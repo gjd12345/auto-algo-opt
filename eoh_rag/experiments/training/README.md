@@ -22,7 +22,7 @@ inference: llm_reranker.py with local model client
 跑带 E arm 的 manifest：
 
 ```bash
-export $(grep -v '^#' ~/.config/agent_go/chatrhino.env | xargs)
+export $(grep -v '^#' ~/.config/auto-algo-opt/chatrhino.env | xargs)
 python -m eoh_rag.experiments.batch_runner \
   --manifest eoh_rag_workspace/experiments/manifests/phase4b_llm_rerank_tsp.json \
   --force

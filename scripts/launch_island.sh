@@ -1,8 +1,8 @@
 #!/bin/bash
 # Island Model Launcher — 15 parallel processes with shared pool
 set -e
-export $(grep -v '^#' ~/.config/agent_go/opencode.env | xargs)
-cd /Users/guojiadong.9/agent_ad/agent_go
+export $(grep -v '^#' ~/.config/auto-algo-opt/opencode.env | xargs)
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 POOL="eoh_rag_workspace/shared_pool"
 rm -rf eoh_rag_workspace/reports/auto_experiment_reports/island_*

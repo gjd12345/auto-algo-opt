@@ -5,7 +5,7 @@
 - Python 3.10+ with numpy
 - Official EoH at `/private/tmp/EoH-main` (or set EOH_OFFICIAL_ROOT)
 - EoH venv at `/private/tmp/eoh_official_venv` (or set EOH_OFFICIAL_PYTHON)
-- API key in `~/.config/agent_go/opencode.env`
+- API key in `~/.config/auto-algo-opt/opencode.env`
 
 ## Replay Best Code
 
@@ -30,7 +30,7 @@ print(BPONLINE(capacity=100).evaluate_program('', score))
 ## Rerun Full Batch
 
 ```bash
-export $(grep -v '^#' ~/.config/agent_go/opencode.env | xargs)
+export $(grep -v '^#' ~/.config/auto-algo-opt/opencode.env | xargs)
 bash scripts/launch_island.sh
 # Wait ~7h for 600+ runs
 ```

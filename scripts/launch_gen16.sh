@@ -1,8 +1,8 @@
 #!/bin/bash
 # Gen=16 exploration — seeded from gen=8 best results
 set -e
-export $(grep -v '^#' ~/.config/agent_go/opencode.env | xargs)
-cd /Users/guojiadong.9/agent_ad/auto-algo-opt
+export $(grep -v '^#' ~/.config/auto-algo-opt/opencode.env | xargs)
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 POOL="eoh_rag_workspace/shared_pool"
 
