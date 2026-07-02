@@ -1,0 +1,23 @@
+name: tests
+
+# Python 单元/集成测试。依赖 Go 工具链的评估器测试在无 Go 环境下会自动跳过
+# （见 tests/test_eoh_runner_specs.py 的 _HAS_GO 门控），因此 CI 不安装 Go。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: pip install -e .
+      - name: Run tests
+        run: python -m pytest tests/ -q
