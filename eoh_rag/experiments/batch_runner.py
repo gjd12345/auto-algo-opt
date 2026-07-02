@@ -163,7 +163,8 @@ RUNNER_MODULE = "eoh_rag.experiments.eoh_single_runner"
 
 # 默认 Python 解释器与官方根目录，均可由环境变量覆盖，manifest 中的同名字段优先级更高
 _DEFAULT_PYTHON = os.environ.get("EOH_OFFICIAL_PYTHON", "")
-_DEFAULT_ROOT = os.environ.get("EOH_OFFICIAL_ROOT", "")
+# 官方 EoH 默认指向仓内 vendored 副本 official_eoh/（可由环境变量或 manifest 覆盖）
+_DEFAULT_ROOT = os.environ.get("EOH_OFFICIAL_ROOT", "") or str(Path(__file__).resolve().parents[2] / "official_eoh")
 # 合法的实验臂集合：纯 EOH、仅 API、文献 RAG、历史 RAG、混合 RAG、上下文文件
 VALID_ARMS = {"pure_eoh", "api_only", "literature_rag", "history_rag", "mixed_rag", "context_file"}
 

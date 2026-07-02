@@ -90,8 +90,8 @@
   "operators": "e1,e2,m1,m2",
   "run_timeout_s": 7200,
   "rag": { "top_k": 2, "max_chars": 2500 },
-  "python_exe": "/private/tmp/eoh_official_venv/bin/python",
-  "official_root": "/private/tmp/EoH-main"
+  "python_exe": "python3",
+  "official_root": "official_eoh"
 }
 ```
 

@@ -55,7 +55,7 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 manifest (实验矩阵)
       │
       ▼
-batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (external official_root)
+batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (内置 official_eoh/)
       │               │                        │
       │               │  build_official_rag_context (注入 RAG 上下文)
       │               ▼                        ▼
@@ -74,10 +74,10 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (exte
  编译成 eoh_rag_workspace/problems/ 下的求解器后评测，引擎为内置 Agent_EOH/。）
 ```
 
-> **官方 EoH 引擎在哪**：主线评测调用的官方 EoH 由 `official_root`（manifest 字段或环境变量
-> `EOH_OFFICIAL_ROOT`）指向的**外部** EoH 安装（stock EoH 的 Python 例子 `examples/<problem>`），
-> 并用其独立 venv（`EOH_OFFICIAL_PYTHON`）运行。它**不在本仓内**——复现主线 605 次实验需自行准备该外部 EoH。
-> 内置的 `Agent_EOH/` 是另一套（Go 问题轨道用），不评测 bp/tsp/cvrp。
+> **官方 EoH 引擎在哪**：已**内置**在 [`official_eoh/`](official_eoh/)（vendored 自
+> [FeiLiu36/EoH](https://github.com/FeiLiu36/EoH)，MIT）。主线运行器默认 `official_root`
+> 就指向它，无需任何外部安装即可自包含复现；也可用 `EOH_OFFICIAL_ROOT` 覆盖。需 Python 3.10+
+> 且装 `requests`（numpy/joblib 已在基础依赖）。另一套内置的 `Agent_EOH/` 只服务 Go 轨道，不评测 bp/tsp/cvrp。
 
 核心模块（均带中文模块头，读前 30 行即可了解职责）：
 
@@ -103,8 +103,8 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (exte
 ## 4. 安装
 
 ### 依赖
-- **Python ≥ 3.10**
-- **外部官方 EoH**（跑主线 bp/tsp/cvrp 进化所需）：一份 stock EoH 安装，含 `examples/<problem>` 与其独立 venv；通过 manifest 的 `official_root` / 环境变量 `EOH_OFFICIAL_ROOT`、`EOH_OFFICIAL_PYTHON` 指定。**本仓不含**。
+- **Python ≥ 3.10**（主线 EoH 引擎要求）+ `requests`（`numpy`/`joblib` 已在基础依赖）
+- **官方 EoH 引擎**：已内置 [`official_eoh/`](official_eoh/)（vendored，MIT），主线默认直接用，**无需外部安装**
 - **Go 工具链**（仅 Go 轨道需要：编译 InsertShips 家族的 `*_solver.go`；缺失时相关评测测试自动跳过，不影响主线与单元测试）
 - 运行真实进化时的可选重依赖：`requests`、`torch`、`numba`（`official-eoh` extra）
 
@@ -171,6 +171,7 @@ auto-algo-opt/
 │   ├── llm/                     # 大模型客户端
 │   ├── memory.py · store.py · strategy_router.py · solver_adapter/
 ├── Agent_EOH/                   # vendored：EoH 的 Go 问题轨道（InsertShips 家族评估器，编译 Go）
+├── official_eoh/                # vendored：主线 EoH 评测引擎（bp/tsp/cvrp，源自 FeiLiu36/EoH，MIT）
 ├── eoh_rag_workspace/           # 运行期数据
 │   ├── problems/                # 各问题的 Go 求解器 + 算例 testdata
 │   ├── rag/                     # RAG 语料（corpus / literature / manual_contexts）
@@ -202,6 +203,9 @@ auto-algo-opt/
 ---
 
 ## 9. 致谢
-本仓库内置（vendored）了 [`Agent_EOH/`](Agent_EOH/) —— Evolution of Heuristics（EoH）的一套变体，
-承担 **Go 问题轨道**（InsertShips 家族）的编译与评测。主线 `bp/tsp/cvrp` 则调用由 `official_root`
-指向的外部 stock EoH 引擎（不在本仓内）。两者的许可与出处均以各自项目的说明为准。
+本仓库内置（vendored）两套 EoH：
+- [`official_eoh/`](official_eoh/) —— 主线 `bp/tsp/cvrp` 的评测引擎，源自
+  [FeiLiu36/EoH](https://github.com/FeiLiu36/EoH)（MIT，ICML 2024），内置以便自包含复现。
+- [`Agent_EOH/`](Agent_EOH/) —— EoH 的一套变体，承担 **Go 问题轨道**（InsertShips 家族）的编译与评测。
+
+两者的许可与出处均以各自目录内的 `LICENSE` / 说明为准。

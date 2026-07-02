@@ -3,16 +3,16 @@
 ## Prerequisites
 
 - Python 3.10+ with numpy
-- Official EoH at `/private/tmp/EoH-main` (or set EOH_OFFICIAL_ROOT)
-- EoH venv at `/private/tmp/eoh_official_venv` (or set EOH_OFFICIAL_PYTHON)
+- Official EoH at `official_eoh` (or set EOH_OFFICIAL_ROOT)
+- EoH venv at `a Python 3.10+ env (numpy/joblib/requests)` (or set EOH_OFFICIAL_PYTHON)
 - API key in `~/.config/auto-algo-opt/opencode.env`
 
 ## Replay Best Code
 
 ```bash
 # BP Online replay (exact result)
-/private/tmp/eoh_official_venv/bin/python -c "
-import sys; sys.path.insert(0, '/private/tmp/EoH-main/examples/bp_online')
+python3 -c "
+import sys; sys.path.insert(0, 'official_eoh/examples/bp_online')
 from prob import BPONLINE
 import numpy as np
 

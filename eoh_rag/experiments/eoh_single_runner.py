@@ -49,7 +49,7 @@ from eoh_rag.rag.card_outcomes import load_outcomes, summarize_all_cards
 from eoh_rag.rag.features import load_population_features
 
 
-DEFAULT_OFFICIAL_ROOT = os.environ.get("EOH_OFFICIAL_ROOT", "")
+DEFAULT_OFFICIAL_ROOT = os.environ.get("EOH_OFFICIAL_ROOT", "") or str(Path(__file__).resolve().parents[2] / "official_eoh")
 DEFAULT_OFFICIAL_PYTHON = os.environ.get("EOH_OFFICIAL_PYTHON", "")
 
 

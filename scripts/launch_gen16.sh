@@ -18,7 +18,7 @@ for i in 1 2 3; do
     --pop-size 6 --generations 16 --operators e1,e2,m1,m2 \
     --n-processes 1 --eval-timeout-s 40 --llm-timeout-s 180 --run-timeout-s 7200 \
     --output-dir "eoh_rag_workspace/reports/auto_experiment_reports/gen16_tsp_${i}" \
-    --official-root /private/tmp/EoH-main --python /private/tmp/eoh_official_venv/bin/python \
+    --official-root official_eoh --python python3 \
     --rag-top-k 2 --rag-max-chars 2500 \
     --rag-query "tsp construct select next node distance nearest insertion regret farthest" \
     --selected-card-ids "tsp_regret_insertion,tsp_nearest_neighbor,tsp_farthest_insertion,tsp_nearest_insertion,tsp_two_opt_awareness" \
@@ -36,7 +36,7 @@ for i in 1 2 3; do
     --pop-size 6 --generations 16 --operators e1,e2,m1,m2 \
     --n-processes 1 --eval-timeout-s 40 --llm-timeout-s 180 --run-timeout-s 7200 \
     --output-dir "eoh_rag_workspace/reports/auto_experiment_reports/gen16_cvrp_${i}" \
-    --official-root /private/tmp/EoH-main --python /private/tmp/eoh_official_venv/bin/python \
+    --official-root official_eoh --python python3 \
     --rag-top-k 2 --rag-max-chars 2500 \
     --rag-query "cvrp construct select next node distance farthest cluster regret depot capacity" \
     --selected-card-ids "cvrp_regret_insertion,cvrp_far_first,cvrp_savings,cvrp_nearest_capacity,cvrp_sweep" \
@@ -54,7 +54,7 @@ for i in 1 2 3; do
     --pop-size 6 --generations 16 --operators e1,e2,m1,m2 \
     --n-processes 1 --eval-timeout-s 40 --llm-timeout-s 180 --run-timeout-s 7200 \
     --output-dir "eoh_rag_workspace/reports/auto_experiment_reports/gen16_bp_${i}" \
-    --official-root /private/tmp/EoH-main --python /private/tmp/eoh_official_venv/bin/python \
+    --official-root official_eoh --python python3 \
     --rag-top-k 2 --rag-max-chars 2500 \
     --rag-query "online bin packing item size fit residual capacity utilization heuristic adaptive" \
     --selected-card-ids "obp_first_fit,obp_best_fit,obp_worst_fit,obp_harmonic,obp_funsearch_residual_poly,obp_eoh_util_sqrt_exp" \

@@ -358,8 +358,8 @@ def main() -> None:
     --problem 可重复指定以只跑部分问题，--timeout-s 控制单个问题的子进程超时。
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--official-root", default=os.environ.get("EOH_OFFICIAL_ROOT", "/private/tmp/EoH-main"))
-    parser.add_argument("--python", default=os.environ.get("EOH_OFFICIAL_PYTHON", "/private/tmp/eoh_official_venv/bin/python"))
+    parser.add_argument("--official-root", default=os.environ.get("EOH_OFFICIAL_ROOT", "") or str(Path(__file__).resolve().parents[2] / "official_eoh"))
+    parser.add_argument("--python", default=os.environ.get("EOH_OFFICIAL_PYTHON", "") or sys.executable)
     parser.add_argument("--output-dir", default="eoh_rag_workspace/reports/official_eoh_smoke")
     # 可多次传入 --problem 累加成列表；不传则跑全部
     parser.add_argument("--problem", choices=sorted(PROBLEMS), action="append")
