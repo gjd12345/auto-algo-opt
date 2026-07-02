@@ -1,0 +1,71 @@
+{
+  "suite": "rag_ablation_4arm_cvrp",
+  "model": "JoyAI-LLM-Pro",
+  "problems": ["cvrp_construct"],
+  "arms": [
+    {
+      "name": "A_pure",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "none"
+    },
+    {
+      "name": "B_keyword",
+      "runner_arm": "literature_rag",
+      "context_strategy": "tocc_candidate_pool",
+      "candidate_card_ids": [
+        "cvrp_regret_insertion",
+        "cvrp_far_first",
+        "cvrp_savings",
+        "cvrp_nearest_capacity",
+        "cvrp_sweep"
+      ],
+      "rag_query": "cvrp construct select next node distance farthest cluster regret depot capacity"
+    },
+    {
+      "name": "C_keyword_outcome",
+      "runner_arm": "literature_rag",
+      "context_strategy": "tocc_candidate_pool",
+      "candidate_card_ids": [
+        "cvrp_regret_insertion",
+        "cvrp_far_first",
+        "cvrp_savings",
+        "cvrp_nearest_capacity",
+        "cvrp_sweep"
+      ],
+      "rag_query": "cvrp construct select next node distance farthest cluster regret depot capacity",
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/rag/corpus/card_outcomes.jsonl"
+      }
+    },
+    {
+      "name": "D_keyword_outcome_pop",
+      "runner_arm": "literature_rag",
+      "context_strategy": "tocc_candidate_pool",
+      "candidate_card_ids": [
+        "cvrp_regret_insertion",
+        "cvrp_far_first",
+        "cvrp_savings",
+        "cvrp_nearest_capacity",
+        "cvrp_sweep"
+      ],
+      "rag_query": "cvrp construct select next node distance farthest cluster regret depot capacity",
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/rag/corpus/card_outcomes.jsonl",
+        "use_prev_run_dir_chain": true
+      }
+    }
+  ],
+  "generations": [4],
+  "pop_size": 4,
+  "repeats": 3,
+  "max_runs": 12,
+  "require_confirm_for_real_run": false,
+  "operators": "e1,e2,m1,m2",
+  "run_timeout_s": 7200,
+  "rag": {
+    "top_k": 2,
+    "max_chars": 2500
+  },
+  "python_exe": "/private/tmp/eoh_official_venv/bin/python",
+  "official_root": "/private/tmp/EoH-main"
+}

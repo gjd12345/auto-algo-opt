@@ -1,0 +1,7 @@
+Optimization API rules:
+- Preserve the ship-id multiset: do not drop, duplicate, or invent ships.
+- A trial move must save both Assign states before RemoveShip/AddShip.
+- After a trial AddShip succeeds, call GenRoute and compare cost_delta.
+- If a move is rejected or infeasible, restore both Assigns before the next trial.
+- Commit at most one best move per call when unsure; simple safe moves beat complex invalid moves.
+- Call dispatch.RenewnTotalCost exactly once before return.

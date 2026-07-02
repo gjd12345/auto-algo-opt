@@ -1,0 +1,23 @@
+{
+  "failures": {
+    "timeout": {
+      "count": 4,
+      "examples": [],
+      "last_seen": "2026-05-19T16:42:08"
+    },
+    "negative_cost": {
+      "count": 1,
+      "examples": [
+        {
+          "error": "-1.0",
+          "code": "func InsertShips(dispatch Dispatch, oris, dess []Station, total_ship int) Dispatch {\n\tlogger := zap.L().Named(\"Insert\")\n\torderCount := len(oris)\n\tif orderCount == 0 {\n\t\treturn dispatch\n\t}\n\n\t// Step 1: Compute for each order the best and second-best insertion cost\n\ttype orderInfo struct {\n\t\tbestCost "
+        }
+      ],
+      "last_seen": "2026-05-19T16:36:03"
+    }
+  },
+  "stats": {
+    "total_attempts": 38,
+    "total_failures": 11
+  }
+}

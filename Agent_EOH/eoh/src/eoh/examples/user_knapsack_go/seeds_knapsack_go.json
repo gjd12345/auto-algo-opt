@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Greedy ratio seed for SelectItems",
+    "code": "func SelectItems(items []Item, capacity int) []bool {\n\tselected := make([]bool, len(items))\n\tremaining := capacity\n\tfor i, item := range items {\n\t\tif item.Weight <= remaining {\n\t\t\tselected[i] = true\n\t\t\tremaining -= item.Weight\n\t\t}\n\t}\n\treturn selected\n}"
+  }
+]

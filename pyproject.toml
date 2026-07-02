@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eoh-rag"
+version = "0.2.0"
+description = "Trace-Conditioned Small-Model Controllers for Heuristic Evolution"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.20",
+    "joblib>=1.2",
+    "pandas",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+official-eoh = ["requests", "torch", "numba", "python-docx"]
+
+[project.scripts]
+eoh-batch = "eoh_rag.experiments.batch_runner:main"
+
+[tool.setuptools.packages.find]
+include = ["eoh_rag*"]

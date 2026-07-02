@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Largest capacity fallback splitting seed",
+    "code": "func SplitOrders(orders []Order, vehicles []Vehicle, workHours float64) []SubOrder {\n\tcaps := make([]float64, 0)\n\tfor _, vehicle := range vehicles {\n\t\tif vehicle.Capacity > 0 && vehicle.Count > 0 {\n\t\t\tcaps = append(caps, vehicle.Capacity)\n\t\t}\n\t}\n\tfor i := 0; i < len(caps); i++ {\n\t\tfor j := i + 1; j < len(caps); j++ {\n\t\t\tif caps[j] > caps[i] {\n\t\t\t\tcaps[i], caps[j] = caps[j], caps[i]\n\t\t\t}\n\t\t}\n\t}\n\tif len(caps) == 0 {\n\t\treturn []SubOrder{}\n\t}\n\tresult := make([]SubOrder, 0)\n\tlargest := caps[0]\n\tfor _, order := range orders {\n\t\tremaining := order.Volume\n\t\tfor remaining > 1e-9 {\n\t\t\tchosen := largest\n\t\t\tfor _, cap := range caps {\n\t\t\t\tif remaining <= cap+1e-9 {\n\t\t\t\t\tchosen = cap\n\t\t\t\t}\n\t\t\t}\n\t\t\tvolume := remaining\n\t\t\tif volume > chosen {\n\t\t\t\tvolume = chosen\n\t\t\t}\n\t\t\tresult = append(result, SubOrder{OrderID: order.ID, Volume: volume, VehicleCapacity: chosen})\n\t\t\tremaining -= volume\n\t\t}\n\t}\n\treturn result\n}"
+  }
+]

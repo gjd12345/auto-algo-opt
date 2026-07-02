@@ -1,0 +1,21 @@
+{
+  "objective": 0.00674,
+  "timestamp_discovered": 1782802857.04054,
+  "timestamp_frozen": "2026-06-30T16:17:24.614417",
+  "commit_hash": "0de525018b36b2a6d0d8d7ffd11e04d14917375d",
+  "corpus_hash": "da8c789ff3306169",
+  "evaluator": {
+    "problem": "bp_online",
+    "distribution": "Weibull(3.0, 45)",
+    "capacity": 100,
+    "n_items": 5000,
+    "framework": "official EoH (eoh_go_workspace \u2192 /private/tmp/EoH-main)"
+  },
+  "code_length_chars": 277,
+  "code_lines": 5,
+  "replay_verified": true,
+  "official_evaluator_result": 0.006741,
+  "metric": "excess_ratio_over_lower_bound = (avg_bins_used - LB) / LB",
+  "meaning": "0.674% more bins than theoretical optimum",
+  "evaluator_note": "uses pre-generated Weibull instances from GetData(), capacity=100"
+}

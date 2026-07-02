@@ -1,0 +1,69 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.idea/
+.vscode/
+*.exe
+*.log
+*.aux
+*.out
+*.tmp
+Agent_EOH/eoh/src/eoh/examples/user_insertships_go/results_insertships*/
+Agent_EOH/eoh/src/eoh/examples/user_insertships_go/v2_agent/run_logs/
+eoh_rag_workspace/candidates/
+eoh_rag_workspace/runs/
+eoh_rag_workspace/memory/
+eoh_rag_workspace/reports/tables/eoh_arrival_grid*/
+eoh_rag_workspace/generated/
+node_modules/
+package.json
+package-lock.json
+build_slides.js
+
+# Exclude per-generation population JSONs (hundreds of small files)
+**/pops/population_generation_*.json
+**/pops_best/population_generation_*.json
+
+# Raw experiment outputs (never tracked)
+eoh_rag_workspace/local_runs/
+eoh_rag_workspace/local_notes/
+eoh_rag_workspace/reports/official_eoh_runs/
+eoh_rag_workspace/reports/auto_experiment_reports/**/run_*/
+eoh_rag_workspace/reports/auto_experiment_reports/island_*/
+eoh_rag_workspace/reports/auto_experiment_reports/gen16_*/
+eoh_rag_workspace/reports/auto_experiment_reports/gen16_island_*/
+eoh_rag_workspace/shared_pool/*.jsonl
+eoh_rag_workspace/shared_pool/_seed_*
+archived_experiments/raw_runs_*/
+archived_experiments/ignored_artifacts_*/
+outputs/
+**/*.pptx.inspect.ndjson
+**/~$*.pptx
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Makefile benchmark outputs
+final_result.txt
+final_result_genetic.txt
+
+# macOS
+.DS_Store
+
+# Virtual env
+.venv/
+
+# Build artifacts
+*.egg-info/
+
+# External repos (re-clone as needed)
+external_repos/
+
+# Compiled binaries
+mainbin*
+
+# Archived zips
+*.zip

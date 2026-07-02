@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Best-fit score: prefer feasible bin with smallest remaining capacity after placement.",
+    "code": "func ScoreBin(item int, remaining []int, capacity int) []float64 {\n    scores := make([]float64, len(remaining))\n    for i, rem := range remaining {\n        scores[i] = float64(capacity - (rem - item))\n    }\n    return scores\n}"
+  }
+]
