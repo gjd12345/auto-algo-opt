@@ -224,7 +224,7 @@ def repair_compile_errors(
 
     # 未显式传入 main.go 文本时，从工程目录读取；找不到则直接判定失败返回
     if base_main_go is None:
-        main_go_path = os.path.join(project_root, "main.go")
+        main_go_path = os.path.join(project_root, "go_solver", "main.go")
         if os.path.exists(main_go_path):
             with open(main_go_path, "r", encoding="utf-8") as f:
                 base_main_go = f.read()
@@ -256,7 +256,7 @@ def repair_compile_errors(
 
             # 拷贝编译所需的配套文件（存在才拷）
             for fname in ["routing.go", "go.mod", "go.sum"]:
-                src = os.path.join(project_root, fname)
+                src = os.path.join(project_root, "go_solver", fname)
                 if os.path.exists(src):
                     shutil.copy2(src, os.path.join(tmp, fname))
 

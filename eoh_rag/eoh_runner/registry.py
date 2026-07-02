@@ -72,7 +72,7 @@ TARGET_SPECS: dict[str, TargetSpec] = {
         ),
         extract_regex=r"func\s+Optimization\s*\(\s*dispatch\s+Dispatch\s*,\s*temperature\s+float64\s*\)\s*Dispatch\s*\{[\s\S]*?\n\}",
         replace_regex_template=r"func Optimization\(dispatch Dispatch, temperature float64\) Dispatch \{\s*\n%s\n\}",
-        seed_path="main.go:455",
+        seed_path="go_solver/main.go:455",
         rag_api_context=(
             "Use dispatch.Assigns[].RemoveShip/AddShip/GenRoute and dispatch.RenewnTotalCost. "
             "Rollback failed moves and preserve the ship-id multiset."
@@ -167,7 +167,7 @@ PROBLEM_SPECS: dict[str, ProblemSpec] = {
     "vrp_insertships": ProblemSpec(
         name="vrp_insertships",
         language="go",
-        source_files=["main.go", "routing.go"],
+        source_files=["go_solver/main.go", "go_solver/routing.go"],
         main_binary="mainbin_sa.exe",
         objective_direction="minimize",
         benchmark_data=[

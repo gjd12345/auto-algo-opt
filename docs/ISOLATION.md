@@ -24,7 +24,7 @@
 
 ### Python side MUST NOT:
 - Depend on Go internal struct fields (Assign.StaIndexesLen, Route[0].CurTime)
-- Directly modify main.go or routing.go
+- Directly modify go_solver/main.go or go_solver/routing.go
 - Assume Go binary location — always use solver_adapter
 
 ### Communication contract: CLI + JSON
@@ -55,7 +55,7 @@
 
 ## Solver Access
 
-The Go solver (`main.go`, `routing.go`) is self-contained and exposes no Python dependencies.
+The Go solver (`go_solver/main.go`, `go_solver/routing.go`) is self-contained and exposes no Python dependencies.
 Python accesses the Go solver through `eoh_rag/solver_adapter/go_solver.py`.
 The EOH experiment runner (`eoh_single_runner.py`) uses official EoH's Python wrapper
 rather than the Go solver directly — they solve different problem types.

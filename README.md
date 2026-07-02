@@ -177,7 +177,7 @@ auto-algo-opt/
 │   ├── experiments/manifests/   # 实验 manifest 配置
 │   └── ...                      # 卡片先验、算子记忆、训练数据等
 ├── solomon_benchmark_d{25,50,75}/   # CVRP Solomon 基准算例
-├── main.go · routing.go · go.mod    # Go 求解器骨架
+├── go_solver/                   # Go 求解器骨架（main.go · routing.go · go.mod · go.sum）
 ├── evidence/                    # 冻结实验证据（结果表、最优代码、复现说明）
 ├── docs/                        # 设计规格（SPEC）与说明
 ├── scripts/                     # 便捷运行脚本
@@ -190,7 +190,7 @@ auto-algo-opt/
 - **RAG 语料**：`eoh_rag_workspace/rag/corpus/*.jsonl`（算法卡、API 约束、失败案例、历史卡）+
   `rag/literature/*.md`（文献策略卡）。语料随进化持续增长——好代码会被合成为历史卡写回。
 - **问题算例**：`eoh_rag_workspace/problems/<problem>/testdata/` 与 `solomon_benchmark_d*/`。
-- **Go 求解器**：根目录 `main.go`/`routing.go` 与各问题 `*_solver.go`。
+- **Go 求解器**：`go_solver/`（`main.go`/`routing.go`）与各问题 `*_solver.go`。
 
 ---
 

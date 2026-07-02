@@ -55,10 +55,10 @@ export EOH_OFFICIAL_PYTHON=/path/to/eoh_official_venv/bin/python
 
 ## Go Solver
 
-The Go solver compiles from the project root:
+The Go solver lives in `go_solver/` and compiles from there:
 
 ```bash
-go build -o mainbin main.go routing.go
+cd go_solver && go build -o mainbin .
 ```
 
 ## Running Experiments

@@ -40,7 +40,7 @@ class TestEOHRunnerSpecs(unittest.TestCase):
 
     def test_go_regexes_match_current_sources(self) -> None:
         root = Path(__file__).resolve().parents[1]
-        main_text = (root / "main.go").read_text(encoding="utf-8")
+        main_text = (root / "go_solver" / "main.go").read_text(encoding="utf-8")
         self.assertIsNotNone(re.search(TARGET_SPECS["InsertShips"].extract_regex, main_text))
         self.assertIsNotNone(re.search(TARGET_SPECS["Optimization"].extract_regex, main_text))
         knapsack_text = (root / "eoh_rag_workspace" / "problems" / "knapsack" / "knapsack_solver.go").read_text(

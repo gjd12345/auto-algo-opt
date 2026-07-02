@@ -349,10 +349,12 @@ class TestIntegration:
         # Setup project
         project = tmp_path / "project"
         project.mkdir()
-        (project / "main.go").write_text(SAMPLE_MAIN_GO)
-        (project / "routing.go").write_text("package main\n")
-        (project / "go.mod").write_text("module test\n\ngo 1.21\n")
-        (project / "go.sum").write_text("")
+        go_dir = project / "go_solver"
+        go_dir.mkdir()
+        (go_dir / "main.go").write_text(SAMPLE_MAIN_GO)
+        (go_dir / "routing.go").write_text("package main\n")
+        (go_dir / "go.mod").write_text("module test\n\ngo 1.21\n")
+        (go_dir / "go.sum").write_text("")
 
         # Setup data
         data_dir = project / "solomon_benchmark_d25"

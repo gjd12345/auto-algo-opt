@@ -174,8 +174,8 @@ class SmartOperator:
             )
 
     def _load_main_go(self) -> None:
-        """读取并缓存工程根下的 main.go 全文（后续抽取种子、拼接编译都用得到）。"""
-        main_path = self.project_root / "main.go"
+        """读取并缓存 go_solver/main.go 全文（后续抽取种子、拼接编译都用得到）。"""
+        main_path = self.project_root / "go_solver" / "main.go"
         if main_path.exists():
             self.main_go_text = main_path.read_text(encoding="utf-8")
 
@@ -297,7 +297,7 @@ class SmartOperator:
 
             # 拷贝编译所需的其他源文件与依赖清单
             for fname in ["routing.go", "go.mod", "go.sum"]:
-                src = self.project_root / fname
+                src = self.project_root / "go_solver" / fname
                 if src.exists():
                     shutil.copy2(str(src), os.path.join(tmp, fname))
 
