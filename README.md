@@ -12,11 +12,13 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 
 给定一个组合优化问题（例如在线装箱、TSP、CVRP），本框架自动完成：
 
-1. **生成**：让大模型基于当前种群 + RAG 上下文，写出候选启发式（Go 代码片段）。
-2. **编译 & 评测**：把候选编译成 Go 求解器，在基准算例上跑分，得到目标值（越小越好）。
+1. **生成**：让大模型基于当前种群 + RAG 上下文，写出候选启发式函数。主线三个问题的候选是 **Python 函数**（`bp_online` 实现 `score(item, bins)`，`tsp/cvrp` 实现 `select_next_node(...)`，均基于 numpy）。
+2. **评测**：把候选交给官方 EoH 引擎，在基准算例上跑分，得到目标值（越小越好）。
 3. **守卫 & 记忆**：用规则守卫过滤异常候选；把失败模式与高质量代码沉淀成结构化记忆。
 4. **进化**：选优作为下一代父本，跨进程共享种群（Island Model），逐代逼近更优解。
 5. **反哺**：把进化出的好策略合成为「历史卡片」写回 RAG 语料，供后续检索复用。
+
+> **两条评测轨道**：上面描述的是**主线**（`bp_online`/`tsp_construct`/`cvrp_construct`，Python 候选，即论文证据来源）。此外还有一条独立的 **Go 轨道**——`InsertShips` 及其同族问题（`bin_packing_go`/`knapsack`/`mixer_split`）的候选是 **Go 代码**，经 `go build` 编译成求解器后评测，由内置的 `Agent_EOH/` 承担（见 [`operator/`](eoh_rag/operator/) 与 `prob_*_go.py`）。两条轨道共用 RAG / PoolAPI / evaluator 等上层设施。
 
 与「一次性让大模型写个算法」不同，这里是一个**可迭代、有记忆、带证据**的进化闭环。
 
@@ -53,12 +55,12 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 manifest (实验矩阵)
       │
       ▼
-batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (Agent_EOH/)
+batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (external official_root)
       │               │                        │
       │               │  build_official_rag_context (注入 RAG 上下文)
       │               ▼                        ▼
-      │        rag/ 检索层                Go 求解器 (eoh_rag_workspace/problems/)
-      │        (语料/检索/重排/卡片合成)   编译+评测 → 目标值
+      │        rag/ 检索层                在基准算例上评测 Python 候选
+      │        (语料/检索/重排/卡片合成)   (score / select_next_node) → 目标值
       │               │
       ▼               ▼
    PoolAPI ◄────── hooks (跑完后的反馈：入池/记忆/合成卡片)
@@ -67,7 +69,15 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (Agen
       │            evaluator (目标值 vs 基线 → archive/continue/adjust/escalate)
       ▼
  RunTracker (标准化 run 目录留痕)
+
+（Go 轨道：InsertShips 家族的候选是 Go 代码，由 operator/ + prob_*_go.py 经 go build
+ 编译成 eoh_rag_workspace/problems/ 下的求解器后评测，引擎为内置 Agent_EOH/。）
 ```
+
+> **官方 EoH 引擎在哪**：主线评测调用的官方 EoH 由 `official_root`（manifest 字段或环境变量
+> `EOH_OFFICIAL_ROOT`）指向的**外部** EoH 安装（stock EoH 的 Python 例子 `examples/<problem>`），
+> 并用其独立 venv（`EOH_OFFICIAL_PYTHON`）运行。它**不在本仓内**——复现主线 605 次实验需自行准备该外部 EoH。
+> 内置的 `Agent_EOH/` 是另一套（Go 问题轨道用），不评测 bp/tsp/cvrp。
 
 核心模块（均带中文模块头，读前 30 行即可了解职责）：
 
@@ -94,13 +104,14 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (Agen
 
 ### 依赖
 - **Python ≥ 3.10**
-- **Go 工具链**（编译/评测 Go 求解器所需；缺失时相关评测测试会自动跳过）
-- 运行官方 EoH 进化时的可选重依赖：`requests`、`torch`、`numba`
+- **外部官方 EoH**（跑主线 bp/tsp/cvrp 进化所需）：一份 stock EoH 安装，含 `examples/<problem>` 与其独立 venv；通过 manifest 的 `official_root` / 环境变量 `EOH_OFFICIAL_ROOT`、`EOH_OFFICIAL_PYTHON` 指定。**本仓不含**。
+- **Go 工具链**（仅 Go 轨道需要：编译 InsertShips 家族的 `*_solver.go`；缺失时相关评测测试自动跳过，不影响主线与单元测试）
+- 运行真实进化时的可选重依赖：`requests`、`torch`、`numba`（`official-eoh` extra）
 
 ```bash
 # 克隆后，在仓库根目录：
 pip install -e .              # 安装 eoh-rag 及基础依赖（numpy/joblib/pandas/matplotlib）
-pip install -e ".[dev]"       # 附带 pytest
+pip install -e ".[dev]"       # 附带 pytest（跑单元测试用这个即可）
 pip install -e ".[official-eoh]"   # 跑真实进化实验时再装（requests/torch/numba/python-docx）
 ```
 
@@ -159,7 +170,7 @@ auto-algo-opt/
 │   ├── eoh_runner/              # 问题/目标规格注册表
 │   ├── llm/                     # 大模型客户端
 │   ├── memory.py · store.py · strategy_router.py · solver_adapter/
-├── Agent_EOH/                   # vendored：官方 Evolution-of-Heuristics 引擎 + Go 问题评估器
+├── Agent_EOH/                   # vendored：EoH 的 Go 问题轨道（InsertShips 家族评估器，编译 Go）
 ├── eoh_rag_workspace/           # 运行期数据
 │   ├── problems/                # 各问题的 Go 求解器 + 算例 testdata
 │   ├── rag/                     # RAG 语料（corpus / literature / manual_contexts）
@@ -191,5 +202,6 @@ auto-algo-opt/
 ---
 
 ## 9. 致谢
-本仓库内置（vendored）了 [`Agent_EOH/`](Agent_EOH/) —— Evolution of Heuristics（EoH）进化引擎
-及其 Go 问题评估器，作为进化循环的底层执行器。其许可与出处以 `Agent_EOH/` 内的说明为准。
+本仓库内置（vendored）了 [`Agent_EOH/`](Agent_EOH/) —— Evolution of Heuristics（EoH）的一套变体，
+承担 **Go 问题轨道**（InsertShips 家族）的编译与评测。主线 `bp/tsp/cvrp` 则调用由 `official_root`
+指向的外部 stock EoH 引擎（不在本仓内）。两者的许可与出处均以各自项目的说明为准。
