@@ -1,1 +1,5 @@
-"""BP Online interpretability experiments."""
+"""
+模块：interpretability（在线装箱可解释性实验包）
+功能：作为在线装箱（BP Online）可解释性实验的 Python 包入口。
+职责：将本目录标记为一个包，聚合与该问题可解释性分析相关的实验脚本与工具。
+"""

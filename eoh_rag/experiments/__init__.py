@@ -1,2 +1,6 @@
-"""Experiment entrypoints for EOH-Go evaluation workflows."""
+"""
+模块：eoh_rag.experiments
+功能：作为实验入口的 Python 包，汇集启发式算法评测流程的运行脚本与工具。
+职责：把本目录下的实验模块聚合为一个可导入的包，供上层按需引用其中的运行入口。
+"""
 

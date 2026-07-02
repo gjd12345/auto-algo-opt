@@ -1,8 +1,35 @@
-"""TOCC V2 Agent — LLM proposer for operator-card selection.
-
-Reads run traces, calls LLM to propose next card set + query.
-LLM only proposes; gatekeeper enforces.
 """
+模块：TOCC Agent（Trace-Conditioned Operator-Card Controller 智能体）
+功能：读取一次 EOH 运行的轨迹（trace），调用大模型（LLM）诊断本次搜索的失败模式，
+      并提议下一轮应当使用的「算子卡片」（operator card）候选池与检索查询语句。
+职责：
+  - 把运行汇总 JSON 展平成结构化的诊断输入（_flatten_trace）；
+  - 依据轨迹拼装给 LLM 的用户提示词（_build_user_prompt）；
+  - 调用 LLM 并解析其返回的 JSON 提议（propose）。
+  说明：本智能体只负责「提议」，不做最终的卡片注入决策，注入由检索/重排环节把关。
+接口：
+  - propose(summary_path, *, model, api_key, endpoint, temperature, timeout_s, max_retries) -> dict
+      返回 {"proposal": {...}, "gatekeeper": {...}, "error": None}
+  - _flatten_trace(summary_path) -> dict：展平运行汇总为诊断字段
+  - _build_user_prompt(trace) -> str：把诊断字段拼成 LLM 用户提示词
+输入：
+  - summary_path：一次运行的汇总文件路径（official_eoh_run_summary.json）；
+  - 环境变量：DEEPSEEK_MODEL / DEEPSEEK_API_KEY / DEEPSEEK_API_ENDPOINT（可被入参覆盖）。
+输出：
+  - 一个包含 LLM 提议（诊断类型、候选卡片列表、检索查询、理由、风险、下一步动作）的字典。
+示例：
+    result = propose("outputs/official_eoh_run_summary.json")
+    if result["error"] is None:
+        print(result["proposal"]["diagnosis"])
+
+面向大模型的说明：本模块解决「基于轨迹诊断，为下一轮进化选卡」的问题；
+LLM 仅产出候选，最终注入由检索/重排把关。
+"""
+
+# TOCC V2 Agent — LLM proposer for operator-card selection.
+#
+# Reads run traces, calls LLM to propose next card set + query.
+# LLM only proposes; gatekeeper enforces.
 
 from __future__ import annotations
 
@@ -19,6 +46,9 @@ from eoh_rag.tocc.controller import (
 )
 
 
+# 系统提示词：约束 LLM 扮演「TOCC 诊断专家」，规定其必须输出的 JSON 字段、
+# 可选的 10 种诊断类型、6 种下一步动作类型，以及选卡规则（前缀约束、候选来源、
+# 多样性/纠偏建议、候选数量与查询长度上限等）。内容为固定契约，供 LLM 调用直接使用。
 SYSTEM_PROMPT = """You are a TOCC (Trace-Conditioned Operator-Card Controller) diagnosis specialist.
 You analyze EOH (Evolutionary Heuristic Optimization) run traces for combinatorial optimization problems.
 
@@ -65,11 +95,22 @@ Rules:
 
 
 def _flatten_trace(summary_path: str) -> dict[str, Any]:
-    """Extract trace fields from official_eoh_run_summary.json."""
+    """从运行汇总文件中抽取并展平诊断所需的轨迹字段。
+
+    读取 official_eoh_run_summary.json，把其中的检索轨迹（rag_trace）与
+    运行汇总（run_summary）合并成一个扁平字典，供后续拼装 LLM 提示词使用。
+
+    参数：
+        summary_path：运行汇总 JSON 文件的路径。
+    返回：
+        一个字典，包含问题名、实验臂、检索查询、已选卡片及其分数、候选池信息、
+        各类告警、有效候选数、最优目标值、代码特征，以及用于对比诊断的历史基线值等。
+    """
     payload = json.loads(Path(summary_path).read_text(encoding="utf-8"))
     rag = payload.get("rag_trace") or {}
     run_sum = payload.get("run_summary") or {}
 
+    # best_code：本轮最优个体的源码；据此提取「代码家族/特征」用于诊断偏置与多样性
     best_code = run_sum.get("best_code", "")
     code_family = list(_get_code_family(best_code))
     population_features = list(rag.get("rag_population_features") or [])
@@ -105,16 +146,19 @@ def _flatten_trace(summary_path: str) -> dict[str, Any]:
         "code_family": code_family,
         "failure_reason": payload.get("failure_reason"),
         "runtime_seconds": payload.get("runtime_seconds"),
+        # 可用卡片池 = 该问题的「定向候选卡」+「与基线重叠的卡」；供 LLM 从中挑选候选
         "available_cards": TARGETED_CANDIDATE_CARDS.get(payload.get("problem", ""), []) +
                            list(BASELINE_OVERLAP_CARDS.get(payload.get("problem", ""), set())),
         "baseline_cards": list(BASELINE_OVERLAP_CARDS.get(payload.get("problem", ""), set())),
+        # 历史基线：纯 EOH 最优、定向最优及其对应卡片，用于横向对比判断本轮好坏
         "pure_eoh_best": _BASELINE_OBJECTIVES.get(payload.get("problem", ""), {}).get("pure"),
         "historical_best": _BASELINE_OBJECTIVES.get(payload.get("problem", ""), {}).get("targeted"),
         "historical_best_cards": _BASELINE_OBJECTIVES.get(payload.get("problem", ""), {}).get("cards", []),
     }
 
 
-# Known best objectives for comparative diagnosis
+# 各问题的已知最优目标值，用于对比诊断：pure=纯 EOH 基线，targeted=使用定向卡的最优，
+# cards=达到定向最优时所用的卡片。目标值越小越好（如路径长度/装箱代价）。
 _BASELINE_OBJECTIVES = {
     "tsp_construct": {"pure": 6.839, "targeted": 6.217, "cards": ["tsp_regret_insertion", "tsp_farthest_insertion"]},
     "cvrp_construct": {"pure": 13.207, "targeted": 12.821, "cards": ["cvrp_regret_insertion", "cvrp_far_first"]},
@@ -122,7 +166,16 @@ _BASELINE_OBJECTIVES = {
 
 
 def _build_user_prompt(trace: dict[str, Any]) -> str:
-    """Build user prompt with trace data."""
+    """把展平后的轨迹拼装成给 LLM 的用户提示词字符串。
+
+    将问题、实验臂、检索查询、候选池、已选卡片与分数、各类告警、历史基线对比等
+    逐行罗列，并在末尾给出对比判断规则与「只输出 JSON」的要求。
+
+    参数：
+        trace：_flatten_trace 返回的扁平轨迹字典。
+    返回：
+        多行提示词字符串（各行以换行拼接）。
+    """
     items = trace.get("rag_selected_items", [])
     titles = trace.get("rag_selected_titles", [])
     scores = trace.get("rag_all_scores", [])
@@ -181,12 +234,24 @@ def propose(
     timeout_s: int = 60,
     max_retries: int = 3,
 ) -> dict[str, Any]:
-    """Propose next card set from a run trace.
+    """根据一次运行的轨迹，调用 LLM 提议下一轮的卡片候选集与检索查询。
 
-    Returns: {"proposal": {...}, "gatekeeper": {...}, "error": None}
+    流程：读取模型/密钥/端点（入参优先，缺省回退到环境变量）→ 展平轨迹并拼装提示词
+    → 调用 LLM（要求返回 JSON）→ 解析返回并封装结果。
+
+    参数：
+        summary_path：运行汇总 JSON 文件路径。
+        model / api_key / endpoint：LLM 模型名、密钥、访问端点；未传时读取对应环境变量。
+        temperature：采样温度，越低越确定。
+        timeout_s：单次请求超时秒数。
+        max_retries：失败重试次数。
+    返回：
+        字典 {"proposal": {...}|None, "gatekeeper": None, "error": None|错误信息}。
+        当缺少凭证、请求异常或 JSON 解析失败时，proposal 为 None 且 error 说明原因。
     """
     from eoh_rag.llm.client import chat_completion
 
+    # 凭证与模型：入参优先，未提供则回退到环境变量（DEEPSEEK_* 系列）
     model = model or os.environ.get("DEEPSEEK_MODEL", "JoyAI-LLM-Pro")
     api_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
     endpoint = endpoint or os.environ.get("DEEPSEEK_API_ENDPOINT", "")
@@ -217,7 +282,8 @@ def propose(
     except RuntimeError as e:
         return {"proposal": None, "gatekeeper": None, "error": str(e)}
 
-    # Handle case where LLM wraps JSON in markdown code block
+    # 兼容 LLM 把 JSON 包在 markdown 代码块（```json ... ```）里的情况：
+    # 取出代码块内容，并去掉可能的 json 语言标记，再做解析
     if "```" in content:
         content = content.split("```")[1]
         if content.startswith("json"):

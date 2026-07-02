@@ -1,3 +1,31 @@
+"""
+模块：eoh_single_runner（EoH 单次进化实验运行器）
+功能：以子进程方式启动一次官方 EoH 启发式进化实验，采集结果并生成 JSON / Markdown 报告。
+职责：
+    - 组装并写出一份自包含的子进程运行脚本（内含 LLM 调用改写、问题加载、上下文注入、种群初始化）。
+    - 按实验分支（arm）决定是否为提示词注入额外参考上下文（纯 EoH / API 规则 / RAG 检索上下文）。
+    - 检查必需的 API 环境变量，拼装命令行并执行子进程，超时与失败均有兜底记录。
+    - 解析最新一代种群，选出目标值最优的候选，汇总为运行摘要。
+    - 将日志中的接口地址与密钥做脱敏后落盘。
+接口：
+    - normalize_api_endpoint(endpoint) -> str：从 URL 中提取纯主机名。
+    - redact_log_tail(text) -> str：对日志尾部做接口/密钥脱敏。
+    - summarize_run(run_dir) -> dict：解析一次运行目录，产出结果摘要。
+    - run_official_eoh(args) -> dict：主流程，执行一次实验并返回结果 payload。
+    - main() -> None：命令行入口，解析参数并打印结果 payload。
+输入：
+    - 命令行参数（问题类型、实验分支、种群规模、代数、RAG 参数、超时等）。
+    - 环境变量：EOH_OFFICIAL_ROOT、EOH_OFFICIAL_PYTHON、以及 API key/endpoint/model 三组变量。
+    - 依赖官方 EoH 代码根目录及其 examples 下的各问题定义。
+输出：
+    - 输出目录下的 official_eoh_run_summary.json 与 official_eoh_run_summary.md。
+    - 每次运行独立目录下的种群、样本、RAG 上下文等中间产物。
+示例：
+    python -m eoh_rag.experiments.eoh_single_runner \
+        --official-root /path/to/eoh --python /path/to/python \
+        --problem bp_online --arm pure_eoh --pop-size 2 --generations 1
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -26,29 +54,46 @@ DEFAULT_OFFICIAL_PYTHON = os.environ.get("EOH_OFFICIAL_PYTHON", "")
 
 
 def normalize_api_endpoint(endpoint: str) -> str:
+    """从接口地址中提取纯主机名，去掉协议前缀和路径部分。
+
+    入参 endpoint 可为完整 URL；返回仅保留 host（如 "api.example.com"），空值返回空串。
+    """
     value = (endpoint or "").strip()
-    value = re.sub(r"^https?://", "", value)
-    value = value.split("/", 1)[0]
+    value = re.sub(r"^https?://", "", value)  # 去掉 http:// 或 https:// 前缀
+    value = value.split("/", 1)[0]  # 仅保留第一个斜杠前的 host 段
     return value.strip()
 
 
 def _natural_generation(path: Path) -> int:
+    """从种群文件名中解析代数编号。
+
+    文件名形如 population_generation_3.json 时返回 3；不匹配则返回 -1（用于排序兜底）。
+    """
     match = re.search(r"population_generation_(\d+)\.json$", path.name)
     return int(match.group(1)) if match else -1
 
 
 def _load_json(path: Path) -> Any:
+    """以 UTF-8 读取并解析一个 JSON 文件，返回其反序列化结果。"""
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def redact_log_tail(text: str) -> str:
-    redacted = re.sub(r"https?://\S+", "[api-endpoint-redacted]", text or "")
-    redacted = re.sub(r"(endpoint=)[^,\s)]+", r"\1[api-endpoint-redacted]", redacted)
-    redacted = re.sub(r"(Bearer\s+)[A-Za-z0-9._~+/=-]+", r"\1[api-key-redacted]", redacted)
+    """对日志文本做脱敏，隐藏接口地址与密钥后再落盘。
+
+    分别把 URL、endpoint=... 值、以及 Bearer 令牌替换为占位符。
+    """
+    redacted = re.sub(r"https?://\S+", "[api-endpoint-redacted]", text or "")  # 屏蔽完整 URL
+    redacted = re.sub(r"(endpoint=)[^,\s)]+", r"\1[api-endpoint-redacted]", redacted)  # 屏蔽 endpoint= 后的值
+    redacted = re.sub(r"(Bearer\s+)[A-Za-z0-9._~+/=-]+", r"\1[api-key-redacted]", redacted)  # 屏蔽 Bearer 令牌
     return redacted
 
 
 def _tail_text(value: str | bytes | None, max_lines: int = 80) -> str:
+    """返回文本的末尾若干行，用于截取子进程日志尾部。
+
+    支持传入字节串（按 UTF-8 容错解码）；默认最多保留最后 80 行。
+    """
     if value is None:
         return ""
     if isinstance(value, bytes):
@@ -59,7 +104,14 @@ def _tail_text(value: str | bytes | None, max_lines: int = 80) -> str:
 
 
 def summarize_run(run_dir: Path) -> dict[str, Any]:
+    """解析一次运行目录，汇总最新一代种群并选出最优候选。
+
+    在 results/pops 下按代数找到最新种群文件，筛出带有效目标值（objective）的候选，
+    取目标值最小者为最优（各支持问题均为最小化）。
+    返回包含是否成功、失败原因、最新代数、种群规模、有效候选数及最优代码/描述/目标值的摘要字典。
+    """
     pop_dir = run_dir / "results" / "pops"
+    # 按解析出的代数编号升序排列历代种群文件
     populations = sorted(pop_dir.glob("population_generation_*.json"), key=_natural_generation)
     samples = sorted((run_dir / "results" / "samples").glob("samples_*.json"))
     best_sample = run_dir / "results" / "samples" / "samples_best.json"
@@ -78,16 +130,18 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "best_sample_path": str(best_sample) if best_sample.exists() else None,
     }
     if not populations:
+        # 没有任何种群文件，说明进化未产出结果
         summary["failure_reason"] = "missing_population"
         return summary
 
-    latest = populations[-1]
+    latest = populations[-1]  # 取最后一代作为结果来源
     population = _load_json(latest)
     if not isinstance(population, list):
         summary["failure_reason"] = "population_not_list"
         return summary
+    # 只保留目标值非空的候选，视为有效个体
     valid = [item for item in population if isinstance(item, dict) and item.get("objective") is not None]
-    best = min(valid, key=lambda item: item["objective"]) if valid else None
+    best = min(valid, key=lambda item: item["objective"]) if valid else None  # 目标值最小者最优
     summary.update(
         {
             "ok": best is not None,
@@ -105,6 +159,11 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
 
 
 def _api_context(problem: str) -> str:
+    """按问题类型返回一段接口约束说明（API RULES），注入到提示词中约束生成代码。
+
+    覆盖 bp_online、tsp_construct、cvrp_construct 三类问题，各自说明需实现的函数及返回值约定；
+    未知问题抛出 ValueError。
+    """
     if problem == "bp_online":
         return (
             "API RULES: implement score(item, bins). Return a numeric numpy array with one score per feasible bin. "
@@ -124,6 +183,12 @@ def _api_context(problem: str) -> str:
 
 
 def _runner_script() -> str:
+    """返回一段自包含的子进程运行脚本源码（字符串）。
+
+    该脚本会被写入运行目录后由官方 EoH 使用的 Python 解释器独立执行，内部负责：
+    补丁化 LLM 接口调用（统一请求格式与重试）、构造接口地址、按问题注入 API 约束或参考上下文、
+    加载对应问题并启动一次进化。此处仅返回脚本文本，不在当前进程内执行。
+    """
     return textwrap.dedent(
         r'''
         from __future__ import annotations
@@ -317,15 +382,31 @@ def _runner_script() -> str:
 
 
 def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
+    """执行一次完整的 EoH 进化实验并返回结果 payload（同时落盘 JSON/Markdown）。
+
+    主要步骤：
+        1. 依据问题、实验分支和时间戳建立独立运行目录，并写出子进程运行脚本。
+        2. 若分支为检索类（literature_rag / history_rag / mixed_rag），构造参考上下文并写入
+           rag_context.txt，同时记录检索轨迹（rag_trace）。
+        3. 校验 API key / endpoint / model 三项环境变量，任一缺失则提前返回带 failure_reason 的结果。
+        4. 拼装命令行、以受控超时运行子进程，采集并脱敏其 stdout/stderr 尾部。
+        5. 解析运行摘要，综合返回码与摘要结果判定失败原因。
+
+    关键入参（取自 argparse）：official_root/python 指定官方代码根与解释器，problem/arm 决定问题与分支，
+    pop_size/generations 控制进化规模，rag_* 系列控制检索行为，*_env 指定环境变量名，run_timeout_s 为总超时。
+    返回：包含运行配置、环境就绪标志、返回码、耗时、日志尾部、检索轨迹与运行摘要的 payload 字典。
+    """
     official_root = Path(args.official_root).resolve()
     python_exe = Path(args.python)
     output_root = Path(args.output_dir).resolve()
+    # 运行目录按 <问题>/<分支>/run_<时间戳> 分层，避免多次运行相互覆盖
     run_dir = output_root / args.problem / args.arm / f"run_{time.strftime('%Y%m%d_%H%M%S')}"
     run_dir.mkdir(parents=True, exist_ok=True)
     runner_path = run_dir / "_run_official_eoh.py"
-    runner_path.write_text(_runner_script(), encoding="utf-8")
+    runner_path.write_text(_runner_script(), encoding="utf-8")  # 将子进程脚本写入运行目录
     context_file = args.context_file
     rag_trace: dict[str, Any] | None = None
+    # 预先探测三项 API 环境是否就绪（endpoint 需能解析出 host）
     endpoint_present = bool(normalize_api_endpoint(os.environ.get(args.api_endpoint_env, "")))
     model_present = bool(args.llm_model or os.environ.get(args.model_env, ""))
     api_key_present = bool(os.environ.get(args.api_key_env, ""))
@@ -349,14 +430,16 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "stderr_tail": "",
         "rag_trace": None,
     }
+    # 检索类分支：构造并注入参考上下文，同时记录检索轨迹
     if args.arm in {"literature_rag", "history_rag", "mixed_rag"}:
         selected_ids = [sid.strip() for sid in args.selected_card_ids.split(",") if sid.strip()] if args.selected_card_ids else None
         candidate_source = getattr(args, "candidate_card_source", "selected_card_ids" if selected_ids else "none")
         population_features: set[str] | None = None
+        # 若提供上一轮运行目录，则从其最新种群抽取特征，供检索时做偏好加权
         if args.prev_run_dir:
             prev_pop_dir = Path(args.prev_run_dir) / "results" / "pops"
             if not prev_pop_dir.exists():
-                # Official EoH nests output: <problem>/<arm>/run_<ts>/results/pops/
+                # 官方 EoH 输出为嵌套结构：<problem>/<arm>/run_<ts>/results/pops/，此处向下递归定位
                 candidates = sorted(Path(args.prev_run_dir).rglob("results/pops"))
                 if candidates:
                     prev_pop_dir = candidates[-1]
@@ -366,9 +449,11 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
                 if isinstance(prev_population, list):
                     population_features = load_population_features(prev_population, top_fraction=args.rag_top_fraction) or None
         outcome_summaries: dict[str, object] | None = None
+        # 若指定了历史结果文件，用于把过往卡片的实验结论纳入上下文
         if getattr(args, "outcome_file", ""):
             outcome_path = Path(args.outcome_file)
             if not outcome_path.exists():
+                # 结果文件缺失：直接记录轨迹并提前返回失败
                 rag_trace = {
                     "rag_candidate_card_ids": selected_ids or [],
                     "rag_candidate_card_source": candidate_source,
@@ -380,6 +465,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
                 _write_outputs(output_root, payload)
                 return payload
             outcome_summaries = summarize_all_cards(load_outcomes(outcome_path)) or None
+        # 依据候选来源字段，把选定卡片 id 放入对应参数槽（三者互斥）
         candidate_kwargs: dict[str, list[str] | None] = {
             "candidate_card_ids": selected_ids if candidate_source == "candidate_card_ids" else None,
             "selected_card_ids": selected_ids if candidate_source == "selected_card_ids" else None,
@@ -399,14 +485,16 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
             **candidate_kwargs,
         )
         context_path = run_dir / "rag_context.txt"
-        context_path.write_text(context, encoding="utf-8")
+        context_path.write_text(context, encoding="utf-8")  # 落盘检索上下文供子进程读取与复核
         context_file = str(context_path)
+        # 补全检索轨迹中的路径与来源信息，便于事后审计
         rag_trace["rag_context_path"] = str(context_path)
         rag_trace["rag_prev_run_dir"] = args.prev_run_dir or ""
         rag_trace["rag_outcome_file"] = args.outcome_file or ""
         rag_trace["rag_outcome_file_exists"] = True if args.outcome_file else None
         rag_trace["rag_population_feature_count"] = len(population_features) if population_features else 0
     payload["rag_trace"] = rag_trace
+    # 三项环境变量逐一校验，缺失即记录具体缺哪一项并提前返回
     if not api_key_present:
         payload["failure_reason"] = f"missing_env_{args.api_key_env}"
         _write_outputs(output_root, payload)
@@ -420,6 +508,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         _write_outputs(output_root, payload)
         return payload
 
+    # 拼装子进程命令行；检索类分支统一以 context_file 方式传入上下文
     cmd = [
         str(python_exe),
         str(runner_path),
@@ -450,6 +539,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "--model-env",
         args.model_env,
     ]
+    # 以下均为可选项，仅在对应参数存在时追加
     if args.llm_model:
         cmd.extend(["--llm-model", args.llm_model])
     if context_file:
@@ -462,6 +552,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     started = time.time()
     return_code: int | None = None
     try:
+        # 运行子进程并捕获输出，run_timeout_s 为整体墙钟超时上限
         proc = subprocess.run(
             cmd,
             text=True,
@@ -472,9 +563,11 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         )
         return_code = proc.returncode
         payload["return_code"] = return_code
+        # 日志尾部先截断再脱敏后保存
         payload["stdout_tail"] = redact_log_tail(_tail_text(proc.stdout))
         payload["stderr_tail"] = redact_log_tail(_tail_text(proc.stderr))
     except subprocess.TimeoutExpired as exc:
+        # 超时：标记失败原因，并尽量保留已产生的部分日志
         payload["return_code"] = None
         payload["failure_reason"] = "timeout"
         payload["stdout_tail"] = redact_log_tail(_tail_text(exc.stdout))
@@ -483,6 +576,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
 
     summary = summarize_run(run_dir)
     payload["run_summary"] = summary
+    # 综合判定失败原因：非零返回码优先，其次是运行摘要判定的失败
     if payload.get("failure_reason") is None and return_code not in (None, 0):
         payload["failure_reason"] = f"return_code_{return_code}"
     if payload.get("failure_reason") is None and not summary.get("ok"):
@@ -492,6 +586,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _write_outputs(output_root: Path, payload: dict[str, Any]) -> None:
+    """把运行结果同时写为 JSON 与 Markdown 两份摘要文件到输出根目录。"""
     output_root.mkdir(parents=True, exist_ok=True)
     json_path = output_root / "official_eoh_run_summary.json"
     md_path = output_root / "official_eoh_run_summary.md"
@@ -500,6 +595,10 @@ def _write_outputs(output_root: Path, payload: dict[str, Any]) -> None:
 
 
 def _write_markdown(path: Path, payload: dict[str, Any]) -> None:
+    """将运行结果 payload 渲染为可读的 Markdown 报告并写入 path。
+
+    报告分为配置、结果、最优代码、最优算法描述四部分；不写入任何密钥信息。
+    """
     summary = payload.get("run_summary") or {}
     lines = [
         "# 官方 EoH LLM Evolution Smoke",
@@ -544,6 +643,11 @@ def _write_markdown(path: Path, payload: dict[str, Any]) -> None:
 
 
 def main() -> None:
+    """命令行入口：解析全部参数，运行一次实验，并以 JSON 打印结果 payload。
+
+    实验分支（--arm）取值：pure_eoh（纯 EoH）、api_only（仅注入接口约束）、
+    literature_rag / history_rag / mixed_rag（三类检索上下文）、context_file（直接读取给定上下文文件）。
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--official-root", default=DEFAULT_OFFICIAL_ROOT)
     parser.add_argument("--python", default=DEFAULT_OFFICIAL_PYTHON)

@@ -1,1 +1,7 @@
-"""Training utilities for LLM rerank fine-tuning (Phase 4b → small model)."""
+"""
+模块：eoh_rag.experiments.training
+功能：训练工具包，用于 LLM 重排（rerank）小模型的微调。
+职责：作为该子包的入口，聚合并暴露与重排微调相关的训练辅助工具。
+接口：本文件为包初始化文件，暂不导出具体符号；子模块按需引入。
+"""
+

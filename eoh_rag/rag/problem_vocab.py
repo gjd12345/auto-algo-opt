@@ -1,13 +1,28 @@
-"""Problem-specific vocabulary for card synthesis and RAG prompts.
-
-Prevents TSP/CVRP language from leaking into BP Online cards, and vice versa.
-Used by card_synthesis.py when generating card descriptions.
+"""
+模块：problem_vocab（问题专属词汇表）
+功能：为不同的组合优化问题提供一套受控的启发式特征词汇，供卡片合成与 RAG 提示词生成使用。
+职责：管理各问题（在线装箱、TSP、CVRP）的“特征动作（DO）”与“适用场景（WHEN）”文本，
+      使描述性语言与对应问题的领域术语一致，避免各问题的表述互相串味。
+接口：get_feature_vocab(problem: str) -> tuple[dict[str, str], dict[str, str]]
+      按问题名返回 (feature_do, feature_when) 两个词典。
+输入：调用时传入的问题标识字符串，如 "bp_online"、"tsp_construct"、"cvrp_construct"。
+输出：两个字符串到字符串的映射：键是特征名，值是该特征的自然语言解释。
+示例：
+    do, when = get_feature_vocab("bp_online")
+    print(do["best_fit"])   # 输出该特征对应的动作说明
 """
 
 from __future__ import annotations
 
 
+# BP Online（在线装箱）—— 装箱问题相关术语
+# 下面两个字典用同一套“特征名”作为键：
+#   *_DO   描述“该特征让启发式做什么动作”
+#   *_WHEN 描述“该特征在什么情况下适用”
+
+
 # BP Online — bin packing terminology
+# BP_FEATURE_DO：装箱问题中每个特征“要做的动作”说明（键=特征名，值=动作描述）
 BP_FEATURE_DO: dict[str, str] = {
     "residual": "prefer bins with small positive residual after placing item",
     "tight_fit": "reward close fit (residual near zero) without overflow",
@@ -30,6 +45,7 @@ BP_FEATURE_DO: dict[str, str] = {
     "awkward_gap_penalty": "penalize bins left in a state where only rare item sizes can fill them",
 }
 
+# BP_FEATURE_WHEN：装箱问题中每个特征“适用于什么场景”的说明（键与 BP_FEATURE_DO 一一对应）
 BP_FEATURE_WHEN: dict[str, str] = {
     "residual": "need to minimize wasted bin capacity",
     "tight_fit": "items vary in size and exact fit prevents fragmentation",
@@ -53,6 +69,7 @@ BP_FEATURE_WHEN: dict[str, str] = {
 }
 
 # TSP Construct — traveling salesman terminology
+# TSP_FEATURE_DO：旅行商问题（逐步构造路径）中每个特征的动作说明
 TSP_FEATURE_DO: dict[str, str] = {
     "destination": "minimize d(current,u) + alpha*d(u,dest), increasing alpha as fewer nodes remain",
     "normalize": "normalize forward and backward distances to [0,1] before combining",
@@ -68,6 +85,7 @@ TSP_FEATURE_DO: dict[str, str] = {
 }
 
 # CVRP Construct — capacitated vehicle routing terminology
+# CVRP_FEATURE_DO：带容量约束的车辆路径问题（逐步构造）中每个特征的动作说明
 CVRP_FEATURE_DO: dict[str, str] = {
     "far_first": "from depot, select farthest customer to seed distant route clusters",
     "regret": "compare cost of serving now vs from depot later; prefer high regret",
@@ -83,11 +101,24 @@ CVRP_FEATURE_DO: dict[str, str] = {
 
 
 def get_feature_vocab(problem: str) -> tuple[dict[str, str], dict[str, str]]:
-    """Return (feature_do, feature_when) dicts for a given problem."""
+    """按问题名返回该问题的特征词汇表。
+
+    参数：
+        problem：问题标识字符串，支持 "bp_online"、"tsp_construct"、"cvrp_construct"。
+
+    返回：
+        一个二元组 (feature_do, feature_when)：
+        - feature_do：特征名到“动作说明”的映射；
+        - feature_when：特征名到“适用场景”的映射。
+        目前仅装箱问题提供 when 词典，其余问题的 when 为空字典；
+        遇到无法识别的问题名时，两个词典都返回空字典。
+    """
+    # 逐个匹配已支持的问题名，返回对应的词典组合
     if problem == "bp_online":
         return BP_FEATURE_DO, BP_FEATURE_WHEN
     elif problem == "tsp_construct":
         return TSP_FEATURE_DO, {}
     elif problem == "cvrp_construct":
         return CVRP_FEATURE_DO, {}
+    # 未识别的问题名：返回一对空字典
     return {}, {}

@@ -1,13 +1,26 @@
-"""Extract LLM rerank training data from completed experiment runs.
-
-Reads `official_eoh_run_summary.json` files, rebuilds the rerank prompt that
-the LLM saw, pairs it with the LLM's actual selection + reasoning, and emits
-RankLLM-compatible `conversations` JSON for SFT training.
-
-Filtering: optionally keep only runs where the resulting objective beat the
-problem-specific pure_eoh baseline (high-quality teacher pairs).
-
-Usage:
+"""
+模块：extract_rerank_traces（LLM 重排训练数据抽取）
+功能：从已完成的实验运行结果中，抽取 LLM 挑选策略卡（rerank）时的“输入提示 + 实际选择”样本对，
+      整理成 RankLLM 兼容的对话式 JSON，供小模型做监督微调（SFT）训练。
+职责：
+  - 读取每个运行目录下的 official_eoh_run_summary.json 汇总文件；
+  - 复原当时 LLM 看到的重排提示（问题、种群特征、候选卡及其历史表现）；
+  - 把提示与 LLM 的真实选择（selected）和理由（reasoning）配成一条训练样本；
+  - 可选按“是否优于该问题的 pure_eoh 基线”过滤，只保留高质量的教师样本；
+  - 汇总统计并写出 JSONL。
+接口：
+  - build_example(summary_path, baseline_medians) -> dict | None：从单个汇总文件构造一条样本
+  - collect_examples(runs_dir, baseline_medians) -> list[dict]：遍历目录收集全部样本
+  - filter_examples(examples, min_improvement_pct, keep_unjudged) -> list[dict]：按提升幅度过滤
+  - main() -> None：命令行入口，串起收集、过滤、写文件、打印统计
+输入：
+  - --runs-dir：包含各次实验运行子目录的根目录（其中散落着 official_eoh_run_summary.json）
+  - --baseline-medians：JSON 字符串，把“问题名 -> pure_eoh 基线中位数”映射起来
+  - --min-improvement-pct / --keep-unjudged：过滤阈值及是否保留无法评判提升的样本
+输出：
+  - 一份 JSONL 文件，每行是一条 {conversations, metadata} 训练样本；
+  - 标准输出打印一段 JSON 统计（写出路径、样本总数、按问题分布、去重后的选择组合数等）。
+示例：
     python -m eoh_rag.experiments.training.extract_rerank_traces \\
         --runs-dir eoh_rag_workspace/reports/auto_experiment_reports \\
         --output eoh_rag_workspace/training/rerank_sft_data.jsonl \\
@@ -21,7 +34,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-# Reuse the exact prompt template so train/inference distributions match.
+# 复用与线上推理完全一致的提示模板与格式化函数，保证训练/推理时的输入分布对齐。
 from eoh_rag.rag.llm_reranker import (
     _RERANK_PROMPT_V1,
     _format_candidates_section,
@@ -29,6 +42,8 @@ from eoh_rag.rag.llm_reranker import (
 )
 from eoh_rag.rag.schemas import CorpusItem
 
+# 训练样本里固定的 system 角色内容：告诉模型它是“策略卡选择器”，
+# 明确输入（进化任务、种群策略、候选卡及历史表现）和输出（严格 JSON，含 selected 与 reasoning）。
 SYSTEM_MESSAGE = (
     "你是策略卡选择器，负责从候选卡片池中为算法进化挑选最有价值的卡片。"
     "输入是当前进化任务、种群已有策略、候选卡及其历史表现。"
@@ -41,12 +56,18 @@ def _rebuild_candidate_items(
     selected_items: list[dict[str, Any]],
     all_scores: list[dict[str, Any]],
 ) -> list[CorpusItem]:
-    """Rebuild minimal CorpusItem objects for the candidate pool.
+    """为候选卡片池重建最小可用的 CorpusItem 对象列表。
 
-    The summary trace stores titles/summaries only for items that were
-    eventually injected. For other candidates we fall back to id-only stubs;
-    the LLM saw the same level of detail at inference time anyway.
+    汇总记录里只对“最终被注入的卡片”保存了标题/摘要等详细信息，
+    对其余候选卡则退化为“仅有 id”的占位对象——这与 LLM 在推理时看到的
+    详细程度是一致的，不会造成训练/推理输入分布偏差。
+
+    参数：
+      - candidate_ids：候选卡片 id 列表，决定返回列表的顺序与集合。
+      - selected_items / all_scores：两份可能带有卡片元信息的记录，按 id 合并成查表字典。
+    返回：与 candidate_ids 一一对应的 CorpusItem 列表。
     """
+    # 先把两份来源里的条目按 id 合并成查表字典；同一 id 以先出现的为准（不覆盖）。
     by_id = {}
     for source in (selected_items, all_scores):
         for entry in source:
@@ -57,6 +78,7 @@ def _rebuild_candidate_items(
 
     items = []
     for cid in candidate_ids:
+        # 查不到元信息时用兜底默认值：标题退化为 id，摘要退化为一句占位说明。
         meta = by_id.get(cid, {})
         items.append(
             CorpusItem(
@@ -74,7 +96,12 @@ def _rebuild_candidate_items(
 
 
 def _load_outcome_summaries(outcome_file: str) -> dict[str, Any]:
-    """Best-effort load of outcome summaries from a card_outcomes.jsonl file."""
+    """尽力从 card_outcomes.jsonl 文件加载各卡片的历史表现汇总。
+
+    参数 outcome_file 为文件路径字符串；文件缺失或解析失败时返回空字典，
+    不抛异常，确保上游流程不因缺少历史数据而中断。
+    返回：{卡片 id -> 汇总信息字典} 的映射。
+    """
     path = Path(outcome_file)
     if not outcome_file or not path.exists():
         return {}
@@ -85,6 +112,7 @@ def _load_outcome_summaries(outcome_file: str) -> dict[str, Any]:
         summaries = summarize_all_cards(outcomes)
         from dataclasses import asdict
 
+        # 把 dataclass 汇总对象转成普通字典，便于后续格式化进提示文本。
         return {cid: asdict(summary) for cid, summary in summaries.items()}
     except Exception:
         return {}
@@ -94,13 +122,23 @@ def build_example(
     summary_path: Path,
     baseline_medians: dict[str, float],
 ) -> dict[str, Any] | None:
-    """Build one training example from a run summary JSON; return None to skip."""
+    """从单个运行汇总 JSON 构造一条训练样本；不满足条件时返回 None 表示跳过。
+
+    参数：
+      - summary_path：某次运行的 official_eoh_run_summary.json 路径。
+      - baseline_medians：{问题名 -> pure_eoh 基线中位数}，用于计算相对提升幅度。
+    返回：形如 {"conversations": [...], "metadata": {...}} 的样本字典，或 None。
+
+    只有当这次运行确实走了 LLM 重排（rag_rerank_mode == "llm"）、没有触发回退、
+    且有实际选择结果时才会产出样本。
+    """
     try:
         data = json.loads(summary_path.read_text())
     except (OSError, json.JSONDecodeError):
         return None
 
     rag = data.get("rag_trace") or {}
+    # 只保留真正用 LLM 做重排的运行；非 llm 模式、发生回退、或无选择结果的一律跳过。
     if rag.get("rag_rerank_mode") != "llm":
         return None
     if rag.get("rag_llm_rerank_fallback_reason"):
@@ -122,7 +160,7 @@ def build_example(
     population_features = set(rag.get("rag_population_features") or [])
     outcome_summaries = _load_outcome_summaries(rag.get("rag_outcome_file", ""))
 
-    # Detect problem from summary or from run dir name
+    # 依次从汇总字段、run_summary、运行目录名推断问题类型，都取不到则记为 "unknown"。
     problem = (
         data.get("problem")
         or data.get("run_summary", {}).get("problem")
@@ -130,6 +168,7 @@ def build_example(
         or "unknown"
     )
 
+    # 用与线上一致的模板复原“用户提问”：拼入问题、检索 query、种群特征、候选卡及历史表现。
     user_prompt = _RERANK_PROMPT_V1.format(
         problem=problem,
         query=rag.get("rag_query") or "",
@@ -140,15 +179,18 @@ def build_example(
         top_k=len(selected),
     )
 
+    # assistant 回复即 LLM 当时的真实输出：选中的卡片列表与理由。
     assistant_payload = {"selected": selected, "reasoning": reasoning}
 
     rs = data.get("run_summary") or {}
     best = rs.get("best_objective")
     baseline = baseline_medians.get(problem)
     improvement_pct = None
+    # 相对提升百分比：基线优于结果为正；目标是最小化，故用 (基线 - 结果) / |基线|。
     if best is not None and baseline:
         improvement_pct = (baseline - best) / abs(baseline) * 100
 
+    # conversations 是 RankLLM 兼容的三段式对话；metadata 保留溯源与筛选所需的辅助信息（不参与训练输入）。
     return {
         "conversations": [
             {"role": "system", "value": SYSTEM_MESSAGE},
@@ -170,7 +212,10 @@ def build_example(
 
 
 def _problem_from_path(summary_path: Path) -> str | None:
-    """Recover problem id from the run directory name."""
+    """从运行目录名推断问题类型（如 tsp_construct / cvrp_construct / bp_online）。
+
+    匹配不到已知关键字时返回 None，交由上层用其他来源或默认值兜底。
+    """
     name = summary_path.parent.name.lower()
     if "tsp_construct" in name:
         return "tsp_construct"
@@ -185,7 +230,13 @@ def collect_examples(
     runs_dir: Path,
     baseline_medians: dict[str, float],
 ) -> list[dict[str, Any]]:
+    """递归遍历 runs_dir 下所有 official_eoh_run_summary.json，收集全部可用训练样本。
+
+    参数 baseline_medians 透传给 build_example 用于计算提升幅度；
+    返回按路径排序、逐个构造成功（非 None）的样本列表。
+    """
     examples = []
+    # rglob 递归查找汇总文件；排序保证多次运行产出的样本顺序稳定可复现。
     for summary_path in sorted(runs_dir.rglob("official_eoh_run_summary.json")):
         ex = build_example(summary_path, baseline_medians)
         if ex is not None:
@@ -198,22 +249,31 @@ def filter_examples(
     min_improvement_pct: float | None,
     keep_unjudged: bool,
 ) -> list[dict[str, Any]]:
-    """Keep only high-quality teacher pairs."""
+    """按“相对基线的提升幅度”筛选出高质量的教师样本。
+
+    参数：
+      - min_improvement_pct：最低提升阈值；为 None 时不过滤，原样返回。
+      - keep_unjudged：当某样本无法计算提升幅度（improvement_pct 为 None）时，是否仍然保留。
+    返回：过滤后的样本列表。
+    """
     if min_improvement_pct is None:
         return examples
     kept = []
     for ex in examples:
         imp = ex["metadata"]["improvement_pct"]
+        # 无法评判提升幅度的样本，仅在显式要求保留时才纳入。
         if imp is None:
             if keep_unjudged:
                 kept.append(ex)
             continue
+        # 达到阈值的样本视为高质量教师对，予以保留。
         if imp >= min_improvement_pct:
             kept.append(ex)
     return kept
 
 
 def main() -> None:
+    """命令行入口：解析参数，收集并（可选）过滤样本，写出 JSONL，并打印统计信息。"""
     parser = argparse.ArgumentParser(description="Extract LLM rerank training data")
     parser.add_argument(
         "--runs-dir",
@@ -243,19 +303,22 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # 把 --baseline-medians 的 JSON 字符串解析成 {问题名 -> 基线中位数} 字典。
     baseline_medians = json.loads(args.baseline_medians)
 
     examples = collect_examples(Path(args.runs_dir), baseline_medians)
+    # 仅当给定阈值时才做质量过滤。
     if args.min_improvement_pct is not None:
         examples = filter_examples(examples, args.min_improvement_pct, args.keep_unjudged)
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # 逐行写出 JSONL：每行一条样本，ensure_ascii=False 以保留中文原文。
     with out_path.open("w", encoding="utf-8") as f:
         for ex in examples:
             f.write(json.dumps(ex, ensure_ascii=False) + "\n")
 
-    # Summary
+    # 统计：按问题分布计数，并统计去重后的“选择组合”数量（组合按选中卡片 id 排序后拼接为 key）。
     by_problem: dict[str, int] = defaultdict(int)
     by_selection: dict[str, int] = defaultdict(int)
     for ex in examples:
