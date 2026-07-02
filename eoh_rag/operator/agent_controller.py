@@ -15,8 +15,8 @@
   - run_operator(project_root, generations=5, pop_size=4, ...)：便捷入口函数，
     内部创建 SmartOperator 并执行 run()，返回最终报告字典。
 输入：
-  - project_root 下的 main.go / routing.go / go.mod / go.sum，以及评测数据目录
-    solomon_benchmark[_<密度>]/；
+  - project_root/go_solver 下的 main.go / routing.go / go.mod / go.sum，以及评测数据目录
+    go_solver/solomon_benchmark[_<密度>]/；
   - 大模型访问所需的 api_key / api_endpoint / model（也可由环境变量
     DEEPSEEK_API_KEY / DEEPSEEK_API_ENDPOINT / DEEPSEEK_MODEL 提供）。
 输出：
@@ -310,11 +310,11 @@ class SmartOperator:
                 return {"cost": None, "timeout": False,
                         "error": f"build failed: {build.stderr[:300]}"}
 
-            # 定位评测数据目录：优先带密度后缀的目录，回退到通用目录
+            # 定位评测数据目录：优先带密度后缀的目录，回退到通用目录（均在 go_solver/ 下）
             density = str(self.dataset_density).lower()
-            data_dir = self.project_root / f"solomon_benchmark_{density}"
+            data_dir = self.project_root / "go_solver" / f"solomon_benchmark_{density}"
             if not data_dir.exists():
-                data_dir = self.project_root / "solomon_benchmark"
+                data_dir = self.project_root / "go_solver" / "solomon_benchmark"
             if not data_dir.exists():
                 return {"cost": None, "timeout": False, "error": "no data directory"}
 

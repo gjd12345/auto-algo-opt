@@ -171,8 +171,8 @@ PROBLEM_SPECS: dict[str, ProblemSpec] = {
         main_binary="mainbin_sa.exe",
         objective_direction="minimize",
         benchmark_data=[
-            {"source_dir": "solomon_benchmark_d50", "instances": ["rc101.json", "rc102.json", "rc103.json"]},
-            {"source_dir": "solomon_benchmark_d75", "instances": ["rc101.json", "rc102.json", "rc103.json"]},
+            {"source_dir": "go_solver/solomon_benchmark_d50", "instances": ["rc101.json", "rc102.json", "rc103.json"]},
+            {"source_dir": "go_solver/solomon_benchmark_d75", "instances": ["rc101.json", "rc102.json", "rc103.json"]},
         ],
         default_metrics={"primary": "best_EOH_J", "secondary": "valid_candidates"},
     ),

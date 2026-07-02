@@ -357,7 +357,7 @@ class TestIntegration:
         (go_dir / "go.sum").write_text("")
 
         # Setup data
-        data_dir = project / "solomon_benchmark_d25"
+        data_dir = project / "go_solver" / "solomon_benchmark_d25"
         data_dir.mkdir()
         (data_dir / "rc101.json").write_text("{}")
 
