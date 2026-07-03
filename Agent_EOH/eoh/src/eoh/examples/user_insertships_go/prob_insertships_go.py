@@ -166,24 +166,6 @@ def _safe_subprocess_env() -> dict[str, str]:
     return {key: value for key, value in os.environ.items() if key in _SUBPROCESS_ENV_ALLOWLIST}
 
 
-# 传给评测子进程的资源上限：限 CPU 秒与单文件大小，防止失控候选耗尽 CPU 或写满磁盘。
-# 不限制地址空间/线程数，以免破坏内存与多线程密集的 Go 工具链。
-_SUBPROCESS_MAX_FILE_BYTES = 1 << 30  # 单文件最大 1 GiB
-
-
-def _posix_resource_limits(cpu_seconds: int):
-    """返回在 POSIX 子进程 exec 前施加资源上限的回调；非 POSIX 平台返回 None。"""
-    if os.name == "nt":
-        return None
-    import resource
-
-    def _apply() -> None:
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
-        resource.setrlimit(resource.RLIMIT_FSIZE, (_SUBPROCESS_MAX_FILE_BYTES, _SUBPROCESS_MAX_FILE_BYTES))
-
-    return _apply
-
-
 def _run_command(cmd: list[str], cwd: str, timeout_s: int) -> dict:
     creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
     proc = subprocess.Popen(
@@ -194,7 +176,6 @@ def _run_command(cmd: list[str], cwd: str, timeout_s: int) -> dict:
         text=True,
         creationflags=creationflags,
         env=_safe_subprocess_env(),  # 使用白名单环境变量，隔离外部环境
-        preexec_fn=_posix_resource_limits(max(1, int(timeout_s)) + 30),  # POSIX 资源上限
     )
     try:
         stdout, stderr = proc.communicate(timeout=timeout_s)
