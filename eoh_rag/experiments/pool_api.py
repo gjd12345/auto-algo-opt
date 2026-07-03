@@ -45,7 +45,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import re
@@ -53,6 +52,8 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
+
+from eoh_rag.utils.file_lock import exclusive_lock
 
 
 class PoolAPI:
@@ -72,16 +73,15 @@ class PoolAPI:
         """文件锁 append 一条 JSONL；ensure_ascii=False 允许中文。"""
         self._ensure_dir()
         line = json.dumps(record, ensure_ascii=False)
-        with open(path, "a") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            f.write(line + "\n")
-            fcntl.flock(f, fcntl.LOCK_UN)
+        with open(path, "a", encoding="utf-8") as f:
+            with exclusive_lock(f):
+                f.write(line + "\n")
 
     def _read_jsonl(self, path: Path) -> list[dict]:
         if not path.exists():
             return []
         entries: list[dict] = []
-        for line in path.read_text().strip().split("\n"):
+        for line in path.read_text(encoding="utf-8").strip().split("\n"):
             if not line:
                 continue
             try:

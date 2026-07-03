@@ -28,13 +28,13 @@
 
 from __future__ import annotations
 
-import fcntl
 import json
 from pathlib import Path
 from typing import Any
 
 from eoh_rag.experiments.evaluator import evaluate_run
 from eoh_rag.experiments.pool_api import PoolAPI
+from eoh_rag.utils.file_lock import exclusive_lock
 
 
 def on_run_success(
@@ -111,10 +111,9 @@ def _maybe_synthesize_card(problem: str, code: str, objective: float) -> None:
         existing = load_corpus(corpus_path)
         if any(c.id == card.id for c in existing):
             return
-        with open(corpus_path, "a") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
-            fcntl.flock(f, fcntl.LOCK_UN)
+        with open(corpus_path, "a", encoding="utf-8") as f:
+            with exclusive_lock(f):
+                f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
     except Exception as e:
         print(f"[WARN] card_synthesis failed: {e}")
 
