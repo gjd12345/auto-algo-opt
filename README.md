@@ -39,9 +39,9 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 
 | 问题 | 运行数 | 最优目标 | 相对基线提升 | >5% 提升占比 |
 | --- | --- | --- | --- | --- |
-| `bp_online` | 192 | 0.00674 | **+83.1%** | 61% |
-| `tsp_construct` | 206 | 6.004 | **+8.5%** | 54% |
-| `cvrp_construct` | 207 | 12.356 | **+8.6%** | 44% |
+| `bp_online` | 192 | 0.00674 | **+83.1%** | 56.8% |
+| `tsp_construct` | 206 | 6.004 | **+8.5%** | 55.8% |
+| `cvrp_construct` | 207 | 12.356 | **+8.6%** | 44.9% |
 
 完整证据见 [`evidence/final_batch_20260630/`](evidence/final_batch_20260630/)（结果表、最优代码、复现说明）。
 其中 BP Online 的最优解采用「同尺寸预留（same-size reservation）」策略，可解释性分析见

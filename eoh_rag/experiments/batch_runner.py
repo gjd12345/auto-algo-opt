@@ -462,21 +462,26 @@ def main() -> None:
                     })
 
                     # 若产出了 summary，则补充最优目标值等信息
+                    summary_ok = False       # run_summary 内部是否标记 ok
+                    summary_failed = False   # summary 是否给出了 failure_reason
                     if summary_path.exists():
                         summary = json.loads(summary_path.read_text(encoding="utf-8"))
                         run_sum = summary.get("run_summary", {})
                         run_index[-1]["best_objective"] = run_sum.get("best_objective")
                         run_index[-1]["valid_candidates"] = run_sum.get("valid_candidates")
+                        summary_ok = bool(run_sum.get("ok"))
                         fail_reason = summary.get("failure_reason")
                         if fail_reason:
+                            summary_failed = True
                             run_index[-1]["failure_reason"] = fail_reason
                             # 进程返回 0 但 summary 内部标记失败：单独标注这种不一致状态
                             if status == "ok":
                                 run_index[-1]["status"] = "ok_but_summary_failure"
 
                     print(f"[DONE] {run_tag}  status={status}  elapsed={elapsed}s")
-                    # 判定本次是否成功：进程成功，或 summary 内部标记 ok
-                    if status == "ok" or (summary_path.exists() and json.loads(summary_path.read_text(encoding="utf-8")).get("run_summary", {}).get("ok")):
+                    # 判定本次是否成功：进程正常退出、summary 未标记失败、run_summary 标记 ok，三者都满足才算成功。
+                    # 任一不满足就断开链式传递，避免超时 / 缺种群 / 内部失败的运行被当成功回写共享池。
+                    if status == "ok" and summary_ok and not summary_failed:
                         prev_run_dir = run_out
                         # Island model: register successful run in shared pool
                         # 成功结果回写共享池，供其它进程作为种子共享（岛屿模型）

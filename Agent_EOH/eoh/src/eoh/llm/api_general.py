@@ -44,7 +44,9 @@ class InterfaceAPI:
         self.n_trial = 5
         self.quota_auto_wait = _env_bool("EOH_API_QUOTA_AUTO_WAIT", True)
         self.quota_pause_seconds = max(60, _env_int("EOH_API_QUOTA_PAUSE_SECONDS", 1800))
-        self.quota_max_pauses = max(0, _env_int("EOH_API_QUOTA_MAX_PAUSES", 0))
+        # 默认最多暂停重试 3 次(fail-closed):配额/限流长期不恢复时放弃返回,
+        # 避免无限 sleep 挂死整轮运行。显式设 EOH_API_QUOTA_MAX_PAUSES=0 可恢复为不限次数。
+        self.quota_max_pauses = max(0, _env_int("EOH_API_QUOTA_MAX_PAUSES", 3))
 
         parsed = urlparse(api_endpoint) if "//" in api_endpoint else urlparse("https://" + api_endpoint)
         self._use_https = parsed.scheme == "https" or (parsed.scheme == "" and "//" not in api_endpoint)
