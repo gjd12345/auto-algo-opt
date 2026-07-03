@@ -1,8 +1,8 @@
 # Hooks SPEC
 
 > 位置：`eoh_rag/experiments/hooks.py`
-> 目的：把 batch_runner 中 pool 注册、card 合成、outcome 追加等副作用逻辑收拢到两个事件函数，
-> batch_runner 主循环只需调 `on_run_success` / `on_run_failure`。
+> 目的：把 pool 注册、card 合成、outcome 追加等副作用逻辑收拢到两个事件函数
+> `on_run_success` / `on_run_failure`，供主循环或测试独立调用。
 
 ## 1. 责任边界
 
@@ -55,13 +55,14 @@ def on_run_failure(
 - on_run_failure 在缺 code 或 reason 时静默跳过
 - 中文模块头前 30 行可回答"这是什么"
 
-## 6. batch_runner 集成方式
+## 6. 与 batch_runner 的关系
 
-batch_runner 主循环通过调用 hooks 完成 run 成功/失败后的副作用处理，无需内联 try-except 逻辑：
+batch_runner 主循环目前以等价的内联逻辑实现同一套副作用（pool 注册、card 合成、outcome 追加）。
+hooks 把这套逻辑抽取为两个事件函数并配单元测试，作为可复用入口；调用方可按如下方式使用：
 
 ```python
-# batch_runner 主循环
-if status == "ok":
+# 在主循环中调用
+if run_ok:
     eval_r = on_run_success(pool, problem, run_out, sm, manifest, outcome_file)
 else:
     on_run_failure(pool, problem, sm)

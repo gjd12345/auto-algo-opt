@@ -1,7 +1,7 @@
 """
 模块：hooks —— 实验 run 生命周期事件处理
-功能：把 batch_runner 中 pool 注册、card 合成、outcome 更新等副作用逻辑统一收拢，
-      batch_runner 主循环只需调 on_run_success / on_run_failure。
+功能：把 pool 注册、card 合成、outcome 更新等副作用逻辑收拢为两个事件函数
+      on_run_success / on_run_failure，供主循环或测试独立调用。
 职责：
   - on_run_success: 注册 pool / code / operator_stat → 评估 → 条件合成 card → 追加 outcome
   - on_run_failure: 注册 failure pattern
@@ -10,7 +10,8 @@
   - PoolAPI 内部的 JSONL 读写（属 pool_api）
   - evaluator 的评价逻辑（属 evaluator）
 
-主要调用方：batch_runner.py（替代内联 try-except 块）
+调用方：tests/test_hooks.py 覆盖这两个事件函数；主循环可按需调用它们完成 run 后的副作用。
+      batch_runner 目前以等价的内联逻辑实现同一套副作用。
 
 接口：
     on_run_success(pool, problem, run_dir, summary, manifest, outcome_file="") → dict

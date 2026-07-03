@@ -60,5 +60,5 @@ class RunTracker:
 
 | 组件 | 关联 |
 | --- | --- |
-| Hooks | hooks.on_run_success 调用 tracker.save_eval / finalize |
-| Replay 脚本 | 为历史 run 补写 tracker 目录 |
+| Hooks / batch_runner | 二者当前不直接调用 RunTracker；如需标准化留痕，可由调用方在 run 结束后接入 |
+| Replay / 分析脚本 | 可为历史 run 补写 tracker 目录，供事后分析与论文表格 |

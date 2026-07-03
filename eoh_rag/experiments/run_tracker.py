@@ -11,7 +11,7 @@
   - 评估 objective（由 evaluator.evaluate_run 负责）
   - 读取 EoH 输出的 run_summary（由调用方解析后传入）
 
-主要调用方：batch_runner.py 的 run hooks（run 生命周期钩子）
+调用方：tests/test_run_tracker.py 覆盖;作为旁路留痕工具,由需要标准化元数据的调用方按需接入。
 
 接口：
     RunTracker(base_dir)
