@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 
 from .evolution import Evolution, _eval_with_timeout
+from ._adaptive import _should_stop
 from ..utils.logger import setup_logger
 
 logger = logging.getLogger('eoh')
@@ -76,6 +77,12 @@ class EOH:
         self._evo_reserved = 0      # evolution-sample slots claimed (budget gate)
         self._evo_registered = 0    # evolution samples completed (checkpoint cadence)
         self._gen_offset = 0        # generation index offset for resumed runs
+        # 自适应早停状态(opt-in;默认关闭时下列逻辑不生效)
+        self._adaptive_stop = bool(getattr(config, "adaptive_stop", False))
+        self._stop_window = max(1, int(getattr(config, "stop_window", 5)))
+        self._stop_min_gap = float(getattr(config, "stop_min_gap", 0.0))
+        self._gen_best_hist = []    # 逐代 checkpoint 处的 best-so-far 目标值
+        self._stop = False          # 自适应早停触发后置 True，worker 提前返回
 
         # Spawn-based subprocess evaluation is set up once in the main thread so
         # the per-call guard in _eval_with_timeout never races across threads.
@@ -248,7 +255,7 @@ class EOH:
         """
         while True:
             with self._lock:
-                if self._evo_reserved >= target:
+                if self._evo_reserved >= target or self._stop:
                     return
                 self._evo_reserved += 1
                 snapshot = list(population_ref[0])
@@ -343,6 +350,15 @@ class EOH:
             f"  --- ~gen {gen}/{self.n_pop}  pop={len(population)}  best={best}  "
             f"samples={self._sample_count}  elapsed={elapsed:.1f}m"
         )
+        # 自适应早停:记录本代 best-so-far,最近 stop_window 代改进不足则置停止标志
+        if self._adaptive_stop:
+            self._gen_best_hist.append(self._best_obj)
+            if not self._stop and _should_stop(self._gen_best_hist, self._stop_window, self._stop_min_gap):
+                self._stop = True
+                self._logger.info(
+                    f"  [adaptive-stop] best-so-far 最近 {self._stop_window} 代相对改进 "
+                    f"< {self._stop_min_gap:.2%},在 ~gen {gen} 停止进化。"
+                )
 
     # ── initialisation ────────────────────────────────────────────────────────
 

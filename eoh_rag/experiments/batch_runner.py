@@ -308,6 +308,14 @@ def _build_cmd(
         # top_fraction 为 1.0 表示不裁剪，无需传参
         if rag.get("top_fraction") and rag["top_fraction"] != 1.0:
             cmd.extend(["--rag-top-fraction", str(rag["top_fraction"])])
+    # 自适应早停:manifest 顶层 adaptive_stop.enabled 为真时透传给 runner
+    astop = manifest.get("adaptive_stop") or {}
+    if astop.get("enabled"):
+        cmd.extend([
+            "--adaptive-stop",
+            "--stop-window", str(astop.get("window", 5)),
+            "--stop-min-gap", str(astop.get("min_gap", 0.0)),
+        ])
     if seed_codes_path:
         cmd.extend(["--seed-codes", seed_codes_path])
     return cmd

@@ -43,6 +43,14 @@ class EoHConfig:
     use_continue: bool = False
     continue_path: str = "./results/pops/population_generation_0.json"
     continue_id: int = 0
+    # Adaptive early-stop (opt-in; disabled by default so fixed-generation runs
+    # and baseline reproduction are unaffected). When adaptive_stop is True and
+    # the best-so-far objective improves by less than stop_min_gap (relative)
+    # over the last stop_window generation checkpoints, evolution stops before
+    # the n_pop cap.
+    adaptive_stop: bool = False
+    stop_window: int = 5
+    stop_min_gap: float = 0.0
 
     def __post_init__(self):
         if self.operator_weights is None:

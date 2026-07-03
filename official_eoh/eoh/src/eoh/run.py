@@ -69,6 +69,9 @@ class EoH:
         use_continue: bool = False,
         continue_path: str = "./results/pops/population_generation_0.json",
         continue_id: int = 0,
+        adaptive_stop: bool = False,
+        stop_window: int = 5,
+        stop_min_gap: float = 0.0,
     ):
         # num_samplers / num_evaluators are the direct concurrency controls for
         # EoH — they are NOT read from the problem or the LLM config. -1 → all
@@ -114,6 +117,9 @@ class EoH:
             use_continue=use_continue,
             continue_path=continue_path,
             continue_id=continue_id,
+            adaptive_stop=adaptive_stop,
+            stop_window=stop_window,
+            stop_min_gap=stop_min_gap,
         )
         create_folders(config.output_dir)
         self._config = config

@@ -334,6 +334,9 @@ def _runner_script() -> str:
             parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
             parser.add_argument("--llm-model", default="")
             parser.add_argument("--seed-codes", default="")
+            parser.add_argument("--adaptive-stop", action="store_true")
+            parser.add_argument("--stop-window", type=int, default=5)
+            parser.add_argument("--stop-min-gap", type=float, default=0.0)
             args = parser.parse_args()
 
             official_root = Path(args.official_root).resolve()
@@ -366,6 +369,9 @@ def _runner_script() -> str:
                 n_processes=args.n_processes,
                 use_seed=args.use_official_seed,
                 seed_path=str(seed_path),
+                adaptive_stop=args.adaptive_stop,
+                stop_window=args.stop_window,
+                stop_min_gap=args.stop_min_gap,
             )
             # Seed codes injection: replace part of init population with elite codes
             if args.seed_codes and Path(args.seed_codes).exists():
@@ -424,6 +430,9 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "generations": args.generations,
         "operators": args.operators,
         "use_official_seed": args.use_official_seed,
+        "adaptive_stop": args.adaptive_stop,
+        "stop_window": args.stop_window,
+        "stop_min_gap": args.stop_min_gap,
         "api_key_present": api_key_present,
         "api_endpoint_present": endpoint_present,
         "model_present": model_present,
@@ -545,6 +554,12 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     # 以下均为可选项，仅在对应参数存在时追加
     if args.llm_model:
         cmd.extend(["--llm-model", args.llm_model])
+    if args.adaptive_stop:
+        cmd.extend([
+            "--adaptive-stop",
+            "--stop-window", str(args.stop_window),
+            "--stop-min-gap", str(args.stop_min_gap),
+        ])
     if context_file:
         cmd.extend(["--context-file", context_file])
     if args.use_official_seed:
@@ -686,6 +701,9 @@ def main() -> None:
     parser.add_argument("--llm-timeout-s", type=int, default=180)
     parser.add_argument("--run-timeout-s", type=int, default=900)
     parser.add_argument("--use-official-seed", action="store_true")
+    parser.add_argument("--adaptive-stop", action="store_true", help="启用自适应早停:平台时提前结束进化")
+    parser.add_argument("--stop-window", type=int, default=5, help="早停观察窗口(代数)")
+    parser.add_argument("--stop-min-gap", type=float, default=0.0, help="窗口内 best 相对改进低于此值则停")
     parser.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
     parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")
     parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
