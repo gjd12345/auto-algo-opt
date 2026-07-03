@@ -141,6 +141,31 @@ def _kill_process_tree(pid: int) -> None:
             pass
 
 
+# 允许透传给子进程（go build / 运行求解器）的环境变量白名单。
+# 只保留 Go 工具链和临时目录所需的变量，避免把无关或敏感的环境变量（如 API 密钥）带入子进程。
+_SUBPROCESS_ENV_ALLOWLIST = {
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "TEMP",
+    "TMP",
+    "GOCACHE",
+    "GOPATH",
+    "GOMODCACHE",
+    "LOCALAPPDATA",
+    "USERPROFILE",
+}
+
+
+def _safe_subprocess_env() -> dict[str, str]:
+    """构造传给子进程的最小环境变量集合。
+
+    仅保留白名单 _SUBPROCESS_ENV_ALLOWLIST 中列出的变量，其余一律过滤掉，
+    使被编译/执行的候选代码无法读取 API 密钥等敏感环境变量。
+    """
+    return {key: value for key, value in os.environ.items() if key in _SUBPROCESS_ENV_ALLOWLIST}
+
+
 def _run_command(cmd: list[str], cwd: str, timeout_s: int) -> dict:
     creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
     proc = subprocess.Popen(
@@ -150,6 +175,7 @@ def _run_command(cmd: list[str], cwd: str, timeout_s: int) -> dict:
         stderr=subprocess.PIPE,
         text=True,
         creationflags=creationflags,
+        env=_safe_subprocess_env(),  # 使用白名单环境变量，隔离外部环境
     )
     try:
         stdout, stderr = proc.communicate(timeout=timeout_s)
