@@ -101,6 +101,7 @@ def chat_completion(
         "model": model,
         "messages": messages,
         "temperature": temperature,
+        "thinking": {"type": "disabled"},
     }
     if response_format:
         body["response_format"] = response_format

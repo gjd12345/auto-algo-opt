@@ -26,7 +26,6 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import os
 import subprocess
@@ -73,6 +72,7 @@ def shared_pool_best_codes(pool_dir: Path, problem: str, top_k: int = 3) -> list
 
 # Problem baselines for card synthesis threshold —— 统一走 baselines.py
 from eoh_rag.experiments.baselines import PROBLEM_BASELINES as _PROBLEM_BASELINES
+from eoh_rag.utils.file_lock import exclusive_lock
 
 
 def _maybe_synthesize_card(pool_dir: str, problem: str, code: str, objective: float) -> None:
@@ -107,10 +107,9 @@ def _maybe_synthesize_card(pool_dir: str, problem: str, code: str, objective: fl
             return
         existing.append(card)
         # 追加写 JSONL，flock 独占锁保证跨进程写入原子性
-        with open(corpus_path, "a") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
-            fcntl.flock(f, fcntl.LOCK_UN)
+        with open(corpus_path, "a", encoding="utf-8") as f:
+            with exclusive_lock(f):
+                f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
     except Exception as e:
         print(f"[WARN] card_synthesis failed: {e}")
 
