@@ -176,16 +176,20 @@ class PoolAPI:
         self._append_jsonl(self._best_codes_path(problem), record)
 
     def best_codes(self, problem: str, top_k: int = 3) -> list[dict]:
-        """按 objective 升序返回去重 top_k 条精英代码。"""
+        """按 objective 升序返回 top_k 条精英代码，按代码内容去重。
+
+        去重以代码内容（优先 code_hash，回退 code）为键而非 objective：不同结构
+        但目标值恰好相同的精英都保留，避免共享池损失结构多样性。
+        """
         entries = self._read_jsonl(self._best_codes_path(problem))
         entries.sort(key=lambda x: x.get("objective", float("inf")))
-        seen: set[float] = set()
+        seen: set[str] = set()
         unique: list[dict] = []
         for e in entries:
-            obj = e.get("objective")
-            if obj in seen:
+            key = e.get("code_hash") or e.get("code", "")
+            if key in seen:
                 continue
-            seen.add(obj)
+            seen.add(key)
             unique.append(e)
             if len(unique) >= top_k:
                 break

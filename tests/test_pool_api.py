@@ -65,13 +65,15 @@ def test_best_run_empty(tmp_path: Path) -> None:
 def test_best_codes_top_k_and_dedup(tmp_path: Path) -> None:
     pool = PoolAPI(tmp_path)
     pool.register_code("bp_online", "code_A", 0.03)
-    pool.register_code("bp_online", "code_A_dup", 0.03)  # 同 objective 去重
+    pool.register_code("bp_online", "code_A", 0.03)  # 完全相同的代码：按代码内容去重
+    pool.register_code("bp_online", "code_E", 0.03)  # 目标值相同但代码不同：保留以保多样性
     pool.register_code("bp_online", "code_B", 0.04)
     pool.register_code("bp_online", "code_C", 0.05)
-    pool.register_code("bp_online", "code_D", 0.06)
     result = pool.best_codes("bp_online", top_k=3)
     assert len(result) == 3
-    assert [r["objective"] for r in result] == [0.03, 0.04, 0.05]
+    # code_A 与 code_E 目标值都是 0.03、但结构不同，都应保留
+    assert [r["objective"] for r in result] == [0.03, 0.03, 0.04]
+    assert {r["code"] for r in result} == {"code_A", "code_E", "code_B"}
 
 
 def test_best_codes_empty(tmp_path: Path) -> None:

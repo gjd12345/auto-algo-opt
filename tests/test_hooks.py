@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -74,6 +75,35 @@ class TestOnRunSuccess:
         result = on_run_success(pool, "bp_online", "/run/1", summary, {})
         assert result == {}
         assert pool.list_runs() == []
+
+    @patch("eoh_rag.experiments.hooks._maybe_synthesize_card")
+    def test_online_outcome_uses_real_baseline_and_run_id(self, _mock_card, pool: PoolAPI, tmp_path: Path):
+        """在线 outcome 应带真实基线、算出 objective_success，并以 run 目录名作 run_id。"""
+        summary = {
+            "run_summary": {
+                "best_objective": 0.00674,  # 优于 bp_online 官方基线 0.0398
+                "best_code": "def h(): pass",
+                "population_size": 4,
+                "valid_candidates": 3,
+                "latest_generation": 4,
+            },
+            "rag_trace": {
+                "rag_injected_items": [
+                    {"id": "history_bp_x", "kind": "algorithm_card",
+                     "section": "strategy", "status": "full", "chars": 400},
+                ],
+            },
+        }
+        outcome_file = tmp_path / "outcomes.jsonl"
+        on_run_success(pool, "bp_online", "/runs/run_xyz", summary, {}, outcome_file=str(outcome_file))
+
+        lines = outcome_file.read_text(encoding="utf-8").strip().splitlines()
+        assert len(lines) == 1
+        rec = json.loads(lines[0])
+        assert rec["pure_baseline"] == 0.0398          # 真实基线，不再是 None
+        assert rec["delta_pct"] is not None and rec["delta_pct"] < 0
+        assert rec["objective_success"] is True         # best 优于基线 → 反馈闭环成立
+        assert rec["run_id"] == "run_xyz"               # 用 run 目录名，避免固定键去重冲突
 
 
 class TestOnRunFailure:

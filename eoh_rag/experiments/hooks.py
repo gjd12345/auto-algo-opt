@@ -33,6 +33,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from eoh_rag.experiments.baselines import get_baseline
 from eoh_rag.experiments.evaluator import evaluate_run
 from eoh_rag.experiments.pool_api import PoolAPI
 from eoh_rag.utils.file_lock import exclusive_lock
@@ -80,7 +81,7 @@ def on_run_success(
 
     # 追加 online outcome（RAG 注入效果追踪）
     if outcome_file:
-        _append_online_outcome(summary, problem, outcome_file)
+        _append_online_outcome(summary, problem, run_dir, outcome_file)
 
     return eval_result
 
@@ -121,7 +122,7 @@ def _maybe_synthesize_card(problem: str, code: str, objective: float) -> None:
         logger.exception("card_synthesis failed")
 
 
-def _append_online_outcome(summary: dict, problem: str, outcome_file: str) -> None:
+def _append_online_outcome(summary: dict, problem: str, run_dir: str, outcome_file: str) -> None:
     """从 summary 中提取 RAG 注入效果并追加到 outcome 文件。"""
     try:
         from eoh_rag.rag.card_outcomes import build_outcome_records, save_outcomes
@@ -139,10 +140,13 @@ def _append_online_outcome(summary: dict, problem: str, outcome_file: str) -> No
             "population_size": run_summary.get("population_size", 4),
             "valid_candidates": run_summary.get("valid_candidates", 0),
             "best_objective": run_summary.get("best_objective"),
-            "pure_baseline": None,
+            # 以问题的官方基线作为纯基线，让 delta_pct 与 objective_success 可算，形成在线反馈闭环。
+            "pure_baseline": get_baseline(problem),
         }
+        # 用 run 目录名作为唯一 run_id，避免固定键在多 run 间去重冲突。
+        run_id = Path(run_dir).name or "online_outcome"
         records = build_outcome_records(
-            run_id="hook_outcome",
+            run_id=run_id,
             problem=problem,
             generation=run_summary.get("latest_generation", 4),
             injection_audit=injection_audit,

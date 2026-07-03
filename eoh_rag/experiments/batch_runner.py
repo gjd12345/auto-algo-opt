@@ -146,7 +146,9 @@ def _append_online_outcome(summary_path: Path, problem: str, outcome_file: str) 
             "population_size": run_summary.get("population_size", 4),
             "valid_candidates": run_summary.get("valid_candidates", 0),
             "best_objective": run_summary.get("best_objective"),
-            "pure_baseline": None,
+            # 以问题的官方基线作为纯基线：build_outcome_records 据此算 delta_pct 与
+            # objective_success，让 RAG 注入的在线效果反馈形成闭环（best 优于基线记为成功）。
+            "pure_baseline": _PROBLEM_BASELINES.get(problem),
         }
         records = build_outcome_records(
             run_id=summary_path.parent.name,
