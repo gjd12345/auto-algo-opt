@@ -8,7 +8,7 @@
     * best_codes_<problem>.jsonl     —— 精英代码池（seed_codes 用）
     * operator_stats_<problem>.jsonl —— 算子成功率统计（e1/e2/m1/m2）
     * failures_<problem>.jsonl       —— 失败模式 + 短提示
-  - 所有写入使用 fcntl.LOCK_EX 保证多进程安全
+  - 所有写入使用跨平台 advisory lock 保证多进程安全
   - 读取时按目标值升序聚合（objective 越小越好，minimize 语义）
 不负责：
   - 决定谁应该 register（由 batch_runner / hooks 决定）
@@ -57,7 +57,7 @@ from eoh_rag.utils.file_lock import exclusive_lock
 
 
 class PoolAPI:
-    """Shared-pool 统一门面（见模块头）。线程/进程安全通过 fcntl 文件锁保证。"""
+    """Shared-pool 统一门面（见模块头）。线程/进程安全通过跨平台文件锁保证。"""
 
     def __init__(self, pool_dir: str | Path) -> None:
         self.pool_dir = Path(pool_dir)
@@ -81,7 +81,10 @@ class PoolAPI:
         if not path.exists():
             return []
         entries: list[dict] = []
-        for line in path.read_text(encoding="utf-8").strip().split("\n"):
+        with open(path, "r", encoding="utf-8") as f:
+            with exclusive_lock(f):
+                text = f.read()
+        for line in text.strip().split("\n"):
             if not line:
                 continue
             try:
@@ -213,7 +216,7 @@ class PoolAPI:
     def operator_weights(self, problem: str) -> dict[str, float]:
         """返回每个算子的采样权重（[0.5, 1.5]），样本 < 3 时给默认 1.0。
 
-        权重公式与既有 adaptive_operators.get_operator_weights 保持一致：
+        权重公式与既有算子权重规则保持一致：
             success_rate = success / total
             weight = 0.5 + success_rate       when total >= 3
                    = 1.0                       otherwise
@@ -278,7 +281,7 @@ class PoolAPI:
 
     @staticmethod
     def _extract_pattern(code: str, failure_type: str) -> str:
-        """从失败代码中提取一句可读的短提示；与 shared_failures 逻辑保持一致。"""
+        """从失败代码中提取一句可读的短提示。"""
         if failure_type == "eval_timeout":
             if re.search(r"for .+ in .+:\s*\n\s*for", code):
                 return "AVOID nested loops over all nodes (causes timeout)"

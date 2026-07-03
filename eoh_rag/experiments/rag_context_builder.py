@@ -379,7 +379,7 @@ def build_rag_context(
     zero_score_candidate_ids = [
         card_id
         for card_id in dict.fromkeys(candidate_ids)
-        if score_by_id.get(card_id) == 0
+        if not score_by_id.get(card_id)
     ]
     retrieved_ids = {item.id for item in retrieved}
     dropped_zero_score_candidate_ids = [

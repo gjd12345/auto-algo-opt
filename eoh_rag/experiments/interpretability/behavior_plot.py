@@ -107,7 +107,9 @@ def plot_behavior():
     # 把观测记录写成 JSON 文件
     import json
     Path('evidence/bp_interpretability/behavior_observations.json').write_text(
-        json.dumps(observations, indent=2))
+        json.dumps(observations, indent=2),
+        encoding="utf-8",
+    )
 
 
 if __name__ == '__main__':

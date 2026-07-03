@@ -327,7 +327,8 @@ def main() -> None:
     parser.add_argument("--output", default="-", help="Output path (default: stdout)")
     args = parser.parse_args()
 
-    proposal = json.loads(open(args.proposal).read())
+    with open(args.proposal, "r", encoding="utf-8") as handle:
+        proposal = json.load(handle)
     # 把逗号分隔的白名单字符串拆成去空白的列表；未提供则为 None（表示不做白名单校验）
     available = [c.strip() for c in args.available_cards.split(",")] if args.available_cards else None
 
@@ -343,7 +344,8 @@ def main() -> None:
     if args.output == "-":
         print(output_text)
     else:
-        open(args.output, "w").write(output_text + "\n")
+        with open(args.output, "w", encoding="utf-8") as handle:
+            handle.write(output_text + "\n")
 
     if not result["accepted"]:
         sys.exit(1)  # 校验未通过时以非零退出码结束，方便上游脚本据此拦截

@@ -311,7 +311,8 @@ def main():
         "max_length": args.max_length,
     }
     (Path(args.output_dir) / "training_manifest.json").write_text(
-        json.dumps(manifest, indent=2)
+        json.dumps(manifest, indent=2),
+        encoding="utf-8",
     )
     print(f"Saved LoRA adapter to {args.output_dir}")
 

@@ -18,29 +18,16 @@ import numpy as np
 from pathlib import Path
 
 
-# 待验证的最优打分函数源码（字符串形式），运行时会被 exec 编译成真正的函数。
-# 打分逻辑：对每个候选箱子，用"放入后的空间利用率"减去"剩余空间过大时的惩罚"作为分数，分数越高越优先放入。
-#   - residual：放入该物品后箱子的剩余容量
-#   - utilization：利用率项，剩余越小、越贴合，分数越高
-#   - penalty：当剩余容量落在 (0, 2*item) 区间时施加的惩罚，避免留下不上不下的碎片空间
-BEST_CODE = """
 def score(item: int, bins: np.ndarray) -> np.ndarray:
     residual = bins - item
     utilization = np.exp(item / (residual + item + 1e-9))
     penalty = np.where((residual > 0) & (residual < 2 * item), (residual - item) ** 2 / (item + 1e-9), 0)
     return utilization - penalty
-"""
 
 
 def make_score_fn():
-    """编译内置的最优打分代码并返回可调用的打分函数。
-
-    做法是用一个仅暴露 numpy 的命名空间执行 BEST_CODE，再取出其中定义的 score。
-    返回值：签名为 score(item, bins) 的函数，给每个候选箱子打分。
-    """
-    ns = {"np": np}  # 受控命名空间，只把 numpy 注入进去
-    exec(BEST_CODE, ns)  # 执行源码字符串，score 会被定义到 ns 里
-    return ns["score"]
+    """返回内置的最优打分函数。"""
+    return score
 
 
 def simulate_bp_online(score_fn, items, capacity=100):
@@ -170,5 +157,5 @@ if __name__ == "__main__":
     print(f"NaN: {summary['total_nan_count']}, Inf: {summary['total_inf_count']}")
 
     out = Path("evidence/bp_interpretability/replay_results.json")
-    out.write_text(json.dumps(summary, indent=2))
+    out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"\nSaved to {out}")

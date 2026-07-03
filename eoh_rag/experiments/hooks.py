@@ -29,12 +29,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 from eoh_rag.experiments.evaluator import evaluate_run
 from eoh_rag.experiments.pool_api import PoolAPI
 from eoh_rag.utils.file_lock import exclusive_lock
+
+logger = logging.getLogger(__name__)
 
 
 def on_run_success(
@@ -114,8 +117,8 @@ def _maybe_synthesize_card(problem: str, code: str, objective: float) -> None:
         with open(corpus_path, "a", encoding="utf-8") as f:
             with exclusive_lock(f):
                 f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
-    except Exception as e:
-        print(f"[WARN] card_synthesis failed: {e}")
+    except Exception:
+        logger.exception("card_synthesis failed")
 
 
 def _append_online_outcome(summary: dict, problem: str, outcome_file: str) -> None:
@@ -147,8 +150,8 @@ def _append_online_outcome(summary: dict, problem: str, outcome_file: str) -> No
         )
         if records and outcome_file:
             save_outcomes(records, Path(outcome_file), append=True)
-    except Exception as e:
-        print(f"[WARN] online_outcome_update failed: {e}")
+    except Exception:
+        logger.exception("online_outcome_update failed")
 
 
 __all__ = ["on_run_success", "on_run_failure"]

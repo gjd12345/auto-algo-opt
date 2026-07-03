@@ -28,11 +28,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from eoh_rag.utils.file_lock import exclusive_lock
+
+logger = logging.getLogger(__name__)
 
 
 # 成本“异常偏低”的判定比例：当候选成本低于基线成本的该比例时视为可疑。
@@ -119,8 +124,11 @@ class FailureMemory:
         # 尝试读取已有的记忆文件；文件缺失或解析失败时都退回为空字典，保证可用。
         if self.db_path.exists():
             try:
-                data = json.loads(self.db_path.read_text(encoding="utf-8"))
-            except Exception:
+                with open(self.db_path, "r", encoding="utf-8") as handle:
+                    with exclusive_lock(handle):
+                        data = json.load(handle)
+            except (OSError, RuntimeError, json.JSONDecodeError, TypeError) as exc:
+                logger.warning("failed to load failure memory %s: %s", self.db_path, exc)
                 data = {}
         else:
             data = {}
@@ -132,17 +140,62 @@ class FailureMemory:
         for key, val in data.get("failures", {}).items():
             self.failures[key] = val
         self.stats = data.get("stats", {"total_attempts": 0, "total_failures": 0})
+        self._loaded_failure_counts = {
+            key: int(val.get("count", 0)) for key, val in self.failures.items()
+        }
+        self._loaded_stats = dict(self.stats)
 
     def _save(self) -> None:
         # 把失败明细与统计整体写回 JSON；ensure_ascii=False 以保留可读的非 ASCII 字符。
-        self.db_path.write_text(
-            json.dumps(
-                {"failures": dict(self.failures), "stats": self.stats},
-                ensure_ascii=False,
-                indent=2,
-            ),
-            encoding="utf-8",
-        )
+        self.memory_dir.mkdir(parents=True, exist_ok=True)
+        with open(self.db_path, "a+", encoding="utf-8") as handle:
+            with exclusive_lock(handle):
+                handle.seek(0)
+                raw = handle.read().strip()
+                try:
+                    disk = json.loads(raw) if raw else {}
+                except json.JSONDecodeError as exc:
+                    logger.warning("failed to merge existing failure memory %s: %s", self.db_path, exc)
+                    disk = {}
+
+                merged_failures = disk.get("failures", {}) if isinstance(disk, dict) else {}
+                if not isinstance(merged_failures, dict):
+                    merged_failures = {}
+                for key, val in self.failures.items():
+                    current = dict(merged_failures.get(key, {"count": 0, "examples": [], "last_seen": None}))
+                    local_delta = int(val.get("count", 0)) - int(self._loaded_failure_counts.get(key, 0))
+                    current["count"] = int(current.get("count", 0)) + max(local_delta, 0)
+                    examples = list(current.get("examples", []))
+                    for example in val.get("examples", []):
+                        if example not in examples and len(examples) < 10:
+                            examples.append(example)
+                    current["examples"] = examples
+                    if val.get("last_seen"):
+                        current["last_seen"] = val.get("last_seen")
+                    merged_failures[key] = current
+
+                merged_stats = disk.get("stats", {}) if isinstance(disk, dict) else {}
+                if not isinstance(merged_stats, dict):
+                    merged_stats = {}
+                for key in ("total_attempts", "total_failures"):
+                    local_delta = int(self.stats.get(key, 0)) - int(self._loaded_stats.get(key, 0))
+                    merged_stats[key] = int(merged_stats.get(key, 0)) + max(local_delta, 0)
+
+                payload = {"failures": merged_failures, "stats": merged_stats}
+                handle.seek(0)
+                handle.truncate()
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+                handle.write("\n")
+                handle.flush()
+
+        self.failures = defaultdict(lambda: {"count": 0, "examples": [], "last_seen": None})
+        for key, val in payload["failures"].items():
+            self.failures[key] = val
+        self.stats = payload["stats"]
+        self._loaded_failure_counts = {
+            key: int(val.get("count", 0)) for key, val in self.failures.items()
+        }
+        self._loaded_stats = dict(self.stats)
 
     def classify_error(self, error_text: str, cost: float | None = None,
                        baseline_cost: float | None = None,

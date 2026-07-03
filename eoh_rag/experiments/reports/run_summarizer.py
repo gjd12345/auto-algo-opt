@@ -25,9 +25,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _find_project_root(start: str | Path) -> Path:
@@ -356,8 +359,8 @@ def summarize(input_dir: str, no_card_memory: bool = False) -> dict[str, Any]:
                             rows[-1]["synthesized_card_id"] = card.id
                             if written:
                                 print(f"  [card-synthesis] New card: {card.id}")
-                    except Exception as exc:
-                        print(f"  [card-synthesis] Warning: {exc}")
+                    except Exception:
+                        logger.exception("card-synthesis failed")
 
             # --- 卡片效果记忆：为每张被注入的卡片记录使用证据 ---
             if rag and not no_card_memory:
@@ -403,8 +406,8 @@ def summarize(input_dir: str, no_card_memory: bool = False) -> dict[str, Any]:
                         # 效果证据以追加方式写入语料库下的 card_outcomes.jsonl
                         outcomes_path = Path(default_corpus_dir(project_root)) / "card_outcomes.jsonl"
                         save_outcomes(outcome_records, outcomes_path, append=True)
-                except Exception as exc:
-                    print(f"  [card-outcomes] Warning: {exc}")
+                except Exception:
+                    logger.exception("card-outcomes update failed")
 
         # 表格行排序：按组别固定顺序 pure -> api -> default -> targeted -> tocc，再按代次
         arm_order = {"pure_eoh": 0, "api_only": 1, "default_rag": 2, "targeted_rag": 3,
@@ -569,13 +572,15 @@ def main() -> None:
 
     # 同时写出与 Markdown 同名的结构化 JSON
     output_json = str(Path(output_md).with_suffix(".json"))
-    json.dump(summary, Path(output_json).open("w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    with open(output_json, "w", encoding="utf-8") as handle:
+        json.dump(summary, handle, ensure_ascii=False, indent=2)
 
     # 额外写出独立的成功率漏斗 JSON，便于单独消费
     funnel = summary.get("success_funnel", {})
     if funnel:
         funnel_path = str(Path(args.input) / "success_funnel.json")
-        json.dump(funnel, Path(funnel_path).open("w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        with open(funnel_path, "w", encoding="utf-8") as handle:
+            json.dump(funnel, handle, ensure_ascii=False, indent=2)
         print(f"Success funnel written to {funnel_path}")
 
     print(f"Summary written to {output_md}")

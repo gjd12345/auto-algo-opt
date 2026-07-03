@@ -15,7 +15,10 @@ if os.name == "nt":
         """Hold an exclusive advisory lock for the duration of the context."""
         original_pos = file_obj.tell()
         file_obj.seek(0)
-        msvcrt.locking(file_obj.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            msvcrt.locking(file_obj.fileno(), msvcrt.LK_LOCK, 1)
+        except OSError as exc:
+            raise RuntimeError(f"failed to lock file descriptor {file_obj.fileno()}") from exc
         try:
             file_obj.seek(original_pos)
             yield
@@ -23,7 +26,10 @@ if os.name == "nt":
         finally:
             unlock_pos = file_obj.tell()
             file_obj.seek(0)
-            msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 1)
+            try:
+                msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 1)
+            except OSError as exc:
+                raise RuntimeError(f"failed to unlock file descriptor {file_obj.fileno()}") from exc
             file_obj.seek(unlock_pos)
 
 else:
