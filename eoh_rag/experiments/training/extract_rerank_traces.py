@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,8 @@ from eoh_rag.rag.llm_reranker import (
     _format_population_section,
 )
 from eoh_rag.rag.schemas import CorpusItem
+
+logger = logging.getLogger(__name__)
 
 # 训练样本里固定的 system 角色内容：告诉模型它是“策略卡选择器”，
 # 明确输入（进化任务、种群策略、候选卡及历史表现）和输出（严格 JSON，含 selected 与 reasoning）。
@@ -114,7 +117,8 @@ def _load_outcome_summaries(outcome_file: str) -> dict[str, Any]:
 
         # 把 dataclass 汇总对象转成普通字典，便于后续格式化进提示文本。
         return {cid: asdict(summary) for cid, summary in summaries.items()}
-    except Exception:
+    except (ImportError, OSError, ValueError, TypeError) as exc:
+        logger.warning("failed to load outcome summaries from %s: %s", outcome_file, exc)
         return {}
 
 
@@ -133,8 +137,9 @@ def build_example(
     且有实际选择结果时才会产出样本。
     """
     try:
-        data = json.loads(summary_path.read_text())
-    except (OSError, json.JSONDecodeError):
+        data = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        logger.warning("failed to load summary %s: %s", summary_path, exc)
         return None
 
     rag = data.get("rag_trace") or {}

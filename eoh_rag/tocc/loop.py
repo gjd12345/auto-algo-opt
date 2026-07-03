@@ -88,7 +88,17 @@ def run_v3_loop(
             break
 
         # 提议方通过 stdout 返回 JSON 结果
-        proposal_raw = json.loads(result.stdout)
+        try:
+            proposal_raw = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            history.append({
+                "iteration": iteration,
+                "error": "proposer returned invalid json",
+                "details": str(exc),
+                "stdout": result.stdout[-500:],
+                "stderr": result.stderr[-500:],
+            })
+            break
 
         if not real_run:
             # 规则控制器输出格式：{diagnosis, recommended_cards, recommended_query, ...}
@@ -118,7 +128,7 @@ def run_v3_loop(
             gatekeeper = proposal_raw.get("gatekeeper", {})
             # 兼容两种字段名：candidate_card_ids 或 selected_card_ids
             cards = (safe_arm.get("candidate_card_ids") or safe_arm.get("selected_card_ids") or []) if safe_arm else []
-            query = safe_arm["rag_query"] if safe_arm else ""
+            query = safe_arm.get("rag_query", "") if safe_arm else ""
             diagnosis = proposal_raw.get("proposal", {}).get("diagnosis", "")
             print(f"[V2] accepted={accepted}, cards={cards}")
 
@@ -137,7 +147,7 @@ def run_v3_loop(
             break
 
         cards = safe_arm.get("candidate_card_ids") or safe_arm.get("selected_card_ids") or []
-        query = safe_arm["rag_query"]
+        query = safe_arm.get("rag_query", "")
         print(f"[ACCEPTED] cards={cards}")
 
         # 为本轮生成 mini-manifest（执行清单）：世代=0、pop_size=4、单次运行，预算严格受限
@@ -154,7 +164,7 @@ def run_v3_loop(
             # 检索配置：引用上一轮运行目录 prev_run_dir 作为历史上下文
             "rag": {"top_k": 2, "max_chars": 2500, "prev_run_dir": prev_run_dir},
         }
-        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[MANIFEST] {manifest_path}")
 
         # 根据模式选择：dry-run 预览，或真实执行
@@ -167,8 +177,12 @@ def run_v3_loop(
                 "--output-dir", output_dir,
                 "--dry-run",
             ]
-            subprocess.run(dm_cmd, text=True, timeout=30)
+            dry_proc = subprocess.run(dm_cmd, text=True, capture_output=True, timeout=30)
             history[-1]["run_result"] = "dry_run_only"
+            history[-1]["dry_run_status"] = "ok" if dry_proc.returncode == 0 else f"exit_{dry_proc.returncode}"
+            if dry_proc.returncode != 0:
+                history[-1]["dry_run_stderr"] = dry_proc.stderr[-500:]
+                break
             current_trace = "(would be new trace)"  # 占位：真实运行才会产生新轨迹
             continue
 
@@ -192,16 +206,25 @@ def run_v3_loop(
         suite_dir = Path(output_dir) / suite
         index_path = suite_dir / "run_index.json"
         if index_path.exists():
-            idx = json.loads(index_path.read_text())
+            try:
+                idx = json.loads(index_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                history[-1]["error"] = "run_index unreadable"
+                history[-1]["details"] = str(exc)
+                break
             if idx:
                 # 从运行索引里定位到本次运行的汇总文件
-                new_summary = Path(idx[0]["output_dir"]) / "official_eoh_run_summary.json"
+                first_run = idx[0]
+                run_output_dir = first_run.get("output_dir", "")
+                if not run_output_dir:
+                    history[-1]["error"] = "run_index missing output_dir"; break
+                new_summary = Path(run_output_dir) / "official_eoh_run_summary.json"
                 if new_summary.exists():
                     current_trace = str(new_summary)  # 用新汇总作为下一轮的轨迹输入
                     history[-1]["new_trace"] = str(new_summary)
-                    history[-1]["best_objective"] = idx[0].get("best_objective")
-                    prev_run_dir = idx[0]["output_dir"]  # 记录本轮目录，供下一轮检索引用
-                    print(f"[OBSERVE] best={idx[0].get('best_objective')}")
+                    history[-1]["best_objective"] = first_run.get("best_objective")
+                    prev_run_dir = run_output_dir  # 记录本轮目录，供下一轮检索引用
+                    print(f"[OBSERVE] best={first_run.get('best_objective')}")
                 else:
                     # 找不到汇总文件：记录错误并终止
                     history[-1]["error"] = "summary not found"; break
@@ -250,7 +273,7 @@ def main() -> None:
 
     # 汇总的逐轮历史落盘为 JSON
     out = output_dir / "v3_loop_history.json"
-    out.write_text(json.dumps(history, ensure_ascii=False, indent=2))
+    out.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nLoop history: {out}")
 
 

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -44,6 +45,8 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 from eoh_rag.experiments.pool_api import PoolAPI
+
+logger = logging.getLogger(__name__)
 
 
 def shared_pool_register(pool_dir: Path, problem: str, run_dir: str, objective: float) -> None:
@@ -110,8 +113,8 @@ def _maybe_synthesize_card(pool_dir: str, problem: str, code: str, objective: fl
         with open(corpus_path, "a", encoding="utf-8") as f:
             with exclusive_lock(f):
                 f.write(json.dumps(card.__dict__, ensure_ascii=False) + "\n")
-    except Exception as e:
-        print(f"[WARN] card_synthesis failed: {e}")
+    except Exception:
+        logger.exception("card_synthesis failed")
 
 
 def _append_online_outcome(summary_path: Path, problem: str, outcome_file: str) -> None:
@@ -154,8 +157,8 @@ def _append_online_outcome(summary_path: Path, problem: str, outcome_file: str) 
         )
         if records and outcome_file:
             save_outcomes(records, Path(outcome_file), append=True)
-    except Exception as e:
-        print(f"[WARN] online_outcome_update failed: {e}")
+    except Exception:
+        logger.exception("online_outcome_update failed")
 
 # 直接复用现成的 EOH 单次运行命令行模块，批量运行器只负责调度与拼参数
 RUNNER_MODULE = "eoh_rag.experiments.eoh_single_runner"
@@ -435,7 +438,7 @@ def main() -> None:
                         best_codes = pool.best_codes(problem, top_k=3)
                         if best_codes:
                             seed_codes_path = str(Path(shared_pool_dir) / f"_seed_{problem}_{os.getpid()}.json")
-                            Path(seed_codes_path).write_text(json.dumps(best_codes, ensure_ascii=False))
+                            Path(seed_codes_path).write_text(json.dumps(best_codes, ensure_ascii=False), encoding="utf-8")
                     cmd = _build_cmd(manifest, problem, arm, gen, rep, run_out, prev_run_dir=effective_prev, seed_codes_path=seed_codes_path)
                     started = time.time()
                     # 真正拉起子进程执行单次运行；超时按 timeout 处理，比运行超时多留 60 秒缓冲
@@ -502,8 +505,8 @@ def main() -> None:
                                         delta = (prev_best - obj) / abs(prev_best) if prev_best else 0
                                         operators_str = manifest.get("operators", "e1,e2,m1,m2")
                                         pool.register_operator_stat(problem, operators_str, improved, delta)
-                            except Exception as e:
-                                print(f"[WARN] shared_pool_register failed: {e}")
+                            except Exception:
+                                logger.exception("shared_pool_register failed")
                         # Online outcome update
                         # 在线效果回流：把本次 RAG 注入的效果记录追加到 outcome 文件
                         if summary_path.exists():
@@ -522,8 +525,8 @@ def main() -> None:
                                 code = rs.get("best_code", "")
                                 if fail_reason and code:
                                     PoolAPI(shared_pool_dir).register_failure(problem, code, fail_reason)
-                            except Exception as e:
-                                print(f"[WARN] failure_sharing failed: {e}")
+                            except Exception:
+                                logger.exception("failure_sharing failed")
 
     # 全部跑完后，把汇总的运行索引写盘（预演/仅校验模式不写）
     if not args.dry_run and not args.no_run:

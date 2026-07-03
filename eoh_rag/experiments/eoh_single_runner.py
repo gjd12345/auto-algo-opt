@@ -195,12 +195,15 @@ def _runner_script() -> str:
 
         import argparse
         import json
+        import logging
         import os
         import re
         import sys
         import time
         import urllib.request
         from pathlib import Path
+
+        logger = logging.getLogger(__name__)
 
 
         def normalize_api_endpoint(endpoint: str) -> str:
@@ -367,11 +370,11 @@ def _runner_script() -> str:
             # Seed codes injection: replace part of init population with elite codes
             if args.seed_codes and Path(args.seed_codes).exists():
                 try:
-                    seed_data = json.loads(Path(args.seed_codes).read_text())
+                    seed_data = json.loads(Path(args.seed_codes).read_text(encoding="utf-8"))
                     if seed_data and hasattr(eoh, '_seed_elite_codes'):
                         eoh._seed_elite_codes(seed_data)
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError, AttributeError, TypeError) as exc:
+                    logger.warning("seed injection failed: %s", exc)
             eoh.run()
 
 

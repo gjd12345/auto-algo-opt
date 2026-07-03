@@ -16,12 +16,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from eoh_rag.llm.client import chat_completion
 from eoh_rag.rag.schemas import CorpusItem
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -170,6 +173,7 @@ def llm_rerank(
         # 调用异常：记录失败原因与耗时后返回空结果，触发上层回退
         trace.fallback_reason = f"llm_call_failed: {type(e).__name__}: {e}"
         trace.latency_ms = int((time.time() - start) * 1000)
+        logger.warning("llm rerank call failed: %s", e, exc_info=True)
         return [], trace
 
     trace.latency_ms = int((time.time() - start) * 1000)

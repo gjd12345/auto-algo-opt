@@ -56,7 +56,7 @@
 ## Solver Access
 
 The Go solver (`go_solver/main.go`, `go_solver/routing.go`) is self-contained and exposes no Python dependencies.
-Python accesses the Go solver through `eoh_rag/solver_adapter/go_solver.py`.
+Python accesses the Go solver through `eoh_rag/solver_adapter/__init__.py`.
 The EOH experiment runner (`eoh_single_runner.py`) uses official EoH's Python wrapper
 rather than the Go solver directly — they solve different problem types.
 

@@ -9,7 +9,7 @@
 | 做 | 不做 |
 | --- | --- |
 | pool_dir 下 4 类 JSONL 的 append/read | 决定谁应该 register（属 batch_runner / hooks） |
-| fcntl 文件锁保证多进程安全 | card synthesis / 语料库写入（属 `rag.card_synthesis`） |
+| 跨平台 advisory lock 保证多进程安全 | card synthesis / 语料库写入（属 `rag.card_synthesis`） |
 | 目标值最小化（minimize）语义的排序去重 | baseline 阈值（属 `experiments.baselines`） |
 | 失败模式短提示的静态推断 | 语义化理解失败原因（可交给小模型） |
 
@@ -61,7 +61,7 @@ class PoolAPI:
 
 ### 3.2 线程/进程安全
 
-- 所有 append 走 `_append_jsonl`，用 `fcntl.LOCK_EX` 独占写。
+- 所有 append 走 `_append_jsonl`，用 `eoh_rag.utils.file_lock.exclusive_lock` 独占写。
 - 读取无锁（append-only + JSONL 行独立 → 最坏情况读到少一行，不会读到损坏行）。
 
 ## 4. 调用约定
