@@ -376,6 +376,11 @@ class EOH:
             population = self.evolution.evaluate_seeds(seeds)
             if not population:
                 raise RuntimeError("Seed initialization produced no valid individuals.")
+            # 用种子种群的最优目标值初始化 best-so-far,使早停判据与逐代轨迹从种子水平起算。
+            seed_objs = [ind['objective'] for ind in population if ind.get('objective') is not None]
+            if seed_objs:
+                self._best_obj = min(seed_objs)
+                self._logger.info(f"  Seeded best_obj={self._best_obj} from {len(seed_objs)} seed(s)")
             self._save_checkpoint(population, 0)
             return population, 0
 

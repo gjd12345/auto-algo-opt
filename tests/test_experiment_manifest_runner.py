@@ -59,6 +59,31 @@ class ExperimentManifestRunnerTests(unittest.TestCase):
         self.assertIn("--candidate-card-source", cmd)
         self.assertIn("candidate_card_ids", cmd)
 
+    def test_build_cmd_passes_model_when_declared(self) -> None:
+        manifest = self._minimal_manifest()
+        manifest["model"] = "JoyAI-LLM-Pro"
+        arm = manifest["arms"][0]
+        cmd = _build_cmd(manifest, "tsp_construct", arm, 0, 1, "/tmp/out")
+
+        self.assertIn("--llm-model", cmd)
+        self.assertIn("JoyAI-LLM-Pro", cmd)
+
+    def test_build_cmd_omits_model_when_absent(self) -> None:
+        manifest = self._minimal_manifest()
+        arm = manifest["arms"][0]
+        cmd = _build_cmd(manifest, "tsp_construct", arm, 0, 1, "/tmp/out")
+
+        self.assertNotIn("--llm-model", cmd)
+
+    def test_runner_script_seeds_via_use_seed_not_phantom(self) -> None:
+        # 精英种子经引擎 use_seed/seed_path 注入,子脚本不得再引用运行时缺失的方法。
+        from eoh_rag.experiments.eoh_single_runner import _runner_script
+
+        script = _runner_script()
+        self.assertNotIn("_seed_elite_codes", script)
+        self.assertIn("use_seed=use_seed", script)
+        self.assertIn("_elite_seeds.json", script)
+
     def test_validate_manifest_accepts_canonical_and_legacy_context_strategies(self) -> None:
         for strategy in ("tocc_candidate_pool", "tocc_selected_cards"):
             manifest = self._minimal_manifest()

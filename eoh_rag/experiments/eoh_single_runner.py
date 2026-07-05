@@ -358,7 +358,26 @@ def _runner_script() -> str:
             operators = [item.strip() for item in args.operators.split(",") if item.strip()]
             install_api_url_patch()
             llm = LLMConfig(api_endpoint=endpoint, api_key=api_key, model=model, timeout=args.llm_timeout_s)
+            # 种子来源:精英代码优先,否则用官方初始种群。精英代码规整成引擎
+            # evaluate_seeds 认可的 {algorithm, code} 列表,经 use_seed/seed_path 注入为初始种群。
+            use_seed = args.use_official_seed
             seed_path = official_root / "examples" / args.problem / "results" / "pops" / "population_generation_0.json"
+            if args.seed_codes and Path(args.seed_codes).exists():
+                try:
+                    raw_seeds = json.loads(Path(args.seed_codes).read_text(encoding="utf-8"))
+                    seeds = [
+                        {"algorithm": s.get("algorithm") or "elite seed", "code": s["code"]}
+                        for s in raw_seeds
+                        if isinstance(s, dict) and s.get("code")
+                    ]
+                    if seeds:
+                        elite_path = Path(args.output_dir) / "_elite_seeds.json"
+                        elite_path.write_text(json.dumps(seeds, ensure_ascii=False), encoding="utf-8")
+                        use_seed = True
+                        seed_path = elite_path
+                        logger.info("注入 %d 份精英代码作为初始种群", len(seeds))
+                except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+                    logger.warning("精英种子加载失败,回退默认初始化: %s", exc)
             eoh = EoH(
                 llm=llm,
                 problem=task,
@@ -367,20 +386,12 @@ def _runner_script() -> str:
                 operators=operators,
                 output_dir=args.output_dir,
                 n_processes=args.n_processes,
-                use_seed=args.use_official_seed,
+                use_seed=use_seed,
                 seed_path=str(seed_path),
                 adaptive_stop=args.adaptive_stop,
                 stop_window=args.stop_window,
                 stop_min_gap=args.stop_min_gap,
             )
-            # Seed codes injection: replace part of init population with elite codes
-            if args.seed_codes and Path(args.seed_codes).exists():
-                try:
-                    seed_data = json.loads(Path(args.seed_codes).read_text(encoding="utf-8"))
-                    if seed_data and hasattr(eoh, '_seed_elite_codes'):
-                        eoh._seed_elite_codes(seed_data)
-                except (OSError, json.JSONDecodeError, AttributeError, TypeError) as exc:
-                    logger.warning("seed injection failed: %s", exc)
             eoh.run()
 
 

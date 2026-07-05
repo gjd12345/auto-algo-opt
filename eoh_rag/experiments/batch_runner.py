@@ -318,6 +318,10 @@ def _build_cmd(
         ])
     if seed_codes_path:
         cmd.extend(["--seed-codes", seed_codes_path])
+    # manifest 顶层声明的模型透传给 runner,使实验声明与实际调用一致;留空则由 runner 端环境变量决定。
+    model = manifest.get("model")
+    if model:
+        cmd.extend(["--llm-model", str(model)])
     return cmd
 
 
