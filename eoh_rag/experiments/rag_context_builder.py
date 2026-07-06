@@ -57,6 +57,17 @@ OFFICIAL_RAG_PROBLEM_CONFIG = {
         "strategy_prefixes": ("cvrp_",),
         "query": "cvrp construct select next customer distance farthest cluster regret route depot",
     },
+    # 派船调度 InsertShips:插入策略卡(nearest/farthest/regret2/savings/solomon_i1)无共同 id 前缀,
+    # 但都带 insertships 标签,故用标签选卡(strategy_tags),strategy_prefixes 留空。
+    "insertships_go": {
+        "api_ids": {"insertships_api_skeleton"},
+        "strategy_prefixes": (),
+        "strategy_tags": {"insertships"},
+        "query": (
+            "vehicle routing dynamic ship insertion greedy cheapest cost delta "
+            "savings regret farthest nearest capacity feasible route depot"
+        ),
+    },
 }
 
 
@@ -94,9 +105,17 @@ class RagContextRequest:
 
 
 def _matches_problem_strategy(item: CorpusItem, problem: str) -> bool:
-    # 判断一张卡是否属于该问题的「文献策略卡」：算法卡 + id 命中前缀 + 不是历史卡。
-    prefixes = OFFICIAL_RAG_PROBLEM_CONFIG[problem]["strategy_prefixes"]
-    return item.kind == "algorithm_card" and item.id.startswith(prefixes) and not _is_history_card(item)
+    # 判断一张卡是否属于该问题的「文献策略卡」：算法卡 + 非历史卡,且 id 命中前缀或标签命中。
+    if item.kind != "algorithm_card" or _is_history_card(item):
+        return False
+    config = OFFICIAL_RAG_PROBLEM_CONFIG[problem]
+    prefixes = config["strategy_prefixes"]
+    if prefixes and item.id.startswith(prefixes):
+        return True
+    strategy_tags = config.get("strategy_tags")
+    if strategy_tags and (set(item.tags) & strategy_tags):
+        return True
+    return False
 
 
 def _matches_problem_history(item: CorpusItem, problem: str) -> bool:

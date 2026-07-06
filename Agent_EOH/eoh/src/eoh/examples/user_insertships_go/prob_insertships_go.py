@@ -30,6 +30,10 @@ def _find_upwards_project_root(start_dir: str, max_depth: int = 12) -> str | Non
     for _ in range(max_depth):
         if os.path.isfile(os.path.join(cur, "main.go")) and os.path.isfile(os.path.join(cur, "routing.go")):
             return cur
+        # Go 求解器单独放在 go_solver/ 子目录时,从该子目录定位
+        go_solver = os.path.join(cur, "go_solver")
+        if os.path.isfile(os.path.join(go_solver, "main.go")) and os.path.isfile(os.path.join(go_solver, "routing.go")):
+            return go_solver
         parent = os.path.dirname(cur)
         if parent == cur:
             break
