@@ -221,18 +221,15 @@ class Evolution:
                 f"The description must be inside a brace. Next, {spec}"
             )
         if operator == "m3":
-            if self._template_kind == 'class':
-                keep_str = "keeping the class interface (name, method signatures, inputs, and outputs) unchanged"
-            elif self._template_kind == 'multi_function':
-                keep_str = "keeping all function names, inputs, and outputs unchanged"
-            else:
-                keep_str = "keeping the function name, inputs, and outputs unchanged"
             return (
-                "First, identify the main components in the code below. "
-                "Next, analyze whether any can be overfit to in-distribution instances. "
-                "Then, simplify the components to enhance generalization to out-of-distribution instances. "
-                f"Finally, provide the revised code {keep_str}.\n"
-                f"{parents['code']}\nDo not give additional explanations."
+                f"{self.task}\n"
+                f"I have one algorithm with its code as follows.\n"
+                f"Algorithm description: {parents['algorithm']}\nCode:\n{parents['code']}\n"
+                "Please identify the main components, analyze whether any are overfit to "
+                "in-distribution instances, and create a simplified version that improves "
+                "generalization to out-of-distribution instances.\n"
+                "First, describe your new algorithm and main steps in one sentence. "
+                f"The description must be inside a brace. Next, {spec}"
             )
         raise ValueError(f"Unknown operator: {operator}")
 
