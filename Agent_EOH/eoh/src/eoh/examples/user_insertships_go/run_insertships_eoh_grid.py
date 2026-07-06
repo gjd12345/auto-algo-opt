@@ -66,7 +66,7 @@ def _guard(objectives: list[float], j_sa: float) -> dict:
 
 
 def _run_one_eoh(ev, seed_path: str, endpoint: str, key: str, model: str,
-                 gens: int, pop: int, out_dir: str) -> list[float]:
+                 gens: int, pop: int, out_dir: str, nproc: int = 4) -> list[float]:
     """跑一轮 EOH,返回末代种群的 objective 列表。"""
     from eoh import EVOL
     from eoh.utils.getParas import Paras
@@ -76,7 +76,7 @@ def _run_one_eoh(ev, seed_path: str, endpoint: str, key: str, model: str,
         method="eoh", problem=ev,
         llm_api_endpoint=endpoint, llm_api_key=key, llm_model=model,
         ec_pop_size=pop, ec_n_pop=gens, ec_operators=["m1", "m2"],
-        exp_n_proc=4, exp_use_seed=True, exp_seed_path=seed_path,
+        exp_n_proc=nproc, exp_use_seed=True, exp_seed_path=seed_path,
         eva_timeout=120, eva_numba_decorator=False,
     )
     EVOL(paras).run()
@@ -149,9 +149,11 @@ def run_grid(args: argparse.Namespace) -> None:
                     shutil.rmtree(cell_out, ignore_errors=True)
                     os.makedirs(cell_out, exist_ok=True)
                     try:
-                        objs = _run_one_eoh(ev, seed_path, endpoint, key, model, args.gens, args.pop, cell_out)
-                    except Exception as e:
-                        print(f"  [warn] {cell} rep{rep} EOH 异常: {e}", flush=True)
+                        objs = _run_one_eoh(ev, seed_path, endpoint, key, model, args.gens, args.pop, cell_out, args.eoh_nproc)
+                    except (Exception, SystemExit) as e:
+                        # EOH 在 API 自检失败时会 sys.exit(SystemExit 不是 Exception 子类),
+                        # 单格失败不应打断整个 worker,记为本格无效、继续下一格。
+                        print(f"  [warn] {cell} rep{rep} EOH 异常: {type(e).__name__} {e}", flush=True)
                         objs = []
                     g = _guard(objs, j_sa)
                     susp_total += g["n_suspicious"]
@@ -228,6 +230,7 @@ def main():
     p.add_argument("--gens", type=int, default=1)
     p.add_argument("--pop", type=int, default=4)
     p.add_argument("--instances", type=int, default=5)
+    p.add_argument("--eoh-nproc", type=int, default=4, help="单轮 EOH 内部并发评测数(并发多 worker 时调小以限总 API 并发)")
     p.add_argument("--sim-time-multi", type=int, default=10)
     p.add_argument("--run-timeout-s", type=int, default=60)
     p.add_argument("--tie-eps", type=float, default=0.01)
