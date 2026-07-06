@@ -87,6 +87,20 @@ class OfficialEohRunTests(unittest.TestCase):
     def test_tail_text_accepts_bytes_from_timeout_expired(self) -> None:
         self.assertEqual(_tail_text(b"a\nb\nc", max_lines=2), "b\nc")
 
+    def test_run_summary_records_resolved_model_name(self) -> None:
+        # 缺 API key 时提前返回、不起子进程;断言 summary 落盘了实际模型名(可追溯每个 run 用了哪个模型)。
+        with tempfile.TemporaryDirectory() as tmp:
+            args = make_official_runner_args(
+                output_dir=tmp,
+                arm="pure_eoh",
+                llm_model="deepseek-v4-flash",
+                api_key_env="EOH_TEST_MISSING_KEY_ENV",
+            )
+            payload = run_official_eoh(args)
+        self.assertEqual(payload.get("model"), "deepseek-v4-flash")
+        self.assertTrue(payload.get("model_present"))
+        self.assertEqual(payload.get("failure_reason"), "missing_env_EOH_TEST_MISSING_KEY_ENV")
+
     def test_summarize_run_reads_latest_population_and_best_code(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             run_dir = Path(tmp)

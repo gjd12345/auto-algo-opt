@@ -428,7 +428,9 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     rag_trace: dict[str, Any] | None = None
     # 预先探测三项 API 环境是否就绪（endpoint 需能解析出 host）
     endpoint_present = bool(normalize_api_endpoint(os.environ.get(args.api_endpoint_env, "")))
-    model_present = bool(args.llm_model or os.environ.get(args.model_env, ""))
+    # 实际解析出的模型名(非密钥,可安全落盘):写进 summary 以便追溯每个 run 究竟用了哪个模型。
+    resolved_model = args.llm_model or os.environ.get(args.model_env, "")
+    model_present = bool(resolved_model)
     api_key_present = bool(os.environ.get(args.api_key_env, ""))
     payload: dict[str, Any] = {
         "problem": args.problem,
@@ -447,6 +449,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "api_key_present": api_key_present,
         "api_endpoint_present": endpoint_present,
         "model_present": model_present,
+        "model": resolved_model,
         "return_code": None,
         "runtime_seconds": None,
         "stdout_tail": "",
