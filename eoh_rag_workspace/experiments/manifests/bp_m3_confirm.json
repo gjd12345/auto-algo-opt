@@ -1,0 +1,28 @@
+{
+  "suite": "bp_m3_confirm",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "arms": [
+    {
+      "name": "E2_m3c",
+      "runner_arm": "literature_rag",
+      "context_strategy": "tocc_candidate_pool",
+      "candidate_card_ids": ["obp_first_fit","obp_best_fit","obp_worst_fit","obp_harmonic","obp_funsearch_residual_poly","obp_eoh_util_sqrt_exp"],
+      "rag_query": "online bin packing item size fit residual capacity utilization heuristic",
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/rag/corpus/card_outcomes.jsonl",
+        "use_prev_run_dir_chain": true,
+        "rerank_mode": "llm"
+      }
+    }
+  ],
+  "generations": [6],
+  "pop_size": 6,
+  "repeats": 1,
+  "max_runs": 1,
+  "require_confirm_for_real_run": false,
+  "operators": "e1,e2,m1,m2,m3",
+  "run_timeout_s": 3600,
+  "rag": { "top_k": 2, "max_chars": 2500 },
+  "official_root": "official_eoh"
+}
