@@ -296,9 +296,17 @@ def _runner_script() -> str:
                 from prob import BPONLINE
                 return BPONLINE(capacity=100, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_construct":
+                if broad_training:
+                    from prob_broad import TSPCONSTBroad
+                    return TSPCONSTBroad(problem_size=50, timeout=eval_timeout_s, n_processes=n_processes,
+                                         n_train=n_train, held_out_set=held_out_set)
                 from prob import TSPCONST
                 return TSPCONST(problem_size=50, n_instance=8, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "cvrp_construct":
+                if broad_training:
+                    from prob_broad import CVRPCONSTBroad
+                    return CVRPCONSTBroad(n_customers=50, capacity=40, timeout=eval_timeout_s, n_processes=n_processes,
+                                          n_train=n_train, held_out_set=held_out_set)
                 from prob import CVRPCONST
                 return CVRPCONST(n_customers=50, capacity=40, n_instance=16, timeout=eval_timeout_s, n_processes=n_processes)
             raise ValueError(f"unknown problem: {problem}")
