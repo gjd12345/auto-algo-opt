@@ -323,6 +323,14 @@ def _build_cmd(
     model = manifest.get("model")
     if model:
         cmd.extend(["--llm-model", str(model)])
+    # 广训练池 + held-out 报告:manifest 顶层 broad_training 为 true 时启用(opt-in,缺省 false)
+    if manifest.get("broad_training"):
+        cmd.append("--broad-training")
+        n_train = manifest.get("n_train", 128)
+        cmd.extend(["--n-train", str(n_train)])
+        held_out = manifest.get("held_out_set")
+        if held_out:
+            cmd.extend(["--held-out-set", json.dumps(held_out)])
     return cmd
 
 
