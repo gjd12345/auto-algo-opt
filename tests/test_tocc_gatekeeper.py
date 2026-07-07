@@ -84,12 +84,12 @@ class ToccGatekeeperTests(unittest.TestCase):
         self.assertTrue(result["accepted"])
         self.assertIn("R5", str(result["warnings"]))
 
-    def test_r6_fixes_unknown_action(self):
+    def test_r6_rejects_unknown_action(self):
         p = self._good_proposal()
         p["next_action"] = "deploy_to_production"
         result = validate_proposal(p, problem="tsp_construct", available_card_ids=TSP_CARDS)
-        self.assertTrue(result["accepted"])
-        self.assertIn("R6", str(result["warnings"]))
+        self.assertFalse(result["accepted"])
+        self.assertIn("R6", str(result["violations"]))
 
     def test_r7_rejects_empty_query(self):
         p = self._good_proposal()

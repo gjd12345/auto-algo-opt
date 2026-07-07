@@ -166,7 +166,12 @@ def validate_proposal(
     proposal["query"] = str(query_raw)
 
     diagnosis = str(proposal.get("diagnosis", ""))
-    query = str(proposal.get("query", ""))
+    query_raw = proposal.get("query") or proposal.get("rag_query", "")
+    # 强制 query 为字符串;非字符串(列表/数字)视为违规
+    if not isinstance(query_raw, str):
+        violations.append(f"R0a: query must be a string, got {type(query_raw).__name__}")
+        return {"accepted": False, "violations": violations, "warnings": warnings, "fixed": None, "safe_arm": None}
+    query = str(query_raw)
     next_action = str(proposal.get("next_action", ""))
     if duplicate_cards:
         # R0：候选卡片存在重复，已去重，仅告警
@@ -217,11 +222,8 @@ def validate_proposal(
 
     # R6：动作合法性——不在允许集合内时回退为 manual_review 并记入 fixed
     if next_action not in VALID_ACTIONS:
-        warnings.append(f"R6: unknown next_action {next_action!r}, set to manual_review")
-        next_action = "manual_review"
-        if fixed is None:
-            fixed = dict(proposal)
-        fixed["next_action"] = "manual_review"
+        violations.append(f"R6: unknown next_action {next_action!r}")
+        return {"accepted": False, "violations": violations, "warnings": warnings, "fixed": None, "safe_arm": None}
 
     # R7：查询串安全——空查询直接拒绝；过长仅告警
     if not query or not query.strip():
