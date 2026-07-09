@@ -182,9 +182,8 @@ def run_v3_loop(
             history[-1]["dry_run_status"] = "ok" if dry_proc.returncode == 0 else f"exit_{dry_proc.returncode}"
             if dry_proc.returncode != 0:
                 history[-1]["dry_run_stderr"] = dry_proc.stderr[-500:]
-                break
-            current_trace = "(would be new trace)"  # 占位：真实运行才会产生新轨迹
-            continue
+            # dry-run 一次即止:不设 fake trace,不继续循环(否则第二轮用字面量 "(would be new trace)" 空转)
+            break
 
         # 真实执行：用 --force 让批量执行器实际跑实验，限时 2100 秒
         print(f"[RUN] cards={cards}")
