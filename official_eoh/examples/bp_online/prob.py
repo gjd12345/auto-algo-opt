@@ -65,3 +65,82 @@ def score(item: int, bins: np.ndarray) -> np.ndarray:
             avg = -np.mean(num_bins_list)
             fitness_per_dataset.append((avg - self.lb[name]) / self.lb[name])
         return float(np.mean(fitness_per_dataset))
+
+
+class BPONLINEBroad(BPONLINE):
+    """广训练池 + held-out 报告版 BP 评测器(opt-in)。
+
+    用 n_train 个变化 Weibull 实例作适应度(对齐 EoH-S 128 实例),held-out pkl 只报告不进适应度。
+    manifest 设 broad_training:true 启用;缺省 false 时 BPONLINE 旧 5 实例不受影响。
+    预留 n_train/held_out_set 字段供 TSP/CVRP 复用(决策 aa)。
+    """
+    def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
+                 n_train: int = 128, held_out_set: list | None = None):
+        super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
+        self.instances, self.lb = self._gen_broad_instances(capacity, n_train)
+        self.held_out_data = self._load_held_out(held_out_set)
+        self.held_out_report = {}     # 由 run 结束后读取
+
+    @staticmethod
+    def _gen_broad_instances(capacity: int, n_train: int):
+        """生成 n_train 个 Weibull 训练实例(对齐 EoH-S 广训练池)。"""
+        instances = {"broad_train": {}}
+        lb_sum = 0.0
+        k, lam = 3.0, 45.0
+        for i in range(n_train):
+            rng = np.random.default_rng(7000 + i)
+            items = np.clip(np.round(rng.weibull(k, 5000) * lam).astype(int), 1, capacity)
+            instances["broad_train"][str(i)] = {
+                "items": items.tolist(), "capacity": capacity, "num_items": 5000
+            }
+            lb_sum += np.ceil(items.sum() / capacity)
+        return instances, {"broad_train": round(lb_sum / n_train, 4)}
+
+    @staticmethod
+    def _load_held_out(held_out_set: list | None) -> list:
+        if not held_out_set:
+            return []
+        import pickle
+        data = []
+        for path in held_out_set:
+            fn = str(path)
+            if not os.path.exists(fn):
+                continue
+            try:
+                raw = pickle.load(open(fn, "rb"))
+                insts = []
+                for v in raw.values():
+                    if isinstance(v, dict):
+                        for vv in v.values():
+                            if isinstance(vv, dict) and "items" in vv:
+                                insts.append(np.array(vv["items"], dtype=np.float64))
+                    elif isinstance(v, list) and v and isinstance(v[0], (list, tuple, np.ndarray)):
+                        for inst in v:
+                            insts.append(np.array(inst, dtype=np.float64))
+                data.append({"path": fn, "instances": insts})
+            except Exception as exc:
+                print(f"[BPONLINEBroad] held-out 加载失败 {fn}: {exc}")
+        return data
+
+    def evaluate_program(self, program_str: str, callable_func) -> float | None:
+        fitness = super().evaluate_program(program_str, callable_func)
+        self.held_out_report = {}
+        for entry in self.held_out_data:
+            items_list = entry["instances"]
+            if not items_list:
+                continue
+            try:
+                cap = 100
+                used_list = []
+                lb_list = []
+                for items in items_list:
+                    bins = np.array([cap] * len(items), dtype=float)
+                    _, bins_packed = self.online_binpack(items, bins, callable_func)
+                    used_list.append(-(bins_packed != cap).sum())
+                    lb_list.append(np.ceil(np.sum(items) / cap))
+                mean_used = -np.mean(used_list)
+                mean_lb = np.mean(lb_list)
+                self.held_out_report[entry["path"]] = round((mean_used - mean_lb) / mean_lb * 100, 3)
+            except Exception as exc:
+                self.held_out_report[entry["path"]] = f"error: {exc}"
+        return fitness
