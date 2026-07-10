@@ -1,0 +1,11 @@
+# Shell 脚本固定 LF，避免 Windows 检出后无法执行；不触碰其他历史文本换行。
+*.sh text eol=lf
+
+# 实验数据和文档资源按二进制处理，禁止换行转换破坏内容。
+*.pkl binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary
+*.exe binary
