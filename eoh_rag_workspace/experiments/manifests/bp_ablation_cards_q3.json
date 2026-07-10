@@ -1,0 +1,48 @@
+{
+  "suite": "bp_ablation_cards_q3",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "broad_training": true,
+  "n_train": 128,
+  "held_out_set": ["eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl"],
+  "arms": [
+    {
+      "name": "pure",
+      "runner_arm": "pure_eoh",
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/reports/bp_ablation_q3/pure/card_outcomes.jsonl"
+      }
+    },
+    {
+      "name": "generic",
+      "runner_arm": "literature_rag",
+      "candidate_card_ids": ["obp_first_fit","obp_best_fit","obp_worst_fit"],
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/reports/bp_ablation_q3/generic/card_outcomes.jsonl"
+      }
+    },
+    {
+      "name": "answer",
+      "runner_arm": "literature_rag",
+      "candidate_card_ids": ["obp_first_fit","obp_best_fit","obp_worst_fit","obp_harmonic","obp_funsearch_residual_poly","obp_eoh_util_sqrt_exp"],
+      "rag": {
+        "outcome_file": "eoh_rag_workspace/reports/bp_ablation_q3/answer/card_outcomes.jsonl"
+      }
+    }
+  ],
+  "generations": [8],
+  "pop_size": 6,
+  "repeats": 10,
+  "max_runs": 30,
+  "operators": "e1,e2,m1,m2",
+  "run_timeout_s": 7200,
+  "n_processes": 6,
+  "seed_list": [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033],
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh",
+  "rag": {
+    "top_k": 2,
+    "max_chars": 2500,
+    "rerank_mode": "llm"
+  }
+}

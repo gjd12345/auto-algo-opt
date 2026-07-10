@@ -48,6 +48,9 @@ from eoh_rag.experiments.pool_api import PoolAPI
 
 logger = logging.getLogger(__name__)
 
+# manifest 中的相对路径统一以仓库根目录为基准，避免启动命令所在目录改变实验输入。
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def shared_pool_register(pool_dir: Path, problem: str, run_dir: str, objective: float) -> None:
     """便捷封装：转发到 PoolAPI(pool_dir).register_run(...)。"""
@@ -171,6 +174,47 @@ _DEFAULT_PYTHON = os.environ.get("EOH_OFFICIAL_PYTHON", "")
 _DEFAULT_ROOT = os.environ.get("EOH_OFFICIAL_ROOT", "") or str(Path(__file__).resolve().parents[2] / "official_eoh")
 # 合法的实验臂集合：纯 EOH、仅 API、文献 RAG、历史 RAG、混合 RAG、上下文文件
 VALID_ARMS = {"pure_eoh", "api_only", "literature_rag", "history_rag", "mixed_rag", "context_file"}
+
+
+def _resolve_held_out_set(
+    held_out_set: Any,
+    repo_root: Path = _REPO_ROOT,
+) -> list[str]:
+    """展开并校验 manifest 中的 held-out 文件路径。
+
+    相对路径按仓库根目录解析，而不是按调用者当前工作目录解析；这样同一份
+    manifest 在本地终端、CI 和调度脚本中会引用同一批数据。返回值统一为绝对路径，
+    便于后续子进程在不同工作目录中继续使用。
+    """
+    if held_out_set is None:
+        return []
+    if not isinstance(held_out_set, list):
+        raise ValueError("held_out_set must be a list of file paths")
+
+    resolved_paths: list[str] = []
+    for index, raw_path in enumerate(held_out_set):
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise ValueError(f"held_out_set[{index}] must be a non-empty file path")
+
+        # 先展开环境变量再展开用户目录，兼容变量值本身以 ~ 开头的配置。
+        expanded_path = Path(os.path.expanduser(os.path.expandvars(raw_path)))
+        if not expanded_path.is_absolute():
+            expanded_path = repo_root / expanded_path
+        resolved_path = expanded_path.resolve()
+
+        if not resolved_path.exists():
+            raise FileNotFoundError(
+                f"held_out_set[{index}] not found: {raw_path!r} "
+                f"(resolved to: {resolved_path})"
+            )
+        if not resolved_path.is_file():
+            raise ValueError(
+                f"held_out_set[{index}] must point to a file: {raw_path!r} "
+                f"(resolved to: {resolved_path})"
+            )
+        resolved_paths.append(str(resolved_path))
+
+    return resolved_paths
 
 
 def _arm_card_ids(arm: dict[str, Any]) -> tuple[list[str], str]:
@@ -363,6 +407,12 @@ def main() -> None:
 
     # 读取并解析实验清单 JSON
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    # held-out 数据会交给后续子进程读取，因此在创建输出目录和启动任何实验前完成解析与校验。
+    try:
+        manifest["held_out_set"] = _resolve_held_out_set(manifest.get("held_out_set"))
+    except (FileNotFoundError, ValueError) as exc:
+        sys.exit(f"Manifest held_out_set validation FAILED: {exc}")
 
     # 先做静态校验，有错则打印全部错误并退出，避免带病运行
     errors = _validate_manifest(manifest)

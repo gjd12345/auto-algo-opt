@@ -115,6 +115,16 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     populations = sorted(pop_dir.glob("population_generation_*.json"), key=_natural_generation)
     samples = sorted((run_dir / "results" / "samples").glob("samples_*.json"))
     best_sample = run_dir / "results" / "samples" / "samples_best.json"
+    held_out_report_path = run_dir / "held_out_report.json"
+    held_out_report: dict[str, Any] = {}
+    if held_out_report_path.is_file():
+        try:
+            loaded_report = _load_json(held_out_report_path)
+            if isinstance(loaded_report, dict):
+                held_out_report = loaded_report
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            # held-out 报告属于补充指标；文件损坏时保留主摘要，并显式标记为不可用。
+            held_out_report = {}
     summary: dict[str, Any] = {
         "run_dir": str(run_dir),
         "ok": False,
@@ -128,6 +138,8 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "best_code": None,
         "sample_file_count": len(samples),
         "best_sample_path": str(best_sample) if best_sample.exists() else None,
+        "held_out_report": held_out_report,
+        "held_out_report_path": str(held_out_report_path) if held_out_report_path.is_file() else None,
     }
     if not populations:
         # 没有任何种群文件，说明进化未产出结果
@@ -312,6 +324,58 @@ def _runner_script() -> str:
             raise ValueError(f"unknown problem: {problem}")
 
 
+        def persist_best_held_out_report(task, output_dir: Path) -> None:
+            """复算最终种群的最佳候选，并把 held-out 指标原子写入运行目录。"""
+
+            if not hasattr(task, "held_out_report"):
+                return
+
+            def generation_number(path: Path) -> int:
+                match = re.search(r"population_generation_(\d+)\.json$", path.name)
+                return int(match.group(1)) if match else -1
+
+            population_paths = sorted(
+                (output_dir / "results" / "pops").glob("population_generation_*.json"),
+                key=generation_number,
+            )
+            if not population_paths:
+                logger.warning("No final population found; held-out report was not generated")
+                return
+
+            try:
+                population = json.loads(population_paths[-1].read_text(encoding="utf-8"))
+                valid_candidates = [
+                    item
+                    for item in population
+                    if isinstance(item, dict)
+                    and item.get("objective") is not None
+                    and item.get("code")
+                ]
+                best_candidate = min(valid_candidates, key=lambda item: item["objective"])
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.warning("Cannot select the best candidate for held-out reporting: %s", exc)
+                return
+
+            # 常规评估在隔离进程中执行，对 task 字段的修改不会回传。这里仅对已经通过
+            # 评估的最佳候选复算一次，确保报告对应最终选择，而不是并发结束顺序。
+            if task.evaluate(best_candidate["code"]) is None:
+                logger.warning("Best candidate could not be re-evaluated for held-out reporting")
+                return
+
+            report = getattr(task, "held_out_report", None)
+            if not isinstance(report, dict):
+                logger.warning("Held-out report has an unexpected type: %s", type(report).__name__)
+                return
+
+            report_path = output_dir / "held_out_report.json"
+            temporary_path = report_path.with_suffix(".json.tmp")
+            temporary_path.write_text(
+                json.dumps(report, ensure_ascii=True, indent=2),
+                encoding="utf-8",
+            )
+            os.replace(temporary_path, report_path)
+
+
         def apply_arm_context(task, problem: str, arm: str, context_file: str) -> None:
             context = ""
             if arm == "api_only":
@@ -413,6 +477,7 @@ def _runner_script() -> str:
                 stop_min_gap=args.stop_min_gap,
             )
             eoh.run()
+            persist_best_held_out_report(task, Path(args.output_dir))
 
 
         if __name__ == "__main__":
@@ -600,7 +665,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     if args.broad_training:
         cmd.extend(["--broad-training", "--n-train", str(args.n_train)])
         if args.held_out_set:
-            cmd.extend(["--held-out-set", json.dumps(args.held_out_set)])
+            # CLI 参数已经是 JSON 数组字符串；再次序列化会让内部 runner 得到字符串而不是路径列表。
+            cmd.extend(["--held-out-set", args.held_out_set])
     if context_file:
         cmd.extend(["--context-file", context_file])
     if args.use_official_seed:

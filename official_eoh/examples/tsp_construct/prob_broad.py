@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """A3: TSP held-out 评测器(与 A1 BPONLINEBroad 同构,复用 n_train/held_out_set 字段)。"""
-import sys, os, numpy as np
+import sys
+from pathlib import Path
 
-REPO = "/Users/guojiadong.9/agent_ad/auto-algo-opt"
-# 注入路径以支持 from eoh import BaseProblem
-sys.path.insert(0, f"{REPO}/official_eoh/eoh/src")
-sys.path.insert(0, f"{REPO}/official_eoh/examples/tsp_construct")
+import numpy as np
+
+EXAMPLE_DIR = Path(__file__).resolve().parent
+OFFICIAL_EOH_ROOT = EXAMPLE_DIR.parents[1]
+# 按当前文件定位 vendored EoH，避免依赖开发机路径或启动命令所在目录。
+sys.path.insert(0, str(OFFICIAL_EOH_ROOT / "eoh" / "src"))
+sys.path.insert(0, str(EXAMPLE_DIR))
 from eoh import BaseProblem
 
 class TSPCONSTBroad(BaseProblem):
