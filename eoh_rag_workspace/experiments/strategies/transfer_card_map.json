@@ -1,0 +1,48 @@
+{
+  "schema_version": "transfer-card-map/v1",
+  "max_chars": 2500,
+  "problems": {
+    "bp_online": {
+      "core_local": [
+        "obp_first_fit",
+        "obp_best_fit"
+      ],
+      "extra_local": [
+        "obp_harmonic",
+        "obp_funsearch_residual_poly"
+      ],
+      "external_abstract": [
+        "as_tsp_construct_tsp_regret_insertion",
+        "as_cvrp_construct_cvrp_savings"
+      ]
+    },
+    "tsp_construct": {
+      "core_local": [
+        "tsp_regret_insertion",
+        "tsp_nearest_insertion"
+      ],
+      "extra_local": [
+        "tsp_farthest_insertion",
+        "tsp_two_opt_awareness"
+      ],
+      "external_abstract": [
+        "as_bp_online_obp_best_fit",
+        "as_cvrp_construct_cvrp_far_first"
+      ]
+    },
+    "cvrp_construct": {
+      "core_local": [
+        "cvrp_regret_insertion",
+        "cvrp_savings"
+      ],
+      "extra_local": [
+        "cvrp_far_first",
+        "cvrp_sweep"
+      ],
+      "external_abstract": [
+        "as_bp_online_obp_harmonic",
+        "as_tsp_construct_tsp_two_opt_awareness"
+      ]
+    }
+  }
+}

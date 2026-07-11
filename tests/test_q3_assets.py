@@ -62,15 +62,15 @@ def test_q3_manifest_preserves_recovered_protocol() -> None:
     assert manifest["max_runs"] == 30
     assert manifest["operators"] == "e1,e2,m1,m2"
     assert manifest["run_timeout_s"] == 7200
-    assert manifest["n_processes"] == 6
+    assert manifest["n_processes"] == 1
+    assert manifest["pool_policy"] == "disabled"
+    assert manifest["outcome_policy"] == "disabled"
+    assert manifest["prev_run_chain"] is False
     assert manifest["seed_list"] == list(range(2024, 2034))
     assert manifest["require_confirm_for_real_run"] is False
     assert manifest["official_root"] == "official_eoh"
-    assert manifest["rag"] == {
-        "top_k": 2,
-        "max_chars": 2500,
-        "rerank_mode": "llm",
-    }
+    assert manifest["rag"] == {"top_k": 2, "max_chars": 2500, "rerank_mode": "llm"}
+    assert all("outcome_file" not in (arm.get("rag") or {}) for arm in manifest["arms"])
 
     arms = {arm["name"]: arm for arm in manifest["arms"]}
     assert set(arms) == {"pure", "generic", "answer"}
@@ -239,4 +239,5 @@ def test_run_q3_parses_only_allowlisted_environment_keys() -> None:
     assert "case \"$key\" in" in script
     assert 'source "$AUTO_ALGO_OPT_ENV_FILE"' not in script
     assert '. "$AUTO_ALGO_OPT_ENV_FILE"' not in script
-    assert "--shared-pool-dir eoh_rag_workspace/shared_pool_q3" in script
+    assert "--shared-pool-dir" not in script
+    assert "prepare_outcome_files" not in script

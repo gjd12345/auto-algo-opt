@@ -1,0 +1,23 @@
+{
+  "suite": "cross_problem_transfer",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online", "tsp_construct", "cvrp_construct"],
+  "arms": [
+    {"name": "local_only", "runner_arm": "literature_rag", "context_strategy": "frozen_local_cards"},
+    {"name": "mixed_abstract", "runner_arm": "context_file", "context_strategy": "frozen_mixed_abstract"}
+  ],
+  "generations": [8],
+  "pop_size": 6,
+  "repeats": 5,
+  "seed_list": [3101, 3102, 3103, 3104, 3105],
+  "max_runs": 30,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "shared_pool_policy": "read_only",
+  "shared_pool_snapshot": "evidence/final_batch_20260630/shared_pool_snapshot",
+  "shared_pool_top_k": 3,
+  "strategy_assets": "eoh_rag_workspace/experiments/strategies/transfer_card_map.json",
+  "rag": {"top_k": 2, "max_chars": 2500},
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh"
+}

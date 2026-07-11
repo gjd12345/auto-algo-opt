@@ -132,24 +132,10 @@ load_api_environment() {
   fi
 }
 
-prepare_outcome_files() {
-  # outcome 文件既是各臂的历史输入也是运行后的追加输出；首次运行要先创建空文件。
-  local arm
-  local outcome_path
-  for arm in pure generic answer; do
-    outcome_path="$OUTPUT_DIRECTORY/$arm/card_outcomes.jsonl"
-    mkdir -p "$(dirname -- "$outcome_path")"
-    if [[ ! -e "$outcome_path" ]]; then
-      : > "$outcome_path"
-    fi
-  done
-}
-
 runner_arguments=(
   -m eoh_rag.experiments.batch_runner
   --manifest "$MANIFEST_PATH"
   --output-dir "$OUTPUT_DIRECTORY"
-  --shared-pool-dir eoh_rag_workspace/shared_pool_q3
 )
 
 if [[ "$DRY_RUN" == true ]]; then
@@ -163,7 +149,6 @@ else
     echo "Export it directly or set AUTO_ALGO_OPT_ENV_FILE to a readable env file." >&2
     exit 1
   fi
-  prepare_outcome_files
   runner_arguments+=(--force)
   echo "Starting Q3 ablation (3 arms x 10 paired repeats)."
 fi

@@ -1,0 +1,149 @@
+{
+  "schema_version": "abstract-strategy-set/v1",
+  "strategies": [
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_bp_online_obp_first_fit",
+      "source_problem": "bp_online",
+      "source_card_id": "obp_first_fit",
+      "abstract_description": "优先采用当前最早满足约束的可行方案，减少额外结构的开启。",
+      "target_problem_compatibility": [
+        "tsp_construct",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "032c77fb5e70e722d76f455f27ac2164e9f22edbf52bc3938b6c143a36e2a099"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_bp_online_obp_best_fit",
+      "source_problem": "bp_online",
+      "source_card_id": "obp_best_fit",
+      "abstract_description": "优先采用执行后剩余空间最少但仍可行的方案，提高已有空间利用率。",
+      "target_problem_compatibility": [
+        "tsp_construct",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "da2c971fe6e36d3a8ef9a5192346d46e25667449cbba17e318daa5c0e6cf01ee"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_bp_online_obp_harmonic",
+      "source_problem": "bp_online",
+      "source_card_id": "obp_harmonic",
+      "abstract_description": "按规模区间分层处理候选项，让相近尺度遵循一致的选择规则。",
+      "target_problem_compatibility": [
+        "tsp_construct",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "8daefd55e19dc1791e13a91bfa59a68a6ca93158ea1c2158a813d840bb7307ff"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_bp_online_obp_funsearch_residual_poly",
+      "source_problem": "bp_online",
+      "source_card_id": "obp_funsearch_residual_poly",
+      "abstract_description": "综合剩余空间与非线性惩罚排序，在紧凑利用和后续可调空间之间平衡。",
+      "target_problem_compatibility": [
+        "tsp_construct",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "8decdb381a414ffa06327aa279e1aaa6f61da957730854169dc887502d8ef805"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_tsp_construct_tsp_regret_insertion",
+      "source_problem": "tsp_construct",
+      "source_card_id": "tsp_regret_insertion",
+      "abstract_description": "优先处理替代选择会迅速变差的候选，同时控制当前增加的代价。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "f8cb007413ec86f43f65f4af18b3dcbb91e3ea49d9116e85b0ef8be12f760685"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_tsp_construct_tsp_farthest_insertion",
+      "source_problem": "tsp_construct",
+      "source_card_id": "tsp_farthest_insertion",
+      "abstract_description": "先吸收离当前结构较远的候选，避免它们在后期形成昂贵补接。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "f4ec6b3ecf061ed7258506fca6dbc4f0a734f42191b6426c4c6629f502050616"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_tsp_construct_tsp_nearest_insertion",
+      "source_problem": "tsp_construct",
+      "source_card_id": "tsp_nearest_insertion",
+      "abstract_description": "优先扩展当前增量代价较小的候选，逐步构造稳定结构。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "44ce55cc43c361ec1ac35c27bbbf6b3980d204665750a310edce03a98c601700"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_tsp_construct_tsp_two_opt_awareness",
+      "source_problem": "tsp_construct",
+      "source_card_id": "tsp_two_opt_awareness",
+      "abstract_description": "选择时兼顾潜在交叉与局部重排空间，减少后续修复成本。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "cvrp_construct"
+      ],
+      "source_content_sha256": "5e053decbeb2712284f60f481b5a7fd8370544c374d924852fd56e1080c842d7"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_cvrp_construct_cvrp_regret_insertion",
+      "source_problem": "cvrp_construct",
+      "source_card_id": "cvrp_regret_insertion",
+      "abstract_description": "优先处理替代位置会造成明显额外代价的候选，并把容量仅作为可行性约束。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "tsp_construct"
+      ],
+      "source_content_sha256": "5b9792794e022a4d035cb1d12e56f6cd2834ebcc49cc84e21e786e151905e7d3"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_cvrp_construct_cvrp_far_first",
+      "source_problem": "cvrp_construct",
+      "source_card_id": "cvrp_far_first",
+      "abstract_description": "先处理远离公共起点的候选，降低后期单独访问造成的高代价。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "tsp_construct"
+      ],
+      "source_content_sha256": "c73effb350c86b4f24efdade1247e962dbb7ef48af8528186ca8334eac342c6a"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_cvrp_construct_cvrp_savings",
+      "source_problem": "cvrp_construct",
+      "source_card_id": "cvrp_savings",
+      "abstract_description": "优先合并能相对独立执行显著节约总代价的候选组合。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "tsp_construct"
+      ],
+      "source_content_sha256": "a29ab4b18b63b54ff872ca447f79bf86d854d678b7ce013d06aa3b1d4157b48d"
+    },
+    {
+      "schema_version": "abstract-strategy/v1",
+      "abstract_strategy_id": "as_cvrp_construct_cvrp_sweep",
+      "source_problem": "cvrp_construct",
+      "source_card_id": "cvrp_sweep",
+      "abstract_description": "按空间方位形成连续处理顺序，再在每个局部范围内满足资源约束。",
+      "target_problem_compatibility": [
+        "bp_online",
+        "tsp_construct"
+      ],
+      "source_content_sha256": "300718e8d111603e5185b13ca5ac538e392ae06baeb68c52382f64baac77705e"
+    }
+  ]
+}
