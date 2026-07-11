@@ -16,8 +16,10 @@ OFFICIAL_EOH_ROOT = EXAMPLE_DIR.parents[1]
 # 与 TSP evaluator 使用相同的文件定位规则，确保从任意工作目录导入均一致。
 sys.path.insert(0, str(OFFICIAL_EOH_ROOT / "eoh" / "src"))
 sys.path.insert(0, str(EXAMPLE_DIR))
+sys.path.insert(0, str(EXAMPLE_DIR.parent))
 
 from eoh import BaseProblem
+from core_benchmarks import evaluate_cvrp, load_cvrp
 
 class CVRPCONSTBroad(BaseProblem):
     """CVRP 广训练池 + held-out 评测器。
@@ -87,6 +89,10 @@ class CVRPCONSTBroad(BaseProblem):
             costs.append(self._tour_cost(coords, route))
         fitness = float(np.mean(costs))
         self.held_out_report = {}
-        for idx, entry in enumerate(self.held_out_data):
-            self.held_out_report[f"held_out_{idx}"] = 0.0
+        for entry in self.held_out_data:
+            try:
+                result = evaluate_cvrp(callable_func, load_cvrp(entry))
+            except Exception as exc:
+                result = {"instance": Path(entry).stem, "feasible": False, "capacity_valid": False, "coverage_valid": False, "error_type": type(exc).__name__, "error": str(exc)}
+            self.held_out_report[Path(entry).stem] = result
         return fitness

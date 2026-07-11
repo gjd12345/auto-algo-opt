@@ -29,6 +29,8 @@
 from __future__ import annotations
 
 import argparse
+import ast
+import hashlib
 import json
 import os
 import re
@@ -140,11 +142,40 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "best_sample_path": str(best_sample) if best_sample.exists() else None,
         "held_out_report": held_out_report,
         "held_out_report_path": str(held_out_report_path) if held_out_report_path.is_file() else None,
+        "population_diversity": [],
     }
     if not populations:
         # 没有任何种群文件，说明进化未产出结果
         summary["failure_reason"] = "missing_population"
         return summary
+
+    # AST 节点类型序列比原始文本更稳健，可忽略变量名与格式差异。
+    for population_path in populations:
+        items = _load_json(population_path)
+        if not isinstance(items, list):
+            continue
+        hashes: set[str] = set()
+        parse_failures = 0
+        parseable = 0
+        for item in items:
+            code = item.get("code") if isinstance(item, dict) else None
+            if not isinstance(code, str) or not code.strip():
+                continue
+            try:
+                tree = ast.parse(code)
+            except SyntaxError:
+                parse_failures += 1
+                continue
+            parseable += 1
+            signature = ",".join(type(node).__name__ for node in ast.walk(tree))
+            hashes.add(hashlib.sha256(signature.encode("utf-8")).hexdigest())
+        summary["population_diversity"].append({
+            "generation": _natural_generation(population_path),
+            "population_size": len(items),
+            "unique_ast_count": len(hashes),
+            "unique_ast_ratio": round(len(hashes) / parseable, 6) if parseable else 0.0,
+            "ast_parse_failure_count": parse_failures,
+        })
 
     latest = populations[-1]  # 取最后一代作为结果来源
     population = _load_json(latest)

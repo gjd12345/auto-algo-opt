@@ -10,7 +10,9 @@ OFFICIAL_EOH_ROOT = EXAMPLE_DIR.parents[1]
 # 按当前文件定位 vendored EoH，避免依赖开发机路径或启动命令所在目录。
 sys.path.insert(0, str(OFFICIAL_EOH_ROOT / "eoh" / "src"))
 sys.path.insert(0, str(EXAMPLE_DIR))
+sys.path.insert(0, str(EXAMPLE_DIR.parent))
 from eoh import BaseProblem
+from core_benchmarks import evaluate_tsp, load_tsp
 
 class TSPCONSTBroad(BaseProblem):
     """TSP 广训练池 + held-out 报告版评测器(opt-in,与 A1 同构)。
@@ -75,6 +77,10 @@ class TSPCONSTBroad(BaseProblem):
         fitness = float(np.mean(costs))
         # held-out 报告(只记录,不进适应度)
         self.held_out_report = {}
-        for idx, entry in enumerate(self.held_out_data):
-            self.held_out_report[f"held_out_{idx}"] = 0.0  # placeholder
+        for entry in self.held_out_data:
+            try:
+                result = evaluate_tsp(callable_func, load_tsp(entry))
+            except Exception as exc:
+                result = {"instance": Path(entry).stem, "feasible": False, "error_type": type(exc).__name__, "error": str(exc)}
+            self.held_out_report[Path(entry).stem] = result
         return fitness

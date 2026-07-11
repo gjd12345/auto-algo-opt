@@ -138,6 +138,20 @@ class OfficialEohRunTests(unittest.TestCase):
         self.assertFalse(summary["ok"])
         self.assertEqual(summary["failure_reason"], "missing_population")
 
+    def test_summarize_run_reports_ast_diversity(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            pops = Path(tmp) / "results" / "pops"
+            pops.mkdir(parents=True)
+            (pops / "population_generation_1.json").write_text(
+                json.dumps([
+                    {"objective": 2.0, "code": "x = 1"},
+                    {"objective": 1.0, "code": "y = 2"},
+                    {"objective": 3.0, "code": "def broken("},
+                ]), encoding="utf-8"
+            )
+            diversity = summarize_run(Path(tmp))["population_diversity"]
+        self.assertEqual(diversity, [{"generation": 1, "population_size": 3, "unique_ast_count": 1, "unique_ast_ratio": 0.5, "ast_parse_failure_count": 1}])
+
     def test_build_bp_online_literature_rag_context_uses_obp_cards_only(self) -> None:
         context, trace = build_official_rag_context(Path.cwd(), "bp_online", "literature_rag", top_k=2, max_chars=1800)
         selected_ids = [item["id"] for item in trace["rag_selected_items"]]

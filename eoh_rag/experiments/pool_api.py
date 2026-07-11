@@ -46,6 +46,7 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 import re
 import time
@@ -194,6 +195,23 @@ class PoolAPI:
             if len(unique) >= top_k:
                 break
         return unique
+
+    def snapshot(self, problem: str, top_k: int = 1) -> list[dict]:
+        """只读返回稳定排序的精英快照，不创建目录也不共享可变对象。"""
+        entries = self._read_jsonl(self._best_codes_path(problem))
+        for entry in entries:
+            entry.setdefault("code_hash", hashlib.sha256(str(entry.get("code", "")).encode("utf-8")).hexdigest())
+        entries.sort(key=lambda item: (float(item.get("objective", float("inf"))), float(item.get("ts", 0.0)), str(item["code_hash"])))
+        selected: list[dict] = []
+        seen: set[str] = set()
+        for entry in entries:
+            if entry["code_hash"] in seen:
+                continue
+            seen.add(entry["code_hash"])
+            selected.append(entry)
+            if len(selected) >= top_k:
+                break
+        return copy.deepcopy(selected)
 
     # ------------------------------------------------------------------ #
     # 算子成功率                                                          #

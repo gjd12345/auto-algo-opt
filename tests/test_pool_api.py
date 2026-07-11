@@ -80,6 +80,19 @@ def test_best_codes_empty(tmp_path: Path) -> None:
     assert PoolAPI(tmp_path).best_codes("bp_online") == []
 
 
+def test_snapshot_is_stable_problem_isolated_and_read_only(tmp_path: Path) -> None:
+    pool = PoolAPI(tmp_path)
+    pool.register_code("bp_online", "x = 1", 2.0, ts=3.0)
+    pool.register_code("bp_online", "x = 2", 1.0, ts=2.0)
+    pool.register_code("tsp_construct", "x = 9", 0.1, ts=1.0)
+    before = sorted(path.name for path in tmp_path.iterdir())
+    rows = pool.snapshot("bp_online", top_k=2)
+    rows[0]["code"] = "mutated"
+    assert [row["objective"] for row in pool.snapshot("bp_online", top_k=2)] == [1.0, 2.0]
+    assert all("x = 9" != row["code"] for row in rows)
+    assert sorted(path.name for path in tmp_path.iterdir()) == before
+
+
 # --------------------------------------------------------------------------- #
 # 算子成功率                                                                   #
 # --------------------------------------------------------------------------- #
