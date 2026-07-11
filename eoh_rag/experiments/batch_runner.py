@@ -45,6 +45,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 from eoh_rag.experiments.pool_api import PoolAPI
+from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -272,17 +273,13 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
     if isinstance(gens, list) and any(not isinstance(g, int) or g < 0 for g in gens):
         errors.append("generations must be a list of non-negative ints")
 
+    errors.extend(validate_run_manifest(manifest))
     return errors
 
 
 def _matrix_count(manifest: dict[str, Any]) -> int:
-    """按「问题数 × 实验臂数 × 代数取值数 × 重复次数」计算展开后的总运行数。"""
-    return (
-        len(manifest.get("problems", []))
-        * len(manifest.get("arms", []))
-        * len(manifest.get("generations", [1]))
-        * manifest.get("repeats", 1)
-    )
+    """基于实际 RunSpec 计数，正确处理 problem-scoped arm。"""
+    return len(expand_run_specs(manifest, Path(".")))
 
 
 def _build_cmd(
@@ -294,6 +291,9 @@ def _build_cmd(
     output_dir: str,
     prev_run_dir: str = "",
     seed_codes_path: str = "",
+    seed: int | None = None,
+    provider: str = "opencode-go",
+    temperature_schedule: str = "fixed",
 ) -> list[str]:
     """为「某问题 × 某实验臂 × 某代数」拼装调用单次运行器的完整命令行参数列表。
 
@@ -326,6 +326,9 @@ def _build_cmd(
         "--official-root", manifest.get("official_root") or _DEFAULT_ROOT,
         "--python", manifest.get("python_exe") or _DEFAULT_PYTHON or sys.executable,
     ]
+    if seed is not None:
+        cmd.extend(["--seed", str(seed)])
+    cmd.extend(["--provider", provider, "--temperature-schedule", temperature_schedule])
     # 合并 RAG 配置：arm 级别覆盖 manifest 级别
     rag = {**manifest.get("rag", {}), **arm.get("rag", {})}
     if arm["runner_arm"] in ("literature_rag", "history_rag", "mixed_rag"):
@@ -399,6 +402,9 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true", help="Skip runs with existing summary")
     parser.add_argument("--force", action="store_true", help="Skip run-count safety check")
     parser.add_argument("--shared-pool-dir", default="", help="Cross-process shared pool for island model population sharing")
+    parser.add_argument("--max-concurrent-runs", type=int, default=1)
+    parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+    parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     args = parser.parse_args()
 
     manifest_path = Path(args.manifest).resolve()
@@ -471,12 +477,14 @@ def main() -> None:
             for gen in generations:
                 prev_run_dir = ""  # 同一 (问题,臂,代数) 下按重复顺序链式传递上一次运行目录
                 for rep in range(1, repeats + 1):
+                    # repeat 只是序号；正式随机性由清单中的显式 seed 控制。
+                    seed = (manifest.get("seed_list") or list(range(repeats)))[rep - 1]
                     run_tag = f"run_{problem}_{arm['name']}_g{gen}_r{rep}"
                     run_out = str(output_root / run_tag)
 
                     # 预演模式：只打印命令，不执行；仍串好 prev_run_dir 以便预览链式关系
                     if args.dry_run:
-                        cmd = _build_cmd(manifest, problem, arm, gen, rep, run_out, prev_run_dir=prev_run_dir)
+                        cmd = _build_cmd(manifest, problem, arm, gen, rep, run_out, prev_run_dir=prev_run_dir, seed=seed, provider=args.provider, temperature_schedule=args.temperature_schedule)
                         print(f"[DRY] {run_tag}")
                         print(f"  {' '.join(cmd)}")
                         print()
@@ -512,7 +520,7 @@ def main() -> None:
                         if best_codes:
                             seed_codes_path = str(Path(shared_pool_dir) / f"_seed_{problem}_{os.getpid()}.json")
                             Path(seed_codes_path).write_text(json.dumps(best_codes, ensure_ascii=False), encoding="utf-8")
-                    cmd = _build_cmd(manifest, problem, arm, gen, rep, run_out, prev_run_dir=effective_prev, seed_codes_path=seed_codes_path)
+                    cmd = _build_cmd(manifest, problem, arm, gen, rep, run_out, prev_run_dir=effective_prev, seed_codes_path=seed_codes_path, seed=seed, provider=args.provider, temperature_schedule=args.temperature_schedule)
                     started = time.time()
                     # 真正拉起子进程执行单次运行；超时按 timeout 处理，比运行超时多留 60 秒缓冲
                     try:
@@ -529,6 +537,7 @@ def main() -> None:
                         "arm": arm["name"],
                         "generation": gen,
                         "repeat": rep,
+                        "seed": seed,
                         "status": status,
                         "runtime_s": elapsed,
                         "output_dir": run_out,

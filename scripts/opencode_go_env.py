@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 DEFAULT_ENDPOINT = "https://opencode.ai/zen/go/v1/chat/completions"
-DEFAULT_MODEL = "glm-5.2"
+DEFAULT_MODEL = "deepseek-v4-flash"
 
 
 def _candidate_auth_paths() -> list[Path]:

@@ -95,7 +95,7 @@ class EOH:
         log_path = os.path.join(config.output_dir, "results", "run_log.txt")
         self._logger = setup_logger(log_path, config.debug)
 
-        random.seed(2024)
+        # 随机源由外层 RunSpec 初始化，避免所有正式 run 被静默固定为同一 seed。
         self.evolution = Evolution(config, problem)
 
     # ── header ────────────────────────────────────────────────────────────────

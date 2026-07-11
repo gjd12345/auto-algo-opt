@@ -209,10 +209,12 @@ def _runner_script() -> str:
         import json
         import logging
         import os
+        import random
         import re
         import sys
         import time
         import urllib.request
+        import numpy as np
         from pathlib import Path
 
         logger = logging.getLogger(__name__)
@@ -410,6 +412,9 @@ def _runner_script() -> str:
             parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")
             parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
             parser.add_argument("--llm-model", default="")
+            parser.add_argument("--seed", type=int, default=2024)
+            parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+            parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
             parser.add_argument("--seed-codes", default="")
             parser.add_argument("--adaptive-stop", action="store_true")
             parser.add_argument("--stop-window", type=int, default=5)
@@ -418,6 +423,10 @@ def _runner_script() -> str:
             parser.add_argument("--n-train", type=int, default=128, help="广训练池实例数(仅 broad-training 有效)")
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
+
+            # 同一配对共享本地随机 seed；远端 LLM 文本不承诺逐字一致。
+            random.seed(args.seed)
+            np.random.seed(args.seed)
 
             official_root = Path(args.official_root).resolve()
             sys.path.insert(0, str(official_root / "eoh" / "src"))
@@ -528,6 +537,9 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "generations": args.generations,
         "operators": args.operators,
         "use_official_seed": args.use_official_seed,
+        "seed": getattr(args, "seed", 2024),
+        "provider": getattr(args, "provider", "opencode-go"),
+        "temperature_schedule": getattr(args, "temperature_schedule", "fixed"),
         "adaptive_stop": args.adaptive_stop,
         "stop_window": args.stop_window,
         "stop_min_gap": args.stop_min_gap,
@@ -652,6 +664,12 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         args.api_endpoint_env,
         "--model-env",
         args.model_env,
+        "--seed",
+        str(getattr(args, "seed", 2024)),
+        "--provider",
+        getattr(args, "provider", "opencode-go"),
+        "--temperature-schedule",
+        getattr(args, "temperature_schedule", "fixed"),
     ]
     # 以下均为可选项，仅在对应参数存在时追加
     if args.llm_model:
@@ -818,6 +836,9 @@ def main() -> None:
     parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")
     parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
     parser.add_argument("--llm-model", default="")
+    parser.add_argument("--seed", type=int, default=2024)
+    parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+    parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     payload = run_official_eoh(parser.parse_args())
     print(json.dumps(payload, ensure_ascii=True, indent=2))
     if payload.get("failure_reason") == "outcome_file_not_found":
