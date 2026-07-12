@@ -19,7 +19,8 @@ def sha256(path: Path) -> str:
 def import_file(source: Path, target: Path) -> str:
     """先校验最小格式，再原子替换；既有文件内容冲突时停止。"""
     text = source.read_text(encoding="utf-8", errors="replace")
-    if "NODE_COORD_SECTION" not in text or "EOF" not in text:
+    # 部分原始 TSPLIB 文件没有显式 EOF；坐标段和类型头足以判定本轮格式。
+    if "NODE_COORD_SECTION" not in text or "TYPE" not in text:
         raise ValueError(f"invalid benchmark format: {source}")
     source_hash = sha256(source)
     if target.exists():
