@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -182,6 +184,30 @@ def test_cross_broad_problems_expose_eoh_template_contract() -> None:
     cvrp_source = (root / "cvrp_construct" / "prob_broad.py").read_text(encoding="utf-8")
     assert "class TSPCONSTBroad(TSPCONST)" in tsp_source
     assert "class CVRPCONSTBroad(CVRPCONST)" in cvrp_source
+
+
+def test_tsp_broad_seed_survives_spawn_evaluation(tmp_path: Path) -> None:
+    script = tmp_path / "spawn_smoke.py"
+    script.write_text(
+        f'''from pathlib import Path
+import sys
+root = Path(r"{REPOSITORY_ROOT / 'official_eoh'}")
+sys.path.insert(0, str(root / "eoh" / "src"))
+sys.path.insert(0, str(root / "examples" / "tsp_construct"))
+from prob_broad import TSPCONSTBroad
+from eoh.eoh.evolution import _eval_with_timeout
+
+if __name__ == "__main__":
+    problem = TSPCONSTBroad(n_train=4, held_out_set=[])
+    value = _eval_with_timeout(problem, problem.template_program, 30)
+    if value is None:
+        raise SystemExit(2)
+    print(value)
+''',
+        encoding="utf-8",
+    )
+    process = subprocess.run([sys.executable, str(script)], text=True, capture_output=True, timeout=60)
+    assert process.returncode == 0, process.stdout + process.stderr
 
 
 def test_summarize_run_reads_held_out_report(tmp_path: Path) -> None:

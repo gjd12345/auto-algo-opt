@@ -322,7 +322,7 @@ def _build_cmd(
         "--operators", manifest.get("operators", "i1"),
         # 默认 6 路 run 内并发(num_samplers=num_evaluators=6);manifest 可覆盖,复现旧确定性基线时设 1
         "--n-processes", str(manifest.get("n_processes", 6)),
-        "--eval-timeout-s", "40",
+        "--eval-timeout-s", str(manifest.get("eval_timeout_s", 40)),
         "--llm-timeout-s", "180",
         "--run-timeout-s", str(manifest.get("run_timeout_s", 1800)),
         "--output-dir", output_dir,

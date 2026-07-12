@@ -75,6 +75,13 @@ class ExperimentManifestRunnerTests(unittest.TestCase):
 
         self.assertNotIn("--llm-model", cmd)
 
+    def test_build_cmd_uses_manifest_eval_timeout(self) -> None:
+        manifest = self._minimal_manifest()
+        manifest["eval_timeout_s"] = 180
+        cmd = _build_cmd(manifest, "tsp_construct", manifest["arms"][0], 0, 1, "/tmp/out")
+        timeout_index = cmd.index("--eval-timeout-s")
+        self.assertEqual("180", cmd[timeout_index + 1])
+
     def test_runner_script_seeds_via_use_seed_not_phantom(self) -> None:
         # 精英种子经引擎 use_seed/seed_path 注入,子脚本不得再引用运行时缺失的方法。
         from eoh_rag.experiments.eoh_single_runner import _runner_script
