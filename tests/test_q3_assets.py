@@ -22,6 +22,13 @@ Q3_MANIFEST_PATH = (
     / "manifests"
     / "bp_ablation_cards_q3.json"
 )
+Q3_COMPONENT_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "eoh_rag_workspace"
+    / "experiments"
+    / "manifests"
+    / "bp_card_component_q3.json"
+)
 
 
 def _write_run_summary(path: Path, dataset_name: str, score: float) -> None:
@@ -89,6 +96,33 @@ def test_q3_manifest_preserves_recovered_protocol() -> None:
         "obp_harmonic",
         "obp_funsearch_residual_poly",
         "obp_eoh_util_sqrt_exp",
+    ]
+
+
+def test_q3_component_manifest_only_adds_two_single_card_arms() -> None:
+    manifest = json.loads(Q3_COMPONENT_MANIFEST_PATH.read_text(encoding="utf-8"))
+
+    assert manifest["suite"] == "bp_card_component_q3"
+    assert manifest["problems"] == ["bp_online"]
+    assert manifest["held_out_set"] == [
+        "eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl"
+    ]
+    assert manifest["generations"] == [8]
+    assert manifest["pop_size"] == 6
+    assert manifest["seed_list"] == list(range(2024, 2034))
+    assert manifest["repeats"] == 10
+    assert manifest["max_runs"] == 20
+    assert manifest["operators"] == "e1,e2,m1,m2"
+    assert manifest["eval_timeout_s"] == 40
+    assert manifest["pool_policy"] == "disabled"
+    assert manifest["outcome_policy"] == "disabled"
+    assert manifest["prev_run_chain"] is False
+
+    arms = {arm["name"]: arm for arm in manifest["arms"]}
+    assert set(arms) == {"harmonic_only", "residual_poly_only"}
+    assert arms["harmonic_only"]["candidate_card_ids"] == ["obp_harmonic"]
+    assert arms["residual_poly_only"]["candidate_card_ids"] == [
+        "obp_funsearch_residual_poly"
     ]
 
 
@@ -316,8 +350,18 @@ def test_analyzer_discovers_batch_and_legacy_layouts(tmp_path: Path) -> None:
         "held_out/hifo_5k_C100.pkl",
         3.5,
     )
+    _write_run_summary(
+        tmp_path
+        / "bp_ablation_cards_q3"
+        / "bp_online"
+        / "pure"
+        / "2024"
+        / analyze_q3.SUMMARY_FILENAME,
+        "held_out/hifo_5k_C100.pkl",
+        1.5,
+    )
 
-    assert analyze_q3.load_arm_scores(tmp_path, "pure") == [2.5, 3.5]
+    assert analyze_q3.load_arm_scores(tmp_path, "pure") == [1.5, 2.5, 3.5]
 
 
 def test_analyzer_fails_when_any_arm_has_no_scores(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

@@ -70,6 +70,11 @@ def discover_arm_summaries(report_directory: str | Path, arm: str) -> list[Path]
     # 兼容调用者传 batch_runner 的 output 根目录，而不是已经拼好 suite 的目录。
     discovered.update(report_path.glob(f"*/run_*_{arm}_*/{SUMMARY_FILENAME}"))
 
+    # 当前可复现实验按“问题/实验臂/seed”分层。保留显式层级匹配，避免递归扫描时
+    # 把同一 formal 根目录下的失败批次或历史批次误并入正式样本。
+    discovered.update(report_path.glob(f"*/{arm}/*/{SUMMARY_FILENAME}"))
+    discovered.update(report_path.glob(f"*/*/{arm}/*/{SUMMARY_FILENAME}"))
+
     return sorted(path.resolve() for path in discovered if path.is_file())
 
 
