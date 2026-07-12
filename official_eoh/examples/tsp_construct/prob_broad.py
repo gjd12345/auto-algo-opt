@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """A3: TSP held-out 评测器(与 A1 BPONLINEBroad 同构,复用 n_train/held_out_set 字段)。"""
 import sys
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -11,10 +12,16 @@ OFFICIAL_EOH_ROOT = EXAMPLE_DIR.parents[1]
 sys.path.insert(0, str(OFFICIAL_EOH_ROOT / "eoh" / "src"))
 sys.path.insert(0, str(EXAMPLE_DIR))
 sys.path.insert(0, str(EXAMPLE_DIR.parent))
-from eoh import BaseProblem
 from core_benchmarks import evaluate_tsp, load_tsp
 
-class TSPCONSTBroad(BaseProblem):
+_BASE_SPEC = importlib.util.spec_from_file_location("_tsp_construct_base_prob", EXAMPLE_DIR / "prob.py")
+if _BASE_SPEC is None or _BASE_SPEC.loader is None:
+    raise ImportError("cannot load TSP base problem")
+_BASE_MODULE = importlib.util.module_from_spec(_BASE_SPEC)
+_BASE_SPEC.loader.exec_module(_BASE_MODULE)
+TSPCONST = _BASE_MODULE.TSPCONST
+
+class TSPCONSTBroad(TSPCONST):
     """TSP 广训练池 + held-out 报告版评测器(opt-in,与 A1 同构)。
     
     用默认 n=50(等缺省构造)的训练实例族作适应度(规模可配),held-out 实例只报告不进适应度。

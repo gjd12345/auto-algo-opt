@@ -7,6 +7,7 @@ manifest 设 broad_training:true 启用;缺省 false 时原 CVRPCONST 不受影�
 """
 from __future__ import annotations
 import sys
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -18,10 +19,16 @@ sys.path.insert(0, str(OFFICIAL_EOH_ROOT / "eoh" / "src"))
 sys.path.insert(0, str(EXAMPLE_DIR))
 sys.path.insert(0, str(EXAMPLE_DIR.parent))
 
-from eoh import BaseProblem
 from core_benchmarks import evaluate_cvrp, load_cvrp
 
-class CVRPCONSTBroad(BaseProblem):
+_BASE_SPEC = importlib.util.spec_from_file_location("_cvrp_construct_base_prob", EXAMPLE_DIR / "prob.py")
+if _BASE_SPEC is None or _BASE_SPEC.loader is None:
+    raise ImportError("cannot load CVRP base problem")
+_BASE_MODULE = importlib.util.module_from_spec(_BASE_SPEC)
+_BASE_SPEC.loader.exec_module(_BASE_MODULE)
+CVRPCONST = _BASE_MODULE.CVRPCONST
+
+class CVRPCONSTBroad(CVRPCONST):
     """CVRP 广训练池 + held-out 评测器。
     
     用 n_train 个变化实例作适应度(对齐 EoH-S 256 实例设计),held-out 只报告不进适应度。

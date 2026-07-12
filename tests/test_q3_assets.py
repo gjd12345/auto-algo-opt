@@ -176,6 +176,14 @@ def test_generated_runner_persists_best_held_out_report() -> None:
     assert "persist_best_held_out_report(task, Path(args.output_dir))" in source
 
 
+def test_cross_broad_problems_expose_eoh_template_contract() -> None:
+    root = REPOSITORY_ROOT / "official_eoh" / "examples"
+    tsp_source = (root / "tsp_construct" / "prob_broad.py").read_text(encoding="utf-8")
+    cvrp_source = (root / "cvrp_construct" / "prob_broad.py").read_text(encoding="utf-8")
+    assert "class TSPCONSTBroad(TSPCONST)" in tsp_source
+    assert "class CVRPCONSTBroad(CVRPCONST)" in cvrp_source
+
+
 def test_summarize_run_reads_held_out_report(tmp_path: Path) -> None:
     population_directory = tmp_path / "results" / "pops"
     population_directory.mkdir(parents=True)
