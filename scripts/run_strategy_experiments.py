@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from eoh_rag.experiments.provider import get_provider_config
 from eoh_rag.experiments.strategy_assets import load_and_validate_assets
-from scripts.opencode_go_env import load_opencode_go_key
+from scripts.opencode_go_env import build_env, load_opencode_go_key
 
 MANIFESTS={"q3":ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json","cross":ROOT/"eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json"}
 
@@ -15,7 +15,12 @@ def _check_provider(name: str) -> tuple[bool,str]:
     if name == "opencode-go" and not key:
         key, _ = load_opencode_go_key()
     if not key: return False, f"missing {config.api_key_env}"
-    request=urllib.request.Request(config.endpoint,data=json.dumps({"model":config.model,"messages":[{"role":"user","content":"Reply OK"}],"max_tokens":2}).encode(),headers={"Authorization":f"Bearer {key}","Content-Type":"application/json"})
+    # OpenCode Go 的边缘防护会拒绝 urllib 默认 User-Agent；与正式调用保持一致。
+    request=urllib.request.Request(
+        config.endpoint,
+        data=json.dumps({"model":config.model,"messages":[{"role":"user","content":"Reply OK"}],"max_tokens":2}).encode(),
+        headers={"Authorization":f"Bearer {key}","Content-Type":"application/json","Accept":"application/json","User-Agent":"eoh-experiment/1.0"},
+    )
     try:
         with urllib.request.urlopen(request,timeout=30) as response: return 200 <= response.status < 300, f"HTTP {response.status}"
     except Exception as exc: return False, f"{type(exc).__name__}: {exc}"
@@ -39,10 +44,14 @@ def preflight(experiments: list[str], provider: str) -> int:
 
 def formal(experiments: list[str], provider: str, concurrency: int, resume: bool) -> int:
     failed=False
+    child_env=os.environ.copy()
+    if provider == "opencode-go":
+        # 只在子进程内把 Go 凭证映射到既有 EoH 合约，认证路径与密钥均不落盘。
+        child_env, _ = build_env("deepseek-v4-flash", "https://opencode.ai/zen/go/v1/chat/completions", preserve_existing=False)
     for name in experiments:
         command=[sys.executable,"-m","eoh_rag.experiments.batch_runner","--manifest",str(MANIFESTS[name]),"--output-dir",str(ROOT/"eoh_rag_workspace/reports/formal"),"--provider",provider,"--max-concurrent-runs",str(concurrency),"--force"]
         if resume: command.append("--resume")
-        failed = subprocess.run(command,cwd=ROOT).returncode != 0 or failed
+        failed = subprocess.run(command,cwd=ROOT,env=child_env).returncode != 0 or failed
     return 1 if failed else 0
 
 def main() -> None:

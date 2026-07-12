@@ -62,7 +62,11 @@ def load_opencode_go_key() -> tuple[str, Path | None]:
 
 def build_env(model: str, endpoint: str, preserve_existing: bool = False) -> tuple[dict[str, str], Path | None]:
     env = os.environ.copy()
-    key, auth_path = load_opencode_go_key()
+    # 显式环境变量优先，便于 CI 和临时进程注入；auth store 仅作本机回退。
+    key = env.get("OPENCODE_GO_API_KEY", "")
+    auth_path: Path | None = None
+    if not key:
+        key, auth_path = load_opencode_go_key()
     if key and (not preserve_existing or not env.get("DEEPSEEK_API_KEY")):
         env["DEEPSEEK_API_KEY"] = key
     if not preserve_existing or not env.get("DEEPSEEK_API_ENDPOINT"):
