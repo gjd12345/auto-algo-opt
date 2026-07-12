@@ -223,8 +223,9 @@ sys.path.insert(0, str(root / "examples" / "tsp_construct"))
 import prob_broad
 
 calls = []
-prob_broad.load_tsp = lambda entry: entry
-prob_broad.evaluate_tsp = lambda heuristic, data: calls.append(data) or {{"feasible": True}}
+prob_broad.evaluate_held_out_with_timeout = (
+    lambda program_str, entry, timeout_s: calls.append(entry) or {{"feasible": True}}
+)
 problem = prob_broad.TSPCONSTBroad(n_train=2, held_out_set=["held-out.tsp"])
 assert problem.evaluate(problem.template_program) is not None
 assert calls == []
@@ -236,6 +237,45 @@ assert problem.held_out_report["held-out"]["feasible"] is True
         encoding="utf-8",
     )
     process = subprocess.run([sys.executable, str(script)], text=True, capture_output=True, timeout=60)
+    assert process.returncode == 0, process.stdout + process.stderr
+
+
+def test_tsp_held_out_timeout_is_reported_without_blocking_run(tmp_path: Path) -> None:
+    script = tmp_path / "held_out_timeout_smoke.py"
+    held_out_path = (
+        REPOSITORY_ROOT
+        / "eoh_rag_workspace"
+        / "held_out"
+        / "core"
+        / "tsp_construct"
+        / "eil51.tsp"
+    )
+    script.write_text(
+        f'''from pathlib import Path
+import sys
+import time
+root = Path(r"{REPOSITORY_ROOT / 'official_eoh'}")
+sys.path.insert(0, str(root / "eoh" / "src"))
+sys.path.insert(0, str(root / "examples" / "tsp_construct"))
+from prob_broad import evaluate_held_out_with_timeout
+
+slow_code = """def select_next_node(current_node, destination_node, unvisited_nodes, distance_matrix):
+    import time
+    time.sleep(2)
+    return unvisited_nodes[0]
+"""
+
+if __name__ == "__main__":
+    started_at = time.perf_counter()
+    result = evaluate_held_out_with_timeout(slow_code, r"{held_out_path}", 0.2)
+    elapsed = time.perf_counter() - started_at
+    assert result["error_type"] == "HeldOutTimeout"
+    assert result["feasible"] is False
+    assert elapsed < 5
+''',
+        encoding="utf-8",
+    )
+    process = subprocess.run([sys.executable, str(script)], text=True, capture_output=True, timeout=15)
     assert process.returncode == 0, process.stdout + process.stderr
 
 

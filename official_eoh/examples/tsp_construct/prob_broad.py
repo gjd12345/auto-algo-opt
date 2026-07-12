@@ -2,6 +2,8 @@
 """A3: TSP held-out 评测器(与 A1 BPONLINEBroad 同构,复用 n_train/held_out_set 字段)。"""
 import sys
 import importlib.util
+import multiprocessing as mp
+import queue
 from pathlib import Path
 
 import numpy as np
@@ -21,6 +23,55 @@ _BASE_MODULE = importlib.util.module_from_spec(_BASE_SPEC)
 _BASE_SPEC.loader.exec_module(_BASE_MODULE)
 TSPCONST = _BASE_MODULE.TSPCONST
 
+
+def _held_out_worker(program_str: str, entry: str, result_queue) -> None:
+    """在隔离进程中编译启发式并评估单个 held-out 实例。"""
+    try:
+        namespace = {"np": np}
+        exec(program_str, namespace)
+        heuristic = namespace.get("select_next_node")
+        if not callable(heuristic):
+            raise ValueError("select_next_node is missing")
+        result_queue.put(evaluate_tsp(heuristic, load_tsp(entry)))
+    except Exception as exc:
+        result_queue.put({
+            "instance": Path(entry).stem,
+            "feasible": False,
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        })
+
+
+def evaluate_held_out_with_timeout(program_str: str, entry: str, timeout_s: float) -> dict:
+    """限时评估一个 TSP held-out 实例，超时作为扩展性结果写入报告。"""
+    context = mp.get_context("spawn")
+    result_queue = context.Queue(maxsize=1)
+    process = context.Process(target=_held_out_worker, args=(program_str, entry, result_queue))
+    process.start()
+    process.join(timeout_s)
+    if process.is_alive():
+        process.terminate()
+        process.join()
+        result_queue.close()
+        return {
+            "instance": Path(entry).stem,
+            "feasible": False,
+            "error_type": "HeldOutTimeout",
+            "error": f"held-out evaluation exceeded {timeout_s:g}s",
+        }
+
+    try:
+        return result_queue.get(timeout=1)
+    except queue.Empty:
+        return {
+            "instance": Path(entry).stem,
+            "feasible": False,
+            "error_type": "HeldOutWorkerExit",
+            "error": f"held-out worker exited with code {process.exitcode}",
+        }
+    finally:
+        result_queue.close()
+
 class TSPCONSTBroad(TSPCONST):
     """TSP 广训练池 + held-out 报告版评测器(opt-in,与 A1 同构)。
     
@@ -37,6 +88,8 @@ class TSPCONSTBroad(TSPCONST):
         self.held_out_report = {}
         # held-out 不参与适应度，只在最终最佳候选确定后计算，避免每个候选重复跑大型基准。
         self.report_held_out = False
+        # 大规模 TSPLIB 会暴露启发式的复杂度问题；单实例限时避免拖垮整个正式 run。
+        self.held_out_timeout_s = min(float(timeout), 30.0)
         self.instance_data = self._gen_broad_instances(n_train, problem_size)
     
     @staticmethod
@@ -90,9 +143,6 @@ class TSPCONSTBroad(TSPCONST):
         # held-out 报告(只记录,不进适应度)
         self.held_out_report = {}
         for entry in self.held_out_data:
-            try:
-                result = evaluate_tsp(callable_func, load_tsp(entry))
-            except Exception as exc:
-                result = {"instance": Path(entry).stem, "feasible": False, "error_type": type(exc).__name__, "error": str(exc)}
+            result = evaluate_held_out_with_timeout(program_str, entry, self.held_out_timeout_s)
             self.held_out_report[Path(entry).stem] = result
         return fitness
