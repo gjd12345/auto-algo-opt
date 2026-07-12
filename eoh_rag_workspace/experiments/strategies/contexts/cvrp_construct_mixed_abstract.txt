@@ -1,0 +1,21 @@
+Skill: cvrp_regret_insertion
+When: several candidates compete and some may become hard to reach later.
+Do: compute best and second-best distance/detour from current_node; regret = second_best - best. Prefer high regret customers that would otherwise force a long detour.
+Fallback: nearest feasible customer if regrets are flat.
+Safety: use rest_capacity for feasibility check only.
+
+---
+
+Skill: cvrp_savings
+When: choosing customers that consolidate routes.
+Do: score u by savings = d(depot,current)+d(depot,u)-d(current,u). Prefer high savings; demand feasibility is binary.
+Fallback: nearest feasible customer.
+Safety: do not choose infeasible demand.
+
+---
+
+按规模区间分层处理候选项，让相近尺度遵循一致的选择规则。
+
+---
+
+选择时兼顾潜在交叉与局部重排空间，减少后续修复成本。

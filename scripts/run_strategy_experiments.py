@@ -8,7 +8,12 @@ from eoh_rag.experiments.provider import get_provider_config
 from eoh_rag.experiments.strategy_assets import load_and_validate_assets
 from scripts.opencode_go_env import build_env, load_opencode_go_key
 
-MANIFESTS={"q3":ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json","cross":ROOT/"eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json"}
+MANIFESTS={
+    "proxy": ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3_proxy.json",
+    "q3":ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json",
+    "cross":ROOT/"eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+}
+REPORT_ROOT = ROOT / "eoh_rag_workspace/reports/formal"
 
 def _check_provider(name: str) -> tuple[bool,str]:
     config=get_provider_config(name); key=os.environ.get(config.api_key_env, "")
@@ -40,6 +45,9 @@ def preflight(experiments: list[str], provider: str) -> int:
     checks.append({"check":"held_out_readable","ok":not missing and len(registry.get("instances",[]))==22,"detail":{"missing":missing,"core_registry_count":len(registry.get("instances",[]))}})
     connected,detail=_check_provider(provider); checks.append({"check":"provider_connected","ok":connected,"detail":detail})
     result={"phase":"preflight","provider":provider,"checks":checks,"formal_allowed":all(check["ok"] for check in checks)}
+    gate_path = REPORT_ROOT / "preflight_gate.json"
+    gate_path.parent.mkdir(parents=True, exist_ok=True)
+    gate_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result,ensure_ascii=False,indent=2)); return 0 if result["formal_allowed"] else 2
 
 def formal(experiments: list[str], provider: str, concurrency: int, resume: bool) -> int:
@@ -54,7 +62,37 @@ def formal(experiments: list[str], provider: str, concurrency: int, resume: bool
         failed = subprocess.run(command,cwd=ROOT,env=child_env).returncode != 0 or failed
     return 1 if failed else 0
 
+def proxy(provider: str, concurrency: int, resume: bool) -> int:
+    preflight_gate = REPORT_ROOT / "preflight_gate.json"
+    if not preflight_gate.is_file() or not json.loads(preflight_gate.read_text(encoding="utf-8")).get("formal_allowed"):
+        print("ERROR: successful preflight_gate.json is required", file=sys.stderr)
+        return 2
+    exit_code = formal(["proxy"], provider, concurrency, resume)
+    suite_dir = REPORT_ROOT / "bp_ablation_cards_q3_proxy"
+    index_path = suite_dir / "run_index.json"
+    rows = json.loads(index_path.read_text(encoding="utf-8")) if index_path.is_file() else []
+    checks = {
+        "provider_connected": True,
+        "seed_recorded": len(rows) == 6 and all(isinstance(row.get("seed"), int) for row in rows),
+        "held_out_readable": True,
+        "summary_written": len(rows) == 6 and all((Path(row["output_dir"]) / "official_eoh_run_summary.json").is_file() for row in rows),
+        "analysis_parseable": len(rows) == 6 and all(row.get("status") in {"ok", "skipped_complete"} for row in rows),
+        "traceback_absent": len(rows) == 6 and all("traceback" not in str(row.get("detail", "")).lower() for row in rows),
+    }
+    result = {"phase": "proxy", "provider": provider, "run_count": len(rows), "checks": checks, "formal_allowed": exit_code == 0 and all(checks.values())}
+    (REPORT_ROOT / "proxy_gate.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["formal_allowed"] else 3
+
 def main() -> None:
-    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
-    raise SystemExit(preflight(args.experiments,args.provider) if args.phase=="preflight" else formal(args.experiments,args.provider,args.max_concurrent_runs,args.resume))
+    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","proxy","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
+    if args.phase == "preflight":
+        raise SystemExit(preflight(args.experiments,args.provider))
+    if args.phase == "proxy":
+        raise SystemExit(proxy(args.provider,args.max_concurrent_runs,args.resume))
+    proxy_gate = REPORT_ROOT / "proxy_gate.json"
+    if not proxy_gate.is_file() or not json.loads(proxy_gate.read_text(encoding="utf-8")).get("formal_allowed"):
+        print("ERROR: successful proxy_gate.json is required", file=sys.stderr)
+        raise SystemExit(2)
+    raise SystemExit(formal(args.experiments,args.provider,args.max_concurrent_runs,args.resume))
 if __name__=="__main__": main()

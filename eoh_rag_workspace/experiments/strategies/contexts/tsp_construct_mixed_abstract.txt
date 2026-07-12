@@ -1,0 +1,21 @@
+Skill: tsp_regret_insertion
+When: several candidate nodes compete and one may become costly later.
+Do: for each candidate, compare best and second-best local connection alternatives; regret = second_best - best. Prefer high regret with moderate current distance.
+Fallback: nearest neighbor if regret is flat.
+Safety: avoid O(n^3) loops.
+
+---
+
+Skill: tsp_nearest_insertion
+When: nearest neighbor may create long final edges.
+Do: score candidate u by distance current->u plus u->destination, favoring nodes that are close to both current path and return direction.
+Fallback: use nearest neighbor if scores tie.
+Safety: compute only over unvisited_nodes.
+
+---
+
+优先采用执行后剩余空间最少但仍可行的方案，提高已有空间利用率。
+
+---
+
+先处理远离公共起点的候选，降低后期单独访问造成的高代价。

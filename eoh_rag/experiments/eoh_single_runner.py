@@ -545,7 +545,9 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     python_exe = Path(args.python)
     output_root = Path(args.output_dir).resolve()
     # 运行目录按 <问题>/<分支>/run_<时间戳> 分层，避免多次运行相互覆盖
-    run_dir = output_root / args.problem / args.arm / f"run_{time.strftime('%Y%m%d_%H%M%S')}"
+    # batch_runner 已为每个 RunSpec 分配隔离目录；精确模式避免再嵌套 problem/arm/time，
+    # 使 resume、run index 与 summary 契约指向同一位置。
+    run_dir = output_root if getattr(args, "exact_output_dir", False) else output_root / args.problem / args.arm / f"run_{time.strftime('%Y%m%d_%H%M%S')}"
     run_dir.mkdir(parents=True, exist_ok=True)
     runner_path = run_dir / "_run_official_eoh.py"
     runner_path.write_text(_runner_script(), encoding="utf-8")  # 将子进程脚本写入运行目录
@@ -870,6 +872,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2024)
     parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
+    parser.add_argument("--exact-output-dir", action="store_true")
     payload = run_official_eoh(parser.parse_args())
     print(json.dumps(payload, ensure_ascii=True, indent=2))
     if payload.get("failure_reason") == "outcome_file_not_found":

@@ -1,0 +1,29 @@
+Skill: obp_first_fit
+When: need a simple online packing baseline.
+Do: give earlier feasible bins higher scores so the first feasible bin is selected.
+Fallback: if remaining is empty, evaluator opens a new bin.
+Safety: return len(remaining) finite scores only.
+
+---
+
+Skill: obp_best_fit
+When: objective is to minimize used bins in online bin packing.
+Do: score each feasible bin by how full it becomes after placing item; prefer smallest residual capacity rem-item.
+Fallback: if no bin is feasible, evaluator opens a new bin.
+Safety: never score infeasible bins; remaining is already feasible.
+
+---
+
+Skill: obp_harmonic
+When: item sizes vary across small, medium, and large classes.
+Do: bucket item by size/capacity ratio; for large items use best-fit, for small items preserve medium gaps, for medium items penalize residual below item/2.
+Fallback: default to best-fit score.
+Safety: no randomness or lookahead.
+
+---
+
+Skill: obp_residual_poly
+When: best-fit leaves many unusable tiny gaps.
+Do: compute residual r=rem-item; reward tight fit but add penalty for residual ranges that are likely unusable, e.g. r near small isolated gaps.
+Fallback: if formula ties, use best-fit.
+Safety: scores must be finite for every feasible bin.

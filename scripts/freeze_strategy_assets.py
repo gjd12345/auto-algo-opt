@@ -33,5 +33,17 @@ def main() -> None:
       "tsp_construct":{"core_local":["tsp_regret_insertion","tsp_nearest_insertion"],"extra_local":["tsp_farthest_insertion","tsp_two_opt_awareness"],"external_abstract":["as_bp_online_obp_best_fit","as_cvrp_construct_cvrp_far_first"]},
       "cvrp_construct":{"core_local":["cvrp_regret_insertion","cvrp_savings"],"extra_local":["cvrp_far_first","cvrp_sweep"],"external_abstract":["as_bp_online_obp_harmonic","as_tsp_construct_tsp_two_opt_awareness"]}}
     (out/"transfer_card_map.json").write_text(json.dumps({"schema_version":"transfer-card-map/v1","max_chars":2500,"problems":mapping},ensure_ascii=False,indent=2),encoding="utf-8")
+    strategy_by_id = {row["abstract_strategy_id"]: row for row in records}
+    context_dir = out / "contexts"
+    context_dir.mkdir(parents=True, exist_ok=True)
+    for problem, config in mapping.items():
+        local_sections = [cards[card_id]["content"].strip() for card_id in config["core_local"] + config["extra_local"]]
+        mixed_sections = [cards[card_id]["content"].strip() for card_id in config["core_local"]]
+        mixed_sections.extend(strategy_by_id[strategy_id]["abstract_description"] for strategy_id in config["external_abstract"])
+        for arm, sections in (("local_only", local_sections), ("mixed_abstract", mixed_sections)):
+            context = "\n\n---\n\n".join(sections)
+            if len(context) > 2500:
+                raise ValueError(f"context exceeds max_chars: {problem}/{arm} ({len(context)})")
+            (context_dir / f"{problem}_{arm}.txt").write_text(context + "\n", encoding="utf-8")
 
 if __name__=="__main__": main()

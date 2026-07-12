@@ -1,0 +1,29 @@
+Skill: tsp_regret_insertion
+When: several candidate nodes compete and one may become costly later.
+Do: for each candidate, compare best and second-best local connection alternatives; regret = second_best - best. Prefer high regret with moderate current distance.
+Fallback: nearest neighbor if regret is flat.
+Safety: avoid O(n^3) loops.
+
+---
+
+Skill: tsp_nearest_insertion
+When: nearest neighbor may create long final edges.
+Do: score candidate u by distance current->u plus u->destination, favoring nodes that are close to both current path and return direction.
+Fallback: use nearest neighbor if scores tie.
+Safety: compute only over unvisited_nodes.
+
+---
+
+Skill: tsp_farthest_insertion
+When: distant clusters may be left until too late.
+Do: prefer candidate with larger distance from destination or current cluster, then choose the least damaging such node. Seed far regions early.
+Fallback: nearest neighbor for small remaining sets.
+Safety: apply only to unvisited_nodes.
+
+---
+
+Skill: tsp_two_opt_awareness
+When: a nearest step may create crossing or long edges.
+Do: penalize candidates that create very long current->u edge relative to local neighbor distances; prefer choices that keep route locally smooth.
+Fallback: nearest neighbor.
+Safety: selector remains greedy and bounded.

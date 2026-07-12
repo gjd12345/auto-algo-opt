@@ -1,0 +1,21 @@
+Skill: obp_first_fit
+When: need a simple online packing baseline.
+Do: give earlier feasible bins higher scores so the first feasible bin is selected.
+Fallback: if remaining is empty, evaluator opens a new bin.
+Safety: return len(remaining) finite scores only.
+
+---
+
+Skill: obp_best_fit
+When: objective is to minimize used bins in online bin packing.
+Do: score each feasible bin by how full it becomes after placing item; prefer smallest residual capacity rem-item.
+Fallback: if no bin is feasible, evaluator opens a new bin.
+Safety: never score infeasible bins; remaining is already feasible.
+
+---
+
+优先处理替代选择会迅速变差的候选，同时控制当前增加的代价。
+
+---
+
+优先合并能相对独立执行显著节约总代价的候选组合。

@@ -3,8 +3,26 @@
   "model": "deepseek-v4-flash",
   "problems": ["bp_online", "tsp_construct", "cvrp_construct"],
   "arms": [
-    {"name": "local_only", "runner_arm": "literature_rag", "context_strategy": "frozen_local_cards"},
-    {"name": "mixed_abstract", "runner_arm": "context_file", "context_strategy": "frozen_mixed_abstract"}
+    {
+      "name": "local_only",
+      "runner_arm": "context_file",
+      "context_strategy": "frozen_local_cards",
+      "context_files": {
+        "bp_online": "eoh_rag_workspace/experiments/strategies/contexts/bp_online_local_only.txt",
+        "tsp_construct": "eoh_rag_workspace/experiments/strategies/contexts/tsp_construct_local_only.txt",
+        "cvrp_construct": "eoh_rag_workspace/experiments/strategies/contexts/cvrp_construct_local_only.txt"
+      }
+    },
+    {
+      "name": "mixed_abstract",
+      "runner_arm": "context_file",
+      "context_strategy": "frozen_mixed_abstract",
+      "context_files": {
+        "bp_online": "eoh_rag_workspace/experiments/strategies/contexts/bp_online_mixed_abstract.txt",
+        "tsp_construct": "eoh_rag_workspace/experiments/strategies/contexts/tsp_construct_mixed_abstract.txt",
+        "cvrp_construct": "eoh_rag_workspace/experiments/strategies/contexts/cvrp_construct_mixed_abstract.txt"
+      }
+    }
   ],
   "generations": [8],
   "pop_size": 6,
@@ -13,6 +31,41 @@
   "max_runs": 30,
   "operators": "e1,e2,m1,m2",
   "n_processes": 1,
+  "broad_training": true,
+  "n_train": 128,
+  "held_out_by_problem": {
+    "bp_online": [
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_1k_C100.pkl",
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl",
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_10k_C100.pkl"
+    ],
+    "tsp_construct": [
+      "eoh_rag_workspace/held_out/core/tsp_construct/eil51.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/st70.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/kroA100.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/ch130.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/kroA200.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/tsp225.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/a280.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/pcb442.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/rat575.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/rat783.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/pr1002.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/pcb3038.tsp"
+    ],
+    "cvrp_construct": [
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n129-k18.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n153-k22.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n200-k36.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n251-k28.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n303-k21.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n351-k40.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n401-k29.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n502-k39.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n1001-k43.vrp"
+    ]
+  },
   "shared_pool_policy": "read_only",
   "shared_pool_snapshot": "evidence/final_batch_20260630/shared_pool_snapshot",
   "shared_pool_top_k": 3,

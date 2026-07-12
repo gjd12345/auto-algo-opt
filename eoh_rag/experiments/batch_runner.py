@@ -26,12 +26,14 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import logging
 import os
 import subprocess
 import sys
 import time
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +47,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 from eoh_rag.experiments.pool_api import PoolAPI
+from eoh_rag.experiments.provider import classify_provider_error
 from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
 logger = logging.getLogger(__name__)
@@ -325,10 +328,18 @@ def _build_cmd(
         "--output-dir", output_dir,
         "--official-root", manifest.get("official_root") or _DEFAULT_ROOT,
         "--python", manifest.get("python_exe") or _DEFAULT_PYTHON or sys.executable,
+        "--exact-output-dir",
     ]
     if seed is not None:
         cmd.extend(["--seed", str(seed)])
     cmd.extend(["--provider", provider, "--temperature-schedule", temperature_schedule])
+    context_files = arm.get("context_files") or {}
+    context_file = context_files.get(problem) or arm.get("context_file", "")
+    if context_file:
+        context_path = Path(context_file)
+        if not context_path.is_absolute():
+            context_path = _REPO_ROOT / context_path
+        cmd.extend(["--context-file", str(context_path.resolve())])
     # 合并 RAG 配置：arm 级别覆盖 manifest 级别
     rag = {**manifest.get("rag", {}), **arm.get("rag", {})}
     if arm["runner_arm"] in ("literature_rag", "history_rag", "mixed_rag"):
@@ -375,10 +386,103 @@ def _build_cmd(
         cmd.append("--broad-training")
         n_train = manifest.get("n_train", 128)
         cmd.extend(["--n-train", str(n_train)])
-        held_out = manifest.get("held_out_set")
+        held_out = (manifest.get("held_out_by_problem") or {}).get(problem) or manifest.get("held_out_set")
         if held_out:
             cmd.extend(["--held-out-set", json.dumps(held_out)])
     return cmd
+
+
+def _summary_is_complete(summary_path: Path) -> bool:
+    """只有成功且满足结果契约的 summary 才能被 resume 跳过。"""
+    if not summary_path.is_file():
+        return False
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return not payload.get("failure_reason") and bool((payload.get("run_summary") or {}).get("ok"))
+
+
+def _write_run_index(index_path: Path, rows: list[dict[str, Any]]) -> None:
+    """原子刷新索引，监控进程随时都能读取完整 JSON。"""
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = index_path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(index_path)
+
+
+def _run_reproducible_manifest(manifest: dict[str, Any], args: argparse.Namespace) -> int:
+    """执行带显式 seed 的正式矩阵，提供有界并发、恢复、重试和增量索引。"""
+    output_base = Path(args.output_dir).resolve()
+    specs = expand_run_specs(manifest, output_base)
+    arm_by_name = {arm["name"]: arm for arm in manifest["arms"]}
+    index_path = output_base / manifest["suite"] / "run_index.json"
+    rows_by_key: dict[str, dict[str, Any]] = {}
+    if index_path.is_file():
+        try:
+            rows_by_key = {row["run_key"]: row for row in json.loads(index_path.read_text(encoding="utf-8"))}
+        except (OSError, json.JSONDecodeError, KeyError):
+            rows_by_key = {}
+    index_lock = threading.Lock()
+    stop_event = threading.Event()
+    snapshot_dir = manifest.get("shared_pool_snapshot", "")
+    snapshot_top_k = int(manifest.get("shared_pool_top_k", 3))
+
+    def execute(spec) -> dict[str, Any]:
+        run_out = spec.output_dir
+        summary_path = run_out / "official_eoh_run_summary.json"
+        if args.resume and _summary_is_complete(summary_path):
+            return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "skipped_complete", "output_dir": str(run_out)}
+        if stop_event.is_set():
+            return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "not_scheduled_provider_stop", "output_dir": str(run_out)}
+        run_out.mkdir(parents=True, exist_ok=True)
+        seed_codes_path = ""
+        if snapshot_dir:
+            source = Path(snapshot_dir)
+            if not source.is_absolute():
+                source = _REPO_ROOT / source
+            # 两臂逐 run 从同一问题专属快照读取，文件只写入当前 run 隔离目录。
+            seed_rows = PoolAPI(source).snapshot(spec.problem, top_k=snapshot_top_k)
+            if len(seed_rows) != snapshot_top_k:
+                return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "invalid_shared_snapshot", "output_dir": str(run_out)}
+            seed_path = run_out / "_seed_codes.json"
+            seed_path.write_text(json.dumps(seed_rows, ensure_ascii=False), encoding="utf-8")
+            seed_codes_path = str(seed_path)
+        command = _build_cmd(
+            manifest, spec.problem, arm_by_name[spec.arm], spec.generation, spec.repeat,
+            str(run_out), seed_codes_path=seed_codes_path, seed=spec.seed,
+            provider=args.provider, temperature_schedule=args.temperature_schedule,
+        )
+        started = time.time()
+        last_detail = ""
+        for attempt in range(1, 4):
+            try:
+                process = subprocess.run(command, text=True, capture_output=True, timeout=manifest.get("run_timeout_s", 1800) + 60)
+                last_detail = (process.stderr or process.stdout or "")[-1000:]
+                if process.returncode == 0 and _summary_is_complete(summary_path):
+                    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+                    run_summary = payload.get("run_summary") or {}
+                    return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "ok", "attempts": attempt, "runtime_s": round(time.time() - started, 1), "output_dir": str(run_out), "best_objective": run_summary.get("best_objective"), "valid_candidates": run_summary.get("valid_candidates")}
+                error_class = classify_provider_error(None, last_detail)
+                if error_class == "provider_quota_exhausted":
+                    stop_event.set()
+                    return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": error_class, "attempts": attempt, "output_dir": str(run_out)}
+            except subprocess.TimeoutExpired:
+                last_detail = "run_timeout"
+        return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "failed_after_retries", "attempts": 3, "runtime_s": round(time.time() - started, 1), "output_dir": str(run_out), "detail": last_detail}
+
+    workers = max(1, int(args.max_concurrent_runs))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        future_map = {executor.submit(execute, spec): spec for spec in specs}
+        for future in concurrent.futures.as_completed(future_map):
+            row = future.result()
+            with index_lock:
+                rows_by_key[row["run_key"]] = row
+                ordered = [rows_by_key[spec.run_key] for spec in specs if spec.run_key in rows_by_key]
+                _write_run_index(index_path, ordered)
+            print(f"[{row['status'].upper()}] {row['run_key']}", flush=True)
+    rows = [rows_by_key[spec.run_key] for spec in specs if spec.run_key in rows_by_key]
+    return 0 if len(rows) == len(specs) and all(row["status"] in {"ok", "skipped_complete"} for row in rows) else 1
 
 
 def main() -> None:
@@ -417,6 +521,11 @@ def main() -> None:
     # held-out 数据会交给后续子进程读取，因此在创建输出目录和启动任何实验前完成解析与校验。
     try:
         manifest["held_out_set"] = _resolve_held_out_set(manifest.get("held_out_set"))
+        if manifest.get("held_out_by_problem"):
+            manifest["held_out_by_problem"] = {
+                problem: _resolve_held_out_set(paths)
+                for problem, paths in manifest["held_out_by_problem"].items()
+            }
     except (FileNotFoundError, ValueError) as exc:
         sys.exit(f"Manifest held_out_set validation FAILED: {exc}")
 
@@ -459,6 +568,10 @@ def main() -> None:
     print(f"Suite: {suite}")
     print(f"Matrix: {len(manifest['problems'])}×{len(manifest['arms'])}×{len(manifest.get('generations',[1]))}×{manifest.get('repeats',1)} = {total_runs} runs")
     print()
+
+    # 新正式清单统一走 RunSpec 调度器；旧清单保留原入口以避免改变历史工作流。
+    if manifest.get("seed_list") and not args.dry_run and not args.no_run:
+        raise SystemExit(_run_reproducible_manifest(manifest, args))
 
     run_index: list[dict[str, Any]] = []
     problems = manifest["problems"]

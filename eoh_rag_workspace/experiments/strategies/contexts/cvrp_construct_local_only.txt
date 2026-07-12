@@ -1,0 +1,29 @@
+Skill: cvrp_regret_insertion
+When: several candidates compete and some may become hard to reach later.
+Do: compute best and second-best distance/detour from current_node; regret = second_best - best. Prefer high regret customers that would otherwise force a long detour.
+Fallback: nearest feasible customer if regrets are flat.
+Safety: use rest_capacity for feasibility check only.
+
+---
+
+Skill: cvrp_savings
+When: choosing customers that consolidate routes.
+Do: score u by savings = d(depot,current)+d(depot,u)-d(current,u). Prefer high savings; demand feasibility is binary.
+Fallback: nearest feasible customer.
+Safety: do not choose infeasible demand.
+
+---
+
+Skill: cvrp_far_first
+When: near depot or starting a new route.
+Do: prefer distant unvisited customers to seed routes toward clusters far from depot. Use distance_matrix[depot][u] to measure distance from depot; prefer larger values early in the route, then switch to nearest once away from depot.
+Fallback: nearest feasible customer if far nodes exhausted.
+Safety: never select customer with demand > rest_capacity.
+
+---
+
+Skill: cvrp_sweep
+When: customers are spatially clustered around depot.
+Do: prefer nodes with similar polar angle from depot as current_node, then nearest distance; this keeps routes in angular sectors.
+Fallback: nearest capacity if angle is unavailable.
+Safety: use deterministic atan2 scoring only.

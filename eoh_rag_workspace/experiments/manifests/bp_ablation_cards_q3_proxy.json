@@ -1,0 +1,26 @@
+{
+  "suite": "bp_ablation_cards_q3_proxy",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "broad_training": true,
+  "n_train": 128,
+  "held_out_set": ["eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl"],
+  "arms": [
+    {"name": "pure", "runner_arm": "pure_eoh"},
+    {"name": "answer", "runner_arm": "literature_rag", "candidate_card_ids": ["obp_first_fit", "obp_best_fit", "obp_worst_fit", "obp_harmonic", "obp_funsearch_residual_poly", "obp_eoh_util_sqrt_exp"]}
+  ],
+  "generations": [2],
+  "pop_size": 3,
+  "repeats": 3,
+  "max_runs": 6,
+  "operators": "e1,e2,m1,m2",
+  "run_timeout_s": 3600,
+  "n_processes": 1,
+  "seed_list": [2024, 2025, 2026],
+  "pool_policy": "disabled",
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh",
+  "rag": {"top_k": 2, "max_chars": 2500, "rerank_mode": "llm"}
+}
