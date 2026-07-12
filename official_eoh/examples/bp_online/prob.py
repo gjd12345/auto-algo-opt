@@ -80,6 +80,8 @@ class BPONLINEBroad(BPONLINE):
         self.instances, self.lb = self._gen_broad_instances(capacity, n_train)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
+        # held-out 只用于最终报告；演化阶段若逐候选重复计算，会显著放大耗时且不参与适应度。
+        self.report_held_out = False
 
     @staticmethod
     def _gen_broad_instances(capacity: int, n_train: int):
@@ -124,6 +126,9 @@ class BPONLINEBroad(BPONLINE):
 
     def evaluate_program(self, program_str: str, callable_func) -> float | None:
         fitness = super().evaluate_program(program_str, callable_func)
+        if not self.report_held_out:
+            return fitness
+
         self.held_out_report = {}
         for entry in self.held_out_data:
             items_list = entry["instances"]

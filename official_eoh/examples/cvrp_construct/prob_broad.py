@@ -41,6 +41,8 @@ class CVRPCONSTBroad(CVRPCONST):
         self.n_train = n_train
         self.held_out_data = held_out_set or []
         self.held_out_report = {}
+        # held-out 只在最终报告阶段执行，避免在 128 实例训练评估后重复增加额外开销。
+        self.report_held_out = False
         self.instance_data = self._gen_broad_instances(n_train, n_customers, capacity)
 
     @staticmethod
@@ -95,6 +97,9 @@ class CVRPCONSTBroad(CVRPCONST):
             if route is None: return None
             costs.append(self._tour_cost(coords, route))
         fitness = float(np.mean(costs))
+        if not self.report_held_out:
+            return fitness
+
         self.held_out_report = {}
         for entry in self.held_out_data:
             try:

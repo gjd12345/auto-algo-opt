@@ -175,6 +175,8 @@ def test_generated_runner_persists_best_held_out_report() -> None:
     compile(source, "_run_official_eoh.py", "exec")
     assert "def persist_best_held_out_report" in source
     assert 'task.evaluate(best_candidate["code"])' in source
+    assert "task.report_held_out = True" in source
+    assert "task.report_held_out = False" in source
     assert "persist_best_held_out_report(task, Path(args.output_dir))" in source
 
 
@@ -203,6 +205,33 @@ if __name__ == "__main__":
     if value is None:
         raise SystemExit(2)
     print(value)
+''',
+        encoding="utf-8",
+    )
+    process = subprocess.run([sys.executable, str(script)], text=True, capture_output=True, timeout=60)
+    assert process.returncode == 0, process.stdout + process.stderr
+
+
+def test_tsp_broad_defers_held_out_until_final_report(tmp_path: Path) -> None:
+    script = tmp_path / "held_out_gate_smoke.py"
+    script.write_text(
+        f'''from pathlib import Path
+import sys
+root = Path(r"{REPOSITORY_ROOT / 'official_eoh'}")
+sys.path.insert(0, str(root / "eoh" / "src"))
+sys.path.insert(0, str(root / "examples" / "tsp_construct"))
+import prob_broad
+
+calls = []
+prob_broad.load_tsp = lambda entry: entry
+prob_broad.evaluate_tsp = lambda heuristic, data: calls.append(data) or {{"feasible": True}}
+problem = prob_broad.TSPCONSTBroad(n_train=2, held_out_set=["held-out.tsp"])
+assert problem.evaluate(problem.template_program) is not None
+assert calls == []
+problem.report_held_out = True
+assert problem.evaluate(problem.template_program) is not None
+assert calls == ["held-out.tsp"]
+assert problem.held_out_report["held-out"]["feasible"] is True
 ''',
         encoding="utf-8",
     )

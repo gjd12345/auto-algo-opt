@@ -391,9 +391,14 @@ def _runner_script() -> str:
 
             # 常规评估在隔离进程中执行，对 task 字段的修改不会回传。这里仅对已经通过
             # 评估的最佳候选复算一次，确保报告对应最终选择，而不是并发结束顺序。
-            if task.evaluate(best_candidate["code"]) is None:
-                logger.warning("Best candidate could not be re-evaluated for held-out reporting")
-                return
+            # 演化阶段只计算训练适应度；此处显式开启 held-out，并且只复算最终最佳候选一次。
+            task.report_held_out = True
+            try:
+                if task.evaluate(best_candidate["code"]) is None:
+                    logger.warning("Best candidate could not be re-evaluated for held-out reporting")
+                    return
+            finally:
+                task.report_held_out = False
 
             report = getattr(task, "held_out_report", None)
             if not isinstance(report, dict):

@@ -35,6 +35,8 @@ class TSPCONSTBroad(TSPCONST):
         self.n_train = n_train
         self.held_out_data = held_out_set or []
         self.held_out_report = {}
+        # held-out 不参与适应度，只在最终最佳候选确定后计算，避免每个候选重复跑大型基准。
+        self.report_held_out = False
         self.instance_data = self._gen_broad_instances(n_train, problem_size)
     
     @staticmethod
@@ -82,6 +84,9 @@ class TSPCONSTBroad(TSPCONST):
             if v is None: return None
             costs.append(v)
         fitness = float(np.mean(costs))
+        if not self.report_held_out:
+            return fitness
+
         # held-out 报告(只记录,不进适应度)
         self.held_out_report = {}
         for entry in self.held_out_data:
