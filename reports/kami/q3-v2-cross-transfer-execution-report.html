@@ -1,0 +1,461 @@
+﻿<!DOCTYPE html>
+<!-- ==================================================================
+     LONG DOCUMENT TEMPLATE · parchment design system
+     多页 A4 白皮书/技术报告/年度总结
+     结构：封面 -> 目录 -> 执行摘要 -> 正文章节 -> 附录
+     ================================================================== -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Q3 v2 与跨问题策略迁移执行报告</title>
+<meta name="author" content="Codex 执行代理">
+<meta name="description" content="实验框架与数据已就绪，正式运行因 Provider 认证失败被门禁阻断。">
+<meta name="keywords" content="Q3 v2,跨问题迁移,实验门禁,RunSpec,Provider">
+<meta name="generator" content="Kami">
+<style>
+  /* Regular weight */
+  @font-face {
+    font-family: "TsangerJinKai02";
+    src: url("../fonts/TsangerJinKai02-W04.ttf") format("truetype"),
+       url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W04.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  /* Bold weight - W05 for all bold variants */
+  @font-face {
+    font-family: "TsangerJinKai02";
+    src: url("../fonts/TsangerJinKai02-W05.ttf") format("truetype"),
+       url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W05.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm 22mm 22mm 22mm;
+    background: #f5f4ed;
+
+    @top-right {
+      content: string(section-title);
+      font-family: "TsangerJinKai02", "Source Han Serif SC",
+                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+      font-size: 8pt;
+      color: #6b6a64;
+    }
+
+    @bottom-center {
+      content: counter(page) "  ·  Q3 v2 与跨问题策略迁移执行报告";
+      font-family: "TsangerJinKai02", "Source Han Serif SC",
+                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+      font-size: 9pt;
+      color: #6b6a64;
+    }
+  }
+
+  @page:first {
+    @top-right { content: ""; }
+    @bottom-center { content: ""; }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment: #f5f4ed;
+    --ivory:     #faf9f5;
+    --near-black:#141413;
+    --dark-warm: #3d3d3a;
+    --olive:     #504e49;
+    --stone:     #6b6a64;
+    --brand:     #1B365D;
+    --border:    #e8e6dc;
+    --border-soft:#e5e3d8;
+    --tag-bg:    #E4ECF5;
+    --serif: "TsangerJinKai02", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif;
+    --sans: var(--serif);
+
+    --rhythm-module:  14pt;
+    --rhythm-section: 18pt;
+  }
+
+  html, body { background: var(--parchment); }
+
+  @media screen {
+    body { max-width: 210mm; margin: 0 auto; padding: 20mm 22mm 22mm 22mm; }
+  }
+
+  body {
+    color: var(--near-black);
+    font-family: var(--serif);
+    font-size: 10.5pt;
+    line-height: 1.55;
+    letter-spacing: 0.3pt;
+    widows: 3;
+    orphans: 3;
+  }
+
+  .sans {
+    font-family: var(--sans);
+  }
+
+  /* ========== COVER ========== */
+  .cover {
+    min-height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40mm 0 0 0;
+    break-after: page;
+  }
+  .cover-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8pt;
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--brand);
+    letter-spacing: 1.5pt;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 18pt;
+  }
+  .cover-eyebrow::before {
+    content: "";
+    width: 9pt;
+    height: 1.5pt;
+    border-radius: 0.75pt;
+    background: var(--brand);
+    flex-shrink: 0;
+  }
+  .cover-title {
+    font-size: 36pt;
+    font-weight: 500;
+    color: var(--near-black);
+    line-height: 1.15;
+    letter-spacing: 0.3pt;
+    margin-bottom: 16pt;
+  }
+  .cover-sub {
+    font-family: var(--sans);
+    font-size: 14pt;
+    color: var(--olive);
+    line-height: 1.5;
+    max-width: 85%;
+    margin-bottom: 30pt;
+  }
+  .cover-meta {
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .cover-meta strong {
+    color: var(--dark-warm);
+    font-weight: 500;
+  }
+
+  /* ========== TOC（目录）========== */
+  .toc { break-after: page; }
+  .toc h2 {
+    font-size: 22pt;
+    font-weight: 500;
+    margin-bottom: var(--rhythm-module);
+    border-left: 2.5pt solid var(--brand);
+    border-radius: 1.5pt;
+    padding-left: 8pt;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6pt 0;
+    border-bottom: 0.3pt dotted var(--border);
+    font-size: 11pt;
+  }
+  .toc-item:last-of-type { border-bottom: none; }
+  .toc-num {
+    color: var(--brand);
+    font-weight: 500;
+    min-width: 30pt;
+  }
+  .toc-title {
+    flex: 1;
+    color: var(--near-black);
+    padding-left: 6pt;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 12pt;
+  }
+  .toc-title[href]::after {
+    content: target-counter(attr(href), page);
+    color: var(--stone);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  /* ========== HEADINGS ========== */
+  h1 {
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0 0 10pt 0;
+    border-left: 2.5pt solid var(--brand);
+    border-radius: 1.5pt;
+    padding-left: 8pt;
+    color: var(--near-black);
+    break-after: avoid;
+    string-set: section-title content();
+  }
+
+  .running-title { string-set: section-title content(); }
+
+  h2 {
+    font-size: 16pt;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 24pt 0 8pt 0;
+    color: var(--near-black);
+    break-after: avoid;
+  }
+
+  h3 {
+    font-size: 13pt;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 18pt 0 6pt 0;
+    color: var(--dark-warm);
+    break-after: avoid;
+  }
+
+  .chapter-num {
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--brand);
+    letter-spacing: 1pt;
+    text-transform: uppercase;
+    margin-bottom: 6pt;
+  }
+
+  /* ========== PARAGRAPHS ========== */
+  p {
+    margin: 0 0 10pt 0;
+    line-height: 1.55;
+    color: var(--near-black);
+    widows: 2;
+    orphans: 2;
+  }
+
+  .lead {
+    font-size: 12pt;
+    line-height: 1.55;
+    color: var(--dark-warm);
+    margin-bottom: var(--rhythm-module);
+  }
+
+  .hl { color: var(--brand); font-weight: 500; }
+  strong { font-weight: 500; }
+
+  /* ========== LISTS ========== */
+  ul, ol {
+    margin: 6pt 0 10pt 0;
+    padding-left: 20pt;
+    line-height: 1.55;
+  }
+  ul li::marker { color: var(--brand); }
+  ol li::marker { color: var(--brand); font-weight: 500; }
+
+  /* ========== QUOTE ========== */
+  blockquote, .quote {
+    border-left: 2pt solid var(--brand);
+    margin: 12pt 0;
+    padding: 4pt 0 4pt 16pt;
+    color: var(--olive);
+    line-height: 1.55;
+    break-inside: avoid;
+  }
+  blockquote .cite, .quote .cite {
+    display: block;
+    font-size: 9pt;
+    color: var(--stone);
+    margin-top: 4pt;
+  }
+
+  /* ========== CODE ========== */
+  /* Mono first for English glyphs, then CJK fallback so Chinese comments
+     inside code/pre render correctly. A mono-only chain causes missing
+     glyphs rendered as "?" or missing-glyph boxes in WeasyPrint when the system lacks
+     a mono font with CJK coverage. */
+  code {
+    font-family: "JetBrains Mono", "SF Mono", Consolas,
+                 "TsangerJinKai02", "Source Han Serif SC",
+                 "Noto Serif CJK SC", "Songti SC", monospace;
+    font-size: 9pt;
+    background: var(--ivory);
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+    color: var(--dark-warm);
+  }
+  pre {
+    font-family: "JetBrains Mono", "SF Mono", Consolas,
+                 "TsangerJinKai02", "Source Han Serif SC",
+                 "Noto Serif CJK SC", "Songti SC", monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    background: var(--ivory);
+    border-radius: 4pt;
+    padding: 10pt 14pt;
+    margin: 10pt 0;
+    white-space: pre-wrap;
+    color: var(--near-black);
+    break-inside: avoid;
+  }
+  pre code { background: transparent; padding: 0; font-size: inherit; }
+
+  /* ========== TABLE (kami-table) ========== */
+  table, .kami-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin: 12pt 0;
+    break-inside: avoid;
+  }
+  table th, .kami-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--dark-warm);
+    padding: 6pt 8pt;
+    border-bottom: 1pt solid var(--border);
+    background: transparent;
+  }
+  table td, .kami-table td {
+    padding: 5pt 8pt;
+    border-bottom: 0.3pt solid var(--border-soft);
+    vertical-align: top;
+  }
+  table.compact th, .kami-table.compact th { padding: 3pt 6pt; font-size: 8pt; }
+  table.compact td, .kami-table.compact td { padding: 2pt 6pt; font-size: 8pt; line-height: 1.4; }
+  table.financial td:not(:first-child), .kami-table.financial td:not(:first-child) {
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  table.financial th:not(:first-child), .kami-table.financial th:not(:first-child) { text-align: right; }
+  table.striped tbody tr:nth-child(even) td, .kami-table.striped tbody tr:nth-child(even) td {
+    background: var(--ivory);
+  }
+  table .total td, .kami-table .total td {
+    font-weight: 500; border-top: 1pt solid var(--brand); border-bottom: none; color: var(--near-black);
+  }
+
+  /* ========== CALLOUT ========== */
+  .callout {
+    background: var(--ivory);
+    border-left: 2pt solid var(--brand);
+    padding: 10pt 14pt;
+    border-radius: 3pt;
+    margin: 12pt 0;
+    line-height: 1.55;
+    break-inside: avoid;
+  }
+  .callout blockquote,
+  .callout .quote {
+    border-left: none;
+    padding-left: 0;
+    margin: 6pt 0;
+    color: var(--olive);
+  }
+  .callout blockquote:first-child,
+  .callout .quote:first-child { margin-top: 0; }
+  .callout blockquote:last-child,
+  .callout .quote:last-child  { margin-bottom: 0; }
+
+  .takeaway {
+    background: var(--ivory);
+    border-radius: 4pt;
+    padding: 10pt 14pt;
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  .takeaway-label {
+    font-family: var(--sans);
+    font-size: 9pt;
+    color: var(--brand);
+    letter-spacing: 0.5pt;
+    text-transform: uppercase;
+    margin-bottom: 4pt;
+  }
+
+  /* ========== TAG ========== */
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--brand);
+    font-family: var(--sans);
+    font-size: 9pt;
+    font-weight: 500;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    margin-right: 4pt;
+  }
+
+  /* ========== FIGURE ========== */
+  figure {
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  figure img {
+    max-width: 100%;
+    border-radius: 4pt;
+  }
+  /* Inline diagrams (e.g. a Mermaid-sourced SVG via scripts/mermaid_normalize.py):
+     center and cap width so the figure never bleeds past the text column. */
+  figure svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 78%;
+    height: auto;
+  }
+  figcaption {
+    font-family: var(--sans);
+    font-size: 9pt;
+    color: var(--stone);
+    margin-top: 6pt;
+    text-align: center;
+  }
+
+  /* ========== EXECUTIVE SUMMARY ========== */
+  .exec-summary {
+    background: var(--ivory);
+    border-left: 1.4pt solid var(--brand);
+    border-radius: 6pt;
+    padding: 16pt 20pt;
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  .exec-summary h2 {
+    margin-top: 0;
+    font-size: 13pt;
+  }
+
+  /* ========== CHAPTER BREAK ========== */
+  .chapter { break-before: page; }
+</style>
+</head>
+<body><style>@media print { html, body { background:#f5f4ed !important; } .chapter, .toc { min-height:240mm; } body::before { content:""; position:fixed; inset:-20mm -22mm -22mm -22mm; background:#f5f4ed; z-index:-1; } }</style>
+<section class="cover"><div><div class="cover-eyebrow">实验工程 · 受阻验收报告</div><div class="cover-title">Q3 v2 与跨问题<br>策略迁移执行报告</div><div class="cover-sub">框架、数据与门禁均已落地；正式 60 runs 因两个 Provider 的真实认证失败而未启动。</div></div><div class="cover-meta"><strong>Codex 执行代理</strong><br>版本 V1.0 · 2026.07.12<br>auto-algo-opt · feat/q3-v2-cross-transfer</div></section>
+<section class="toc"><h2>目录</h2><div class="toc-item"><span class="toc-num">01</span><a class="toc-title" href="#summary">执行结论</a></div><div class="toc-item"><span class="toc-num">02</span><a class="toc-title" href="#delivery">已交付工程</a></div><div class="toc-item"><span class="toc-num">03</span><a class="toc-title" href="#evidence">验证证据</a></div><div class="toc-item"><span class="toc-num">04</span><a class="toc-title" href="#blocker">正式实验门禁</a></div><div class="toc-item"><span class="toc-num">05</span><a class="toc-title" href="#handoff">恢复与交接</a></div></section>
+<section class="chapter" id="summary"><div class="chapter-num">01 · Executive Decision</div><h1>执行结论</h1><p class="lead">计划的工程化部分已经完成并推送：可复现 RunSpec、显式 seed、Provider 脱敏、真实 Core held-out、只读历史池、冻结策略资产和统一 preflight 均已落地。<span class="hl">正式实验未运行</span>，原因不是代码或数据缺口，而是 OpenCode Go 返回 HTTP 403、DeepSeek 回退返回 HTTP 401。</p><h2>完成度摘要</h2><table><thead><tr><th>维度</th><th>结果</th><th>证据</th></tr></thead><tbody><tr><td>框架回归</td><td>通过</td><td>398 passed，1 skipped</td></tr><tr><td>正式矩阵</td><td>通过</td><td>Q3 30；cross 30</td></tr><tr><td>数据门禁</td><td>通过</td><td>HiFo 3 份；Core registry 22/22</td></tr><tr><td>策略冻结</td><td>通过</td><td>12 条抽象策略；3 个目标映射</td></tr><tr><td>Provider 连通</td><td>阻断</td><td>OpenCode 403；DeepSeek 401</td></tr><tr><td>正式证据</td><td>未生成</td><td>未绕过 preflight</td></tr></tbody></table><div class="takeaway"><div class="takeaway-label">结论边界</div>当前不能对 Q3 策略卡收益或跨问题迁移收益作任何统计结论；不存在可合法配对的正式 run。</div></section>
+<section class="chapter" id="delivery"><div class="chapter-num">02 · Delivered System</div><h1>已交付工程</h1><h2>运行契约</h2><p>新增不可变 RunSpec，将 suite、problem、arm、generation、repeat、seed、run key 与输出目录绑定。矩阵按 seed → problem → arm 展开，problem-scoped arm 按实际数量计数；summary 与 run index 记录 seed。</p><h2>隔离与安全</h2><ul><li>Q3 固定 n_processes=1，禁用 pool、outcome 与 previous-run chain。</li><li>Provider 日志只保留名称、endpoint host、模型和 key 是否存在。</li><li>429 与额度耗尽分别归类，fixed 温度保持 Provider 默认。</li><li>原始响应、population、trace、数据集与认证路径不进入 Git。</li></ul><h2>Core held-out</h2><p>TSP 与 CVRP evaluator 已删除 0.0 占位，改为真实构造路线、验证可行性并输出 cost、optimum 与 relative gap；失败使用结构化错误。PoolAPI.snapshot 稳定排序、深拷贝、problem 隔离且零写入。每代 population 生成 AST 多样性摘要。</p><h2>冻结策略与清单</h2><p>Q3 固定 10 seeds、三臂和四个算子。Cross 固定 BP/TSP/CVRP、两臂和 5 seeds；两臂共享同一 605-run 快照。12 条中文抽象策略与 transfer map 已冻结，卡数和 2,500 字符预算一致。</p></section>
+<section class="chapter" id="evidence"><div class="chapter-num">03 · Verification Evidence</div><h1>验证证据</h1><h2>提交链</h2><table class="compact"><thead><tr><th>提交</th><th>内容</th></tr></thead><tbody><tr><td>61f377d</td><td>冻结实验协议</td></tr><tr><td>ef9973a</td><td>可复现运行契约</td></tr><tr><td>58b3ef7</td><td>Core held-out 与多样性</td></tr><tr><td>678ab66</td><td>preflight 与冻结 manifest</td></tr><tr><td>fe0bc39</td><td>22 个 Core 数据 hash registry</td></tr></tbody></table><h2>验证命令</h2><pre><code>python -m pytest -q
+python -m compileall -q eoh_rag official_eoh scripts
+git diff --check
+python scripts/run_strategy_experiments.py --experiments q3 cross --provider opencode-go --phase preflight
+python scripts/run_strategy_experiments.py --experiments q3 cross --provider deepseek --phase preflight</code></pre><h2>数据证据</h2><p>HiFo 1k、5k、10k 从锁定提交 e64ce9e 下载并通过计划内 SHA-256。12 个 TSPLIB 与 10 个 CVRPLIB 实例保存在 ignored 目录；Git registry 记录实际 SHA-256，避免原始数据进入版本库。</p></section>
+<section class="chapter" id="blocker"><div class="chapter-num">04 · Formal Gate</div><h1>正式实验门禁</h1><p class="lead">preflight 的 manifest、策略资产和 held-out 检查全部通过，唯一失败项是 <span class="hl">provider_connected</span>。</p><table><thead><tr><th>Provider</th><th>认证来源</th><th>真实请求</th><th>处理</th></tr></thead><tbody><tr><td>OpenCode Go</td><td>本机 auth store，可读取</td><td>HTTP 403 Forbidden</td><td>不启动 cohort</td></tr><tr><td>DeepSeek</td><td>环境变量存在</td><td>HTTP 401 Unauthorized</td><td>不启动回退 cohort</td></tr></tbody></table><div class="callout">在 Provider 真实连通性失败时启动 60 runs，会得到失败批次或不可审计的混合统计。门禁阻断符合计划，而不是执行中断。</div><h2>未产生的结果</h2><ul><li>Q3 Proxy 6 runs 未启动。</li><li>Q3 正式 30 runs 未启动。</li><li>cross 正式 30 runs 未启动。</li><li>q3_pairs、Wilcoxon/Holm、decision 与最佳代码证据均未伪造。</li></ul></section>
+<section class="chapter" id="handoff"><div class="chapter-num">05 · Handoff</div><h1>恢复与交接</h1><p class="lead">只需恢复任一 Provider 的有效授权，然后重新执行 preflight；其余数据与工程门禁已就绪。</p><h2>唯一恢复路径</h2><pre><code>python scripts/run_strategy_experiments.py --experiments q3 cross --provider opencode-go --phase preflight
+# 若 formal_allowed=true：
+python scripts/run_strategy_experiments.py --experiments q3 cross --provider opencode-go --phase formal --max-concurrent-runs 1 --resume</code></pre><h2>Git 状态</h2><p>分支 feat/q3-v2-cross-transfer 已持续推送至 origin。所有代码修改均经过 status、diff、测试、显式 add、commit 与 push；未使用 git add . 或强制推送。</p><div class="takeaway"><div class="takeaway-label">下一次唤醒后的第一件事</div>刷新 OpenCode Go auth store 或设置可用的 Provider key，先跑 preflight；只有 formal_allowed=true 才启动 Proxy 与正式 cohort。</div></section>
+</body>
+</html>
+
+
+
