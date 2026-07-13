@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from scripts.analyze_q3_fused_confirmation import analyze as analyze_confirmation
 from scripts.analyze_q3_mechanism_discovery import analyze
 from scripts.freeze_q3_mechanism_contexts import build_contexts, freeze_contexts, validate_frozen_contexts
 
@@ -59,3 +60,41 @@ def test_analysis_selects_semantic_confirmation() -> None:
     result = analyze(rows)
     assert result["decision"]["status"] == "semantic_interaction_candidate"
     assert result["decision"]["fused_practically_equivalent"] is True
+
+
+def test_fused_confirmation_requires_primary_wins_and_cross_scale_support() -> None:
+    rows = []
+    for index in range(10):
+        seed = 5101 + index
+        rows.extend(
+            [
+                {
+                    "problem": "bp_online",
+                    "arm": "sham_sham",
+                    "seed": seed,
+                    "status": "ok",
+                    "attempts": 1,
+                    "h1k": 4.8,
+                    "h5k": 4.0,
+                    "h10k": 4.1,
+                    "valid": True,
+                },
+                {
+                    "problem": "bp_online",
+                    "arm": "fused_sham",
+                    "seed": seed,
+                    "status": "ok",
+                    "attempts": 1,
+                    "h1k": 4.7,
+                    "h5k": 3.1 if index < 7 else 4.2,
+                    "h10k": 3.0,
+                    "valid": True,
+                },
+            ]
+        )
+
+    result = analyze_confirmation(rows)
+
+    assert result["comparisons"]["h5k"]["win"] == 7
+    assert result["decision"]["status"] == "confirmed_cross_scale"
+    assert result["decision"]["next_branch"] == "dynamic_selection_pilot"

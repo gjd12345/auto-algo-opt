@@ -1,0 +1,42 @@
+{
+  "suite": "bp_q3_fused_confirmation_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "arms": [
+    {
+      "name": "sham_sham",
+      "runner_arm": "context_file",
+      "context_strategy": "two_control_slots",
+      "context_file": "eoh_rag_workspace/experiments/strategies/q3_mechanism/sham_sham.txt"
+    },
+    {
+      "name": "fused_sham",
+      "runner_arm": "context_file",
+      "context_strategy": "fused_semantics_plus_control",
+      "context_file": "eoh_rag_workspace/experiments/strategies/q3_mechanism/fused_sham.txt"
+    }
+  ],
+  "generations": [3],
+  "pop_size": 4,
+  "repeats": 10,
+  "seed_list": [5101, 5102, 5103, 5104, 5105, 5106, 5107, 5108, 5109, 5110],
+  "max_runs": 20,
+  "run_timeout_s": 3600,
+  "eval_timeout_s": 40,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 128,
+  "held_out_set": [
+    "eoh_rag_workspace/problems/bp_online/held_out/hifo_1k_C100.pkl",
+    "eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl",
+    "eoh_rag_workspace/problems/bp_online/held_out/hifo_10k_C100.pkl"
+  ],
+  "pool_policy": "disabled",
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "context_lock": "eoh_rag_workspace/experiments/strategies/q3_mechanism/context_lock.json",
+  "primary_metric": "bp_online/held_out/hifo_5k_C100_gap",
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh"
+}
