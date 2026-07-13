@@ -33,29 +33,8 @@
 
   @page {
     size: A4;
-    margin: 20mm 22mm 22mm 22mm;
+    margin: 0;
     background: #f5f4ed;
-
-    @top-right {
-      content: string(section-title);
-      font-family: "TsangerJinKai02", "Source Han Serif SC",
-                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
-      font-size: 8pt;
-      color: #6b6a64;
-    }
-
-    @bottom-center {
-      content: counter(page) "  ·  Q3 v2 与跨问题策略迁移执行报告";
-      font-family: "TsangerJinKai02", "Source Han Serif SC",
-                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
-      font-size: 9pt;
-      color: #6b6a64;
-    }
-  }
-
-  @page:first {
-    @top-right { content: ""; }
-    @bottom-center { content: ""; }
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -440,7 +419,30 @@
   .chapter { break-before: page; }
 </style>
 </head>
-<body><style>@media print { html, body, .cover, .chapter, .toc { background:#f5f4ed !important; } .chapter, .toc { min-height:240mm; } }</style>
+<body><style>@media print {
+  html, body, .cover, .chapter, .toc { background:#f5f4ed !important; }
+  body { counter-reset: report-page; }
+  .cover, .chapter, .toc {
+    counter-increment: report-page;
+    position: relative;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm 22mm 22mm;
+    box-shadow: 0 0 0 30mm #f5f4ed;
+  }
+  .cover { padding: 60mm 22mm 22mm; }
+  .cover::after, .chapter::after, .toc::after {
+    content: counter(report-page) "  ·  Q3 v2 策略卡实验报告";
+    position: absolute;
+    right: 22mm;
+    bottom: 8mm;
+    left: 22mm;
+    color: #6b6a64;
+    font-size: 9pt;
+    text-align: center;
+  }
+  .cover::after { content: ""; }
+}</style>
 <section class="cover"><div><div class="cover-eyebrow">自动科研 · 最终验收报告</div><div class="cover-title">Q3 v2、跨问题迁移<br>与组件归因报告</div><div class="cover-sub">60 个主实验 run 与 20 个自动追加归因坐标均已完成。Q3 获得方向性支持；自动探索进一步支持双卡互补或上下文交互。</div></div><div class="cover-meta"><strong>Codex 执行代理</strong><br>版本 V3.0 · 2026.07.13<br>auto-algo-opt · feat/q3-v2-cross-transfer</div></section>
 <section class="toc"><h2>目录</h2><div class="toc-item"><span class="toc-num">01</span><a class="toc-title" href="#summary">执行结论</a></div><div class="toc-item"><span class="toc-num">02</span><a class="toc-title" href="#q3">Q3 v2 结果</a></div><div class="toc-item"><span class="toc-num">03</span><a class="toc-title" href="#cross">跨问题迁移结果</a></div><div class="toc-item"><span class="toc-num">04</span><a class="toc-title" href="#component">胜出卡组件归因</a></div><div class="toc-item"><span class="toc-num">05</span><a class="toc-title" href="#integrity">完整性与运行成本</a></div><div class="toc-item"><span class="toc-num">06</span><a class="toc-title" href="#engineering">工程修复与证据链</a></div><div class="toc-item"><span class="toc-num">07</span><a class="toc-title" href="#handoff">交接与下一步</a></div></section>
 <section class="chapter" id="summary"><div class="chapter-num">01 · Executive Decision</div><h1>执行结论</h1><p class="lead">preflight 与 Proxy 门禁通过后，Q3 30/30、Cross 30/30 正式 run 均为 <span class="hl">ok</span>。系统再依据 Q3 结果自动选择最高信息增益方向，完成 20 个单卡组件归因坐标；统计严格按 problem + seed 显式配对，失败和不完整坐标均原样保留。</p><table><thead><tr><th>工作流</th><th>完成度</th><th>正式判定</th></tr></thead><tbody><tr><td>Proxy</td><td>6 / 6</td><td>全部门禁通过</td></tr><tr><td>Q3 v2</td><td>30 / 30；10 对</td><td>directional_support</td></tr><tr><td>Cross</td><td>30 / 30；9 / 15 完整对</td><td>inconclusive</td></tr><tr><td>组件归因</td><td>20 / 20；12 有效</td><td>supports_pair_complementarity</td></tr><tr><td>最佳代码</td><td>Q3 3；Cross 4；组件 2</td><td>AST、held-out 与敏感信息检查通过</td></tr></tbody></table><div class="takeaway"><div class="takeaway-label">核心判断</div>answer 策略卡在 BP 5k 主指标上获得方向性支持；任一单卡均不足以解释双卡优势，支持互补或上下文交互。跨问题抽象迁移因固定 Core 完整性不足，仍不能确认。</div></section>
