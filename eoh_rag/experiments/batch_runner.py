@@ -412,6 +412,11 @@ def _write_run_index(index_path: Path, rows: list[dict[str, Any]]) -> None:
     temporary.replace(index_path)
 
 
+def _arm_uses_shared_snapshot(snapshot_dir: str, arm: dict[str, Any]) -> bool:
+    """判断当前臂是否继承冻结池；默认值保持旧清单的全臂继承行为。"""
+    return bool(snapshot_dir) and bool(arm.get("inherit_shared_pool", True))
+
+
 def _run_reproducible_manifest(manifest: dict[str, Any], args: argparse.Namespace) -> int:
     """执行带显式 seed 的正式矩阵，提供有界并发、恢复、重试和增量索引。"""
     output_base = Path(args.output_dir).resolve()
@@ -438,7 +443,7 @@ def _run_reproducible_manifest(manifest: dict[str, Any], args: argparse.Namespac
             return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "not_scheduled_provider_stop", "output_dir": str(run_out)}
         run_out.mkdir(parents=True, exist_ok=True)
         seed_codes_path = ""
-        if snapshot_dir:
+        if _arm_uses_shared_snapshot(snapshot_dir, arm_by_name[spec.arm]):
             source = Path(snapshot_dir)
             if not source.is_absolute():
                 source = _REPO_ROOT / source

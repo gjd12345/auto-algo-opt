@@ -1,0 +1,56 @@
+{
+  "suite": "inherited_pool_control_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["tsp_construct", "cvrp_construct"],
+  "arms": [
+    {
+      "name": "fresh_start",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context",
+      "inherit_shared_pool": false
+    },
+    {
+      "name": "inherited_top6",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context",
+      "inherit_shared_pool": true
+    }
+  ],
+  "generations": [4],
+  "pop_size": 6,
+  "repeats": 3,
+  "seed_list": [8101, 8102, 8103],
+  "max_runs": 12,
+  "run_timeout_s": 5400,
+  "eval_timeout_s": 40,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 64,
+  "held_out_by_problem": {
+    "tsp_construct": [
+      "eoh_rag_workspace/held_out/core/tsp_construct/eil51.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/st70.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/kroA100.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/ch130.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/kroA200.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/tsp225.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/a280.tsp"
+    ],
+    "cvrp_construct": [
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n129-k18.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n153-k22.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n200-k36.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n251-k28.vrp"
+    ]
+  },
+  "shared_pool_snapshot": "evidence/final_batch_20260630/shared_pool_snapshot",
+  "shared_pool_top_k": 6,
+  "pool_policy": "read_only_snapshot",
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "primary_metric": "held_out_gap_and_runtime",
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh"
+}

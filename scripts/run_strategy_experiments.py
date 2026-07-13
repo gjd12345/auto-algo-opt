@@ -17,6 +17,7 @@ MANIFESTS={
     "mechanism_confirm":ROOT/"eoh_rag_workspace/experiments/manifests/bp_q3_fused_confirmation_v1.json",
     "m3_screen":ROOT/"eoh_rag_workspace/experiments/manifests/m3_operator_screen_v1.json",
     "m3_tsp_confirm":ROOT/"eoh_rag_workspace/experiments/manifests/m3_tsp_confirmation_v1.json",
+    "inheritance_control":ROOT/"eoh_rag_workspace/experiments/manifests/inherited_pool_control_v1.json",
 }
 REPORT_ROOT = ROOT / "eoh_rag_workspace/reports/formal"
 
@@ -98,7 +99,7 @@ def proxy(provider: str, concurrency: int, resume: bool) -> int:
     return 0 if result["formal_allowed"] else 3
 
 def main() -> None:
-    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross","mechanism","mechanism_confirm","m3_screen","m3_tsp_confirm"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","proxy","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross","mechanism","mechanism_confirm","m3_screen","m3_tsp_confirm","inheritance_control"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","proxy","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
     if args.phase == "preflight":
         raise SystemExit(preflight(args.experiments,args.provider))
     if args.phase == "proxy":
