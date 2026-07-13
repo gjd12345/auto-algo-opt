@@ -47,6 +47,17 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 其中 BP Online 的最优解采用「同尺寸预留（same-size reservation）」策略，可解释性分析见
 `evidence/bp_interpretability/`。
 
+### 策略卡正式实验与自动归因探索（2026-07-13）
+
+60 个主实验 run 与 20 个组件归因坐标均已完成。Q3 的 answer 卡相对 pure 达到计划定义的方向性支持；跨问题迁移因 TSP Core 超时和一组 CVRP 不完整配对，按预注册完整性规则判定为 inconclusive，未静默删除无效实例。自动追加的组件归因实验支持“双卡互补或上下文交互”，但不把单卡失败坐标补抽成成功，也不将结果夸大为严格加性协同。
+
+- 实验协议：[`docs/experiments/gated_strategy_card_experiments.md`](docs/experiments/gated_strategy_card_experiments.md)
+- Q3 正式证据：[`reports/strategy_experiments/q3_v2/q3_report.md`](reports/strategy_experiments/q3_v2/q3_report.md)
+- Cross 正式证据：[`reports/strategy_experiments/cross_problem_transfer/cross_report.md`](reports/strategy_experiments/cross_problem_transfer/cross_report.md)
+- 组件归因证据：[`reports/strategy_experiments/q3_card_components/component_report.md`](reports/strategy_experiments/q3_card_components/component_report.md)
+- 执行交接：[`HANDOFF_Q3_CROSS.md`](HANDOFF_Q3_CROSS.md)
+- Kami 验收报告：[`reports/kami/q3-v2-cross-transfer-execution-report.pdf`](reports/kami/q3-v2-cross-transfer-execution-report.pdf)
+
 ---
 
 ## 3. 架构与模块地图
