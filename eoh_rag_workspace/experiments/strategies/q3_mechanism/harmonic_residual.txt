@@ -1,0 +1,36 @@
+CONTROLLED STRATEGY CONTEXT
+The following section always contains exactly two card slots. Use strategy content only when a slot explicitly provides it.
+
+[CARD SLOT 1]
+Type: frozen strategy
+Title: OBP Harmonic Skill Card
+Summary: Harmonic-style scoring: adapt bin preference by item size class relative to capacity.
+Constraints:
+- Keep score formula simple and bounded.
+- Return len(remaining) scores.
+Strategy:
+Skill: obp_harmonic
+When: item sizes vary across small, medium, and large classes.
+Do: bucket item by size/capacity ratio; for large items use best-fit, for small items preserve medium gaps, for medium items penalize residual below item/2.
+Fallback: default to best-fit score.
+Safety: no randomness or lookahead.
+[NEUTRAL LENGTH PADDING]
+This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task rule. This padding only equa
+[END CARD SLOT 1]
+
+[CARD SLOT 2]
+Type: frozen strategy
+Title: OBP FunSearch Residual Polynomial Skill Card
+Summary: FunSearch-style residual penalty: combine tight-fit reward with polynomial penalty on unusable gaps.
+Constraints:
+- Do not use future items.
+- Keep polynomial numerically stable.
+Strategy:
+Skill: obp_residual_poly
+When: best-fit leaves many unusable tiny gaps.
+Do: compute residual r=rem-item; reward tight fit but add penalty for residual ranges that are likely unusable, e.g. r near small isolated gaps.
+Fallback: if formula ties, use best-fit.
+Safety: scores must be finite for every feasible bin.
+[NEUTRAL LENGTH PADDING]
+This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task rule. This padding only equalizes context length and adds no task r
+[END CARD SLOT 2]

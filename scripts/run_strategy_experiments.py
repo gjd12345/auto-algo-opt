@@ -6,12 +6,14 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from eoh_rag.experiments.provider import get_provider_config
 from eoh_rag.experiments.strategy_assets import load_and_validate_assets
+from scripts.freeze_q3_mechanism_contexts import validate_frozen_contexts
 from scripts.opencode_go_env import build_env, load_opencode_go_key
 
 MANIFESTS={
     "proxy": ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3_proxy.json",
     "q3":ROOT/"eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json",
     "cross":ROOT/"eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+    "mechanism":ROOT/"eoh_rag_workspace/experiments/manifests/bp_q3_mechanism_discovery_v1.json",
 }
 REPORT_ROOT = ROOT / "eoh_rag_workspace/reports/formal"
 
@@ -36,6 +38,14 @@ def preflight(experiments: list[str], provider: str) -> int:
         manifest=MANIFESTS[name]
         proc=subprocess.run([sys.executable,"-m","eoh_rag.experiments.batch_runner","--manifest",str(manifest),"--no-run"],cwd=ROOT,text=True,capture_output=True)
         checks.append({"check":"manifest_dry_run","suite":name,"ok":proc.returncode==0,"detail":(proc.stdout+proc.stderr)[-500:]})
+        manifest_payload=json.loads(manifest.read_text(encoding="utf-8"))
+        if manifest_payload.get("context_lock"):
+            try:
+                lock_path=ROOT/manifest_payload["context_lock"]
+                lock=validate_frozen_contexts(lock_path)
+                checks.append({"check":"context_lock","suite":name,"ok":True,"detail":{"files":len(lock["files"]),"chars":lock["effective_context_chars"]}})
+            except Exception as exc:
+                checks.append({"check":"context_lock","suite":name,"ok":False,"detail":str(exc)})
     try:
         load_and_validate_assets(ROOT/"eoh_rag_workspace/experiments/strategies/abstract_strategies.json",ROOT/"eoh_rag_workspace/experiments/strategies/transfer_card_map.json")
         checks.append({"check":"strategy_assets","ok":True})
@@ -85,7 +95,7 @@ def proxy(provider: str, concurrency: int, resume: bool) -> int:
     return 0 if result["formal_allowed"] else 3
 
 def main() -> None:
-    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","proxy","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument("--experiments",nargs="+",choices=["q3","cross","mechanism"],required=True); parser.add_argument("--provider",choices=["opencode-go","deepseek"],default="opencode-go"); parser.add_argument("--phase",choices=["preflight","proxy","formal"],required=True); parser.add_argument("--max-concurrent-runs",type=int,default=1); parser.add_argument("--resume",action="store_true"); args=parser.parse_args()
     if args.phase == "preflight":
         raise SystemExit(preflight(args.experiments,args.provider))
     if args.phase == "proxy":
