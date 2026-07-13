@@ -30,13 +30,26 @@ def _read_json(path: Path) -> dict:
 def _suite_time_bounds(suite_dir: Path) -> tuple[str, str]:
     """以正式摘要文件的首末落盘时间界定实验窗口，避免依赖会被后续任务覆盖的进程文件。"""
 
-    summary_paths = list(suite_dir.rglob("official_eoh_run_summary.json"))
-    if not summary_paths:
-        raise FileNotFoundError(f"no formal summaries found under {suite_dir}")
-    timestamps = sorted(path.stat().st_mtime for path in summary_paths)
+    rows = _read_json(suite_dir / "run_index.json")
+    if not isinstance(rows, list) or not rows:
+        raise ValueError(f"invalid formal run index under {suite_dir}")
+    start_timestamps: list[float] = []
+    completed_timestamps: list[float] = []
+    for row in rows:
+        summary_path = (
+            suite_dir
+            / str(row["problem"])
+            / str(row["arm"])
+            / str(row["seed"])
+            / "official_eoh_run_summary.json"
+        )
+        completed_timestamp = summary_path.stat().st_mtime
+        completed_timestamps.append(completed_timestamp)
+        # 并发 run 的最早启动时间不能用首个完成时间代替，需要扣除各自记录的运行时长。
+        start_timestamps.append(completed_timestamp - float(row.get("runtime_s", 0.0)))
     return (
-        datetime.fromtimestamp(timestamps[0]).astimezone().isoformat(),
-        datetime.fromtimestamp(timestamps[-1]).astimezone().isoformat(),
+        datetime.fromtimestamp(min(start_timestamps)).astimezone().isoformat(),
+        datetime.fromtimestamp(max(completed_timestamps)).astimezone().isoformat(),
     )
 
 
