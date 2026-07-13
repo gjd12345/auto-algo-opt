@@ -31,12 +31,20 @@ def evaluate_tsp(heuristic, instance: dict) -> dict:
     coords = instance["coords"]; n = len(coords)
     # TSPLIB EUC_2D 使用最近整数距离，不使用连续欧氏距离。
     dist = np.rint(np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2))
+    # 距离矩阵是候选算法的只读输入。共享同一矩阵可避免每走一步都复制 n×n 数据，
+    # 否则评估器自身会在大实例上先于候选算法超时，造成系统性的假失败。
+    dist.setflags(write=False)
     route = [0]
+    visited = np.zeros(n, dtype=bool)
+    visited[0] = True
     while len(route) < n:
-        unvisited = np.asarray([node for node in range(n) if node not in route], dtype=int)
-        nxt = int(heuristic(route[-1], 0, unvisited, dist.copy()))
-        if nxt not in unvisited: raise ValueError("heuristic returned visited or unknown node")
+        # flatnonzero 与旧实现一样按节点编号升序返回，但布尔索引避免反复扫描 route。
+        unvisited = np.flatnonzero(~visited)
+        nxt = int(heuristic(route[-1], 0, unvisited, dist))
+        if nxt < 0 or nxt >= n or visited[nxt]:
+            raise ValueError("heuristic returned visited or unknown node")
         route.append(nxt)
+        visited[nxt] = True
     cost = float(sum(dist[a, b] for a, b in zip(route, route[1:] + route[:1])))
     optimum = instance.get("optimum")
     return {"instance": instance["name"], "nodes": n, "feasible": True, "tour_cost": cost, "optimum": optimum, "relative_gap_pct": ((cost - optimum) / optimum * 100.0) if optimum else None}
