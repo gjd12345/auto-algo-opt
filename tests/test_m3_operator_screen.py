@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
+
 from eoh_rag.experiments.batch_runner import _build_cmd
 from scripts.analyze_m3_operator_screen import analyze
 from scripts.analyze_m3_tsp_confirmation import analyze as analyze_tsp_confirmation
@@ -90,3 +94,16 @@ def test_tsp_confirmation_requires_training_and_core7_improvement() -> None:
     assert result["objective_comparison"]["win"] == 4
     assert result["core7_comparison"]["win"] == 3
     assert result["decision"]["status"] == "m3_tsp_confirmed"
+
+
+def test_tsp_confirmation_direct_entry_can_import_dependencies() -> None:
+    script = Path(__file__).resolve().parents[1] / "scripts" / "analyze_m3_tsp_confirmation.py"
+
+    completed = subprocess.run(
+        [sys.executable, str(script), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr

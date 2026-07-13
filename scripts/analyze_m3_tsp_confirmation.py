@@ -5,7 +5,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from pathlib import Path
+
+# 允许从仓库根目录直接运行本脚本，与其他正式分析入口保持一致。
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from scripts.analyze_m3_operator_screen import _paired, load_rows
 
