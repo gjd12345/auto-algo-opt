@@ -4,14 +4,18 @@ from dataclasses import replace
 import json
 from pathlib import Path
 
+import pytest
+
 from eoh_rag.experiments.reports.export_strategy_evidence import (
     RunEvidence,
+    analyze_component,
     analyze_cross,
     analyze_q3,
     build_environment,
     collect_dataset_hashes,
     core_suite_score,
     load_formal_runs,
+    write_component_evidence,
     write_cross_evidence,
     write_adversarial_candidates,
     write_q3_evidence,
@@ -39,6 +43,23 @@ def _run(
         population_size=6,
         best_code="def score(item, bins):\n    return bins\n",
         held_out_report=held_out_report or {"held_out/hifo_5k_C100.pkl": score},
+    )
+
+
+def _failed_run(problem: str, arm: str, seed: int) -> RunEvidence:
+    return RunEvidence(
+        run_key=f"suite/{problem}/{arm}/{seed}",
+        problem=problem,
+        arm=arm,
+        seed=seed,
+        status="failed_after_retries",
+        attempts=3,
+        runtime_s=30.0,
+        best_objective=None,
+        valid_candidates=0,
+        population_size=0,
+        best_code=None,
+        held_out_report={},
     )
 
 
@@ -179,6 +200,90 @@ def test_loader_accepts_wrapped_and_bare_summaries(tmp_path: Path) -> None:
 
     assert [run.seed for run in loaded] == [2024, 2025]
     assert all(run.population_size == 6 for run in loaded)
+
+
+def test_loader_only_keeps_failed_coordinates_when_explicitly_allowed(tmp_path: Path) -> None:
+    suite_dir = tmp_path / "formal" / "component"
+    run_dir = suite_dir / "bp_online" / "residual_poly_only" / "2024"
+    run_dir.mkdir(parents=True)
+    (run_dir / "official_eoh_run_summary.json").write_text(
+        json.dumps(
+            {
+                "run_summary": {
+                    "ok": False,
+                    "failure_reason": "missing_population",
+                    "population_size": 0,
+                    "valid_candidates": 0,
+                    "best_objective": None,
+                    "best_code": None,
+                    "held_out_report": {},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    rows = [
+        {
+            "run_key": "component/bp_online/residual_poly_only/2024",
+            "problem": "bp_online",
+            "arm": "residual_poly_only",
+            "seed": 2024,
+            "status": "failed_after_retries",
+            "attempts": 3,
+            "runtime_s": 30.0,
+            "output_dir": str(run_dir),
+        }
+    ]
+    (suite_dir / "run_index.json").write_text(json.dumps(rows), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="formal run is not ok"):
+        load_formal_runs(suite_dir, expected_count=1)
+
+    loaded = load_formal_runs(suite_dir, expected_count=1, allow_failed=True)
+
+    assert len(loaded) == 1
+    assert loaded[0].run_key == "component/bp_online/residual_poly_only/2024"
+    assert loaded[0].status == "failed_after_retries"
+    assert loaded[0].best_code is None
+    assert loaded[0].held_out_report == {}
+
+
+def test_component_analysis_preserves_failures_and_compares_with_q3() -> None:
+    q3_runs: list[RunEvidence] = []
+    component_runs: list[RunEvidence] = []
+    for seed in range(2024, 2034):
+        q3_runs.extend(
+            [
+                _run("bp_online", "pure", seed, 4.0),
+                _run("bp_online", "generic", seed, 3.5),
+                _run("bp_online", "answer", seed, 3.0),
+            ]
+        )
+        component_runs.append(
+            _run("bp_online", "harmonic_only", seed, 4.5)
+            if seed != 2031
+            else _failed_run("bp_online", "harmonic_only", seed)
+        )
+        component_runs.append(
+            _run("bp_online", "residual_poly_only", seed, 5.0)
+            if seed < 2027
+            else _failed_run("bp_online", "residual_poly_only", seed)
+        )
+
+    result = analyze_component(component_runs, q3_runs)
+
+    assert result["summary"]["arms"]["harmonic_only"]["valid_runs"] == 9
+    assert result["summary"]["arms"]["harmonic_only"]["valid_rate"] == 0.9
+    assert result["summary"]["arms"]["residual_poly_only"]["valid_runs"] == 3
+    assert result["summary"]["arms"]["residual_poly_only"]["valid_rate"] == 0.3
+    assert result["comparisons"]["answer_vs_harmonic_only"] == {
+        "paired_valid": 9,
+        "answer_win": 9,
+        "tie": 0,
+        "answer_loss": 0,
+    }
+    assert result["comparisons"]["answer_vs_residual_poly_only"]["answer_win"] == 3
+    assert result["decision"]["status"] == "supports_pair_complementarity"
 
 
 def test_q3_writer_creates_required_evidence_without_local_paths(tmp_path: Path) -> None:
