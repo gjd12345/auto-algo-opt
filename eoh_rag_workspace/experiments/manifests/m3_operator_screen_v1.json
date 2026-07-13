@@ -1,0 +1,54 @@
+{
+  "suite": "m3_operator_screen_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online", "tsp_construct", "cvrp_construct"],
+  "arms": [
+    {
+      "name": "four_ops",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context",
+      "operators": "e1,e2,m1,m2"
+    },
+    {
+      "name": "with_m3",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context",
+      "operators": "e1,e2,m1,m2,m3"
+    }
+  ],
+  "generations": [4],
+  "pop_size": 6,
+  "repeats": 3,
+  "seed_list": [6101, 6102, 6103],
+  "max_runs": 18,
+  "run_timeout_s": 3600,
+  "eval_timeout_s": 40,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 64,
+  "held_out_by_problem": {
+    "bp_online": [
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_1k_C100.pkl",
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl",
+      "eoh_rag_workspace/problems/bp_online/held_out/hifo_10k_C100.pkl"
+    ],
+    "tsp_construct": [
+      "eoh_rag_workspace/held_out/core/tsp_construct/eil51.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/st70.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/kroA100.tsp",
+      "eoh_rag_workspace/held_out/core/tsp_construct/ch130.tsp"
+    ],
+    "cvrp_construct": [
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n129-k18.vrp",
+      "eoh_rag_workspace/held_out/core/cvrp_construct/X-n153-k22.vrp"
+    ]
+  },
+  "pool_policy": "disabled",
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "primary_metric": "training_objective_and_m3_productivity",
+  "require_confirm_for_real_run": false,
+  "official_root": "official_eoh"
+}

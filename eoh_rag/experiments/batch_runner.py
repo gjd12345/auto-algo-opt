@@ -319,7 +319,8 @@ def _build_cmd(
         "--arm", arm["runner_arm"],
         "--pop-size", str(manifest.get("pop_size", 4)),
         "--generations", str(generation),
-        "--operators", manifest.get("operators", "i1"),
+        # 算子消融需要两臂共享其余预算，只允许在臂级别覆盖算子列表。
+        "--operators", arm.get("operators", manifest.get("operators", "i1")),
         # 默认 6 路 run 内并发(num_samplers=num_evaluators=6);manifest 可覆盖,复现旧确定性基线时设 1
         "--n-processes", str(manifest.get("n_processes", 6)),
         "--eval-timeout-s", str(manifest.get("eval_timeout_s", 40)),
