@@ -274,6 +274,14 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             for path in extra_corpus_files
         ):
             errors.append(f"arm[{i}] rag.extra_corpus_files must be a list of file paths")
+        feedback_policy = arm.get(
+            "evolution_feedback_policy",
+            manifest.get("evolution_feedback_policy", "legacy"),
+        )
+        if feedback_policy not in {"legacy", "objective_aware"}:
+            errors.append(
+                f"arm[{i}] evolution_feedback_policy must be 'legacy' or 'objective_aware'"
+            )
 
     problems = manifest.get("problems", [])
     for p in problems:
@@ -350,6 +358,17 @@ def _build_cmd(
     if seed is not None:
         cmd.extend(["--seed", str(seed)])
     cmd.extend(["--provider", provider, "--temperature-schedule", temperature_schedule])
+    cmd.extend(
+        [
+            "--evolution-feedback-policy",
+            str(
+                arm.get(
+                    "evolution_feedback_policy",
+                    manifest.get("evolution_feedback_policy", "legacy"),
+                )
+            ),
+        ]
+    )
     # strict 是 v1 冻结合同；新 cohort 只有显式声明 clip 才启用确定性预算截断。
     cmd.extend(
         [

@@ -472,6 +472,11 @@ def _runner_script() -> str:
             parser.add_argument("--seed", type=int, default=2024)
             parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
             parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
+            parser.add_argument(
+                "--evolution-feedback-policy",
+                choices=["legacy", "objective_aware"],
+                default="legacy",
+            )
             parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")
             parser.add_argument("--controller-dev-suite", default="synthetic_dev_v1")
             parser.add_argument("--controller-confirm-suite", default="synthetic_confirm_v1")
@@ -545,6 +550,7 @@ def _runner_script() -> str:
                 pop_size=args.pop_size,
                 n_pop=args.generations,
                 operators=operators,
+                feedback_policy=args.evolution_feedback_policy,
                 output_dir=args.output_dir,
                 n_processes=args.n_processes,
                 use_seed=use_seed,
@@ -610,6 +616,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "seed": getattr(args, "seed", 2024),
         "provider": getattr(args, "provider", "opencode-go"),
         "temperature_schedule": getattr(args, "temperature_schedule", "fixed"),
+        "evolution_feedback_policy": getattr(args, "evolution_feedback_policy", "legacy"),
         "controller_budget_policy": getattr(args, "controller_budget_policy", "strict"),
         "controller_dev_suite": getattr(args, "controller_dev_suite", "synthetic_dev_v1"),
         "controller_confirm_suite": getattr(args, "controller_confirm_suite", "synthetic_confirm_v1"),
@@ -744,6 +751,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         getattr(args, "provider", "opencode-go"),
         "--temperature-schedule",
         getattr(args, "temperature_schedule", "fixed"),
+        "--evolution-feedback-policy",
+        getattr(args, "evolution_feedback_policy", "legacy"),
         "--controller-budget-policy",
         getattr(args, "controller_budget_policy", "strict"),
         "--controller-dev-suite",
@@ -925,6 +934,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2024)
     parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
+    parser.add_argument(
+        "--evolution-feedback-policy",
+        choices=["legacy", "objective_aware"],
+        default="legacy",
+    )
     parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")
     parser.add_argument("--controller-dev-suite", default="synthetic_dev_v1")
     parser.add_argument("--controller-confirm-suite", default="synthetic_confirm_v1")

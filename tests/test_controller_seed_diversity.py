@@ -28,6 +28,7 @@ def test_balanced_v2_suites_cover_each_distribution_at_each_size() -> None:
         "synthetic_confirm_v2",
         "synthetic_confirm_v3",
         "synthetic_confirm_v4",
+        "synthetic_confirm_v5",
     ):
         suite = build_controller_suite(suite_name)
         sizes = sorted({len(instance.initial_route) for instance in suite})

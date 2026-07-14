@@ -115,9 +115,25 @@ from ..llm.interface_LLM import InterfaceLLM
 from ..problem import _get_entry_name, _detect_template_kind, _extract_import_lines
 
 
-def parent_selection(pop, m):
+def parent_selection(pop, m, feedback_policy="legacy"):
     if not pop:
         raise ValueError("Cannot select parents from an empty population.")
+    if feedback_policy == "objective_aware":
+        # 评价反馈模式始终保留当前精英；多父代算子再配一个不同个体，兼顾利用与探索。
+        ranked = sorted(pop, key=lambda item: float(item["objective"]))
+        if m == 1:
+            return [ranked[0]]
+        selected = [ranked[0]]
+        remaining = ranked[1:]
+        while len(selected) < m:
+            if not remaining:
+                selected.append(ranked[0])
+                continue
+            weights = [1 / (rank + 2) for rank in range(len(remaining))]
+            chosen = random.choices(remaining, weights=weights, k=1)[0]
+            selected.append(chosen)
+            remaining.remove(chosen)
+        return selected
     ranks = list(range(len(pop)))
     probs = [1 / (rank + 1 + len(pop)) for rank in ranks]
     return random.choices(pop, weights=probs, k=m)
@@ -138,6 +154,7 @@ class Evolution:
         self.n_processes = problem.n_processes
         self.timeout = problem.timeout
         self.n_parents = config.n_parents
+        self.feedback_policy = config.feedback_policy
 
         if not self.debug:
             warnings.filterwarnings("ignore")
@@ -167,10 +184,63 @@ class Evolution:
         )
 
     def _parent_block(self, parents: list) -> str:
+        if self.feedback_policy == "objective_aware":
+            return "\n".join(
+                f"No.{i+1} dev objective={p['objective']} (lower is better).\n"
+                f"Algorithm description: {p['algorithm']}\nCode:\n{p['code']}"
+                for i, p in enumerate(parents)
+            )
         return "\n".join(
             f"No.{i+1} algorithm and the corresponding code are:\n{p['algorithm']}\n{p['code']}"
             for i, p in enumerate(parents)
         )
+
+    def _operator_request(self, operator: str) -> str:
+        """按反馈策略生成算子要求；legacy 文本保持原实现不变。"""
+
+        legacy = {
+            "e1": "Please help me create a new algorithm that has a totally different form from the given ones.\n",
+            "e2": (
+                "Please help me create a new algorithm that has a totally different form from the given ones "
+                "but can be motivated from them.\n"
+                "Firstly, identify the common backbone idea in the provided algorithms. "
+            ),
+            "m1": (
+                "Please assist me in creating a new algorithm that has a different form but can be a "
+                "modified version of the algorithm provided.\n"
+            ),
+            "m2": (
+                "Please identify the main algorithm parameters and assist me in creating a new algorithm "
+                "that has different parameter settings.\n"
+            ),
+        }
+        if self.feedback_policy != "objective_aware":
+            return legacy[operator]
+        feedback = {
+            "e1": (
+                "Use the dev objectives as feedback. Preserve effective parts of the best parent, "
+                "then introduce one clear structural alternative. Do not reset to a generic default.\n"
+            ),
+            "e2": (
+                "Use the dev objectives as feedback. Identify ideas associated with lower objectives, "
+                "keep the best backbone, and combine it with one useful difference from another parent. "
+            ),
+            "m1": (
+                "The parent is the current best by dev objective. Preserve its strongest structure and "
+                "make one purposeful modification that could lower the objective.\n"
+            ),
+            "m2": (
+                "The parent is the current best by dev objective. Change only one or two parameters; "
+                "do not reset its full structure or ordering.\n"
+            ),
+        }
+        return feedback[operator]
+
+    def _single_parent_request(self, parent: dict, operator: str) -> str:
+        request = self._operator_request(operator)
+        if self.feedback_policy != "objective_aware":
+            return request
+        return f"Dev objective: {parent['objective']} (lower is better).\n{request}"
 
     def _build_prompt(self, operator: str, parents=None) -> str:
         spec = self._func_spec()
@@ -185,7 +255,7 @@ class Evolution:
             return (
                 f"{self.task}\n"
                 f"I have {len(parents)} existing algorithms with their codes as follows:\n{block}\n"
-                "Please help me create a new algorithm that has a totally different form from the given ones.\n"
+                f"{self._operator_request(operator)}"
                 "First, describe your new algorithm and main steps in one sentence. "
                 f"The description must be inside a brace. Next, {spec}"
             )
@@ -194,9 +264,7 @@ class Evolution:
             return (
                 f"{self.task}\n"
                 f"I have {len(parents)} existing algorithms with their codes as follows:\n{block}\n"
-                "Please help me create a new algorithm that has a totally different form from the given ones "
-                "but can be motivated from them.\n"
-                "Firstly, identify the common backbone idea in the provided algorithms. "
+                f"{self._operator_request(operator)}"
                 "Secondly, based on the backbone idea describe your new algorithm in one sentence. "
                 f"The description must be inside a brace. Thirdly, {spec}"
             )
@@ -205,8 +273,7 @@ class Evolution:
                 f"{self.task}\n"
                 f"I have one algorithm with its code as follows.\n"
                 f"Algorithm description: {parents['algorithm']}\nCode:\n{parents['code']}\n"
-                "Please assist me in creating a new algorithm that has a different form but can be a "
-                "modified version of the algorithm provided.\n"
+                f"{self._single_parent_request(parents, operator)}"
                 "First, describe your new algorithm and main steps in one sentence. "
                 f"The description must be inside a brace. Next, {spec}"
             )
@@ -215,8 +282,7 @@ class Evolution:
                 f"{self.task}\n"
                 f"I have one algorithm with its code as follows.\n"
                 f"Algorithm description: {parents['algorithm']}\nCode:\n{parents['code']}\n"
-                "Please identify the main algorithm parameters and assist me in creating a new algorithm "
-                "that has different parameter settings.\n"
+                f"{self._single_parent_request(parents, operator)}"
                 "First, describe your new algorithm and main steps in one sentence. "
                 f"The description must be inside a brace. Next, {spec}"
             )
@@ -322,12 +388,12 @@ class Evolution:
         elif operator in ("e1", "e2"):
             if not population:
                 raise ValueError(f"Operator '{operator}' requires a non-empty population.")
-            parents = parent_selection(population, self.n_parents)
+            parents = parent_selection(population, self.n_parents, self.feedback_policy)
             prompt = self._build_prompt(operator, parents)
         elif operator in ("m1", "m2", "m3"):
             if not population:
                 raise ValueError(f"Operator '{operator}' requires a non-empty population.")
-            parents = parent_selection(population, 1)[0]
+            parents = parent_selection(population, 1, self.feedback_policy)[0]
             prompt = self._build_prompt(operator, parents)
         else:
             raise ValueError(f"Unknown operator: {operator}")
