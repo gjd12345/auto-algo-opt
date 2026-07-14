@@ -1,0 +1,60 @@
+{
+  "asset_id": "bp_online_agent_discovery_scale_v1",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,proxy_only,scale_balanced,unstable_across_runs,not_for_formal_seed",
+  "source_run_key": "bp_scale_balanced_feedback_proxy_v1/bp_online/balanced_1k_5k_10k/11003",
+  "agent_commit": "e30205f788d2bd9e620cdca306592d3efc032198",
+  "manifest_sha256": "3B7C3503511476E1FFBA735888751240C6C3C1B21F4F6F9040AE99F24A4641A6",
+  "run_summary_sha256": "5228A3AC6382827D7FA80646FC15EF557AA36ADA7AC7E265FBC056E77B307847",
+  "samples_sha256": "9F2A7986FC31E90792CD1824D05F7D3E6B9994C705294ACD0FFCC111348DEF86",
+  "best_sample_sha256": "B1883581E331DF892989F65F510B8880BA041232D7881D804AFBA94E7E7F5982",
+  "best_code_sha256": "CD9817B2861BB6E7DEC3BC14182A89798AC2571EA3B9947DA54268CDB0345585",
+  "diagnostic_manifest_sha256": "A4CFE2E20453412DF3AB4A2D4BAAB97B2B3BF3525B847030BBE20CF4632AE9F1",
+  "diagnostic_summary_sha256": "1223E95081E198860B17DDF61C05214774AAACB51DEC1DE8E05DE3483EBBD919",
+  "diagnostic_pairs_sha256": "952176EA8E68FC854DD5EC5038A9A0A66E8761AAC07760899868261BBED076F7",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 11003,
+  "generation": 2,
+  "population": 3,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "m2",
+  "source_sample_order": 1,
+  "visibility": {
+    "codex_external_teacher_visible": false,
+    "inherited_605_elites_visible": true,
+    "objective_feedback_visible": true,
+    "scale_balanced_training_visible": true,
+    "diagnostic_suite_visible_during_evolution": false
+  },
+  "selection": {
+    "selected_by": "lowest balanced 1k/5k/10k development objective in its run",
+    "diagnostic_used_for_selection": false,
+    "formal_confirmation_run": false
+  },
+  "proxy_reliability": {
+    "balanced_runs_beating_inherited_seed": 1,
+    "balanced_runs_total": 3,
+    "proxy_gate_passed": false,
+    "formal_seed_allowed": false
+  },
+  "evaluation": {
+    "dev_suite": "balanced_40x1k_40x5k_40x10k",
+    "seeded_best_dev_objective": 0.012051915569476457,
+    "agent_dev_objective": 0.010629935274585047,
+    "relative_dev_improvement_pct": 11.7987907125139,
+    "fresh_diagnostic_pairs": 90,
+    "fresh_diagnostic_wins": 52,
+    "fresh_diagnostic_ties": 16,
+    "fresh_diagnostic_losses": 22,
+    "fresh_diagnostic_mean_gap_reduction_pct_points": {
+      "1000": 0.249293538012869,
+      "5000": 0.0857752080016262,
+      "10000": 0.026538822633941698,
+      "overall": 0.12053585621614561
+    }
+  },
+  "algorithm": "Use a squared small-residual penalty and move the balance target from 0.50 to 0.45.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    harmonic_penalty = 1.0 / ((residual + 1e-9) ** 2)\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.45) ** 2) * 10)\n    scores = harmonic_penalty + balance_peak\n    return scores"
+}

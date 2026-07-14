@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -64,3 +65,21 @@ def test_scale_feedback_manifest_pairs_only_training_profile() -> None:
     assert profiles == ["single_5k", "balanced_1k_5k_10k"]
     assert seed_paths[0] == seed_paths[1]
     assert policies == ["objective_aware", "objective_aware"]
+
+
+def test_scale_proxy_candidate_stays_out_of_formal_seed_memory() -> None:
+    asset = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_scale_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["selection"]["diagnostic_used_for_selection"] is False
+    assert asset["proxy_reliability"]["proxy_gate_passed"] is False
+    assert asset["proxy_reliability"]["formal_seed_allowed"] is False
+    assert asset["evaluation"]["fresh_diagnostic_wins"] == 52
+    assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
+        "best_code_sha256"
+    ]
