@@ -19,28 +19,35 @@ import confirm_tsp_scale_archive as confirmation
 INSTANCE_SIZE = 3038
 INSTANCE_SEEDS = (20270011, 20270012, 20270013)
 TIMEOUT_S = 30.0
-ARCHIVE_SIZE = 4
+CURRENT_AW_ARCHIVE_SIZE = 4
 MIN_BETTER_INSTANCES = 2
 MIN_MEDIAN_IMPROVEMENT_PCT = 0.1
 MANIFEST_NAME = "frontier_archive_confirmation_manifest.json"
 
 
-def load_selected_hashes(stage_ay_dir: Path) -> list[str]:
+def load_selected_hashes(stage_ay_dir: Path, selected_archive_path: Path) -> list[str]:
     summary_path = stage_ay_dir / "safe_pool_frontier_summary.json"
-    archive_path = stage_ay_dir / "selected_frontier_archive.jsonl"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     if not summary.get("overall_pass"):
         raise RuntimeError("Stage AY 未通过发现门槛，不能进入确认")
-    rows = base.read_jsonl(archive_path)
+    rows = base.read_jsonl(selected_archive_path)
     hashes = [str(row["code_hash"]) for row in rows]
-    if len(hashes) != ARCHIVE_SIZE or len(hashes) != len(set(hashes)):
-        raise RuntimeError("Stage AY 冻结档案不是四条唯一代码")
-    if hashes != [str(value) for value in summary["selected_code_hashes"]]:
+    if not hashes or len(hashes) != len(set(hashes)):
+        raise RuntimeError("待确认档案必须包含至少一条唯一代码")
+    default_archive_path = stage_ay_dir / "selected_frontier_archive.jsonl"
+    if selected_archive_path == default_archive_path and hashes != [
+        str(value) for value in summary["selected_code_hashes"]
+    ]:
         raise RuntimeError("Stage AY summary 与冻结档案顺序不一致")
     return hashes
 
 
-def prepare(output_dir: Path, catalog_path: Path, stage_ay_dir: Path) -> None:
+def prepare(
+    output_dir: Path,
+    catalog_path: Path,
+    stage_ay_dir: Path,
+    selected_archive_path: Path | None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = output_dir / MANIFEST_NAME
     if manifest_path.exists():
@@ -50,11 +57,15 @@ def prepare(output_dir: Path, catalog_path: Path, stage_ay_dir: Path) -> None:
     stage_ay_dir = stage_ay_dir.resolve()
     stage_ay_manifest_path = stage_ay_dir / "safe_pool_frontier_manifest.json"
     stage_ay_summary_path = stage_ay_dir / "safe_pool_frontier_summary.json"
-    selected_archive_path = stage_ay_dir / "selected_frontier_archive.jsonl"
+    selected_archive_path = (
+        selected_archive_path.resolve()
+        if selected_archive_path
+        else stage_ay_dir / "selected_frontier_archive.jsonl"
+    )
     stage_ay_manifest = json.loads(stage_ay_manifest_path.read_text(encoding="utf-8"))
-    selected_hashes = load_selected_hashes(stage_ay_dir)
+    selected_hashes = load_selected_hashes(stage_ay_dir, selected_archive_path)
     current_aw_hashes = [str(value) for value in stage_ay_manifest["current_aw_archive"]]
-    if len(current_aw_hashes) != ARCHIVE_SIZE or len(current_aw_hashes) != len(set(current_aw_hashes)):
+    if len(current_aw_hashes) != CURRENT_AW_ARCHIVE_SIZE or len(current_aw_hashes) != len(set(current_aw_hashes)):
         raise RuntimeError("Stage AY 记录的当前 AW 档案不是四条唯一代码")
 
     catalog = base.read_jsonl(catalog_path)
@@ -122,9 +133,10 @@ def prepare(output_dir: Path, catalog_path: Path, stage_ay_dir: Path) -> None:
         "candidates": candidates,
         "instances": instances,
         "timeout_s": TIMEOUT_S,
+        "selected_archive_size": len(selected_hashes),
         "expected_coordinates": len(candidates) * len(instances),
         "gate": {
-            "selected_required_feasible": ARCHIVE_SIZE * len(instances),
+            "selected_required_feasible": len(selected_hashes) * len(instances),
             "median_improvement_min_pct": MIN_MEDIAN_IMPROVEMENT_PCT,
             "better_instances_min": MIN_BETTER_INSTANCES,
             "posthoc_slot_replacement_allowed": False,
@@ -304,6 +316,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--catalog-path", type=Path)
     parser.add_argument("--stage-ay-dir", type=Path)
+    parser.add_argument("--selected-archive", type=Path)
     args = parser.parse_args()
     if args.command == "prepare" and not all((args.catalog_path, args.stage_ay_dir)):
         parser.error("prepare 需要历史目录和 Stage AY 路径")
@@ -314,7 +327,7 @@ def main() -> None:
     args = parse_args()
     output_dir = args.output_dir.resolve()
     if args.command == "prepare":
-        prepare(output_dir, args.catalog_path, args.stage_ay_dir)
+        prepare(output_dir, args.catalog_path, args.stage_ay_dir, args.selected_archive)
     else:
         run(output_dir)
 
