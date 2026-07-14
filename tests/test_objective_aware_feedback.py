@@ -100,3 +100,40 @@ def test_agent_discovery_v3_is_attributed_to_feedback_evolution() -> None:
     assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
         "best_code_sha256"
     ]
+
+
+def test_bp_feedback_proxy_reuses_frozen_605_elites() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    seed_path = (
+        REPO_ROOT / "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    )
+    seeds = json.loads(seed_path.read_text(encoding="utf-8"))
+    snapshot_path = (
+        REPO_ROOT
+        / "evidence/final_batch_20260630/shared_pool_snapshot/best_codes_bp_online.jsonl"
+    )
+    snapshot_codes = {
+        json.loads(line)["code"]
+        for line in snapshot_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["broad_training"] is True
+    assert manifest["n_train"] == 32
+    assert len(manifest["held_out_set"]) == 3
+    assert len(seeds) == 4
+    assert all(seed["code"] in snapshot_codes for seed in seeds)
+    assert hashlib.sha256(seed_path.read_bytes()).hexdigest().upper() == manifest[
+        "feedback_hypothesis"
+    ]["seed_asset_sha256"]
+    policies = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+    assert policies == ["legacy", "objective_aware"]

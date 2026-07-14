@@ -1,0 +1,18 @@
+[
+  {
+    "algorithm": "Inherited 605-run bp_online elite rank 1; snapshot objective=0.00674.",
+    "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    utilization = np.exp(item / (residual + item + 1e-9))\n    penalty = np.where((residual > 0) & (residual < 2 * item), (residual - item) ** 2 / (item + 1e-9), 0)\n    return utilization - penalty"
+  },
+  {
+    "algorithm": "Inherited 605-run bp_online elite rank 2; snapshot objective=0.00694.",
+    "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    # Quadratic waste penalty: strongly prefer smaller residuals\n    waste_penalty = 1.0 / (residual * residual + 1e-9)\n    # Penalize residuals near half capacity (adjust 50 as needed)\n    future_penalty = -np.abs(residual - 50) / 50.0\n    # Tie-break: higher index gets slight advantage (reverse of original)\n    tie_breaker = np.arange(len(bins)) * 1e-9\n    scores = waste_penalty + future_penalty + tie_breaker\n    return scores"
+  },
+  {
+    "algorithm": "Inherited 605-run bp_online elite rank 3; snapshot objective=0.00694.",
+    "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    half_cap = bins.max() / 2  # approximate half capacity from largest bin\n    power = 1.5\n    # Score: larger inverse residual encourages small leftover; penalty for deviation from half capacity\n    scores = (1.0 / (residual ** power)) - (abs(residual - half_cap) / half_cap)\n    return scores"
+  },
+  {
+    "algorithm": "Inherited 605-run bp_online elite rank 4; snapshot objective=0.00714.",
+    "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    harmonic_penalty = 1.0 / (residual + 1e-9)\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.5) ** 2) * 10)\n    scores = harmonic_penalty + balance_peak\n    return scores"
+  }
+]
