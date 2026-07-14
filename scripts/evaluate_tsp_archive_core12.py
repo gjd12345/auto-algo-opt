@@ -53,28 +53,64 @@ def validate_archive(candidates: list[dict[str, Any]]) -> None:
         seen.add(expected_hash)
 
 
-def prepare(output_dir: Path, archive_path: Path, reuse_results: Path | None) -> None:
+def resolve_archive_candidates(archive_path: Path, catalog_path: Path | None) -> list[dict[str, Any]]:
+    archive_rows = read_jsonl(archive_path)
+    if not archive_rows:
+        raise ValueError("冻结档案不能为空")
+
+    rows_with_code = [bool(str(row.get("code", ""))) for row in archive_rows]
+    if all(rows_with_code):
+        validate_archive(archive_rows)
+        return archive_rows
+    if any(rows_with_code):
+        raise ValueError("冻结档案不能混合完整代码与仅 hash 记录")
+    if catalog_path is None:
+        raise ValueError("仅含代码 hash 的冻结档案需要 --catalog-path")
+
+    # 档案只保存筛选结果，完整代码继续由同一份历史目录提供，避免复制代码造成来源漂移。
+    catalog = read_jsonl(catalog_path)
+    validate_archive(catalog)
+    catalog_by_hash = {row["code_hash"]: row for row in catalog}
+    archive_hashes = [str(row.get("code_hash", "")) for row in archive_rows]
+    if any(not code_hash for code_hash in archive_hashes):
+        raise ValueError("冻结档案存在空 code_hash")
+    if len(set(archive_hashes)) != len(archive_hashes):
+        raise ValueError("冻结档案包含重复 code_hash")
+    missing_hashes = [code_hash for code_hash in archive_hashes if code_hash not in catalog_by_hash]
+    if missing_hashes:
+        raise ValueError(f"历史目录缺少冻结代码：{missing_hashes}")
+    return [catalog_by_hash[code_hash] for code_hash in archive_hashes]
+
+
+def prepare(
+    output_dir: Path,
+    archive_path: Path,
+    reuse_results: Path | None,
+    catalog_path: Path | None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = output_dir / MANIFEST_NAME
     if manifest_path.exists():
         raise FileExistsError(f"评估清单已存在，禁止覆盖：{manifest_path}")
 
     archive_path = archive_path.resolve()
-    candidates = read_jsonl(archive_path)
-    validate_archive(candidates)
+    catalog_path = catalog_path.resolve() if catalog_path else None
+    candidates = resolve_archive_candidates(archive_path, catalog_path)
     registry = audit.load_tsp_registry()
     reuse_path = reuse_results.resolve() if reuse_results else None
     if reuse_path and not reuse_path.is_file():
         raise FileNotFoundError(f"复用结果不存在：{reuse_path}")
 
     manifest = {
-        "schema_version": "tsp-frozen-archive-core12/v1",
+        "schema_version": "tsp-frozen-archive-core12/v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "repo_commit": audit.current_commit(),
         "archive_path": str(archive_path),
         "archive_sha256": audit.sha256_file(archive_path),
         "archive_code_count": len(candidates),
         "archive_code_hashes": [candidate["code_hash"] for candidate in candidates],
+        "catalog_path": str(catalog_path) if catalog_path else None,
+        "catalog_sha256": audit.sha256_file(catalog_path) if catalog_path else None,
         "registry_sha256": audit.sha256_file(audit.REGISTRY_PATH),
         "evaluator_sha256": audit.sha256_file(audit.EVALUATOR_PATH),
         "timeout_s": 30.0,
@@ -97,14 +133,16 @@ def load_frozen_inputs(output_dir: Path) -> tuple[dict[str, Any], list[dict[str,
         "evaluator_sha256": audit.sha256_file(audit.EVALUATOR_PATH),
     }
     reuse_path = Path(manifest["reuse_results_path"]) if manifest.get("reuse_results_path") else None
+    catalog_path = Path(manifest["catalog_path"]) if manifest.get("catalog_path") else None
     if reuse_path:
         checks["reuse_results_sha256"] = audit.sha256_file(reuse_path)
+    if catalog_path:
+        checks["catalog_sha256"] = audit.sha256_file(catalog_path)
     for key, actual in checks.items():
         if manifest[key] != actual:
             raise RuntimeError(f"冻结输入校验失败：{key}")
 
-    candidates = read_jsonl(archive_path)
-    validate_archive(candidates)
+    candidates = resolve_archive_candidates(archive_path, catalog_path)
     if [candidate["code_hash"] for candidate in candidates] != manifest["archive_code_hashes"]:
         raise RuntimeError("冻结档案顺序或代码集合发生变化")
     return manifest, candidates
@@ -206,6 +244,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("command", choices=("prepare", "run"))
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--archive-path", type=Path)
+    parser.add_argument("--catalog-path", type=Path)
     parser.add_argument("--reuse-results", type=Path)
     args = parser.parse_args()
     if args.command == "prepare" and args.archive_path is None:
@@ -217,7 +256,7 @@ def main() -> None:
     args = parse_args()
     output_dir = args.output_dir.resolve()
     if args.command == "prepare":
-        prepare(output_dir, args.archive_path, args.reuse_results)
+        prepare(output_dir, args.archive_path, args.reuse_results, args.catalog_path)
     else:
         run(output_dir)
 
