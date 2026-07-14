@@ -49,6 +49,7 @@ def make_official_runner_args(**overrides) -> Namespace:
         stop_min_gap=0.0,
         broad_training=False,
         n_train=128,
+        bp_training_profile="single_5k",
         held_out_set="",
         api_key_env="",
         api_endpoint_env="",

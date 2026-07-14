@@ -444,6 +444,11 @@ def _build_cmd(
         cmd.append("--broad-training")
         n_train = manifest.get("n_train", 128)
         cmd.extend(["--n-train", str(n_train)])
+        # 允许实验臂只切换 BP 训练尺度，其他预算、模型和种子保持配对。
+        bp_training_profile = arm.get(
+            "bp_training_profile", manifest.get("bp_training_profile", "single_5k")
+        )
+        cmd.extend(["--bp-training-profile", str(bp_training_profile)])
         held_out = (manifest.get("held_out_by_problem") or {}).get(problem) or manifest.get("held_out_set")
         if held_out:
             cmd.extend(["--held-out-set", json.dumps(held_out)])

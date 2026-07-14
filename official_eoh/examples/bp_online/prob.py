@@ -75,17 +75,47 @@ class BPONLINEBroad(BPONLINE):
     预留 n_train/held_out_set 字段供 TSP/CVRP 复用(决策 aa)。
     """
     def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
-                 n_train: int = 128, held_out_set: list | None = None):
+                 n_train: int = 128, held_out_set: list | None = None,
+                 training_profile: str = "single_5k"):
         super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
-        self.instances, self.lb = self._gen_broad_instances(capacity, n_train)
+        self.training_profile = training_profile
+        self.instances, self.lb = self._gen_broad_instances(capacity, n_train, training_profile)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
         # held-out 只用于最终报告；演化阶段若逐候选重复计算，会显著放大耗时且不参与适应度。
         self.report_held_out = False
 
     @staticmethod
-    def _gen_broad_instances(capacity: int, n_train: int):
-        """生成 n_train 个 Weibull 训练实例(对齐 EoH-S 广训练池)。"""
+    def _gen_broad_instances(capacity: int, n_train: int, training_profile: str = "single_5k"):
+        """生成冻结训练实例；多尺度版本与 128×5k 保持相同总物品量。"""
+        if training_profile == "balanced_1k_5k_10k":
+            instances = {}
+            lower_bounds = {}
+            # 40×(1k+5k+10k)=64 万，与旧 128×5k 的评测量一致；三个尺度分别计分后等权平均。
+            for scale_index, item_count in enumerate((1000, 5000, 10000)):
+                dataset_name = f"broad_train_{item_count}"
+                dataset = {}
+                lower_bound_sum = 0.0
+                for instance_index in range(40):
+                    rng = np.random.default_rng(21000 + scale_index * 1000 + instance_index)
+                    items = np.clip(
+                        np.round(rng.weibull(3.0, item_count) * 45.0).astype(int),
+                        1,
+                        capacity,
+                    )
+                    dataset[str(instance_index)] = {
+                        "items": items.tolist(),
+                        "capacity": capacity,
+                        "num_items": item_count,
+                    }
+                    lower_bound_sum += np.ceil(items.sum() / capacity)
+                instances[dataset_name] = dataset
+                lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
+            return instances, lower_bounds
+        if training_profile != "single_5k":
+            raise ValueError(f"unknown BP training profile: {training_profile}")
+
+        # 保留旧数据的 seed、数量和字段，默认配置的历史结果可逐字重放。
         instances = {"broad_train": {}}
         lb_sum = 0.0
         k, lam = 3.0, 45.0

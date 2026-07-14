@@ -335,6 +335,7 @@ def _runner_script() -> str:
 
         def load_problem(problem: str, official_root: Path, eval_timeout_s: int, n_processes: int,
                          broad_training: bool = False, n_train: int = 128, held_out_set: list | None = None,
+                         bp_training_profile: str = "single_5k",
                          controller_budget_policy: str = "strict",
                          controller_dev_suite: str = "synthetic_dev_v1",
                          controller_confirm_suite: str = "synthetic_confirm_v1"):
@@ -345,7 +346,8 @@ def _runner_script() -> str:
                 if broad_training:
                     from prob import BPONLINEBroad
                     return BPONLINEBroad(capacity=100, timeout=eval_timeout_s, n_processes=n_processes,
-                                         n_train=n_train, held_out_set=held_out_set)
+                                         n_train=n_train, held_out_set=held_out_set,
+                                         training_profile=bp_training_profile)
                 from prob import BPONLINE
                 return BPONLINE(capacity=100, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_construct":
@@ -486,6 +488,11 @@ def _runner_script() -> str:
             parser.add_argument("--stop-min-gap", type=float, default=0.0)
             parser.add_argument("--broad-training", action="store_true", help="启用广训练池(128 Weibull 实例)+ held-out 报告(opt-in)")
             parser.add_argument("--n-train", type=int, default=128, help="广训练池实例数(仅 broad-training 有效)")
+            parser.add_argument(
+                "--bp-training-profile",
+                choices=["single_5k", "balanced_1k_5k_10k"],
+                default="single_5k",
+            )
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
 
@@ -511,7 +518,7 @@ def _runner_script() -> str:
             held_out_set = json.loads(args.held_out_set) if args.held_out_set else None
             task = load_problem(args.problem, official_root, args.eval_timeout_s, args.n_processes,
                                 broad_training=args.broad_training, n_train=args.n_train,
-                                held_out_set=held_out_set,
+                                held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
                                 controller_budget_policy=args.controller_budget_policy,
                                 controller_dev_suite=args.controller_dev_suite,
                                 controller_confirm_suite=args.controller_confirm_suite)
@@ -625,6 +632,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "stop_min_gap": args.stop_min_gap,
         "broad_training": args.broad_training,
         "n_train": args.n_train,
+        "bp_training_profile": getattr(args, "bp_training_profile", "single_5k"),
         "held_out_set": args.held_out_set,
         "api_key_present": api_key_present,
         "api_endpoint_present": endpoint_present,
@@ -771,6 +779,10 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         ])
     if args.broad_training:
         cmd.extend(["--broad-training", "--n-train", str(args.n_train)])
+        cmd.extend([
+            "--bp-training-profile",
+            getattr(args, "bp_training_profile", "single_5k"),
+        ])
         if args.held_out_set:
             # CLI 参数已经是 JSON 数组字符串；再次序列化会让内部 runner 得到字符串而不是路径列表。
             cmd.extend(["--held-out-set", args.held_out_set])
@@ -926,6 +938,11 @@ def main() -> None:
     parser.add_argument("--stop-min-gap", type=float, default=0.0, help="窗口内 best 相对改进低于此值则停")
     parser.add_argument("--broad-training", action="store_true", help="启用广训练池(128 Weibull 实例)+ held-out 报告(opt-in)")
     parser.add_argument("--n-train", type=int, default=128, help="广训练池实例数")
+    parser.add_argument(
+        "--bp-training-profile",
+        choices=["single_5k", "balanced_1k_5k_10k"],
+        default="single_5k",
+    )
     parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组")
     parser.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
     parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")
