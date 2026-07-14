@@ -132,6 +132,34 @@ def test_agent_discovery_asset_reproduces_dev_and_confirm_results() -> None:
     )
 
 
+def test_second_agent_discovery_reproduces_dev_and_confirm_results() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    asset = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v2.json"
+        ).read_text(encoding="utf-8")
+    )
+    namespace: dict[str, object] = {}
+    exec(asset["code"], namespace)
+    function = namespace["build_search_plan"]
+
+    dev = evaluate_controller(function, build_controller_suite("synthetic_dev_v2"), budget_policy="clip")
+    confirm = evaluate_controller(
+        function,
+        build_controller_suite("synthetic_confirm_v3"),
+        budget_policy="clip",
+    )
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["visibility"]["external_teacher_visible"] is False
+    assert asset["visibility"]["diverse_seed_factory_visible"] is False
+    assert dev["objective"] == pytest.approx(asset["evaluation"]["agent_dev_objective"], abs=1e-12)
+    assert confirm["objective"] == pytest.approx(
+        asset["evaluation"]["agent_confirm_objective"], abs=1e-12
+    )
+
+
 def test_seed_diversity_confirmation_manifest_uses_new_confirm_suite() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     manifest = json.loads(

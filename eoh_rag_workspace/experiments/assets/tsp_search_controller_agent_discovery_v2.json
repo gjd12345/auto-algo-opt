@@ -1,0 +1,38 @@
+{
+  "asset_id": "tsp_search_controller_agent_discovery_v2",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,target_algorithm,optional_seed",
+  "source_run_key": "tsp_search_controller_seed_diversity_confirm_v1/tsp_search_controller/static_seed/9601",
+  "agent_commit": "27913e45b1ce4aacfcdd670d77118a83f1d26d1f",
+  "manifest_sha256": "8B74653A1FB6247824787FF30D615FD2B5A09CABCE5B9BD87119CE91B0D5DCC3",
+  "run_summary_sha256": "12EE3B3B90B7538B4F1B088573819C326755F8FF0A54C741CFF46B2369EEFFCD",
+  "held_out_report_sha256": "0B39FE2021D04C2C7045EED2B6725ACDD1B8BA8B3D744D07FFA2E21224DF4E0C",
+  "best_code_sha256": "D9CDDE9814615D0F5F1AC7E0B6CC32495D1595700AA09047EECD0ADB05B28EA7",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 9601,
+  "generation": 4,
+  "population": 4,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "visibility": {
+    "rag_memory_visible": false,
+    "external_teacher_visible": false,
+    "diverse_seed_factory_visible": false,
+    "confirm_suite_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "734A9D2FD9B8235D10FFA1A4EBA928472A00C28B8274A235927F638E96348487",
+  "evaluation": {
+    "dev_suite": "synthetic_dev_v2",
+    "baseline_dev_objective": 0.8257345477567531,
+    "agent_dev_objective": 0.8217776839805818,
+    "relative_dev_improvement_pct": 0.479193196762908,
+    "confirm_suite": "synthetic_confirm_v3",
+    "baseline_confirm_objective": 0.8401711157384543,
+    "agent_confirm_objective": 0.8396537011513093,
+    "relative_confirm_improvement_pct": 0.0615844293445109,
+    "confirm_better_same_worse": [6, 2, 4]
+  },
+  "algorithm": "Apply two-opt first, then three-opt, and finish with relocation while using the full weighted budget.",
+  "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    \"\"\"Return [(primitive, budget, minimum_relative_gain), ...].\"\"\"\n    return [(\"two_opt\", 20, 0.0), (\"three_opt\", 4, 0.0), (\"relocate\", 10, 0.0)]"
+}
