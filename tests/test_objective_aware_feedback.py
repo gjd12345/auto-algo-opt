@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -79,3 +80,23 @@ def test_objective_feedback_manifest_pairs_policy_only() -> None:
 
     assert policies == ["legacy", "objective_aware"]
     assert seed_paths[0] == seed_paths[1]
+
+
+def test_agent_discovery_v3_is_attributed_to_feedback_evolution() -> None:
+    asset_path = (
+        REPO_ROOT
+        / "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v3.json"
+    )
+    asset = json.loads(asset_path.read_text(encoding="utf-8"))
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["origin"] == "automatic_evolution"
+    assert asset["visibility"]["objective_feedback_visible"] is True
+    assert asset["visibility"]["external_teacher_visible"] is False
+    assert asset["selection"]["confirm_used_for_selection"] is False
+    assert asset["evaluation"]["agent_dev_objective"] < asset["evaluation"][
+        "parent_v2_dev_objective"
+    ]
+    assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
+        "best_code_sha256"
+    ]

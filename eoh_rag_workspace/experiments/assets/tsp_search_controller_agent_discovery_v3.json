@@ -1,0 +1,63 @@
+{
+  "asset_id": "tsp_search_controller_agent_discovery_v3",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,target_algorithm,optional_seed",
+  "source_run_key": "tsp_search_controller_objective_feedback_proxy_v1/tsp_search_controller/objective_aware/9802",
+  "agent_commit": "83739b993f2c96c4ec12b0d3e45c6e0689a5fde1",
+  "feedback_implementation_commit": "bffda65",
+  "manifest_sha256": "6F976A5FDCD1E083FDAE9FF531844B33CA9B68409B9C17E9C3467CFE8DA3C7C3",
+  "run_summary_sha256": "3A4570549444A0DB95D90528982A0D3BC5E1D62BF39CB32EA26E2F21E8DC66C4",
+  "held_out_report_sha256": "1DEBF4CDACF71A1F300BD32F33B145FD2824AD6A088DD85AF81F3DFE5610E77E",
+  "samples_sha256": "CC60422453CDB95F2A68F69DA1D8C4523094EFE270389EEBBA6745A163A50C9F",
+  "best_code_sha256": "56E4DB6BEC74FFE1328A47E3C78AE407053410F557D230E7FACA64065A10CBCF",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 9802,
+  "generation": 4,
+  "population": 4,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "m1",
+  "controller_budget_policy": "clip",
+  "visibility": {
+    "rag_memory_visible": false,
+    "external_teacher_visible": false,
+    "agent_discovery_memory_visible": true,
+    "objective_feedback_visible": true,
+    "confirm_suite_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "5BF56A7CBCAA9B0DEBBB42F51C2F50851FE5CB6CEF4CC6B829346AAA439F314F",
+  "selection": {
+    "selected_by": "lowest generated synthetic_dev_v2 objective after the preregistered proxy gate passed",
+    "confirm_used_for_selection": false,
+    "paired_objective_aware_wins": 3,
+    "paired_seed_count": 3,
+    "objective_aware_runs_beating_inherited_best": 2
+  },
+  "evaluation": {
+    "dev_suite": "synthetic_dev_v2",
+    "baseline_dev_objective": 0.8257345477567531,
+    "parent_v2_dev_objective": 0.8217776839805818,
+    "agent_dev_objective": 0.8211099042836915,
+    "relative_dev_improvement_vs_baseline_pct": 0.5600641859572555,
+    "relative_dev_improvement_vs_parent_v2_pct": 0.08126038342337578,
+    "confirm_suite": "synthetic_confirm_v5",
+    "baseline_confirm_objective": 0.8228605322362964,
+    "parent_v2_confirm_objective": 0.820826493737466,
+    "agent_confirm_objective": 0.8206246680980952,
+    "relative_confirm_improvement_vs_baseline_pct": 0.2717184809100971,
+    "relative_confirm_improvement_vs_parent_v2_pct": 0.02458810003217556,
+    "confirm_better_same_worse_vs_baseline": [7, 2, 3]
+  },
+  "cross_confirm_evaluation": {
+    "synthetic_confirm_v2": 0.8290705516595052,
+    "synthetic_confirm_v3": 0.8384016594556579,
+    "synthetic_confirm_v4": 0.8281332141234816,
+    "synthetic_confirm_v5": 0.8206246680980952,
+    "mean_objective": 0.829057523334185,
+    "relative_improvement_vs_baseline_mean_pct": 0.45475616970789784,
+    "relative_improvement_vs_parent_v2_mean_pct": 0.018196943827923237
+  },
+  "algorithm": "Keep the successful two-opt, three-opt, relocate order, then move a little more budget from relocation to three-opt.",
+  "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    \"\"\"Return [(primitive, budget, minimum_relative_gain), ...].\"\"\"\n    return [(\"two_opt\", 20, 0.0), (\"three_opt\", 6, 0.0), (\"relocate\", 8, 0.0)]"
+}
