@@ -1,0 +1,51 @@
+{
+  "asset_id": "bp_online_agent_discovery_v1b",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,dev_tied_candidate,optional_seed",
+  "source_run_key": "bp_objective_feedback_proxy_v1/bp_online/objective_aware/9902",
+  "agent_commit": "9afa7681aca782a53c3344384b05019ca828f14d",
+  "feedback_implementation_commit": "bffda65",
+  "manifest_sha256": "7B64475F480CA26E29BC13843B6D0C0204DD670C1BC99B0F78F19B0582EEC4CF",
+  "run_summary_sha256": "7CB92986B9D47514B97436429B9335BD7CC50F4312D71C470AABE25E4E7A2A29",
+  "held_out_report_sha256": "157993E830E825682C37CE7DEBA10FFE8255307F9A3E81710F4FDCE99FCC5C2A",
+  "samples_sha256": "696DA860BF94FCECDBA160E56A5D06D3E516A6D1FB77C76006449F9DEAE4C9EE",
+  "best_code_sha256": "BCB57EA0B9758E984CF6CAEB4AC2AA0ED9987E4906C560AFBF122C7CB9A40166",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 9902,
+  "generation": 2,
+  "population": 3,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "m2",
+  "source_sample_order": 1,
+  "visibility": {
+    "rag_memory_visible": false,
+    "codex_external_teacher_visible": false,
+    "inherited_605_elites_visible": true,
+    "objective_feedback_visible": true,
+    "held_out_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "19D700DBB1642CDF71F9B2A306547E274D09DCCEE690B62866399357928CA9A1",
+  "selection": {
+    "selected_by": "lowest full-precision 32-instance dev objective",
+    "dev_tied_with": "bp_online_agent_discovery_v1a",
+    "tie_handling": "freeze both candidates",
+    "held_out_used_to_break_tie": false
+  },
+  "evaluation": {
+    "dev_suite": "broad_train_32",
+    "seeded_best_dev_objective": 0.007391015422757746,
+    "agent_dev_objective": 0.007359895252993983,
+    "relative_dev_improvement_pct": 0.4210540498662804,
+    "held_out_gap_pct": {
+      "hifo_1k_C100": 3.033,
+      "hifo_5k_C100": 0.867,
+      "hifo_10k_C100": 0.531,
+      "mean": 1.477
+    },
+    "relative_mean_held_out_gap_reduction_vs_seed_pct": 0.0
+  },
+  "algorithm": "Keep the quadratic residual penalty, soften the balance penalty denominator, and strengthen the stable tie-break.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    waste_penalty = 1.0 / (residual * residual + 1e-9)\n    future_penalty = -np.abs(residual - 50) / 75.0\n    tie_breaker = np.arange(len(bins)) * 1e-8\n    scores = waste_penalty + future_penalty + tie_breaker\n    return scores"
+}

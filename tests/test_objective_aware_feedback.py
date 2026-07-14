@@ -137,3 +137,26 @@ def test_bp_feedback_proxy_reuses_frozen_605_elites() -> None:
         command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
         policies.append(command[command.index("--evolution-feedback-policy") + 1])
     assert policies == ["legacy", "objective_aware"]
+
+
+def test_bp_tied_discoveries_are_both_frozen_without_held_out_selection() -> None:
+    assets = [
+        json.loads(
+            (
+                REPO_ROOT
+                / f"eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_v1{suffix}.json"
+            ).read_text(encoding="utf-8")
+        )
+        for suffix in ("a", "b")
+    ]
+
+    assert {asset["actor"] for asset in assets} == {"research_agent_eoh"}
+    assert {asset["evaluation"]["agent_dev_objective"] for asset in assets} == {
+        0.007359895252993983
+    }
+    assert all(asset["selection"]["held_out_used_to_break_tie"] is False for asset in assets)
+    assert all(asset["visibility"]["codex_external_teacher_visible"] is False for asset in assets)
+    for asset in assets:
+        assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
+            "best_code_sha256"
+        ]

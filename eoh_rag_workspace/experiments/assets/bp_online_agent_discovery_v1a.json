@@ -1,0 +1,51 @@
+{
+  "asset_id": "bp_online_agent_discovery_v1a",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,dev_tied_candidate,optional_seed",
+  "source_run_key": "bp_objective_feedback_proxy_v1/bp_online/objective_aware/9901",
+  "agent_commit": "9afa7681aca782a53c3344384b05019ca828f14d",
+  "feedback_implementation_commit": "bffda65",
+  "manifest_sha256": "7B64475F480CA26E29BC13843B6D0C0204DD670C1BC99B0F78F19B0582EEC4CF",
+  "run_summary_sha256": "EED7B895A9205CECA17AD1DD70B9626BB8DA5A9342C788445897A273F84E1E9E",
+  "held_out_report_sha256": "215AB8413469CCD44602F11557C4C86E4025FEFE79D37D701199B48567BA39AA",
+  "samples_sha256": "1637F6586F3D910222857592D5487B561456A83FA817BD80353528060F02993E",
+  "best_code_sha256": "5BB9E78E19A24912FE0F6D8AAB318F1CF3CBF7EC863C282A48A9A36CA229E276",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 9901,
+  "generation": 2,
+  "population": 3,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "m2",
+  "source_sample_order": 5,
+  "visibility": {
+    "rag_memory_visible": false,
+    "codex_external_teacher_visible": false,
+    "inherited_605_elites_visible": true,
+    "objective_feedback_visible": true,
+    "held_out_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "19D700DBB1642CDF71F9B2A306547E274D09DCCEE690B62866399357928CA9A1",
+  "selection": {
+    "selected_by": "lowest full-precision 32-instance dev objective",
+    "dev_tied_with": "bp_online_agent_discovery_v1b",
+    "tie_handling": "freeze both candidates",
+    "held_out_used_to_break_tie": false
+  },
+  "evaluation": {
+    "dev_suite": "broad_train_32",
+    "seeded_best_dev_objective": 0.007391015422757746,
+    "agent_dev_objective": 0.007359895252993983,
+    "relative_dev_improvement_pct": 0.4210540498662804,
+    "held_out_gap_pct": {
+      "hifo_1k_C100": 1.89,
+      "hifo_5k_C100": 0.788,
+      "hifo_10k_C100": 0.596,
+      "mean": 1.0913333333333333
+    },
+    "relative_mean_held_out_gap_reduction_vs_seed_pct": 26.111487248928007
+  },
+  "algorithm": "Strengthen the small-residual penalty, move the balance target from 50 to 40, and preserve the stable tie-break.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    waste_penalty = 1.0 / (residual ** 3 + 1e-9)\n    future_penalty = -np.abs(residual - 40) / 40.0\n    tie_breaker = np.arange(len(bins)) * 1e-9\n    scores = waste_penalty + future_penalty + tie_breaker\n    return scores"
+}
