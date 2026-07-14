@@ -41,6 +41,27 @@ def test_balanced_profile_matches_single_scale_item_budget() -> None:
     assert set(lower_bounds) == set(balanced)
 
 
+def test_robust_fold_profile_reuses_balanced_instances() -> None:
+    balanced, _ = BPONLINEBroad._gen_broad_instances(
+        100, 128, "balanced_1k_5k_10k"
+    )
+    robust, lower_bounds = BPONLINEBroad._gen_broad_instances(
+        100, 128, "robust_folds_1k_5k_10k"
+    )
+
+    assert len(robust) == 12
+    assert all(len(dataset) == 10 for dataset in robust.values())
+    assert set(lower_bounds) == set(robust)
+    for scale in (1000, 5000, 10000):
+        balanced_items = list(balanced[f"broad_train_{scale}"].values())
+        robust_items = [
+            instance
+            for fold_index in range(4)
+            for instance in robust[f"broad_train_{scale}_fold{fold_index}"].values()
+        ]
+        assert robust_items == balanced_items
+
+
 def test_scale_feedback_manifest_pairs_only_training_profile() -> None:
     manifest = json.loads(
         (
@@ -135,4 +156,62 @@ def test_structured_feedback_proxy_pairs_only_feedback_visibility() -> None:
 
     assert profiles == ["balanced_1k_5k_10k", "balanced_1k_5k_10k"]
     assert policies == ["objective_aware", "scale_aware"]
+    assert seed_paths[0] == seed_paths[1]
+
+
+def test_robust_feedback_penalizes_fold_variation() -> None:
+    problem = BPONLINEBroad(
+        n_train=1,
+        training_profile="single_5k",
+        structured_feedback=True,
+        robust_feedback=True,
+    )
+    problem.instances = {}
+    problem.lb = {}
+    for scale in (1000, 5000, 10000):
+        for fold, items in enumerate(([60, 40], [60, 60])):
+            name = f"broad_train_{scale}_fold{fold}"
+            problem.instances[name] = {
+                "0": {"items": items, "capacity": 100, "num_items": 2}
+            }
+            problem.lb[name] = 1.0
+
+    result = problem.evaluate_program("", lambda item, bins: -np.asarray(bins))
+
+    assert result["feedback"]["scale_gap_pct"] == {
+        "1000": 50.0,
+        "5000": 50.0,
+        "10000": 50.0,
+    }
+    assert result["feedback"]["scale_std_pct"] == {
+        "1000": 50.0,
+        "5000": 50.0,
+        "10000": 50.0,
+    }
+    assert result["feedback"]["mean_objective"] == 0.5
+    assert result["feedback"]["variation_penalty"] == 0.25
+    assert result["objective"] == 0.75
+
+
+def test_robust_feedback_proxy_reuses_same_instances_and_seeds() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_robust_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [13001, 13002, 13003]
+    policies = []
+    profiles = []
+    seed_paths = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+        profiles.append(command[command.index("--bp-training-profile") + 1])
+        seed_paths.append(command[command.index("--seed-codes") + 1])
+
+    assert policies == ["objective_aware", "robust_aware"]
+    assert profiles == ["balanced_1k_5k_10k", "robust_folds_1k_5k_10k"]
     assert seed_paths[0] == seed_paths[1]

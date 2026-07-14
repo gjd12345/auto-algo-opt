@@ -138,7 +138,7 @@ from ..problem import _get_entry_name, _detect_template_kind, _extract_import_li
 def parent_selection(pop, m, feedback_policy="legacy"):
     if not pop:
         raise ValueError("Cannot select parents from an empty population.")
-    if feedback_policy in {"objective_aware", "scale_aware"}:
+    if feedback_policy in {"objective_aware", "scale_aware", "robust_aware"}:
         # 评价反馈模式始终保留当前精英；多父代算子再配一个不同个体，兼顾利用与探索。
         ranked = sorted(pop, key=lambda item: float(item["objective"]))
         if m == 1:
@@ -204,7 +204,7 @@ class Evolution:
         )
 
     def _parent_block(self, parents: list) -> str:
-        if self.feedback_policy in {"objective_aware", "scale_aware"}:
+        if self.feedback_policy in {"objective_aware", "scale_aware", "robust_aware"}:
             return "\n".join(
                 f"No.{i+1} dev objective={p['objective']} (lower is better).\n"
                 f"{self._structured_feedback_line(p)}"
@@ -218,7 +218,7 @@ class Evolution:
 
     def _structured_feedback_line(self, parent: dict) -> str:
         """把分尺度 gap 转成直白反馈；缺少详情时安全回退为空。"""
-        if self.feedback_policy != "scale_aware":
+        if self.feedback_policy not in {"scale_aware", "robust_aware"}:
             return ""
         feedback = parent.get("other_inf")
         if not isinstance(feedback, dict):
@@ -235,7 +235,17 @@ class Evolution:
         )
         gap_text = ", ".join(f"{scale} items={float(gap):.6f}%" for scale, gap in ordered)
         worst_scale = feedback.get("worst_scale", "unknown")
-        return f"Scale gaps (lower is better): {gap_text}. Worst scale: {worst_scale} items.\n"
+        line = f"Scale gaps (lower is better): {gap_text}. Worst scale: {worst_scale} items.\n"
+        if self.feedback_policy != "robust_aware":
+            return line
+        scale_std = feedback.get("scale_std_pct")
+        if not isinstance(scale_std, dict) or not scale_std:
+            return line + "Fold stability feedback unavailable for this parent.\n"
+        std_text = ", ".join(
+            f"{scale} items std={float(scale_std.get(scale, 0.0)):.6f}%"
+            for scale, _ in ordered
+        )
+        return line + f"Fold variation (lower is more stable): {std_text}.\n"
 
     def _operator_request(self, operator: str) -> str:
         """按反馈策略生成算子要求；legacy 文本保持原实现不变。"""
@@ -278,6 +288,26 @@ class Evolution:
                 ),
             }
             return scale_feedback[operator]
+        if self.feedback_policy == "robust_aware":
+            robust_feedback = {
+                "e1": (
+                    "Use both scale means and fold variation as feedback. Make one structural change that helps "
+                    "across repeated folds; ignore tiny gains that are smaller than the reported variation.\n"
+                ),
+                "e2": (
+                    "Combine only ideas whose gains are repeated across folds. Preserve the stable behavior of "
+                    "the best parent and avoid a trade that helps one fold but hurts the others. "
+                ),
+                "m1": (
+                    "Make one purposeful modification that reduces a repeated weakness across folds. Prefer "
+                    "simple changes with a margin larger than the reported fold variation.\n"
+                ),
+                "m2": (
+                    "Change only one parameter when the direction is supported across folds. Avoid tuning to a "
+                    "small aggregate difference that is within the reported fold variation.\n"
+                ),
+            }
+            return robust_feedback[operator]
         feedback = {
             "e1": (
                 "Use the dev objectives as feedback. Preserve effective parts of the best parent, "

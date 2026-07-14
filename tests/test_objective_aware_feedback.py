@@ -73,6 +73,23 @@ def test_scale_aware_prompt_exposes_worst_scale_feedback() -> None:
     assert "Do not trade a large regression on another scale" in prompt
 
 
+def test_robust_aware_prompt_exposes_fold_variation() -> None:
+    evolution = _evolution("robust_aware")
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "scale_gap_pct": {"1000": 0.8, "5000": 0.4, "10000": 0.2},
+            "scale_std_pct": {"1000": 0.3, "5000": 0.1, "10000": 0.05},
+            "worst_scale": "1000",
+        },
+    }
+    prompt = evolution._build_prompt("m2", parent)
+
+    assert "1000 items std=0.300000%" in prompt
+    assert "within the reported fold variation" in prompt
+    assert parent_selection([parent, *_population()], 1, "robust_aware")[0]["objective"] == 0.7
+
+
 def test_structured_evaluation_result_keeps_feedback_and_old_float_contract() -> None:
     old_objective, old_feedback = _normalize_evaluation_result(0.123456)
     objective, feedback = _normalize_evaluation_result(

@@ -7,6 +7,7 @@
 
 import sys
 import os
+import re
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -76,10 +77,12 @@ class BPONLINEBroad(BPONLINE):
     """
     def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
                  n_train: int = 128, held_out_set: list | None = None,
-                 training_profile: str = "single_5k", structured_feedback: bool = False):
+                 training_profile: str = "single_5k", structured_feedback: bool = False,
+                 robust_feedback: bool = False):
         super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
         self.training_profile = training_profile
         self.structured_feedback = structured_feedback
+        self.robust_feedback = robust_feedback
         self.instances, self.lb = self._gen_broad_instances(capacity, n_train, training_profile)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
@@ -112,6 +115,28 @@ class BPONLINEBroad(BPONLINE):
                     lower_bound_sum += np.ceil(items.sum() / capacity)
                 instances[dataset_name] = dataset
                 lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
+            return instances, lower_bounds
+        if training_profile == "robust_folds_1k_5k_10k":
+            balanced, _ = BPONLINEBroad._gen_broad_instances(
+                capacity, n_train, "balanced_1k_5k_10k"
+            )
+            instances = {}
+            lower_bounds = {}
+            # 复用完全相同的 120 个实例，只拆成四折；避免把增加数据量误当成稳健反馈效果。
+            for dataset_name, dataset in balanced.items():
+                for fold_index in range(4):
+                    fold_name = f"{dataset_name}_fold{fold_index}"
+                    fold_items = list(dataset.items())[fold_index * 10:(fold_index + 1) * 10]
+                    instances[fold_name] = dict(fold_items)
+                    lower_bounds[fold_name] = round(
+                        np.mean(
+                            [
+                                np.ceil(np.sum(instance["items"]) / capacity)
+                                for _, instance in fold_items
+                            ]
+                        ),
+                        4,
+                    )
             return instances, lower_bounds
         if training_profile != "single_5k":
             raise ValueError(f"unknown BP training profile: {training_profile}")
@@ -189,7 +214,7 @@ class BPONLINEBroad(BPONLINE):
     def _evaluate_with_scale_feedback(self, callable_func):
         """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
         fitness_per_dataset = []
-        scale_gap_pct = {}
+        gap_by_scale = {}
         for name, dataset in self.instances.items():
             used_bins = []
             for instance in dataset.values():
@@ -200,12 +225,35 @@ class BPONLINEBroad(BPONLINE):
                 used_bins.append((bins_packed != capacity).sum())
             gap = (np.mean(used_bins) - self.lb[name]) / self.lb[name]
             fitness_per_dataset.append(float(gap))
-            scale = name.rsplit("_", 1)[-1]
-            scale_gap_pct[scale] = round(float(gap * 100.0), 6)
+            match = re.search(r"broad_train_(\d+)", name)
+            scale = match.group(1) if match else name.rsplit("_", 1)[-1]
+            gap_by_scale.setdefault(scale, []).append(float(gap * 100.0))
+        scale_gap_pct = {
+            scale: round(float(np.mean(gaps)), 6) for scale, gaps in gap_by_scale.items()
+        }
+        scale_std_pct = {
+            scale: round(float(np.std(gaps)), 6) for scale, gaps in gap_by_scale.items()
+        }
         worst_scale = max(scale_gap_pct, key=scale_gap_pct.get)
         feedback = {
             "scale_gap_pct": scale_gap_pct,
             "worst_scale": worst_scale,
             "worst_gap_pct": scale_gap_pct[worst_scale],
         }
-        return float(np.mean(fitness_per_dataset)), feedback
+        mean_objective = float(np.mean(fitness_per_dataset))
+        if self.robust_feedback:
+            # 波动惩罚让只在个别固定折上获益的候选不易进入种群；权重在实验前固定为 0.5。
+            variation_penalty = 0.5 * float(np.mean(list(scale_std_pct.values()))) / 100.0
+            feedback.update(
+                {
+                    "scale_std_pct": scale_std_pct,
+                    "scale_fold_gap_pct": {
+                        scale: [round(gap, 6) for gap in gaps]
+                        for scale, gaps in gap_by_scale.items()
+                    },
+                    "mean_objective": mean_objective,
+                    "variation_penalty": variation_penalty,
+                }
+            )
+            return mean_objective + variation_penalty, feedback
+        return mean_objective, feedback

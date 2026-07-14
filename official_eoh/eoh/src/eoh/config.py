@@ -28,7 +28,7 @@ class EoHConfig:
     operators: list = field(default_factory=lambda: ['e1', 'e2', 'm1', 'm2'])
     operator_weights: list = None
     n_parents: int = 2
-    # legacy 保持论文实现；objective_aware 反馈总目标；scale_aware 再反馈分尺度误差。
+    # legacy 保持论文实现；objective_aware 反馈总目标；后两种逐步加入尺度和稳定性反馈。
     feedback_policy: str = "legacy"
     # Async pipeline concurrency (decoupled from pop_size).
     # num_samplers : concurrent LLM-generation threads (I/O bound).
@@ -63,6 +63,11 @@ class EoHConfig:
         if self.n_parents > self.pop_size or self.n_parents < 2:
             warnings.warn("n_parents out of range, resetting to 2.")
             self.n_parents = 2
-        if self.feedback_policy not in {"legacy", "objective_aware", "scale_aware"}:
+        if self.feedback_policy not in {
+            "legacy",
+            "objective_aware",
+            "scale_aware",
+            "robust_aware",
+        }:
             warnings.warn("unknown feedback_policy, resetting to legacy.")
             self.feedback_policy = "legacy"
