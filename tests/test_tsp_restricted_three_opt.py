@@ -11,6 +11,7 @@ SCRIPTS_DIRECTORY = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIRECTORY))
 
 import evaluate_tsp_restricted_three_opt as three_opt  # noqa: E402
+import confirm_tsp_restricted_three_opt_external as external  # noqa: E402
 import intervene_tsp_edge_variability as intervention  # noqa: E402
 
 
@@ -60,6 +61,10 @@ class RestrictedThreeOptTests(unittest.TestCase):
             intervention.route_cost(moved, distances),
             intervention.route_cost(route, distances),
         )
+
+    def test_two_sided_sign_test_uses_only_nonzero_pairs(self) -> None:
+        self.assertAlmostEqual(0.03125, external.two_sided_sign_test_p_value(6, 6))
+        self.assertEqual(1.0, external.two_sided_sign_test_p_value(0, 0))
 
 
 if __name__ == "__main__":
