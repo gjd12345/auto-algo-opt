@@ -45,6 +45,8 @@ def build_search_plan(problem_size: int, total_budget: int) -> list:
         timeout: int = 120,
         n_processes: int = 1,
         budget_policy: str = "strict",
+        dev_suite_name: str = "synthetic_dev_v1",
+        confirm_suite_name: str = "synthetic_confirm_v1",
     ):
         super().__init__(timeout=timeout, n_processes=n_processes)
         if budget_policy not in {"strict", "clip"}:
@@ -56,8 +58,10 @@ def build_search_plan(problem_size: int, total_budget: int) -> list:
                 " If the weighted total exceeds total_budget, the evaluator keeps the original order, "
                 "clips the first overflowing step to the remaining affordable budget, and ignores later steps."
             )
-        self.dev_suite = build_controller_suite("synthetic_dev_v1")
-        self.confirm_suite = build_controller_suite("synthetic_confirm_v1")
+        self.dev_suite_name = dev_suite_name
+        self.confirm_suite_name = confirm_suite_name
+        self.dev_suite = build_controller_suite(dev_suite_name)
+        self.confirm_suite = build_controller_suite(confirm_suite_name)
         self.report_held_out = False
         self.held_out_report: dict = {}
 
@@ -72,7 +76,7 @@ def build_search_plan(problem_size: int, total_budget: int) -> list:
         if self.report_held_out:
             # held-out 只在最终候选冻结后由 runner 开启，不参与进化反馈。
             self.held_out_report = {
-                "suite": "synthetic_confirm_v1",
+                "suite": self.confirm_suite_name,
                 "controller_confirm_objective": summary["objective"],
                 "controller_confirm_mean_normalized_cost": summary["mean_normalized_cost"],
                 "controller_confirm_mean_improvement_pct": summary["mean_improvement_pct"],

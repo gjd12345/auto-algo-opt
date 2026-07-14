@@ -287,6 +287,10 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
     controller_budget_policy = manifest.get("controller_budget_policy", "strict")
     if controller_budget_policy not in {"strict", "clip"}:
         errors.append("controller_budget_policy must be 'strict' or 'clip'")
+    for field in ("controller_dev_suite", "controller_confirm_suite"):
+        value = manifest.get(field)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            errors.append(f"{field} must be a non-empty suite name")
 
     errors.extend(validate_run_manifest(manifest))
     return errors
@@ -351,6 +355,10 @@ def _build_cmd(
         [
             "--controller-budget-policy",
             str(manifest.get("controller_budget_policy", "strict")),
+            "--controller-dev-suite",
+            str(manifest.get("controller_dev_suite", "synthetic_dev_v1")),
+            "--controller-confirm-suite",
+            str(manifest.get("controller_confirm_suite", "synthetic_confirm_v1")),
         ]
     )
     context_files = arm.get("context_files") or {}
@@ -400,8 +408,12 @@ def _build_cmd(
             "--stop-window", str(astop.get("window", 5)),
             "--stop-min-gap", str(astop.get("min_gap", 0.0)),
         ])
-    if seed_codes_path:
-        cmd.extend(["--seed-codes", seed_codes_path])
+    effective_seed_codes = seed_codes_path or arm.get("seed_codes", "")
+    if effective_seed_codes:
+        seed_path = Path(effective_seed_codes)
+        if not seed_path.is_absolute():
+            seed_path = _REPO_ROOT / seed_path
+        cmd.extend(["--seed-codes", str(seed_path.resolve())])
     if manifest.get("use_official_seed"):
         cmd.append("--use-official-seed")
     # manifest 顶层声明的模型透传给 runner,使实验声明与实际调用一致;留空则由 runner 端环境变量决定。

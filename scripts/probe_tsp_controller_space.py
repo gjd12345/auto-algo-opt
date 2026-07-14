@@ -9,47 +9,17 @@ from pathlib import Path
 from statistics import fmean
 from typing import Any, Sequence
 
+from eoh_rag.search_control.controller_seed_factory import (
+    BASELINE_PLAN,
+    Plan,
+    generate_random_plan,
+)
 from eoh_rag.search_control.tsp_controller import (
-    ALLOWED_PRIMITIVES,
-    MAX_PLAN_STEPS,
-    MAX_STEP_BUDGET,
     MAX_TOTAL_BUDGET,
     PLAN_COST_PENALTY,
-    PRIMITIVE_BUDGET_WEIGHTS,
     build_controller_suite,
     evaluate_controller,
 )
-
-
-Plan = tuple[tuple[str, int, float], ...]
-BASELINE_PLAN: Plan = (
-    ("two_opt", 20, 0.0),
-    ("relocate", 10, 0.0),
-    ("three_opt", 4, 0.0),
-)
-THRESHOLD_CHOICES = (0.0, 0.0, 0.0, 0.0005, 0.001, 0.002, 0.005)
-
-
-def generate_random_plan(rng: random.Random) -> Plan:
-    """生成合法且接近用满预算的计划，避免大量样本浪费在明显欠预算区域。"""
-
-    step_count = rng.randint(2, MAX_PLAN_STEPS)
-    primitives = [rng.choice(ALLOWED_PRIMITIVES) for _ in range(step_count)]
-    remaining = MAX_TOTAL_BUDGET
-    steps: list[tuple[str, int, float]] = []
-    for index, primitive in enumerate(primitives):
-        weight = PRIMITIVE_BUDGET_WEIGHTS[primitive]
-        future_minimum = sum(
-            PRIMITIVE_BUDGET_WEIGHTS[item] for item in primitives[index + 1 :]
-        )
-        maximum = min(MAX_STEP_BUDGET, (remaining - future_minimum) // weight)
-        if maximum < 1:
-            break
-        # 前面的步骤保留随机性；最后一步尽量用完剩余预算，以公平比较路线质量。
-        budget = maximum if index == step_count - 1 else rng.randint(1, maximum)
-        steps.append((primitive, budget, rng.choice(THRESHOLD_CHOICES)))
-        remaining -= weight * budget
-    return tuple(steps)
 
 
 def _instance_score(result: dict[str, Any]) -> float:

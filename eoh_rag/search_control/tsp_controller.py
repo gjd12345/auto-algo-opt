@@ -197,7 +197,38 @@ _SUITE_SPECS = {
         (136, 2105, "ring"),
         (152, 2106, "uniform"),
     ),
+    # v2 在每个规模上同时覆盖三种分布，避免控制器把“节点数”误当成“分布类型”。
+    "synthetic_dev_v2": (
+        (64, 3101, "uniform"),
+        (64, 3102, "clustered"),
+        (64, 3103, "ring"),
+        (96, 3104, "uniform"),
+        (96, 3105, "clustered"),
+        (96, 3106, "ring"),
+        (128, 3107, "uniform"),
+        (128, 3108, "clustered"),
+        (128, 3109, "ring"),
+        (160, 3110, "uniform"),
+        (160, 3111, "clustered"),
+        (160, 3112, "ring"),
+    ),
+    "synthetic_confirm_v2": (
+        (72, 4101, "uniform"),
+        (72, 4102, "clustered"),
+        (72, 4103, "ring"),
+        (104, 4104, "uniform"),
+        (104, 4105, "clustered"),
+        (104, 4106, "ring"),
+        (136, 4107, "uniform"),
+        (136, 4108, "clustered"),
+        (136, 4109, "ring"),
+        (168, 4110, "uniform"),
+        (168, 4111, "clustered"),
+        (168, 4112, "ring"),
+    ),
 }
+
+AVAILABLE_CONTROLLER_SUITES = tuple(_SUITE_SPECS)
 
 
 def build_controller_suite(suite_name: str) -> tuple[ControllerInstance, ...]:
