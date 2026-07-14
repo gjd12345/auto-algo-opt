@@ -47,6 +47,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 from eoh_rag.experiments.pool_api import PoolAPI
+from eoh_rag.experiments.problem_registry import RUNNABLE_PROBLEMS
 from eoh_rag.experiments.provider import classify_provider_error
 from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
@@ -269,7 +270,7 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
 
     problems = manifest.get("problems", [])
     for p in problems:
-        if p not in ("bp_online", "tsp_construct", "cvrp_construct"):
+        if p not in RUNNABLE_PROBLEMS:
             errors.append(f"unknown problem: {p!r}")
 
     gens = manifest.get("generations", [])
@@ -378,6 +379,8 @@ def _build_cmd(
         ])
     if seed_codes_path:
         cmd.extend(["--seed-codes", seed_codes_path])
+    if manifest.get("use_official_seed"):
+        cmd.append("--use-official-seed")
     # manifest 顶层声明的模型透传给 runner,使实验声明与实际调用一致;留空则由 runner 端环境变量决定。
     model = manifest.get("model")
     if model:

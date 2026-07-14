@@ -1,0 +1,14 @@
+[
+  {
+    "algorithm": "先让便宜的 2-opt 收敛，再尝试节点移位。",
+    "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    return [(\"two_opt\", 24, 0.0), (\"relocate\", 12, 0.0)]"
+  },
+  {
+    "algorithm": "按从便宜到昂贵的顺序使用三个互补邻域。",
+    "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    return [(\"two_opt\", 20, 0.0), (\"relocate\", 10, 0.0), (\"three_opt\", 4, 0.0)]"
+  },
+  {
+    "algorithm": "小实例先移位，大实例保留更多三边重连预算。",
+    "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    if problem_size < 100:\n        return [(\"relocate\", 10, 0.0), (\"two_opt\", 20, 0.0), (\"or_opt_2\", 6, 0.0001)]\n    return [(\"two_opt\", 18, 0.0), (\"relocate\", 8, 0.0), (\"three_opt\", 5, 0.0001)]"
+  }
+]

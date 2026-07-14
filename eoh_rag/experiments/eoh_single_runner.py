@@ -46,7 +46,7 @@ from eoh_rag.experiments.rag_context_builder import (
     history_card_gate_reasons,
     history_card_gate_warnings,
 )
-from eoh_rag.experiments.problem_registry import PROBLEMS
+from eoh_rag.experiments.problem_registry import RUNNABLE_PROBLEMS
 from eoh_rag.rag.card_outcomes import load_outcomes, summarize_all_cards
 from eoh_rag.rag.features import load_population_features
 
@@ -325,6 +325,11 @@ def _runner_script() -> str:
                     "API RULES: implement select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix). "
                     "Return one int from unvisited_nodes, or depot only when intentionally ending the route."
                 )
+            if problem == "tsp_search_controller":
+                return (
+                    "API RULES: implement build_search_plan(problem_size, total_budget). Return only a list of "
+                    "(primitive, budget, minimum_relative_gain) tuples using the documented whitelist and budget."
+                )
             raise ValueError(f"unknown problem: {problem}")
 
 
@@ -354,6 +359,9 @@ def _runner_script() -> str:
                                           n_train=n_train, held_out_set=held_out_set)
                 from prob import CVRPCONST
                 return CVRPCONST(n_customers=50, capacity=40, n_instance=16, timeout=eval_timeout_s, n_processes=n_processes)
+            if problem == "tsp_search_controller":
+                from prob import TSPSEARCHCONTROLLER
+                return TSPSEARCHCONTROLLER(timeout=eval_timeout_s, n_processes=n_processes)
             raise ValueError(f"unknown problem: {problem}")
 
 
@@ -433,7 +441,11 @@ def _runner_script() -> str:
         def main() -> None:
             parser = argparse.ArgumentParser()
             parser.add_argument("--official-root", required=True)
-            parser.add_argument("--problem", required=True, choices=["bp_online", "tsp_construct", "cvrp_construct"])
+            parser.add_argument(
+                "--problem",
+                required=True,
+                choices=["bp_online", "tsp_construct", "cvrp_construct", "tsp_search_controller"],
+            )
             parser.add_argument("--arm", required=True, choices=["pure_eoh", "api_only", "context_file"])
             parser.add_argument("--context-file", default="")
             parser.add_argument("--output-dir", required=True)
@@ -490,7 +502,12 @@ def _runner_script() -> str:
             # 种子来源:精英代码优先,否则用官方初始种群。精英代码规整成引擎
             # evaluate_seeds 认可的 {algorithm, code} 列表,经 use_seed/seed_path 注入为初始种群。
             use_seed = args.use_official_seed
-            seed_path = official_root / "examples" / args.problem / "results" / "pops" / "population_generation_0.json"
+            example_root = official_root / "examples" / args.problem
+            curated_seed_path = example_root / "seeds" / "controller_seeds.json"
+            legacy_seed_path = example_root / "results" / "pops" / "population_generation_0.json"
+            # 控制器种子是冻结输入，不应放进被忽略的 results 目录。旧问题继续读取
+            # 官方 population_generation_0.json，保持既有实验完全兼容。
+            seed_path = curated_seed_path if curated_seed_path.is_file() else legacy_seed_path
             if args.seed_codes and Path(args.seed_codes).exists():
                 try:
                     raw_seeds = json.loads(Path(args.seed_codes).read_text(encoding="utf-8"))
@@ -833,7 +850,7 @@ def main() -> None:
     parser.add_argument("--official-root", default=DEFAULT_OFFICIAL_ROOT)
     parser.add_argument("--python", default=DEFAULT_OFFICIAL_PYTHON)
     parser.add_argument("--output-dir", default="eoh_rag_workspace/reports/official_eoh_runs")
-    parser.add_argument("--problem", choices=sorted(PROBLEMS), default="bp_online")
+    parser.add_argument("--problem", choices=sorted(RUNNABLE_PROBLEMS), default="bp_online")
     parser.add_argument(
         "--arm",
         choices=["pure_eoh", "api_only", "literature_rag", "history_rag", "mixed_rag", "context_file"],
