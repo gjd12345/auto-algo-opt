@@ -47,11 +47,14 @@ def prepare(
     catalog_path: Path,
     stage_ay_dir: Path,
     selected_archive_path: Path | None,
+    instance_seeds: tuple[int, ...],
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = output_dir / MANIFEST_NAME
     if manifest_path.exists():
         raise FileExistsError(f"确认清单已存在，禁止覆盖：{manifest_path}")
+    if len(instance_seeds) != 3 or len(set(instance_seeds)) != 3:
+        raise ValueError("确认阶段需要三个互不重复的实例种子")
 
     catalog_path = catalog_path.resolve()
     stage_ay_dir = stage_ay_dir.resolve()
@@ -76,7 +79,7 @@ def prepare(
         raise RuntimeError("确认档案包含历史目录外代码")
 
     instances = []
-    for index, seed in enumerate(INSTANCE_SEEDS, start=1):
+    for index, seed in enumerate(instance_seeds, start=1):
         name = f"synthetic_frontier_confirm_{index}_{INSTANCE_SIZE}"
         path = output_dir / f"{name}.tsp"
         confirmation.write_tsplib(path, INSTANCE_SIZE, seed, name)
@@ -317,6 +320,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--catalog-path", type=Path)
     parser.add_argument("--stage-ay-dir", type=Path)
     parser.add_argument("--selected-archive", type=Path)
+    parser.add_argument("--instance-seeds", nargs=3, type=int, default=INSTANCE_SEEDS)
     args = parser.parse_args()
     if args.command == "prepare" and not all((args.catalog_path, args.stage_ay_dir)):
         parser.error("prepare 需要历史目录和 Stage AY 路径")
@@ -327,7 +331,13 @@ def main() -> None:
     args = parse_args()
     output_dir = args.output_dir.resolve()
     if args.command == "prepare":
-        prepare(output_dir, args.catalog_path, args.stage_ay_dir, args.selected_archive)
+        prepare(
+            output_dir,
+            args.catalog_path,
+            args.stage_ay_dir,
+            args.selected_archive,
+            tuple(args.instance_seeds),
+        )
     else:
         run(output_dir)
 
