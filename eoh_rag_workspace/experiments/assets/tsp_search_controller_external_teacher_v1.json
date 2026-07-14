@@ -1,0 +1,41 @@
+{
+  "asset_id": "tsp_search_controller_external_teacher_v1",
+  "actor": "codex",
+  "origin": "codex_exploration",
+  "asset_role": "external_teacher,target_algorithm,optional_seed",
+  "selection_commit": "77c5e4595cecabb37f272ec28f7b01821afd0b19",
+  "source_probe_sha256": "C77FE8483F4B7ED93EABAB477F0BB0E563698917AA27072DD2FD317974C2FAE3",
+  "selection_suite": "synthetic_dev_v1",
+  "confirm_suite_used_for_selection": false,
+  "probe": {
+    "random_seed": 20260715,
+    "random_sample_count": 2000,
+    "evaluated_plan_count": 2001,
+    "split_thresholds": [80, 96, 112, 128]
+  },
+  "baseline_dev_objective": 0.8290348302506002,
+  "selected_dev_objective": 0.8021224743764065,
+  "relative_dev_objective_improvement_pct": 3.2462274071233734,
+  "controller": {
+    "controller_type": "size_branch",
+    "threshold": 112,
+    "small_plan": [
+      ["three_opt", 2, 0.005],
+      ["relocate", 5, 0.002],
+      ["relocate", 6, 0.005],
+      ["three_opt", 3, 0.0],
+      ["two_opt", 13, 0.0]
+    ],
+    "large_plan": [
+      ["two_opt", 10, 0.0005],
+      ["relocate", 7, 0.0005],
+      ["two_opt", 24, 0.0],
+      ["relocate", 6, 0.005]
+    ]
+  },
+  "usage_policy": {
+    "agent_attribution": "This asset must never be reported as research_agent autonomous discovery.",
+    "teacher_invisible_arm": "Do not expose this asset to the research agent.",
+    "teacher_visible_arm": "Expose only when the experiment explicitly declares teacher_seeded."
+  }
+}
