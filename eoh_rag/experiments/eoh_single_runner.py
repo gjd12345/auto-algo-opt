@@ -496,7 +496,11 @@ def _runner_script() -> str:
             parser.add_argument("--n-train", type=int, default=128, help="广训练池实例数(仅 broad-training 有效)")
             parser.add_argument(
                 "--bp-training-profile",
-                choices=["single_5k", "balanced_1k_5k_10k"],
+                choices=[
+                    "single_5k",
+                    "balanced_1k_5k_10k",
+                    "robust_folds_1k_5k_10k",
+                ],
                 default="single_5k",
             )
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
@@ -948,7 +952,11 @@ def main() -> None:
     parser.add_argument("--n-train", type=int, default=128, help="广训练池实例数")
     parser.add_argument(
         "--bp-training-profile",
-        choices=["single_5k", "balanced_1k_5k_10k"],
+        choices=[
+            "single_5k",
+            "balanced_1k_5k_10k",
+            "robust_folds_1k_5k_10k",
+        ],
         default="single_5k",
     )
     parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组")
