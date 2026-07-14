@@ -5,6 +5,8 @@ import json
 import random
 from pathlib import Path
 
+import pytest
+
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 from eoh_rag.search_control.controller_seed_factory import (
     build_diverse_seed_records,
@@ -14,6 +16,7 @@ from eoh_rag.search_control.tsp_controller import (
     MAX_TOTAL_BUDGET,
     PRIMITIVE_BUDGET_WEIGHTS,
     build_controller_suite,
+    evaluate_controller,
     validate_search_plan,
 )
 
@@ -95,3 +98,31 @@ def test_seed_diversity_manifest_freezes_suites_and_seed_hash() -> None:
     assert Path(command[command.index("--seed-codes") + 1]) == seed_path.resolve()
     assert command[command.index("--controller-dev-suite") + 1] == "synthetic_dev_v2"
     assert command[command.index("--controller-confirm-suite") + 1] == "synthetic_confirm_v2"
+
+
+def test_agent_discovery_asset_reproduces_dev_and_confirm_results() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    asset = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    namespace: dict[str, object] = {}
+    exec(asset["code"], namespace)
+    function = namespace["build_search_plan"]
+
+    dev = evaluate_controller(function, build_controller_suite("synthetic_dev_v2"), budget_policy="clip")
+    confirm = evaluate_controller(
+        function,
+        build_controller_suite("synthetic_confirm_v2"),
+        budget_policy="clip",
+    )
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["visibility"]["external_teacher_visible"] is False
+    assert asset["visibility"]["confirm_suite_visible_during_evolution"] is False
+    assert dev["objective"] == pytest.approx(asset["evaluation"]["agent_dev_objective"], abs=1e-12)
+    assert confirm["objective"] == pytest.approx(
+        asset["evaluation"]["agent_confirm_objective"], abs=1e-12
+    )

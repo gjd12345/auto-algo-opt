@@ -1,0 +1,38 @@
+{
+  "asset_id": "tsp_search_controller_agent_discovery_v1",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,target_algorithm,optional_seed",
+  "source_run_key": "tsp_search_controller_seed_diversity_proxy_v1/tsp_search_controller/diverse_seed/9503",
+  "agent_commit": "4cc8975767f9a0ae47c24458d769efa2251aea44",
+  "manifest_sha256": "7F05256B50A83DADE49233C03344E5D7AC958E58811AEE457EE482F51E720131",
+  "run_summary_sha256": "9B2FD1ECF9388289FAEAB94C095ADCE5888B0FE870B2157C036B7DD0801F48B2",
+  "held_out_report_sha256": "6BDD54E773C7615BD1703546B4271A1FCA90AB97B6F61D37B2744A5AC036B6D8",
+  "best_code_sha256": "3E1E2DA450A771FEEF02EAD292EBEBD646AE6220DDC2D936B889DA222F28E984",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 9503,
+  "generation": 2,
+  "population": 3,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "visibility": {
+    "rag_memory_visible": false,
+    "external_teacher_visible": false,
+    "diverse_seed_factory_visible": true,
+    "confirm_suite_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "3D31D6A696E54C83421B9BBC82E940E843422D407E0C28D11151B80F2D9EA197",
+  "evaluation": {
+    "dev_suite": "synthetic_dev_v2",
+    "baseline_dev_objective": 0.8257345477567531,
+    "agent_dev_objective": 0.8225169138240784,
+    "relative_dev_improvement_pct": 0.38966928795894,
+    "confirm_suite": "synthetic_confirm_v2",
+    "baseline_confirm_objective": 0.8339557401379093,
+    "agent_confirm_objective": 0.8284497414886696,
+    "relative_confirm_improvement_pct": 0.660226722383278,
+    "confirm_better_same_worse": [7, 0, 5]
+  },
+  "algorithm": "Use a size-aware budget distribution: for small problems allocate more budget to fine-grained moves, and for larger problems emphasize two-opt and three-opt before relocation.",
+  "code": "def build_search_plan(problem_size: int, total_budget: int) -> list:\n    \"\"\"Return [(primitive, budget, minimum_relative_gain), ...].\"\"\"\n    if problem_size < 100:\n        return [(\"relocate\", 8, 0.001), (\"or_opt_2\", 6, 0.0005), (\"two_opt\", 16, 0.0)]\n    return [(\"two_opt\", 20, 0.0), (\"three_opt\", 6, 0.001), (\"relocate\", 4, 0.0)]"
+}
