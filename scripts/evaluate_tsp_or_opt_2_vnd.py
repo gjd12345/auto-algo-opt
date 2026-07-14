@@ -61,32 +61,47 @@ def load_protocol(
     return protocol, stage_bt_protocol, stage_bv_protocol
 
 
-def apply_or_opt_2(route: np.ndarray, source: int, edge_start: int) -> np.ndarray:
-    """移除 source 起始的两个连续节点，再把整段插到指定边之后。"""
-    segment = route[source : source + 2]
-    reduced = np.delete(route, [source, source + 1])
-    # 原插入边位于片段之后时，删除两个节点会让该边左移两个位置。
-    insert_at = edge_start - 1 if source < edge_start else edge_start + 1
+def apply_segment_relocation(
+    route: np.ndarray,
+    source: int,
+    edge_start: int,
+    segment_length: int,
+) -> np.ndarray:
+    """移除一段连续节点，再保持内部顺序插到指定边之后。"""
+    segment = route[source : source + segment_length]
+    removed_positions = np.arange(source, source + segment_length)
+    reduced = np.delete(route, removed_positions)
+    # 原插入边位于片段之后时，删除片段会让该边整体左移。
+    insert_at = (
+        edge_start - segment_length + 1
+        if source < edge_start
+        else edge_start + 1
+    )
     return np.insert(reduced, insert_at, segment)
 
 
-def best_or_opt_2(
+def best_segment_relocation(
     route: np.ndarray,
     distances: np.ndarray,
     neighbors: np.ndarray,
+    segment_length: int,
 ) -> tuple[np.ndarray, bool]:
-    """枚举片段两端近邻附近的插入边，选择全局最佳严格改进。"""
+    """枚举片段首尾近邻附近的插入边，选择全局最佳严格改进。"""
     node_count = len(route)
+    if segment_length < 2 or segment_length > node_count - 2:
+        raise ValueError("连续片段长度必须在 2 到 n-2 之间")
     neighbor_count = neighbors.shape[1]
-    source_positions = np.arange(1, node_count - 1, dtype=np.int64)
+    source_positions = np.arange(
+        1, node_count - segment_length + 1, dtype=np.int64
+    )
     position_by_node = np.empty(node_count, dtype=np.int64)
     position_by_node[route] = np.arange(node_count, dtype=np.int64)
 
     first_nodes = route[source_positions]
-    second_nodes = route[source_positions + 1]
+    last_nodes = route[source_positions + segment_length - 1]
     # 同时观察片段首尾节点的近邻，避免只照顾片段的一端。
     candidate_nodes = np.concatenate(
-        (neighbors[first_nodes], neighbors[second_nodes]), axis=1
+        (neighbors[first_nodes], neighbors[last_nodes]), axis=1
     )
     candidate_positions = position_by_node[candidate_nodes]
     edge_start = np.stack(
@@ -94,11 +109,9 @@ def best_or_opt_2(
     ).reshape(-1)
     source = np.repeat(source_positions, neighbor_count * 4)
 
-    # 片段内部两条边和片段前一条边都不能作为插入位置，否则只是原地重放。
-    valid = (
-        (edge_start != source - 1)
-        & (edge_start != source)
-        & (edge_start != source + 1)
+    # 片段内部边和片段前一条边都不能作为插入位置，否则只是原地重放。
+    valid = (edge_start < source - 1) | (
+        edge_start > source + segment_length - 1
     )
     pair_ids = np.unique(source[valid] * node_count + edge_start[valid])
     source = pair_ids // node_count
@@ -106,25 +119,44 @@ def best_or_opt_2(
 
     previous_node = route[source - 1]
     first_node = route[source]
-    second_node = route[source + 1]
-    next_node = route[(source + 2) % node_count]
+    last_node = route[source + segment_length - 1]
+    next_node = route[(source + segment_length) % node_count]
     insertion_left = route[edge_start]
     insertion_right = route[(edge_start + 1) % node_count]
     delta = (
         distances[previous_node, next_node]
         + distances[insertion_left, first_node]
-        + distances[second_node, insertion_right]
+        + distances[last_node, insertion_right]
         - distances[previous_node, first_node]
-        - distances[second_node, next_node]
+        - distances[last_node, next_node]
         - distances[insertion_left, insertion_right]
     )
     best_index = int(np.argmin(delta))
     if float(delta[best_index]) >= -1e-12:
         return route, False
     return (
-        apply_or_opt_2(route, int(source[best_index]), int(edge_start[best_index])),
+        apply_segment_relocation(
+            route,
+            int(source[best_index]),
+            int(edge_start[best_index]),
+            segment_length,
+        ),
         True,
     )
+
+
+def apply_or_opt_2(route: np.ndarray, source: int, edge_start: int) -> np.ndarray:
+    """保留旧入口，确保已冻结的 Or-opt-2 实验可精确重放。"""
+    return apply_segment_relocation(route, source, edge_start, segment_length=2)
+
+
+def best_or_opt_2(
+    route: np.ndarray,
+    distances: np.ndarray,
+    neighbors: np.ndarray,
+) -> tuple[np.ndarray, bool]:
+    """保留旧入口，使用长度为 2 的通用连续片段邻域。"""
+    return best_segment_relocation(route, distances, neighbors, segment_length=2)
 
 
 def run_or_opt_2_vnd(

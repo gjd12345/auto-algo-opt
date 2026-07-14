@@ -42,6 +42,27 @@ class OrOpt2NeighborhoodTests(unittest.TestCase):
             intervention.route_cost(route, distances),
         )
 
+    def test_three_node_segment_move_preserves_order_and_improves_cost(self) -> None:
+        coords = np.asarray(
+            [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]],
+            dtype=float,
+        )
+        distances = intervention.build_distance_matrix(coords)
+        route = np.asarray([0, 1, 4, 5, 6, 2, 3, 7], dtype=np.int64)
+        neighbors = np.argsort(distances, axis=1)[:, 1:7]
+
+        improved_route, improved = or_opt_2.best_segment_relocation(
+            route, distances, neighbors, segment_length=3
+        )
+
+        self.assertTrue(improved)
+        self.assertEqual(0, int(improved_route[0]))
+        self.assertEqual(sorted(route.tolist()), sorted(improved_route.tolist()))
+        self.assertLess(
+            intervention.route_cost(improved_route, distances),
+            intervention.route_cost(route, distances),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
