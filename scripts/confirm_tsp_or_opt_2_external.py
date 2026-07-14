@@ -25,9 +25,6 @@ def load_protocol(
     checks = {
         "instance_manifest_sha256": intervention.sha256_file(args.instance_manifest),
         "split_manifest_sha256": intervention.sha256_file(args.split_manifest),
-        "stage_bs_confirmation_sha256": intervention.sha256_file(
-            args.stage_bs_confirmation
-        ),
         "stage_bt_protocol_sha256": intervention.sha256_file(args.stage_bt_protocol),
         "stage_bv_protocol_sha256": intervention.sha256_file(args.stage_bv_protocol),
         "stage_bw_protocol_sha256": intervention.sha256_file(args.stage_bw_protocol),
@@ -37,6 +34,15 @@ def load_protocol(
     for key, actual in checks.items():
         if protocol["inputs"].get(key) != actual:
             raise RuntimeError(f"冻结输入 hash 不匹配：{key}")
+    comparison_hash_key = (
+        "stage_bs_comparison_sha256"
+        if "stage_bs_comparison_sha256" in protocol["inputs"]
+        else "stage_bs_confirmation_sha256"
+    )
+    if protocol["inputs"].get(comparison_hash_key) != intervention.sha256_file(
+        args.stage_bs_comparison
+    ):
+        raise RuntimeError(f"冻结输入 hash 不匹配：{comparison_hash_key}")
     return (
         protocol,
         json.loads(args.stage_bt_protocol.read_text(encoding="utf-8")),
@@ -57,22 +63,33 @@ def run(args: argparse.Namespace) -> None:
         raise FileExistsError(f"外部 Or-opt-2 确认已完成：{summary_path}")
 
     split = json.loads(args.split_manifest.read_text(encoding="utf-8"))
-    expected_instances = {item["instance"]: item for item in split["confirmation"]}
-    if len(expected_instances) != int(protocol["split"]["instance_count"]):
-        raise RuntimeError("冻结 confirmation 实例数不一致")
     all_instances = {
         item["name"]: item for item in intervention.load_instances(args.instance_manifest)
     }
+    split_name = protocol["split"]["name"]
+    minimum_nodes = int(protocol["split"].get("minimum_nodes_exclusive", -1))
+    expected_instances = {
+        item["instance"]: item
+        for item in split[split_name]
+        if int(all_instances[item["instance"]]["dimension"]) > minimum_nodes
+    }
+    if len(expected_instances) != int(protocol["split"]["instance_count"]):
+        raise RuntimeError("冻结外部实例数不一致")
     instances = {name: all_instances[name] for name in expected_instances}
     for name, item in instances.items():
         if item["sha256"] != expected_instances[name]["sha256"]:
             raise RuntimeError(f"外部实例 hash 不匹配：{name}")
 
     comparison_rows = {
-        row["instance"]: row for row in relocation.load_csv(args.stage_bs_confirmation)
+        row["instance"]: row for row in relocation.load_csv(args.stage_bs_comparison)
+    }
+    comparison_rows = {
+        instance: row
+        for instance, row in comparison_rows.items()
+        if instance in expected_instances
     }
     if set(comparison_rows) != set(instances):
-        raise RuntimeError("Stage BS 确认实例与冻结划分不一致")
+        raise RuntimeError("Stage BS 比较实例与冻结划分不一致")
     winner_by_key: dict[tuple[str, str], str] = {}
     raw_cost_by_key: dict[tuple[str, str], float] = {}
     for instance, row in comparison_rows.items():
@@ -193,7 +210,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--protocol", type=Path, required=True)
     parser.add_argument("--instance-manifest", type=Path, required=True)
     parser.add_argument("--split-manifest", type=Path, required=True)
-    parser.add_argument("--stage-bs-confirmation", type=Path, required=True)
+    parser.add_argument(
+        "--stage-bs-comparison",
+        "--stage-bs-confirmation",
+        dest="stage_bs_comparison",
+        type=Path,
+        required=True,
+    )
     parser.add_argument("--stage-bt-protocol", type=Path, required=True)
     parser.add_argument("--stage-bv-protocol", type=Path, required=True)
     parser.add_argument("--stage-bw-protocol", type=Path, required=True)
