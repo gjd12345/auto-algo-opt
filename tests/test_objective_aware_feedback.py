@@ -79,4 +79,3 @@ def test_objective_feedback_manifest_pairs_policy_only() -> None:
 
     assert policies == ["legacy", "objective_aware"]
     assert seed_paths[0] == seed_paths[1]
-
