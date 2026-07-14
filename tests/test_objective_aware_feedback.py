@@ -14,7 +14,11 @@ OFFICIAL_SRC = REPO_ROOT / "official_eoh" / "eoh" / "src"
 if str(OFFICIAL_SRC) not in sys.path:
     sys.path.insert(0, str(OFFICIAL_SRC))
 
-from eoh.eoh.evolution import Evolution, parent_selection  # noqa: E402
+from eoh.eoh.evolution import (  # noqa: E402
+    Evolution,
+    _normalize_evaluation_result,
+    parent_selection,
+)
 
 
 def _population() -> list[dict]:
@@ -51,6 +55,40 @@ def test_objective_aware_prompt_exposes_feedback_without_generic_reset() -> None
     assert "dev objective=0.7 (lower is better)" in prompt
     assert "Preserve effective parts of the best parent" in prompt
     assert "totally different form" not in prompt
+
+
+def test_scale_aware_prompt_exposes_worst_scale_feedback() -> None:
+    evolution = _evolution("scale_aware")
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "scale_gap_pct": {"10000": 0.2, "1000": 0.8, "5000": 0.4},
+            "worst_scale": "1000",
+        },
+    }
+    prompt = evolution._build_prompt("m1", parent)
+
+    assert "1000 items=0.800000%" in prompt
+    assert "Worst scale: 1000 items" in prompt
+    assert "Do not trade a large regression on another scale" in prompt
+
+
+def test_structured_evaluation_result_keeps_feedback_and_old_float_contract() -> None:
+    old_objective, old_feedback = _normalize_evaluation_result(0.123456)
+    objective, feedback = _normalize_evaluation_result(
+        {
+            "objective": 0.0123456,
+            "feedback": {
+                "scale_gap_pct": {"1000": 0.8},
+                "worst_scale": "1000",
+            },
+        }
+    )
+
+    assert old_objective == 0.12346
+    assert old_feedback is None
+    assert objective == 0.01235
+    assert feedback == {"scale_gap_pct": {"1000": 0.8}, "worst_scale": "1000"}
 
 
 def test_legacy_prompt_contract_remains_unchanged() -> None:

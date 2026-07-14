@@ -36,3 +36,18 @@ def test_proxy_gate_requires_both_overall_and_small_scale_support() -> None:
     checks = gate_checks([pair(1, 1), pair(1, 0), pair(-1, -1)], [], manifest)
 
     assert all(checks.values())
+
+
+def test_structured_proxy_diagnostic_is_frozen_before_generation() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_scale_structured_proxy_diagnostic_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert manifest["freeze_timing"] == "before_generation"
+    assert manifest["pair_seeds"] == [12001, 12002, 12003]
+    assert manifest["generator"]["seed_start"] == 37000
+    assert manifest["baseline_arm"] == "scalar_feedback"
+    assert manifest["agent_arm"] == "scale_aware_feedback"

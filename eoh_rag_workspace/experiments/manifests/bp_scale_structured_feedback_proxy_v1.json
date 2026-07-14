@@ -1,0 +1,57 @@
+{
+  "suite": "bp_scale_structured_feedback_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "broad_training": true,
+  "n_train": 128,
+  "arms": [
+    {
+      "name": "scalar_feedback",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "inherited_eoh_history",
+      "evolution_feedback_policy": "objective_aware",
+      "bp_training_profile": "balanced_1k_5k_10k",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    },
+    {
+      "name": "scale_aware_feedback",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "inherited_eoh_history",
+      "evolution_feedback_policy": "scale_aware",
+      "bp_training_profile": "balanced_1k_5k_10k",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    }
+  ],
+  "generations": [2],
+  "pop_size": 3,
+  "repeats": 3,
+  "seed_list": [12001, 12002, 12003],
+  "max_runs": 6,
+  "operators": "e1,e2,m1,m2",
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 240,
+  "run_timeout_s": 10800,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "fresh_multiscale_diagnostic_gap",
+  "feedback_hypothesis": {
+    "same_multiscale_training_data": true,
+    "same_total_items_per_candidate": 640000,
+    "same_seed_asset": true,
+    "same_evolution_seed_pairs": true,
+    "only_difference": "aggregate_objective_vs_aggregate_plus_per_scale_feedback",
+    "contains_codex_external_teacher": false,
+    "previous_proxy_candidates_visible": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 6,
+    "valid_generated_runs_per_arm_min": 3,
+    "scale_aware_beats_scalar_final_objective_pairs_min": 2,
+    "scale_aware_beats_scalar_on_fresh_diagnostic_pairs_min": 2,
+    "scale_aware_1k_mean_gap_not_worse_pairs_min": 2
+  },
+  "official_root": "official_eoh"
+}

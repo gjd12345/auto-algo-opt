@@ -138,6 +138,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "best_objective": None,
         "best_algorithm": None,
         "best_code": None,
+        "best_feedback": None,
         "sample_file_count": len(samples),
         "best_sample_path": str(best_sample) if best_sample.exists() else None,
         "held_out_report": held_out_report,
@@ -196,6 +197,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             "best_objective": best.get("objective") if best else None,
             "best_algorithm": best.get("algorithm") if best else None,
             "best_code": best.get("code") if best else None,
+            "best_feedback": best.get("other_inf") if best else None,
         }
     )
     return summary
@@ -336,6 +338,7 @@ def _runner_script() -> str:
         def load_problem(problem: str, official_root: Path, eval_timeout_s: int, n_processes: int,
                          broad_training: bool = False, n_train: int = 128, held_out_set: list | None = None,
                          bp_training_profile: str = "single_5k",
+                         bp_structured_feedback: bool = False,
                          controller_budget_policy: str = "strict",
                          controller_dev_suite: str = "synthetic_dev_v1",
                          controller_confirm_suite: str = "synthetic_confirm_v1"):
@@ -347,7 +350,8 @@ def _runner_script() -> str:
                     from prob import BPONLINEBroad
                     return BPONLINEBroad(capacity=100, timeout=eval_timeout_s, n_processes=n_processes,
                                          n_train=n_train, held_out_set=held_out_set,
-                                         training_profile=bp_training_profile)
+                                         training_profile=bp_training_profile,
+                                         structured_feedback=bp_structured_feedback)
                 from prob import BPONLINE
                 return BPONLINE(capacity=100, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_construct":
@@ -476,7 +480,7 @@ def _runner_script() -> str:
             parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
             parser.add_argument(
                 "--evolution-feedback-policy",
-                choices=["legacy", "objective_aware"],
+                choices=["legacy", "objective_aware", "scale_aware"],
                 default="legacy",
             )
             parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")
@@ -519,6 +523,7 @@ def _runner_script() -> str:
             task = load_problem(args.problem, official_root, args.eval_timeout_s, args.n_processes,
                                 broad_training=args.broad_training, n_train=args.n_train,
                                 held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
+                                bp_structured_feedback=args.evolution_feedback_policy == "scale_aware",
                                 controller_budget_policy=args.controller_budget_policy,
                                 controller_dev_suite=args.controller_dev_suite,
                                 controller_confirm_suite=args.controller_confirm_suite)
@@ -953,7 +958,7 @@ def main() -> None:
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     parser.add_argument(
         "--evolution-feedback-policy",
-        choices=["legacy", "objective_aware"],
+        choices=["legacy", "objective_aware", "scale_aware"],
         default="legacy",
     )
     parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")

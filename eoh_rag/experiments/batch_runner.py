@@ -278,9 +278,10 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             "evolution_feedback_policy",
             manifest.get("evolution_feedback_policy", "legacy"),
         )
-        if feedback_policy not in {"legacy", "objective_aware"}:
+        if feedback_policy not in {"legacy", "objective_aware", "scale_aware"}:
             errors.append(
-                f"arm[{i}] evolution_feedback_policy must be 'legacy' or 'objective_aware'"
+                f"arm[{i}] evolution_feedback_policy must be 'legacy', "
+                "'objective_aware', or 'scale_aware'"
             )
 
     problems = manifest.get("problems", [])

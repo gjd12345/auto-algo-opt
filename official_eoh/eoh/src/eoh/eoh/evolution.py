@@ -111,6 +111,26 @@ def _eval_with_timeout(problem, code, timeout):
         return None
 
 
+def _normalize_evaluation_result(result):
+    """兼容旧 float 与带结构化反馈的新评价结果。"""
+    feedback = None
+    raw_objective = result
+    if isinstance(result, dict):
+        raw_objective = result.get("objective")
+        candidate_feedback = result.get("feedback")
+        if isinstance(candidate_feedback, dict):
+            feedback = candidate_feedback
+    if raw_objective is None:
+        return None, feedback
+    try:
+        rounded = float(np.round(raw_objective, 5))
+    except (TypeError, ValueError):
+        return None, feedback
+    if not np.isfinite(rounded):
+        return None, feedback
+    return rounded, feedback
+
+
 from ..llm.interface_LLM import InterfaceLLM
 from ..problem import _get_entry_name, _detect_template_kind, _extract_import_lines
 
@@ -118,7 +138,7 @@ from ..problem import _get_entry_name, _detect_template_kind, _extract_import_li
 def parent_selection(pop, m, feedback_policy="legacy"):
     if not pop:
         raise ValueError("Cannot select parents from an empty population.")
-    if feedback_policy == "objective_aware":
+    if feedback_policy in {"objective_aware", "scale_aware"}:
         # 评价反馈模式始终保留当前精英；多父代算子再配一个不同个体，兼顾利用与探索。
         ranked = sorted(pop, key=lambda item: float(item["objective"]))
         if m == 1:
@@ -184,9 +204,10 @@ class Evolution:
         )
 
     def _parent_block(self, parents: list) -> str:
-        if self.feedback_policy == "objective_aware":
+        if self.feedback_policy in {"objective_aware", "scale_aware"}:
             return "\n".join(
                 f"No.{i+1} dev objective={p['objective']} (lower is better).\n"
+                f"{self._structured_feedback_line(p)}"
                 f"Algorithm description: {p['algorithm']}\nCode:\n{p['code']}"
                 for i, p in enumerate(parents)
             )
@@ -194,6 +215,27 @@ class Evolution:
             f"No.{i+1} algorithm and the corresponding code are:\n{p['algorithm']}\n{p['code']}"
             for i, p in enumerate(parents)
         )
+
+    def _structured_feedback_line(self, parent: dict) -> str:
+        """把分尺度 gap 转成直白反馈；缺少详情时安全回退为空。"""
+        if self.feedback_policy != "scale_aware":
+            return ""
+        feedback = parent.get("other_inf")
+        if not isinstance(feedback, dict):
+            return "Scale feedback unavailable for this parent.\n"
+        scale_gaps = feedback.get("scale_gap_pct")
+        if not isinstance(scale_gaps, dict) or not scale_gaps:
+            return "Scale feedback unavailable for this parent.\n"
+        ordered = sorted(
+            scale_gaps.items(),
+            key=lambda item: (
+                0 if str(item[0]).isdigit() else 1,
+                int(item[0]) if str(item[0]).isdigit() else str(item[0]),
+            ),
+        )
+        gap_text = ", ".join(f"{scale} items={float(gap):.6f}%" for scale, gap in ordered)
+        worst_scale = feedback.get("worst_scale", "unknown")
+        return f"Scale gaps (lower is better): {gap_text}. Worst scale: {worst_scale} items.\n"
 
     def _operator_request(self, operator: str) -> str:
         """按反馈策略生成算子要求；legacy 文本保持原实现不变。"""
@@ -214,8 +256,28 @@ class Evolution:
                 "that has different parameter settings.\n"
             ),
         }
-        if self.feedback_policy != "objective_aware":
+        if self.feedback_policy == "legacy":
             return legacy[operator]
+        if self.feedback_policy == "scale_aware":
+            scale_feedback = {
+                "e1": (
+                    "Use the per-scale gaps as feedback. Preserve the best backbone, then make one structural "
+                    "change aimed at the worst scale without sacrificing the other scales.\n"
+                ),
+                "e2": (
+                    "Use the per-scale gaps as feedback. Combine ideas that reduce the worst-scale gap while "
+                    "keeping the stronger scale behavior from the best parent. "
+                ),
+                "m1": (
+                    "Preserve the current best structure and make one purposeful modification aimed at its "
+                    "worst scale. Do not trade a large regression on another scale for a small average gain.\n"
+                ),
+                "m2": (
+                    "Change only one or two parameters to reduce the worst-scale gap while keeping the other "
+                    "reported scale gaps stable.\n"
+                ),
+            }
+            return scale_feedback[operator]
         feedback = {
             "e1": (
                 "Use the dev objectives as feedback. Preserve effective parts of the best parent, "
@@ -238,9 +300,12 @@ class Evolution:
 
     def _single_parent_request(self, parent: dict, operator: str) -> str:
         request = self._operator_request(operator)
-        if self.feedback_policy != "objective_aware":
+        if self.feedback_policy == "legacy":
             return request
-        return f"Dev objective: {parent['objective']} (lower is better).\n{request}"
+        return (
+            f"Dev objective: {parent['objective']} (lower is better).\n"
+            f"{self._structured_feedback_line(parent)}{request}"
+        )
 
     def _build_prompt(self, operator: str, parents=None) -> str:
         spec = self._func_spec()
@@ -451,18 +516,12 @@ class Evolution:
             if fitness is None:
                 logger.debug("  [eval] timed out or returned None after %ds", self.timeout)
 
-            if fitness is not None:
-                rounded = float(np.round(fitness, 5))
-                objective = rounded if np.isfinite(rounded) else None
-                if not np.isfinite(rounded):
-                    logger.debug("  [eval] non-finite fitness (%s) discarded", fitness)
-            else:
-                objective = None
+            objective, feedback = _normalize_evaluation_result(fitness)
             offspring = {
                 'algorithm': algorithm,
                 'code': code,
                 'objective': objective,
-                'other_inf': None,
+                'other_inf': feedback,
             }
             return parents, offspring
 
@@ -516,16 +575,13 @@ class Evolution:
                 ]
         population = []
         for seed, fitness in zip(seeds, fitness_list):
-            if fitness is not None:
-                rounded = float(np.round(fitness, 5))
-                if not np.isfinite(rounded):
-                    logger.debug("  [seed] non-finite fitness (%s) discarded", fitness)
-                    continue
+            objective, feedback = _normalize_evaluation_result(fitness)
+            if objective is not None:
                 population.append({
                     'algorithm': seed['algorithm'],
                     'code': seed['code'],
-                    'objective': rounded,
-                    'other_inf': None,
+                    'objective': objective,
+                    'other_inf': feedback,
                 })
         logger.info("Seeds: %d/%d valid.", len(population), len(seeds))
         return population

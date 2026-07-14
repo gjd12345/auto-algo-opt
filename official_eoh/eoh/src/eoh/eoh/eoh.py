@@ -15,9 +15,7 @@ import threading
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import numpy as np
-
-from .evolution import Evolution, _eval_with_timeout
+from .evolution import Evolution, _eval_with_timeout, _normalize_evaluation_result
 from ._adaptive import _should_stop
 from ..utils.logger import setup_logger
 
@@ -26,13 +24,7 @@ logger = logging.getLogger('eoh')
 
 def _normalize_fitness(fitness):
     """Round a raw fitness and discard non-finite values. Returns float or None."""
-    if fitness is None:
-        return None
-    rounded = float(np.round(fitness, 5))
-    if not np.isfinite(rounded):
-        logger.debug("  [eval] non-finite fitness (%s) discarded", fitness)
-        return None
-    return rounded
+    return _normalize_evaluation_result(fitness)[0]
 
 
 def population_management(pop, size):
@@ -234,11 +226,12 @@ class EOH:
             logger.debug("  [eval] submit failed: %s: %s", type(e).__name__, e)
             fitness = None
 
+        objective, feedback = _normalize_evaluation_result(fitness)
         return {
             'algorithm': algorithm,
             'code': code,
-            'objective': _normalize_fitness(fitness),
-            'other_inf': None,
+            'objective': objective,
+            'other_inf': feedback,
         }
 
     def _select_operator(self):

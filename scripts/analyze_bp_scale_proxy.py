@@ -23,13 +23,14 @@ def _sha256_code(code: str) -> str:
     return hashlib.sha256(code.encode()).hexdigest().upper()
 
 
-def _load_run_code(report_root: Path, arm: str, seed: int) -> dict[str, Any]:
+def _load_run_code(
+    report_root: Path, arm: str, seed: int, expected_profile: str
+) -> dict[str, Any]:
     summary_path = report_root / arm / str(seed) / "official_eoh_run_summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     run_summary = summary.get("run_summary") or {}
     if summary.get("failure_reason") or not run_summary.get("ok"):
         raise ValueError(f"source run is incomplete: {arm}/{seed}")
-    expected_profile = arm
     if summary.get("bp_training_profile") != expected_profile:
         raise ValueError(f"training profile mismatch: {arm}/{seed}")
     code = run_summary.get("best_code")
@@ -61,8 +62,8 @@ def _build_tasks(
                     + scale_index * int(generator["seed_stride"])
                     + instance_index,
                     "candidates": [
-                        {"candidate_id": "single_5k", "code": baseline_code},
-                        {"candidate_id": "balanced_1k_5k_10k", "code": agent_code},
+                        {"candidate_id": manifest["baseline_arm"], "code": baseline_code},
+                        {"candidate_id": manifest["agent_arm"], "code": agent_code},
                     ],
                 }
             )
@@ -93,16 +94,18 @@ def _evaluate_tasks(tasks: list[dict[str, Any]], workers: int) -> tuple[list[dic
 
 
 def _summarize_pair(rows: list[dict[str, Any]], manifest: dict[str, Any]) -> dict[str, Any]:
+    baseline_id = manifest["baseline_arm"]
+    agent_id = manifest["agent_arm"]
     by_scale = {
         str(item_count): _paired_summary(
             [row for row in rows if row["item_count"] == item_count],
-            "single_5k",
-            "balanced_1k_5k_10k",
+            baseline_id,
+            agent_id,
         )
         for item_count in manifest["generator"]["item_counts"]
     }
     return {
-        "overall": _paired_summary(rows, "single_5k", "balanced_1k_5k_10k"),
+        "overall": _paired_summary(rows, baseline_id, agent_id),
         "by_scale": by_scale,
     }
 
@@ -117,14 +120,26 @@ def gate_checks(pair_summaries: list[dict[str, Any]], failures: list[dict], mani
         for pair in pair_summaries
     )
     valid_pairs = sum(pair["overall"]["pairs"] for pair in pair_summaries)
-    return {
+    checks = {
         "valid_instance_pairs": valid_pairs >= int(gate["valid_instance_pairs_min"]),
         "no_failed_instances": not failures,
-        "balanced_beats_single_seed_pairs": balanced_better
-        >= int(gate["balanced_beats_single_seed_pairs_min"]),
-        "balanced_1k_mean_gap_not_worse_seed_pairs": one_k_not_worse
-        >= int(gate["balanced_1k_mean_gap_not_worse_seed_pairs_min"]),
     }
+    if "agent_beats_baseline_seed_pairs_min" in gate:
+        checks["agent_beats_baseline_seed_pairs"] = balanced_better >= int(
+            gate["agent_beats_baseline_seed_pairs_min"]
+        )
+        checks["agent_1k_mean_gap_not_worse_seed_pairs"] = one_k_not_worse >= int(
+            gate["agent_1k_mean_gap_not_worse_seed_pairs_min"]
+        )
+    else:
+        # 兼容已发布的 v1 多尺度训练集诊断字段，保证旧证据可重复分析。
+        checks["balanced_beats_single_seed_pairs"] = balanced_better >= int(
+            gate["balanced_beats_single_seed_pairs_min"]
+        )
+        checks["balanced_1k_mean_gap_not_worse_seed_pairs"] = one_k_not_worse >= int(
+            gate["balanced_1k_mean_gap_not_worse_seed_pairs_min"]
+        )
+    return checks
 
 
 def run(manifest_path: Path, output_path: Path, workers: int) -> int:
@@ -136,9 +151,22 @@ def run(manifest_path: Path, output_path: Path, workers: int) -> int:
     pair_summaries: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     all_rows: list[dict[str, Any]] = []
+    expected_profiles = manifest.get("expected_training_profiles") or {}
     for seed in manifest["pair_seeds"]:
-        baseline = _load_run_code(report_root, manifest["baseline_arm"], seed)
-        agent = _load_run_code(report_root, manifest["agent_arm"], seed)
+        baseline_arm = manifest["baseline_arm"]
+        agent_arm = manifest["agent_arm"]
+        baseline = _load_run_code(
+            report_root,
+            baseline_arm,
+            seed,
+            expected_profiles.get(baseline_arm, baseline_arm),
+        )
+        agent = _load_run_code(
+            report_root,
+            agent_arm,
+            seed,
+            expected_profiles.get(agent_arm, agent_arm),
+        )
         source_runs.append({"seed": seed, "baseline": baseline, "agent": agent})
         rows, pair_failures = _evaluate_tasks(
             _build_tasks(manifest, baseline["code"], agent["code"]), workers
@@ -174,7 +202,7 @@ def run(manifest_path: Path, output_path: Path, workers: int) -> int:
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    pairs_path = output_path.with_name("bp_scale_proxy_diagnostic_pairs.jsonl")
+    pairs_path = output_path.with_name(f"{manifest['suite']}_pairs.jsonl")
     pairs_path.write_text(
         "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in all_rows), encoding="utf-8"
     )

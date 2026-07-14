@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
+
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 
 
@@ -83,3 +85,54 @@ def test_scale_proxy_candidate_stays_out_of_formal_seed_memory() -> None:
     assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
         "best_code_sha256"
     ]
+
+
+def test_structured_bp_feedback_reports_each_training_scale() -> None:
+    problem = BPONLINEBroad(
+        n_train=1,
+        training_profile="single_5k",
+        structured_feedback=True,
+    )
+    # 用三个极小数据集验证反馈合同，避免单元测试重复运行正式训练预算。
+    problem.instances = {
+        f"broad_train_{scale}": {
+            "0": {"items": [60, 40], "capacity": 100, "num_items": 2}
+        }
+        for scale in (1000, 5000, 10000)
+    }
+    problem.lb = {name: 1.0 for name in problem.instances}
+
+    result = problem.evaluate_program("", lambda item, bins: -np.asarray(bins))
+
+    assert isinstance(result, dict)
+    assert result["objective"] == 0.0
+    assert result["feedback"]["scale_gap_pct"] == {
+        "1000": 0.0,
+        "5000": 0.0,
+        "10000": 0.0,
+    }
+    assert result["feedback"]["worst_scale"] in {"1000", "5000", "10000"}
+
+
+def test_structured_feedback_proxy_pairs_only_feedback_visibility() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_scale_structured_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [12001, 12002, 12003]
+    profiles = []
+    policies = []
+    seed_paths = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        profiles.append(command[command.index("--bp-training-profile") + 1])
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+        seed_paths.append(command[command.index("--seed-codes") + 1])
+
+    assert profiles == ["balanced_1k_5k_10k", "balanced_1k_5k_10k"]
+    assert policies == ["objective_aware", "scale_aware"]
+    assert seed_paths[0] == seed_paths[1]

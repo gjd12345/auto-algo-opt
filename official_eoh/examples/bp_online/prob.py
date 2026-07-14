@@ -76,9 +76,10 @@ class BPONLINEBroad(BPONLINE):
     """
     def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
                  n_train: int = 128, held_out_set: list | None = None,
-                 training_profile: str = "single_5k"):
+                 training_profile: str = "single_5k", structured_feedback: bool = False):
         super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
         self.training_profile = training_profile
+        self.structured_feedback = structured_feedback
         self.instances, self.lb = self._gen_broad_instances(capacity, n_train, training_profile)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
@@ -154,10 +155,15 @@ class BPONLINEBroad(BPONLINE):
                 print(f"[BPONLINEBroad] held-out 加载失败 {fn}: {exc}")
         return data
 
-    def evaluate_program(self, program_str: str, callable_func) -> float | None:
-        fitness = super().evaluate_program(program_str, callable_func)
+    def evaluate_program(self, program_str: str, callable_func) -> float | dict | None:
+        if self.structured_feedback:
+            fitness, scale_feedback = self._evaluate_with_scale_feedback(callable_func)
+            evaluation_result = {"objective": fitness, "feedback": scale_feedback}
+        else:
+            fitness = super().evaluate_program(program_str, callable_func)
+            evaluation_result = fitness
         if not self.report_held_out:
-            return fitness
+            return evaluation_result
 
         self.held_out_report = {}
         for entry in self.held_out_data:
@@ -178,4 +184,28 @@ class BPONLINEBroad(BPONLINE):
                 self.held_out_report[entry["path"]] = round((mean_used - mean_lb) / mean_lb * 100, 3)
             except Exception as exc:
                 self.held_out_report[entry["path"]] = f"error: {exc}"
-        return fitness
+        return evaluation_result
+
+    def _evaluate_with_scale_feedback(self, callable_func):
+        """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
+        fitness_per_dataset = []
+        scale_gap_pct = {}
+        for name, dataset in self.instances.items():
+            used_bins = []
+            for instance in dataset.values():
+                capacity = instance["capacity"]
+                items = np.array(instance["items"])
+                bins = np.array([capacity] * instance["num_items"])
+                _, bins_packed = self.online_binpack(items, bins, callable_func)
+                used_bins.append((bins_packed != capacity).sum())
+            gap = (np.mean(used_bins) - self.lb[name]) / self.lb[name]
+            fitness_per_dataset.append(float(gap))
+            scale = name.rsplit("_", 1)[-1]
+            scale_gap_pct[scale] = round(float(gap * 100.0), 6)
+        worst_scale = max(scale_gap_pct, key=scale_gap_pct.get)
+        feedback = {
+            "scale_gap_pct": scale_gap_pct,
+            "worst_scale": worst_scale,
+            "worst_gap_pct": scale_gap_pct[worst_scale],
+        }
+        return float(np.mean(fitness_per_dataset)), feedback
