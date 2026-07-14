@@ -1,0 +1,29 @@
+{
+  "schema_version": "bp_scale_proxy_diagnostic/v1",
+  "suite": "bp_scale_proxy_diagnostic_v1",
+  "freeze_timing": "after_generation_before_result_inspection",
+  "source_suite": "bp_scale_balanced_feedback_proxy_v1",
+  "source_report_root": "eoh_rag_workspace/reports/formal/bp_scale_balanced_feedback_proxy_v1/bp_scale_balanced_feedback_proxy_v1/bp_online",
+  "pair_seeds": [11001, 11002, 11003],
+  "baseline_arm": "single_5k",
+  "agent_arm": "balanced_1k_5k_10k",
+  "candidate_selection": "final_best_code_from_each_run_summary",
+  "generator": {
+    "distribution": "weibull",
+    "shape": 3.0,
+    "scale": 45.0,
+    "clip_min": 1,
+    "clip_max": 100,
+    "item_counts": [1000, 5000, 10000],
+    "instances_per_scale": 30,
+    "seed_start": 36000,
+    "seed_stride": 1000
+  },
+  "proxy_gate": {
+    "valid_instance_pairs_min": 270,
+    "balanced_beats_single_seed_pairs_min": 2,
+    "balanced_1k_mean_gap_not_worse_seed_pairs_min": 2,
+    "pass_action": "freeze_candidates_and_run_seed_41000_formal_confirmation",
+    "fail_action": "stop_scale_balanced_branch_and_keep_negative_result"
+  }
+}
