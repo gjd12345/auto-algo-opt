@@ -23,6 +23,7 @@
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -31,7 +32,7 @@ from eoh_rag.rag.build_corpus import _is_history_card, load_all_corpora
 from eoh_rag.rag.prompt_context import format_prompt_context_with_audit
 from eoh_rag.rag.reranker import RerankConfig, retrieve_with_rerank, score_corpus_with_rerank
 from eoh_rag.rag.retriever import retrieve, score_corpus
-from eoh_rag.rag.schemas import CorpusItem
+from eoh_rag.rag.schemas import CorpusItem, load_corpus
 
 
 # 各支持问题的官方检索配置。键是问题名，值包含三部分：
@@ -56,6 +57,14 @@ OFFICIAL_RAG_PROBLEM_CONFIG = {
         "api_ids": {"cvrp_construct_api_skeleton"},
         "strategy_prefixes": ("cvrp_",),
         "query": "cvrp construct select next customer distance farthest cluster regret route depot",
+    },
+    "tsp_search_controller": {
+        "api_ids": set(),
+        "strategy_prefixes": (),
+        "query": (
+            "tsp local search controller valid generated plan route quality "
+            "primitive order weighted budget stopping feedback"
+        ),
     },
     # 派船调度 InsertShips:插入策略卡(nearest/farthest/regret2/savings/solomon_i1)无共同 id 前缀,
     # 但都带 insertships 标签,故用标签选卡(strategy_tags),strategy_prefixes 留空。
@@ -102,6 +111,31 @@ class RagContextRequest:
     rerank_config: RerankConfig | None = None
     rerank_mode: str = "feature_outcome"
     rerank_temperature: float = 0.0
+    extra_corpus_paths: tuple[str, ...] = ()
+
+
+def _load_extra_corpora(
+    project_root: Path,
+    raw_paths: tuple[str, ...],
+) -> tuple[list[CorpusItem], list[str]]:
+    """加载实验专属语料，并返回条目与解析后的绝对路径。
+
+    相对路径固定按仓库根目录解析，避免跨设备启动目录不同导致读取另一份记忆。
+    这里不扫描目录，只读取 manifest 明确列出的 JSONL 文件。
+    """
+
+    items: list[CorpusItem] = []
+    resolved_paths: list[str] = []
+    for raw_path in raw_paths:
+        path = Path(raw_path)
+        if not path.is_absolute():
+            path = project_root / path
+        path = path.resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"Extra RAG corpus not found: {path}")
+        items.extend(load_corpus(path))
+        resolved_paths.append(str(path))
+    return items, resolved_paths
 
 
 def _matches_problem_strategy(item: CorpusItem, problem: str) -> bool:
@@ -302,6 +336,23 @@ def build_rag_context(
 
     config = OFFICIAL_RAG_PROBLEM_CONFIG[problem]
     corpus = load_all_corpora(project_root)
+    extra_items, extra_corpus_paths = _load_extra_corpora(
+        project_root,
+        request.extra_corpus_paths,
+    )
+    existing_ids = {item.id for item in corpus}
+    extra_ids = [item.id for item in extra_items]
+    repeated_extra_ids = sorted(
+        item_id for item_id, count in Counter(extra_ids).items() if count > 1
+    )
+    if repeated_extra_ids:
+        raise ValueError(
+            f"Extra RAG corpus repeats IDs: {repeated_extra_ids}"
+        )
+    duplicate_ids = sorted(existing_ids & set(extra_ids))
+    if duplicate_ids:
+        raise ValueError(f"Extra RAG corpus contains duplicate IDs: {duplicate_ids}")
+    corpus.extend(extra_items)
     # 全局约束卡：该问题对应的接口骨架，始终注入上下文。
     api_ids = set(config["api_ids"])
     global_items = [item for item in corpus if item.kind == "api_constraint" and item.id in api_ids]
@@ -439,6 +490,8 @@ def build_rag_context(
         "rag_top_k": top_k,
         "rag_max_chars": max_chars,
         "rag_corpus_size": len(corpus),
+        "rag_extra_corpus_paths": extra_corpus_paths,
+        "rag_extra_corpus_item_count": len(extra_items),
         "rag_strategy_pool_size": len(strategy_pool),
         "rag_candidate_card_ids": candidate_ids,
         "rag_candidate_card_source": candidate_source,
@@ -496,6 +549,7 @@ def build_official_rag_context(
     cards: list[str] | None = None,
     rerank_mode: str = "feature_outcome",
     rerank_temperature: float = 0.0,
+    extra_corpus_paths: tuple[str, ...] = (),
 ) -> tuple[str, dict[str, Any]]:
     """面向调用方的便捷入口：把散开的关键字参数收敛成一次 build_rag_context 调用。
 
@@ -523,5 +577,6 @@ def build_official_rag_context(
             rerank_config=rerank_config,
             rerank_mode=rerank_mode,
             rerank_temperature=rerank_temperature,
+            extra_corpus_paths=extra_corpus_paths,
         ),
     )

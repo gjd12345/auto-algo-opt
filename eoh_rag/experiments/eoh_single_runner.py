@@ -671,6 +671,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
             population_features=population_features,
             rerank_mode=args.rag_rerank,
             rerank_temperature=args.rag_rerank_temperature,
+            extra_corpus_paths=tuple(getattr(args, "rag_extra_corpus", []) or []),
             **candidate_kwargs,
         )
         context_path = run_dir / "rag_context.txt"
@@ -882,6 +883,12 @@ def main() -> None:
     parser.add_argument("--rag-rerank", default="feature_outcome", choices=["keyword", "feature_outcome", "llm"], help="Rerank mode")
     parser.add_argument("--rag-rerank-temperature", type=float, default=0.0, help="LLM rerank temperature (0=deterministic)")
     parser.add_argument("--rag-top-fraction", type=float, default=1.0, help="Population top fraction for feature extraction")
+    parser.add_argument(
+        "--rag-extra-corpus",
+        action="append",
+        default=[],
+        help="Additional experiment-specific CorpusItem JSONL; may be repeated",
+    )
     parser.add_argument("--seed-codes", default="", help="JSON file with seed codes for population init")
     parser.add_argument("--pop-size", type=int, default=2)
     parser.add_argument("--generations", type=int, default=1)

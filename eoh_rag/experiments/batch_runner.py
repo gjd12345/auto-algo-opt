@@ -267,6 +267,13 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             errors.append(
                 f"arm[{i}] tocc_* strategy requires candidate_card_ids, selected_card_ids, or cards"
             )
+        rag_config = {**(manifest.get("rag") or {}), **(arm.get("rag") or {})}
+        extra_corpus_files = rag_config.get("extra_corpus_files", [])
+        if not isinstance(extra_corpus_files, list) or any(
+            not isinstance(path, str) or not path.strip()
+            for path in extra_corpus_files
+        ):
+            errors.append(f"arm[{i}] rag.extra_corpus_files must be a list of file paths")
 
     problems = manifest.get("problems", [])
     for p in problems:
@@ -380,6 +387,11 @@ def _build_cmd(
         # top_fraction 为 1.0 表示不裁剪，无需传参
         if rag.get("top_fraction") and rag["top_fraction"] != 1.0:
             cmd.extend(["--rag-top-fraction", str(rag["top_fraction"])])
+        for raw_path in rag.get("extra_corpus_files", []):
+            corpus_path = Path(raw_path)
+            if not corpus_path.is_absolute():
+                corpus_path = _REPO_ROOT / corpus_path
+            cmd.extend(["--rag-extra-corpus", str(corpus_path.resolve())])
     # 自适应早停:manifest 顶层 adaptive_stop.enabled 为真时透传给 runner
     astop = manifest.get("adaptive_stop") or {}
     if astop.get("enabled"):

@@ -1,0 +1,71 @@
+{
+  "suite": "tsp_search_controller_feedback_rag_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["tsp_search_controller"],
+  "arms": [
+    {
+      "name": "pure",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context"
+    },
+    {
+      "name": "feedback_rag",
+      "runner_arm": "history_rag",
+      "context_strategy": "dev_feedback_memory",
+      "candidate_card_ids": [
+        "history_tsp_search_controller_feedback_v1_generation_reliability",
+        "history_tsp_search_controller_feedback_v1_contract_validity",
+        "history_tsp_search_controller_feedback_v1_quality_plateau",
+        "history_tsp_search_controller_feedback_v1_ranked_outcomes"
+      ],
+      "rag_query": "valid generated tsp controller improve dev objective distinct size-aware schedule weighted budget",
+      "rag": {
+        "top_k": 2,
+        "max_chars": 1800,
+        "rerank_mode": "feature_outcome",
+        "extra_corpus_files": [
+          "eoh_rag_workspace/experiments/assets/tsp_search_controller_feedback_v1.jsonl"
+        ]
+      }
+    }
+  ],
+  "generations": [2],
+  "pop_size": 3,
+  "repeats": 3,
+  "seed_list": [9401, 9402, 9403],
+  "max_runs": 6,
+  "operators": "e1,e2,m1,m2",
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 120,
+  "run_timeout_s": 3600,
+  "controller_budget_policy": "clip",
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "primary_metric": "synthetic_dev_best_generated_objective",
+  "seed_baseline": {
+    "selection_suite": "synthetic_dev_v1",
+    "best_seed_index": 2,
+    "best_seed_objective": 0.8290348302506002,
+    "confirm_suite_is_not_used_for_selection": true
+  },
+  "feedback_memory": {
+    "source_suites": [
+      "tsp_search_controller_proxy_v1",
+      "tsp_search_controller_proxy_v2"
+    ],
+    "contains_held_out": false,
+    "sha256": "9983110CB8F3A557380791DCCD7EF3D04D1CAEA645EC7DEC24671EE9E91FC63B"
+  },
+  "proxy_gate": {
+    "completed_runs_min": 6,
+    "valid_held_out_runs_min": 6,
+    "paired_seed_count_min": 3,
+    "valid_generated_runs_per_arm_min": 3,
+    "feedback_beats_pure_generated_best_pairs_min": 2,
+    "feedback_runs_beating_seed_on_dev_min": 1,
+    "minimum_dev_objective_improvement": 0.0001
+  },
+  "official_root": "official_eoh"
+}
