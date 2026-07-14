@@ -194,3 +194,30 @@ def test_bp_feedback_confirmation_scales_only_budget_and_training_suite() -> Non
         command = _build_cmd(confirm, "bp_online", arm, 4, 0, "out")
         policies.append(command[command.index("--evolution-feedback-policy") + 1])
     assert policies == ["legacy", "objective_aware"]
+
+
+def test_bp_agent_discovery_v2_keeps_dev_and_held_out_claims_separate() -> None:
+    asset = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_v2.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["origin"] == "automatic_evolution"
+    assert asset["visibility"]["codex_external_teacher_visible"] is False
+    assert asset["visibility"]["proxy_discoveries_visible"] is False
+    assert asset["selection"]["held_out_used_for_selection"] is False
+    assert asset["paired_confirmation"][
+        "objective_aware_beats_legacy_generated_best_pairs"
+    ] == 3
+    assert asset["evaluation"]["agent_dev_objective"] < asset["evaluation"][
+        "seeded_best_dev_objective"
+    ]
+    assert asset["evaluation"][
+        "relative_mean_held_out_gap_reduction_vs_seed_pct"
+    ] < 0
+    assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
+        "best_code_sha256"
+    ]

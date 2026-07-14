@@ -1,0 +1,67 @@
+{
+  "asset_id": "bp_online_agent_discovery_v2",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,dev_confirmed,heldout_mixed,optional_seed",
+  "source_run_key": "bp_objective_feedback_confirm_v1/bp_online/objective_aware/10003",
+  "agent_commit": "546bd8bf7f0d4023ee8806fd7a9d5994daff7e5d",
+  "feedback_implementation_commit": "bffda65",
+  "manifest_sha256": "C10A5E8F6307824FAA48D0EAB8A02B10AC21663E873C1F37BE73F82738F823EA",
+  "run_summary_sha256": "6FB8D8ADBF15D90C3ADBF35919653A00D9BBD5EA124E11A87BF7A4BC6BC4F47E",
+  "held_out_report_sha256": "1B9EC9F531C5B67387DF4E7886244A3688D7DD72762EEFA3A2B2FC7D218C74BC",
+  "samples_sha256": "4052034536226F1197F32576A17BF76C8731B67B18947D88DF0CF9EBE039214B",
+  "best_code_sha256": "B95EA6403F4B5355AF5FBB4EC1B1F771957B8071908C586FF1F7D8D64C03D67D",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 10003,
+  "generation": 4,
+  "population": 4,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "e1",
+  "source_sample_order": 14,
+  "visibility": {
+    "rag_memory_visible": false,
+    "codex_external_teacher_visible": false,
+    "proxy_discoveries_visible": false,
+    "inherited_605_elites_visible": true,
+    "objective_feedback_visible": true,
+    "held_out_visible_during_evolution": false
+  },
+  "parent_seed_asset_sha256": "19D700DBB1642CDF71F9B2A306547E274D09DCCEE690B62866399357928CA9A1",
+  "selection": {
+    "selected_by": "lowest full-precision 128-instance dev objective",
+    "held_out_used_for_selection": false,
+    "proxy_discoveries_used_as_seeds": false
+  },
+  "paired_confirmation": {
+    "completed_runs": 6,
+    "paired_seed_count": 3,
+    "objective_aware_beats_legacy_generated_best_pairs": 3,
+    "objective_aware_runs_beating_own_seeded_best": 2,
+    "legacy_valid_generated": 33,
+    "legacy_generated": 48,
+    "objective_aware_valid_generated": 35,
+    "objective_aware_generated": 48
+  },
+  "evaluation": {
+    "dev_suite": "broad_train_128",
+    "seeded_best_dev_objective": 0.007604020036305946,
+    "agent_dev_objective": 0.007308415220638388,
+    "relative_dev_improvement_pct": 3.88748075697027,
+    "held_out_gap_pct": {
+      "hifo_1k_C100": 2.685,
+      "hifo_5k_C100": 0.847,
+      "hifo_10k_C100": 0.496,
+      "mean": 1.3426666666666667
+    },
+    "seeded_best_held_out_gap_pct": {
+      "hifo_1k_C100": 2.636,
+      "hifo_5k_C100": 0.778,
+      "hifo_10k_C100": 0.531,
+      "mean": 1.315
+    },
+    "relative_mean_held_out_gap_reduction_vs_seed_pct": -2.10392902408112
+  },
+  "algorithm": "Cap the small-residual reward with log1p and move the balance target from 0.50 to 0.45.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    harmonic_penalty = np.log1p(1.0 / (residual + 1e-6))\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.45) ** 2) * 8)\n    scores = harmonic_penalty + balance_peak\n    return scores"
+}
