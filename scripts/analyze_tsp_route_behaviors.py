@@ -146,6 +146,26 @@ def read_expected_costs(path: Path) -> dict[tuple[str, str], float]:
         }
 
 
+def load_instance_entries(instance_manifest: Path | None) -> tuple[list[dict[str, Any]], str | None]:
+    if instance_manifest is None:
+        return [
+            {"instance": item["instance"], "path": audit.REPO_ROOT / item["path"]}
+            for item in audit.load_tsp_registry()
+        ], None
+
+    manifest_path = instance_manifest.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entries = []
+    for item in manifest.get("instances", []):
+        path = Path(item["path"])
+        if audit.sha256_file(path) != item["sha256"]:
+            raise RuntimeError(f"外部实例 hash 不匹配：{item['name']}")
+        entries.append({"instance": item["name"], "path": path})
+    if not entries or len(entries) != manifest.get("instance_count"):
+        raise ValueError("外部实例 manifest 为空或数量不一致")
+    return entries, audit.sha256_file(manifest_path)
+
+
 def run(args: argparse.Namespace) -> None:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -156,16 +176,19 @@ def run(args: argparse.Namespace) -> None:
     archive_path = args.archive_path.resolve()
     catalog_path = args.catalog_path.resolve()
     candidates = archive.resolve_archive_candidates(archive_path, catalog_path)
-    expected_costs = read_expected_costs(args.expected_results.resolve())
-    registry = audit.load_tsp_registry()
+    expected_path = args.expected_results.resolve() if args.expected_results else None
+    expected_costs = read_expected_costs(expected_path) if expected_path else None
+    instances, instance_manifest_sha256 = load_instance_entries(args.instance_manifest)
     rows = []
     for candidate in candidates:
-        for item in registry:
+        for item in instances:
             instance = item["instance"]
-            data = load_tsp(audit.REPO_ROOT / item["path"])
+            data = load_tsp(item["path"])
             route, distances, tour_cost = build_route(candidate["code"], data["coords"])
-            expected_cost = expected_costs.get((candidate["code_hash"], instance))
-            if expected_cost is None or tour_cost != expected_cost:
+            expected_cost = (
+                expected_costs.get((candidate["code_hash"], instance)) if expected_costs else None
+            )
+            if expected_costs is not None and (expected_cost is None or tour_cost != expected_cost):
                 raise RuntimeError(
                     f"路线成本与冻结结果不一致：{candidate['code_hash']} {instance} "
                     f"expected={expected_cost} actual={tour_cost}"
@@ -186,13 +209,14 @@ def run(args: argparse.Namespace) -> None:
         "repo_commit": audit.current_commit(),
         "archive_sha256": audit.sha256_file(archive_path),
         "catalog_sha256": audit.sha256_file(catalog_path),
-        "expected_results_sha256": audit.sha256_file(args.expected_results.resolve()),
+        "instance_manifest_sha256": instance_manifest_sha256,
+        "expected_results_sha256": audit.sha256_file(expected_path) if expected_path else None,
         "coordinate_count": len(rows),
         "unique_coordinate_count": len({(row["code_hash"], row["instance"]) for row in rows}),
         "median_sampled_edge_pair_count": statistics.median(
             row["sampled_edge_pair_count"] for row in rows
         ),
-        "tour_costs_match_frozen_results": True,
+        "tour_costs_match_frozen_results": True if expected_path else None,
     }
     audit.write_json(output_dir / "route_behavior_summary.json", summary)
     print(json.dumps(summary, ensure_ascii=False))
@@ -203,7 +227,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--archive-path", type=Path, required=True)
     parser.add_argument("--catalog-path", type=Path, required=True)
-    parser.add_argument("--expected-results", type=Path, required=True)
+    parser.add_argument("--instance-manifest", type=Path)
+    parser.add_argument("--expected-results", type=Path)
     return parser.parse_args()
 
 
