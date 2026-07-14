@@ -22,7 +22,11 @@ from eoh_rag.search_control.tsp_controller import (
 
 
 def test_balanced_v2_suites_cover_each_distribution_at_each_size() -> None:
-    for suite_name in ("synthetic_dev_v2", "synthetic_confirm_v2"):
+    for suite_name in (
+        "synthetic_dev_v2",
+        "synthetic_confirm_v2",
+        "synthetic_confirm_v3",
+    ):
         suite = build_controller_suite(suite_name)
         sizes = sorted({len(instance.initial_route) for instance in suite})
         assert len(suite) == 12
@@ -126,3 +130,21 @@ def test_agent_discovery_asset_reproduces_dev_and_confirm_results() -> None:
     assert confirm["objective"] == pytest.approx(
         asset["evaluation"]["agent_confirm_objective"], abs=1e-12
     )
+
+
+def test_seed_diversity_confirmation_manifest_uses_new_confirm_suite() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    manifest = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/manifests/tsp_search_controller_seed_diversity_confirm_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["generations"] == [4]
+    assert manifest["pop_size"] == 4
+    assert manifest["seed_list"] == [9601, 9602, 9603, 9604, 9605]
+    assert manifest["controller_dev_suite"] == "synthetic_dev_v2"
+    assert manifest["controller_confirm_suite"] == "synthetic_confirm_v3"
+    assert manifest["seed_assets"]["contains_external_teacher"] is False

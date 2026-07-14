@@ -226,6 +226,20 @@ _SUITE_SPECS = {
         (168, 4111, "clustered"),
         (168, 4112, "ring"),
     ),
+    "synthetic_confirm_v3": (
+        (80, 5101, "uniform"),
+        (80, 5102, "clustered"),
+        (80, 5103, "ring"),
+        (112, 5104, "uniform"),
+        (112, 5105, "clustered"),
+        (112, 5106, "ring"),
+        (144, 5107, "uniform"),
+        (144, 5108, "clustered"),
+        (144, 5109, "ring"),
+        (176, 5110, "uniform"),
+        (176, 5111, "clustered"),
+        (176, 5112, "ring"),
+    ),
 }
 
 AVAILABLE_CONTROLLER_SUITES = tuple(_SUITE_SPECS)
