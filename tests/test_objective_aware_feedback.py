@@ -160,3 +160,37 @@ def test_bp_tied_discoveries_are_both_frozen_without_held_out_selection() -> Non
         assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
             "best_code_sha256"
         ]
+
+
+def test_bp_feedback_confirmation_scales_only_budget_and_training_suite() -> None:
+    proxy = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    confirm = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_confirm_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(confirm) == []
+    assert confirm["n_train"] == 128
+    assert confirm["generations"] == [4]
+    assert confirm["pop_size"] == 4
+    assert confirm["seed_list"] == [10001, 10002, 10003]
+    assert confirm["held_out_set"] == proxy["held_out_set"]
+    assert confirm["operators"] == proxy["operators"]
+    assert confirm["confirmation_protocol"]["proxy_discoveries_used_as_seeds"] is False
+    assert confirm["confirmation_protocol"]["held_out_is_not_used_for_selection"] is True
+    assert [arm["seed_codes"] for arm in confirm["arms"]] == [
+        arm["seed_codes"] for arm in proxy["arms"]
+    ]
+
+    policies = []
+    for arm in confirm["arms"]:
+        command = _build_cmd(confirm, "bp_online", arm, 4, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+    assert policies == ["legacy", "objective_aware"]
