@@ -96,12 +96,47 @@ def build_diverse_seed_records(
     return records
 
 
+def append_agent_discoveries(
+    seed_records: Sequence[dict[str, Any]],
+    agent_assets: Sequence[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """把科研 Agent 已冻结发现追加到种子池，并拒绝 Codex 外部教师混入。"""
+
+    records = [
+        {"algorithm": str(item["algorithm"]), "code": str(item["code"])}
+        for item in seed_records
+    ]
+    seen_code = {item["code"].strip() for item in records}
+    for asset in agent_assets:
+        if asset.get("actor") != "research_agent_eoh":
+            raise ValueError(
+                f"长期 Agent 种子只接受 research_agent_eoh 资产：{asset.get('asset_id')}"
+            )
+        code = str(asset.get("code") or "")
+        if not code.strip():
+            raise ValueError(f"Agent 资产缺少代码：{asset.get('asset_id')}")
+        if code.strip() in seen_code:
+            continue
+        records.append(
+            {
+                "algorithm": (
+                    f"Inherited research-agent discovery {asset.get('asset_id')}: "
+                    f"{asset.get('algorithm', '')}"
+                ),
+                "code": code,
+            }
+        )
+        seen_code.add(code.strip())
+    return records
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build deterministic diverse controller seeds")
     parser.add_argument("--base-seed-file", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--total-count", type=int, default=12)
     parser.add_argument("--random-seed", type=int, default=20260715)
+    parser.add_argument("--agent-asset", action="append", default=[])
     args = parser.parse_args()
 
     base_records = json.loads(Path(args.base_seed_file).read_text(encoding="utf-8"))
@@ -112,6 +147,11 @@ def main() -> None:
         total_count=args.total_count,
         random_seed=args.random_seed,
     )
+    agent_assets = [
+        json.loads(Path(path).read_text(encoding="utf-8"))
+        for path in args.agent_asset
+    ]
+    records = append_agent_discoveries(records, agent_assets)
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -125,6 +165,7 @@ def main() -> None:
                 "base_count": len(base_records),
                 "total_count": len(records),
                 "random_seed": args.random_seed,
+                "agent_asset_count": len(agent_assets),
             },
             ensure_ascii=False,
             indent=2,

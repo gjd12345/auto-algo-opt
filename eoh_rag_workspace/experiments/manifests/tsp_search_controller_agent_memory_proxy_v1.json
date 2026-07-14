@@ -1,0 +1,54 @@
+{
+  "suite": "tsp_search_controller_agent_memory_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["tsp_search_controller"],
+  "arms": [
+    {
+      "name": "diverse_control",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "no_extra_context",
+      "seed_codes": "official_eoh/examples/tsp_search_controller/seeds/controller_diverse_seeds_v1.json"
+    },
+    {
+      "name": "agent_memory",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "agent_discovery_inheritance",
+      "seed_codes": "official_eoh/examples/tsp_search_controller/seeds/controller_agent_memory_seeds_v1.json"
+    }
+  ],
+  "generations": [4],
+  "pop_size": 4,
+  "repeats": 3,
+  "seed_list": [9701, 9702, 9703],
+  "max_runs": 6,
+  "operators": "e1,e2,m1,m2",
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 180,
+  "run_timeout_s": 5400,
+  "controller_budget_policy": "clip",
+  "controller_dev_suite": "synthetic_dev_v2",
+  "controller_confirm_suite": "synthetic_confirm_v4",
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "primary_metric": "synthetic_dev_v2_best_generated_objective",
+  "agent_memory": {
+    "base_diverse_seed_count": 12,
+    "inherited_agent_discovery_count": 2,
+    "best_inherited_dev_objective": 0.8217776839805818,
+    "contains_external_teacher": false,
+    "sha256": "5BF56A7CBCAA9B0DEBBB42F51C2F50851FE5CB6CEF4CC6B829346AAA439F314F",
+    "confirm_v4_is_not_used_for_selection": true
+  },
+  "proxy_gate": {
+    "completed_runs_min": 6,
+    "valid_held_out_runs_min": 6,
+    "paired_seed_count_min": 3,
+    "valid_generated_runs_per_arm_min": 3,
+    "memory_beats_control_generated_best_pairs_min": 2,
+    "memory_runs_beating_best_inherited_seed_on_dev_min": 1,
+    "minimum_dev_objective_improvement": 0.0001
+  },
+  "official_root": "official_eoh"
+}

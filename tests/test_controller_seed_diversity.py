@@ -9,6 +9,7 @@ import pytest
 
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 from eoh_rag.search_control.controller_seed_factory import (
+    append_agent_discoveries,
     build_diverse_seed_records,
     generate_random_plan,
 )
@@ -26,6 +27,7 @@ def test_balanced_v2_suites_cover_each_distribution_at_each_size() -> None:
         "synthetic_dev_v2",
         "synthetic_confirm_v2",
         "synthetic_confirm_v3",
+        "synthetic_confirm_v4",
     ):
         suite = build_controller_suite(suite_name)
         sizes = sorted({len(instance.initial_route) for instance in suite})
@@ -176,3 +178,56 @@ def test_seed_diversity_confirmation_manifest_uses_new_confirm_suite() -> None:
     assert manifest["controller_dev_suite"] == "synthetic_dev_v2"
     assert manifest["controller_confirm_suite"] == "synthetic_confirm_v3"
     assert manifest["seed_assets"]["contains_external_teacher"] is False
+
+
+def test_agent_memory_seed_file_contains_only_agent_discoveries() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    seed_path = (
+        repo_root
+        / "official_eoh/examples/tsp_search_controller/seeds/controller_agent_memory_seeds_v1.json"
+    )
+    records = json.loads(seed_path.read_text(encoding="utf-8"))
+    agent_assets = [
+        json.loads(
+            (
+                repo_root
+                / f"eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v{version}.json"
+            ).read_text(encoding="utf-8")
+        )
+        for version in (1, 2)
+    ]
+    external_teacher = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/assets/tsp_search_controller_external_teacher_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert len(records) == 14
+    assert all(asset["code"] in {record["code"] for record in records} for asset in agent_assets)
+    assert all(
+        external_teacher["asset_id"] not in record["algorithm"] for record in records
+    )
+    with pytest.raises(ValueError, match="research_agent_eoh"):
+        append_agent_discoveries(records[:1], [external_teacher])
+
+
+def test_agent_memory_manifest_freezes_new_confirm_suite_and_hash() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    manifest = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/manifests/tsp_search_controller_agent_memory_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    seed_path = (
+        repo_root
+        / "official_eoh/examples/tsp_search_controller/seeds/controller_agent_memory_seeds_v1.json"
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["controller_confirm_suite"] == "synthetic_confirm_v4"
+    assert manifest["agent_memory"]["contains_external_teacher"] is False
+    assert hashlib.sha256(seed_path.read_bytes()).hexdigest().upper() == manifest[
+        "agent_memory"
+    ]["sha256"]
