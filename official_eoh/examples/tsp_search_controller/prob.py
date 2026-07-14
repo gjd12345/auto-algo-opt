@@ -40,8 +40,22 @@ def build_search_plan(problem_size: int, total_budget: int) -> list:
         "improves less than that value. Focus on route quality while avoiding wasteful steps."
     )
 
-    def __init__(self, timeout: int = 120, n_processes: int = 1):
+    def __init__(
+        self,
+        timeout: int = 120,
+        n_processes: int = 1,
+        budget_policy: str = "strict",
+    ):
         super().__init__(timeout=timeout, n_processes=n_processes)
+        if budget_policy not in {"strict", "clip"}:
+            raise ValueError(f"未知预算策略：{budget_policy!r}")
+        self.budget_policy = budget_policy
+        if budget_policy == "clip":
+            # v2 的唯一合同变化：总预算溢出不再浪费整份合法代码，而是保留原顺序的可执行前缀。
+            self.task_description += (
+                " If the weighted total exceeds total_budget, the evaluator keeps the original order, "
+                "clips the first overflowing step to the remaining affordable budget, and ignores later steps."
+            )
         self.dev_suite = build_controller_suite("synthetic_dev_v1")
         self.confirm_suite = build_controller_suite("synthetic_confirm_v1")
         self.report_held_out = False
@@ -50,7 +64,11 @@ def build_search_plan(problem_size: int, total_budget: int) -> list:
     def evaluate_program(self, program_str: str, callable_func) -> float | None:
         del program_str
         suite = self.confirm_suite if self.report_held_out else self.dev_suite
-        summary = evaluate_controller(callable_func, suite)
+        summary = evaluate_controller(
+            callable_func,
+            suite,
+            budget_policy=self.budget_policy,
+        )
         if self.report_held_out:
             # held-out 只在最终候选冻结后由 runner 开启，不参与进化反馈。
             self.held_out_report = {

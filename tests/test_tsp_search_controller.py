@@ -9,6 +9,7 @@ import pytest
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 from eoh_rag.search_control.tsp_controller import (
     MAX_TOTAL_BUDGET,
+    PRIMITIVE_BUDGET_WEIGHTS,
     build_controller_suite,
     evaluate_controller,
     validate_search_plan,
@@ -37,6 +38,29 @@ def test_validate_search_plan_accepts_weighted_budget_boundary() -> None:
 def test_validate_search_plan_rejects_unsafe_output(plan: object) -> None:
     with pytest.raises(ValueError):
         validate_search_plan(plan, MAX_TOTAL_BUDGET)
+
+
+def test_clip_policy_keeps_original_prefix_and_truncates_overflow_step() -> None:
+    plan = [("two_opt", 24, 0.0), ("three_opt", 8, 0.01), ("relocate", 1, 0.0)]
+
+    steps = validate_search_plan(plan, MAX_TOTAL_BUDGET, budget_policy="clip")
+
+    assert [(step.primitive, step.budget) for step in steps] == [
+        ("two_opt", 24),
+        ("three_opt", 7),
+    ]
+    assert sum(
+        PRIMITIVE_BUDGET_WEIGHTS[step.primitive] * step.budget for step in steps
+    ) <= MAX_TOTAL_BUDGET
+
+
+def test_clip_policy_does_not_repair_unknown_primitives() -> None:
+    with pytest.raises(ValueError, match="未知搜索原语"):
+        validate_search_plan(
+            [("unknown", 24, 0.0), ("two_opt", 1, 0.0)],
+            MAX_TOTAL_BUDGET,
+            budget_policy="clip",
+        )
 
 
 def test_controller_evaluation_is_deterministic_and_improves_routes() -> None:
@@ -75,6 +99,30 @@ def test_controller_manifest_is_runnable_and_uses_official_seeds() -> None:
     )
     assert "--use-official-seed" in command
     assert command[command.index("--problem") + 1] == "tsp_search_controller"
+    assert command[command.index("--controller-budget-policy") + 1] == "strict"
+
+
+def test_controller_v2_manifest_freezes_clip_policy_and_new_seeds() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    manifest = json.loads(
+        (
+            repo_root
+            / "eoh_rag_workspace/experiments/manifests/tsp_search_controller_proxy_v2.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [9301, 9302, 9303]
+    command = _build_cmd(
+        manifest,
+        "tsp_search_controller",
+        manifest["arms"][0],
+        2,
+        1,
+        "proxy-v2-output",
+        seed=9301,
+    )
+    assert command[command.index("--controller-budget-policy") + 1] == "clip"
 
 
 def test_seed_file_contains_only_valid_controller_plans() -> None:

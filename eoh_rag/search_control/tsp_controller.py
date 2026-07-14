@@ -71,8 +71,17 @@ def _is_int(value: object) -> bool:
     return isinstance(value, (int, np.integer)) and not isinstance(value, bool)
 
 
-def validate_search_plan(raw_plan: object, total_budget: int) -> list[SearchStep]:
-    """校验候选控制器输出，阻止未知原语、越界预算和异常阈值进入评测。"""
+def validate_search_plan(
+    raw_plan: object,
+    total_budget: int,
+    budget_policy: str = "strict",
+) -> list[SearchStep]:
+    """校验候选控制器输出，并按冻结策略处理加权总预算。
+
+    ``strict`` 保留 proxy v1 的合同：总预算超限时整份计划无效。
+    ``clip`` 用于独立的 proxy v2：保留合法前缀，超限步骤截到剩余预算后停止。
+    未知原语、字段类型错误和单步越界在两种策略下都不会被修复。
+    """
 
     if not _is_int(total_budget) or not 1 <= int(total_budget) <= MAX_TOTAL_BUDGET:
         raise ValueError("total_budget 超出控制器允许范围")
@@ -80,6 +89,8 @@ def validate_search_plan(raw_plan: object, total_budget: int) -> list[SearchStep
         raise ValueError("搜索计划必须是非空列表")
     if len(raw_plan) > MAX_PLAN_STEPS:
         raise ValueError("搜索计划步骤过多")
+    if budget_policy not in {"strict", "clip"}:
+        raise ValueError(f"未知预算策略：{budget_policy!r}")
 
     steps: list[SearchStep] = []
     weighted_budget = 0
@@ -100,10 +111,24 @@ def validate_search_plan(raw_plan: object, total_budget: int) -> list[SearchStep
             raise ValueError(f"第 {index + 1} 步停止阈值越界")
 
         budget_value = int(budget)
-        weighted_budget += PRIMITIVE_BUDGET_WEIGHTS[str(primitive)] * budget_value
-        if weighted_budget > int(total_budget):
-            raise ValueError("搜索计划超过加权总预算")
-        steps.append(SearchStep(str(primitive), budget_value, threshold_value))
+        primitive_name = str(primitive)
+        step_weight = PRIMITIVE_BUDGET_WEIGHTS[primitive_name]
+        requested_cost = step_weight * budget_value
+        if weighted_budget + requested_cost > int(total_budget):
+            if budget_policy == "strict":
+                raise ValueError("搜索计划超过加权总预算")
+
+            # v2 只修复总预算溢出：保留原顺序和合法前缀，把当前步骤截到剩余预算后停止。
+            # 这样不会替候选重新排序，也不会让后续低成本步骤绕过前面的超限选择。
+            affordable_budget = (int(total_budget) - weighted_budget) // step_weight
+            if affordable_budget >= 1:
+                steps.append(
+                    SearchStep(primitive_name, affordable_budget, threshold_value)
+                )
+            break
+
+        weighted_budget += requested_cost
+        steps.append(SearchStep(primitive_name, budget_value, threshold_value))
     return steps
 
 
@@ -264,9 +289,10 @@ def _apply_step(
 def _evaluate_instance(
     plan_function: Callable[[int, int], object],
     instance: ControllerInstance,
+    budget_policy: str,
 ) -> dict[str, Any]:
     raw_plan = plan_function(len(instance.initial_route), MAX_TOTAL_BUDGET)
-    steps = validate_search_plan(raw_plan, MAX_TOTAL_BUDGET)
+    steps = validate_search_plan(raw_plan, MAX_TOTAL_BUDGET, budget_policy)
     route = instance.initial_route.copy()
     initial_cost = route_metrics.route_cost(route, instance.distances)
     executed_budget = 0
@@ -308,10 +334,13 @@ def _evaluate_instance(
 def evaluate_controller(
     plan_function: Callable[[int, int], object],
     suite: Sequence[ControllerInstance],
+    budget_policy: str = "strict",
 ) -> dict[str, Any]:
     """评测一个控制器；目标以路线质量为主，只加极小的确定性预算惩罚。"""
 
-    results = [_evaluate_instance(plan_function, instance) for instance in suite]
+    results = [
+        _evaluate_instance(plan_function, instance, budget_policy) for instance in suite
+    ]
     mean_normalized_cost = fmean(item["normalized_cost"] for item in results)
     mean_budget_ratio = fmean(
         item["executed_weighted_budget"] / MAX_TOTAL_BUDGET for item in results

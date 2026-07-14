@@ -277,6 +277,10 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
     if isinstance(gens, list) and any(not isinstance(g, int) or g < 0 for g in gens):
         errors.append("generations must be a list of non-negative ints")
 
+    controller_budget_policy = manifest.get("controller_budget_policy", "strict")
+    if controller_budget_policy not in {"strict", "clip"}:
+        errors.append("controller_budget_policy must be 'strict' or 'clip'")
+
     errors.extend(validate_run_manifest(manifest))
     return errors
 
@@ -335,6 +339,13 @@ def _build_cmd(
     if seed is not None:
         cmd.extend(["--seed", str(seed)])
     cmd.extend(["--provider", provider, "--temperature-schedule", temperature_schedule])
+    # strict 是 v1 冻结合同；新 cohort 只有显式声明 clip 才启用确定性预算截断。
+    cmd.extend(
+        [
+            "--controller-budget-policy",
+            str(manifest.get("controller_budget_policy", "strict")),
+        ]
+    )
     context_files = arm.get("context_files") or {}
     context_file = context_files.get(problem) or arm.get("context_file", "")
     if context_file:

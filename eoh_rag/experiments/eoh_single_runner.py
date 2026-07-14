@@ -334,7 +334,8 @@ def _runner_script() -> str:
 
 
         def load_problem(problem: str, official_root: Path, eval_timeout_s: int, n_processes: int,
-                         broad_training: bool = False, n_train: int = 128, held_out_set: list | None = None):
+                         broad_training: bool = False, n_train: int = 128, held_out_set: list | None = None,
+                         controller_budget_policy: str = "strict"):
             sys.path.insert(0, str(official_root / "eoh" / "src"))
             example_root = official_root / "examples" / problem
             sys.path.insert(0, str(example_root))
@@ -361,7 +362,11 @@ def _runner_script() -> str:
                 return CVRPCONST(n_customers=50, capacity=40, n_instance=16, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_search_controller":
                 from prob import TSPSEARCHCONTROLLER
-                return TSPSEARCHCONTROLLER(timeout=eval_timeout_s, n_processes=n_processes)
+                return TSPSEARCHCONTROLLER(
+                    timeout=eval_timeout_s,
+                    n_processes=n_processes,
+                    budget_policy=controller_budget_policy,
+                )
             raise ValueError(f"unknown problem: {problem}")
 
 
@@ -463,6 +468,7 @@ def _runner_script() -> str:
             parser.add_argument("--seed", type=int, default=2024)
             parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
             parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
+            parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")
             parser.add_argument("--seed-codes", default="")
             parser.add_argument("--adaptive-stop", action="store_true")
             parser.add_argument("--stop-window", type=int, default=5)
@@ -494,7 +500,8 @@ def _runner_script() -> str:
             held_out_set = json.loads(args.held_out_set) if args.held_out_set else None
             task = load_problem(args.problem, official_root, args.eval_timeout_s, args.n_processes,
                                 broad_training=args.broad_training, n_train=args.n_train,
-                                held_out_set=held_out_set)
+                                held_out_set=held_out_set,
+                                controller_budget_policy=args.controller_budget_policy)
             apply_arm_context(task, args.problem, args.arm, args.context_file)
             operators = [item.strip() for item in args.operators.split(",") if item.strip()]
             install_api_url_patch()
@@ -595,6 +602,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "seed": getattr(args, "seed", 2024),
         "provider": getattr(args, "provider", "opencode-go"),
         "temperature_schedule": getattr(args, "temperature_schedule", "fixed"),
+        "controller_budget_policy": getattr(args, "controller_budget_policy", "strict"),
         "adaptive_stop": args.adaptive_stop,
         "stop_window": args.stop_window,
         "stop_min_gap": args.stop_min_gap,
@@ -725,6 +733,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         getattr(args, "provider", "opencode-go"),
         "--temperature-schedule",
         getattr(args, "temperature_schedule", "fixed"),
+        "--controller-budget-policy",
+        getattr(args, "controller_budget_policy", "strict"),
     ]
     # 以下均为可选项，仅在对应参数存在时追加
     if args.llm_model:
@@ -894,6 +904,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2024)
     parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
+    parser.add_argument("--controller-budget-policy", choices=["strict", "clip"], default="strict")
     parser.add_argument("--exact-output-dir", action="store_true")
     payload = run_official_eoh(parser.parse_args())
     print(json.dumps(payload, ensure_ascii=True, indent=2))
