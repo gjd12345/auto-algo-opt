@@ -1,0 +1,57 @@
+{
+  "schema_version": "bp_hifo_generalization/v1",
+  "suite": "bp_confirmation_gate_agent_hifo_v1",
+  "problem": "bp_online",
+  "capacity": 100,
+  "datasets": [
+    {
+      "dataset_id": "hifo_1k_C100",
+      "path": "eoh_rag_workspace/problems/bp_online/held_out/hifo_1k_C100.pkl",
+      "sha256": "889FBC931AC7A5F94895E1E2DFA2CF4D762969BBFBFE0902F93867B74D363795",
+      "expected_instances": 5,
+      "item_count": 1000
+    },
+    {
+      "dataset_id": "hifo_5k_C100",
+      "path": "eoh_rag_workspace/problems/bp_online/held_out/hifo_5k_C100.pkl",
+      "sha256": "172F86591A29CCBA94FFC6B711B2F8283AFF560C2C9718C9F3C23C93FDA0D668",
+      "expected_instances": 5,
+      "item_count": 5000
+    },
+    {
+      "dataset_id": "hifo_10k_C100",
+      "path": "eoh_rag_workspace/problems/bp_online/held_out/hifo_10k_C100.pkl",
+      "sha256": "CECC30E87B286FD6223FFB51624769242D306BE6B383C843D6DADC57F3B81EB3",
+      "expected_instances": 5,
+      "item_count": 10000
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "inherited_seed_best",
+      "actor": "historical_eoh",
+      "asset_path": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json",
+      "asset_sha256": "19D700DBB1642CDF71F9B2A306547E274D09DCCEE690B62866399357928CA9A1",
+      "code_sha256": "50D99C40C4348CE2C0481A78FE15285DBA8A78223C4BD419209DA68B308E1D6F"
+    },
+    {
+      "candidate_id": "bp_online_agent_discovery_gate_confirmed_v1",
+      "actor": "research_agent_eoh",
+      "asset_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_confirmed_v1.json",
+      "asset_sha256": "CB03B403D91C879C6C2B9AED59CFEC26FA51448C3FAE31D1129FA1CAB87516D9",
+      "code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8"
+    }
+  ],
+  "comparison": {
+    "baseline_candidate_id": "inherited_seed_best",
+    "agent_candidate_id": "bp_online_agent_discovery_gate_confirmed_v1",
+    "candidate_frozen_before_evaluation": true,
+    "hifo_used_during_evolution_or_selection": false,
+    "scope_extension_only": true
+  },
+  "scope_extension_gate": {
+    "valid_pairs_min": 15,
+    "sign_test_p_value_max": 0.05,
+    "positive_dataset_count_min": 2
+  }
+}
