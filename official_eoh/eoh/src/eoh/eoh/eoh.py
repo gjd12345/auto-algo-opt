@@ -269,7 +269,10 @@ class EOH:
             'objective': objective,
             'other_inf': feedback,
         }
-        if self.config.feedback_policy == "confirmation_aware" and objective is not None:
+        if self.config.feedback_policy in {
+            "confirmation_aware",
+            "confirmation_gate_only",
+        } and objective is not None:
             accepted, gate_details = confirmation_gate(offspring, parents)
             offspring["selection_accepted"] = accepted
             offspring["selection_reason"] = gate_details["reason"]

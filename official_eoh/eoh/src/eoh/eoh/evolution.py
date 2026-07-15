@@ -143,6 +143,8 @@ def parent_selection(pop, m, feedback_policy="legacy"):
         "scale_aware",
         "robust_aware",
         "confirmation_aware",
+        "confirmation_observe_only",
+        "confirmation_gate_only",
     }:
         # 评价反馈模式始终保留当前精英；多父代算子再配一个不同个体，兼顾利用与探索。
         ranked = sorted(pop, key=lambda item: float(item["objective"]))
@@ -214,6 +216,8 @@ class Evolution:
             "scale_aware",
             "robust_aware",
             "confirmation_aware",
+            "confirmation_observe_only",
+            "confirmation_gate_only",
         }:
             return "\n".join(
                 f"No.{i+1} dev objective={p['objective']} (lower is better).\n"

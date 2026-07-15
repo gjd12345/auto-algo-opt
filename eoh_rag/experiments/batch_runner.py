@@ -284,10 +284,13 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             "scale_aware",
             "robust_aware",
             "confirmation_aware",
+            "confirmation_observe_only",
+            "confirmation_gate_only",
         }:
             errors.append(
                 f"arm[{i}] evolution_feedback_policy must be 'legacy', "
-                "'objective_aware', 'scale_aware', 'robust_aware', or 'confirmation_aware'"
+                "'objective_aware', 'scale_aware', 'robust_aware', 'confirmation_aware', "
+                "'confirmation_observe_only', or 'confirmation_gate_only'"
             )
 
     problems = manifest.get("problems", [])

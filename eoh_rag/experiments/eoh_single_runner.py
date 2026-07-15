@@ -490,6 +490,8 @@ def _runner_script() -> str:
                     "scale_aware",
                     "robust_aware",
                     "confirmation_aware",
+                    "confirmation_observe_only",
+                    "confirmation_gate_only",
                 ],
                 default="legacy",
             )
@@ -540,7 +542,12 @@ def _runner_script() -> str:
                                 held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
                                 bp_structured_feedback=args.evolution_feedback_policy in {"scale_aware", "robust_aware"},
                                 bp_robust_feedback=args.evolution_feedback_policy == "robust_aware",
-                                bp_confirmation_feedback=args.evolution_feedback_policy == "confirmation_aware",
+                                # 两个消融臂读取完全相同的搜索批和确认批；只有 gate_only 改变接纳规则。
+                                bp_confirmation_feedback=args.evolution_feedback_policy in {
+                                    "confirmation_aware",
+                                    "confirmation_observe_only",
+                                    "confirmation_gate_only",
+                                },
                                 controller_budget_policy=args.controller_budget_policy,
                                 controller_dev_suite=args.controller_dev_suite,
                                 controller_confirm_suite=args.controller_confirm_suite)
@@ -986,6 +993,8 @@ def main() -> None:
             "scale_aware",
             "robust_aware",
             "confirmation_aware",
+            "confirmation_observe_only",
+            "confirmation_gate_only",
         ],
         default="legacy",
     )

@@ -285,3 +285,27 @@ def test_confirmation_feedback_proxy_pairs_only_acceptance_policy() -> None:
     assert policies == ["objective_aware", "confirmation_aware"]
     assert profiles == ["dual_batch_1k_5k_10k", "dual_batch_1k_5k_10k"]
     assert seed_paths[0] == seed_paths[1]
+
+
+def test_confirmation_gate_only_proxy_hides_confirmation_from_both_prompts() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [15001, 15002, 15003]
+    policies = []
+    profiles = []
+    seed_paths = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+        profiles.append(command[command.index("--bp-training-profile") + 1])
+        seed_paths.append(command[command.index("--seed-codes") + 1])
+
+    assert policies == ["confirmation_observe_only", "confirmation_gate_only"]
+    assert profiles == ["dual_batch_1k_5k_10k", "dual_batch_1k_5k_10k"]
+    assert seed_paths[0] == seed_paths[1]

@@ -4,6 +4,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 from eoh_rag.search_control.tsp_controller import build_controller_suite
@@ -19,7 +20,7 @@ from eoh.eoh.evolution import (  # noqa: E402
     _normalize_evaluation_result,
     parent_selection,
 )
-from eoh.eoh.eoh import confirmation_gate  # noqa: E402
+from eoh.eoh.eoh import EOH, confirmation_gate  # noqa: E402
 
 
 def _population() -> list[dict]:
@@ -116,6 +117,64 @@ def test_confirmation_prompt_and_gate_require_two_batch_dominance() -> None:
     assert "Avoid tuning to a search-only difference" in prompt
     assert confirmation_gate(accepted, parent)[0] is True
     assert confirmation_gate(rejected, parent)[0] is False
+
+
+def test_confirmation_gate_only_keeps_confirmation_values_out_of_prompt() -> None:
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "scale_gap_pct": {"1000": 0.8, "5000": 0.4, "10000": 0.2},
+            "confirm_scale_gap_pct": {"1000": 0.9, "5000": 0.5, "10000": 0.3},
+            "confirm_objective": 0.005,
+        },
+    }
+    observe_prompt = _evolution("confirmation_observe_only")._build_prompt("m1", parent)
+    gate_prompt = _evolution("confirmation_gate_only")._build_prompt("m1", parent)
+
+    # 两个臂给模型的输入必须一致，确认值只供引擎接纳候选，不能暗中改变生成提示。
+    assert observe_prompt == gate_prompt
+    assert "Dev objective: 0.7 (lower is better)" in gate_prompt
+    assert "Independent confirmation" not in gate_prompt
+    assert "Preserve its strongest structure" in gate_prompt
+
+
+def test_confirmation_gate_only_changes_acceptance_not_evaluation() -> None:
+    parent = {
+        **_population()[1],
+        "other_inf": {"confirm_objective": 0.005},
+    }
+
+    class ImmediateExecutor:
+        def submit(self, *_args, **_kwargs):
+            return SimpleNamespace(
+                result=lambda: {
+                    "objective": 0.6,
+                    "feedback": {"confirm_objective": 0.0051},
+                }
+            )
+
+    def build_engine(policy: str) -> EOH:
+        engine = EOH.__new__(EOH)
+        engine.config = SimpleNamespace(feedback_policy=policy)
+        engine.problem = SimpleNamespace(timeout=1)
+        engine._eval_executor = ImmediateExecutor()
+        engine.evolution = SimpleNamespace(
+            generate_code=lambda _population, _operator: (
+                parent,
+                "def f(): return 1",
+                "candidate",
+            )
+        )
+        return engine
+
+    observed = build_engine("confirmation_observe_only")._build_offspring([parent], "m1")
+    gated = build_engine("confirmation_gate_only")._build_offspring([parent], "m1")
+
+    assert observed["objective"] == gated["objective"] == 0.6
+    assert observed["other_inf"] == {"confirm_objective": 0.0051}
+    assert "selection_accepted" not in observed
+    assert gated["selection_accepted"] is False
+    assert gated["selection_reason"] == "dominance_failed"
 
 
 def test_structured_evaluation_result_keeps_feedback_and_old_float_contract() -> None:
