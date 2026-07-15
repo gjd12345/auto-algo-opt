@@ -1,0 +1,48 @@
+{
+  "suite": "cvrp_fresh_generated_diagnostic_v1",
+  "candidate_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+  "source_suite": "cvrp_confirmation_portability_proxy_v1",
+  "environments": [
+    {
+      "name": "uniform_50",
+      "geometry": "uniform_square",
+      "n_customers": 50,
+      "capacity": 40,
+      "demand_max": 3,
+      "instances": 30,
+      "seed_start": 31000
+    },
+    {
+      "name": "clustered_100",
+      "geometry": "clustered",
+      "n_customers": 100,
+      "capacity": 60,
+      "demand_max": 6,
+      "instances": 30,
+      "seed_start": 41000
+    },
+    {
+      "name": "rectangular_200",
+      "geometry": "rectangular",
+      "n_customers": 200,
+      "capacity": 80,
+      "demand_max": 8,
+      "instances": 30,
+      "seed_start": 51000
+    }
+  ],
+  "gate": {
+    "all_candidates_feasible": true,
+    "mean_relative_improvement_pct_min": 0.0,
+    "win_rate_non_ties_min": 0.55,
+    "sign_test_p_max": 0.05,
+    "positive_environments_min": 2
+  },
+  "selection_contract": {
+    "strictly_paired": true,
+    "held_out_used": false,
+    "thresholds_frozen_before_run": true,
+    "winner_if_both_pass": "higher_median_relative_improvement_pct",
+    "next_if_none_pass": "retain_same_distribution_result_only"
+  }
+}
