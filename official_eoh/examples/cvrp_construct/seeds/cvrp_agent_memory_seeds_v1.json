@@ -1,0 +1,15 @@
+[
+  {
+    "algorithm": "Research Agent EOH CVRP memory seed selected only by broad-training objective; held-out remained report-only.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    if current_node == depot:\n        return unvisited_nodes[np.argmin(distance_matrix[depot][unvisited_nodes])]\n\n    current_dists = distance_matrix[current_node][unvisited_nodes]\n    depot_dists = distance_matrix[depot][unvisited_nodes]\n    demands_u = demands[unvisited_nodes]\n\n    # Compute savings and regret scores\n    savings = depot_dists + distance_matrix[current_node][depot] - current_dists\n    best_dist = np.minimum(current_dists, depot_dists + distance_matrix[current_node][depot])\n    second_best = np.zeros_like(best_dist)\n    for i, u in enumerate(unvisited_nodes):\n        dists = np.delete(current_dists, i)\n        second_best[i] = np.min(dists) if len(dists) > 0 else best_dist[i]\n    regret = second_best - best_dist\n\n    # Demand pressure term\n    demand_ratio = demands_u / (rest_capacity + 1e-8)\n    \n    # Combined score: savings + regret * (1 - demand_ratio)\n    scores = savings + regret * (1 - demand_ratio)\n\n    best_idx = int(np.argmax(scores))\n    best_customer = unvisited_nodes[best_idx]\n\n    # Early return check based on direct return cost vs serving cost\n    serving_cost = current_dists[best_idx] + distance_matrix[best_customer][depot]\n    return_cost = distance_matrix[current_node][depot]\n    if serving_cost > 2.0 * return_cost and rest_capacity < demands[unvisited_nodes].max() * 1.2:\n        return depot\n\n    return best_customer",
+    "provenance": {
+      "actor": "research_agent_eoh",
+      "source_suite": "cross_problem_transfer",
+      "source_arm": "mixed_abstract",
+      "source_seed": 3101,
+      "source_training_objective": 848.06395,
+      "selection_used_held_out": false,
+      "source_code_sha256": "D65C0ADB47376F26AD8032CF622A6E2375E766817C5165836861B920EC816BD4"
+    }
+  }
+]

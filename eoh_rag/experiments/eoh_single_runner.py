@@ -340,7 +340,7 @@ def _runner_script() -> str:
                          bp_training_profile: str = "single_5k",
                          bp_structured_feedback: bool = False,
                          bp_robust_feedback: bool = False,
-                         bp_confirmation_feedback: bool = False,
+                         confirmation_feedback: bool = False,
                          controller_budget_policy: str = "strict",
                          controller_dev_suite: str = "synthetic_dev_v1",
                          controller_confirm_suite: str = "synthetic_confirm_v1"):
@@ -355,21 +355,23 @@ def _runner_script() -> str:
                                          training_profile=bp_training_profile,
                                          structured_feedback=bp_structured_feedback,
                                          robust_feedback=bp_robust_feedback,
-                                         confirmation_feedback=bp_confirmation_feedback)
+                                         confirmation_feedback=confirmation_feedback)
                 from prob import BPONLINE
                 return BPONLINE(capacity=100, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_construct":
                 if broad_training:
                     from prob_broad import TSPCONSTBroad
                     return TSPCONSTBroad(problem_size=50, timeout=eval_timeout_s, n_processes=n_processes,
-                                         n_train=n_train, held_out_set=held_out_set)
+                                         n_train=n_train, held_out_set=held_out_set,
+                                         confirmation_feedback=confirmation_feedback)
                 from prob import TSPCONST
                 return TSPCONST(problem_size=50, n_instance=8, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "cvrp_construct":
                 if broad_training:
                     from prob_broad import CVRPCONSTBroad
                     return CVRPCONSTBroad(n_customers=50, capacity=40, timeout=eval_timeout_s, n_processes=n_processes,
-                                          n_train=n_train, held_out_set=held_out_set)
+                                          n_train=n_train, held_out_set=held_out_set,
+                                          confirmation_feedback=confirmation_feedback)
                 from prob import CVRPCONST
                 return CVRPCONST(n_customers=50, capacity=40, n_instance=16, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_search_controller":
@@ -518,6 +520,14 @@ def _runner_script() -> str:
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
 
+            confirmation_policy = args.evolution_feedback_policy in {
+                "confirmation_aware",
+                "confirmation_observe_only",
+                "confirmation_gate_only",
+            }
+            if args.problem in {"tsp_construct", "cvrp_construct"} and confirmation_policy and not args.broad_training:
+                raise ValueError("TSP/CVRP confirmation feedback requires --broad-training")
+
             # 同一配对共享本地随机 seed；远端 LLM 文本不承诺逐字一致。
             random.seed(args.seed)
             np.random.seed(args.seed)
@@ -550,12 +560,8 @@ def _runner_script() -> str:
                                 held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
                                 bp_structured_feedback=args.evolution_feedback_policy in {"scale_aware", "robust_aware"},
                                 bp_robust_feedback=args.evolution_feedback_policy == "robust_aware",
-                                # 两个消融臂读取完全相同的搜索批和确认批；只有 gate_only 改变接纳规则。
-                                bp_confirmation_feedback=args.evolution_feedback_policy in {
-                                    "confirmation_aware",
-                                    "confirmation_observe_only",
-                                    "confirmation_gate_only",
-                                },
+                                # 所有问题共享同一反馈合同；确认批固定且与 held-out 严格分离。
+                                confirmation_feedback=confirmation_policy,
                                 controller_budget_policy=args.controller_budget_policy,
                                 controller_dev_suite=args.controller_dev_suite,
                                 controller_confirm_suite=args.controller_confirm_suite)

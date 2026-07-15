@@ -79,25 +79,33 @@ class TSPCONSTBroad(TSPCONST):
     manifest 设 broad_training:true 启用;缺省 false 时原 TSPCONST 不受影响。
     """
     def __init__(self, problem_size: int = 50, timeout: int = 40, n_processes: int = 1,
-                 n_train: int = 128, held_out_set: list | None = None):
+                 n_train: int = 128, held_out_set: list | None = None,
+                 confirmation_feedback: bool = False, n_confirm: int | None = None):
         super().__init__(timeout=timeout, n_processes=n_processes)  # BaseProblem,非 TSPCONST
         self.problem_size = problem_size
         self.neighbor_size = min(50, problem_size)
         self.n_train = n_train
+        self.confirmation_feedback = confirmation_feedback
         self.held_out_data = held_out_set or []
         self.held_out_report = {}
         # held-out 不参与适应度，只在最终最佳候选确定后计算，避免每个候选重复跑大型基准。
         self.report_held_out = False
         # 大规模 TSPLIB 会暴露启发式的复杂度问题；单实例限时避免拖垮整个正式 run。
         self.held_out_timeout_s = min(float(timeout), 30.0)
-        self.instance_data = self._gen_broad_instances(n_train, problem_size)
+        self.instance_data = self._gen_broad_instances(n_train, problem_size, seed_start=9000)
+        # 确认批与搜索批同分布但 seed 不重叠，只用于反馈和接纳，不能替代最终 held-out。
+        confirm_size = n_train if n_confirm is None else max(1, int(n_confirm))
+        self.confirmation_data = (
+            self._gen_broad_instances(confirm_size, problem_size, seed_start=19000)
+            if confirmation_feedback else []
+        )
     
     @staticmethod
-    def _gen_broad_instances(n: int, size: int):
+    def _gen_broad_instances(n: int, size: int, seed_start: int = 9000):
         """生成 n 个随机 TSP 实例(同分布不同 seed)。"""
         data = []
         for i in range(n):
-            rng = np.random.default_rng(9000 + i)
+            rng = np.random.default_rng(seed_start + i)
             coords = rng.uniform(0, 1000, (size, 2))
             dist = np.array([[np.linalg.norm(coords[a]-coords[b]) for b in range(size)] for a in range(size)])
             neigh = np.argsort(dist, axis=1)
@@ -130,19 +138,39 @@ class TSPCONSTBroad(TSPCONST):
         if len(route) != n: return None
         return self._tour_cost(coords, route)
     
-    def evaluate_program(self, program_str: str, callable_func) -> float | None:
+    def _evaluate_instances(self, callable_func, instance_data) -> float | None:
+        """在一组冻结实例上计算平均路线成本；任何无效路线都使候选失效。"""
         costs = []
-        for coords, dist, neigh in self.instance_data:
+        for coords, dist, neigh in instance_data:
             v = self._eval_candidate(callable_func, coords, dist, neigh)
             if v is None: return None
             costs.append(v)
-        fitness = float(np.mean(costs))
+        return float(np.mean(costs))
+
+    def evaluate_program(self, program_str: str, callable_func) -> float | dict | None:
+        fitness = self._evaluate_instances(callable_func, self.instance_data)
+        if fitness is None:
+            return None
+
+        evaluation_result: float | dict = fitness
+        if self.confirmation_feedback:
+            confirm_objective = self._evaluate_instances(callable_func, self.confirmation_data)
+            if confirm_objective is None:
+                return None
+            evaluation_result = {
+                "objective": fitness,
+                "feedback": {
+                    "confirm_objective": confirm_objective,
+                    "search_confirm_gap": confirm_objective - fitness,
+                },
+            }
+
         if not self.report_held_out:
-            return fitness
+            return evaluation_result
 
         # held-out 报告(只记录,不进适应度)
         self.held_out_report = {}
         for entry in self.held_out_data:
             result = evaluate_held_out_with_timeout(program_str, entry, self.held_out_timeout_s)
             self.held_out_report[Path(entry).stem] = result
-        return fitness
+        return evaluation_result

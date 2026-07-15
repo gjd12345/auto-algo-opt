@@ -1,0 +1,70 @@
+{
+  "suite": "cvrp_confirmation_portability_proxy_v1",
+  "model": "offline-numeric",
+  "problems": ["cvrp_construct"],
+  "broad_training": true,
+  "n_train": 32,
+  "held_out_set": [
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n251-k28.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n502-k39.vrp"
+  ],
+  "arms": [
+    {
+      "name": "offline_single_numeric_gate",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "agent_memory_seed_single_numeric",
+      "operators": "n1",
+      "evolution_feedback_policy": "confirmation_gate_only",
+      "seed_codes": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_memory_seeds_v1.json"
+    },
+    {
+      "name": "offline_pair_numeric_gate",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "agent_memory_seed_pair_numeric",
+      "operators": "n2",
+      "evolution_feedback_policy": "confirmation_gate_only",
+      "seed_codes": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_memory_seeds_v1.json"
+    }
+  ],
+  "generations": [3],
+  "pop_size": 4,
+  "repeats": 1,
+  "seed_list": [17001],
+  "max_runs": 2,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 180,
+  "run_timeout_s": 3600,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "cvrp_fixed_confirmation_objective",
+  "trigger": {
+    "source_suite": "bp_numeric_pair_compensation_proxy_v1",
+    "action": "test_cross_problem_portability_of_feedback_gated_offline_operators"
+  },
+  "discovery_contract": {
+    "actor": "research_agent_eoh",
+    "generator": "offline_ast_numeric_neighborhood",
+    "candidate_budget_per_arm": 12,
+    "llm_calls": 0,
+    "search_instances": 32,
+    "confirmation_instances": 32,
+    "search_and_confirmation_seed_ranges_overlap": false,
+    "confirmation_gate_controls_acceptance": true,
+    "held_out_controls_selection": false,
+    "held_out_is_reused_diagnostic": true,
+    "contains_codex_external_teacher": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 2,
+    "valid_runs_min": 2,
+    "evaluated_candidates_per_arm_min": 12,
+    "operator_runtime_failures_max": 0,
+    "next_if_any_non_seed_final": "freeze_candidate_and_run_fresh_generated_cvrp_diagnostic",
+    "next_if_no_non_seed_final": "record_portability_without_improvement_and_stop_numeric_branch"
+  },
+  "official_root": "official_eoh"
+}
