@@ -395,3 +395,25 @@ def test_cross_distribution_seed_bundle_starts_from_confirmed_agent_asset() -> N
     assert len({entry["code"] for entry in seed_bundle}) == 3
     confirmed_hash = hashlib.sha256(seed_bundle[0]["code"].encode("utf-8")).hexdigest()
     assert confirmed_hash.upper() == confirmed_asset["best_code_sha256"]
+
+
+def test_cross_distribution_local_refine_proxy_uses_only_m2_and_fresh_seeds() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_local_refine_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [16101, 16102, 16103]
+    assert manifest["operators"] == "m2"
+    assert manifest["generations"] == [4]
+    assert manifest["pop_size"] == 3
+    assert manifest["max_runs"] == 3
+    assert manifest["discovery_contract"]["hifo_visible_during_training_or_selection"] is False
+
+    command = _build_cmd(manifest, "bp_online", manifest["arms"][0], 4, 0, "out")
+    assert command[command.index("--operators") + 1] == "m2"
+    assert command[command.index("--evolution-feedback-policy") + 1] == "confirmation_gate_only"
+    assert command[command.index("--bp-training-profile") + 1] == "dual_env_1k_5k_10k"
