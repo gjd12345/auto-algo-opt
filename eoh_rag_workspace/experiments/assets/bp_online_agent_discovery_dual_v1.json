@@ -1,0 +1,45 @@
+{
+  "asset_id": "bp_online_agent_discovery_dual_v1",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,candidate_under_confirmation,dual_batch_aggregate,not_yet_formal_seed",
+  "source_run_key": "bp_confirmation_feedback_proxy_v1/bp_online/aggregate_feedback/14001",
+  "agent_commit": "3d27e8d9236c4dd082090f4889270b080cdb5b04",
+  "manifest_sha256": "5C1C6CF676EF5F901B97D0BBDD5595B459536CDE041E2F1035A2DCA4DBD540AA",
+  "run_summary_sha256": "43F4774CBF85D8DA6E622F43AA00C118D0437459427D28142F35E4FFF7C01520",
+  "samples_sha256": "0B282274C1C97D2547CC167D30B86AE7FB07DF68304C853C8F178967EB50A303",
+  "best_sample_sha256": "E57308EE967A7EC81319179E8817EF49046E6F2D3C2B9B8BF4D5F4BFC59CEA3A",
+  "best_code_sha256": "FF76A8F81571F3583C995929E0BBF983AF1CC545BEA7D2D496E98DE08CA573E1",
+  "provider": "opencode-go",
+  "model": "deepseek-v4-flash",
+  "run_seed": 14001,
+  "generation": 2,
+  "population": 3,
+  "operators": ["e1", "e2", "m1", "m2"],
+  "source_operator": "m2",
+  "source_sample_order": 4,
+  "visibility": {
+    "codex_external_teacher_visible": false,
+    "inherited_605_elites_visible": true,
+    "objective_feedback_visible": true,
+    "dual_batch_instances_visible_as_one_aggregate_objective": true,
+    "independent_39000_diagnostic_visible_during_evolution": false
+  },
+  "selection": {
+    "selected_by": "lowest aggregate development objective in run 14001",
+    "diagnostic_used_during_evolution": false,
+    "fresh_90_pair_diagnostic_used_to_prioritize_large_confirmation": true,
+    "formal_seed_allowed": false
+  },
+  "evaluation": {
+    "development_suite": "dual_batch_20_search_plus_20_confirm_per_scale_as_aggregate",
+    "seeded_best_dev_objective": 0.01218,
+    "agent_dev_objective": 0.01194,
+    "fresh_diagnostic_pairs": 90,
+    "fresh_diagnostic_mean_gap_reduction_vs_seed_pct_points": 0.04792867467294604,
+    "fresh_diagnostic_seed_start": 39000,
+    "large_confirmation_status": "pending"
+  },
+  "algorithm": "Increase the small-residual exponent from 1.0 to 1.1 while keeping the balance peak centered at 0.5.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    harmonic_penalty = 1.0 / (residual + 1e-9) ** 1.1\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.5) ** 2) * 10)\n    scores = harmonic_penalty + balance_peak\n    return scores"
+}

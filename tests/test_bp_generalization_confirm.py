@@ -16,6 +16,10 @@ MANIFEST_PATH = (
     REPO_ROOT
     / "eoh_rag_workspace/experiments/manifests/bp_agent_v2_generalization_confirm_v1.json"
 )
+DUAL_MANIFEST_PATH = (
+    REPO_ROOT
+    / "eoh_rag_workspace/experiments/manifests/bp_dual_agent_generalization_confirm_v1.json"
+)
 
 
 def test_generalization_manifest_freezes_new_large_paired_suite() -> None:
@@ -30,6 +34,27 @@ def test_generalization_manifest_freezes_new_large_paired_suite() -> None:
         "inherited_seed_best",
         "bp_online_agent_discovery_v2",
     ]
+    for candidate in candidates:
+        assert hashlib.sha256(candidate["code"].encode()).hexdigest().upper() == candidate[
+            "code_sha256"
+        ]
+
+
+def test_dual_agent_manifest_freezes_independent_confirmation_suite() -> None:
+    manifest = json.loads(DUAL_MANIFEST_PATH.read_text(encoding="utf-8"))
+    candidates = load_candidates(manifest)
+
+    # 新确认集不得复用筛选候选时已经查看过的 39000 段实例，避免把诊断结果当作泛化结果。
+    assert manifest["generator"]["item_counts"] == [1000, 5000, 10000]
+    assert manifest["generator"]["instances_per_scale"] == 100
+    assert manifest["generator"]["seed_start"] == 61000
+    assert manifest["comparison"]["previous_90_instance_diagnostic_set_reused"] is False
+    assert manifest["comparison"]["diagnostic_was_used_to_prioritize_confirmation"] is True
+    assert [candidate["candidate_id"] for candidate in candidates] == [
+        "inherited_seed_best",
+        "bp_online_agent_discovery_dual_v1",
+    ]
+    assert candidates[1]["actor"] == "research_agent_eoh"
     for candidate in candidates:
         assert hashlib.sha256(candidate["code"].encode()).hexdigest().upper() == candidate[
             "code_sha256"
