@@ -5,6 +5,8 @@ import sys
 
 import numpy as np
 
+from eoh_rag.experiments.batch_runner import _build_cmd
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -71,7 +73,9 @@ def test_cvrp_broad_returns_independent_confirmation_feedback():
     )
     assert len(problem.instance_data) == 2
     assert len(problem.confirmation_data) == 3
-    assert not np.array_equal(problem.instance_data[0][0], problem.confirmation_data[0][0])
+    assert not np.array_equal(
+        problem.instance_data[0]["coords"], problem.confirmation_data[0]["coords"]
+    )
 
 
 def test_confirmation_feedback_is_opt_in_for_construct_problems():
@@ -93,6 +97,30 @@ def test_confirmation_feedback_is_opt_in_for_construct_problems():
     assert isinstance(cvrp_problem.evaluate_program("", cvrp_nearest), float)
     assert tsp_problem.confirmation_data == []
     assert cvrp_problem.confirmation_data == []
+
+
+def test_cvrp_multi_environment_feedback_is_equal_weighted():
+    module = load_problem_module("cvrp_construct")
+    problem = module.CVRPCONSTBroad(
+        n_train=6,
+        confirmation_feedback=True,
+        n_confirm=6,
+        training_profile="multi_env_50_100_200",
+    )
+
+    def nearest_feasible(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+        del depot, rest_capacity, demands
+        return int(unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])])
+
+    result = problem.evaluate_program("", nearest_feasible)
+
+    assert isinstance(result, dict)
+    expected = {"uniform_50", "clustered_100", "rectangular_200"}
+    assert set(result["feedback"]["search_environment_objectives"]) == expected
+    assert set(result["feedback"]["confirm_environment_objectives"]) == expected
+    assert result["objective"] == np.mean(
+        list(result["feedback"]["search_environment_objectives"].values())
+    )
 
 
 def test_cvrp_portability_manifest_freezes_feedback_and_provenance_contracts():
@@ -131,3 +159,21 @@ def test_cvrp_structural_proxy_uses_confirmed_agent_memory():
     assert seeds[0]["provenance"]["actor"] == "research_agent_eoh"
     assert seeds[0]["provenance"]["held_out_used_for_selection"] is False
     assert "Clustered 100-customer instances remained weak" in memory
+
+
+def test_cvrp_multi_environment_manifest_routes_profile_and_failure_memory():
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    arm = manifest["arms"][0]
+    memory = (REPO_ROOT / arm["context_files"]["cvrp_construct"]).read_text(encoding="utf-8")
+
+    assert manifest["cvrp_training_profile"] == "multi_env_50_100_200"
+    assert manifest["discovery_contract"]["environment_aggregation"] == "equal_weight"
+    assert "44 wins, 46 losses" in memory
+    command = _build_cmd(manifest, "cvrp_construct", arm, 2, 1, "out")
+    profile_index = command.index("--cvrp-training-profile")
+    assert command[profile_index + 1] == "multi_env_50_100_200"

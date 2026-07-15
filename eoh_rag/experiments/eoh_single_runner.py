@@ -338,6 +338,7 @@ def _runner_script() -> str:
         def load_problem(problem: str, official_root: Path, eval_timeout_s: int, n_processes: int,
                          broad_training: bool = False, n_train: int = 128, held_out_set: list | None = None,
                          bp_training_profile: str = "single_5k",
+                         cvrp_training_profile: str = "uniform_50",
                          bp_structured_feedback: bool = False,
                          bp_robust_feedback: bool = False,
                          confirmation_feedback: bool = False,
@@ -371,7 +372,8 @@ def _runner_script() -> str:
                     from prob_broad import CVRPCONSTBroad
                     return CVRPCONSTBroad(n_customers=50, capacity=40, timeout=eval_timeout_s, n_processes=n_processes,
                                           n_train=n_train, held_out_set=held_out_set,
-                                          confirmation_feedback=confirmation_feedback)
+                                          confirmation_feedback=confirmation_feedback,
+                                          training_profile=cvrp_training_profile)
                 from prob import CVRPCONST
                 return CVRPCONST(n_customers=50, capacity=40, n_instance=16, timeout=eval_timeout_s, n_processes=n_processes)
             if problem == "tsp_search_controller":
@@ -517,6 +519,11 @@ def _runner_script() -> str:
                 ],
                 default="single_5k",
             )
+            parser.add_argument(
+                "--cvrp-training-profile",
+                choices=["uniform_50", "multi_env_50_100_200"],
+                default="uniform_50",
+            )
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
 
@@ -558,6 +565,7 @@ def _runner_script() -> str:
             task = load_problem(args.problem, official_root, args.eval_timeout_s, args.n_processes,
                                 broad_training=args.broad_training, n_train=args.n_train,
                                 held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
+                                cvrp_training_profile=args.cvrp_training_profile,
                                 bp_structured_feedback=args.evolution_feedback_policy in {"scale_aware", "robust_aware"},
                                 bp_robust_feedback=args.evolution_feedback_policy == "robust_aware",
                                 # 所有问题共享同一反馈合同；确认批固定且与 held-out 严格分离。
@@ -677,6 +685,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "broad_training": args.broad_training,
         "n_train": args.n_train,
         "bp_training_profile": getattr(args, "bp_training_profile", "single_5k"),
+        "cvrp_training_profile": getattr(args, "cvrp_training_profile", "uniform_50"),
         "held_out_set": args.held_out_set,
         "api_key_present": api_key_present,
         "api_endpoint_present": endpoint_present,
@@ -827,6 +836,10 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         cmd.extend([
             "--bp-training-profile",
             getattr(args, "bp_training_profile", "single_5k"),
+        ])
+        cmd.extend([
+            "--cvrp-training-profile",
+            getattr(args, "cvrp_training_profile", "uniform_50"),
         ])
         if args.held_out_set:
             # CLI 参数已经是 JSON 数组字符串；再次序列化会让内部 runner 得到字符串而不是路径列表。
@@ -993,6 +1006,11 @@ def main() -> None:
             "dual_env_1k_5k_10k",
         ],
         default="single_5k",
+    )
+    parser.add_argument(
+        "--cvrp-training-profile",
+        choices=["uniform_50", "multi_env_50_100_200"],
+        default="uniform_50",
     )
     parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组")
     parser.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")

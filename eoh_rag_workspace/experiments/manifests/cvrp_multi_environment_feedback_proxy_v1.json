@@ -1,0 +1,68 @@
+{
+  "suite": "cvrp_multi_environment_feedback_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["cvrp_construct"],
+  "broad_training": true,
+  "n_train": 36,
+  "cvrp_training_profile": "multi_env_50_100_200",
+  "held_out_set": [
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n251-k28.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n502-k39.vrp"
+  ],
+  "arms": [
+    {
+      "name": "multi_environment_memory",
+      "runner_arm": "context_file",
+      "context_strategy": "multi_environment_failure_memory_v1",
+      "context_files": {
+        "cvrp_construct": "eoh_rag_workspace/experiments/strategies/contexts/cvrp_multi_environment_failure_memory_v1.txt"
+      },
+      "operators": "m1,m2",
+      "evolution_feedback_policy": "confirmation_aware",
+      "seed_codes": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_fresh_confirmed_seed_v1.json"
+    }
+  ],
+  "generations": [2],
+  "pop_size": 4,
+  "repeats": 1,
+  "seed_list": [19001],
+  "max_runs": 1,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 240,
+  "llm_timeout_s": 180,
+  "run_timeout_s": 3600,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "cvrp_equal_weight_multi_environment_confirmation_objective",
+  "trigger": {
+    "source_suite": "cvrp_structure_fresh_diagnostic_v1",
+    "failure_mode": "uniform_clustered_gain_rectangular_regression",
+    "action": "move_environment_tradeoff_into_numeric_feedback"
+  },
+  "discovery_contract": {
+    "actor": "research_agent_eoh",
+    "candidate_budget": 8,
+    "search_instances_per_environment": 12,
+    "confirmation_instances_per_environment": 12,
+    "environment_objective": "mean_route_cost_per_customer",
+    "environment_aggregation": "equal_weight",
+    "confirmation_feedback_visible_to_llm": true,
+    "confirmation_gate_controls_acceptance": true,
+    "held_out_controls_selection": false,
+    "fresh_diagnostic_seed_ranges_visible": false,
+    "contains_codex_external_teacher": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 1,
+    "valid_generated_candidates_min": 6,
+    "non_seed_final_runs_min": 1,
+    "next_if_non_seed_final": "use_new_91000_101000_111000_fresh_diagnostic",
+    "next_if_low_valid_generation": "retry_once_with_seed_19002",
+    "next_if_valid_but_no_non_seed": "stop_multi_environment_structure_branch"
+  },
+  "official_root": "official_eoh"
+}

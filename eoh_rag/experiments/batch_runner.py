@@ -459,6 +459,10 @@ def _build_cmd(
             "bp_training_profile", manifest.get("bp_training_profile", "single_5k")
         )
         cmd.extend(["--bp-training-profile", str(bp_training_profile)])
+        cvrp_training_profile = arm.get(
+            "cvrp_training_profile", manifest.get("cvrp_training_profile", "uniform_50")
+        )
+        cmd.extend(["--cvrp-training-profile", str(cvrp_training_profile)])
         held_out = (manifest.get("held_out_by_problem") or {}).get(problem) or manifest.get("held_out_set")
         if held_out:
             cmd.extend(["--held-out-set", json.dumps(held_out)])

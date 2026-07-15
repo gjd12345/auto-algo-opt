@@ -351,10 +351,21 @@ class Evolution:
                         f" Search-confirm difference: {float(search_confirm_gap):.6f}."
                         if search_confirm_gap is not None else ""
                     )
-                    return (
+                    line = (
                         f"Independent confirmation objective: {float(confirm_objective):.6f}."
                         f"{gap_text}\n"
                     )
+                    search_environments = feedback.get("search_environment_objectives")
+                    confirm_environments = feedback.get("confirm_environment_objectives")
+                    if isinstance(search_environments, dict) and isinstance(confirm_environments, dict):
+                        names = sorted(set(search_environments) & set(confirm_environments))
+                        environment_text = ", ".join(
+                            f"{name}: search={float(search_environments[name]):.6f}, "
+                            f"confirm={float(confirm_environments[name]):.6f}"
+                            for name in names
+                        )
+                        line += f"Environment objectives (lower is better): {environment_text}.\n"
+                    return line
             return "Scale feedback unavailable for this parent.\n"
         ordered = sorted(
             scale_gaps.items(),

@@ -136,6 +136,24 @@ def test_confirmation_prompt_supports_generic_construct_feedback() -> None:
     assert "Scale feedback unavailable" not in prompt
 
 
+def test_confirmation_prompt_exposes_multi_environment_objectives() -> None:
+    evolution = _evolution("confirmation_aware")
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "confirm_objective": 8.0,
+            "search_confirm_gap": 0.2,
+            "search_environment_objectives": {"uniform_50": 7.0, "rectangular_200": 9.0},
+            "confirm_environment_objectives": {"uniform_50": 7.2, "rectangular_200": 8.8},
+        },
+    }
+
+    prompt = evolution._build_prompt("m1", parent)
+
+    assert "uniform_50: search=7.000000, confirm=7.200000" in prompt
+    assert "rectangular_200: search=9.000000, confirm=8.800000" in prompt
+
+
 def test_confirmation_gate_only_keeps_confirmation_values_out_of_prompt() -> None:
     parent = {
         **_population()[1],
