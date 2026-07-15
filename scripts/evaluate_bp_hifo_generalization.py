@@ -8,14 +8,20 @@ import hashlib
 import json
 import pickle
 import platform
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+# 直接以 `python scripts/...py` 启动时，默认模块路径只有 scripts 目录；显式加入仓库根目录，
+# 保证本地、CI 和其他设备都能复用同一评估函数。
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from scripts.evaluate_bp_generalization import (
-    REPO_ROOT,
     _distribution,
     _git_commit,
     _sign_test_p_value,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -56,3 +58,16 @@ def test_hifo_pair_evaluation_is_strictly_paired() -> None:
 
     assert row["results"]["a"] == row["results"]["b"]
     assert row["lower_bound"] == 1
+
+
+def test_hifo_script_direct_entrypoint_is_portable() -> None:
+    completed = subprocess.run(
+        [sys.executable, "scripts/evaluate_bp_hifo_generalization.py", "--help"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=30,
+    )
+
+    assert completed.returncode == 0
+    assert "--manifest" in completed.stdout
