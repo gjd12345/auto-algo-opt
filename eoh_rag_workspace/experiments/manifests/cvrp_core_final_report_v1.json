@@ -1,0 +1,18 @@
+{
+  "suite": "cvrp_core_final_report_v1",
+  "registry_file": "eoh_rag_workspace/experiments/manifests/core_benchmark_registry.json",
+  "registry_sha256": "00A9EB2D3D16C1641C22296E6CCFE71B3B8D50C42DD90C25D4F716BDF4F55642",
+  "candidate_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+  "candidate_file_sha256": "D482554228D41FD3F8EC8858B51731BC69A3491C656C5F3CC36C31770C88A6A5",
+  "candidate_ids": ["seed", "n2"],
+  "coordinate_timeout_seconds": 240,
+  "max_concurrent_coordinates": 2,
+  "report_contract": {
+    "held_out_used": true,
+    "held_out_controls_selection": false,
+    "include_all_registry_cvrp_instances": true,
+    "timeout_is_failure": true,
+    "failed_coordinates_are_not_dropped": true,
+    "result_must_not_tune_candidate": true
+  }
+}
