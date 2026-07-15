@@ -1,0 +1,44 @@
+{
+  "asset_id": "bp_online_agent_discovery_gate_confirmed_v1",
+  "actor": "research_agent_eoh",
+  "origin": "automatic_evolution",
+  "asset_role": "agent_discovery,large_confirmed,c100_weibull_generalization,formal_seed",
+  "parent_candidate_asset": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_v1.json",
+  "parent_candidate_asset_sha256": "A12CEEB2B07C4BE64746D8FDECEFEDF1B50DD8F06E8BB3ED5F6850EFE3C1441D",
+  "best_code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8",
+  "confirmation_manifest_sha256": "C99D6B298E1DFE1E979C128D7C5FB6028A4840EE5ED8EFC2AAF6798A89DA371A",
+  "confirmation_summary_sha256": "58FB4F7360197F1E88073A166528CA7E711B5A4D057284B8A233C0B41D3D11D4",
+  "confirmation_pairs_sha256": "48BDF288DA142B3568B4EC8FB3C24CBB4D201CCD6F9C46C4136CFD2A63F7E0D7",
+  "promotion_commit": "e69cc22f89d5fc9bfbb27588f3ea72eb04b0190b",
+  "formal_seed_path": "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_elites_v1.json",
+  "selection": {
+    "selected_by": "frozen 90-pair diagnostic",
+    "large_confirmation_independent_from_selection": true,
+    "formal_seed_allowed": true
+  },
+  "confirmed_scope": {
+    "problem": "bp_online",
+    "capacity": 100,
+    "distribution": "weibull",
+    "shape": 3.0,
+    "scale": 45.0,
+    "item_counts": [1000, 5000, 10000],
+    "independent_pairs": 300,
+    "out_of_distribution_status": "pending"
+  },
+  "confirmation": {
+    "gate_passed": true,
+    "wins": 198,
+    "ties": 47,
+    "losses": 55,
+    "sign_test_p_value": 3.913857959137215e-20,
+    "mean_gap_reduction_vs_inherited_seed_pct_points": 0.15328989697233752,
+    "mean_gap_reduction_by_scale_pct_points": {
+      "1000": 0.3534772117668502,
+      "5000": 0.06186842886642432,
+      "10000": 0.044524050283738036
+    }
+  },
+  "algorithm": "Increase the small-residual penalty to inverse-square and move the balance peak from 0.5 to 0.45.",
+  "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    quadratic_penalty = 1.0 / (residual ** 2 + 1e-9)\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.45) ** 2) * 10)\n    scores = quadratic_penalty + balance_peak\n    return scores"
+}

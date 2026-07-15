@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Research Agent EOH confirmed BP seed: inverse-square residual penalty with a balance peak centered at 0.45.",
+    "code": "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    residual = bins - item\n    quadratic_penalty = 1.0 / (residual ** 2 + 1e-9)\n    balance_peak = np.exp(-((residual / (bins.mean() + 1e-9) - 0.45) ** 2) * 10)\n    scores = quadratic_penalty + balance_peak\n    return scores"
+  }
+]

@@ -95,6 +95,40 @@ def test_confirmation_gate_candidate_stays_pending_before_large_suite() -> None:
     ]
 
 
+def test_confirmed_gate_candidate_is_published_without_rewriting_parent() -> None:
+    parent_path = (
+        REPO_ROOT
+        / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_v1.json"
+    )
+    parent = json.loads(parent_path.read_text(encoding="utf-8"))
+    confirmed = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_confirmed_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    seeds = json.loads(
+        (
+            REPO_ROOT
+            / "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_elites_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    # 待确认资产继续保留原状态；通过后发布新资产，避免破坏已冻结确认清单的哈希。
+    assert parent["selection"]["formal_seed_allowed"] is False
+    assert confirmed["selection"]["formal_seed_allowed"] is True
+    assert confirmed["confirmation"]["gate_passed"] is True
+    assert confirmed["confirmed_scope"]["out_of_distribution_status"] == "pending"
+    assert confirmed["parent_candidate_asset_sha256"] == hashlib.sha256(
+        parent_path.read_bytes()
+    ).hexdigest().upper()
+    assert len(seeds) == 1
+    assert seeds[0]["code"] == confirmed["code"]
+    assert hashlib.sha256(confirmed["code"].encode()).hexdigest().upper() == confirmed[
+        "best_code_sha256"
+    ]
+
+
 def test_pair_evaluation_is_deterministic_and_strictly_paired() -> None:
     code = "def score(item, bins):\n    return -bins"
     task = {
