@@ -527,7 +527,7 @@ def _runner_script() -> str:
             from eoh import EoH, LLMConfig
 
             operators = [item.strip() for item in args.operators.split(",") if item.strip()]
-            offline_only = bool(operators) and set(operators) <= {"n1"}
+            offline_only = bool(operators) and set(operators) <= {"n1", "n2"}
             api_key = os.environ.get(args.api_key_env, "")
             endpoint = os.environ.get(args.api_endpoint_env, "").strip()
             model = args.llm_model or os.environ.get(args.model_env, "")
@@ -641,7 +641,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     rag_trace: dict[str, Any] | None = None
     # 预先探测三项 API 环境是否就绪（endpoint 需能解析出 host）
     operators = [item.strip() for item in args.operators.split(",") if item.strip()]
-    offline_operator_run = bool(operators) and set(operators) <= {"n1"}
+    offline_operator_run = bool(operators) and set(operators) <= {"n1", "n2"}
     endpoint_present = bool(normalize_api_endpoint(os.environ.get(args.api_endpoint_env, "")))
     # 实际解析出的模型名(非密钥,可安全落盘):写进 summary 以便追溯每个 run 究竟用了哪个模型。
     resolved_model = args.llm_model or os.environ.get(args.model_env, "")

@@ -59,11 +59,10 @@ def _numeric_neighbors(value) -> list[int | float]:
 
 
 class _NumericConstantRewriter(ast.NodeTransformer):
-    """按 AST 遍历序号只替换一个数值常量。"""
+    """按 AST 遍历序号替换指定数值常量。"""
 
-    def __init__(self, target_index: int, replacement: int | float):
-        self.target_index = target_index
-        self.replacement = replacement
+    def __init__(self, replacements: dict[int, int | float]):
+        self.replacements = replacements
         self.current_index = 0
 
     def visit_Constant(self, node):
@@ -71,9 +70,16 @@ class _NumericConstantRewriter(ast.NodeTransformer):
             return node
         index = self.current_index
         self.current_index += 1
-        if index != self.target_index:
+        if index not in self.replacements:
             return node
-        return ast.copy_location(ast.Constant(value=self.replacement), node)
+        return ast.copy_location(ast.Constant(value=self.replacements[index]), node)
+
+
+def _rewrite_numeric_constants(code: str, replacements: dict[int, int | float]) -> str:
+    candidate_tree = ast.parse(code)
+    candidate_tree = _NumericConstantRewriter(replacements).visit(candidate_tree)
+    ast.fix_missing_locations(candidate_tree)
+    return ast.unparse(candidate_tree).strip()
 
 
 def numeric_constant_mutations(code: str) -> list[tuple[str, str]]:
@@ -88,15 +94,44 @@ def numeric_constant_mutations(code: str) -> list[tuple[str, str]]:
     seen = {code.strip()}
     for target_index, value in enumerate(values):
         for replacement in _numeric_neighbors(value):
-            candidate_tree = ast.parse(code)
-            candidate_tree = _NumericConstantRewriter(target_index, replacement).visit(candidate_tree)
-            ast.fix_missing_locations(candidate_tree)
-            candidate_code = ast.unparse(candidate_tree).strip()
+            candidate_code = _rewrite_numeric_constants(code, {target_index: replacement})
             if candidate_code in seen:
                 continue
             seen.add(candidate_code)
             description = f"Numeric neighborhood mutation: {value!r} -> {replacement!r}."
             mutations.append((candidate_code, description))
+    return mutations
+
+
+def numeric_constant_pair_mutations(code: str) -> list[tuple[str, str]]:
+    """生成同时改变两个不同数值常量的确定性补偿邻域。"""
+    tree = ast.parse(code)
+    values = [
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and _is_mutable_numeric_constant(node.value)
+    ]
+    mutations = []
+    seen = {code.strip()}
+    for first_index, first_value in enumerate(values):
+        for second_index in range(first_index + 1, len(values)):
+            second_value = values[second_index]
+            for first_replacement in _numeric_neighbors(first_value):
+                for second_replacement in _numeric_neighbors(second_value):
+                    replacements = {
+                        first_index: first_replacement,
+                        second_index: second_replacement,
+                    }
+                    candidate_code = _rewrite_numeric_constants(code, replacements)
+                    if candidate_code in seen:
+                        continue
+                    seen.add(candidate_code)
+                    description = (
+                        "Numeric pair mutation: "
+                        f"{first_value!r} -> {first_replacement!r}; "
+                        f"{second_value!r} -> {second_replacement!r}."
+                    )
+                    mutations.append((candidate_code, description))
     return mutations
 
 
@@ -242,15 +277,15 @@ class Evolution:
         self.timeout = problem.timeout
         self.n_parents = config.n_parents
         self.feedback_policy = config.feedback_policy
-        # n1 不调用 LLM；游标让同一 run 依次覆盖邻域，锁保证多采样线程不会重复领取候选。
-        self._numeric_mutation_cursor = 0
+        # 离线算子不调用 LLM；独立游标让同一 run 依次覆盖邻域，锁避免多线程重复领取。
+        self._numeric_mutation_cursors = {"n1": 0, "n2": 0}
         self._numeric_mutation_lock = threading.Lock()
 
         if not self.debug:
             warnings.filterwarnings("ignore")
 
         # 纯离线算子不应因为缺少 Provider 而无法跨设备运行；混合算子列表仍照常初始化 LLM。
-        offline_only = bool(config.operators) and set(config.operators) <= {"n1"}
+        offline_only = bool(config.operators) and set(config.operators) <= {"n1", "n2"}
         self.llm = None if offline_only else InterfaceLLM(
             config.llm.api_endpoint,
             config.llm.api_key,
@@ -597,18 +632,22 @@ class Evolution:
         if operator == "i1":
             parents = None
             prompt = self._build_prompt("i1")
-        elif operator == "n1":
+        elif operator in {"n1", "n2"}:
             if not population:
-                raise ValueError("Operator 'n1' requires a non-empty population.")
+                raise ValueError(f"Operator '{operator}' requires a non-empty population.")
             parents = parent_selection(population, 1, self.feedback_policy)[0]
-            mutations = numeric_constant_mutations(parents["code"])
+            mutations = (
+                numeric_constant_mutations(parents["code"])
+                if operator == "n1"
+                else numeric_constant_pair_mutations(parents["code"])
+            )
             if not mutations:
                 return parents, None, None
             with self._numeric_mutation_lock:
-                index = self._numeric_mutation_cursor % len(mutations)
-                self._numeric_mutation_cursor += 1
+                index = self._numeric_mutation_cursors[operator] % len(mutations)
+                self._numeric_mutation_cursors[operator] += 1
             code, algorithm = mutations[index]
-            logger.debug("  [n1] candidate %d/%d: %s", index + 1, len(mutations), algorithm)
+            logger.debug("  [%s] candidate %d/%d: %s", operator, index + 1, len(mutations), algorithm)
             return parents, code, algorithm
         elif operator in ("e1", "e2"):
             if not population:

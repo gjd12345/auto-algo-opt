@@ -15,7 +15,11 @@ OFFICIAL_SRC = REPO_ROOT / "official_eoh" / "eoh" / "src"
 if str(OFFICIAL_SRC) not in sys.path:
     sys.path.insert(0, str(OFFICIAL_SRC))
 
-from eoh.eoh.evolution import Evolution, numeric_constant_mutations  # noqa: E402
+from eoh.eoh.evolution import (  # noqa: E402
+    Evolution,
+    numeric_constant_mutations,
+    numeric_constant_pair_mutations,
+)
 
 
 PARENT_CODE = """def score(item: int, bins: np.ndarray) -> np.ndarray:
@@ -55,7 +59,7 @@ def test_n1_uses_best_parent_without_calling_llm() -> None:
     evolution = Evolution.__new__(Evolution)
     evolution.feedback_policy = "confirmation_gate_only"
     evolution.n_parents = 2
-    evolution._numeric_mutation_cursor = 0
+    evolution._numeric_mutation_cursors = {"n1": 0, "n2": 0}
     evolution._numeric_mutation_lock = threading.Lock()
     evolution._call_llm = lambda _prompt: (_ for _ in ()).throw(AssertionError("LLM called"))
     population = [
@@ -69,6 +73,20 @@ def test_n1_uses_best_parent_without_calling_llm() -> None:
     assert parent["algorithm"] == "best"
     assert first_code != second_code
     assert first_algorithm.startswith("Numeric neighborhood mutation:")
+
+
+def test_numeric_pair_mutations_change_two_literals_and_are_unique() -> None:
+    mutations = numeric_constant_pair_mutations(PARENT_CODE)
+
+    assert len(mutations) == 93
+    assert len({code for code, _ in mutations}) == len(mutations)
+    parent_values = _numeric_values(PARENT_CODE)
+    for code, description in mutations:
+        child_values = _numeric_values(code)
+        assert len(child_values) == len(parent_values)
+        assert sum(left != right for left, right in zip(parent_values, child_values)) == 2
+        assert code.count("1e-09") == 2
+        assert description.startswith("Numeric pair mutation:")
 
 
 def test_n1_only_evolution_does_not_initialize_llm(monkeypatch) -> None:
@@ -122,3 +140,20 @@ def test_numeric_neighborhood_proxy_is_single_run_and_offline() -> None:
     command = _build_cmd(manifest, "bp_online", manifest["arms"][0], 4, 0, "out")
     assert command[command.index("--operators") + 1] == "n1"
     assert command[command.index("--llm-model") + 1] == "offline-n1"
+
+
+def test_numeric_pair_proxy_caps_deterministic_compensation_budget() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_numeric_pair_compensation_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["operators"] == "n2"
+    assert manifest["generations"] == [8]
+    assert manifest["pop_size"] == 4
+    assert manifest["max_runs"] == 1
+    assert manifest["discovery_contract"]["deterministic_candidates_evaluated"] == 32
+    assert manifest["discovery_contract"]["total_available_neighborhood"] == 93

@@ -1,0 +1,65 @@
+{
+  "suite": "bp_numeric_pair_compensation_proxy_v1",
+  "model": "offline-n2",
+  "problems": ["bp_online"],
+  "broad_training": true,
+  "n_train": 128,
+  "arms": [
+    {
+      "name": "offline_pair_gate",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "confirmed_agent_seed_pair_compensation",
+      "evolution_feedback_policy": "confirmation_gate_only",
+      "bp_training_profile": "dual_env_1k_5k_10k",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_mixed_seeds_v1.json"
+    }
+  ],
+  "generations": [8],
+  "pop_size": 4,
+  "repeats": 1,
+  "seed_list": [16301],
+  "max_runs": 1,
+  "operators": "n2",
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 240,
+  "run_timeout_s": 3600,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "fresh_cross_distribution_diagnostic_gap",
+  "trigger": {
+    "source_suite": "bp_numeric_neighborhood_proxy_v1",
+    "failure_mode": "search_improvement_confirm_regression",
+    "action": "explore_deterministic_two_literal_compensation"
+  },
+  "discovery_contract": {
+    "generator": "offline_ast_numeric_pair_neighborhood_n2",
+    "problem_specific_constants": false,
+    "two_distinct_literal_changes_per_candidate": true,
+    "deterministic_candidates_evaluated": 32,
+    "total_available_neighborhood": 93,
+    "llm_calls": 0,
+    "confirmation_gate_controls_acceptance": true,
+    "hifo_visible_during_training_or_selection": false,
+    "contains_codex_external_teacher": false,
+    "fresh_diagnostic_only_after_non_seed_candidate": true
+  },
+  "proxy_gate": {
+    "completed_runs_min": 1,
+    "valid_generated_runs_min": 1,
+    "non_seed_final_runs_min": 1,
+    "fresh_diagnostic_seed_start": 131000,
+    "fresh_diagnostic_item_counts": [1000, 5000, 10000],
+    "fresh_diagnostic_instances_per_environment_scale": 30,
+    "fresh_diagnostic_environments": [
+      "weibull_shape3_scale45",
+      "uniform_1_100",
+      "weibull_shape1.5_scale35"
+    ],
+    "fresh_diagnostic_sign_test_p_max": 0.05,
+    "fresh_diagnostic_positive_environments_min": 2
+  },
+  "official_root": "official_eoh"
+}
