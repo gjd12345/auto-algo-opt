@@ -1,0 +1,5 @@
+AGENT MEMORY — development evidence, not held-out evidence.
+
+The current parent uses a savings-plus-regret score and an early-return rule. It passed a fixed search/confirmation gate and then improved mean route cost by 1.613% over 90 fresh generated CVRP instances. The gain was strongest on rectangular 200-customer instances. Clustered 100-customer instances remained weak: 14 wins, 14 losses, 2 ties, although their mean cost improved by 0.447%.
+
+Preserve the confirmed savings/regret backbone. Make one clear structural change that can improve clustered routing without destroying the confirmed behavior. Useful directions include local density, depot direction, demand concentration, or route-stage information. Do not merely sweep the two existing early-return constants, and do not claim held-out evidence.

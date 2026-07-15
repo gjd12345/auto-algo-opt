@@ -1,0 +1,66 @@
+{
+  "suite": "cvrp_structural_memory_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["cvrp_construct"],
+  "broad_training": true,
+  "n_train": 32,
+  "held_out_set": [
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n101-k25.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n251-k28.vrp",
+    "eoh_rag_workspace/held_out/core/cvrp_construct/X-n502-k39.vrp"
+  ],
+  "arms": [
+    {
+      "name": "confirmed_memory_structure",
+      "runner_arm": "context_file",
+      "context_strategy": "confirmed_agent_memory_v1",
+      "context_files": {
+        "cvrp_construct": "eoh_rag_workspace/experiments/strategies/contexts/cvrp_confirmed_agent_memory_v1.txt"
+      },
+      "operators": "m1,m2",
+      "evolution_feedback_policy": "confirmation_aware",
+      "seed_codes": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_fresh_confirmed_seed_v1.json"
+    }
+  ],
+  "generations": [2],
+  "pop_size": 4,
+  "repeats": 1,
+  "seed_list": [18001],
+  "max_runs": 1,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 180,
+  "llm_timeout_s": 180,
+  "run_timeout_s": 3600,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "cvrp_fixed_confirmation_objective",
+  "trigger": {
+    "source_suite": "cvrp_fresh_generated_diagnostic_v1",
+    "selected_candidate": "n2",
+    "action": "use_confirmed_memory_for_llm_structural_evolution"
+  },
+  "discovery_contract": {
+    "actor": "research_agent_eoh",
+    "candidate_budget": 8,
+    "operators": ["m1", "m2"],
+    "confirmation_feedback_visible_to_llm": true,
+    "confirmation_gate_controls_acceptance": true,
+    "fresh_diagnostic_memory_visible": true,
+    "held_out_controls_selection": false,
+    "held_out_is_reused_diagnostic": true,
+    "numeric_only_mutation_forbidden_by_context": true,
+    "contains_codex_external_teacher": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 1,
+    "valid_generated_candidates_min": 6,
+    "non_seed_final_runs_min": 1,
+    "next_if_non_seed_final": "freeze_candidate_and_use_new_61000_71000_81000_diagnostic_seeds",
+    "next_if_low_valid_generation": "retry_once_with_seed_18002",
+    "next_if_valid_but_no_non_seed": "stop_structural_memory_branch"
+  },
+  "official_root": "official_eoh"
+}

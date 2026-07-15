@@ -1,0 +1,19 @@
+[
+  {
+    "algorithm": "Research Agent EOH CVRP seed selected by fixed search/confirmation dominance and a 90-instance fresh generated diagnostic.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray, rest_capacity: float, demands: np.ndarray, distance_matrix: np.ndarray) -> int:\n    if len(unvisited_nodes) == 0:\n        return depot\n    if current_node == depot:\n        return unvisited_nodes[np.argmin(distance_matrix[depot][unvisited_nodes])]\n    current_dists = distance_matrix[current_node][unvisited_nodes]\n    depot_dists = distance_matrix[depot][unvisited_nodes]\n    demands_u = demands[unvisited_nodes]\n    savings = depot_dists + distance_matrix[current_node][depot] - current_dists\n    best_dist = np.minimum(current_dists, depot_dists + distance_matrix[current_node][depot])\n    second_best = np.zeros_like(best_dist)\n    for i, u in enumerate(unvisited_nodes):\n        dists = np.delete(current_dists, i)\n        second_best[i] = np.min(dists) if len(dists) > 0 else best_dist[i]\n    regret = second_best - best_dist\n    demand_ratio = demands_u / (rest_capacity + 1e-08)\n    scores = savings + regret * (1 - demand_ratio)\n    best_idx = int(np.argmax(scores))\n    best_customer = unvisited_nodes[best_idx]\n    serving_cost = current_dists[best_idx] + distance_matrix[best_customer][depot]\n    return_cost = distance_matrix[current_node][depot]\n    if serving_cost > 1.28 * return_cost and rest_capacity < demands[unvisited_nodes].max() * 1.026:\n        return depot\n    return best_customer",
+    "provenance": {
+      "actor": "research_agent_eoh",
+      "source_suite": "cvrp_confirmation_portability_proxy_v1",
+      "source_operator": "n2",
+      "source_seed": 17001,
+      "code_sha256": "BC5D55374D323D51C2AD3E22ABC4ADCBCC4559B532CE97BF3A60173E2FA4E5CD",
+      "fresh_diagnostic_suite": "cvrp_fresh_generated_diagnostic_v1",
+      "fresh_pairs": 90,
+      "fresh_mean_relative_improvement_pct": 1.612878486383622,
+      "fresh_median_relative_improvement_pct": 2.117733796777557,
+      "fresh_sign_test_p": 0.0038362357516146246,
+      "held_out_used_for_selection": false
+    }
+  }
+]

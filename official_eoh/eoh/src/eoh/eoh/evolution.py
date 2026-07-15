@@ -343,6 +343,18 @@ class Evolution:
             return "Scale feedback unavailable for this parent.\n"
         scale_gaps = feedback.get("scale_gap_pct")
         if not isinstance(scale_gaps, dict) or not scale_gaps:
+            if self.feedback_policy == "confirmation_aware":
+                confirm_objective = feedback.get("confirm_objective")
+                if confirm_objective is not None:
+                    search_confirm_gap = feedback.get("search_confirm_gap")
+                    gap_text = (
+                        f" Search-confirm difference: {float(search_confirm_gap):.6f}."
+                        if search_confirm_gap is not None else ""
+                    )
+                    return (
+                        f"Independent confirmation objective: {float(confirm_objective):.6f}."
+                        f"{gap_text}\n"
+                    )
             return "Scale feedback unavailable for this parent.\n"
         ordered = sorted(
             scale_gaps.items(),

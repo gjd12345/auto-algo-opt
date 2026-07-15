@@ -113,3 +113,21 @@ def test_cvrp_portability_manifest_freezes_feedback_and_provenance_contracts():
     assert manifest["discovery_contract"]["held_out_is_reused_diagnostic"] is True
     assert seeds[0]["provenance"]["actor"] == "research_agent_eoh"
     assert seeds[0]["provenance"]["selection_used_held_out"] is False
+
+
+def test_cvrp_structural_proxy_uses_confirmed_agent_memory():
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/cvrp_structural_memory_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    arm = manifest["arms"][0]
+    seeds = json.loads((REPO_ROOT / arm["seed_codes"]).read_text(encoding="utf-8"))
+    memory = (REPO_ROOT / arm["context_files"]["cvrp_construct"]).read_text(encoding="utf-8")
+
+    assert arm["evolution_feedback_policy"] == "confirmation_aware"
+    assert arm["operators"] == "m1,m2"
+    assert seeds[0]["provenance"]["actor"] == "research_agent_eoh"
+    assert seeds[0]["provenance"]["held_out_used_for_selection"] is False
+    assert "Clustered 100-customer instances remained weak" in memory

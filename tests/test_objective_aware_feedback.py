@@ -119,6 +119,23 @@ def test_confirmation_prompt_and_gate_require_two_batch_dominance() -> None:
     assert confirmation_gate(rejected, parent)[0] is False
 
 
+def test_confirmation_prompt_supports_generic_construct_feedback() -> None:
+    evolution = _evolution("confirmation_aware")
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "confirm_objective": 0.75,
+            "search_confirm_gap": 0.05,
+        },
+    }
+
+    prompt = evolution._build_prompt("m1", parent)
+
+    assert "Independent confirmation objective: 0.750000" in prompt
+    assert "Search-confirm difference: 0.050000" in prompt
+    assert "Scale feedback unavailable" not in prompt
+
+
 def test_confirmation_gate_only_keeps_confirmation_values_out_of_prompt() -> None:
     parent = {
         **_population()[1],
