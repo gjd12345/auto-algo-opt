@@ -1,0 +1,26 @@
+{
+  "suite": "cvrp_environment_gate_audit_v1",
+  "candidate_roots": [
+    "evidence",
+    "eoh_rag_workspace/reports/formal",
+    "official_eoh/examples/cvrp_construct/seeds"
+  ],
+  "max_file_bytes": 5000000,
+  "sample_size": 60,
+  "reference_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_structure_candidate_v1.json",
+  "reference_candidate_id": "n2_seed",
+  "training_profile": "multi_env_50_100_200",
+  "n_train": 36,
+  "n_confirm": 36,
+  "candidate_timeout_seconds": 45,
+  "environment_regression_limit_pct": 1.0,
+  "conflict_rate_trigger": 0.2,
+  "selection_contract": {
+    "sample_order": "ascending_code_sha256",
+    "held_out_used": false,
+    "current_gate": "search_improved_and_confirm_not_worse",
+    "environment_conflict": "current_gate_pass_and_any_confirm_environment_regression_gt_1pct",
+    "next_if_conflict_rate_ge_20pct": "implement_environment_robust_gate",
+    "next_otherwise": "retain_current_gate_and_monitor"
+  }
+}
