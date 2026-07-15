@@ -78,3 +78,24 @@ def test_passing_candidate_selection_uses_frozen_median_rule():
 
     assert select_passing_candidate(reports) == "n2"
     assert select_passing_candidate({"n1": {"passed": False, "overall": {}}}) is None
+
+
+def test_structure_diagnostic_uses_new_seed_ranges_and_frozen_hashes():
+    first_manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/cvrp_fresh_generated_diagnostic_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    structure_manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/cvrp_structure_fresh_diagnostic_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    candidates = load_candidates(REPO_ROOT / structure_manifest["candidate_file"])
+
+    first_ranges = {item["seed_start"] for item in first_manifest["environments"]}
+    structure_ranges = {item["seed_start"] for item in structure_manifest["environments"]}
+    assert first_ranges.isdisjoint(structure_ranges)
+    assert [item["candidate_id"] for item in candidates] == ["n2_seed", "density_structure"]
