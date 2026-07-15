@@ -309,3 +309,21 @@ def test_confirmation_gate_only_proxy_hides_confirmation_from_both_prompts() -> 
     assert policies == ["confirmation_observe_only", "confirmation_gate_only"]
     assert profiles == ["dual_batch_1k_5k_10k", "dual_batch_1k_5k_10k"]
     assert seed_paths[0] == seed_paths[1]
+
+
+def test_confirmation_gate_diagnostic_uses_unseen_multiscale_instances() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_diagnostic_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    # 52xxx 段未参与训练或此前诊断，且每个进化 seed 都在同一实例上严格比较两臂。
+    assert manifest["pair_seeds"] == [15001, 15002, 15003]
+    assert manifest["baseline_arm"] == "observe_only"
+    assert manifest["agent_arm"] == "gate_only"
+    assert manifest["generator"]["seed_start"] == 52000
+    assert manifest["generator"]["item_counts"] == [1000, 5000, 10000]
+    assert manifest["generator"]["instances_per_scale"] == 30
+    assert manifest["proxy_gate"]["valid_instance_pairs_min"] == 270
