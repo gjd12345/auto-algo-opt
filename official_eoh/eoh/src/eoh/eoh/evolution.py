@@ -40,6 +40,66 @@ _START_METHOD_LOCK = threading.Lock()
 logger = logging.getLogger('eoh')
 
 
+def _is_mutable_numeric_constant(value) -> bool:
+    """只选择适合做局部搜索的数值常量，跳过布尔值和常见稳定项。"""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    return abs(float(value)) > 1e-8 and abs(float(value)) != 1.0
+
+
+def _numeric_neighbors(value) -> list[int | float]:
+    """生成保持原数值类型的小邻域，避免整数参数被改成浮点后破坏接口。"""
+    if isinstance(value, int):
+        neighbors = [value + step for step in (-2, -1, 1, 2)]
+        if value > 0:
+            neighbors = [candidate for candidate in neighbors if candidate > 0]
+        return neighbors
+    factors = (0.8, 0.9, 0.95, 1.05, 1.1, 1.2)
+    return [float(f"{value * factor:.12g}") for factor in factors]
+
+
+class _NumericConstantRewriter(ast.NodeTransformer):
+    """按 AST 遍历序号只替换一个数值常量。"""
+
+    def __init__(self, target_index: int, replacement: int | float):
+        self.target_index = target_index
+        self.replacement = replacement
+        self.current_index = 0
+
+    def visit_Constant(self, node):
+        if not _is_mutable_numeric_constant(node.value):
+            return node
+        index = self.current_index
+        self.current_index += 1
+        if index != self.target_index:
+            return node
+        return ast.copy_location(ast.Constant(value=self.replacement), node)
+
+
+def numeric_constant_mutations(code: str) -> list[tuple[str, str]]:
+    """生成一次只改一个数值常量的确定性邻域，并按代码文本去重。"""
+    tree = ast.parse(code)
+    values = [
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and _is_mutable_numeric_constant(node.value)
+    ]
+    mutations = []
+    seen = {code.strip()}
+    for target_index, value in enumerate(values):
+        for replacement in _numeric_neighbors(value):
+            candidate_tree = ast.parse(code)
+            candidate_tree = _NumericConstantRewriter(target_index, replacement).visit(candidate_tree)
+            ast.fix_missing_locations(candidate_tree)
+            candidate_code = ast.unparse(candidate_tree).strip()
+            if candidate_code in seen:
+                continue
+            seen.add(candidate_code)
+            description = f"Numeric neighborhood mutation: {value!r} -> {replacement!r}."
+            mutations.append((candidate_code, description))
+    return mutations
+
+
 def _eval_worker(queue, problem, code):
     """Subprocess entry point — must be module-level for pickling.
 
@@ -182,11 +242,16 @@ class Evolution:
         self.timeout = problem.timeout
         self.n_parents = config.n_parents
         self.feedback_policy = config.feedback_policy
+        # n1 不调用 LLM；游标让同一 run 依次覆盖邻域，锁保证多采样线程不会重复领取候选。
+        self._numeric_mutation_cursor = 0
+        self._numeric_mutation_lock = threading.Lock()
 
         if not self.debug:
             warnings.filterwarnings("ignore")
 
-        self.llm = InterfaceLLM(
+        # 纯离线算子不应因为缺少 Provider 而无法跨设备运行；混合算子列表仍照常初始化 LLM。
+        offline_only = bool(config.operators) and set(config.operators) <= {"n1"}
+        self.llm = None if offline_only else InterfaceLLM(
             config.llm.api_endpoint,
             config.llm.api_key,
             config.llm.model,
@@ -532,6 +597,19 @@ class Evolution:
         if operator == "i1":
             parents = None
             prompt = self._build_prompt("i1")
+        elif operator == "n1":
+            if not population:
+                raise ValueError("Operator 'n1' requires a non-empty population.")
+            parents = parent_selection(population, 1, self.feedback_policy)[0]
+            mutations = numeric_constant_mutations(parents["code"])
+            if not mutations:
+                return parents, None, None
+            with self._numeric_mutation_lock:
+                index = self._numeric_mutation_cursor % len(mutations)
+                self._numeric_mutation_cursor += 1
+            code, algorithm = mutations[index]
+            logger.debug("  [n1] candidate %d/%d: %s", index + 1, len(mutations), algorithm)
+            return parents, code, algorithm
         elif operator in ("e1", "e2"):
             if not population:
                 raise ValueError(f"Operator '{operator}' requires a non-empty population.")

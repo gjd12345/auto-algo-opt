@@ -480,7 +480,7 @@ def _runner_script() -> str:
             parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
             parser.add_argument("--llm-model", default="")
             parser.add_argument("--seed", type=int, default=2024)
-            parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+            parser.add_argument("--provider", choices=["opencode-go", "deepseek", "offline"], default="opencode-go")
             parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
             parser.add_argument(
                 "--evolution-feedback-policy",
@@ -526,15 +526,22 @@ def _runner_script() -> str:
             sys.path.insert(0, str(official_root / "eoh" / "src"))
             from eoh import EoH, LLMConfig
 
+            operators = [item.strip() for item in args.operators.split(",") if item.strip()]
+            offline_only = bool(operators) and set(operators) <= {"n1"}
             api_key = os.environ.get(args.api_key_env, "")
             endpoint = os.environ.get(args.api_endpoint_env, "").strip()
             model = args.llm_model or os.environ.get(args.model_env, "")
-            if not api_key:
-                raise RuntimeError(f"Missing API key env: {args.api_key_env}")
-            if not endpoint:
-                raise RuntimeError(f"Missing API endpoint env: {args.api_endpoint_env}")
-            if not model:
-                raise RuntimeError(f"Missing model env: {args.model_env}")
+            if offline_only:
+                api_key = api_key or "offline-unused"
+                endpoint = endpoint or "offline://unused"
+                model = model or "offline-n1"
+            else:
+                if not api_key:
+                    raise RuntimeError(f"Missing API key env: {args.api_key_env}")
+                if not endpoint:
+                    raise RuntimeError(f"Missing API endpoint env: {args.api_endpoint_env}")
+                if not model:
+                    raise RuntimeError(f"Missing model env: {args.model_env}")
 
             # 解析 held_out_set JSON 数组
             held_out_set = json.loads(args.held_out_set) if args.held_out_set else None
@@ -553,7 +560,6 @@ def _runner_script() -> str:
                                 controller_dev_suite=args.controller_dev_suite,
                                 controller_confirm_suite=args.controller_confirm_suite)
             apply_arm_context(task, args.problem, args.arm, args.context_file)
-            operators = [item.strip() for item in args.operators.split(",") if item.strip()]
             install_api_url_patch()
             llm = LLMConfig(api_endpoint=endpoint, api_key=api_key, model=model, timeout=args.llm_timeout_s)
             # 种子来源:精英代码优先,否则用官方初始种群。精英代码规整成引擎
@@ -634,6 +640,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     context_file = args.context_file
     rag_trace: dict[str, Any] | None = None
     # 预先探测三项 API 环境是否就绪（endpoint 需能解析出 host）
+    operators = [item.strip() for item in args.operators.split(",") if item.strip()]
+    offline_operator_run = bool(operators) and set(operators) <= {"n1"}
     endpoint_present = bool(normalize_api_endpoint(os.environ.get(args.api_endpoint_env, "")))
     # 实际解析出的模型名(非密钥,可安全落盘):写进 summary 以便追溯每个 run 究竟用了哪个模型。
     resolved_model = args.llm_model or os.environ.get(args.model_env, "")
@@ -668,6 +676,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "api_endpoint_present": endpoint_present,
         "model_present": model_present,
         "model": resolved_model,
+        "offline_operator_run": offline_operator_run,
         "return_code": None,
         "runtime_seconds": None,
         "stdout_tail": "",
@@ -740,15 +749,15 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         rag_trace["rag_population_feature_count"] = len(population_features) if population_features else 0
     payload["rag_trace"] = rag_trace
     # 三项环境变量逐一校验，缺失即记录具体缺哪一项并提前返回
-    if not api_key_present:
+    if not offline_operator_run and not api_key_present:
         payload["failure_reason"] = f"missing_env_{args.api_key_env}"
         _write_outputs(output_root, payload)
         return payload
-    if not endpoint_present:
+    if not offline_operator_run and not endpoint_present:
         payload["failure_reason"] = f"missing_env_{args.api_endpoint_env}"
         _write_outputs(output_root, payload)
         return payload
-    if not model_present:
+    if not offline_operator_run and not model_present:
         payload["failure_reason"] = f"missing_env_{args.model_env}"
         _write_outputs(output_root, payload)
         return payload
@@ -985,7 +994,7 @@ def main() -> None:
     parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
     parser.add_argument("--llm-model", default="")
     parser.add_argument("--seed", type=int, default=2024)
-    parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+    parser.add_argument("--provider", choices=["opencode-go", "deepseek", "offline"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     parser.add_argument(
         "--evolution-feedback-policy",

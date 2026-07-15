@@ -585,7 +585,7 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="Skip run-count safety check")
     parser.add_argument("--shared-pool-dir", default="", help="Cross-process shared pool for island model population sharing")
     parser.add_argument("--max-concurrent-runs", type=int, default=1)
-    parser.add_argument("--provider", choices=["opencode-go", "deepseek"], default="opencode-go")
+    parser.add_argument("--provider", choices=["opencode-go", "deepseek", "offline"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     args = parser.parse_args()
 

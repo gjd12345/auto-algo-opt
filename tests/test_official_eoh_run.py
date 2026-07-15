@@ -82,6 +82,24 @@ class OfficialEohRunTests(unittest.TestCase):
         self.assertIn('"robust_folds_1k_5k_10k"', script)
         self.assertIn('"dual_batch_1k_5k_10k"', script)
         self.assertIn('"dual_env_1k_5k_10k"', script)
+        self.assertIn('"offline-n1"', script)
+
+    def test_offline_n1_run_does_not_require_provider_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            args = make_official_runner_args(
+                official_root=tmp,
+                output_dir=str(Path(tmp) / "out"),
+                operators="n1",
+                provider="offline",
+            )
+            with patch(
+                "eoh_rag.experiments.eoh_single_runner.subprocess.run",
+                return_value=subprocess.CompletedProcess(args=["python"], returncode=1, stdout="", stderr=""),
+            ):
+                payload = run_official_eoh(args)
+
+        self.assertTrue(payload["offline_operator_run"])
+        self.assertFalse(str(payload.get("failure_reason", "")).startswith("missing_env_"))
 
     def test_redact_log_tail_removes_endpoint_and_bearer_token(self) -> None:
         text = "LLM @ https://api.example.com/v1/chat endpoint=api.example.com Bearer TOKEN"
