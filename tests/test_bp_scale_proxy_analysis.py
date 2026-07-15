@@ -66,3 +66,18 @@ def test_robust_proxy_diagnostic_is_frozen_before_generation() -> None:
     assert manifest["generator"]["seed_start"] == 38000
     assert manifest["baseline_arm"] == "scalar_feedback"
     assert manifest["agent_arm"] == "robust_feedback"
+
+
+def test_confirmation_proxy_diagnostic_is_frozen_before_generation() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_diagnostic_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert manifest["freeze_timing"] == "before_generation"
+    assert manifest["pair_seeds"] == [14001, 14002, 14003]
+    assert manifest["generator"]["seed_start"] == 39000
+    assert manifest["baseline_arm"] == "aggregate_feedback"
+    assert manifest["agent_arm"] == "confirmation_feedback"

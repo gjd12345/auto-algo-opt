@@ -68,6 +68,7 @@ class EoHConfig:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "confirmation_aware",
         }:
             warnings.warn("unknown feedback_policy, resetting to legacy.")
             self.feedback_policy = "legacy"

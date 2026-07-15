@@ -80,6 +80,7 @@ class OfficialEohRunTests(unittest.TestCase):
         self.assertIn('"User-Agent": "eoh-experiment/1.0"', script)
         self.assertIn('"thinking": {"type": "disabled"}', script)
         self.assertIn('"robust_folds_1k_5k_10k"', script)
+        self.assertIn('"dual_batch_1k_5k_10k"', script)
 
     def test_redact_log_tail_removes_endpoint_and_bearer_token(self) -> None:
         text = "LLM @ https://api.example.com/v1/chat endpoint=api.example.com Bearer TOKEN"

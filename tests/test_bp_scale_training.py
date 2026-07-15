@@ -62,6 +62,20 @@ def test_robust_fold_profile_reuses_balanced_instances() -> None:
         assert robust_items == balanced_items
 
 
+def test_dual_batch_profile_keeps_total_budget_and_independent_batches() -> None:
+    dual, lower_bounds = BPONLINEBroad._gen_broad_instances(
+        100, 128, "dual_batch_1k_5k_10k"
+    )
+
+    assert len(dual) == 6
+    assert all(len(dataset) == 20 for dataset in dual.values())
+    assert set(lower_bounds) == set(dual)
+    assert sum(
+        instance["num_items"] for dataset in dual.values() for instance in dataset.values()
+    ) == 640_000
+    assert dual["broad_search_1000"]["0"]["items"] != dual["broad_confirm_1000"]["0"]["items"]
+
+
 def test_scale_feedback_manifest_pairs_only_training_profile() -> None:
     manifest = json.loads(
         (
@@ -214,4 +228,60 @@ def test_robust_feedback_proxy_reuses_same_instances_and_seeds() -> None:
 
     assert policies == ["objective_aware", "robust_aware"]
     assert profiles == ["balanced_1k_5k_10k", "robust_folds_1k_5k_10k"]
+    assert seed_paths[0] == seed_paths[1]
+
+
+def test_confirmation_feedback_reports_search_and_independent_batch() -> None:
+    problem = BPONLINEBroad(
+        n_train=1,
+        training_profile="single_5k",
+        confirmation_feedback=True,
+    )
+    problem.instances = {}
+    problem.lb = {}
+    for scale in (1000, 5000, 10000):
+        for batch_name, items in (("search", [60, 40]), ("confirm", [60, 60])):
+            name = f"broad_{batch_name}_{scale}"
+            problem.instances[name] = {
+                "0": {"items": items, "capacity": 100, "num_items": 2}
+            }
+            problem.lb[name] = 1.0
+
+    result = problem.evaluate_program("", lambda item, bins: -np.asarray(bins))
+
+    assert result["objective"] == 0.0
+    assert result["feedback"]["scale_gap_pct"] == {
+        "1000": 0.0,
+        "5000": 0.0,
+        "10000": 0.0,
+    }
+    assert result["feedback"]["confirm_scale_gap_pct"] == {
+        "1000": 100.0,
+        "5000": 100.0,
+        "10000": 100.0,
+    }
+    assert result["feedback"]["confirm_objective"] == 1.0
+
+
+def test_confirmation_feedback_proxy_pairs_only_acceptance_policy() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [14001, 14002, 14003]
+    policies = []
+    profiles = []
+    seed_paths = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+        profiles.append(command[command.index("--bp-training-profile") + 1])
+        seed_paths.append(command[command.index("--seed-codes") + 1])
+
+    assert policies == ["objective_aware", "confirmation_aware"]
+    assert profiles == ["dual_batch_1k_5k_10k", "dual_batch_1k_5k_10k"]
     assert seed_paths[0] == seed_paths[1]

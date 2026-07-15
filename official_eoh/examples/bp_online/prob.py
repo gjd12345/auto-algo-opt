@@ -78,11 +78,12 @@ class BPONLINEBroad(BPONLINE):
     def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
                  n_train: int = 128, held_out_set: list | None = None,
                  training_profile: str = "single_5k", structured_feedback: bool = False,
-                 robust_feedback: bool = False):
+                 robust_feedback: bool = False, confirmation_feedback: bool = False):
         super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
         self.training_profile = training_profile
         self.structured_feedback = structured_feedback
         self.robust_feedback = robust_feedback
+        self.confirmation_feedback = confirmation_feedback
         self.instances, self.lb = self._gen_broad_instances(capacity, n_train, training_profile)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
@@ -138,6 +139,33 @@ class BPONLINEBroad(BPONLINE):
                         4,
                     )
             return instances, lower_bounds
+        if training_profile == "dual_batch_1k_5k_10k":
+            instances = {}
+            lower_bounds = {}
+            # 搜索和开发确认各占一半预算；确认批参与选择，因此不是最终 held-out。
+            for scale_index, item_count in enumerate((1000, 5000, 10000)):
+                for batch_name, seed_start in (("search", 41000), ("confirm", 51000)):
+                    dataset_name = f"broad_{batch_name}_{item_count}"
+                    dataset = {}
+                    lower_bound_sum = 0.0
+                    for instance_index in range(20):
+                        rng = np.random.default_rng(
+                            seed_start + scale_index * 1000 + instance_index
+                        )
+                        items = np.clip(
+                            np.round(rng.weibull(3.0, item_count) * 45.0).astype(int),
+                            1,
+                            capacity,
+                        )
+                        dataset[str(instance_index)] = {
+                            "items": items.tolist(),
+                            "capacity": capacity,
+                            "num_items": item_count,
+                        }
+                        lower_bound_sum += np.ceil(items.sum() / capacity)
+                    instances[dataset_name] = dataset
+                    lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
+            return instances, lower_bounds
         if training_profile != "single_5k":
             raise ValueError(f"unknown BP training profile: {training_profile}")
 
@@ -181,7 +209,10 @@ class BPONLINEBroad(BPONLINE):
         return data
 
     def evaluate_program(self, program_str: str, callable_func) -> float | dict | None:
-        if self.structured_feedback:
+        if self.confirmation_feedback:
+            fitness, scale_feedback = self._evaluate_with_confirmation_feedback(callable_func)
+            evaluation_result = {"objective": fitness, "feedback": scale_feedback}
+        elif self.structured_feedback:
             fitness, scale_feedback = self._evaluate_with_scale_feedback(callable_func)
             evaluation_result = {"objective": fitness, "feedback": scale_feedback}
         else:
@@ -211,19 +242,51 @@ class BPONLINEBroad(BPONLINE):
                 self.held_out_report[entry["path"]] = f"error: {exc}"
         return evaluation_result
 
+    def _evaluate_dataset_gap(self, name, dataset, callable_func):
+        """计算一个冻结数据集的 gap，供多种反馈合同复用。"""
+        used_bins = []
+        for instance in dataset.values():
+            capacity = instance["capacity"]
+            items = np.array(instance["items"])
+            bins = np.array([capacity] * instance["num_items"])
+            _, bins_packed = self.online_binpack(items, bins, callable_func)
+            used_bins.append((bins_packed != capacity).sum())
+        return float((np.mean(used_bins) - self.lb[name]) / self.lb[name])
+
+    def _evaluate_with_confirmation_feedback(self, callable_func):
+        """搜索批负责排序，独立开发确认批负责判断候选是否能进入种群。"""
+        gaps = {"search": {}, "confirm": {}}
+        for name, dataset in self.instances.items():
+            match = re.search(r"broad_(search|confirm)_(\d+)", name)
+            if not match:
+                raise ValueError(f"invalid dual-batch dataset name: {name}")
+            batch_name, scale = match.groups()
+            gaps[batch_name][scale] = self._evaluate_dataset_gap(name, dataset, callable_func)
+        search_scale = {
+            scale: round(gap * 100.0, 6) for scale, gap in gaps["search"].items()
+        }
+        confirm_scale = {
+            scale: round(gap * 100.0, 6) for scale, gap in gaps["confirm"].items()
+        }
+        search_objective = float(np.mean(list(gaps["search"].values())))
+        confirm_objective = float(np.mean(list(gaps["confirm"].values())))
+        worst_scale = max(search_scale, key=search_scale.get)
+        feedback = {
+            "scale_gap_pct": search_scale,
+            "confirm_scale_gap_pct": confirm_scale,
+            "worst_scale": worst_scale,
+            "worst_gap_pct": search_scale[worst_scale],
+            "confirm_objective": confirm_objective,
+            "search_confirm_gap": confirm_objective - search_objective,
+        }
+        return search_objective, feedback
+
     def _evaluate_with_scale_feedback(self, callable_func):
         """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
         fitness_per_dataset = []
         gap_by_scale = {}
         for name, dataset in self.instances.items():
-            used_bins = []
-            for instance in dataset.values():
-                capacity = instance["capacity"]
-                items = np.array(instance["items"])
-                bins = np.array([capacity] * instance["num_items"])
-                _, bins_packed = self.online_binpack(items, bins, callable_func)
-                used_bins.append((bins_packed != capacity).sum())
-            gap = (np.mean(used_bins) - self.lb[name]) / self.lb[name]
+            gap = self._evaluate_dataset_gap(name, dataset, callable_func)
             fitness_per_dataset.append(float(gap))
             match = re.search(r"broad_train_(\d+)", name)
             scale = match.group(1) if match else name.rsplit("_", 1)[-1]

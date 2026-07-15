@@ -40,6 +40,32 @@ def population_management(pop, size):
     return heapq.nsmallest(min(size, len(unique)), unique, key=lambda x: x['objective'])
 
 
+def confirmation_gate(offspring, parents):
+    """候选必须同时改善搜索父代且不损害独立开发确认批。"""
+    parent_list = parents if isinstance(parents, list) else [parents]
+    parent_list = [parent for parent in parent_list if isinstance(parent, dict)]
+    if not parent_list:
+        return False, {"reason": "missing_parent_feedback"}
+    reference = min(parent_list, key=lambda item: float(item["objective"]))
+    candidate_feedback = offspring.get("other_inf") or {}
+    reference_feedback = reference.get("other_inf") or {}
+    candidate_confirm = candidate_feedback.get("confirm_objective")
+    reference_confirm = reference_feedback.get("confirm_objective")
+    if candidate_confirm is None or reference_confirm is None:
+        return False, {"reason": "missing_confirmation_objective"}
+    search_improved = float(offspring["objective"]) < float(reference["objective"])
+    confirm_not_worse = float(candidate_confirm) <= float(reference_confirm)
+    details = {
+        "reason": "accepted" if search_improved and confirm_not_worse else "dominance_failed",
+        "search_improved": search_improved,
+        "confirm_not_worse": confirm_not_worse,
+        "reference_search_objective": reference["objective"],
+        "candidate_confirm_objective": candidate_confirm,
+        "reference_confirm_objective": reference_confirm,
+    }
+    return search_improved and confirm_not_worse, details
+
+
 class EOH:
     """Main EoH evolutionary loop."""
 
@@ -127,7 +153,15 @@ class EOH:
             obj = offspring['objective']
             score_str = str(obj)
 
-        is_new_best = obj is not None and (self._best_obj is None or obj < self._best_obj)
+        selection_accepted = bool(offspring.get("selection_accepted", True)) if offspring else False
+        if obj is not None and not selection_accepted:
+            score_str += " (confirm rejected)"
+
+        is_new_best = (
+            obj is not None
+            and selection_accepted
+            and (self._best_obj is None or obj < self._best_obj)
+        )
         if is_new_best:
             self._best_obj = obj
 
@@ -145,6 +179,8 @@ class EOH:
             'algorithm': offspring.get('algorithm') if offspring else None,
             'code': offspring.get('code') if offspring else None,
             'objective': offspring.get('objective') if offspring else None,
+            'selection_accepted': offspring.get('selection_accepted', True) if offspring else False,
+            'selection_reason': offspring.get('selection_reason') if offspring else None,
         }
         self._samples_buffer.append(record)
         if len(self._samples_buffer) >= self._SAMPLE_BATCH:
@@ -211,7 +247,7 @@ class EOH:
         Returns an offspring dict (objective may be None), or None on failure.
         """
         try:
-            _parents, code, algorithm = self.evolution.generate_code(population_snapshot, operator)
+            parents, code, algorithm = self.evolution.generate_code(population_snapshot, operator)
         except Exception as e:
             logger.debug("  [offspring] %s: %s", type(e).__name__, e)
             return None
@@ -227,12 +263,20 @@ class EOH:
             fitness = None
 
         objective, feedback = _normalize_evaluation_result(fitness)
-        return {
+        offspring = {
             'algorithm': algorithm,
             'code': code,
             'objective': objective,
             'other_inf': feedback,
         }
+        if self.config.feedback_policy == "confirmation_aware" and objective is not None:
+            accepted, gate_details = confirmation_gate(offspring, parents)
+            offspring["selection_accepted"] = accepted
+            offspring["selection_reason"] = gate_details["reason"]
+            if not isinstance(offspring["other_inf"], dict):
+                offspring["other_inf"] = {}
+            offspring["other_inf"]["selection_gate"] = gate_details
+        return offspring
 
     def _select_operator(self):
         return random.choices(self.operators, weights=self.operator_weights, k=1)[0]
@@ -269,7 +313,11 @@ class EOH:
             with self._lock:
                 try:
                     self._record(op, off)
-                    if off and off['objective'] is not None:
+                    if (
+                        off
+                        and off['objective'] is not None
+                        and off.get("selection_accepted", True)
+                    ):
                         population_ref[0].append(off)
                         population_ref[0] = population_management(population_ref[0], self.pop_size)
                 except Exception as e:

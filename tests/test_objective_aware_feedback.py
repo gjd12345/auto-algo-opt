@@ -19,6 +19,7 @@ from eoh.eoh.evolution import (  # noqa: E402
     _normalize_evaluation_result,
     parent_selection,
 )
+from eoh.eoh.eoh import confirmation_gate  # noqa: E402
 
 
 def _population() -> list[dict]:
@@ -88,6 +89,33 @@ def test_robust_aware_prompt_exposes_fold_variation() -> None:
     assert "1000 items std=0.300000%" in prompt
     assert "within the reported fold variation" in prompt
     assert parent_selection([parent, *_population()], 1, "robust_aware")[0]["objective"] == 0.7
+
+
+def test_confirmation_prompt_and_gate_require_two_batch_dominance() -> None:
+    evolution = _evolution("confirmation_aware")
+    parent = {
+        **_population()[1],
+        "other_inf": {
+            "scale_gap_pct": {"1000": 0.8, "5000": 0.4, "10000": 0.2},
+            "confirm_scale_gap_pct": {"1000": 0.9, "5000": 0.5, "10000": 0.3},
+            "confirm_objective": 0.005,
+            "worst_scale": "1000",
+        },
+    }
+    prompt = evolution._build_prompt("m1", parent)
+    accepted = {
+        "objective": 0.6,
+        "other_inf": {"confirm_objective": 0.0049},
+    }
+    rejected = {
+        "objective": 0.6,
+        "other_inf": {"confirm_objective": 0.0051},
+    }
+
+    assert "Independent confirmation gaps" in prompt
+    assert "Avoid tuning to a search-only difference" in prompt
+    assert confirmation_gate(accepted, parent)[0] is True
+    assert confirmation_gate(rejected, parent)[0] is False
 
 
 def test_structured_evaluation_result_keeps_feedback_and_old_float_contract() -> None:

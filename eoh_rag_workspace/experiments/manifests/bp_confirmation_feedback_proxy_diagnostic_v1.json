@@ -1,0 +1,33 @@
+{
+  "schema_version": "bp_scale_proxy_diagnostic/v1",
+  "suite": "bp_confirmation_feedback_proxy_diagnostic_v1",
+  "freeze_timing": "before_generation",
+  "source_suite": "bp_confirmation_feedback_proxy_v1",
+  "source_report_root": "eoh_rag_workspace/reports/formal/bp_confirmation_feedback_proxy_v1/bp_confirmation_feedback_proxy_v1/bp_online",
+  "pair_seeds": [14001, 14002, 14003],
+  "baseline_arm": "aggregate_feedback",
+  "agent_arm": "confirmation_feedback",
+  "expected_training_profiles": {
+    "aggregate_feedback": "dual_batch_1k_5k_10k",
+    "confirmation_feedback": "dual_batch_1k_5k_10k"
+  },
+  "candidate_selection": "final_best_code_from_each_run_summary",
+  "generator": {
+    "distribution": "weibull",
+    "shape": 3.0,
+    "scale": 45.0,
+    "clip_min": 1,
+    "clip_max": 100,
+    "item_counts": [1000, 5000, 10000],
+    "instances_per_scale": 30,
+    "seed_start": 39000,
+    "seed_stride": 1000
+  },
+  "proxy_gate": {
+    "valid_instance_pairs_min": 270,
+    "agent_beats_baseline_seed_pairs_min": 2,
+    "agent_1k_mean_gap_not_worse_seed_pairs_min": 2,
+    "pass_action": "freeze_confirmation_candidates_and_design_larger_confirmation",
+    "fail_action": "stop_confirmation_feedback_branch_and_record_negative_result"
+  }
+}

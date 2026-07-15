@@ -138,7 +138,12 @@ from ..problem import _get_entry_name, _detect_template_kind, _extract_import_li
 def parent_selection(pop, m, feedback_policy="legacy"):
     if not pop:
         raise ValueError("Cannot select parents from an empty population.")
-    if feedback_policy in {"objective_aware", "scale_aware", "robust_aware"}:
+    if feedback_policy in {
+        "objective_aware",
+        "scale_aware",
+        "robust_aware",
+        "confirmation_aware",
+    }:
         # 评价反馈模式始终保留当前精英；多父代算子再配一个不同个体，兼顾利用与探索。
         ranked = sorted(pop, key=lambda item: float(item["objective"]))
         if m == 1:
@@ -204,7 +209,12 @@ class Evolution:
         )
 
     def _parent_block(self, parents: list) -> str:
-        if self.feedback_policy in {"objective_aware", "scale_aware", "robust_aware"}:
+        if self.feedback_policy in {
+            "objective_aware",
+            "scale_aware",
+            "robust_aware",
+            "confirmation_aware",
+        }:
             return "\n".join(
                 f"No.{i+1} dev objective={p['objective']} (lower is better).\n"
                 f"{self._structured_feedback_line(p)}"
@@ -218,7 +228,11 @@ class Evolution:
 
     def _structured_feedback_line(self, parent: dict) -> str:
         """把分尺度 gap 转成直白反馈；缺少详情时安全回退为空。"""
-        if self.feedback_policy not in {"scale_aware", "robust_aware"}:
+        if self.feedback_policy not in {
+            "scale_aware",
+            "robust_aware",
+            "confirmation_aware",
+        }:
             return ""
         feedback = parent.get("other_inf")
         if not isinstance(feedback, dict):
@@ -236,6 +250,20 @@ class Evolution:
         gap_text = ", ".join(f"{scale} items={float(gap):.6f}%" for scale, gap in ordered)
         worst_scale = feedback.get("worst_scale", "unknown")
         line = f"Scale gaps (lower is better): {gap_text}. Worst scale: {worst_scale} items.\n"
+        if self.feedback_policy == "confirmation_aware":
+            confirm_gaps = feedback.get("confirm_scale_gap_pct")
+            if not isinstance(confirm_gaps, dict) or not confirm_gaps:
+                return line + "Independent confirmation feedback unavailable for this parent.\n"
+            confirm_text = ", ".join(
+                f"{scale} items={float(confirm_gaps.get(scale, 0.0)):.6f}%"
+                for scale, _ in ordered
+            )
+            confirm_objective = feedback.get("confirm_objective", "unknown")
+            return (
+                line
+                + f"Independent confirmation gaps: {confirm_text}. "
+                + f"Confirmation objective: {confirm_objective}.\n"
+            )
         if self.feedback_policy != "robust_aware":
             return line
         scale_std = feedback.get("scale_std_pct")
@@ -308,6 +336,26 @@ class Evolution:
                 ),
             }
             return robust_feedback[operator]
+        if self.feedback_policy == "confirmation_aware":
+            confirmation_feedback = {
+                "e1": (
+                    "Use both search and independent confirmation gaps as feedback. Make one structural change "
+                    "expected to improve the search objective without harming confirmation behavior.\n"
+                ),
+                "e2": (
+                    "Combine only ideas supported by both search and independent confirmation feedback. Preserve "
+                    "the parent behavior that transfers across the two batches. "
+                ),
+                "m1": (
+                    "Make one purposeful modification aimed at a weakness repeated in both search and independent "
+                    "confirmation batches. Avoid tuning to a search-only difference.\n"
+                ),
+                "m2": (
+                    "Change only one parameter when its direction is supported by both search and independent "
+                    "confirmation gaps. Avoid a change that merely improves the fixed search batch.\n"
+                ),
+            }
+            return confirmation_feedback[operator]
         feedback = {
             "e1": (
                 "Use the dev objectives as feedback. Preserve effective parts of the best parent, "
