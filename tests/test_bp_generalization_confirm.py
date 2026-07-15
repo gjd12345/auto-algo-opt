@@ -20,6 +20,10 @@ DUAL_MANIFEST_PATH = (
     REPO_ROOT
     / "eoh_rag_workspace/experiments/manifests/bp_dual_agent_generalization_confirm_v1.json"
 )
+GATE_MANIFEST_PATH = (
+    REPO_ROOT
+    / "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_agent_generalization_confirm_v1.json"
+)
 
 
 def test_generalization_manifest_freezes_new_large_paired_suite() -> None:
@@ -59,6 +63,36 @@ def test_dual_agent_manifest_freezes_independent_confirmation_suite() -> None:
         assert hashlib.sha256(candidate["code"].encode()).hexdigest().upper() == candidate[
             "code_sha256"
         ]
+
+
+def test_confirmation_gate_candidate_stays_pending_before_large_suite() -> None:
+    asset_path = (
+        REPO_ROOT
+        / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_v1.json"
+    )
+    asset = json.loads(asset_path.read_text(encoding="utf-8"))
+    manifest = json.loads(GATE_MANIFEST_PATH.read_text(encoding="utf-8"))
+    candidates = load_candidates(manifest)
+
+    assert asset["actor"] == "research_agent_eoh"
+    assert asset["origin"] == "automatic_evolution"
+    assert asset["visibility"]["confirmation_values_visible_to_llm"] is False
+    assert asset["visibility"]["confirmation_values_visible_to_acceptance_gate"] is True
+    assert asset["selection"]["formal_seed_allowed"] is False
+    assert asset["evaluation"]["large_confirmation_status"] == "pending"
+    assert hashlib.sha256(asset["code"].encode()).hexdigest().upper() == asset[
+        "best_code_sha256"
+    ]
+    assert manifest["generator"]["seed_start"] == 81000
+    assert manifest["generator"]["instances_per_scale"] == 100
+    assert manifest["comparison"]["previous_90_instance_diagnostic_set_reused"] is False
+    assert manifest["comparison"][
+        "diagnostic_was_used_to_select_confirmation_candidate"
+    ] is True
+    assert [candidate["candidate_id"] for candidate in candidates] == [
+        "inherited_seed_best",
+        "bp_online_agent_discovery_gate_v1",
+    ]
 
 
 def test_pair_evaluation_is_deterministic_and_strictly_paired() -> None:

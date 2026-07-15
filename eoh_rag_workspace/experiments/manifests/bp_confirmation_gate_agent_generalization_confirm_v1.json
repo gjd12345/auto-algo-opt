@@ -1,0 +1,47 @@
+{
+  "schema_version": "bp_generalization_confirmation/v1",
+  "suite": "bp_confirmation_gate_agent_generalization_confirm_v1",
+  "problem": "bp_online",
+  "capacity": 100,
+  "generator": {
+    "distribution": "weibull",
+    "shape": 3.0,
+    "scale": 45.0,
+    "clip_min": 1,
+    "clip_max": 100,
+    "item_counts": [1000, 5000, 10000],
+    "instances_per_scale": 100,
+    "seed_start": 81000,
+    "seed_stride": 1000
+  },
+  "candidates": [
+    {
+      "candidate_id": "inherited_seed_best",
+      "actor": "historical_eoh",
+      "asset_path": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json",
+      "asset_sha256": "19D700DBB1642CDF71F9B2A306547E274D09DCCEE690B62866399357928CA9A1",
+      "code_sha256": "50D99C40C4348CE2C0481A78FE15285DBA8A78223C4BD419209DA68B308E1D6F"
+    },
+    {
+      "candidate_id": "bp_online_agent_discovery_gate_v1",
+      "actor": "research_agent_eoh",
+      "asset_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_v1.json",
+      "asset_sha256": "A12CEEB2B07C4BE64746D8FDECEFEDF1B50DD8F06E8BB3ED5F6850EFE3C1441D",
+      "code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8"
+    }
+  ],
+  "comparison": {
+    "baseline_candidate_id": "inherited_seed_best",
+    "agent_candidate_id": "bp_online_agent_discovery_gate_v1",
+    "primary_metric": "paired_gap_reduction_pct_points",
+    "lower_gap_is_better": true,
+    "candidate_frozen_before_suite_evaluation": true,
+    "previous_90_instance_diagnostic_set_reused": false,
+    "diagnostic_was_used_to_select_confirmation_candidate": true
+  },
+  "confirmation_gate": {
+    "valid_pairs_min": 300,
+    "sign_test_p_value_max": 0.05,
+    "positive_scale_count_min": 2
+  }
+}
