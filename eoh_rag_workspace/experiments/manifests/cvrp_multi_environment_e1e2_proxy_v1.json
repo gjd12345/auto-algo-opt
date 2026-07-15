@@ -1,0 +1,65 @@
+{
+  "suite": "cvrp_multi_environment_e1e2_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["cvrp_construct"],
+  "broad_training": true,
+  "n_train": 36,
+  "cvrp_training_profile": "multi_env_50_100_200",
+  "held_out_set": [],
+  "arms": [
+    {
+      "name": "multi_environment_structural_search",
+      "runner_arm": "context_file",
+      "context_strategy": "multi_environment_failure_memory_v2",
+      "context_files": {
+        "cvrp_construct": "eoh_rag_workspace/experiments/strategies/contexts/cvrp_multi_environment_failure_memory_v2.txt"
+      },
+      "operators": "e1,e2",
+      "evolution_feedback_policy": "confirmation_aware",
+      "seed_codes": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_fresh_confirmed_seed_v1.json"
+    }
+  ],
+  "generations": [2],
+  "pop_size": 4,
+  "repeats": 1,
+  "seed_list": [20001],
+  "max_runs": 1,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 240,
+  "llm_timeout_s": 180,
+  "run_timeout_s": 3600,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "cvrp_equal_weight_multi_environment_confirmation_objective",
+  "trigger": {
+    "source_suite": "cvrp_multi_environment_fresh_diagnostic_v1",
+    "failure_mode": "local_mutations_pass_fixed_batches_but_fail_fresh_diagnostic",
+    "action": "switch_to_e1_e2_structural_generation"
+  },
+  "discovery_contract": {
+    "actor": "research_agent_eoh",
+    "candidate_budget": 8,
+    "search_instances_per_environment": 12,
+    "confirmation_instances_per_environment": 12,
+    "environment_objective": "mean_route_cost_per_customer",
+    "environment_aggregation": "equal_weight",
+    "confirmation_feedback_visible_to_llm": true,
+    "confirmation_gate_controls_acceptance": true,
+    "held_out_controls_selection": false,
+    "fresh_diagnostic_seed_ranges_visible": false,
+    "forbidden_failed_mechanisms": ["local_density_bonus", "remaining_demand_variance_penalty"],
+    "contains_codex_external_teacher": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 1,
+    "valid_generated_candidates_min": 6,
+    "non_seed_final_runs_min": 1,
+    "next_if_non_seed_final": "use_new_121000_131000_141000_fresh_diagnostic",
+    "next_if_low_valid_generation": "retry_once_with_seed_20002",
+    "next_if_valid_but_no_non_seed": "stop_e1_e2_structural_branch"
+  },
+  "official_root": "official_eoh"
+}
