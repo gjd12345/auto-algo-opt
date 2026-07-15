@@ -1,0 +1,60 @@
+{
+  "suite": "bp_cross_distribution_confirmation_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "problems": ["bp_online"],
+  "broad_training": true,
+  "n_train": 128,
+  "arms": [
+    {
+      "name": "observe_only",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "confirmed_agent_seed",
+      "evolution_feedback_policy": "confirmation_observe_only",
+      "bp_training_profile": "dual_env_1k_5k_10k",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_mixed_seeds_v1.json"
+    },
+    {
+      "name": "gate_only",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "confirmed_agent_seed",
+      "evolution_feedback_policy": "confirmation_gate_only",
+      "bp_training_profile": "dual_env_1k_5k_10k",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_mixed_seeds_v1.json"
+    }
+  ],
+  "generations": [2],
+  "pop_size": 3,
+  "repeats": 3,
+  "seed_list": [16001, 16002, 16003],
+  "max_runs": 6,
+  "operators": "e1,e2,m1,m2",
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 240,
+  "run_timeout_s": 10800,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "fresh_cross_distribution_diagnostic_gap",
+  "feedback_hypothesis": {
+    "same_search_and_confirmation_instances_between_arms": true,
+    "same_objective_only_prompt_contract": true,
+    "search_distribution": "weibull_shape3_scale45",
+    "confirmation_distribution": "half_uniform_1_100_half_weibull_shape1.5_scale35",
+    "confirmation_values_hidden_from_prompt": true,
+    "only_gate_arm_changes_population_acceptance": true,
+    "hifo_visible_during_training_or_selection": false,
+    "same_seed_asset": true,
+    "same_evolution_seed_pairs": true,
+    "contains_codex_external_teacher": false
+  },
+  "proxy_gate": {
+    "completed_runs_min": 6,
+    "valid_generated_runs_per_arm_min": 3,
+    "gate_final_code_differs_from_seed_pairs_min": 2,
+    "gate_beats_observe_on_fresh_diagnostic_pairs_min": 2,
+    "gate_positive_environment_count_pairs_min": 2
+  },
+  "official_root": "official_eoh"
+}

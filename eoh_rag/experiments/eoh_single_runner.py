@@ -511,6 +511,7 @@ def _runner_script() -> str:
                     "balanced_1k_5k_10k",
                     "robust_folds_1k_5k_10k",
                     "dual_batch_1k_5k_10k",
+                    "dual_env_1k_5k_10k",
                 ],
                 default="single_5k",
             )
@@ -974,6 +975,7 @@ def main() -> None:
             "balanced_1k_5k_10k",
             "robust_folds_1k_5k_10k",
             "dual_batch_1k_5k_10k",
+            "dual_env_1k_5k_10k",
         ],
         default="single_5k",
     )

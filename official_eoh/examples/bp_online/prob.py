@@ -166,6 +166,43 @@ class BPONLINEBroad(BPONLINE):
                     instances[dataset_name] = dataset
                     lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
             return instances, lower_bounds
+        if training_profile == "dual_env_1k_5k_10k":
+            instances = {}
+            lower_bounds = {}
+            # 搜索批保持原 Weibull 分布；确认批预注册为均匀分布与宽尾 Weibull 的等量混合。
+            # 这里不读取 HiFo，避免把已经查看过的 held-out 反向变成训练反馈。
+            for scale_index, item_count in enumerate((1000, 5000, 10000)):
+                for batch_name, seed_start in (("search", 91000), ("confirm", 101000)):
+                    dataset_name = f"broad_{batch_name}_{item_count}"
+                    dataset = {}
+                    lower_bound_sum = 0.0
+                    for instance_index in range(20):
+                        rng = np.random.default_rng(
+                            seed_start + scale_index * 1000 + instance_index
+                        )
+                        if batch_name == "search":
+                            items = np.clip(
+                                np.round(rng.weibull(3.0, item_count) * 45.0).astype(int),
+                                1,
+                                capacity,
+                            )
+                        elif instance_index < 10:
+                            items = rng.integers(1, capacity + 1, size=item_count)
+                        else:
+                            items = np.clip(
+                                np.round(rng.weibull(1.5, item_count) * 35.0).astype(int),
+                                1,
+                                capacity,
+                            )
+                        dataset[str(instance_index)] = {
+                            "items": items.tolist(),
+                            "capacity": capacity,
+                            "num_items": item_count,
+                        }
+                        lower_bound_sum += np.ceil(items.sum() / capacity)
+                    instances[dataset_name] = dataset
+                    lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
+            return instances, lower_bounds
         if training_profile != "single_5k":
             raise ValueError(f"unknown BP training profile: {training_profile}")
 

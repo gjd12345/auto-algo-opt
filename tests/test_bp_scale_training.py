@@ -76,6 +76,28 @@ def test_dual_batch_profile_keeps_total_budget_and_independent_batches() -> None
     assert dual["broad_search_1000"]["0"]["items"] != dual["broad_confirm_1000"]["0"]["items"]
 
 
+def test_cross_distribution_profile_keeps_budget_without_hifo() -> None:
+    first, lower_bounds = BPONLINEBroad._gen_broad_instances(
+        100, 128, "dual_env_1k_5k_10k"
+    )
+    second, _ = BPONLINEBroad._gen_broad_instances(100, 128, "dual_env_1k_5k_10k")
+
+    assert first == second
+    assert len(first) == 6
+    assert all(len(dataset) == 20 for dataset in first.values())
+    assert set(lower_bounds) == set(first)
+    assert sum(
+        instance["num_items"]
+        for dataset in first.values()
+        for instance in dataset.values()
+    ) == 640_000
+    search = np.asarray(first["broad_search_1000"]["0"]["items"])
+    uniform_confirm = np.asarray(first["broad_confirm_1000"]["0"]["items"])
+    wide_tail_confirm = np.asarray(first["broad_confirm_1000"]["10"]["items"])
+    assert not np.array_equal(search, uniform_confirm)
+    assert not np.array_equal(uniform_confirm, wide_tail_confirm)
+
+
 def test_scale_feedback_manifest_pairs_only_training_profile() -> None:
     manifest = json.loads(
         (
@@ -327,3 +349,49 @@ def test_confirmation_gate_diagnostic_uses_unseen_multiscale_instances() -> None
     assert manifest["generator"]["item_counts"] == [1000, 5000, 10000]
     assert manifest["generator"]["instances_per_scale"] == 30
     assert manifest["proxy_gate"]["valid_instance_pairs_min"] == 270
+
+
+def test_cross_distribution_proxy_pairs_only_the_acceptance_gate() -> None:
+    manifest = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_confirmation_proxy_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _validate_manifest(manifest) == []
+    assert manifest["seed_list"] == [16001, 16002, 16003]
+    policies = []
+    profiles = []
+    seed_paths = []
+    for arm in manifest["arms"]:
+        command = _build_cmd(manifest, "bp_online", arm, 2, 0, "out")
+        policies.append(command[command.index("--evolution-feedback-policy") + 1])
+        profiles.append(command[command.index("--bp-training-profile") + 1])
+        seed_paths.append(command[command.index("--seed-codes") + 1])
+
+    assert policies == ["confirmation_observe_only", "confirmation_gate_only"]
+    assert profiles == ["dual_env_1k_5k_10k", "dual_env_1k_5k_10k"]
+    assert seed_paths[0] == seed_paths[1]
+
+
+def test_cross_distribution_seed_bundle_starts_from_confirmed_agent_asset() -> None:
+    confirmed_asset = json.loads(
+        (
+            REPO_ROOT
+            / "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_confirmed_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    seed_bundle = json.loads(
+        (
+            REPO_ROOT
+            / "official_eoh/examples/bp_online/seeds/bp_agent_confirmed_mixed_seeds_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    # 第一条固定为科研 Agent 已独立确认的候选；另外两条只提供结构差异，避免重复浪费预算。
+    assert seed_bundle[0]["code"] == confirmed_asset["code"]
+    assert len(seed_bundle) == 3
+    assert len({entry["code"] for entry in seed_bundle}) == 3
+    confirmed_hash = hashlib.sha256(seed_bundle[0]["code"].encode("utf-8")).hexdigest()
+    assert confirmed_hash.upper() == confirmed_asset["best_code_sha256"]
