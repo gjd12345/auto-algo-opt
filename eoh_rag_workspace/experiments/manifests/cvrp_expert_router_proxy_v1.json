@@ -1,0 +1,62 @@
+{
+  "suite": "cvrp_expert_router_proxy_v1",
+  "model": "deepseek-v4-flash",
+  "provider_policy": {
+    "primary": "opencode-go",
+    "fallback": "deepseek",
+    "fallback_requires_new_complete_cohort": true
+  },
+  "problems": ["cvrp_expert_router"],
+  "arms": [
+    {
+      "name": "evolved_router",
+      "runner_arm": "api_only",
+      "context_strategy": "router_contract_v1",
+      "operators": "e1,e2,m1,m2",
+      "evolution_feedback_policy": "router_aware",
+      "seed_codes": "official_eoh/examples/cvrp_expert_router/seeds/router_seeds_v1.json"
+    }
+  ],
+  "router_contract": "official_eoh/examples/cvrp_expert_router/router_contract_v1.json",
+  "router_contract_sha256": "F54FF8C4AA78AE8689E2E0E9836A3724C60FCBD475700E1D40BC1959FB96E16F",
+  "seed_codes_sha256": "06DBAB65A140641960AD095D9DDAB6C17510B11F4F068681E9AF47D110A05818",
+  "generations": [4],
+  "pop_size": 4,
+  "repeats": 3,
+  "seed_list": [20101, 20102, 20103],
+  "max_runs": 3,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 180,
+  "llm_timeout_s": 180,
+  "run_timeout_s": 5400,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "development_mean_relative_cost_vs_n2",
+  "selection_contract": {
+    "actor": "research_agent_eoh",
+    "confirmation_feedback_visible_to_evolution": false,
+    "held_out_visible": false,
+    "codex_may_write_final_router": false,
+    "oracle_is_report_only": true
+  },
+  "baselines": {
+    "single_n2_objective": 0.0,
+    "dev_oracle_mean_improvement_pct": 2.5107308656974996
+  },
+  "proxy_gate": {
+    "completed_runs_min": 3,
+    "valid_generated_runs_min": 3,
+    "paired_seed_count_min": 3,
+    "confirmation_mean_improvement_vs_n2_pct_min": 0.3,
+    "confirmation_environment_degradation_pct_max": 0.5,
+    "runs_using_at_least_two_experts_min": 2,
+    "selector_invalid_outputs_max": 0,
+    "missing_coordinates_max": 0,
+    "next_if_pass": "freeze_router_and_run_new_unseen_generalization_suite",
+    "next_if_fail": "retain_oracle_as_upper_bound_and_switch_to_reevo_reflection_memory"
+  },
+  "official_root": "official_eoh"
+}
