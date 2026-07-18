@@ -1,0 +1,124 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-pairwise-selector-ablation-dev-v1",
+  "audience": "agent",
+  "created_at": "2026-07-19T02:57:10+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "provenance": "external_teacher_diagnostic",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "implementation_commit": "2bb22d695704f146c69f8f597dd7fd9aa4b741f4",
+  "routing": {
+    "required_docs": [
+      {
+        "path": "02-Codex与科研Agent职责边界.md",
+        "raw_sha256": "35b3ec8c6f6a6592876a9eaada0e616d83ad7623ecb788ee14db1c525238b1ef"
+      },
+      {
+        "path": "03-系统架构与模块契约.md",
+        "raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6"
+      },
+      {
+        "path": "08-执行前后检查清单.md",
+        "raw_sha256": "9cab6bc05c1a001c478af7a156b334941b3f06c6cd1ef81e1c61e439aabfbca3"
+      }
+    ],
+    "conditional_docs": [
+      {
+        "path": "05-实验诚信与证据规范.md",
+        "raw_sha256": "9ff085867b783965cb6815060029b3f66f650e86e5ef441dc544c13eaae49cb4",
+        "trigger": "selector performance matrix and promotion gate"
+      }
+    ]
+  },
+  "implementation": {
+    "public_seam": "eoh_rag.experiments.pairwise_selector.PairwiseCostSensitiveSelector.fit(...).predict(...)",
+    "objective_directions": [
+      "minimize",
+      "maximize"
+    ],
+    "pairwise_model": "sklearn RandomForestClassifier",
+    "n_estimators": 99,
+    "random_state": 2011,
+    "unweighted_rule": "uniform weight on non-tie pairwise labels",
+    "weighted_rule": "absolute pairwise relative-cost difference",
+    "deterministic_final_tie_break": true,
+    "dependency": "scikit-learn>=1.2",
+    "frozen_v1_changed": false,
+    "formal_manifest_changed": false
+  },
+  "protocol": {
+    "manifest": "eoh_rag_workspace/experiments/manifests/cvrp_pairwise_selector_ablation_dev_v1.json",
+    "manifest_sha256": "04e5dd0ec8683a0b8be681d6c758a8737a06708c644ee8f64c9dfc85fe009909",
+    "primary": "leave_one_environment_out",
+    "secondary": "stratified_5fold",
+    "deterministic_passes": 1,
+    "llm_calls": 0,
+    "formal_coordinates": 0
+  },
+  "data_boundary": {
+    "scope": "development_only",
+    "sample_count": 90,
+    "feature_count": 9,
+    "expert_count": 4,
+    "dataset_sha256": "0e2af1c19042f749b636205c8cd916b28facb0a9f9bf266af8ca0bae9c6cc78f",
+    "router_contract_sha256": "9d62cdd88b4cd06b8b5c99e8a797be81407da4ba999071a8c089b26ffe222ab3",
+    "confirmation_accessed": false
+  },
+  "result": {
+    "status": "exploratory_complete",
+    "decision": "do_not_promote",
+    "evidence_level": "refuted_for_direct_raw_cost_weighting",
+    "leave_one_environment_out": {
+      "cost_knn_k5": {
+        "mean_improvement_vs_n2_pct": -0.1896193440807382,
+        "mean_regret_to_oracle_pct": 2.7003502097782373,
+        "worst_environment_improvement_vs_n2_pct": -0.5688580322422145
+      },
+      "pairwise_forest_unweighted": {
+        "mean_improvement_vs_n2_pct": 0.0867231279130232,
+        "mean_regret_to_oracle_pct": 2.424007737784476,
+        "oracle_cost_match_rate": 0.4444444444444444,
+        "worst_environment_improvement_vs_n2_pct": -0.0968204810425304
+      },
+      "pairwise_forest_cost_weighted": {
+        "mean_improvement_vs_n2_pct": -0.140447957099784,
+        "mean_regret_to_oracle_pct": 2.6511788227972837,
+        "oracle_cost_match_rate": 0.3888888888888889,
+        "worst_environment_improvement_vs_n2_pct": -0.31735923743494665
+      }
+    },
+    "stratified_5fold": {
+      "cost_knn_k5_mean_improvement_vs_n2_pct": 0.8820214518895888,
+      "pairwise_forest_unweighted_mean_improvement_vs_n2_pct": 0.725885552940289,
+      "pairwise_forest_cost_weighted_mean_improvement_vs_n2_pct": 0.6928245928606357
+    },
+    "gate_checks": {
+      "positive_mean_improvement": false,
+      "better_mean_than_unweighted": false,
+      "better_mean_than_current_knn": true,
+      "worst_environment_not_worse_than_unweighted": false,
+      "worst_environment_not_worse_than_current_knn": true
+    }
+  },
+  "evidence": {
+    "aggregate_json": "eoh_rag_workspace/reports/formal/cvrp_pairwise_selector_ablation_dev_v1/ablation.json",
+    "aggregate_json_sha256": "2cc0cfca19f8f42d7ae77ac6de43337e970aeced97a98ba759d00c64408ff39c",
+    "markdown_report": "eoh_rag_workspace/reports/formal/cvrp_pairwise_selector_ablation_dev_v1/ablation.md",
+    "markdown_report_sha256": "2831dfbdbca66f7094f401765e224d4d309abe4606a0381ca1e208ada0baa00a",
+    "human_record": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_025710-code_implementation-CVRP代价敏感pairwise选择器离线消融.md",
+    "human_record_sha256": "8feaa86fc0f7310166845a6c9900243321f209112fa331bc2cc32211dd12c659"
+  },
+  "verification": {
+    "method": "TDD red-green vertical slices plus targeted selector milestone tests",
+    "targeted_test_command": "python -m pytest tests/test_pairwise_cost_sensitive_selector.py tests/test_cvrp_selector_learnability.py tests/test_portfolio_complementarity_feedback.py tests/test_cvrp_expert_router.py tests/test_cvrp_expert_router_analysis.py -q",
+    "targeted_test_result": "29 passed in 61.88s",
+    "python_compile": "passed",
+    "ruff": "passed",
+    "dependency_import": "scikit-learn 1.8.0 passed",
+    "pip_check": "global environment has unrelated pre-existing marker-pdf, surya-ocr, llamafactory and sse-starlette conflicts; no eoh-rag or scikit-learn conflict reported",
+    "test_tier": "targeted"
+  },
+  "next_action": "restore_valid_provider_credentials_and_rerun_frozen_v1_coordinates_20101_20102_20103; do not activate the weighted pairwise selector"
+}

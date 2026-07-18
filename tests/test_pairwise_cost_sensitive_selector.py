@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from eoh_rag.experiments.pairwise_selector import PairwiseCostSensitiveSelector
 
@@ -47,3 +48,25 @@ def test_all_ties_choose_smallest_algorithm_index_deterministically() -> None:
         0,
         0,
     ]
+
+
+def test_maximization_uses_the_same_pairwise_contract() -> None:
+    """通用选择器只切换目标方向，不复制另一套实现。"""
+
+    selector = PairwiseCostSensitiveSelector(
+        objective_direction="maximize",
+        random_state=2011,
+    ).fit(
+        np.asarray([[0.0], [1.0]], dtype=float),
+        np.asarray([[0.0, 1.0], [0.0, 2.0]], dtype=float),
+    )
+
+    assert selector.predict(np.asarray([[0.5]], dtype=float)).tolist() == [1]
+
+
+def test_fit_rejects_zero_feature_columns_before_model_training() -> None:
+    with pytest.raises(ValueError, match="at least one feature"):
+        PairwiseCostSensitiveSelector().fit(
+            np.empty((2, 0), dtype=float),
+            np.asarray([[0.0, 1.0], [1.0, 0.0]], dtype=float),
+        )

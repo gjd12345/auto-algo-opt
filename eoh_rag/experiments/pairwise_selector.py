@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -28,12 +29,18 @@ class PairwiseCostSensitiveSelector:
         self,
         *,
         cost_sensitive: bool = True,
+        objective_direction: Literal["minimize", "maximize"] = "minimize",
         n_estimators: int = 99,
         random_state: int = 0,
     ) -> None:
         if n_estimators <= 0:
             raise ValueError("n_estimators must be positive")
+        if objective_direction not in {"minimize", "maximize"}:
+            raise ValueError(
+                "objective_direction must be minimize or maximize"
+            )
         self.cost_sensitive = bool(cost_sensitive)
+        self.objective_direction = objective_direction
         self.n_estimators = int(n_estimators)
         self.random_state = int(random_state)
         self._feature_count: int | None = None
@@ -45,7 +52,7 @@ class PairwiseCostSensitiveSelector:
         features: np.ndarray,
         costs: np.ndarray,
     ) -> PairwiseCostSensitiveSelector:
-        """拟合所有算法对；costs 必须是越小越好的有限损失。"""
+        """拟合所有算法对；目标方向由 ``objective_direction`` 冻结。"""
 
         feature_matrix = np.asarray(features, dtype=float)
         cost_matrix = np.asarray(costs, dtype=float)
@@ -53,6 +60,8 @@ class PairwiseCostSensitiveSelector:
             raise ValueError("features and costs must both be two-dimensional")
         if len(feature_matrix) == 0 or len(feature_matrix) != len(cost_matrix):
             raise ValueError("features and costs must be non-empty and aligned")
+        if feature_matrix.shape[1] == 0:
+            raise ValueError("features must contain at least one feature column")
         if cost_matrix.shape[1] < 2:
             raise ValueError("costs must contain at least two algorithms")
         if not np.all(np.isfinite(feature_matrix)) or not np.all(
@@ -74,7 +83,11 @@ class PairwiseCostSensitiveSelector:
                     cost_matrix[:, left_index] - cost_matrix[:, right_index]
                 )
                 non_tie = np.abs(differences) > 1e-15
-                labels = (differences > 0).astype(int)
+                labels = (
+                    (differences > 0).astype(int)
+                    if self.objective_direction == "minimize"
+                    else (differences < 0).astype(int)
+                )
                 sample_weights = (
                     np.abs(differences)
                     if self.cost_sensitive
