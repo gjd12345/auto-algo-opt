@@ -1,0 +1,59 @@
+{
+  "schema_version": "agent_ad_cvrp_router_gate/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-router-implementation-gate",
+  "audience": "agent",
+  "created_at": "2026-07-19T00:53:24+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "4e98f8e5eb9eb76bd86eaaaa5728204aa5e51e08",
+  "status": "implementation_and_offline_smoke_completed",
+  "evidence_refs": [
+    {
+      "kind": "router_contract",
+      "path": "official_eoh/examples/cvrp_expert_router/router_contract_v1.json",
+      "sha256": "9D62CDD88B4CD06B8B5C99E8A797BE81407DA4BA999071A8C089B26FFE222AB3"
+    },
+    {
+      "kind": "fallback_manifest",
+      "path": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_deepseek_fallback_v1.json"
+    },
+    {
+      "kind": "offline_smoke",
+      "path": "eoh_rag_workspace/reports/formal/cvrp_expert_router_offline_smoke_v3/official_eoh_run_summary.json",
+      "result": "return_code_0_valid_candidates_1_confirmation_complete"
+    },
+    {
+      "kind": "test",
+      "command": "python -m pytest -q",
+      "result": "543 passed, 3 skipped, 4 subtests passed"
+    },
+    {
+      "kind": "human_record",
+      "path": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_005324-code_implementation-CVRP选择器接入与资产阻塞边总勘误.md"
+    }
+  ],
+  "constraints": [
+    "Only the nine frozen instance features and expert summaries are visible to the selector.",
+    "Development uses seeds 121000-141029; confirmation uses disjoint seeds 151000-171029.",
+    "Confirmation is evaluated only after the final candidate is frozen and never feeds the same evolution run.",
+    "The development oracle remains report-only and is not an input to fitness or prompts.",
+    "The OpenCode Go key was unavailable before cohort start; the complete three-run cohort therefore uses the declared DeepSeek fallback and must not be merged with a primary-provider cohort.",
+    "Historical actor values such as research_agent_eoh remain historical evidence and are not silently rewritten."
+  ],
+  "next_action": {
+    "action": "run_cvrp_expert_router_proxy_deepseek_fallback_v1_then_apply_frozen_gate",
+    "manifest": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_deepseek_fallback_v1.json",
+    "provider": "deepseek",
+    "run_count": 3,
+    "analysis": "python -m eoh_rag.experiments.reports.analyze_cvrp_expert_router",
+    "parallel_gap_work": "deep_read_relevant_algorithm_selection_and_reflective_evolution_papers",
+    "do_not_do": [
+      "mix provider cohorts",
+      "change the proxy gate after seeing results",
+      "expose confirmation or oracle costs to evolution",
+      "report the 2.5107 percent development oracle as achieved performance"
+    ]
+  }
+}
