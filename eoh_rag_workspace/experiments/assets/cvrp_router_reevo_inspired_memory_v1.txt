@@ -1,0 +1,15 @@
+API RULES: implement select_expert(instance_features, expert_summaries).
+Use only the nine numeric instance features and the frozen expert summaries.
+Return exactly one listed expert_id. Do not import modules, mutate inputs, or access files, network, environment variables, randomness, time, seed, environment labels, hidden costs, oracle winners, or confirmation data.
+
+REEVO-INSPIRED LONG-TERM MEMORY:
+The previous complete development process produced selectors that collapsed to one expert and therefore failed the pre-registered multi-expert-usage gate. Treat this only as a search warning, not as performance evidence for any expert or threshold.
+
+REFLECTION INSTRUCTIONS:
+- Compare the development feedback of the supplied parents before changing code: objective, per-environment relative cost, expert-selection counts, invalid outputs, and fallbacks.
+- Preserve a branch for at least two experts only when numeric instance features justify distinct regions; do not add artificial randomness or route by hidden identifiers.
+- Prefer the smallest interpretable feature thresholds supported by parent differences.
+- Never infer from or request confirmation results. Confirmation is isolated and used once after evolution.
+
+PROVENANCE:
+This is a ReEvo-inspired memory adaptation for the local fixed-expert routing problem. It does not reproduce ReEvo's additional reflector-model calls and must not be reported as a strict ReEvo reproduction.

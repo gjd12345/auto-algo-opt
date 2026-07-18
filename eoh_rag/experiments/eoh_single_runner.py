@@ -393,7 +393,8 @@ def _runner_script() -> str:
                          confirmation_feedback: bool = False,
                          controller_budget_policy: str = "strict",
                          controller_dev_suite: str = "synthetic_dev_v1",
-                         controller_confirm_suite: str = "synthetic_confirm_v1"):
+                         controller_confirm_suite: str = "synthetic_confirm_v1",
+                         router_contract: str = ""):
             sys.path.insert(0, str(official_root / "eoh" / "src"))
             example_root = official_root / "examples" / problem
             sys.path.insert(0, str(example_root))
@@ -440,6 +441,7 @@ def _runner_script() -> str:
                 return CVRPEXPERTROUTER(
                     timeout=eval_timeout_s,
                     n_processes=n_processes,
+                    contract_path=router_contract or None,
                 )
             raise ValueError(f"unknown problem: {problem}")
 
@@ -577,6 +579,7 @@ def _runner_script() -> str:
             )
             parser.add_argument("--arm", required=True, choices=["pure_eoh", "api_only", "context_file"])
             parser.add_argument("--context-file", default="")
+            parser.add_argument("--router-contract", default="")
             parser.add_argument("--output-dir", required=True)
             parser.add_argument("--pop-size", type=int, default=2)
             parser.add_argument("--generations", type=int, default=1)
@@ -679,7 +682,8 @@ def _runner_script() -> str:
                                 confirmation_feedback=confirmation_policy,
                                 controller_budget_policy=args.controller_budget_policy,
                                 controller_dev_suite=args.controller_dev_suite,
-                                controller_confirm_suite=args.controller_confirm_suite)
+                                controller_confirm_suite=args.controller_confirm_suite,
+                                router_contract=args.router_contract)
             apply_arm_context(task, args.problem, args.arm, args.context_file)
             install_api_url_patch()
             llm = LLMConfig(api_endpoint=endpoint, api_key=api_key, model=model, timeout=args.llm_timeout_s)
@@ -971,6 +975,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
             cmd.extend(["--held-out-set", args.held_out_set])
     if context_file:
         cmd.extend(["--context-file", context_file])
+    if args.router_contract:
+        cmd.extend(["--router-contract", args.router_contract])
     if args.use_official_seed:
         cmd.append("--use-official-seed")
     if args.seed_codes:
@@ -1090,6 +1096,7 @@ def main() -> None:
         default="pure_eoh",
     )
     parser.add_argument("--context-file", default="")
+    parser.add_argument("--router-contract", default="")
     parser.add_argument("--rag-top-k", type=int, default=2)
     parser.add_argument("--rag-max-chars", type=int, default=1800)
     parser.add_argument("--rag-query", default="")

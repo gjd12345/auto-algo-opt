@@ -129,9 +129,19 @@ def select_expert(instance_features: dict[str, float],
         "and do not mutate either input."
     )
 
-    def __init__(self, timeout: int = 180, n_processes: int = 1):
+    def __init__(
+        self,
+        timeout: int = 180,
+        n_processes: int = 1,
+        contract_path: str | Path | None = None,
+    ):
         super().__init__(timeout=timeout, n_processes=n_processes)
-        self.contract_path = EXAMPLE_DIR / "router_contract_v1.json"
+        # 默认合同保持旧实验可复现；新 cohort 必须显式传入独立合同，避免复用已观察的确认集。
+        self.contract_path = (
+            Path(contract_path).resolve()
+            if contract_path
+            else EXAMPLE_DIR / "router_contract_v1.json"
+        )
         self.contract_bytes = self.contract_path.read_bytes()
         self.contract_sha256 = _sha256_bytes(self.contract_bytes)
         self.contract = json.loads(self.contract_bytes.decode("utf-8"))

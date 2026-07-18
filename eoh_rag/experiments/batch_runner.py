@@ -431,6 +431,12 @@ def _build_cmd(
         if not context_path.is_absolute():
             context_path = _REPO_ROOT / context_path
         cmd.extend(["--context-file", str(context_path.resolve())])
+    router_contract = arm.get("router_contract") or manifest.get("router_contract", "")
+    if router_contract:
+        router_contract_path = Path(router_contract)
+        if not router_contract_path.is_absolute():
+            router_contract_path = _REPO_ROOT / router_contract_path
+        cmd.extend(["--router-contract", str(router_contract_path.resolve())])
     # 合并 RAG 配置：arm 级别覆盖 manifest 级别
     rag = {**manifest.get("rag", {}), **arm.get("rag", {})}
     if arm["runner_arm"] in ("literature_rag", "history_rag", "mixed_rag"):

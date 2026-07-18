@@ -1,0 +1,122 @@
+{
+  "schema_version": "cvrp_expert_router_contract/v1",
+  "contract_id": "cvrp_expert_router_v2_disjoint_reevo",
+  "scientific_actor": "research_agent",
+  "purpose": "在与 v1 完全隔离的数据划分上比较基础路由反馈与 ReEvo-inspired 反思记忆",
+  "function_contract": {
+    "name": "select_expert",
+    "signature": "select_expert(instance_features: dict[str, float], expert_summaries: list[dict[str, str]]) -> str",
+    "output": "必须返回 expert_ids 中的一个字符串",
+    "forbidden": [
+      "文件、网络、环境变量、随机数和时钟访问",
+      "修改输入对象",
+      "读取 environment、seed、候选成本、oracle winner 或 held-out 信息"
+    ]
+  },
+  "feature_order": [
+    "n_customers",
+    "capacity",
+    "mean_demand_ratio",
+    "demand_cv",
+    "capacity_fill_ratio",
+    "span_aspect_ratio",
+    "depot_distance_ratio",
+    "nearest_neighbor_ratio",
+    "radial_distance_cv"
+  ],
+  "features": {
+    "n_customers": "客户数量，不含仓库",
+    "capacity": "单车容量",
+    "mean_demand_ratio": "客户平均需求除以单车容量",
+    "demand_cv": "客户需求标准差除以平均需求",
+    "capacity_fill_ratio": "总需求除以理论最少车辆数乘容量",
+    "span_aspect_ratio": "坐标较长跨度除以较短跨度，最小为 1",
+    "depot_distance_ratio": "仓库到客户平均距离除以客户两两平均距离",
+    "nearest_neighbor_ratio": "客户平均最近邻距离除以客户两两平均距离",
+    "radial_distance_cv": "仓库到客户距离的标准差除以其平均值"
+  },
+  "feature_numerics": {
+    "distance_epsilon": 1e-12,
+    "standard_deviation": "population",
+    "pairwise_diagonal_excluded": true,
+    "nan_or_infinite_feature": "candidate_invalid"
+  },
+  "expert_ids": [
+    "n1",
+    "n2",
+    "density_structure",
+    "multi_environment_variance"
+  ],
+  "experts": [
+    {
+      "expert_id": "n1",
+      "actor": "research_agent",
+      "code_sha256": "E428E8AE8ADBD136BD60C0367A5BF7810528887172C67ECDDAD25C4CBFDC4DA0",
+      "source_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+      "source_file_sha256": "D482554228D41FD3F8EC8858B51731BC69A3491C656C5F3CC36C31770C88A6A5",
+      "summary": "按节省距离和后悔值选点，使用较温和的提前回仓阈值"
+    },
+    {
+      "expert_id": "n2",
+      "actor": "research_agent",
+      "code_sha256": "BC5D55374D323D51C2AD3E22ABC4ADCBCC4559B532CE97BF3A60173E2FA4E5CD",
+      "source_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+      "source_file_sha256": "D482554228D41FD3F8EC8858B51731BC69A3491C656C5F3CC36C31770C88A6A5",
+      "summary": "沿用节省距离和后悔值骨架，使用更积极的提前回仓阈值"
+    },
+    {
+      "expert_id": "density_structure",
+      "actor": "research_agent",
+      "code_sha256": "EFBED55F3CBFEC7986FCC012FDEFDFBA7574F2B9FDD2F5F983AEB85E1911AD92",
+      "source_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_structure_candidate_v1.json",
+      "source_file_sha256": "E426B21165ED66DD75D7C46A58BC5D967A78F5AA621702D528E8A357CAD7D0C1",
+      "summary": "在共同骨架上加入附近客户平均距离，容量宽松时更偏向较孤立的客户"
+    },
+    {
+      "expert_id": "multi_environment_variance",
+      "actor": "research_agent",
+      "code_sha256": "2383079CC38C001EF23742C82DC6DA959745A11DFCEB363798203BA7922B52B3",
+      "source_file": "official_eoh/examples/cvrp_construct/seeds/cvrp_multi_environment_candidate_v1.json",
+      "source_file_sha256": "C1F8A3BA3A41BC6BE3C1FB0A66CBE459CC8600A626BD3AA5F003143C43B7E8FE",
+      "summary": "在共同骨架上按当前未访问客户的需求方差调整需求惩罚"
+    }
+  ],
+  "data_split": {
+    "development": {
+      "uniform_50": [181000, 181029],
+      "clustered_100": [191000, 191029],
+      "rectangular_200": [201000, 201029]
+    },
+    "confirmation": {
+      "uniform_50": [211000, 211029],
+      "clustered_100": [221000, 221029],
+      "rectangular_200": [231000, 231029]
+    },
+    "held_out_used": false,
+    "confirmation_visible_during_evolution": false,
+    "disjoint_from_contract_ids": ["cvrp_expert_router_v1"]
+  },
+  "fitness": {
+    "direction": "minimize",
+    "per_instance": "(selected_expert_cost - n2_cost) / n2_cost",
+    "aggregate": "三个环境分别求均值后等权平均",
+    "n2_reference": 0.0,
+    "feedback_visible": [
+      "development objective",
+      "各环境相对 n2 的平均差",
+      "各专家被选择次数",
+      "无效输出和专家回退次数"
+    ]
+  },
+  "failure_policy": {
+    "selector_exception_or_unknown_id": "candidate_invalid",
+    "selected_expert_failure": "fallback_to_n2_and_record",
+    "n2_fallback_failure": "candidate_invalid",
+    "selector_input_mutation": "candidate_invalid"
+  },
+  "prior_contract_results": {
+    "usable_as_fitness_input": false,
+    "usable_as_confirmation_input": false,
+    "allowed_memory_fact": "此前完整代理 cohort 因候选均退化为单专家规则而未通过多专家使用门禁"
+  }
+}

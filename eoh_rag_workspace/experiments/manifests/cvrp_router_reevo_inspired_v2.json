@@ -1,0 +1,85 @@
+{
+  "suite": "cvrp_router_reevo_inspired_v2",
+  "status": "frozen_pending_budget_approval",
+  "model": "deepseek-v4-flash",
+  "provider_policy": {
+    "primary": "opencode-go",
+    "fallback": "deepseek",
+    "fallback_requires_new_complete_cohort": true,
+    "provider_cohorts_may_not_mix": true
+  },
+  "problems": ["cvrp_expert_router"],
+  "arms": [
+    {
+      "name": "router_aware_control",
+      "runner_arm": "api_only",
+      "context_strategy": "api_contract_only",
+      "operators": "e1,e2,m1,m2",
+      "evolution_feedback_policy": "router_aware",
+      "seed_codes": "official_eoh/examples/cvrp_expert_router/seeds/router_seeds_v1.json"
+    },
+    {
+      "name": "reevo_inspired_memory",
+      "runner_arm": "context_file",
+      "context_strategy": "reevo_inspired_long_term_memory_v1",
+      "context_file": "eoh_rag_workspace/experiments/assets/cvrp_router_reevo_inspired_memory_v1.txt",
+      "operators": "e1,e2,m1,m2",
+      "evolution_feedback_policy": "router_aware",
+      "seed_codes": "official_eoh/examples/cvrp_expert_router/seeds/router_seeds_v1.json"
+    }
+  ],
+  "router_contract": "official_eoh/examples/cvrp_expert_router/router_contract_v2.json",
+  "router_contract_sha256": "44AAC84170F565C80968C72291DBA286C0606F6E0328B3465EC74E5B906772C8",
+  "seed_codes_sha256": "56D37B803C0DA5B6D0177578B70E8ACABFB428701AF6B28B41CEA195232C22FF",
+  "memory_asset_sha256": "094BA4D327D66A0AC51A1A078256BB6146A8DB55C87D084CC45CCFB98163CAF8",
+  "generations": [4],
+  "pop_size": 4,
+  "repeats": 3,
+  "seed_list": [20201, 20202, 20203],
+  "max_runs": 6,
+  "additional_llm_run_budget_required": 6,
+  "use_official_seed": true,
+  "n_processes": 1,
+  "eval_timeout_s": 180,
+  "llm_timeout_s": 180,
+  "run_timeout_s": 5400,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "primary_metric": "paired_confirmation_mean_improvement_of_memory_over_control_pct",
+  "scientific_claim_boundary": {
+    "treatment_label": "ReEvo-inspired reflection memory",
+    "strict_reevo_reproduction": false,
+    "reason": "不增加 ReEvo 官方实现中的独立短期与长期 reflector LLM 调用，只移植其成对比较和压缩记忆原则",
+    "actor": "research_agent"
+  },
+  "selection_contract": {
+    "confirmation_feedback_visible_to_evolution": false,
+    "old_v1_confirmation_reused": false,
+    "held_out_visible": false,
+    "codex_may_write_final_router": false,
+    "prior_gate_metrics_visible": false,
+    "prior_failure_pattern_visible": "single_expert_collapse_only"
+  },
+  "paired_gate": {
+    "completed_runs_min": 6,
+    "valid_generated_runs_min": 6,
+    "paired_seed_count_min": 3,
+    "memory_minus_control_confirmation_improvement_pct_min": 0.2,
+    "memory_confirmation_mean_improvement_vs_n2_pct_min": 0.3,
+    "memory_confirmation_environment_degradation_pct_max": 0.5,
+    "memory_runs_using_at_least_two_experts_min": 2,
+    "selector_invalid_outputs_max": 0,
+    "missing_coordinates_max": 0,
+    "next_if_pass": "freeze_memory_router_and_run_new_unseen_generalization_suite",
+    "next_if_fail": "record_reflection_memory_negative_result_and_stop_cvrp_router_expansion"
+  },
+  "launch_gate": {
+    "budget_approval_required": true,
+    "approved": false,
+    "api_preflight_after_approval": true,
+    "tests_require_separate_user_approval": true
+  },
+  "official_root": "official_eoh"
+}
