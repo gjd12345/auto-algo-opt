@@ -127,12 +127,12 @@ def analyze_proxy(manifest_path: Path, run_root: Path) -> dict[str, Any]:
     worst_environment_degradation_pct = (
         max(environment_mean_degradation_pct.values())
         if environment_mean_degradation_pct
-        else float("inf")
+        else None
     )
     confirmation_mean_improvement = (
         mean(confirmation_improvements)
         if confirmation_improvements
-        else float("-inf")
+        else None
     )
     paired_seed_count = len(
         {
@@ -146,9 +146,12 @@ def analyze_proxy(manifest_path: Path, run_root: Path) -> dict[str, Any]:
         "valid_generated_runs": valid_generated_runs
         >= int(gate["valid_generated_runs_min"]),
         "paired_seed_count": paired_seed_count >= int(gate["paired_seed_count_min"]),
-        "confirmation_mean_improvement": confirmation_mean_improvement
+        "confirmation_mean_improvement": confirmation_mean_improvement is not None
+        and confirmation_mean_improvement
         >= float(gate["confirmation_mean_improvement_vs_n2_pct_min"]),
         "confirmation_environment_degradation": worst_environment_degradation_pct
+        is not None
+        and worst_environment_degradation_pct
         <= float(gate["confirmation_environment_degradation_pct_max"]),
         "multi_expert_usage": runs_using_multiple_experts
         >= int(gate["runs_using_at_least_two_experts_min"]),
@@ -157,14 +160,36 @@ def analyze_proxy(manifest_path: Path, run_root: Path) -> dict[str, Any]:
         "missing_coordinates": len(missing_keys) <= int(gate["missing_coordinates_max"]),
         "feasible_confirmation": infeasible_runs == 0,
     }
-    passed = all(checks.values())
+    # 只有冻结坐标和 confirmation 齐全时，门禁不通过才是方法层失败；
+    # Provider、进程或缺失报告造成的 0-run 不能触发科学方向切换。
+    evidence_complete = (
+        completed >= int(gate["completed_runs_min"])
+        and paired_seed_count >= int(gate["paired_seed_count_min"])
+        and len(missing_keys) <= int(gate["missing_coordinates_max"])
+    )
+    passed = evidence_complete and all(checks.values())
+    if not evidence_complete:
+        status = "inconclusive"
+        evidence_level = "inconclusive"
+        next_action = gate.get(
+            "next_if_inconclusive",
+            "restore_valid_provider_credentials_and_rerun_same_frozen_coordinates",
+        )
+    elif passed:
+        status = "passed"
+        evidence_level = "tentative"
+        next_action = gate["next_if_pass"]
+    else:
+        status = "failed"
+        evidence_level = "tentative"
+        next_action = gate["next_if_fail"]
     return {
         "schema_version": "cvrp_expert_router_proxy_analysis/v1",
         "suite": manifest["suite"],
         "manifest": str(manifest_path),
         "run_root": str(run_root),
-        "status": "passed" if passed else "failed",
-        "evidence_level": "tentative" if passed else "inconclusive",
+        "status": status,
+        "evidence_level": evidence_level,
         "metrics": {
             "completed_runs": completed,
             "valid_generated_runs": valid_generated_runs,
@@ -180,7 +205,7 @@ def analyze_proxy(manifest_path: Path, run_root: Path) -> dict[str, Any]:
         "checks": checks,
         "missing_run_keys": missing_keys,
         "run_evidence": run_evidence,
-        "next_action": gate["next_if_pass"] if passed else gate["next_if_fail"],
+        "next_action": next_action,
     }
 
 
