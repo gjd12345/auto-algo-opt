@@ -1,0 +1,108 @@
+{
+  "schema_version": "agent_ad_literature_note/v1",
+  "document_id": "agent_ad:2026-07-19:paper-hydra-portfolio-construction",
+  "audience": "agent",
+  "created_at": "2026-07-19T02:01:45+08:00",
+  "phase_id": "literature_exploration",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "0d0f7312c47e5a87e4db71752fb61a0c2ff18422",
+  "routing": {
+    "required_docs": [
+      {
+        "path": "01-主线目标与研究问题.md",
+        "raw_sha256": "ffc06589985e6a1dd3e5cc0509196eff9888472ca9e1a4d37117bb9237edfcb0"
+      },
+      {
+        "path": "04-效果评价与基线对照.md",
+        "raw_sha256": "3c67b30fe787c1e648008afce1e1a764014a0c264f35cc711f32195a5ff9cf56"
+      },
+      {
+        "path": "09-Codex自由探索空间.md",
+        "raw_sha256": "c2c93ea816f7eec9fe2cac9823cd358eb9fa3249e1fa2014ae6b9ba1528f8691"
+      }
+    ],
+    "conditional_docs": [
+      {
+        "path": "03-系统架构与模块契约.md",
+        "raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6",
+        "trigger": "map literature evidence to a portable feedback and portfolio module"
+      }
+    ]
+  },
+  "paper": {
+    "title": "Hydra: Automatically Configuring Algorithms for Portfolio-Based Selection",
+    "authors": [
+      "Lin Xu",
+      "Holger H. Hoos",
+      "Kevin Leyton-Brown"
+    ],
+    "venue": "Proceedings of the Twenty-Fourth AAAI Conference on Artificial Intelligence, pages 210-216, 2010",
+    "doi": "10.1609/aaai.v24i1.7565",
+    "publisher_url": "https://ojs.aaai.org/index.php/AAAI/article/view/7565",
+    "pdf_url": "https://ojs.aaai.org/index.php/AAAI/article/download/7565/7426",
+    "project_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/Hydra/",
+    "source_archive_url": "https://www.cs.ubc.ca/labs/beta/Projects/Hydra/hydra-1.1-development-cae8151.zip",
+    "source_archive_version_hint": "hydra-1.1-development-cae8151",
+    "source_archive_fetch_status": "official endpoint exposed but local download remained incomplete and was discarded",
+    "license": "Unknown",
+    "pdf_sha256": "C812C5E852DC5BC4237510DE0DB1083BD188D1237F6B8FCDED3FE09BB6EE1CBF"
+  },
+  "paper_evidence": {
+    "configuration_space_size": "4.82e12",
+    "hydra_iterations": 7,
+    "focused_ils_runs_per_iteration": 10,
+    "focused_ils_time_bound": "one day per run",
+    "metric": "PAR-10 with a five-second cutoff; lower is better",
+    "test_repetitions": "3 runs per algorithm-instance pair; median runtime determines solved status",
+    "result_table": {
+      "BM": {
+        "portfolio_17": 3.06,
+        "hydra_7": 3.06
+      },
+      "INDU": {
+        "portfolio_17": 7.74,
+        "hydra_7": 7.77
+      },
+      "RAND": {
+        "portfolio_17": 813.72,
+        "hydra_7": 631.35
+      },
+      "HAND": {
+        "portfolio_17": 2597.71,
+        "hydra_7": 2495.06
+      }
+    },
+    "random_seed_values": "Unknown"
+  },
+  "project_mapping": {
+    "role": "development_only_selector_v2_method_reference",
+    "portable_capability": "generate candidates against portfolio complementarity feedback instead of standalone mean quality",
+    "minimization_feedback": "per_instance_score(candidate, incumbent_portfolio) = min(candidate_loss, incumbent_portfolio_loss)",
+    "required_gates": [
+      "oracle portfolio gain on development data",
+      "real selector gain under disjoint development validation",
+      "feasibility and runtime safety",
+      "code-hash deduplication",
+      "no confirmation visibility"
+    ],
+    "current_status": "protocol_mapping_only",
+    "frozen_v1_changed": false,
+    "activation_gate": "create and freeze a separate v2 manifest after the current v1 cohort is resolved"
+  },
+  "human_record": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_020145-literature_exploration-Hydra互补算法池构造深读.md",
+  "verification": {
+    "pdf_pages_rendered_and_inspected": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "machine_json_parse": "passed",
+    "test_tier": "skipped",
+    "test_reason": "literature and process-record update only; no execution path changed"
+  },
+  "next_action": "restore_valid_provider_credentials_and_rerun_frozen_v1_coordinates_before_any_v2_activation"
+}
