@@ -107,8 +107,11 @@ def cross_validated_predictions(
     k_values: tuple[int, ...] = (1, 3, 5, 9),
     pairwise_n_estimators: int = 99,
     pairwise_random_state: int = 2011,
+    pairwise_backup_minimum_vote_margin: int = 0,
 ) -> dict[str, np.ndarray]:
     """每个测试实例只由不含自身的训练折产生一次预测。"""
+    if pairwise_backup_minimum_vote_margin < 0:
+        raise ValueError("pairwise_backup_minimum_vote_margin must be non-negative")
     sample_count = len(features)
     predictions = {
         "single_best_train": np.full(sample_count, -1, dtype=int),
@@ -118,6 +121,11 @@ def cross_validated_predictions(
         },
         "pairwise_forest_unweighted": np.full(sample_count, -1, dtype=int),
         "pairwise_forest_cost_weighted": np.full(
+            sample_count,
+            -1,
+            dtype=int,
+        ),
+        "pairwise_forest_unweighted_tie_backup": np.full(
             sample_count,
             -1,
             dtype=int,
@@ -151,6 +159,15 @@ def cross_validated_predictions(
             predictions[method_name][test_indices] = selector.predict(
                 features[test_indices]
             )
+            if not cost_sensitive:
+                # 后备算法只能由训练折决定，避免测试实例的真实成本反向影响路由。
+                predictions["pairwise_forest_unweighted_tie_backup"][
+                    test_indices
+                ] = selector.predict_with_backup(
+                    features[test_indices],
+                    backup_algorithm_index=single_best,
+                    minimum_vote_margin=pairwise_backup_minimum_vote_margin,
+                )
     if any(np.any(values < 0) for values in predictions.values()):
         raise ValueError("cross-validation did not predict every instance exactly once")
     return predictions
@@ -234,6 +251,46 @@ def assess_pairwise_ablation(
         ),
         "weighted_minus_current_knn_mean_improvement_pct": (
             weighted_mean - current_mean
+        ),
+        "gate_checks": gate_checks,
+        "decision": (
+            "promote_to_selector_v2_dev_candidate"
+            if all(gate_checks.values())
+            else "do_not_promote"
+        ),
+    }
+
+
+def assess_backup_ablation(
+    *,
+    backup: dict[str, Any],
+    unweighted: dict[str, Any],
+) -> dict[str, Any]:
+    """判断固定后备是否在不牺牲原选择器的前提下改善开发期稳健性。"""
+
+    mean_key = "mean_improvement_vs_n2_pct"
+    worst_key = "worst_environment_improvement_vs_n2_pct"
+    backup_mean = float(backup[mean_key])
+    unweighted_mean = float(unweighted[mean_key])
+    backup_worst = float(backup[worst_key])
+    unweighted_worst = float(unweighted[worst_key])
+    tolerance = 1e-12
+    gate_checks = {
+        "positive_mean_improvement": backup_mean > tolerance,
+        "mean_not_worse_than_unweighted": (
+            backup_mean + tolerance >= unweighted_mean
+        ),
+        "worst_environment_not_worse_than_unweighted": (
+            backup_worst + tolerance >= unweighted_worst
+        ),
+    }
+    return {
+        "primary_protocol": "leave_one_environment_out",
+        "backup_minus_unweighted_mean_improvement_pct": (
+            backup_mean - unweighted_mean
+        ),
+        "backup_minus_unweighted_worst_environment_improvement_pct": (
+            backup_worst - unweighted_worst
         ),
         "gate_checks": gate_checks,
         "decision": (
@@ -367,6 +424,10 @@ def analyze_development_learnability() -> dict[str, Any]:
         unweighted=loeo_methods["pairwise_forest_unweighted"],
         current_knn=loeo_k5,
     )
+    backup_ablation = assess_backup_ablation(
+        backup=loeo_methods["pairwise_forest_unweighted_tie_backup"],
+        unweighted=loeo_methods["pairwise_forest_unweighted"],
+    )
     if (
         stratified_k5["mean_improvement_vs_n2_pct"] > 0
         and loeo_k5["mean_improvement_vs_n2_pct"] > 0
@@ -378,7 +439,7 @@ def analyze_development_learnability() -> dict[str, Any]:
         assessment = "fixed_k5_has_no_positive_cross_validated_signal"
 
     return {
-        "schema_version": "cvrp_selector_learnability_dev/v2",
+        "schema_version": "cvrp_selector_learnability_dev/v3",
         "status": "exploratory_complete",
         "actor": "codex",
         "provenance": "external_teacher_diagnostic",
@@ -395,6 +456,13 @@ def analyze_development_learnability() -> dict[str, Any]:
             "weighted_sample_rule": "absolute pairwise relative-cost difference",
             "unweighted_sample_rule": "uniform weight on non-tie pairwise labels",
             **pairwise_ablation,
+        },
+        "backup_ablation": {
+            "provenance": "SATzilla2012 fallback-routing adaptation",
+            "selector": "pairwise_forest_unweighted",
+            "backup": "single_best_train",
+            "minimum_vote_margin": 0,
+            **backup_ablation,
         },
         "primary_diagnostic": {
             "method": "cost_knn_k5",
@@ -471,6 +539,25 @@ def _write_markdown(path: Path, result: dict[str, Any]) -> None:
                 for name, passed in result["pairwise_ablation"][
                     "gate_checks"
                 ].items()
+            ],
+            "",
+            "## Fixed-backup abstention ablation",
+            "",
+            f"- decision: `{result['backup_ablation']['decision']}`",
+            (
+                "- backup_minus_unweighted_mean_improvement_pct: "
+                f"`{result['backup_ablation']['backup_minus_unweighted_mean_improvement_pct']:.6f}`"
+            ),
+            (
+                "- backup_minus_unweighted_worst_environment_improvement_pct: "
+                f"`{result['backup_ablation']['backup_minus_unweighted_worst_environment_improvement_pct']:.6f}`"
+            ),
+            "",
+            "### Gate checks",
+            "",
+            *[
+                f"- {name}: `{passed}`"
+                for name, passed in result["backup_ablation"]["gate_checks"].items()
             ],
             "",
             "## Evidence boundary",

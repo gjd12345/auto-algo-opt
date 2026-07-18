@@ -1,0 +1,81 @@
+{
+  "schema_version": "cvrp_pairwise_abstain_backup_ablation/v1",
+  "status": "frozen_development_only",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "provenance": "external_teacher_diagnostic",
+  "research_question": "Does a pre-fixed single-best backup on tied unweighted pairwise votes improve CVRP expert-selection robustness without reducing realized development-only quality?",
+  "paper_reference": {
+    "title": "SATzilla2012: Improved Algorithm Selection Based on Cost-sensitive Classification Models",
+    "paper_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/SATzilla/SATzilla2012final.pdf",
+    "adapted_component": "deterministic fallback route only; not the refuted raw cost-weighting arm"
+  },
+  "data": {
+    "scope": "development_only",
+    "source": "official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py",
+    "router_contract": "official_eoh/examples/cvrp_expert_router/router_contract_v1.json",
+    "router_contract_sha256": "9d62cdd88b4cd06b8b5c99e8a797be81407da4ba999071a8c089b26ffe222ab3",
+    "expected_dataset_sha256": "0e2af1c19042f749b636205c8cd916b28facb0a9f9bf266af8ca0bae9c6cc78f",
+    "sample_count": 90,
+    "feature_count": 9,
+    "expert_count": 4,
+    "confirmation_accessed": false
+  },
+  "protocols": {
+    "primary": "leave_one_environment_out",
+    "secondary": "stratified_5fold",
+    "fold_assignment": "deterministic_frozen_order",
+    "hyperparameter_search": false
+  },
+  "arms": {
+    "pairwise_unweighted": {
+      "method": "pairwise_forest_unweighted",
+      "n_estimators": 99,
+      "random_state": 2011,
+      "sample_weight": "1 for non-ties, 0 for ties"
+    },
+    "pairwise_unweighted_tie_backup": {
+      "method": "pairwise_forest_unweighted_tie_backup",
+      "n_estimators": 99,
+      "random_state": 2011,
+      "minimum_vote_margin": 0,
+      "backup_rule": "single_best_train computed from each training fold only",
+      "test_cost_visible_to_backup": false
+    }
+  },
+  "metrics": {
+    "direction": "higher_is_better",
+    "primary": "mean_improvement_vs_n2_pct",
+    "safety": "worst_environment_improvement_vs_n2_pct",
+    "diagnostics": [
+      "mean_regret_to_oracle_pct",
+      "oracle_cost_match_rate",
+      "better_same_worse_vs_n2",
+      "expert_selection_counts"
+    ]
+  },
+  "promotion_gate": {
+    "all_required": true,
+    "checks": [
+      "backup mean improvement is strictly positive",
+      "backup mean improvement is not worse than unweighted",
+      "backup worst-environment improvement is not worse than unweighted"
+    ]
+  },
+  "run_budget": {
+    "deterministic_passes": 1,
+    "llm_calls": 0,
+    "formal_coordinates": 0,
+    "stop_after_report": true
+  },
+  "output": {
+    "json": "eoh_rag_workspace/reports/formal/cvrp_pairwise_abstain_backup_dev_v1/ablation.json",
+    "markdown": "eoh_rag_workspace/reports/formal/cvrp_pairwise_abstain_backup_dev_v1/ablation.md"
+  },
+  "activation_boundary": {
+    "frozen_cvrp_router_v1_changed": false,
+    "formal_manifest_changed": false,
+    "confirmation_may_be_loaded": false,
+    "promotion_only_means": "eligible for a separately frozen selector-v2 development protocol"
+  }
+}

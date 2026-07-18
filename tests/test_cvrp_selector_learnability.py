@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from eoh_rag.experiments.reports.analyze_cvrp_selector_learnability import (
+    assess_backup_ablation,
     assess_pairwise_ablation,
     build_leave_one_environment_out_folds,
     build_stratified_folds,
@@ -106,6 +107,38 @@ def test_cross_validation_reports_weighted_pairwise_ablation() -> None:
     assert all(len(values) == 4 for values in predictions.values())
 
 
+def test_pairwise_backup_uses_only_the_fold_fixed_single_best_expert() -> None:
+    """回退专家必须由训练折固定，不能在测试折查看真实成本后再选择。"""
+
+    features = np.asarray([[-2.0], [-1.0], [1.0], [2.0]])
+    relative_costs = np.asarray(
+        [
+            [0.0, -0.20],
+            [0.0, -0.10],
+            [0.0, 0.10],
+            [0.0, 0.20],
+        ]
+    )
+    folds = [
+        (np.asarray([1, 3]), np.asarray([0, 2])),
+        (np.asarray([0, 2]), np.asarray([1, 3])),
+    ]
+
+    predictions = cross_validated_predictions(
+        features,
+        relative_costs,
+        folds,
+        k_values=(1,),
+        pairwise_backup_minimum_vote_margin=100,
+    )
+
+    assert "pairwise_forest_unweighted_tie_backup" in predictions
+    assert np.array_equal(
+        predictions["pairwise_forest_unweighted_tie_backup"],
+        predictions["single_best_train"],
+    )
+
+
 def test_pairwise_ablation_requires_realized_and_worst_environment_gains() -> None:
     """加权模型必须同时超过无权重模型、当前 kNN 和零改善线。"""
 
@@ -130,5 +163,27 @@ def test_pairwise_ablation_requires_realized_and_worst_environment_gains() -> No
         "better_mean_than_current_knn": True,
         "worst_environment_not_worse_than_unweighted": True,
         "worst_environment_not_worse_than_current_knn": True,
+    }
+    assert assessment["decision"] == "promote_to_selector_v2_dev_candidate"
+
+
+def test_backup_ablation_requires_positive_mean_without_worsening_pairwise_arm() -> None:
+    """保底臂即使更稳，也不能以负均值改善为代价被晋级。"""
+
+    assessment = assess_backup_ablation(
+        backup={
+            "mean_improvement_vs_n2_pct": 0.2,
+            "worst_environment_improvement_vs_n2_pct": -0.1,
+        },
+        unweighted={
+            "mean_improvement_vs_n2_pct": 0.1,
+            "worst_environment_improvement_vs_n2_pct": -0.2,
+        },
+    )
+
+    assert assessment["gate_checks"] == {
+        "positive_mean_improvement": True,
+        "mean_not_worse_than_unweighted": True,
+        "worst_environment_not_worse_than_unweighted": True,
     }
     assert assessment["decision"] == "promote_to_selector_v2_dev_candidate"

@@ -138,6 +138,43 @@ class PairwiseCostSensitiveSelector:
     def predict(self, features: np.ndarray) -> np.ndarray:
         """返回每个实例选择的算法列索引。"""
 
+        feature_matrix = self._validate_prediction_features(features)
+        votes, pair_winners = self._collect_votes(feature_matrix)
+        return self._resolve_predictions(votes, pair_winners)
+
+    def predict_with_backup(
+        self,
+        features: np.ndarray,
+        *,
+        backup_algorithm_index: int,
+        minimum_vote_margin: int,
+    ) -> np.ndarray:
+        """在 pairwise 票数不够分明时回退到调用方预先冻结的专家。
+
+        ``backup_algorithm_index`` 必须由训练折或 manifest 在调用前确定；本方法
+        只读取特征和已拟合模型，避免把测试实例的真实成本倒灌进路由决策。
+        """
+
+        if self._algorithm_count is None:
+            raise ValueError("selector must be fitted before predict")
+        if not 0 <= backup_algorithm_index < self._algorithm_count:
+            raise ValueError("backup_algorithm_index is outside fitted algorithms")
+        if minimum_vote_margin < 0:
+            raise ValueError("minimum_vote_margin must be non-negative")
+
+        feature_matrix = self._validate_prediction_features(features)
+        votes, pair_winners = self._collect_votes(feature_matrix)
+        predictions = self._resolve_predictions(votes, pair_winners)
+        for row_index, row_votes in enumerate(votes):
+            top_votes = np.sort(row_votes)[-2:]
+            vote_margin = int(top_votes[-1] - top_votes[-2])
+            if vote_margin <= minimum_vote_margin:
+                predictions[row_index] = backup_algorithm_index
+        return predictions
+
+    def _validate_prediction_features(self, features: np.ndarray) -> np.ndarray:
+        """校验预测输入，防止不同特征合同被静默复用。"""
+
         if self._feature_count is None or self._algorithm_count is None:
             raise ValueError("selector must be fitted before predict")
         feature_matrix = np.asarray(features, dtype=float)
@@ -145,6 +182,13 @@ class PairwiseCostSensitiveSelector:
             raise ValueError("prediction features do not match fitted feature shape")
         if not np.all(np.isfinite(feature_matrix)):
             raise ValueError("prediction features must contain only finite values")
+        return feature_matrix
+
+    def _collect_votes(
+        self,
+        feature_matrix: np.ndarray,
+    ) -> tuple[np.ndarray, list[np.ndarray]]:
+        """收集每个算法对的投票，供普通选择与可选回退共享同一证据。"""
 
         sample_count = len(feature_matrix)
         votes = np.zeros((sample_count, self._algorithm_count), dtype=int)
@@ -165,6 +209,14 @@ class PairwiseCostSensitiveSelector:
                 ).astype(int)
             pair_winners.append(winners)
             votes[np.arange(sample_count), winners] += 1
+        return votes, pair_winners
+
+    def _resolve_predictions(
+        self,
+        votes: np.ndarray,
+        pair_winners: list[np.ndarray],
+    ) -> np.ndarray:
+        """将票数转为确定性专家索引，保留原有的平票规则。"""
 
         predictions: list[int] = []
         for row_index, row_votes in enumerate(votes):

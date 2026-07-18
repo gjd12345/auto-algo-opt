@@ -64,6 +64,23 @@ def test_maximization_uses_the_same_pairwise_contract() -> None:
     assert selector.predict(np.asarray([[0.5]], dtype=float)).tolist() == [1]
 
 
+def test_vote_margin_can_abstain_to_a_fold_fixed_backup() -> None:
+    """低置信规则只能回退到调用方冻结的专家，不能读取测试成本。"""
+
+    selector = PairwiseCostSensitiveSelector(random_state=2011).fit(
+        np.asarray([[0.0], [1.0]], dtype=float),
+        np.asarray([[1.0, 0.0], [2.0, 0.0]], dtype=float),
+    )
+    test_features = np.asarray([[0.5]], dtype=float)
+
+    assert selector.predict(test_features).tolist() == [1]
+    assert selector.predict_with_backup(
+        test_features,
+        backup_algorithm_index=0,
+        minimum_vote_margin=100,
+    ).tolist() == [0]
+
+
 def test_fit_rejects_zero_feature_columns_before_model_training() -> None:
     with pytest.raises(ValueError, match="at least one feature"):
         PairwiseCostSensitiveSelector().fit(
