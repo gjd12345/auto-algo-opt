@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-07-14T23:14:05+08:00" agent="Codex" version="24.7.17">
+  <diagram id="agent-role-boundary" name="职责边界与成果归属">
+    <mxGraphModel adaptiveColors="auto" dx="1560" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="lane-human" value="人类&#xa;目标与裁决" style="swimlane;horizontal=0;startSize=110;fillColor=#fff9e6;strokeColor=#d6b656;html=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1560" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="human-goal" value="冻结研究目标&lt;br&gt;问题集与预算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="lane-human">
+          <mxGeometry x="120" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="human-claim" value="安全边界&lt;br&gt;最终结论裁决" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="lane-human">
+          <mxGeometry x="1020" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-codex" value="Codex&#xa;搭建、探索、审计" style="swimlane;horizontal=0;startSize=110;fillColor=#e8f4f8;strokeColor=#6c8ebf;html=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="150" width="1560" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="codex-research" value="读取论文与代码&lt;br&gt;自由探索方法" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane-codex">
+          <mxGeometry x="120" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="codex-build" value="实现通用框架&lt;br&gt;提示、反馈、RAG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane-codex">
+          <mxGeometry x="300" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="codex-teacher" value="外部教师与目标&lt;br&gt;origin=codex" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane-codex">
+          <mxGeometry x="660" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="codex-audit" value="审计数据、代码&lt;br&gt;结果与归属" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane-codex">
+          <mxGeometry x="1020" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-agent" value="科研 Agent&#xa;正式自主研究主体" style="swimlane;horizontal=0;startSize=110;fillColor=#e8f5e9;strokeColor=#82b366;html=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="300" width="1560" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="agent-retrieve" value="检索策略、精英&lt;br&gt;失败与决策记忆" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane-agent">
+          <mxGeometry x="120" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="agent-plan" value="形成候选方向&lt;br&gt;分配种群与预算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane-agent">
+          <mxGeometry x="300" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="agent-feedback" value="读取结构化反馈&lt;br&gt;决定继续或转向" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane-agent">
+          <mxGeometry x="660" y="35" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="agent-freeze" value="冻结候选与理由&lt;br&gt;actor=research_agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane-agent">
+          <mxGeometry x="840" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-engine" value="EOH 与其他引擎&#xa;可修改、可替换、可组合" style="swimlane;horizontal=0;startSize=110;fillColor=#fff0e6;strokeColor=#d79b00;html=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="450" width="1560" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="engine-eoh" value="改进后的 EOH&lt;br&gt;生成与变异候选" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="lane-engine">
+          <mxGeometry x="300" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="engine-other" value="其他生成器&lt;br&gt;程序搜索与论文方法" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="lane-engine">
+          <mxGeometry x="480" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="engine-pop" value="多种群协同&lt;br&gt;隔离、共享与去重" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="lane-engine">
+          <mxGeometry x="660" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-evidence" value="评测与证据&#xa;真实结果真相源" style="swimlane;horizontal=0;startSize=110;fillColor=#fce4ec;strokeColor=#b85450;html=1;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="0" y="600" width="1560" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="eval-dev" value="开发集沙箱&lt;br&gt;质量、失败、成本" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="lane-evidence">
+          <mxGeometry x="480" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="eval-heldout" value="冻结 held-out&lt;br&gt;只做最终验收" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="lane-evidence">
+          <mxGeometry x="840" y="45" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="evidence-ledger" value="证据账本与报告&lt;br&gt;不隐藏失败坐标" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="lane-evidence">
+          <mxGeometry x="1020" y="40" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-goal-agent" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#666666;html=1;" edge="1" parent="1" source="human-goal" target="agent-plan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-codex-build" value="实现" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;dashed=1;strokeColor=#6c8ebf;html=1;" edge="1" parent="1" source="codex-build" target="agent-retrieve"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-codex-engine" value="修改" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;dashed=1;strokeColor=#6c8ebf;html=1;" edge="1" parent="1" source="codex-build" target="engine-eoh"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-teacher-agent" value="可选教师" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;dashed=1;strokeColor=#6c8ebf;html=1;" edge="1" parent="1" source="codex-teacher" target="agent-plan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-agent-engine" value="调用" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#82b366;html=1;" edge="1" parent="1" source="agent-plan" target="engine-eoh"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-eoh-pop" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#d79b00;html=1;" edge="1" parent="1" source="engine-eoh" target="engine-pop"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-other-pop" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#d79b00;html=1;" edge="1" parent="1" source="engine-other" target="engine-pop"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-pop-eval" value="候选" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#d79b00;html=1;" edge="1" parent="1" source="engine-pop" target="eval-dev"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-eval-feedback" value="反馈" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#b85450;html=1;" edge="1" parent="1" source="eval-dev" target="agent-feedback"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-feedback-plan" value="继续" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#82b366;html=1;" edge="1" parent="1" source="agent-feedback" target="agent-plan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-feedback-freeze" value="冻结" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#82b366;html=1;" edge="1" parent="1" source="agent-feedback" target="agent-freeze"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-freeze-heldout" value="最终验收" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#82b366;html=1;" edge="1" parent="1" source="agent-freeze" target="eval-heldout"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-dev-ledger" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#b85450;html=1;" edge="1" parent="1" source="eval-dev" target="evidence-ledger"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-heldout-ledger" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#b85450;html=1;" edge="1" parent="1" source="eval-heldout" target="evidence-ledger"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-ledger-audit" value="审计" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;dashed=1;strokeColor=#6c8ebf;html=1;" edge="1" parent="1" source="evidence-ledger" target="codex-audit"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge-ledger-claim" value="证据" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;strokeColor=#666666;html=1;" edge="1" parent="1" source="evidence-ledger" target="human-claim"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

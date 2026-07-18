@@ -1,0 +1,63 @@
+<mxGraphModel adaptiveColors="auto" dx="1380" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="TSP 历史池：质量高不等于运行快" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+      <mxGeometry x="280" y="20" width="620" height="45" as="geometry"/>
+    </mxCell>
+    <mxCell id="pool" value="历史池&#xa;206 条记录 = 206 个唯一代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#4C78A8;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="45" y="115" width="220" height="85" as="geometry"/>
+    </mxCell>
+    <mxCell id="funnel" value="严格速度阶梯&#xa;201 → 201 → 164 → 105&#xa;最终 51.0% 通过" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A8D5D;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="345" y="105" width="250" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="quality" value="质量 top-6&#xa;Core-12：64/72 可行&#xa;第一名只通过 6/12" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#D99B2B;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="690" y="90" width="230" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="scale" value="规模 top-6&#xa;同分时优先实际运行快&#xa;Core-12 为 72/72 可行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#7E57C2;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="690" y="240" width="230" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="overlap" value="质量第一名 vs 规模第一名&#xa;共同可行：4 胜 0 平 2 负&#xa;中位改善 2.58，但超时 6/12" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="980" y="160" width="205" height="115" as="geometry"/>
+    </mxCell>
+    <mxCell id="mechanism" value="槽位审计&#xa;4+2、3+3、2+4 都有 4 条快代码&#xa;训练分数组成相同" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDE8E7;strokeColor=#C44E52;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="345" y="310" width="250" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="dual" value="离线候选：2 个质量槽 + 4 个规模槽&#xa;保留全部严格更优训练解&#xa;同分时优先快实现" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDF3F5;strokeColor=#2A7F86;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="430" width="300" height="115" as="geometry"/>
+    </mxCell>
+    <mxCell id="next" value="下一步 Stage AU&#xa;用非 held-out 合成 dev 探针&#xa;重新生成规模槽并检查 false-safe" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1F2937;strokeWidth=2;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="620" width="300" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4C78A8;" edge="1" parent="1" source="pool" target="funnel">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" value="按 objective" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#D99B2B;fontSize=13;" edge="1" parent="1" source="funnel" target="quality">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" value="按门槛 + 运行时间" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7E57C2;fontSize=13;" edge="1" parent="1" source="funnel" target="scale">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6B7280;" edge="1" parent="1" source="quality" target="overlap">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6B7280;" edge="1" parent="1" source="scale" target="overlap">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" value="解释" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#C44E52;fontSize=13;" edge="1" parent="1" source="funnel" target="mechanism">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2A7F86;" edge="1" parent="1" source="mechanism" target="dual">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2A7F86;" edge="1" parent="1" source="quality" target="dual">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2A7F86;" edge="1" parent="1" source="scale" target="dual">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e10" value="先补完整对照" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#1F2937;fontSize=13;" edge="1" parent="1" source="dual" target="next">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

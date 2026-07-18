@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T19:25:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="stage-bv" name="Stage BV">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Stage BV：先找到单节点移位边界，再换邻域" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="170" y="30" width="820" height="40" as="geometry"/></mxCell>
+        <mxCell id="a" value="Stage BU&#xa;最多 100 次移位&#xa;最终中位降幅 12.95%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="70" y="160" width="250" height="120" as="geometry"/></mxCell>
+        <mxCell id="b" value="只延长停止上限&#xa;最多 500 次或无改进即停&#xa;其他设置完全不变" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4CC;strokeColor=#D6A700;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="410" y="145" width="300" height="150" as="geometry"/></mxCell>
+        <mxCell id="c" value="自然停止&#xa;83～255 次&#xa;最终中位降幅 13.06%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DFF3E4;strokeColor=#2E8B57;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="800" y="160" width="250" height="120" as="geometry"/></mxCell>
+        <mxCell id="d" value="顺序门槛失败&#xa;相对 BU 中位只再降 0.13%&#xa;低于预设 0.25%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDE8E7;strokeColor=#D9534F;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="280" y="390" width="300" height="140" as="geometry"/></mxCell>
+        <mxCell id="e" value="下一步&#xa;停止增加同类预算&#xa;改测连续两节点移位" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#7E57C2;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="680" y="390" width="300" height="140" as="geometry"/></mxCell>
+        <mxCell id="ab" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="bc" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="cd" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="c" target="d"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="de" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

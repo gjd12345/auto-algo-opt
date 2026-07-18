@@ -1,0 +1,54 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="同规模过滤：从安全确认到质量重排" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+      <mxGeometry x="260" y="20" width="650" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="history" value="历史池&#xa;206 条唯一 TSP 代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="115" width="190" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="small_probe" value="小规模与外推探针&#xa;排序有用，但秒数不准" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="285" y="105" width="210" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="direct_probe" value="Stage AW：同规模直接过滤&#xa;99 条判安全&#xa;真实标签 false-safe = 0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="555" y="95" width="235" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="new_instances" value="Stage AX：3 个全新 n=3038&#xa;AW 四槽 12/12&#xa;参考四槽 12/12&#xa;质量前二 0/6" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="850" y="85" width="245" height="140" as="geometry"/>
+    </mxCell>
+    <mxCell id="quality_result" value="路线成本（越低越好）&#xa;AW 对参考：2 胜 / 1 平 / 0 负&#xa;中位差 −0.060%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="690" y="305" width="280" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="mechanism" value="关键机制&#xa;先在目标规模挡住慢代码&#xa;再只在安全集合内比较质量" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="370" y="305" width="250" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="boundary" value="结论边界&#xa;已完成独立合成重复&#xa;尚不是 TSPLIB Full" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="60" y="315" width="230" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="next" value="下一步 Stage AY → AZ&#xa;99 条安全代码做质量—速度前沿&#xa;冻结候选后用全新实例确认" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="390" y="515" width="390" height="115" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="history" target="small_probe">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#D79B00;" edge="1" parent="1" source="small_probe" target="direct_probe">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="direct_probe" target="new_instances">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="new_instances" target="quality_result">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="quality_result" target="mechanism">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="mechanism" target="boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="mechanism" target="next">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

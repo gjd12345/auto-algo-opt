@@ -1,0 +1,20 @@
+<mxGraphModel adaptiveColors="auto" dx="1180" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="科研 Agent 正结果的归属与证据链" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="260" y="35" width="620" height="40" as="geometry"/></mxCell>
+    <mxCell id="static" value="共同基础&#xa;3 个静态种子&#xa;最好 objective 相同" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#5B8DB8;fontSize=14;" vertex="1" parent="1"><mxGeometry x="65" y="150" width="190" height="85" as="geometry"/></mxCell>
+    <mxCell id="diverse" value="Agent 初始化机制&#xa;追加 9 个确定性随机计划&#xa;不含外部教师" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#C99A2E;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="140" width="225" height="105" as="geometry"/></mxCell>
+    <mxCell id="eoh" value="EOH 自动进化&#xa;seed=9503&#xa;e1/e2/m1/m2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8F7;strokeColor=#8B5CA6;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="665" y="150" width="195" height="85" as="geometry"/></mxCell>
+    <mxCell id="candidate" value="Agent 自主新候选&#xa;dev v2 改善 0.390%&#xa;不是输入种子" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#5B9A68;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="955" y="145" width="210" height="95" as="geometry"/></mxCell>
+    <mxCell id="confirm" value="未见 confirm v2&#xa;objective 改善 0.660%&#xa;7 胜 / 5 负" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4F1;strokeColor=#438C82;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="665" y="390" width="215" height="95" as="geometry"/></mxCell>
+    <mxCell id="asset" value="冻结正式资产&#xa;actor=research_agent_eoh&#xa;commit 5528804" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#5B8DB8;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="390" width="225" height="95" as="geometry"/></mxCell>
+    <mxCell id="excluded" value="明确不可归入本结果&#xa;Codex 外部教师：不可见&#xa;RAG 反馈记忆：不可见" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#C65D4B;fontSize=14;" vertex="1" parent="1"><mxGeometry x="65" y="390" width="205" height="95" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="static" target="diverse"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="diverse" target="eoh"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="eoh" target="candidate"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" value="冻结后评测" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#438C82;fontSize=12;" edge="1" parent="1" source="candidate" target="confirm"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#438C82;" edge="1" parent="1" source="confirm" target="asset"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" value="不可见" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;strokeColor=#C65D4B;fontSize=12;" edge="1" parent="1" source="excluded" target="eoh"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

@@ -1,0 +1,25 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T07:05:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bk" name="阶段BK">
+    <mxGraphModel dx="1380" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="input" value="外部 56&#xa;双槽最佳 vs 四槽最佳&#xa;修复前 33 胜 / 23 负" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="300" width="250" height="120" as="geometry"/></mxCell>
+        <mxCell id="repair" value="匹配局部修复&#xa;相同候选索引&#xa;相同 5 步成本型 2-opt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="390" y="300" width="250" height="120" as="geometry"/></mxCell>
+        <mxCell id="gain" value="两边都明显改善&#xa;双槽 -1.927%&#xa;四槽 -2.115%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="710" y="120" width="230" height="120" as="geometry"/></mxCell>
+        <mxCell id="gap" value="差距部分收缩&#xa;37 缩小 / 19 扩大&#xa;p=0.022" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="710" y="310" width="230" height="120" as="geometry"/></mxCell>
+        <mxCell id="gate" value="主门槛未通过&#xa;绝对差距只缩小 15.1%&#xa;低于冻结的 25%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="710" y="500" width="230" height="120" as="geometry"/></mxCell>
+        <mxCell id="meaning" value="结论&#xa;局部缺陷解释一部分&#xa;全局路线家族差异仍保留" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1030" y="285" width="260" height="150" as="geometry"/></mxCell>
+        <mxCell id="next" value="下一步&#xa;路线边集合重合度&#xa;槽位独有贡献&#xa;档案覆盖前沿" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;" vertex="1" parent="1"><mxGeometry x="1370" y="285" width="220" height="150" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="input" target="repair"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="repair" target="gain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="repair" target="gap"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="repair" target="gate"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gain" target="meaning"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gap" target="meaning"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="gate" target="meaning"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="meaning" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

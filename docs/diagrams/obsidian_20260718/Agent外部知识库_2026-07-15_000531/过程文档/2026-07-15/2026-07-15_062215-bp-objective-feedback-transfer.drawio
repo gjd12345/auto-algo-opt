@@ -1,0 +1,41 @@
+<mxfile host="Electron" modified="2026-07-15T06:22:15.000+08:00" agent="Codex" version="24.7.17">
+  <diagram id="bp-feedback-transfer" name="Page-1">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="同一目标反馈机制从 TSP 迁移到 BP" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="300" y="30" width="570" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="seed" value="相同冻结输入&#xa;4 个历史 BP 精英&#xa;相同 seed / 预算 / 模型" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="230" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="legacy" value="旧反馈&#xa;父代近似随机&#xa;提示不含目标值" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="410" y="105" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="aware" value="目标值反馈&#xa;优先当前最好父代&#xa;提示给出目标值和方向" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="245" width="220" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="legacy_result" value="旧反馈结果&#xa;优于继承精英 0/3&#xa;有效代码 14/18" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#C77800;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="760" y="105" width="230" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="aware_result" value="目标反馈结果&#xa;优于继承精英 2/3&#xa;有效代码 16/18" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="245" width="230" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="heldout" value="候选冻结后才看 held-out&#xa;v1a 平均 gap 降 26.1%&#xa;但 10k 规模退化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDF2F8;strokeColor=#BE185D;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="755" y="450" width="240" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="conclusion" value="当前结论：反馈机制跨问题可迁移&#xa;证据为 tentative，需 128 实例确认" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#B45309;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="390" y="620" width="310" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4C78A8;" edge="1" parent="1" source="seed" target="legacy"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#2E7D32;" edge="1" parent="1" source="seed" target="aware"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6B7280;" edge="1" parent="1" source="legacy" target="legacy_result"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#15803D;strokeWidth=2;" edge="1" parent="1" source="aware" target="aware_result"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="只报告，不反馈" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#BE185D;fontSize=13;" edge="1" parent="1" source="aware_result" target="heldout"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B45309;" edge="1" parent="1" source="legacy_result" target="conclusion"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B45309;" edge="1" parent="1" source="heldout" target="conclusion"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

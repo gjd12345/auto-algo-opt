@@ -1,0 +1,65 @@
+{
+  "schema_version": "tsp-frontier-archive-confirmation-summary/v1",
+  "study_role": "independent_synthetic_frontier_confirmation",
+  "completed_at": "2026-07-14T05:42:05.604350+00:00",
+  "manifest_sha256": "1165d07ebb37dd2bfcc89010b10638f075b6e221da0a25d3df7ca7bcffebcb40",
+  "coordinates": 15,
+  "archives": {
+    "selected_frontier": {
+      "archive": "selected_frontier",
+      "codes": 1,
+      "coordinates": 3,
+      "feasible": 3,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 471986.0,
+        "synthetic_frontier_confirm_2_3038": 471617.0,
+        "synthetic_frontier_confirm_3_3038": 474929.0
+      }
+    },
+    "current_aw": {
+      "archive": "current_aw",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 474268.0,
+        "synthetic_frontier_confirm_2_3038": 468640.0,
+        "synthetic_frontier_confirm_3_3038": 474215.0
+      }
+    }
+  },
+  "selected_code_validity": {
+    "23225aeb15945f0834b2c70fde98cbf5d7a40c08289b37735709814b3a6a1fd8": 3
+  },
+  "comparisons": [
+    {
+      "instance": "synthetic_frontier_confirm_1_3038",
+      "selected_best_tour_cost": 471986.0,
+      "current_aw_best_tour_cost": 474268.0,
+      "selected_relative_diff_pct": -0.48116254944461784,
+      "direction": "better"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_2_3038",
+      "selected_best_tour_cost": 471617.0,
+      "current_aw_best_tour_cost": 468640.0,
+      "selected_relative_diff_pct": 0.6352424035506999,
+      "direction": "worse"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_3_3038",
+      "selected_best_tour_cost": 474929.0,
+      "current_aw_best_tour_cost": 474215.0,
+      "selected_relative_diff_pct": 0.150564617314931,
+      "direction": "worse"
+    }
+  ],
+  "direction_counts": {
+    "better": 1,
+    "same": 0,
+    "worse": 2,
+    "missing": 0
+  },
+  "median_selected_relative_diff_pct": 0.150564617314931,
+  "overall_pass": false
+}

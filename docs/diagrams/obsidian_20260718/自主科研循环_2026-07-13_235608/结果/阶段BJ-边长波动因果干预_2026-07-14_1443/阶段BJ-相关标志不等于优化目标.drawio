@@ -1,0 +1,25 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T06:53:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bj" name="阶段BJ">
+    <mxGraphModel dx="1400" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="prior" value="外部相关结果&#xa;边长波动差与成本差 ρ=0.70" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="60" y="300" width="250" height="100" as="geometry"/></mxCell>
+        <mxCell id="intervene" value="冻结 2-opt 干预&#xa;只按边长波动下降选移动&#xa;不按总成本排序" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="370" y="285" width="250" height="130" as="geometry"/></mxCell>
+        <mxCell id="cv" value="最大降波动&#xa;56/56 波动下降&#xa;成本 11 胜 / 45 负&#xa;中位 +0.576%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1"><mxGeometry x="700" y="100" width="250" height="140" as="geometry"/></mxCell>
+        <mxCell id="random" value="随机降波动对照&#xa;280/280 波动下降&#xa;成本 0/280 改善&#xa;中位 +5.130%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1"><mxGeometry x="700" y="300" width="250" height="140" as="geometry"/></mxCell>
+        <mxCell id="cost" value="按成本选择阳性对照&#xa;55/56 成本改善&#xa;中位 -1.927%&#xa;邻域中确实有好移动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="700" y="500" width="250" height="140" as="geometry"/></mxCell>
+        <mxCell id="asymmetry" value="单向关系&#xa;好路线常伴随较低波动&#xa;降低波动不保证路线更短" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1030" y="270" width="260" height="150" as="geometry"/></mxCell>
+        <mxCell id="decision" value="科研决策&#xa;保留为预测标志&#xa;停止直接优化该指标&#xa;下一步比较共同局部修复" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1370" y="270" width="220" height="150" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="prior" target="intervene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="intervene" target="cv"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="intervene" target="random"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="intervene" target="cost"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="cv" target="asymmetry"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="random" target="asymmetry"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="cost" target="asymmetry"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="asymmetry" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

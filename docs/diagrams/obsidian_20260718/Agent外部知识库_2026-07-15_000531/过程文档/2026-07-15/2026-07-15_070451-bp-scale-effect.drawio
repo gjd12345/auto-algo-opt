@@ -1,0 +1,21 @@
+<mxfile host="Electron" modified="2026-07-15T07:04:51.000+08:00" agent="Codex" version="24.7.17">
+  <diagram id="bp-scale-effect" name="Page-1">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Agent-v2 的收益随实例规模改变" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="300" y="40" width="560" height="40" as="geometry"/></mxCell>
+        <mxCell id="train" value="原开发反馈&#xa;128 个 5k 实例&#xa;只覆盖单一规模" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="185" width="215" height="105" as="geometry"/></mxCell>
+        <mxCell id="agent" value="目标反馈 Agent-v2&#xa;自动改善开发值 3.887%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="380" y="185" width="240" height="105" as="geometry"/></mxCell>
+        <mxCell id="small" value="1k × 100&#xa;28 / 18 / 54&#xa;平均变差 0.1743 点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#B91C1C;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="770" y="105" width="220" height="105" as="geometry"/></mxCell>
+        <mxCell id="medium" value="5k × 100&#xa;52 / 18 / 30&#xa;平均改善 0.0449 点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#B45309;fontSize=15;" vertex="1" parent="1"><mxGeometry x="770" y="260" width="220" height="105" as="geometry"/></mxCell>
+        <mxCell id="large" value="10k × 100&#xa;83 / 2 / 15&#xa;平均改善 0.0707 点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="770" y="415" width="220" height="105" as="geometry"/></mxCell>
+        <mxCell id="decision" value="下一反馈设计&#xa;40×1k + 40×5k + 40×10k&#xa;三尺度等权，总物品量不变" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#7E22CE;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="380" y="610" width="300" height="100" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#4C78A8;" edge="1" parent="1" source="train" target="agent"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#B91C1C;" edge="1" parent="1" source="agent" target="small"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#B45309;" edge="1" parent="1" source="agent" target="medium"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#15803D;" edge="1" parent="1" source="agent" target="large"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="修复覆盖缺口" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#7E22CE;fontSize=13;" edge="1" parent="1" source="small" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

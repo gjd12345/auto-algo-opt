@@ -1,0 +1,73 @@
+{
+  "schema_version": "tsp-scale-archive-confirmation-summary/v1",
+  "study_role": "independent_synthetic_target_scale_confirmation",
+  "completed_at": "2026-07-14T04:39:48.519605+00:00",
+  "manifest_sha256": "78395f7c13d462d3bc07e78949995f2afa5a54237fa8d95725cd8dd93ae14023",
+  "coordinates": 27,
+  "archives": {
+    "aw_scale": {
+      "archive": "aw_scale",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_confirm_1_3038": 468313.0,
+        "synthetic_confirm_2_3038": 476971.0,
+        "synthetic_confirm_3_3038": 472854.0
+      }
+    },
+    "reference_scale": {
+      "archive": "reference_scale",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_confirm_1_3038": 468592.0,
+        "synthetic_confirm_2_3038": 476971.0,
+        "synthetic_confirm_3_3038": 473843.0
+      }
+    },
+    "quality_diagnostic": {
+      "archive": "quality_diagnostic",
+      "codes": 2,
+      "coordinates": 6,
+      "feasible": 0,
+      "best_tour_cost_by_instance": {
+        "synthetic_confirm_1_3038": null,
+        "synthetic_confirm_2_3038": null,
+        "synthetic_confirm_3_3038": null
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "instance": "synthetic_confirm_1_3038",
+      "aw_best_tour_cost": 468313.0,
+      "reference_best_tour_cost": 468592.0,
+      "aw_relative_diff_pct": -0.05954006897258169,
+      "direction": "better"
+    },
+    {
+      "instance": "synthetic_confirm_2_3038",
+      "aw_best_tour_cost": 476971.0,
+      "reference_best_tour_cost": 476971.0,
+      "aw_relative_diff_pct": 0.0,
+      "direction": "same"
+    },
+    {
+      "instance": "synthetic_confirm_3_3038",
+      "aw_best_tour_cost": 472854.0,
+      "reference_best_tour_cost": 473843.0,
+      "aw_relative_diff_pct": -0.20871892166814746,
+      "direction": "better"
+    }
+  ],
+  "aw_vs_reference_direction_counts": {
+    "better": 2,
+    "same": 1,
+    "worse": 0,
+    "missing": 0
+  },
+  "median_aw_relative_diff_pct": -0.05954006897258169,
+  "overall_pass": true
+}

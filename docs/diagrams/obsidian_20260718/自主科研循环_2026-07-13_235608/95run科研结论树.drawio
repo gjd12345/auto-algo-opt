@@ -1,0 +1,54 @@
+<mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0" adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="Agent AD：95 个新 LLM run 的科研结论树" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="390" y="20" width="820" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="start" value="历史 Q3 观察&#xa;固定答案双卡优于 pure&#xa;+0.7275，7/0/3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="650" y="90" width="300" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="question" value="优势来自稳定机制吗？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="690" y="220" width="220" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="card" value="策略卡机制线&#xa;55 runs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="390" width="240" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3" value="m3 算子线&#xa;28 runs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="680" y="390" width="240" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="inherit" value="历史继承线&#xa;12 runs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1230" y="390" width="240" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="cardresult" value="H+R 对 harmonic：0/0/5&#xa;融合语义确认：5/2/3&#xa;结论：语义机制未复现" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4cccc;strokeColor=#cc0000;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="70" y="520" width="340" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3result" value="浅预算 TSP 一度为正&#xa;深预算训练：1/0/4&#xa;Core-7：2/0/3&#xa;结论：三问题均排除 m3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4cccc;strokeColor=#cc0000;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="630" y="510" width="340" height="125" as="geometry"/>
+    </mxCell>
+    <mxCell id="inheritresult" value="TSP 训练与 held-out：3/3&#xa;CVRP held-out：2/3&#xa;每 run 少 12 个新候选&#xa;结论：短预算热启动候选" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#009900;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="510" width="340" height="125" as="geometry"/>
+    </mxCell>
+    <mxCell id="negative" value="已排除&#xa;稳定答案卡机制&#xa;双卡协同&#xa;m3 稳定增量" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="350" y="710" width="290" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="positive" value="当前最强候选&#xa;TSP 历史 top-6 热启动&#xa;短预算双指标 3/3 改善" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="960" y="710" width="310" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="next" value="下一轮：扩大 TSP 热启动 seed&#xa;CVRP 先做逐实例冲突诊断&#xa;暂缓跨问题策略卡迁移" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="630" y="875" width="340" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="start" target="question"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" value="受控拆解" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="question" target="card"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" value="算子验证" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="question" target="m3"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" value="转向复用历史搜索" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="question" target="inherit"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#cc0000;" edge="1" parent="1" source="card" target="cardresult"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#cc0000;" edge="1" parent="1" source="m3" target="m3result"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#009900;" edge="1" parent="1" source="inherit" target="inheritresult"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#cc0000;" edge="1" parent="1" source="cardresult" target="negative"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#cc0000;" edge="1" parent="1" source="m3result" target="negative"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;strokeColor=#009900;" edge="1" parent="1" source="inheritresult" target="positive"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="negative" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="positive" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

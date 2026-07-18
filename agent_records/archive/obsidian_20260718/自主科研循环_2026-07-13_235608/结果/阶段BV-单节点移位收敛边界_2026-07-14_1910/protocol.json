@@ -1,0 +1,63 @@
+{
+  "schema_version": "tsp-single-node-relocation-vnd-protocol/v1",
+  "frozen_at": "2026-07-14T19:10:00+08:00",
+  "research_role": "exploratory_high_scale_relocation_convergence_boundary",
+  "question": "Stage BU 有 5/6 条路线触及 100 次上限；保持算法其余部分不变时，继续到无改进能否再降低路线成本？",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bt_results_sha256": "149eda9c4c09b16a022db246683db41c65c164a625a2160fb89b5c0cd93e6ec3",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "stage_bu_protocol_sha256": "0a93137f85085e690a24247cd094fd1810846afa07a02113631407b27be07373",
+    "stage_bu_result_sha256": "778752927d3bcc06c25733190799d9d73dd60d8c38db500e3a6ce22d969c0cc4",
+    "stage_bu_summary_sha256": "4fd44cc29622b25d5bd3a84770fc9e6959b6d98622177985aa996f3281bf7c29"
+  },
+  "search": {
+    "reproduce_stage_bt_first": true,
+    "nearest_neighbor_count": 40,
+    "neighbor_build_block_size": 128,
+    "two_opt_maximum_steps_after_each_relocation": 500,
+    "maximum_accepted_relocations": 500,
+    "relocation_candidates": "把每个非起点节点移到其 40 个近邻之前或之后",
+    "accept_when": "选择全局最佳且严格降低总成本的单节点移位",
+    "tie_break": "原位置和插入边位置按字典序较小者",
+    "stop_when": "没有严格降成本移位或已接受 500 次",
+    "same_schedule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role_count": 2,
+    "expected_result_count": 6,
+    "stage_bt_cost_must_match": true,
+    "research_limit": "同三个实例已参与 Stage BU，只能用于定位停止边界，不能作为新的独立泛化证据",
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 6,
+    "portfolio_vnd_nonworse_than_stage_bt_instances_min": 3,
+    "portfolio_vnd_strictly_better_than_stage_bt_instances_min": 3,
+    "portfolio_vnd_median_extra_improvement_pct_min": 1.6261798860869041,
+    "vnd_portfolio_vs_vnd_baseline_wins_min": 2,
+    "vnd_portfolio_vs_vnd_baseline_losses_max": 1,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 12.949198556870323
+  },
+  "comparison_to_stage_bu_gate": {
+    "portfolio_nonworse_instances_min": 3,
+    "portfolio_strictly_better_instances_min": 2,
+    "portfolio_median_extra_improvement_pct_min": 0.25,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 13.0
+  },
+  "leakage_controls": [
+    "500 次上限在启动前冻结，结果后不继续增加上限",
+    "除停止上限外，邻域、近邻数、接受规则、2-opt 和实例均与 Stage BU 相同",
+    "Stage BU 只用于预先固定比较门槛，不替换实例或路线",
+    "若通过开发门槛，下一步必须使用未参与开发的外部实例确认"
+  ],
+  "decision": {
+    "all_checks_pass": "provisional_relocation_convergence_boundary_supported",
+    "otherwise": "stop_relocation_budget_extension_and_test_or_opt_2",
+    "default_pool_behavior": "unchanged"
+  }
+}

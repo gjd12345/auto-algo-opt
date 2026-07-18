@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net" modified="2026-07-15T07:51:21.000+08:00" agent="Codex" version="24.7.17">
+  <diagram id="bp-scale-feedback-reversal" name="Page-1">
+    <mxGraphModel dx="1200" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="分尺度反馈：训练改善，但新实例反转" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="260" y="30" width="650" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="input" value="共同起点与共同多尺度训练集&#xa;1k / 5k / 10k，总预算相同" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="60" y="140" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="scalar" value="只看总分&#xa;3/3 保留旧种子&#xa;0.01205" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="105" width="230" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="scale" value="总分 + 分尺度反馈&#xa;3/3 训练分数更好&#xa;0.01201 / 0.01177 / 0.01177" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="430" y="245" width="280" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="fresh" value="冻结的新实例诊断&#xa;270 对，0 失败&#xa;分尺度候选 0/3 胜过基线" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C94C4C;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="160" width="280" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="cause" value="原因：反馈有方向，但没有稳定性证据&#xa;微小训练收益被样本波动反转" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#D6A328;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="410" y="455" width="330" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="decision" value="自动决策&#xa;停止 scale_aware 放大&#xa;转向多折稳健反馈" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C5CC4;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="445" width="280" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#4F81BD;strokeWidth=2;" edge="1" parent="1" source="input" target="scalar"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#4F81BD;strokeWidth=2;" edge="1" parent="1" source="input" target="scale"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#6B7280;strokeWidth=2;" edge="1" parent="1" source="scalar" target="fresh"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#3A9D5D;strokeWidth=2;" edge="1" parent="1" source="scale" target="fresh"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C94C4C;strokeWidth=2;" edge="1" parent="1" source="fresh" target="cause"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7C5CC4;strokeWidth=2;" edge="1" parent="1" source="cause" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

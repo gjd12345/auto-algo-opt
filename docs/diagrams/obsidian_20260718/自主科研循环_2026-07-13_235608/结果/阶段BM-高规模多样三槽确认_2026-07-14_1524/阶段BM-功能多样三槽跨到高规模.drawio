@@ -1,0 +1,22 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T07:35:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bm" name="阶段BM">
+    <mxGraphModel dx="1400" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="source" value="官方归档冻结筛选&#xa;3101～7500 节点&#xa;只保留 EUC_2D" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="60" y="300" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="filter" value="头部校验&#xa;pla7397 是 CEIL_2D&#xa;运行前排除" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="360" y="300" width="230" height="120" as="geometry"/></mxCell>
+        <mxCell id="suite" value="正式高规模集&#xa;fnl4461&#xa;rl5915 / rl5934" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1"><mxGeometry x="650" y="300" width="220" height="120" as="geometry"/></mxCell>
+        <mxCell id="result" value="AW1+R2+R4&#xa;3/3 达到六代码 oracle&#xa;对当前四槽 2胜1平0负" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="940" y="270" width="280" height="160" as="geometry"/></mxCell>
+        <mxCell id="mechanism" value="功能证据继续成立&#xa;AW1=AW3：3/3&#xa;R4 提供两个独有最优" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="940" y="500" width="280" height="130" as="geometry"/></mxCell>
+        <mxCell id="decision" value="决策&#xa;高规模支持功能多样三槽&#xa;样本仅3，不自动部署&#xa;下一步审计源码冗余原因" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1310" y="280" width="270" height="170" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="source" target="filter"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="filter" target="suite"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="suite" target="result"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="suite" target="mechanism"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="result" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="mechanism" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

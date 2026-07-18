@@ -1,0 +1,73 @@
+{
+  "schema_version": "tsp-safe-pool-quality-portfolio-protocol/v1",
+  "frozen_at": "2026-07-14T16:55:00+08:00",
+  "research_role": "quality_first_locked_discovery_confirmation",
+  "question": "在当前四槽基础上，从99条目标规模安全代码中加入少量互补代码，能否在未见官方实例上获得更大的路线成本降幅",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "split_manifest_sha256": "72266d3ea593a1ccd3990f9f0e1b2f928ef0155a38a556b717ca2ec7146a7fb3",
+    "safe_probe_results_sha256": "a7ca6cb4650f419bb5114175868a56f76f001f786f03584980b40febbe501385",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "stage_bp_clusters_sha256": "d3db941b0bf67c16949960bd06f1719b3338507f60ebee9fe247e9be98bd6044"
+  },
+  "candidate_selection": {
+    "source": "Stage AW dev_probe_results.csv",
+    "condition": "feasible == True",
+    "expected_code_count": 99,
+    "baseline_code_hashes": [
+      "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+      "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+      "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56"
+    ]
+  },
+  "split": {
+    "source": "Stage BI split_manifest.json",
+    "discovery_count": 28,
+    "confirmation_count": 28,
+    "confirmation_labels_must_remain_unread_until_portfolio_frozen": true
+  },
+  "evaluation": {
+    "instance_count": 56,
+    "candidate_count": 99,
+    "expected_coordinate_count": 5544,
+    "distance_rule": "TSPLIB EUC_2D round-to-nearest",
+    "checkpoint": "每个代码实例坐标完成后追加并flush；按唯一坐标恢复",
+    "runtime_role": "只报告代价，不作为质量候选淘汰条件"
+  },
+  "discovery_selection": {
+    "base_archive": "四条baseline代码",
+    "maximum_added_codes": 8,
+    "greedy_objective": "每一步选择使28个发现实例平均路线成本降幅增加最多的代码",
+    "stop_when": "没有候选带来正的平均边际降幅",
+    "tie_break": [
+      "更大的中位降幅",
+      "更高的历史objective",
+      "更小的original_index",
+      "code_hash字典序"
+    ],
+    "freeze_before_confirmation": [
+      "有序新增代码hash",
+      "每一步发现集指标",
+      "组合JSON及SHA-256"
+    ]
+  },
+  "confirmation_gate": {
+    "feasible_coordinate_count": 5544,
+    "portfolio_losses_vs_baseline_max": 0,
+    "portfolio_wins_vs_baseline_min": 8,
+    "median_cost_improvement_pct_min": 0.1,
+    "mean_cost_improvement_pct_min": 0.1
+  },
+  "leakage_controls": [
+    "发现命令只加载split中的discovery实例",
+    "确认命令必须提供冻结组合的预期SHA-256",
+    "确认结果不得用于更换代码、增加槽位或修改贪心规则",
+    "本阶段不把Core-12或高规模三实例混入选择"
+  ],
+  "decision": {
+    "all_checks_pass": "quality_first_portfolio_supported_for_independent_scale_confirmation",
+    "otherwise": "report_effect_and_end_this_portfolio_branch",
+    "default_pool_behavior": "unchanged"
+  }
+}

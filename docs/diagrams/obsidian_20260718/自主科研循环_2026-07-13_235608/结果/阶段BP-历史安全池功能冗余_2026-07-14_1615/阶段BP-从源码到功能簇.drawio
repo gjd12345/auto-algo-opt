@@ -1,0 +1,45 @@
+<mxfile host="Electron" modified="2026-07-14T08:45:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bp" name="Stage BP">
+    <mxGraphModel dx="1100" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="历史安全池：源码很多，实际功能家族更少" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="190" y="30" width="760" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="source" value="99 条安全代码&#xa;99 个不同 AST" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F6DB8;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="probe" value="6 个冻结探针&#xa;594/594 路线有效" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#C99324;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="150" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="pairs" value="4,851 对比较&#xa;209 对达到 0.95" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4E8FF;strokeColor=#8B5FBF;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="150" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="clusters" value="50 个功能簇&#xa;38 个单例，最大簇 15" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E5F6EA;strokeColor=#3F8F5B;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="150" width="220" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="exact" value="完全路线签名&#xa;58 种" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="335" y="360" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="copies" value="41 条完全重复副本&#xa;可作为离线压缩线索" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C65D5D;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="600" y="360" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="quality" value="高质量没有完全坍缩&#xa;objective 前 20 覆盖 15 簇" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF7F7;strokeColor=#3A8D8D;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="870" y="360" width="230" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="decision" value="当前决定：不删池、不改默认档案&#xa;下一步用全新探针确认 50 个代表是否保留 99 条代码的覆盖" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E7;strokeColor=#B7791F;strokeWidth=2;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="550" width="560" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;strokeWidth=2;" edge="1" parent="1" source="source" target="probe"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;strokeWidth=2;" edge="1" parent="1" source="probe" target="pairs"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;strokeWidth=2;" edge="1" parent="1" source="pairs" target="clusters"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;" edge="1" parent="1" source="probe" target="exact"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;" edge="1" parent="1" source="exact" target="copies"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#64748B;" edge="1" parent="1" source="clusters" target="quality"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#B7791F;strokeWidth=2;" edge="1" parent="1" source="copies" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#B7791F;strokeWidth=2;" edge="1" parent="1" source="quality" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

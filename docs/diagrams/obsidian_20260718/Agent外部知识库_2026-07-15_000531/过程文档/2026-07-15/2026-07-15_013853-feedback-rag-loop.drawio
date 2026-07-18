@@ -1,0 +1,19 @@
+<mxGraphModel adaptiveColors="auto" dx="1180" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="科研 Agent 的结果反馈 → RAG → 下一轮进化闭环" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="210" y="35" width="720" height="40" as="geometry"/></mxCell>
+    <mxCell id="runs" value="历史 EOH 开发样本&#xa;v1 + v2：36 个位置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#5B8DB8;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="70" y="180" width="190" height="82" as="geometry"/></mxCell>
+    <mxCell id="memory" value="确定性反馈记忆&#xa;无代码 / 合同有效 / objective&#xa;不读取 held-out" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#C99A2E;fontSize=14;" vertex="1" parent="1"><mxGeometry x="345" y="170" width="220" height="102" as="geometry"/></mxCell>
+    <mxCell id="retrieve" value="RAG 检索与审计&#xa;4 张候选卡 → 2 张注入&#xa;路径、截断、选择写入 trace" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8F7;strokeColor=#8B5CA6;fontSize=14;" vertex="1" parent="1"><mxGeometry x="650" y="170" width="235" height="102" as="geometry"/></mxCell>
+    <mxCell id="evolution" value="下一轮 EOH 自动进化&#xa;同 seed：pure vs feedback_rag" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#5B9A68;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="965" y="180" width="210" height="82" as="geometry"/></mxCell>
+    <mxCell id="result" value="结果&#xa;有效率 14/18 vs 11/18&#xa;质量突破 0/3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#C65D4B;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="650" y="400" width="235" height="90" as="geometry"/></mxCell>
+    <mxCell id="decision" value="自动决策&#xa;不扩正式实验&#xa;改做控制空间探针" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4F1;strokeColor=#438C82;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="400" width="220" height="90" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="runs" target="memory"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="memory" target="retrieve"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="retrieve" target="evolution"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="evolution" target="result"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="result" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" value="结果继续进入记忆，但不可污染 held-out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#438C82;fontSize=12;dashed=1;" edge="1" parent="1" source="decision" target="memory"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

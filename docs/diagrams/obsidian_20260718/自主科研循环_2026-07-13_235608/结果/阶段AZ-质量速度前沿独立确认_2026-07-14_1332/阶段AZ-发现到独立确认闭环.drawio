@@ -1,0 +1,22 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="安全过滤后质量重排：发现到独立确认" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="260" y="20" width="650" height="42" as="geometry"/></mxCell>
+    <mxCell id="discovery" value="Stage AY 发现集&#xa;94/99 条代码 3/3 可行&#xa;新四槽成本降低 3.13%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="70" y="130" width="250" height="115" as="geometry"/></mxCell>
+    <mxCell id="freeze" value="冻结四槽、规则和 hash&#xa;不换槽、不复用实例&#xa;保留临界慢代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;" vertex="1" parent="1"><mxGeometry x="395" y="130" width="240" height="115" as="geometry"/></mxCell>
+    <mxCell id="confirmation" value="Stage AZ 全新实例&#xa;8 条代码 × 3 实例&#xa;24/24 可行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="710" y="130" width="230" height="115" as="geometry"/></mxCell>
+    <mxCell id="quality" value="确认结果（越低越好）&#xa;3 胜 / 0 平 / 0 负&#xa;中位成本降低 3.52%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="815" y="335" width="275" height="115" as="geometry"/></mxCell>
+    <mxCell id="runtime" value="临界代码仍通过&#xa;中位 21.71 秒&#xa;最大 26.67 秒 &lt; 30 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=15;" vertex="1" parent="1"><mxGeometry x="495" y="340" width="245" height="105" as="geometry"/></mxCell>
+    <mxCell id="claim" value="确认结论&#xa;历史池存在更好的目标规模档案&#xa;损失来自最终保留规则" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="170" y="335" width="260" height="115" as="geometry"/></mxCell>
+    <mxCell id="boundary" value="边界&#xa;已确认合成目标规模&#xa;尚未覆盖 TSPLIB Full" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;" vertex="1" parent="1"><mxGeometry x="185" y="545" width="230" height="95" as="geometry"/></mxCell>
+    <mxCell id="next" value="下一步：最小充分档案&#xa;逐槽移除与全部子集分析&#xa;判断收益是否依赖慢代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="610" y="535" width="330" height="115" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="discovery" target="freeze"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="freeze" target="confirmation"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="confirmation" target="quality"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="quality" target="runtime"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="runtime" target="claim"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="claim" target="boundary"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#D79B00;" edge="1" parent="1" source="runtime" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

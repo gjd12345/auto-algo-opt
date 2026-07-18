@@ -1,0 +1,20 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="单槽压缩失败：问题在速度，还是实例覆盖？" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="245" y="25" width="680" height="42" as="geometry"/></mxCell>
+    <mxCell id="candidate" value="Stage BA 单槽 R4&#xa;六实例方向 6/0/0&#xa;中位耗时 0.70 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="65" y="140" width="235" height="110" as="geometry"/></mxCell>
+    <mxCell id="fresh" value="Stage BB 全新三实例&#xa;R4 3/3 可行&#xa;当前 AW 12/12 可行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=15;" vertex="1" parent="1"><mxGeometry x="380" y="140" width="230" height="110" as="geometry"/></mxCell>
+    <mxCell id="negative" value="冻结门槛失败&#xa;1 胜 / 0 平 / 2 负&#xa;中位成本反而 +0.15%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="690" y="135" width="255" height="120" as="geometry"/></mxCell>
+    <mxCell id="meaning" value="机制判断&#xa;失败不是超时&#xa;单一路线行为覆盖不足" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="455" y="350" width="245" height="105" as="geometry"/></mxCell>
+    <mxCell id="pair" value="BA 已预先记录的快速双槽&#xa;R2 + R4&#xa;两条中位耗时均低于 0.75 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=15;" vertex="1" parent="1"><mxGeometry x="745" y="345" width="280" height="115" as="geometry"/></mxCell>
+    <mxCell id="rule" value="Stage BC 全新实例&#xa;双槽 6/6 可行&#xa;至少 2/3 更好且中位改善 ≥ 0.1%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="665" y="555" width="330" height="110" as="geometry"/></mxCell>
+    <mxCell id="boundary" value="禁止做法&#xa;不删除 BB 负结果&#xa;不按 BB 临时换成新代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;" vertex="1" parent="1"><mxGeometry x="250" y="555" width="260" height="100" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="candidate" target="fresh"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="fresh" target="negative"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#D79B00;" edge="1" parent="1" source="negative" target="meaning"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="meaning" target="pair"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="pair" target="rule"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="meaning" target="boundary"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

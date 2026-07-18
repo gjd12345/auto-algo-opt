@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-ad.local/schemas/tsp_inherited_pool_confirmation_report.schema.v1.json",
+  "title": "TSP inherited-pool confirmation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "metadata",
+    "cohort",
+    "runs",
+    "paired_summary",
+    "per_instance_summary",
+    "cost_summary",
+    "complexity_summary",
+    "gates",
+    "decision",
+    "evidence_strength",
+    "failure_coordinates",
+    "evidence_files"
+  ],
+  "$defs": {
+    "nullableNumber": {"type": ["number", "null"]},
+    "nullableInteger": {"type": ["integer", "null"], "minimum": 0},
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_count",
+        "retry_count",
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "request_latency_ms"
+      ],
+      "properties": {
+        "request_count": {"type": "integer", "minimum": 0},
+        "retry_count": {"type": "integer", "minimum": 0},
+        "prompt_tokens": {"$ref": "#/$defs/nullableInteger"},
+        "completion_tokens": {"$ref": "#/$defs/nullableInteger"},
+        "total_tokens": {"$ref": "#/$defs/nullableInteger"},
+        "request_latency_ms": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "array", "items": {"type": "number", "minimum": 0}}
+          ]
+        },
+        "usage_source": {"enum": ["provider", "unavailable"]}
+      }
+    },
+    "heldOutInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instance", "status", "gap", "runtime_s", "failure_coordinate_id"],
+      "properties": {
+        "instance": {"enum": ["eil51", "st70", "kroA100", "ch130", "kroA200", "tsp225", "a280"]},
+        "status": {"enum": ["feasible", "infeasible", "timeout", "error"]},
+        "gap": {"$ref": "#/$defs/nullableNumber"},
+        "runtime_s": {"$ref": "#/$defs/nullableNumber"},
+        "failure_coordinate_id": {"type": ["string", "null"]}
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coordinate_id",
+        "problem",
+        "arm",
+        "seed",
+        "provider",
+        "model",
+        "status",
+        "summary_path",
+        "objective",
+        "candidate_stats",
+        "population_diversity",
+        "held_out",
+        "stage_timings",
+        "usage",
+        "code_metrics",
+        "secondary_probe_selection",
+        "input_hashes"
+      ],
+      "properties": {
+        "coordinate_id": {"type": "string", "pattern": "^tsp_construct/(fresh_start|inherited_top6)/91(0[1-9]|10)$"},
+        "problem": {"const": "tsp_construct"},
+        "arm": {"enum": ["fresh_start", "inherited_top6"]},
+        "seed": {"type": "integer", "minimum": 9101, "maximum": 9110},
+        "provider": {"const": "opencode-go"},
+        "model": {"const": "deepseek-v4-flash"},
+        "status": {"enum": ["ok", "failed", "incomplete"]},
+        "summary_path": {"type": "string", "minLength": 1},
+        "objective": {"$ref": "#/$defs/nullableNumber"},
+        "candidate_stats": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attempts", "generated", "scored", "generation_failures", "evaluation_failures", "scored_rate"],
+          "properties": {
+            "attempts": {"type": "integer", "minimum": 0},
+            "generated": {"type": "integer", "minimum": 0},
+            "scored": {"type": "integer", "minimum": 0},
+            "generation_failures": {"type": "integer", "minimum": 0},
+            "evaluation_failures": {"type": "integer", "minimum": 0},
+            "scored_rate": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "population_diversity": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["generation", "ast_unique_rate"],
+            "properties": {
+              "generation": {"type": "integer", "minimum": 0},
+              "ast_unique_rate": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "held_out": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["feasible_count", "total_count", "median_gap", "instances"],
+          "properties": {
+            "feasible_count": {"type": "integer", "minimum": 0, "maximum": 7},
+            "total_count": {"const": 7},
+            "median_gap": {"$ref": "#/$defs/nullableNumber"},
+            "instances": {
+              "type": "array",
+              "minItems": 7,
+              "maxItems": 7,
+              "items": {"$ref": "#/$defs/heldOutInstance"}
+            }
+          }
+        },
+        "stage_timings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seed_eval_s", "evolution_s", "held_out_s", "total_s"],
+          "properties": {
+            "seed_eval_s": {"type": "number", "minimum": 0},
+            "evolution_s": {"type": "number", "minimum": 0},
+            "held_out_s": {"type": "number", "minimum": 0},
+            "total_s": {"type": "number", "minimum": 0}
+          }
+        },
+        "usage": {"$ref": "#/$defs/usage"},
+        "code_metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nonblank_lines", "ast_nodes", "loop_count", "max_loop_depth"],
+          "properties": {
+            "nonblank_lines": {"type": "integer", "minimum": 0},
+            "ast_nodes": {"type": "integer", "minimum": 0},
+            "loop_count": {"type": "integer", "minimum": 0},
+            "max_loop_depth": {"type": "integer", "minimum": 0}
+          }
+        },
+        "secondary_probe_selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "selected_objective_rank",
+            "predicted_a280_runtime_s",
+            "safe_candidate_count",
+            "selected_code_sha256",
+            "used_core7_for_selection",
+            "changes_primary_selection"
+          ],
+          "properties": {
+            "status": {"enum": ["selected", "no_safe_candidate", "not_available"]},
+            "selected_objective_rank": {"type": ["integer", "null"], "minimum": 1, "maximum": 6},
+            "predicted_a280_runtime_s": {"$ref": "#/$defs/nullableNumber"},
+            "safe_candidate_count": {"type": "integer", "minimum": 0, "maximum": 6},
+            "selected_code_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+            "used_core7_for_selection": {"const": false},
+            "changes_primary_selection": {"const": false}
+          }
+        },
+        "input_hashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["manifest", "shared_pool", "core7"],
+          "properties": {
+            "manifest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "shared_pool": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+            "core7": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "agent-ad-tsp-inheritance-confirmation/v1"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite",
+        "generated_at",
+        "status",
+        "repo_branch",
+        "repo_commit",
+        "provider",
+        "model",
+        "manifest_sha256",
+        "shared_pool_sha256",
+        "core7_sha256",
+        "candidate_eval_timeout_s",
+        "held_out_timeout_s",
+        "started_at",
+        "finished_at"
+      ],
+      "properties": {
+        "suite": {"const": "tsp_inherited_pool_confirmation_v1"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["complete", "incomplete", "invalid"]},
+        "repo_branch": {"type": "string", "minLength": 1},
+        "repo_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+        "provider": {"const": "opencode-go"},
+        "model": {"const": "deepseek-v4-flash"},
+        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "shared_pool_sha256": {"const": "27e58dedacc5e069bcef6435fdf68afecfdd4de9358d5d144f3007a035b26f10"},
+        "core7_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "candidate_eval_timeout_s": {"const": 40},
+        "held_out_timeout_s": {"const": 30},
+        "started_at": {"type": "string", "format": "date-time"},
+        "finished_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planned_runs", "completed_runs", "planned_pairs", "complete_pairs", "arms", "seeds"],
+      "properties": {
+        "planned_runs": {"const": 20},
+        "completed_runs": {"type": "integer", "minimum": 0, "maximum": 20},
+        "planned_pairs": {"const": 10},
+        "complete_pairs": {"type": "integer", "minimum": 0, "maximum": 10},
+        "arms": {
+          "type": "array",
+          "prefixItems": [{"const": "fresh_start"}, {"const": "inherited_top6"}],
+          "items": false
+        },
+        "seeds": {
+          "type": "array",
+          "prefixItems": [
+            {"const": 9101}, {"const": 9102}, {"const": 9103}, {"const": 9104}, {"const": 9105},
+            {"const": 9106}, {"const": 9107}, {"const": 9108}, {"const": 9109}, {"const": 9110}
+          ],
+          "items": false
+        }
+      }
+    },
+    "runs": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/run"}},
+    "paired_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gain_definition", "per_seed", "median_pair_gain", "wins", "ties", "losses"],
+      "properties": {
+        "gain_definition": {"const": "fresh_median_gap_minus_inherited_median_gap"},
+        "per_seed": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["seed", "fresh_median_gap", "inherited_median_gap", "pair_gain", "winner", "both_fully_feasible"],
+            "properties": {
+              "seed": {"type": "integer", "minimum": 9101, "maximum": 9110},
+              "fresh_median_gap": {"$ref": "#/$defs/nullableNumber"},
+              "inherited_median_gap": {"$ref": "#/$defs/nullableNumber"},
+              "pair_gain": {"$ref": "#/$defs/nullableNumber"},
+              "winner": {"enum": ["fresh_start", "inherited_top6", "tie", "invalid"]},
+              "both_fully_feasible": {"type": "boolean"}
+            }
+          }
+        },
+        "median_pair_gain": {"$ref": "#/$defs/nullableNumber"},
+        "wins": {"type": "integer", "minimum": 0, "maximum": 10},
+        "ties": {"type": "integer", "minimum": 0, "maximum": 10},
+        "losses": {"type": "integer", "minimum": 0, "maximum": 10}
+      }
+    },
+    "per_instance_summary": {
+      "type": "array",
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["instance", "valid_pairs", "median_pair_gain", "wins", "ties", "losses", "fresh_feasible", "inherited_feasible"],
+        "properties": {
+          "instance": {"enum": ["eil51", "st70", "kroA100", "ch130", "kroA200", "tsp225", "a280"]},
+          "valid_pairs": {"type": "integer", "minimum": 0, "maximum": 10},
+          "median_pair_gain": {"$ref": "#/$defs/nullableNumber"},
+          "wins": {"type": "integer", "minimum": 0, "maximum": 10},
+          "ties": {"type": "integer", "minimum": 0, "maximum": 10},
+          "losses": {"type": "integer", "minimum": 0, "maximum": 10},
+          "fresh_feasible": {"type": "integer", "minimum": 0, "maximum": 10},
+          "inherited_feasible": {"type": "integer", "minimum": 0, "maximum": 10}
+        }
+      }
+    },
+    "cost_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fresh", "inherited", "candidate_scored_rate_drop", "historical_pool_sunk_cost_included"],
+      "properties": {
+        "fresh": {"type": "object"},
+        "inherited": {"type": "object"},
+        "candidate_scored_rate_drop": {"$ref": "#/$defs/nullableNumber"},
+        "historical_pool_sunk_cost_included": {"const": false}
+      }
+    },
+    "complexity_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fresh", "inherited"],
+      "properties": {
+        "fresh": {"type": "object"},
+        "inherited": {"type": "object"}
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["data_complete", "single_provider", "inherited_70_of_70_feasible", "a280_zero_failures", "median_gain_positive", "minimum_seven_wins", "candidate_rate_drop_within_10pp", "all_pass"],
+      "properties": {
+        "data_complete": {"type": "boolean"},
+        "single_provider": {"type": "boolean"},
+        "inherited_70_of_70_feasible": {"type": "boolean"},
+        "a280_zero_failures": {"type": "boolean"},
+        "median_gain_positive": {"type": "boolean"},
+        "minimum_seven_wins": {"type": "boolean"},
+        "candidate_rate_drop_within_10pp": {"type": "boolean"},
+        "all_pass": {"type": "boolean"}
+      }
+    },
+    "decision": {"enum": ["confirmed", "candidate_robustness_tradeoff", "not_confirmed", "invalid_cohort"]},
+    "evidence_strength": {
+      "enum": [
+        "directional_statistical_support",
+        "operational_replication",
+        "robustness_tradeoff",
+        "not_supported",
+        "invalid"
+      ]
+    },
+    "failure_coordinates": {"type": "array", "items": {"type": "string"}},
+    "evidence_files": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  }
+}

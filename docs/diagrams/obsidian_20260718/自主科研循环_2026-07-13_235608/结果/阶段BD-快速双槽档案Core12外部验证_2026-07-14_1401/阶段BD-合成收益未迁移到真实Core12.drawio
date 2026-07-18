@@ -1,0 +1,19 @@
+<mxGraphModel adaptiveColors="auto" dx="1210" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="快速双槽：合成确认通过，但真实 Core-12 外部验证失败" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="170" y="30" width="830" height="50" as="geometry"/></mxCell>
+    <mxCell id="synthetic" value="合成 n=3038 确认&#xa;R2+R4：6/6 可行&#xa;相对四槽 2胜0平1负&#xa;成本中位降低 1.03%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=16;spacing=10;" vertex="1" parent="1"><mxGeometry x="80" y="145" width="260" height="150" as="geometry"/></mxCell>
+    <mxCell id="core12" value="真实 TSPLIB Core-12&#xa;72/72 坐标可行，无超时&#xa;双槽相对四槽 3胜0平9负&#xa;gap 中位高 0.82 个百分点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=16;spacing=10;" vertex="1" parent="1"><mxGeometry x="455" y="145" width="280" height="150" as="geometry"/></mxCell>
+    <mxCell id="gate" value="冻结门槛&#xa;至少 7/12 更好&#xa;中位改善至少 0.1%&#xa;结果：未通过" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=15;" vertex="1" parent="1"><mxGeometry x="850" y="145" width="210" height="150" as="geometry"/></mxCell>
+    <mxCell id="detail" value="互补只出现在少数实例族&#xa;R4：kroA100、kroA200&#xa;R2：pcb442&#xa;其余 9 个实例四槽更好" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=15;spacing=10;" vertex="1" parent="1"><mxGeometry x="250" y="410" width="300" height="135" as="geometry"/></mxCell>
+    <mxCell id="decision" value="自动决策&#xa;保留当前四槽&#xa;停止继续压缩档案&#xa;不把合成收益写成外部泛化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=16;fontStyle=1;spacing=10;" vertex="1" parent="1"><mxGeometry x="650" y="410" width="300" height="135" as="geometry"/></mxCell>
+    <mxCell id="next" value="下一步：离线解释迁移差异&#xa;比较合成与真实实例中的代码排名变化&#xa;判断差异来自规模，还是实例结构" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=15;spacing=10;" vertex="1" parent="1"><mxGeometry x="440" y="635" width="380" height="110" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="synthetic" target="core12"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="core12" target="gate"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="core12" target="detail"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" value="失败" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#B85450;fontColor=#B85450;endArrow=block;" edge="1" parent="1" source="gate" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="detail" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="decision" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

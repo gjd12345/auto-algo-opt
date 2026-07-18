@@ -1,0 +1,149 @@
+{
+  "primary_metric": "hifo_5k_C100.pkl",
+  "arms": {
+    "api_only": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 4.077
+    },
+    "fused_sham": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 3.061
+    },
+    "harmonic_residual": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 4.287
+    },
+    "harmonic_sham": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 3.738
+    },
+    "pure_eoh": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 4.077
+    },
+    "sham_residual": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 4.077
+    },
+    "sham_sham": {
+      "coordinates": 5,
+      "valid_scores": 5,
+      "valid_rate": 1.0,
+      "median_score": 4.077
+    }
+  },
+  "comparisons": {
+    "api_only_vs_pure_eoh": {
+      "candidate": "api_only",
+      "reference": "pure_eoh",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": 0.0,
+      "win": 1,
+      "tie": 3,
+      "loss": 1
+    },
+    "sham_sham_vs_api_only": {
+      "candidate": "sham_sham",
+      "reference": "api_only",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": 0.0,
+      "win": 1,
+      "tie": 3,
+      "loss": 1
+    },
+    "harmonic_residual_vs_sham_sham": {
+      "candidate": "harmonic_residual",
+      "reference": "sham_sham",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": -0.20999999999999996,
+      "win": 2,
+      "tie": 0,
+      "loss": 3
+    },
+    "harmonic_residual_vs_harmonic_sham": {
+      "candidate": "harmonic_residual",
+      "reference": "harmonic_sham",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": -0.657,
+      "win": 0,
+      "tie": 0,
+      "loss": 5
+    },
+    "harmonic_residual_vs_sham_residual": {
+      "candidate": "harmonic_residual",
+      "reference": "sham_residual",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": -0.20999999999999996,
+      "win": 2,
+      "tie": 0,
+      "loss": 3
+    },
+    "fused_sham_vs_harmonic_residual": {
+      "candidate": "fused_sham",
+      "reference": "harmonic_residual",
+      "paired_seeds": [
+        4101,
+        4102,
+        4103,
+        4104,
+        4105
+      ],
+      "complete_pairs": 5,
+      "median_gain": 2.0540000000000003,
+      "win": 3,
+      "tie": 0,
+      "loss": 2
+    }
+  },
+  "decision": {
+    "status": "no_clear_mechanism",
+    "next_branch": "failure_and_behavior_audit"
+  }
+}

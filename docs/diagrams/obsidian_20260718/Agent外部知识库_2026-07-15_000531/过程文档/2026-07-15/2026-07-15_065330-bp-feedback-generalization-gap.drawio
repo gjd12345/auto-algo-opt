@@ -1,0 +1,22 @@
+<mxfile host="Electron" modified="2026-07-15T06:53:30.000+08:00" agent="Codex" version="24.7.17">
+  <diagram id="bp-feedback-gap" name="Page-1">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="反馈闭环已确认，但泛化链路仍有断点" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="270" y="35" width="630" height="40" as="geometry"/></mxCell>
+        <mxCell id="history" value="冻结历史精英&#xa;同一输入 / 同一预算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="175" width="200" height="85" as="geometry"/></mxCell>
+        <mxCell id="feedback" value="目标值反馈 EOH&#xa;自动生成 48 个候选槽" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="175" width="230" height="85" as="geometry"/></mxCell>
+        <mxCell id="dev" value="5k 单尺度开发集&#xa;3/3 胜旧反馈&#xa;最佳改善 3.887%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#15803D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="700" y="135" width="230" height="110" as="geometry"/></mxCell>
+        <mxCell id="heldout" value="1k / 5k / 10k 评估&#xa;平均 gap 反而恶化 2.10%&#xa;只有 10k 改善" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#B91C1C;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="700" y="335" width="250" height="115" as="geometry"/></mxCell>
+        <mxCell id="cause" value="当前最可能断点&#xa;训练实例很多，但规模单一&#xa;反馈只优化聚合开发值" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#B45309;fontSize=16;" vertex="1" parent="1"><mxGeometry x="365" y="385" width="240" height="105" as="geometry"/></mxCell>
+        <mxCell id="next" value="下一实验&#xa;单尺度 vs 等计算量多尺度训练&#xa;使用全新确认集" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#7E22CE;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="610" width="260" height="100" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#4C78A8;" edge="1" parent="1" source="history" target="feedback"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="搜索机制成立" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#15803D;fontSize=13;" edge="1" parent="1" source="feedback" target="dev"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="冻结后报告" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#B91C1C;fontSize=13;" edge="1" parent="1" source="dev" target="heldout"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="泛化未成立" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#B45309;fontSize=13;" edge="1" parent="1" source="heldout" target="cause"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="先诊断再冻结" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#7E22CE;fontSize=13;" edge="1" parent="1" source="cause" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

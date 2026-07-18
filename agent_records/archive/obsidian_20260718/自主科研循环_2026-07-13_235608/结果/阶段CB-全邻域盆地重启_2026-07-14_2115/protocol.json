@@ -1,0 +1,56 @@
+{
+  "schema_version": "tsp-full-vnd-basin-restart-protocol/v1",
+  "frozen_at": "2026-07-14T21:15:00+08:00",
+  "research_role": "exploratory_high_scale_full_vnd_basin_restart",
+  "question": "允许确定性强扰动暂时变差，再用全部邻域重新收敛，能否跳到比 Stage BZ 更好的局部最优区域？",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bt_results_sha256": "149eda9c4c09b16a022db246683db41c65c164a625a2160fb89b5c0cd93e6ec3",
+    "stage_bv_protocol_sha256": "817c6c4c799a8a78c613ed65e462cbe4fb12515e1715b80f3642f93b62f5d255",
+    "stage_bv_results_sha256": "4df0d04d99ba7053e9f80ee2daaa5753d2460ae45935f475dce79230b2b17528",
+    "stage_bw_protocol_sha256": "6873c7f23ce8123ad82884649ff5f00f175d30a16460e88f20c81863d9fd49d5",
+    "stage_bw_results_sha256": "607462d2bf9f1b79287fd03e83de5b46f4e1d3e20028d2bcd8c07a3e059d86e7",
+    "stage_bz_protocol_sha256": "afd0b8d170b607dc31793dedec835c0e9c19bd455454cf645354bc50c084e3cf",
+    "stage_bz_results_sha256": "b4e0a4f46b7a75cf6b80bcceaa9e72cb34bc7371e58d6ad10a45d15b167d747c",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "search": {
+    "restart_count": 8,
+    "restart_indices": [0, 1, 2, 3, 4, 5, 6, 7],
+    "deterministic_role": "portfolio_full_vnd",
+    "perturbation": "Stage BT 的确定性双桥分段交换",
+    "after_each_restart": "依次收敛 2-opt、单节点移位、Or-opt-2、Or-opt-3",
+    "two_opt_maximum_steps": 500,
+    "or_opt_3_maximum_moves": 50,
+    "accept_when": "完整收敛后的最终成本严格低于当前最佳",
+    "restart_from": "每次从当前最佳路线扰动"
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role": "portfolio",
+    "expected_result_count": 3,
+    "stage_bz_cost_must_match": true,
+    "research_limit": "三个实例用于搜索策略开发，通过后仍需外部确认"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 3,
+    "nonworse_than_stage_bz_instances_min": 3,
+    "strictly_better_than_stage_bz_instances_min": 2,
+    "median_extra_improvement_pct_min": 0.25,
+    "final_vs_raw_baseline_median_improvement_pct_min": 13.5
+  },
+  "leakage_controls": [
+    "8 个重启、种子角色、扰动、收敛顺序和门槛在任何结果前冻结",
+    "不按实例增加重启次数，不使用结果选择 restart index",
+    "中间路线可以变差，但只有完整收敛后的严格更优路线能更新当前最佳",
+    "失败后不改为 16 次重启；通过后才进入外部确认"
+  ],
+  "decision": {
+    "all_checks_pass": "full_vnd_basin_restart_supported_for_external_confirmation",
+    "otherwise": "stop_basin_restart_branch_and_finalize_quality_pipeline",
+    "default_pool_behavior": "unchanged"
+  }
+}

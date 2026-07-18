@@ -1,0 +1,16 @@
+<mxGraphModel adaptiveColors="auto" dx="1180" dy="740" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="同一批代码从合成 n=3038 到真实 Core-12 出现排名反转" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="150" y="30" width="870" height="50" as="geometry"/></mxCell>
+    <mxCell id="synthetic" value="合成实例（9 个）&#xa;&#xa;R2　平均名次 2.56&#xa;R4　平均名次 2.67&#xa;AW4　平均名次 3.56&#xa;AW2　平均名次 3.67&#xa;AW1/AW3　平均名次 4.28" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=17;spacing=12;align=left;" vertex="1" parent="1"><mxGeometry x="90" y="140" width="330" height="260" as="geometry"/></mxCell>
+    <mxCell id="real" value="真实 Core-12（12 个）&#xa;&#xa;AW1/AW3　平均名次 2.71&#xa;R2　平均名次 3.58&#xa;AW2　平均名次 3.67&#xa;AW4　平均名次 3.79&#xa;R4　平均名次 4.54" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=17;spacing=12;align=left;" vertex="1" parent="1"><mxGeometry x="750" y="140" width="330" height="260" as="geometry"/></mxCell>
+    <mxCell id="shift" value="六条代码的平均名次相关：-0.65&#xa;不是轻微波动，而是整体顺序反转" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=16;" vertex="1" parent="1"><mxGeometry x="480" y="165" width="210" height="200" as="geometry"/></mxCell>
+    <mxCell id="scale" value="节点数不足以解释&#xa;合成实例均为 n=3038，双槽 8胜1负&#xa;真实 pcb3038 中双槽仍更差&#xa;Core-12 的胜负也不随节点数单调变化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=16;spacing=10;" vertex="1" parent="1"><mxGeometry x="220" y="500" width="340" height="145" as="geometry"/></mxCell>
+    <mxCell id="next" value="剩余解释：点集几何结构&#xa;下一步提取长宽比、邻点距离波动、空间聚集度&#xa;只做探索性关联，不用 12 个实例宣称因果" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=16;spacing=10;" vertex="1" parent="1"><mxGeometry x="650" y="500" width="360" height="145" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="synthetic" target="shift"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="shift" target="real"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="shift" target="scale"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="scale" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

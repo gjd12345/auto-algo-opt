@@ -1,0 +1,26 @@
+<mxfile host="Electron" modified="2026-07-14T15:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-cd-confirmation" name="Stage CD">
+    <mxGraphModel dx="1300" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="受限 3-opt：从高规模开发通过到 28 个外部实例确认" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="180" y="30" width="940" height="50" as="geometry"/></mxCell>
+        <mxCell id="dev" value="Stage CC 开发 3 例&#xa;3/3 改善&#xa;中位新增 0.482%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="70" y="170" width="260" height="130" as="geometry"/></mxCell>
+        <mxCell id="freeze" value="冻结不变&#xa;四种重连｜12 近邻&#xa;最多 20 次" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="390" y="170" width="240" height="130" as="geometry"/></mxCell>
+        <mxCell id="external" value="外部 28 实例&#xa;23 改善｜5 不变｜0 变差&#xa;中位新增 0.314%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="690" y="160" width="300" height="150" as="geometry"/></mxCell>
+        <mxCell id="result" value="升级为质量主方法&#xa;最终平均 12.81%&#xa;最终中位 12.85%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#10B981;strokeColor=#047857;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1050" y="160" width="220" height="150" as="geometry"/></mxCell>
+        <mxCell id="small" value="≤300 节点&#xa;平均新增 0.637%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;fontSize=15;" vertex="1" parent="1"><mxGeometry x="300" y="450" width="210" height="90" as="geometry"/></mxCell>
+        <mxCell id="mid" value="301～1000 节点&#xa;平均新增 0.731%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;fontSize=15;" vertex="1" parent="1"><mxGeometry x="550" y="450" width="210" height="90" as="geometry"/></mxCell>
+        <mxCell id="large" value=">1000 节点&#xa;平均新增 0.455%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;fontSize=15;" vertex="1" parent="1"><mxGeometry x="800" y="450" width="210" height="90" as="geometry"/></mxCell>
+        <mxCell id="next" value="只有 4461～5934 节点触及 20 次上限&#xa;下一步单独扩展高规模预算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0E7FF;strokeColor=#4F46E5;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="450" y="620" width="430" height="90" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="dev" target="freeze"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#059669;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="freeze" target="external"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#047857;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="external" target="result"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;" edge="1" parent="1" source="external" target="small"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;" edge="1" parent="1" source="external" target="mid"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;" edge="1" parent="1" source="external" target="large"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4F46E5;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="large" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

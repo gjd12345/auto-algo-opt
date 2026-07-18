@@ -1,0 +1,68 @@
+{
+  "schema_version": "tsp-frontier-archive-confirmation-summary/v1",
+  "study_role": "independent_synthetic_frontier_confirmation",
+  "completed_at": "2026-07-14T05:34:01.114106+00:00",
+  "manifest_sha256": "7b4fdd8573e843b69c36222eea90e25c1d1ececd72046d966044ad3111423993",
+  "coordinates": 24,
+  "archives": {
+    "selected_frontier": {
+      "archive": "selected_frontier",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 463093.0,
+        "synthetic_frontier_confirm_2_3038": 462544.0,
+        "synthetic_frontier_confirm_3_3038": 459194.0
+      }
+    },
+    "current_aw": {
+      "archive": "current_aw",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 488837.0,
+        "synthetic_frontier_confirm_2_3038": 479424.0,
+        "synthetic_frontier_confirm_3_3038": 461298.0
+      }
+    }
+  },
+  "selected_code_validity": {
+    "4a88814912e5890769e16efa02ff9928be4f92ed42a11a7c8f7917d969538ffd": 3,
+    "d3846ff9b372b1d39e7fa3a82737ef4dcd2b4e5196e367b7a0e4119c4e42ecfb": 3,
+    "3432d3e7426675905cdf459f6b60f54cdf70eee398bf4466f26b8a6d2460fa0f": 3,
+    "23225aeb15945f0834b2c70fde98cbf5d7a40c08289b37735709814b3a6a1fd8": 3
+  },
+  "comparisons": [
+    {
+      "instance": "synthetic_frontier_confirm_1_3038",
+      "selected_best_tour_cost": 463093.0,
+      "current_aw_best_tour_cost": 488837.0,
+      "selected_relative_diff_pct": -5.266377135936928,
+      "direction": "better"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_2_3038",
+      "selected_best_tour_cost": 462544.0,
+      "current_aw_best_tour_cost": 479424.0,
+      "selected_relative_diff_pct": -3.5208917367507677,
+      "direction": "better"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_3_3038",
+      "selected_best_tour_cost": 459194.0,
+      "current_aw_best_tour_cost": 461298.0,
+      "selected_relative_diff_pct": -0.4561042970054065,
+      "direction": "better"
+    }
+  ],
+  "direction_counts": {
+    "better": 3,
+    "same": 0,
+    "worse": 0,
+    "missing": 0
+  },
+  "median_selected_relative_diff_pct": -3.5208917367507677,
+  "overall_pass": true
+}

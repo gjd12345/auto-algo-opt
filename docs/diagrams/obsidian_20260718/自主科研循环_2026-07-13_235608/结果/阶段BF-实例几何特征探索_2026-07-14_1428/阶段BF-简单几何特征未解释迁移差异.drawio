@@ -1,0 +1,17 @@
+<mxGraphModel adaptiveColors="auto" dx="1180" dy="740" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="简单几何特征没有解释快速双槽的真实实例胜负" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="170" y="30" width="830" height="50" as="geometry"/></mxCell>
+    <mxCell id="features" value="预先限定的实例特征&#xa;长宽比与旋转后扁平度&#xa;最近邻距离波动&#xa;4×4 网格密度不均匀度&#xa;中心距离波动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="80" y="150" width="280" height="210" as="geometry"/></mxCell>
+    <mxCell id="result" value="Core-12 结果&#xa;几何特征相关绝对值均不超过 0.22&#xa;多数逐点剔除后方向改变&#xa;节点数相关 0.42，但跨来源后接近 0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="445" y="150" width="300" height="210" as="geometry"/></mxCell>
+    <mxCell id="counter" value="直接反例&#xa;kroA100/200：狭长且双槽大胜&#xa;tsp225/rat575/rat783：同样狭长但双槽失败&#xa;形状比例不是充分条件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="830" y="150" width="280" height="210" as="geometry"/></mxCell>
+    <mxCell id="decision" value="自动决策：不构造特征定向实例&#xa;避免用弱相关继续追逐假设" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=16;" vertex="1" parent="1"><mxGeometry x="280" y="500" width="260" height="150" as="geometry"/></mxCell>
+    <mxCell id="next" value="下一步直接看算法行为&#xa;比较胜负实例中的边长分布、最近邻选择率和交叉&#xa;从代码如何构造路线寻找机制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="670" y="500" width="340" height="150" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="features" target="result"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="result" target="counter"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="result" target="decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="counter" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="decision" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

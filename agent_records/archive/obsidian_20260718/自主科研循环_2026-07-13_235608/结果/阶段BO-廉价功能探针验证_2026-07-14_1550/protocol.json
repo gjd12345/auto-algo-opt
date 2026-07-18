@@ -1,0 +1,54 @@
+{
+  "schema_version": "tsp-cheap-functional-probe-protocol/v1",
+  "frozen_at": "2026-07-14T15:50:00+08:00",
+  "research_role": "locked_probe_then_real_similarity_validation",
+  "question": "六个廉价非held-out合成探针能否预测代码在真实TSPLIB实例上的路线功能相似度",
+  "inputs": {
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "real_pairwise_similarity_sha256": "39fc476e2094a9d5dc20cd9163dbb6e06277e0a4f40b6de493da1a6bd4a02053"
+  },
+  "probes": [
+    {"name": "uniform128", "geometry": "uniform", "nodes": 128, "seed": 2031001},
+    {"name": "uniform256", "geometry": "uniform", "nodes": 256, "seed": 2031002},
+    {"name": "clustered128", "geometry": "clustered", "nodes": 128, "seed": 2031003},
+    {"name": "clustered256", "geometry": "clustered", "nodes": 256, "seed": 2031004},
+    {"name": "ring128", "geometry": "ring", "nodes": 128, "seed": 2031005},
+    {"name": "ring256", "geometry": "ring", "nodes": 256, "seed": 2031006}
+  ],
+  "generator": {
+    "coordinate_range": [0, 10000],
+    "round_to_integer": true,
+    "distance_rule": "EUC_2D round-to-nearest",
+    "cluster_count": 5,
+    "cluster_sigma": 400,
+    "ring_center": [5000, 5000],
+    "ring_radius": 3500,
+    "ring_radial_sigma": 250,
+    "ring_angular_jitter_fraction": 0.25
+  },
+  "signature": {
+    "route_representation": "无向边集合",
+    "pair_similarity": "六探针Jaccard均值",
+    "predicted_redundant_threshold": 0.95,
+    "real_redundant_threshold": 0.98
+  },
+  "validation_gate": {
+    "spearman_probe_vs_real_min": 0.8,
+    "redundant_pair_precision_min": 0.8,
+    "redundant_pair_recall_min": 0.8,
+    "aw1_aw3_probe_identical_required": true,
+    "r2_r4_must_not_be_predicted_redundant": true
+  },
+  "execution_order": [
+    "probe阶段不得读取真实pairwise文件",
+    "冻结probe_pairwise_similarity.csv及SHA-256",
+    "validate阶段必须提供冻结probe文件的预期SHA-256",
+    "验证后不得修改探针、阈值或门槛"
+  ],
+  "decision": {
+    "all_checks_pass": "cheap_functional_signature_supported_for_offline_curation",
+    "otherwise": "cheap_functional_signature_research_only",
+    "default_pool_behavior": "unchanged"
+  }
+}

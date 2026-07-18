@@ -1,0 +1,94 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T06:05:00.000+08:00" agent="Codex" version="24.7.17" type="device">
+  <diagram id="tsp-runtime-tradeoff" name="TSP热启动质量与运行折中">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="&lt;b&gt;TSP 历史热启动：质量收益与运行风险如何同时处理&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="980" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="pool" value="&lt;b&gt;历史 top-6&lt;/b&gt;&lt;br&gt;605-run 精英作为起点&lt;br&gt;不重新随机初始化" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="130" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="evolution" value="&lt;b&gt;四代短预算进化&lt;/b&gt;&lt;br&gt;只按训练 objective 排名" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="280" y="130" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="slow_region" value="&lt;b&gt;最终种群慢区&lt;/b&gt;&lt;br&gt;seed 8101 前五名&lt;br&gt;a280 全部超过 30 秒" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F8CECC;strokeColor=#B85450;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="520" y="130" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="objective_choice" value="&lt;b&gt;objective 第一名&lt;/b&gt;&lt;br&gt;质量较高&lt;br&gt;但 Core-7 为 20/21 可行" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F8CECC;strokeColor=#B85450;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="770" y="130" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="population" value="&lt;b&gt;保留最终 top-6&lt;/b&gt;&lt;br&gt;第六名是历史种子&lt;br&gt;训练只比第一名差 1.19%" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="280" y="350" width="190" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="probe" value="&lt;b&gt;合成 dev 运行探针&lt;/b&gt;&lt;br&gt;n=120 / 160 / 200&lt;br&gt;外推 n=280 运行时间" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="350" width="190" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="decision" value="预测运行时间&lt;br&gt;&lt;b&gt;&amp;lt; 30 秒？&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="790" y="345" width="150" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="safe_choice" value="&lt;b&gt;安全候选中选 objective 最优&lt;/b&gt;&lt;br&gt;8101 改选第六名&lt;br&gt;8102/8103 保留第一名" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="350" width="210" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="safe_result" value="&lt;b&gt;小规模风险被修复&lt;/b&gt;&lt;br&gt;Core-7：21/21 可行&lt;br&gt;3/3 获胜；中位收益 +5.414" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="350" width="220" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="rejected" value="排除该候选&lt;br&gt;不读取 Core-7" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F8CECC;strokeColor=#B85450;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="790" y="540" width="150" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="validation" value="&lt;b&gt;冻结验证&lt;/b&gt;&lt;br&gt;a280 跨 seed：12/12 安全分类正确&lt;br&gt;合成 n=442：8 安全、4 超时，12/12 正确&lt;br&gt;两轮均为 0 false-safe" style="shape=note;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F5F5F5;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="500" y="540" width="240" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="extension_test" value="&lt;b&gt;冻结后扩展验证&lt;/b&gt;&lt;br&gt;5 个 TSPLIB 实例&lt;br&gt;n=442–3038；不重新选候选" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="520" width="220" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="extension_fail" value="&lt;b&gt;大规模外推失败&lt;/b&gt;&lt;br&gt;inherited：0/15 可行&lt;br&gt;fresh：11/15 可行" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F8CECC;strokeColor=#B85450;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="650" width="220" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;修正后的证据边界&lt;/b&gt;&lt;br&gt;运行探针只守住目标规模 n=280&lt;br&gt;不能写成 TSPLIB-full 鲁棒；需把大规模门槛加入确认协议" style="shape=note;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="940" y="650" width="280" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pool_evolution" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6C8EBF;strokeWidth=2;" edge="1" parent="1" source="pool" target="evolution">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_evolution_slow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=2;" edge="1" parent="1" source="evolution" target="slow_region">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_slow_objective" value="只看训练质量" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="slow_region" target="objective_choice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_evolution_population" value="保留备选" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="evolution" target="population">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_population_probe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=2;" edge="1" parent="1" source="population" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_probe_decision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=2;" edge="1" parent="1" source="probe" target="decision">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_decision_safe" value="是" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="decision" target="safe_choice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_safe_result" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=2;" edge="1" parent="1" source="safe_choice" target="safe_result">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_decision_reject" value="否" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="decision" target="rejected">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_validation_probe" value="冻结后验证" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#666666;fontSize=12;" edge="1" parent="1" source="validation" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_core7_extension" value="扩大规模" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#D6B656;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="safe_result" target="extension_test">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_extension_fail" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=2;" edge="1" parent="1" source="extension_test" target="extension_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_result_boundary" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#D6B656;" edge="1" parent="1" source="extension_fail" target="boundary">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

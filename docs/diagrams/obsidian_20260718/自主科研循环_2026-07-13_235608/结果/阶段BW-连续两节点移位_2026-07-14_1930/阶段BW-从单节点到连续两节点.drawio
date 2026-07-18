@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T19:45:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="stage-bw" name="Stage BW">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Stage BW：整体移动相邻节点，跨过单节点局部最优" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="140" y="30" width="880" height="45" as="geometry"/></mxCell>
+        <mxCell id="a" value="Stage BV&#xa;单节点移位自然停止&#xa;中位总降幅 13.06%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="60" y="165" width="250" height="120" as="geometry"/></mxCell>
+        <mxCell id="b" value="连续两节点整体移动&#xa;保留片段内部连接&#xa;避免逐个移动先变差" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4CC;strokeColor=#D6A700;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="400" y="145" width="300" height="160" as="geometry"/></mxCell>
+        <mxCell id="c" value="每次移动后&#xa;重新收敛 2-opt&#xa;再收敛单节点移位" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#7E57C2;fontSize=17;align=center;" vertex="1" parent="1"><mxGeometry x="790" y="165" width="260" height="120" as="geometry"/></mxCell>
+        <mxCell id="d" value="开发结果&#xa;3/3 路线继续下降&#xa;中位新增 0.19%&#xa;中位总降幅 13.22%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DFF3E4;strokeColor=#2E8B57;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="270" y="410" width="300" height="150" as="geometry"/></mxCell>
+        <mxCell id="e" value="下一步&#xa;冻结同一日程&#xa;在 28 个外部确认实例上&#xa;只检验新增邻域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDE8E7;strokeColor=#D9534F;fontSize=17;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="670" y="410" width="300" height="150" as="geometry"/></mxCell>
+        <mxCell id="ab" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="bc" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="cd" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="c" target="d"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="de" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

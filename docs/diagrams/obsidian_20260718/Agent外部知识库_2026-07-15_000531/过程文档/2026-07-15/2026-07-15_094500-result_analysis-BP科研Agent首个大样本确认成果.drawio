@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net" modified="2026-07-15T09:45:00+08:00" agent="Codex" version="24.7.17">
+  <diagram id="bp-agent-confirmed" name="成果证据链">
+    <mxGraphModel dx="1250" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="evolution" value="EOH 科研 Agent&#xa;普通 objective 提示&#xa;独立确认门接纳" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="40" y="240" width="220" height="120" as="geometry"/></mxCell>
+        <mxCell id="candidate" value="自动候选&#xa;逆平方剩余惩罚&#xa;平衡中心 0.45" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1"><mxGeometry x="320" y="240" width="220" height="120" as="geometry"/></mxCell>
+        <mxCell id="diagnostic" value="冻结 90 对诊断&#xa;51 胜 / 18 平 / 21 负&#xa;只用于选确认对象" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="600" y="240" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="confirm" value="全新 300 对确认&#xa;198 胜 / 47 平 / 55 负&#xa;平均 +0.1533 点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="900" y="230" width="250" height="140" as="geometry"/></mxCell>
+        <mxCell id="seed" value="发布跨设备正式 seed&#xa;范围：C100 Weibull&#xa;下一步：HiFo 分布外验证" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="900" y="450" width="250" height="130" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="evolution" target="candidate"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="candidate" target="diagnostic"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="diagnostic" target="confirm"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="confirm" target="seed"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

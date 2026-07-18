@@ -1,0 +1,20 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="四槽质量档案能否压缩为更稳的单槽？" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="260" y="25" width="650" height="42" as="geometry"/></mxCell>
+    <mxCell id="four" value="已确认的新四槽&#xa;6 个实例全部可行&#xa;含 1 条 25.74 秒慢代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="65" y="145" width="240" height="110" as="geometry"/></mxCell>
+    <mxCell id="enumerate" value="枚举全部 15 个非空子集&#xa;分别检查 discovery 与 confirmation&#xa;门槛不变" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=15;" vertex="1" parent="1"><mxGeometry x="385" y="135" width="270" height="130" as="geometry"/></mxCell>
+    <mxCell id="all_pass" value="15/15 子集均通过&#xa;收益不依赖慢代码&#xa;四槽不是必要条件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="735" y="145" width="235" height="110" as="geometry"/></mxCell>
+    <mxCell id="slow" value="R1 单槽&#xa;质量收益最大&#xa;但确认集有 1 个实例变差&#xa;中位耗时 25.74 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;" vertex="1" parent="1"><mxGeometry x="270" y="365" width="245" height="120" as="geometry"/></mxCell>
+    <mxCell id="fast" value="R4 单槽（推荐）&#xa;六实例 6 胜 / 0 平 / 0 负&#xa;中位耗时 0.70 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="640" y="365" width="260" height="120" as="geometry"/></mxCell>
+    <mxCell id="gain" value="R4 相对当前 AW&#xa;discovery 中位 −0.80%&#xa;confirmation 中位 −3.08%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=15;" vertex="1" parent="1"><mxGeometry x="650" y="555" width="250" height="100" as="geometry"/></mxCell>
+    <mxCell id="boundary" value="选择使用了 AZ 结果&#xa;必须再用全新实例确认&#xa;不能直接当最终部署结论" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="275" y="555" width="260" height="100" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="four" target="enumerate"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="enumerate" target="all_pass"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="all_pass" target="slow"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="all_pass" target="fast"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#D79B00;" edge="1" parent="1" source="fast" target="gain"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="gain" target="boundary"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

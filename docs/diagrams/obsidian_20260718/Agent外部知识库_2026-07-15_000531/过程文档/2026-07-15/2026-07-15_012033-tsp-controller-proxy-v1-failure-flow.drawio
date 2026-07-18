@@ -1,0 +1,36 @@
+<mxGraphModel adaptiveColors="auto" dx="1200" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="TSP 搜索控制器 proxy v1：候选为何没有超过冻结种子" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+      <mxGeometry x="180" y="30" width="810" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="generated" value="EOH 自动生成&#xa;18 个候选位置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#5B8DB8;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="70" y="145" width="180" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="empty" value="6 个无代码&#xa;生成阶段失败" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#C65D4B;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="350" y="90" width="190" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="code" value="12 个产生代码" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4D6;strokeColor=#C99A2E;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="350" y="205" width="190" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="over" value="5 个仅预算超限&#xa;整段候选被作废" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#C65D4B;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="650" y="145" width="200" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="valid" value="7 个合同有效&#xa;7 种不同搜索计划" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#5B9A68;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="650" y="260" width="200" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="fail" value="0/3 run 超过冻结种子&#xa;proxy v1 门槛未通过" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8F7;strokeColor=#8B5CA6;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="940" y="260" width="210" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="next" value="proxy v2 唯一改动&#xa;合法步骤按原顺序截断预算&#xa;保留数据、指标和门槛" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4F1;strokeColor=#438C82;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="440" width="280" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="generated" target="empty"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="generated" target="code"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="code" target="over"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="code" target="valid"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#64748B;" edge="1" parent="1" source="valid" target="fail"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" value="负结果保留，建立新 cohort" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#438C82;fontSize=12;" edge="1" parent="1" source="fail" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

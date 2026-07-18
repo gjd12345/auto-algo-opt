@@ -1,0 +1,47 @@
+{
+  "schema_version": "tsp-high-scale-diverse-trio-confirmation-protocol/v1",
+  "frozen_at": "2026-07-14T15:27:00+08:00",
+  "research_role": "independent_high_scale_external_confirmation",
+  "question": "功能多样三槽AW1+R2+R4能否在更大未见官方实例上保持接近六代码oracle的覆盖",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "archives": {
+    "frozen_diverse_trio": ["AW1", "R2", "R4"],
+    "current_robust_four": ["AW1", "AW2", "AW3", "AW4"],
+    "full_six_oracle": ["AW1", "AW2", "AW3", "AW4", "R2", "R4"]
+  },
+  "evaluation": {
+    "distance_rule": "TSPLIB EUC_2D round-to-nearest",
+    "distance_matrix": "每个实例构建一次并由六代码只读共享",
+    "serial_execution": true,
+    "expected_coordinate_count": 18,
+    "selection_after_results": false
+  },
+  "primary_gate": {
+    "feasible_coordinate_count_min": 18,
+    "trio_exact_full_oracle_matches_min": 2,
+    "trio_mean_regret_to_full_oracle_pct_max": 0.5,
+    "trio_max_regret_to_full_oracle_pct_max": 2.0,
+    "trio_vs_current_wins_must_not_be_fewer_than_losses": true,
+    "trio_vs_current_median_cost_delta_pct_max": 0.5
+  },
+  "secondary_outputs": [
+    "AW1与AW3路线是否继续完全相同",
+    "R2与R4无向边Jaccard",
+    "逐代码运行时间和逐实例获胜标签",
+    "当前四槽相对六代码oracle的遗憾"
+  ],
+  "decision": {
+    "all_primary_checks_pass": "diverse_trio_high_scale_supported_but_not_deployed",
+    "otherwise": "diverse_trio_high_scale_not_supported",
+    "deployment": "三个实例样本过小，任何结果都不自动修改当前默认档案"
+  },
+  "failure_policy": [
+    "不因pla7397是CEIL_2D而混入口径",
+    "不因内存或运行失败降低节点下限或更换实例",
+    "不根据高规模结果替换三槽成员"
+  ]
+}

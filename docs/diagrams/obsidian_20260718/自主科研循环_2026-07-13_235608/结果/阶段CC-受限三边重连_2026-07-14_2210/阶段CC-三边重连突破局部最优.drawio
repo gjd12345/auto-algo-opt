@@ -1,0 +1,20 @@
+<mxfile host="Electron" modified="2026-07-14T14:40:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-cc-three-opt" name="Stage CC">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="受限 3-opt 在强变邻域之后仍带来稳定新增收益" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="160" y="30" width="880" height="50" as="geometry"/></mxCell>
+        <mxCell id="cb" value="Stage CB 最佳路线&#xa;2-opt、节点移位、片段移位&#xa;和 8 次重启均已完成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="170" width="260" height="120" as="geometry"/></mxCell>
+        <mxCell id="three" value="受限 3-opt&#xa;四种真三边重连&#xa;12 近邻｜最多 20 次" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="470" y="160" width="260" height="140" as="geometry"/></mxCell>
+        <mxCell id="gain" value="3/3 全部改善&#xa;平均 +0.485%&#xa;中位 +0.482%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#10B981;strokeColor=#047857;fontColor=#FFFFFF;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="870" y="160" width="260" height="140" as="geometry"/></mxCell>
+        <mxCell id="cap" value="三例都接受 20 次&#xa;尚未收敛" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="300" y="430" width="250" height="100" as="geometry"/></mxCell>
+        <mxCell id="next" value="先做外部 28 实例确认&#xa;参数不变，不在开发集加预算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0E7FF;strokeColor=#4F46E5;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="650" y="430" width="300" height="100" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2563EB;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="cb" target="three"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#059669;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="three" target="gain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;endArrow=block;endFill=1;" edge="1" parent="1" source="gain" target="cap"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="冻结后确认" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#4F46E5;strokeWidth=2;endArrow=block;endFill=1;fontSize=14;" edge="1" parent="1" source="cap" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

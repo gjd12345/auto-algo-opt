@@ -1,0 +1,17 @@
+<mxGraphModel adaptiveColors="auto" dx="1180" dy="740" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="静态实例特征解释失败后，路线行为出现稳定信号" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="170" y="30" width="830" height="50" as="geometry"/></mxCell>
+    <mxCell id="replay" value="确定性重放&#xa;6 条冻结代码 × Core-12&#xa;72/72 路线成本与 Stage BD 完全一致" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="70" y="145" width="280" height="160" as="geometry"/></mxCell>
+    <mxCell id="edge" value="边长波动差&#xa;相关 0.62&#xa;逐点剔除范围 0.50～0.77&#xa;双槽更能压低波动时，质量更好" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="435" y="120" width="300" height="185" as="geometry"/></mxCell>
+    <mxCell id="cross" value="抽样交叉率差&#xa;相关 0.56&#xa;逐点剔除范围 0.42～0.67&#xa;双槽减少交叉时，质量更好" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="820" y="120" width="280" height="185" as="geometry"/></mxCell>
+    <mxCell id="limit" value="结论边界&#xa;这些指标在看过 Core-12 后提出&#xa;稳定相关不等于因果&#xa;失败实例中也有局部减少" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="250" y="460" width="300" height="170" as="geometry"/></mxCell>
+    <mxCell id="next" value="下一步：未见真实实例确认&#xa;冻结额外 TSPLIB EUC_2D 实例&#xa;先锁定来源与清单，再评估路线质量和行为关系" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=16;spacing=12;" vertex="1" parent="1"><mxGeometry x="670" y="460" width="360" height="170" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="replay" target="edge"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="edge" target="cross"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="edge" target="limit"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="cross" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="limit" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

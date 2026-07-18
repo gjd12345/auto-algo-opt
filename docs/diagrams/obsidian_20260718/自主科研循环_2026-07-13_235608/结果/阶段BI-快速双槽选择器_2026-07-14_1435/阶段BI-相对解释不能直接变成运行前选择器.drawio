@@ -1,0 +1,21 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T06:40:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bi" name="阶段BI">
+    <mxGraphModel dx="1380" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="split" value="哈希锁定划分&#xa;发现 28 / 确认 28" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="300" width="220" height="90" as="geometry"/></mxCell>
+        <mxCell id="features" value="只看双槽自身&#xa;下界差、边长波动&#xa;最近邻率、两槽分歧" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="350" y="280" width="240" height="130" as="geometry"/></mxCell>
+        <mxCell id="rules" value="140 个冻结单阈值&#xa;要求至少接受一半&#xa;同时限制平均与尾部伤害" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1"><mxGeometry x="650" y="280" width="250" height="130" as="geometry"/></mxCell>
+        <mxCell id="fail" value="0 个通过&#xa;最近规则仍有 p90 +1.95%&#xa;确认标签保持未打开" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="970" y="280" width="250" height="130" as="geometry"/></mxCell>
+        <mxCell id="meaning" value="科研结论&#xa;相对行为差能解释胜负&#xa;绝对双槽信号不能安全预测" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;" vertex="1" parent="1"><mxGeometry x="1280" y="150" width="250" height="130" as="geometry"/></mxCell>
+        <mxCell id="next" value="下一步&#xa;冻结边长波动干预&#xa;检验因果价值" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1280" y="430" width="250" height="110" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="split" target="features"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="features" target="rules"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="rules" target="fail"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="fail" target="meaning"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="fail" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

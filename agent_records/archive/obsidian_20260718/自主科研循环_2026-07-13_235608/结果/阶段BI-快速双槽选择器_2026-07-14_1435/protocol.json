@@ -1,0 +1,61 @@
+{
+  "schema_version": "tsp-fast-pair-fallback-router-protocol/v1",
+  "frozen_at": "2026-07-14T14:35:00+08:00",
+  "research_role": "post_external_exploratory_locked_split",
+  "question": "先运行R2和R4后，能否只用实例输入与双槽路线行为决定是否回退四槽，在不降低路线质量的同时减少平均代码评估数",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "route_behavior_metrics_sha256": "1aeb05cbd5c75a0533ef255ea5e2a1e516f82444ad1d0beffde83e4d65a50e78",
+    "pairwise_comparison_sha256": "a44da65f96abb88de8858a3cce7cc0d5e5a4d8f9590e8686736b95cb464bd863",
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535"
+  },
+  "split": {
+    "rule": "按实例文件sha256升序排列，0起始偶数位进入discovery，奇数位进入confirmation",
+    "expected_discovery_count": 28,
+    "expected_confirmation_count": 28
+  },
+  "execution": {
+    "first_run": ["R2", "R4"],
+    "accept_pair_code_evaluations": 2,
+    "fallback_total_code_evaluations": 6,
+    "baseline_four_archive_code_evaluations": 4,
+    "fallback_result": "使用四槽中的最低路线成本",
+    "pair_result": "使用R2和R4中的最低路线成本"
+  },
+  "candidate_rules": [
+    {"feature": "pair_lower_bound_gap_pct", "accept_when": "le"},
+    {"feature": "pair_edge_length_cv", "accept_when": "le"},
+    {"feature": "pair_nearest_choice_rate", "accept_when": "ge"},
+    {"feature": "pair_cost_spread_pct", "accept_when": "le"},
+    {"feature": "pair_edge_cv_spread", "accept_when": "le"}
+  ],
+  "discovery_constraints": {
+    "minimum_acceptance_rate": 0.5,
+    "accepted_wins_must_exceed_losses": true,
+    "maximum_mean_cost_delta_pct": 0.0,
+    "maximum_p90_cost_delta_pct": 1.0,
+    "maximum_single_instance_harm_pct": 5.0
+  },
+  "selection_order": [
+    "fewest_accepted_losses",
+    "lowest_mean_router_cost_delta_pct",
+    "most_accepted_instances",
+    "candidate_rule_order",
+    "lowest_threshold"
+  ],
+  "confirmation_gate": {
+    "minimum_acceptance_rate": 0.5,
+    "accepted_wins_must_exceed_losses": true,
+    "maximum_mean_cost_delta_pct": 0.0,
+    "maximum_p90_cost_delta_pct": 1.0,
+    "maximum_single_instance_harm_pct": 5.0,
+    "minimum_feasible_rate": 1.0
+  },
+  "failure_action": "若发现集无规则通过，或冻结规则在确认集失败，则停止选择器分支，不改默认四槽，不查看确认标签后重新调阈值",
+  "leakage_controls": [
+    "发现阶段不输出或统计confirmation标签",
+    "规则JSON与SHA-256冻结后才能运行confirmation命令",
+    "规则不读取最优解、四槽路线行为或confirmation标签",
+    "本研究在看过外部56总体结果后提出，只能称为锁定划分的探索性验证"
+  ]
+}

@@ -1,0 +1,765 @@
+{
+  "schema_version": "tsp-safe-pool-frontier/v1",
+  "study_role": "discovery_with_previously_confirmed_instances",
+  "created_at": "2026-07-14T04:45:41.585237+00:00",
+  "repo_commit": "66b5287dc8146c52f7afe1c6d0fd583de752893f",
+  "inputs": {
+    "catalog": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AS-历史池质量规模双档案_2026-07-14_0749\\history_code_catalog.jsonl",
+      "sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+    },
+    "stage_aw_predictions": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AW-目标规模合成dev直接探针_2026-07-14_1134\\direct_scale_predictions_frozen.csv",
+      "sha256": "c0f771eca2416f3f72068c27f03ed74fc9561768341ba46089cc645245bf98bd"
+    },
+    "stage_ax_manifest": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\scale_archive_confirmation_manifest.json",
+      "sha256": "78395f7c13d462d3bc07e78949995f2afa5a54237fa8d95725cd8dd93ae14023"
+    },
+    "stage_ax_results": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\scale_archive_confirmation_results.csv",
+      "sha256": "3ecac68270c2bfe38ae286b4b04d799292688ea38acc1ed3676fbe8f89fb0baf"
+    },
+    "stage_ax_summary": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\scale_archive_confirmation_summary.json",
+      "sha256": "6f31d9d2f1de3af696be5fb4c0f3a0da503d43181e561fecce7841df3a314ebe"
+    }
+  },
+  "evaluator_sha256": "f2145e7cbde978673ff7f600622fee431411296fad319d054eac849d2e4af76c",
+  "safe_code_hashes": [
+    "07db19a271112e44e36d5631550d95728bacca33c13c2c6a25028e1ea4b88396",
+    "cf8bfe699224101cce0280cd387490aaa9b653e545f95be17b75afb19d328815",
+    "ba42888081deeb12d2aa958df41b853cbe8a986d0bfe6a20bbfb0428acd7a762",
+    "6120ca5c202382284979e7183e5ed9a91a16d51fa940156e1dbb4fc6e7d8c99f",
+    "28d1c3ff1421008108fc869b9263ad43862cf8a808fdae38a228cd3732c56826",
+    "40f4d6dfdf3ff32a3a345ef67923a6e3bb134724cb6c0a326d4d1f9861df8545",
+    "8ba1041a7976fda351d9229ea59e7c384907e7168cac7c56a1cd09ba685dd1e1",
+    "0338a175604155394e698fa6f015af01870ff022b18050bd3e00745891972571",
+    "f81efd584db65fe2189360f52ac2c68ad0df64f883edcf5e484144eb5ce37ab8",
+    "3432d3e7426675905cdf459f6b60f54cdf70eee398bf4466f26b8a6d2460fa0f",
+    "d3846ff9b372b1d39e7fa3a82737ef4dcd2b4e5196e367b7a0e4119c4e42ecfb",
+    "e9fb54a440d5fb67caa19031b3fcd62cddf06aaf51d49b7b02735b861de4d0c5",
+    "419a101ec2de003e0702636896bf82d74a09640ea5140296ba427874496b1226",
+    "fac7e7e8c574e09840791a31011488e91e7d559175e5440b06c624b2c24a1ee8",
+    "f57d25fc6107d37cccf59bbeacf539fe4dbed919b561518ec0820067db5ddf41",
+    "0250128da13662a6cb057ec1157a22c0b0db4e52509ab9f01501a729a0d510c3",
+    "8d3ea38ef769e12b3e2d5a604f312e137b4cb7a38d645f04c3c919e631d430a3",
+    "5e199da12af799f474c70bf2dcea68ec874c14b62664500261c00a1e7e4b8668",
+    "a46295341823e86c138a402abd8870a9df1618c4039d3f1e44eecfec8a0aa312",
+    "a40a9591473a536355afc3c26efa8b9262ed3bb86511bb118ea3d2d3d391cf1a",
+    "35558aa2437754c16cb317c27a06b133b36219fb9815897a14f37b31ec48ad48",
+    "c5bb56ec097139dc1884796ed4bc5f1cf64b7795a29873c2341a3e01d9bfd6a7",
+    "e7dd7bfacd6f37ea0bd4cd6fec4e43077d828d31d994ba3a87341d6a35846135",
+    "23225aeb15945f0834b2c70fde98cbf5d7a40c08289b37735709814b3a6a1fd8",
+    "636a8995c3f70cd78f1a4c982946e8c613e32a307f181deccc3693ee19d068da",
+    "a64b77ee5e206fd25bf7f22ac9cfe8b559b94232d360c5b3c28d16e0b5c1ba3d",
+    "dfe37ceba45643d4805c6887dc3510b7e05bf1baa127d786d8d35d9998114769",
+    "d082e114e5a67ca7a3c8212fdfa4c6292e0cbdcbb7a28a6b0a9f6df4678d7cd4",
+    "e42683fd6532b5b50ead977c886696ad16c79b04cb6766481c331c9dbf0578a3",
+    "97a5f4a73b39f63d76413e7f762df5f36b710a2d9421dc8f6790f0cab1b968a0",
+    "c60b15c6f688dd365d9dc282b4bd6c8f83b0aa2fdbd61860d0a1838917f005ad",
+    "a44895104120345e924cf897a61fefcde434d43efdcff19d380dc63b040f9ee5",
+    "79eb1fa4a6c5344e6ec2d725fa64fa3532ee8a64f8484ee8d58f211dbda07e13",
+    "b1828d6d3ad42f8e6245579f8b40d928cfbb97a527c644014f0c762e9780038a",
+    "604bd4ff9c9e19361abda1914a9891d1406edce443b02c4e78fecb442621c9ec",
+    "eccb2ed6c3e42d541b093a579ca8cde5a0c370d8218d01062cc03c9a8bd88177",
+    "37c6044e59952acea0dcbc8d40a9300bb9acb2b755aebe0520408fad0533e756",
+    "e189d8df52c0379ec40eb009caa19ff871a3306754ff965356e31c0593ccddee",
+    "358dc9648ad19731e9ee92b250eb3bcf7a3dd0c621fc7fb878bd33c4341a4cbe",
+    "6007346d8341aaa3a73923640a167d00f6374821af1d359e80da40d7372dd930",
+    "b361183840851871d88c8f643cbdbd0129f7a3ae16f79232431c0c930ca31663",
+    "7b90ac0075499ce2b9ef5008adf3d8725bfd68ee738472e996f88b81418db78c",
+    "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+    "6d959affc6155e63fab227697481a3be66c5127a1831ffd7ca280d46b43b7726",
+    "65da34c3541f7b8c7bfe9c2ba307e7fa27c4228fca10bcdd73add089be5a6df7",
+    "52552c3a600b10c1fe31b010cf4bb0ecaf1e0f7b7665b29e7ae2b69cbc95713b",
+    "4a88814912e5890769e16efa02ff9928be4f92ed42a11a7c8f7917d969538ffd",
+    "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+    "d53dcf5cfc73124a4933718fc9af56bb43fcc76c2d69620ad35443732b9acd03",
+    "c9c9110835d50d40d02d1f32b47b2d3411d49724104e99415ac669e784fbf61d",
+    "a3a13b931d74d588362fb73d5305cf9de4bd4543af3f3be1df08a469e6bab1b5",
+    "ff181d34620293a97d2662b7060ceee8b4fcc4a7b344f260f9766fd316c1a8ab",
+    "a0c49e307352f8ca7921142950e0ae73f009e0c1c842c44c788d585a25bffcd2",
+    "f83765d03cb461980c135f019eed58c7acc4799d28d36a6cb60638a9db7668e5",
+    "cc4e90ebba6534936ba5de2a378ccdae5e2be471db9dfa5ea803dc6594c97878",
+    "2693db9d926c8710e657d27cef6f35dedefbbdf1d199472938ec57ffa86d3e84",
+    "b7deaf9c18434ad5673ebc4efd746afc676fb399f40559c3fd6908e6d007ec06",
+    "09250cedf33bc5578eecf1eef44a3705c13c57d8df523d9bda919a7a6a3636b9",
+    "e3375e8548f1e566fa0c92c360e168120c0bf9b1552cb62e24c70687176392b3",
+    "5e8e6b73ed238f1632ee308d84978df4c8474a38badd1915ddd3f9c23b387db8",
+    "6d9a65b9045fdf0a3e9c8dbf5eafb5099684481935ca5679d5e8eebfdf97931d",
+    "56cec08f05dfdbe70e649cccca2cabcb6ad9a3b1682da174750b270a229901ae",
+    "aee6bc49b4907a228ecb47d1bdd396cf27bf2b9bcac1b902c0fcd7d96632ad21",
+    "74ce99f4393038516c1f78bce74d1aa79be891719725baa96839b9deed7359ff",
+    "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56",
+    "325f977d3d9b7d3c499864cd45b72f2a30a3fa86820f135d0e33d2a7fd2e5c5a",
+    "8c6f3b75c05802e7f86683db599706b3aba0cfdc512f0f538f3c3412ddbeecfa",
+    "e2f38141812a1c8b4178b6c24c3f9cc0b8945ef50edb3c19ba180aa95a3e1ec3",
+    "45882acded6aadda0efa33db0e7279bc037543401869fcf87c47c90565b56f96",
+    "5c44663f6f9455dd798bfacf3d9d3f44de70c2e03613e9e38d9784e2085ce95d",
+    "1d86b93f715130dd101b2f4895e84eeb721d3980cf6b7f84e0999c67d3ec4cf4",
+    "31021a553373d50337cbb9b6a3b5680c9db240d1a1e77fda3355173d15a52209",
+    "09ae9773c8b31a5066817cd1b7186637ca2b0e4d5b78b35bae3cbd983c714e42",
+    "5d0a2eeeda8608ea5ab324a8a12ce6ea93ce9ae7f2afabb893675506537c7063",
+    "d821720d6ce98ce1d7d0f21fa4db17197c137330682e50b0e963d7f7051d0c10",
+    "afd1b378695ccadf5a0b1ce30e4fe43520596062014d7210a11fdd8ecacef577",
+    "5840fd054566cd9959999251d45d69bb3807dd832e1849509eea111f07b5e23d",
+    "0b54de8b1792e349978b6b7843d4d0c4b253982fc31f1d74be06ce80692ac7a3",
+    "09a64be9c8e3beddf009d432bd669cba42c0ca1d01c44a93532adaa6008aef73",
+    "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+    "a5a872cad681f4ec521951cc461d64d828e4d80d932560b9474305a5c3005232",
+    "161ad002efa45c05aaf868582c58bad1b948f60c98c02fc3e8ff708d505ca40c",
+    "7a2c04628118ec85997450180b94eca72ea2f3c294391acbce6e63dd84732c6d",
+    "d7b309b77168f46c0d2b406af3639158e4a36003c8bfee37d8697e079033d9cd",
+    "0625c3327e8a1852126805f1999dcea45ffcc6259b4b31eb4fc3a11685a640b1",
+    "e2b68019f524c00bdd35711c47d21d7299ff7cacd2bf185a34f4f11f04b4f445",
+    "d494bc6c177e93aee237d54c378cf263235248c46a796c3d8478cc69c7ddd5df",
+    "71ab3be8cf2e4a84066758be4afb6738d537d6add1705bc9de234eed6be18815",
+    "69279f3c321b684453aa220724628dffd8f57266d41fa383f1588e36c22859d5",
+    "e72952a560cc64dbb9070adee60c40ae441e09dd915eaab79f50a95ca1aa4165",
+    "017bf28656400ae38ba0f7b90feaeb4b3eaf6321fcc2b5a0cb8160e2b08c4cd7",
+    "7a4b5bfa27cd0ebcaf38954e37754cfb48f537f72ac80b725056bdb26ee4e959",
+    "db5c420b32fae1e1b9457f32d8089fb2b98ecccbfe9fd80740e08090e21bfedc",
+    "acd2d5fd5fbfe7dd4e419f7e5a05d05031e934f190cb48e228fe51735a9b7998",
+    "bdac8131b9313d1b5f1877e6f7bb562bbc22da8074c9e52d574bd27b136aeaee",
+    "bca14f5195a7f35b32994c2b03c4782ab8f803951c9187d53917a3fd5736e5f6",
+    "5091fd75fde4d169e343bc92cc928ac4682f48b3757a44e6046f2074997d5387",
+    "fff3ba461e0afe294267d13b6ede14013ade19105c4a39a4fb035b22a50f8c9f",
+    "fdac9fe884ff8d4b388dd1f2f7fadef4f11fa5e6a502e0f365af78b7e778169b"
+  ],
+  "candidates": [
+    {
+      "code_hash": "07db19a271112e44e36d5631550d95728bacca33c13c2c6a25028e1ea4b88396",
+      "objective": 6.07672,
+      "original_index": 0,
+      "ast_nodes": 100
+    },
+    {
+      "code_hash": "cf8bfe699224101cce0280cd387490aaa9b653e545f95be17b75afb19d328815",
+      "objective": 6.22059,
+      "original_index": 2,
+      "ast_nodes": 105
+    },
+    {
+      "code_hash": "ba42888081deeb12d2aa958df41b853cbe8a986d0bfe6a20bbfb0428acd7a762",
+      "objective": 6.13382,
+      "original_index": 5,
+      "ast_nodes": 84
+    },
+    {
+      "code_hash": "6120ca5c202382284979e7183e5ed9a91a16d51fa940156e1dbb4fc6e7d8c99f",
+      "objective": 6.31369,
+      "original_index": 6,
+      "ast_nodes": 144
+    },
+    {
+      "code_hash": "28d1c3ff1421008108fc869b9263ad43862cf8a808fdae38a228cd3732c56826",
+      "objective": 6.07672,
+      "original_index": 7,
+      "ast_nodes": 71
+    },
+    {
+      "code_hash": "40f4d6dfdf3ff32a3a345ef67923a6e3bb134724cb6c0a326d4d1f9861df8545",
+      "objective": 6.20115,
+      "original_index": 8,
+      "ast_nodes": 91
+    },
+    {
+      "code_hash": "8ba1041a7976fda351d9229ea59e7c384907e7168cac7c56a1cd09ba685dd1e1",
+      "objective": 6.35245,
+      "original_index": 11,
+      "ast_nodes": 109
+    },
+    {
+      "code_hash": "0338a175604155394e698fa6f015af01870ff022b18050bd3e00745891972571",
+      "objective": 6.30341,
+      "original_index": 12,
+      "ast_nodes": 76
+    },
+    {
+      "code_hash": "f81efd584db65fe2189360f52ac2c68ad0df64f883edcf5e484144eb5ce37ab8",
+      "objective": 6.22262,
+      "original_index": 13,
+      "ast_nodes": 277
+    },
+    {
+      "code_hash": "3432d3e7426675905cdf459f6b60f54cdf70eee398bf4466f26b8a6d2460fa0f",
+      "objective": 6.15449,
+      "original_index": 14,
+      "ast_nodes": 116
+    },
+    {
+      "code_hash": "d3846ff9b372b1d39e7fa3a82737ef4dcd2b4e5196e367b7a0e4119c4e42ecfb",
+      "objective": 6.08375,
+      "original_index": 16,
+      "ast_nodes": 114
+    },
+    {
+      "code_hash": "e9fb54a440d5fb67caa19031b3fcd62cddf06aaf51d49b7b02735b861de4d0c5",
+      "objective": 6.13382,
+      "original_index": 18,
+      "ast_nodes": 115
+    },
+    {
+      "code_hash": "419a101ec2de003e0702636896bf82d74a09640ea5140296ba427874496b1226",
+      "objective": 6.17634,
+      "original_index": 19,
+      "ast_nodes": 227
+    },
+    {
+      "code_hash": "fac7e7e8c574e09840791a31011488e91e7d559175e5440b06c624b2c24a1ee8",
+      "objective": 6.20872,
+      "original_index": 20,
+      "ast_nodes": 159
+    },
+    {
+      "code_hash": "f57d25fc6107d37cccf59bbeacf539fe4dbed919b561518ec0820067db5ddf41",
+      "objective": 6.15446,
+      "original_index": 21,
+      "ast_nodes": 123
+    },
+    {
+      "code_hash": "0250128da13662a6cb057ec1157a22c0b0db4e52509ab9f01501a729a0d510c3",
+      "objective": 6.23173,
+      "original_index": 28,
+      "ast_nodes": 166
+    },
+    {
+      "code_hash": "8d3ea38ef769e12b3e2d5a604f312e137b4cb7a38d645f04c3c919e631d430a3",
+      "objective": 6.20115,
+      "original_index": 30,
+      "ast_nodes": 110
+    },
+    {
+      "code_hash": "5e199da12af799f474c70bf2dcea68ec874c14b62664500261c00a1e7e4b8668",
+      "objective": 6.18904,
+      "original_index": 31,
+      "ast_nodes": 103
+    },
+    {
+      "code_hash": "a46295341823e86c138a402abd8870a9df1618c4039d3f1e44eecfec8a0aa312",
+      "objective": 6.13382,
+      "original_index": 32,
+      "ast_nodes": 76
+    },
+    {
+      "code_hash": "a40a9591473a536355afc3c26efa8b9262ed3bb86511bb118ea3d2d3d391cf1a",
+      "objective": 6.13382,
+      "original_index": 33,
+      "ast_nodes": 158
+    },
+    {
+      "code_hash": "35558aa2437754c16cb317c27a06b133b36219fb9815897a14f37b31ec48ad48",
+      "objective": 6.08926,
+      "original_index": 35,
+      "ast_nodes": 141
+    },
+    {
+      "code_hash": "c5bb56ec097139dc1884796ed4bc5f1cf64b7795a29873c2341a3e01d9bfd6a7",
+      "objective": 6.14944,
+      "original_index": 36,
+      "ast_nodes": 228
+    },
+    {
+      "code_hash": "e7dd7bfacd6f37ea0bd4cd6fec4e43077d828d31d994ba3a87341d6a35846135",
+      "objective": 6.30466,
+      "original_index": 37,
+      "ast_nodes": 295
+    },
+    {
+      "code_hash": "23225aeb15945f0834b2c70fde98cbf5d7a40c08289b37735709814b3a6a1fd8",
+      "objective": 6.20621,
+      "original_index": 39,
+      "ast_nodes": 148
+    },
+    {
+      "code_hash": "636a8995c3f70cd78f1a4c982946e8c613e32a307f181deccc3693ee19d068da",
+      "objective": 6.20713,
+      "original_index": 40,
+      "ast_nodes": 267
+    },
+    {
+      "code_hash": "a64b77ee5e206fd25bf7f22ac9cfe8b559b94232d360c5b3c28d16e0b5c1ba3d",
+      "objective": 6.31369,
+      "original_index": 41,
+      "ast_nodes": 104
+    },
+    {
+      "code_hash": "dfe37ceba45643d4805c6887dc3510b7e05bf1baa127d786d8d35d9998114769",
+      "objective": 6.18814,
+      "original_index": 42,
+      "ast_nodes": 99
+    },
+    {
+      "code_hash": "d082e114e5a67ca7a3c8212fdfa4c6292e0cbdcbb7a28a6b0a9f6df4678d7cd4",
+      "objective": 6.20713,
+      "original_index": 43,
+      "ast_nodes": 162
+    },
+    {
+      "code_hash": "e42683fd6532b5b50ead977c886696ad16c79b04cb6766481c331c9dbf0578a3",
+      "objective": 6.45209,
+      "original_index": 45,
+      "ast_nodes": 199
+    },
+    {
+      "code_hash": "97a5f4a73b39f63d76413e7f762df5f36b710a2d9421dc8f6790f0cab1b968a0",
+      "objective": 6.13566,
+      "original_index": 46,
+      "ast_nodes": 131
+    },
+    {
+      "code_hash": "c60b15c6f688dd365d9dc282b4bd6c8f83b0aa2fdbd61860d0a1838917f005ad",
+      "objective": 6.30341,
+      "original_index": 48,
+      "ast_nodes": 191
+    },
+    {
+      "code_hash": "a44895104120345e924cf897a61fefcde434d43efdcff19d380dc63b040f9ee5",
+      "objective": 6.16765,
+      "original_index": 49,
+      "ast_nodes": 201
+    },
+    {
+      "code_hash": "79eb1fa4a6c5344e6ec2d725fa64fa3532ee8a64f8484ee8d58f211dbda07e13",
+      "objective": 6.44821,
+      "original_index": 51,
+      "ast_nodes": 73
+    },
+    {
+      "code_hash": "b1828d6d3ad42f8e6245579f8b40d928cfbb97a527c644014f0c762e9780038a",
+      "objective": 6.23281,
+      "original_index": 52,
+      "ast_nodes": 216
+    },
+    {
+      "code_hash": "604bd4ff9c9e19361abda1914a9891d1406edce443b02c4e78fecb442621c9ec",
+      "objective": 6.20115,
+      "original_index": 53,
+      "ast_nodes": 94
+    },
+    {
+      "code_hash": "eccb2ed6c3e42d541b093a579ca8cde5a0c370d8218d01062cc03c9a8bd88177",
+      "objective": 6.07672,
+      "original_index": 54,
+      "ast_nodes": 179
+    },
+    {
+      "code_hash": "37c6044e59952acea0dcbc8d40a9300bb9acb2b755aebe0520408fad0533e756",
+      "objective": 6.21513,
+      "original_index": 55,
+      "ast_nodes": 163
+    },
+    {
+      "code_hash": "e189d8df52c0379ec40eb009caa19ff871a3306754ff965356e31c0593ccddee",
+      "objective": 6.31369,
+      "original_index": 56,
+      "ast_nodes": 152
+    },
+    {
+      "code_hash": "358dc9648ad19731e9ee92b250eb3bcf7a3dd0c621fc7fb878bd33c4341a4cbe",
+      "objective": 6.20066,
+      "original_index": 60,
+      "ast_nodes": 182
+    },
+    {
+      "code_hash": "6007346d8341aaa3a73923640a167d00f6374821af1d359e80da40d7372dd930",
+      "objective": 6.07672,
+      "original_index": 63,
+      "ast_nodes": 73
+    },
+    {
+      "code_hash": "b361183840851871d88c8f643cbdbd0129f7a3ae16f79232431c0c930ca31663",
+      "objective": 6.30341,
+      "original_index": 64,
+      "ast_nodes": 74
+    },
+    {
+      "code_hash": "7b90ac0075499ce2b9ef5008adf3d8725bfd68ee738472e996f88b81418db78c",
+      "objective": 6.19188,
+      "original_index": 66,
+      "ast_nodes": 244
+    },
+    {
+      "code_hash": "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "objective": 6.07672,
+      "original_index": 67,
+      "ast_nodes": 79
+    },
+    {
+      "code_hash": "6d959affc6155e63fab227697481a3be66c5127a1831ffd7ca280d46b43b7726",
+      "objective": 6.20621,
+      "original_index": 69,
+      "ast_nodes": 211
+    },
+    {
+      "code_hash": "65da34c3541f7b8c7bfe9c2ba307e7fa27c4228fca10bcdd73add089be5a6df7",
+      "objective": 6.52269,
+      "original_index": 70,
+      "ast_nodes": 163
+    },
+    {
+      "code_hash": "52552c3a600b10c1fe31b010cf4bb0ecaf1e0f7b7665b29e7ae2b69cbc95713b",
+      "objective": 6.34985,
+      "original_index": 74,
+      "ast_nodes": 133
+    },
+    {
+      "code_hash": "4a88814912e5890769e16efa02ff9928be4f92ed42a11a7c8f7917d969538ffd",
+      "objective": 6.19754,
+      "original_index": 75,
+      "ast_nodes": 150
+    },
+    {
+      "code_hash": "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+      "objective": 6.07672,
+      "original_index": 76,
+      "ast_nodes": 71
+    },
+    {
+      "code_hash": "d53dcf5cfc73124a4933718fc9af56bb43fcc76c2d69620ad35443732b9acd03",
+      "objective": 6.16069,
+      "original_index": 77,
+      "ast_nodes": 146
+    },
+    {
+      "code_hash": "c9c9110835d50d40d02d1f32b47b2d3411d49724104e99415ac669e784fbf61d",
+      "objective": 6.07672,
+      "original_index": 78,
+      "ast_nodes": 179
+    },
+    {
+      "code_hash": "a3a13b931d74d588362fb73d5305cf9de4bd4543af3f3be1df08a469e6bab1b5",
+      "objective": 6.15446,
+      "original_index": 79,
+      "ast_nodes": 92
+    },
+    {
+      "code_hash": "ff181d34620293a97d2662b7060ceee8b4fcc4a7b344f260f9766fd316c1a8ab",
+      "objective": 6.3195,
+      "original_index": 82,
+      "ast_nodes": 250
+    },
+    {
+      "code_hash": "a0c49e307352f8ca7921142950e0ae73f009e0c1c842c44c788d585a25bffcd2",
+      "objective": 6.22299,
+      "original_index": 83,
+      "ast_nodes": 159
+    },
+    {
+      "code_hash": "f83765d03cb461980c135f019eed58c7acc4799d28d36a6cb60638a9db7668e5",
+      "objective": 6.54524,
+      "original_index": 84,
+      "ast_nodes": 157
+    },
+    {
+      "code_hash": "cc4e90ebba6534936ba5de2a378ccdae5e2be471db9dfa5ea803dc6594c97878",
+      "objective": 6.49155,
+      "original_index": 86,
+      "ast_nodes": 120
+    },
+    {
+      "code_hash": "2693db9d926c8710e657d27cef6f35dedefbbdf1d199472938ec57ffa86d3e84",
+      "objective": 6.30205,
+      "original_index": 95,
+      "ast_nodes": 276
+    },
+    {
+      "code_hash": "b7deaf9c18434ad5673ebc4efd746afc676fb399f40559c3fd6908e6d007ec06",
+      "objective": 6.30341,
+      "original_index": 98,
+      "ast_nodes": 108
+    },
+    {
+      "code_hash": "09250cedf33bc5578eecf1eef44a3705c13c57d8df523d9bda919a7a6a3636b9",
+      "objective": 6.34985,
+      "original_index": 110,
+      "ast_nodes": 145
+    },
+    {
+      "code_hash": "e3375e8548f1e566fa0c92c360e168120c0bf9b1552cb62e24c70687176392b3",
+      "objective": 6.34985,
+      "original_index": 111,
+      "ast_nodes": 146
+    },
+    {
+      "code_hash": "5e8e6b73ed238f1632ee308d84978df4c8474a38badd1915ddd3f9c23b387db8",
+      "objective": 6.4896,
+      "original_index": 117,
+      "ast_nodes": 243
+    },
+    {
+      "code_hash": "6d9a65b9045fdf0a3e9c8dbf5eafb5099684481935ca5679d5e8eebfdf97931d",
+      "objective": 6.32839,
+      "original_index": 128,
+      "ast_nodes": 154
+    },
+    {
+      "code_hash": "56cec08f05dfdbe70e649cccca2cabcb6ad9a3b1682da174750b270a229901ae",
+      "objective": 6.07672,
+      "original_index": 137,
+      "ast_nodes": 128
+    },
+    {
+      "code_hash": "aee6bc49b4907a228ecb47d1bdd396cf27bf2b9bcac1b902c0fcd7d96632ad21",
+      "objective": 6.40504,
+      "original_index": 140,
+      "ast_nodes": 196
+    },
+    {
+      "code_hash": "74ce99f4393038516c1f78bce74d1aa79be891719725baa96839b9deed7359ff",
+      "objective": 6.11493,
+      "original_index": 141,
+      "ast_nodes": 112
+    },
+    {
+      "code_hash": "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56",
+      "objective": 6.07672,
+      "original_index": 142,
+      "ast_nodes": 142
+    },
+    {
+      "code_hash": "325f977d3d9b7d3c499864cd45b72f2a30a3fa86820f135d0e33d2a7fd2e5c5a",
+      "objective": 6.07672,
+      "original_index": 143,
+      "ast_nodes": 144
+    },
+    {
+      "code_hash": "8c6f3b75c05802e7f86683db599706b3aba0cfdc512f0f538f3c3412ddbeecfa",
+      "objective": 6.07672,
+      "original_index": 145,
+      "ast_nodes": 104
+    },
+    {
+      "code_hash": "e2f38141812a1c8b4178b6c24c3f9cc0b8945ef50edb3c19ba180aa95a3e1ec3",
+      "objective": 6.22804,
+      "original_index": 148,
+      "ast_nodes": 160
+    },
+    {
+      "code_hash": "45882acded6aadda0efa33db0e7279bc037543401869fcf87c47c90565b56f96",
+      "objective": 6.31317,
+      "original_index": 150,
+      "ast_nodes": 100
+    },
+    {
+      "code_hash": "5c44663f6f9455dd798bfacf3d9d3f44de70c2e03613e9e38d9784e2085ce95d",
+      "objective": 6.16069,
+      "original_index": 151,
+      "ast_nodes": 237
+    },
+    {
+      "code_hash": "1d86b93f715130dd101b2f4895e84eeb721d3980cf6b7f84e0999c67d3ec4cf4",
+      "objective": 6.20872,
+      "original_index": 152,
+      "ast_nodes": 162
+    },
+    {
+      "code_hash": "31021a553373d50337cbb9b6a3b5680c9db240d1a1e77fda3355173d15a52209",
+      "objective": 6.13437,
+      "original_index": 153,
+      "ast_nodes": 158
+    },
+    {
+      "code_hash": "09ae9773c8b31a5066817cd1b7186637ca2b0e4d5b78b35bae3cbd983c714e42",
+      "objective": 6.30341,
+      "original_index": 158,
+      "ast_nodes": 78
+    },
+    {
+      "code_hash": "5d0a2eeeda8608ea5ab324a8a12ce6ea93ce9ae7f2afabb893675506537c7063",
+      "objective": 6.21423,
+      "original_index": 159,
+      "ast_nodes": 220
+    },
+    {
+      "code_hash": "d821720d6ce98ce1d7d0f21fa4db17197c137330682e50b0e963d7f7051d0c10",
+      "objective": 6.30341,
+      "original_index": 161,
+      "ast_nodes": 167
+    },
+    {
+      "code_hash": "afd1b378695ccadf5a0b1ce30e4fe43520596062014d7210a11fdd8ecacef577",
+      "objective": 6.20325,
+      "original_index": 163,
+      "ast_nodes": 174
+    },
+    {
+      "code_hash": "5840fd054566cd9959999251d45d69bb3807dd832e1849509eea111f07b5e23d",
+      "objective": 6.14012,
+      "original_index": 164,
+      "ast_nodes": 202
+    },
+    {
+      "code_hash": "0b54de8b1792e349978b6b7843d4d0c4b253982fc31f1d74be06ce80692ac7a3",
+      "objective": 6.20731,
+      "original_index": 167,
+      "ast_nodes": 207
+    },
+    {
+      "code_hash": "09a64be9c8e3beddf009d432bd669cba42c0ca1d01c44a93532adaa6008aef73",
+      "objective": 6.20412,
+      "original_index": 168,
+      "ast_nodes": 169
+    },
+    {
+      "code_hash": "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+      "objective": 6.07672,
+      "original_index": 170,
+      "ast_nodes": 155
+    },
+    {
+      "code_hash": "a5a872cad681f4ec521951cc461d64d828e4d80d932560b9474305a5c3005232",
+      "objective": 6.13716,
+      "original_index": 172,
+      "ast_nodes": 141
+    },
+    {
+      "code_hash": "161ad002efa45c05aaf868582c58bad1b948f60c98c02fc3e8ff708d505ca40c",
+      "objective": 6.34728,
+      "original_index": 174,
+      "ast_nodes": 159
+    },
+    {
+      "code_hash": "7a2c04628118ec85997450180b94eca72ea2f3c294391acbce6e63dd84732c6d",
+      "objective": 6.30341,
+      "original_index": 175,
+      "ast_nodes": 134
+    },
+    {
+      "code_hash": "d7b309b77168f46c0d2b406af3639158e4a36003c8bfee37d8697e079033d9cd",
+      "objective": 6.29488,
+      "original_index": 177,
+      "ast_nodes": 125
+    },
+    {
+      "code_hash": "0625c3327e8a1852126805f1999dcea45ffcc6259b4b31eb4fc3a11685a640b1",
+      "objective": 6.20173,
+      "original_index": 179,
+      "ast_nodes": 223
+    },
+    {
+      "code_hash": "e2b68019f524c00bdd35711c47d21d7299ff7cacd2bf185a34f4f11f04b4f445",
+      "objective": 6.13382,
+      "original_index": 182,
+      "ast_nodes": 86
+    },
+    {
+      "code_hash": "d494bc6c177e93aee237d54c378cf263235248c46a796c3d8478cc69c7ddd5df",
+      "objective": 6.31369,
+      "original_index": 185,
+      "ast_nodes": 102
+    },
+    {
+      "code_hash": "71ab3be8cf2e4a84066758be4afb6738d537d6add1705bc9de234eed6be18815",
+      "objective": 6.15242,
+      "original_index": 186,
+      "ast_nodes": 137
+    },
+    {
+      "code_hash": "69279f3c321b684453aa220724628dffd8f57266d41fa383f1588e36c22859d5",
+      "objective": 6.30341,
+      "original_index": 187,
+      "ast_nodes": 144
+    },
+    {
+      "code_hash": "e72952a560cc64dbb9070adee60c40ae441e09dd915eaab79f50a95ca1aa4165",
+      "objective": 6.29737,
+      "original_index": 188,
+      "ast_nodes": 194
+    },
+    {
+      "code_hash": "017bf28656400ae38ba0f7b90feaeb4b3eaf6321fcc2b5a0cb8160e2b08c4cd7",
+      "objective": 6.30341,
+      "original_index": 189,
+      "ast_nodes": 76
+    },
+    {
+      "code_hash": "7a4b5bfa27cd0ebcaf38954e37754cfb48f537f72ac80b725056bdb26ee4e959",
+      "objective": 6.22292,
+      "original_index": 190,
+      "ast_nodes": 190
+    },
+    {
+      "code_hash": "db5c420b32fae1e1b9457f32d8089fb2b98ecccbfe9fd80740e08090e21bfedc",
+      "objective": 6.07672,
+      "original_index": 191,
+      "ast_nodes": 84
+    },
+    {
+      "code_hash": "acd2d5fd5fbfe7dd4e419f7e5a05d05031e934f190cb48e228fe51735a9b7998",
+      "objective": 6.20621,
+      "original_index": 193,
+      "ast_nodes": 143
+    },
+    {
+      "code_hash": "bdac8131b9313d1b5f1877e6f7bb562bbc22da8074c9e52d574bd27b136aeaee",
+      "objective": 6.23281,
+      "original_index": 194,
+      "ast_nodes": 161
+    },
+    {
+      "code_hash": "bca14f5195a7f35b32994c2b03c4782ab8f803951c9187d53917a3fd5736e5f6",
+      "objective": 6.20115,
+      "original_index": 195,
+      "ast_nodes": 79
+    },
+    {
+      "code_hash": "5091fd75fde4d169e343bc92cc928ac4682f48b3757a44e6046f2074997d5387",
+      "objective": 6.08926,
+      "original_index": 198,
+      "ast_nodes": 202
+    },
+    {
+      "code_hash": "fff3ba461e0afe294267d13b6ede14013ade19105c4a39a4fb035b22a50f8c9f",
+      "objective": 6.16069,
+      "original_index": 200,
+      "ast_nodes": 224
+    },
+    {
+      "code_hash": "fdac9fe884ff8d4b388dd1f2f7fadef4f11fa5e6a502e0f365af78b7e778169b",
+      "objective": 6.16321,
+      "original_index": 205,
+      "ast_nodes": 146
+    }
+  ],
+  "instances": [
+    {
+      "name": "synthetic_confirm_1_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_1_3038.tsp",
+      "size": 3038,
+      "seed": 20270001,
+      "sha256": "37e7246831c4a4a3b18e58ee37fb790a245837d6a7e9687eab2bba75a87dc64c"
+    },
+    {
+      "name": "synthetic_confirm_2_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_2_3038.tsp",
+      "size": 3038,
+      "seed": 20270002,
+      "sha256": "5ffe6fef6daadc2532f46cf59d9aae2e6c25063b55a36b24cfa51a375365bf91"
+    },
+    {
+      "name": "synthetic_confirm_3_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_3_3038.tsp",
+      "size": 3038,
+      "seed": 20270003,
+      "sha256": "e42846312722eecc4be3b32c18bf0e882636181f30dbea7055cfd7bfb6664c36"
+    }
+  ],
+  "timeout_s": 30.0,
+  "current_aw_archive": [
+    "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+    "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+    "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+    "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56"
+  ],
+  "expected_coordinates": 297,
+  "gate": {
+    "fully_feasible_codes_min": 90,
+    "selected_coordinates_feasible": 12,
+    "selected_cost_signatures_min": 2,
+    "median_improvement_vs_current_aw_min_pct": 0.1
+  },
+  "selection_rule": "三实例均可行后，按中位相对成本、运行时间、AST 节点数排序，并优先保留不同路线成本签名",
+  "confirmation_rule": "发现门槛通过后必须在全新实例确认，当前三实例不得同时用于最终结论"
+}

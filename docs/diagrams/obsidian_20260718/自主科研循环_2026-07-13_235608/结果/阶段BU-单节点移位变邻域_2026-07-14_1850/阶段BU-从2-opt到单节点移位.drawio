@@ -1,0 +1,20 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T19:05:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="stage-bu" name="Stage BU">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Stage BU：换一种路线修改方式，继续降低成本" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="160" y="30" width="840" height="40" as="geometry"/></mxCell>
+        <mxCell id="a" value="Stage BT 起点&#xa;12 槽 + 收敛 2-opt&#xa;高规模平均降幅 11.31%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4C78A8;fontSize=16;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="60" y="150" width="250" height="125" as="geometry"/></mxCell>
+        <mxCell id="b" value="单节点移位&#xa;把一个节点移到 40 个近邻前后&#xa;只接受严格降成本变化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4CC;strokeColor=#D6A700;fontSize=16;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="385" y="135" width="300" height="155" as="geometry"/></mxCell>
+        <mxCell id="c" value="重新做 2-opt&#xa;每次移位后最多 500 步&#xa;移位最多接受 100 次" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#7E57C2;fontSize=16;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="760" y="150" width="260" height="125" as="geometry"/></mxCell>
+        <mxCell id="d" value="结果&#xa;Stage BT 后再降 1.39%&#xa;最终平均降幅 12.55%&#xa;全部门槛通过" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DFF3E4;strokeColor=#2E8B57;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="385" y="380" width="300" height="150" as="geometry"/></mxCell>
+        <mxCell id="e" value="仍有空间&#xa;5/6 路线触及 100 次上限&#xa;下一步只延长停止边界&#xa;不改邻域和接受规则" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDE8E7;strokeColor=#D9534F;fontSize=16;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="760" y="390" width="270" height="130" as="geometry"/></mxCell>
+        <mxCell id="ab" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="bc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="cd" value="交替执行" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="c" target="d"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="de" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,20 @@
+<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="从单槽失败到快速双槽确认" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1"><mxGeometry x="285" y="25" width="600" height="42" as="geometry"/></mxCell>
+    <mxCell id="single_fail" value="Stage BB：R4 单槽&#xa;3/3 可行但质量失败&#xa;1 胜 / 0 平 / 2 负" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="75" y="145" width="240" height="115" as="geometry"/></mxCell>
+    <mxCell id="frozen_pair" value="BA 已预先记录&#xa;快速双槽 R2 + R4&#xa;中位耗时均低于 0.8 秒" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F81BD;fontSize=15;" vertex="1" parent="1"><mxGeometry x="390" y="145" width="240" height="115" as="geometry"/></mxCell>
+    <mxCell id="pair_confirm" value="Stage BC 全新三实例&#xa;双槽 6/6 可行&#xa;当前 AW 12/12 可行" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="705" y="145" width="235" height="115" as="geometry"/></mxCell>
+    <mxCell id="quality" value="确认门槛通过&#xa;2 胜 / 0 平 / 1 负&#xa;中位成本降低 1.03%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3A9D5D;fontSize=17;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="750" y="365" width="260" height="115" as="geometry"/></mxCell>
+    <mxCell id="mechanism" value="本批三个最佳都来自 R2&#xa;R4 本批未贡献最佳值&#xa;双槽价值需跨更多实例判断" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;fontSize=15;" vertex="1" parent="1"><mxGeometry x="420" y="365" width="260" height="115" as="geometry"/></mxCell>
+    <mxCell id="core12" value="下一步：TSPLIB Core-12&#xa;51–3038 节点&#xa;检查真实实例与跨规模泛化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#8E67B5;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="425" y="560" width="300" height="110" as="geometry"/></mxCell>
+    <mxCell id="boundary" value="当前结论&#xa;双槽通过合成目标规模确认&#xa;尚未证明真实基准泛化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDECEC;strokeColor=#C0504D;fontSize=14;" vertex="1" parent="1"><mxGeometry x="100" y="555" width="245" height="105" as="geometry"/></mxCell>
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#4F81BD;" edge="1" parent="1" source="single_fail" target="frozen_pair"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="frozen_pair" target="pair_confirm"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#3A9D5D;" edge="1" parent="1" source="pair_confirm" target="quality"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#D79B00;" edge="1" parent="1" source="quality" target="mechanism"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#8E67B5;" edge="1" parent="1" source="mechanism" target="core12"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#C0504D;" edge="1" parent="1" source="mechanism" target="boundary"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

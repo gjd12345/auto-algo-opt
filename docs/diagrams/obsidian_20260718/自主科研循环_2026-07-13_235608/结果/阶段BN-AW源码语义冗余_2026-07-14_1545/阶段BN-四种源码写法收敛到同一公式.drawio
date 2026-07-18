@@ -1,0 +1,26 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T07:45:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bn" name="阶段BN">
+    <mxGraphModel dx="1400" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="aw1" value="AW1 / AW3&#xa;直接最小化&#xa;dc - 0.5×dd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="100" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="aw2" value="AW2&#xa;插入代价与远端奖励&#xa;另有最后3点兜底" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="300" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="aw4" value="AW4&#xa;远端分数与角度惩罚&#xa;另有单点兜底" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="70" y="500" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="simplify" value="代数化简&#xa;去掉与候选无关常数&#xa;绕行量非负" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1"><mxGeometry x="400" y="285" width="240" height="140" as="geometry"/></mxCell>
+        <mxCell id="same" value="同一主体公式家族&#xa;argmin(dc - 0.5×dd)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="730" y="285" width="270" height="140" as="geometry"/></mxCell>
+        <mxCell id="residual" value="剩余差异&#xa;末端兜底&#xa;并列时浮点打破&#xa;距离取整边界" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="1080" y="120" width="240" height="140" as="geometry"/></mxCell>
+        <mxCell id="evidence" value="59 个实例&#xa;AW1=AW3：59/59&#xa;AW2/AW4：44/59" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="1080" y="450" width="240" height="130" as="geometry"/></mxCell>
+        <mxCell id="next" value="框架方向&#xa;源码/AST hash 不够&#xa;下一步验证廉价路线功能签名" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1400" y="285" width="260" height="150" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="aw1" target="same"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="aw2" target="simplify"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="aw4" target="simplify"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="simplify" target="same"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="same" target="residual"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="same" target="evidence"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="residual" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="evidence" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

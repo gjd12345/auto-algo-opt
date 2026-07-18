@@ -1,0 +1,24 @@
+<mxfile host="app.diagrams.net" modified="2026-07-14T07:20:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="stage-bl" name="阶段BL">
+    <mxGraphModel dx="1400" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="codes" value="六条不同源码&#xa;AW1～AW4 + R2/R4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" vertex="1" parent="1"><mxGeometry x="60" y="300" width="220" height="100" as="geometry"/></mxCell>
+        <mxCell id="routes" value="重放 56 个官方实例&#xa;比较无向路线边集合" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" vertex="1" parent="1"><mxGeometry x="340" y="300" width="240" height="100" as="geometry"/></mxCell>
+        <mxCell id="aw" value="当前四槽内部&#xa;平均重合 0.989&#xa;AW1=AW3：56/56" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;" vertex="1" parent="1"><mxGeometry x="650" y="120" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="pair" value="快速双槽 R2/R4&#xa;平均重合 0.567&#xa;独有最优 18 + 15" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="650" y="460" width="240" height="120" as="geometry"/></mxCell>
+        <mxCell id="frontier" value="描述性覆盖前沿&#xa;AW1+R2+R4 覆盖 52/56&#xa;平均遗憾 0.028%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" vertex="1" parent="1"><mxGeometry x="980" y="280" width="260" height="140" as="geometry"/></mxCell>
+        <mxCell id="lesson" value="核心认识&#xa;源码槽位数 ≠ 功能槽位数&#xa;高成本相关 ≠ 相同行为" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1320" y="280" width="260" height="140" as="geometry"/></mxCell>
+        <mxCell id="next" value="下一步&#xa;冻结三槽候选&#xa;在更大未见官方实例确认&#xa;当前默认档案不变" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" vertex="1" parent="1"><mxGeometry x="1320" y="500" width="260" height="140" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="codes" target="routes"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="routes" target="aw"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="routes" target="pair"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="aw" target="frontier"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="pair" target="frontier"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="frontier" target="lesson"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="lesson" target="next"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
