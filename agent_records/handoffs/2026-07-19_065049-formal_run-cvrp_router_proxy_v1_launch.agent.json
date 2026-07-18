@@ -1,0 +1,39 @@
+{
+  "schema_version": "agent_ad_experiment_execution/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-router-proxy-v1-launch",
+  "audience": "agent",
+  "created_at": "2026-07-19T06:50:49+08:00",
+  "phase_id": "formal_run",
+  "actor": "research_agent",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "694cf2a89830dc2d9e1b4e6bc01a8764dc6e47ad",
+  "status": "running",
+  "experiment": {
+    "suite": "cvrp_expert_router_proxy_v1",
+    "manifest": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_v1.json",
+    "coordinates": [20101, 20102, 20103],
+    "generations": 4,
+    "pop_size": 4,
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "max_concurrent_runs": 3,
+    "user_authorized_force": true,
+    "confirmation_feedback_visible_to_evolution": false,
+    "held_out_visible": false
+  },
+  "evidence_refs": [
+    {"kind": "provider_preflight", "path": "eoh_rag_workspace/reports/auto_experiment_reports/cvrp_expert_router_proxy_v1/cvrp_expert_router_proxy_v1/_provider_preflight.json", "status": "http_200"},
+    {"kind": "runtime_root", "path": "eoh_rag_workspace/reports/auto_experiment_reports/cvrp_expert_router_proxy_v1/cvrp_expert_router_proxy_v1"},
+    {"kind": "manifest", "path": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_v1.json", "router_contract_sha256": "9D62CDD88B4CD06B8B5C99E8A797BE81407DA4BA999071A8C089B26FFE222AB3"}
+  ],
+  "constraints": {
+    "provider_cohorts_must_not_mix": true,
+    "frozen_coordinates_must_not_change": true,
+    "selector_v1_must_not_change": true,
+    "confirmation_must_not_influence_evolution": true,
+    "codex_may_not_write_final_router": true,
+    "secret_values_recorded": false
+  },
+  "next_action": "monitor the three frozen coordinates; after all exit, run the frozen proxy gate and record every outcome without changing the cohort"
+}

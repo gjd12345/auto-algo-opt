@@ -7,9 +7,9 @@
   "repository": "C:\\Users\\24294\\agent_ad\\worktrees\\q3-v2-cross-transfer",
   "branch": "feat/q3-v2-cross-transfer",
   "baseline_commit": "cd5967f",
-  "current_commit": "89778b1bc79445a257b3bb8e9a6e29c3fd683693",
+  "current_commit": "694cf2a89830dc2d9e1b4e6bc01a8764dc6e47ad",
   "current_phase": "cvrp_expert_router_proxy",
-  "next_action": "restore_valid_provider_credentials_then_rerun_same_frozen_cvrp_router_coordinates_20101_20102_20103",
+  "next_action": "monitor_running_frozen_cvrp_router_coordinates_20101_20102_20103_then_apply_proxy_gate",
   "provider_policy": {
     "primary": "opencode-go",
     "model": "deepseek-v4-flash",
@@ -22,7 +22,17 @@
     "scheduled_new_llm_runs": 98,
     "minimum_concurrency_target": 6
   },
-  "active_processes": [],
-  "last_result": "A generic minimize/maximize pairwise forest selector was implemented and tested. In the single pre-registered 90-instance development-only ablation, raw pairwise cost weighting failed promotion: LOEO mean improvement versus n2 was -0.140448%, compared with +0.086723% for the same unweighted forest and -0.189619% for cost_knn_k5; weighted worst-environment improvement was -0.317359%. The weighted hypothesis is refuted for direct activation, unweighted remains an exploratory clue only, and frozen CVRP v1 plus confirmation remain unchanged.",
+  "active_processes": [
+    {
+      "kind": "formal_cohort",
+      "suite": "cvrp_expert_router_proxy_v1",
+      "coordinates": [20101, 20102, 20103],
+      "provider": "opencode-go",
+      "model": "deepseek-v4-flash",
+      "started_at": "2026-07-19T06:50:49+08:00",
+      "status": "running"
+    }
+  ],
+  "last_result": "The frozen cvrp_expert_router_proxy_v1 cohort has started with three concurrent research_agent coordinates (20101, 20102, 20103) after an opencode-go HTTP 200 preflight. The pairwise weighted and fixed-backup external-teacher diagnostics remain do_not_promote and are not part of the frozen v1 cohort; confirmation and held-out remain invisible to evolution.",
   "blocked_reason": null
 }
