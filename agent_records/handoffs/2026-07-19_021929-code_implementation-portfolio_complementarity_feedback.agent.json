@@ -1,0 +1,83 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-19:portfolio-complementarity-feedback-v1",
+  "audience": "agent",
+  "created_at": "2026-07-19T02:19:29+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "1b1e4bc05e9c227a9cc1fd017da590443e5af748",
+  "routing": {
+    "required_docs": [
+      {
+        "path": "02-Codex与科研Agent职责边界.md",
+        "raw_sha256": "35b3ec8c6f6a6592876a9eaada0e616d83ad7623ecb788ee14db1c525238b1ef"
+      },
+      {
+        "path": "03-系统架构与模块契约.md",
+        "raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6"
+      },
+      {
+        "path": "08-执行前后检查清单.md",
+        "raw_sha256": "9cab6bc05c1a001c478af7a156b334941b3f06c6cd1ef81e1c61e439aabfbca3"
+      }
+    ],
+    "conditional_docs": [
+      {
+        "path": "05-实验诚信与证据规范.md",
+        "raw_sha256": "9ff085867b783965cb6815060029b3f66f650e86e5ef441dc544c13eaae49cb4",
+        "trigger": "new development evidence contract and selection gate"
+      }
+    ]
+  },
+  "source_method": {
+    "paper": "Hydra: Automatically Configuring Algorithms for Portfolio-Based Selection",
+    "doi": "10.1609/aaai.v24i1.7565",
+    "human_note": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_020145-literature_exploration-Hydra互补算法池构造深读.md",
+    "use": "external method reference for a portable feedback primitive; not an algorithm candidate"
+  },
+  "implementation": {
+    "public_seam": "eoh_rag.experiments.portfolio_feedback.assess_portfolio_candidate",
+    "module": "eoh_rag/experiments/portfolio_feedback.py",
+    "tests": "tests/test_portfolio_complementarity_feedback.py",
+    "status": "implemented_not_activated",
+    "objective_directions": [
+      "minimize",
+      "maximize"
+    ],
+    "decision_thresholds_are_persisted": true,
+    "gate_checks": [
+      "development_only",
+      "disjoint_validation",
+      "code_hash_unique",
+      "candidate_feasible",
+      "oracle_gain",
+      "real_selector_gain"
+    ],
+    "evidence_boundaries": {
+      "confirmation_input_supported": false,
+      "held_out_input_supported": false,
+      "generation_and_validation_overlap_allowed": false,
+      "oracle_gain_alone_can_accept": false,
+      "frozen_v1_changed": false,
+      "manifest_activated": false
+    }
+  },
+  "verification": {
+    "method": "TDD red-green vertical slices followed by targeted milestone tests",
+    "new_module_tests": 12,
+    "targeted_test_command": "python -m pytest tests/test_portfolio_complementarity_feedback.py tests/test_cvrp_expert_router.py tests/test_cvrp_selector_learnability.py tests/test_cvrp_expert_router_analysis.py -q",
+    "targeted_test_result": "23 passed in 59.87s",
+    "python_compile": "passed",
+    "ruff": "passed",
+    "git_diff_check": "passed",
+    "test_tier": "targeted"
+  },
+  "scientific_claim": {
+    "level": "none",
+    "reason": "the deterministic smoke test verifies contract behavior only and is not an experiment result"
+  },
+  "human_record": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_021929-code_implementation-Hydra互补反馈通用原语离线烟测.md",
+  "next_action": "restore_valid_provider_credentials_and_rerun_frozen_v1_coordinates_before_freezing_any_v2_manifest"
+}
