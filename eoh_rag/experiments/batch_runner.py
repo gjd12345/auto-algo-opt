@@ -574,13 +574,18 @@ def _run_reproducible_manifest(manifest: dict[str, Any], args: argparse.Namespac
         for attempt in range(1, 4):
             try:
                 process = subprocess.run(command, text=True, capture_output=True, timeout=manifest.get("run_timeout_s", 1800) + 60)
-                last_detail = (process.stderr or process.stdout or "")[-1000:]
+                # 同时保留 stdout 的 Provider 状态和 stderr 的调用栈；否则认证错误会被调用栈覆盖，
+                # 调度器只能把不可恢复的 401 误判为普通失败并重复消耗三轮重试。
+                classification_detail = "\n".join(
+                    part for part in (process.stdout, process.stderr) if part
+                )
+                last_detail = classification_detail[-2000:]
                 if process.returncode == 0 and _summary_is_complete(summary_path):
                     payload = json.loads(summary_path.read_text(encoding="utf-8"))
                     run_summary = payload.get("run_summary") or {}
                     return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": "ok", "attempts": attempt, "runtime_s": round(time.time() - started, 1), "output_dir": str(run_out), "best_objective": run_summary.get("best_objective"), "valid_candidates": run_summary.get("valid_candidates")}
-                error_class = classify_provider_error(None, last_detail)
-                if error_class == "provider_quota_exhausted":
+                error_class = classify_provider_error(None, classification_detail)
+                if error_class in {"provider_auth_invalid", "provider_quota_exhausted"}:
                     stop_event.set()
                     return {"run_key": spec.run_key, "problem": spec.problem, "arm": spec.arm, "seed": spec.seed, "generation": spec.generation, "status": error_class, "attempts": attempt, "output_dir": str(run_out)}
             except subprocess.TimeoutExpired:

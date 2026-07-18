@@ -266,6 +266,7 @@ def _runner_script() -> str:
         import re
         import sys
         import time
+        import urllib.error
         import urllib.request
         import numpy as np
         from pathlib import Path
@@ -306,6 +307,7 @@ def _runner_script() -> str:
                     "User-Agent": "eoh-experiment/1.0",
                 }
                 url = api_url(self.api_endpoint)
+                last_error = "unknown"
                 for attempt in range(max_retries):
                     try:
                         req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
@@ -316,15 +318,36 @@ def _runner_script() -> str:
                             error_msg = parsed.get("error", {}).get("message", str(parsed))
                             raise ValueError(f"API returned no choices: {error_msg}")
                         return choices[0]["message"]["content"]
+                    except urllib.error.HTTPError as exc:
+                        raw_body = exc.read().decode("utf-8", "replace")
+                        try:
+                            error_code = json.loads(raw_body).get("error", {}).get("type", "unknown")
+                        except (json.JSONDecodeError, AttributeError):
+                            error_code = "unknown"
+                        # 只记录 HTTP 状态和错误类型，不写响应正文，避免认证细节进入正式证据。
+                        last_error = f"http_status={exc.code} code={error_code}"
+                        api_general.logger.debug(
+                            "API HTTP error (attempt %d/%d): %s",
+                            attempt + 1,
+                            max_retries,
+                            last_error,
+                        )
+                        # 认证、权限和普通请求错误不会通过相同请求自行恢复，直接交给批调度器 fail-fast。
+                        if exc.code < 500 and exc.code not in {408, 429}:
+                            break
+                        if attempt < max_retries - 1:
+                            time.sleep(2 ** attempt)
                     except Exception as exc:
+                        last_error = type(exc).__name__
                         api_general.logger.debug("API error (attempt %d/%d): %s", attempt + 1, max_retries, exc)
                         if attempt < max_retries - 1:
                             time.sleep(2 ** attempt)
                 api_general.logger.warning(
-                    "API call failed after %d attempts (endpoint=%s, model=%s).",
+                    "API call failed (attempt_limit=%d, endpoint=%s, model=%s, error=%s).",
                     max_retries,
                     self.api_endpoint,
                     self.model_LLM,
+                    last_error,
                 )
                 return None
 

@@ -1,7 +1,11 @@
+import json
+from argparse import Namespace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from eoh_rag.experiments import batch_runner
 from eoh_rag.experiments.provider import classify_provider_error, get_provider_config, temperature_for
 from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
@@ -63,8 +67,51 @@ def test_provider_audit_is_secret_free(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_provider_error_and_temperature_contracts() -> None:
+    assert classify_provider_error(401, "") == "provider_auth_invalid"
+    assert classify_provider_error(None, "error=http_status=403 code=invalid_request_error") == "provider_auth_invalid"
     assert classify_provider_error(429, "") == "provider_rate_limited"
     assert classify_provider_error(402, "insufficient balance") == "provider_quota_exhausted"
     assert temperature_for("fixed", 4, 8, None) is None
     assert temperature_for("linear", 7, 8, 1.0) == 0.0
     assert temperature_for("step-down", 7, 8, 1.0) == 0.5
+
+
+def test_reproducible_manifest_fails_fast_on_invalid_provider_auth(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = {
+        "suite": "auth_fail_fast",
+        "problems": ["bp_online"],
+        "arms": [{"name": "api", "runner_arm": "api_only"}],
+        "generations": [1],
+        "repeats": 1,
+        "seed_list": [2024],
+    }
+    args = Namespace(
+        output_dir=str(tmp_path),
+        resume=False,
+        max_concurrent_runs=1,
+        provider="deepseek",
+        temperature_schedule="fixed",
+    )
+    calls = 0
+
+    def fake_run(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return SimpleNamespace(
+            returncode=1,
+            stdout="API call failed (error=http_status=401 code=invalid_request_error).",
+            stderr="RuntimeError: LLM API check failed.",
+        )
+
+    monkeypatch.setattr(batch_runner, "_build_cmd", lambda *_args, **_kwargs: ["fake-run"])
+    monkeypatch.setattr(batch_runner.subprocess, "run", fake_run)
+
+    assert batch_runner._run_reproducible_manifest(manifest, args) == 1
+    index_path = tmp_path / "auth_fail_fast" / "run_index.json"
+    rows = json.loads(index_path.read_text(encoding="utf-8"))
+    assert calls == 1
+    assert rows[0]["status"] == "provider_auth_invalid"
+    assert rows[0]["attempts"] == 1

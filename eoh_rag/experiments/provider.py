@@ -24,6 +24,17 @@ def get_provider_config(name: str) -> ProviderConfig:
 
 def classify_provider_error(status_code: int | None, message: str) -> str:
     normalized = message.lower()
+    if status_code in {401, 403} or any(
+        token in normalized
+        for token in (
+            "http_status=401",
+            "http_status=403",
+            "authentication fails",
+            "invalid api key",
+            "invalid_api_key",
+        )
+    ):
+        return "provider_auth_invalid"
     if status_code == 429 or "rate limit" in normalized:
         return "provider_rate_limited"
     if any(token in normalized for token in ("quota", "insufficient balance", "credits exhausted")):

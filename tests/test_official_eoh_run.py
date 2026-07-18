@@ -77,6 +77,8 @@ class OfficialEohRunTests(unittest.TestCase):
         compile(script, "_run_official_eoh.py", "exec")
         self.assertIn("install_api_url_patch", script)
         self.assertIn("api_url(self.api_endpoint)", script)
+        self.assertIn("except urllib.error.HTTPError as exc:", script)
+        self.assertIn("http_status={exc.code}", script)
         self.assertIn('"User-Agent": "eoh-experiment/1.0"', script)
         self.assertIn('"thinking": {"type": "disabled"}', script)
         self.assertIn('"robust_folds_1k_5k_10k"', script)
