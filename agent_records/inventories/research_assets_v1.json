@@ -1,0 +1,1340 @@
+{
+  "schema_version": "research_asset_inventory/v1",
+  "generated_by": "scripts/research_asset_inventory.py",
+  "generation_policy": "Deterministic aggregation only; no scientific ranking and no raw population ingestion.",
+  "problem_catalog": {
+    "current_formal_runner": [
+      {
+        "problem_id": "bp_online",
+        "execution_tier": "current_formal_runner",
+        "registry_source": "eoh_rag.experiments.problem_registry.RUNNABLE_PROBLEMS",
+        "objective_direction": "minimize",
+        "target_function": "score",
+        "manifest_occurrences": 39,
+        "manifest_paths": [
+          "eoh_rag_workspace/experiments/manifests/adaptive_bp_online.json",
+          "eoh_rag_workspace/experiments/manifests/adaptive_bp_warm.json",
+          "eoh_rag_workspace/experiments/manifests/bp_ablation_cards.json",
+          "eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json",
+          "eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3_proxy.json",
+          "eoh_rag_workspace/experiments/manifests/bp_ablation_preflight.json",
+          "eoh_rag_workspace/experiments/manifests/bp_agent_v2_generalization_confirm_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_card_component_q3.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_agent_generalization_confirm_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_agent_hifo_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_confirmation_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_local_refine_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_dual_agent_generalization_confirm_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_m3_confirm.json",
+          "eoh_rag_workspace/experiments/manifests/bp_m3_pilot.json",
+          "eoh_rag_workspace/experiments/manifests/bp_numeric_neighborhood_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_numeric_pair_compensation_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_confirm_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_q3_fused_confirmation_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_q3_mechanism_discovery_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_robust_feedback_proxy_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_robust_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_scale_balanced_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_scale_proxy_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_scale_structured_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/bp_scale_structured_proxy_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+          "eoh_rag_workspace/experiments/manifests/data_collection_bp_online.json",
+          "eoh_rag_workspace/experiments/manifests/gen16_bp_online.json",
+          "eoh_rag_workspace/experiments/manifests/high_gen_bp_online.json",
+          "eoh_rag_workspace/experiments/manifests/m3_operator_screen_v1.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_bp_online_ADE2.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_bp_online_E2_seeded.json",
+          "eoh_rag_workspace/experiments/manifests/warm_fixed_gen40_bp.json"
+        ]
+      },
+      {
+        "problem_id": "tsp_construct",
+        "execution_tier": "current_formal_runner",
+        "registry_source": "eoh_rag.experiments.problem_registry.RUNNABLE_PROBLEMS",
+        "objective_direction": "minimize",
+        "target_function": "select_next_node",
+        "manifest_occurrences": 16,
+        "manifest_paths": [
+          "eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+          "eoh_rag_workspace/experiments/manifests/data_collection_tsp.json",
+          "eoh_rag_workspace/experiments/manifests/gen16_tsp_construct.json",
+          "eoh_rag_workspace/experiments/manifests/high_gen_tsp_construct.json",
+          "eoh_rag_workspace/experiments/manifests/inherited_pool_control_v1.json",
+          "eoh_rag_workspace/experiments/manifests/m3_operator_screen_v1.json",
+          "eoh_rag_workspace/experiments/manifests/m3_tsp_confirmation_v1.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F1.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F2.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F3.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_llm_rerank_tsp.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_4arm_tsp.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_continue.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_only.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_r4r5.json"
+        ]
+      },
+      {
+        "problem_id": "cvrp_construct",
+        "execution_tier": "current_formal_runner",
+        "registry_source": "eoh_rag.experiments.problem_registry.RUNNABLE_PROBLEMS",
+        "objective_direction": "minimize",
+        "target_function": "select_next_node",
+        "manifest_occurrences": 19,
+        "manifest_paths": [
+          "eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_confirmation_portability_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_core_final_report_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_environment_gate_audit_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_fresh_generated_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_e1e2_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_e1e2_retry_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_fresh_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_structural_memory_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_structure_fresh_diagnostic_v1.json",
+          "eoh_rag_workspace/experiments/manifests/data_collection_cvrp.json",
+          "eoh_rag_workspace/experiments/manifests/gen16_cvrp_construct.json",
+          "eoh_rag_workspace/experiments/manifests/high_gen_cvrp_construct.json",
+          "eoh_rag_workspace/experiments/manifests/inherited_pool_control_v1.json",
+          "eoh_rag_workspace/experiments/manifests/m3_operator_screen_v1.json",
+          "eoh_rag_workspace/experiments/manifests/phase4b_llm_rerank_cvrp.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_4arm_cvrp.json",
+          "eoh_rag_workspace/experiments/manifests/rag_ablation_smoke_cvrp.json"
+        ]
+      },
+      {
+        "problem_id": "tsp_search_controller",
+        "execution_tier": "current_formal_runner",
+        "registry_source": "eoh_rag.experiments.problem_registry.RUNNABLE_PROBLEMS",
+        "objective_direction": "minimize",
+        "target_function": "build_search_plan",
+        "manifest_occurrences": 7,
+        "manifest_paths": [
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_agent_memory_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_feedback_rag_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_objective_feedback_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_proxy_v1.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_proxy_v2.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_seed_diversity_confirm_v1.json",
+          "eoh_rag_workspace/experiments/manifests/tsp_search_controller_seed_diversity_proxy_v1.json"
+        ]
+      },
+      {
+        "problem_id": "cvrp_expert_router",
+        "execution_tier": "current_formal_runner",
+        "registry_source": "eoh_rag.experiments.problem_registry.RUNNABLE_PROBLEMS",
+        "objective_direction": "minimize",
+        "target_function": "select_expert",
+        "manifest_occurrences": 2,
+        "manifest_paths": [
+          "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_deepseek_fallback_v1.json",
+          "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_v1.json"
+        ]
+      }
+    ],
+    "legacy_go_runner": [
+      {
+        "problem_id": "bin_packing_online",
+        "execution_tier": "legacy_go_runner",
+        "registry_source": "eoh_rag.eoh_runner.registry.PROBLEM_SPECS",
+        "language": "go",
+        "objective_direction": "minimize",
+        "source_files": [
+          {
+            "path": "eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go",
+            "exists": true
+          }
+        ],
+        "benchmark_data": [
+          {
+            "path": "eoh_rag_workspace/problems/bin_packing_online/testdata/obp_5x60_c100.json",
+            "label": "obp_5x60_c100"
+          }
+        ],
+        "default_metrics": {
+          "primary": "gap_to_lb",
+          "secondary": "valid_rate"
+        },
+        "registered_in_current_formal_runner": false
+      },
+      {
+        "problem_id": "knapsack",
+        "execution_tier": "legacy_go_runner",
+        "registry_source": "eoh_rag.eoh_runner.registry.PROBLEM_SPECS",
+        "language": "go",
+        "objective_direction": "maximize",
+        "source_files": [
+          {
+            "path": "eoh_rag_workspace/problems/knapsack/knapsack_solver.go",
+            "exists": true
+          }
+        ],
+        "benchmark_data": [
+          {
+            "path": "eoh_rag_workspace/problems/knapsack/testdata/testdata_01.json",
+            "label": "n20"
+          }
+        ],
+        "default_metrics": {
+          "primary": "value",
+          "secondary": "valid_rate"
+        },
+        "registered_in_current_formal_runner": false
+      },
+      {
+        "problem_id": "mixer_split",
+        "execution_tier": "legacy_go_runner",
+        "registry_source": "eoh_rag.eoh_runner.registry.PROBLEM_SPECS",
+        "language": "go",
+        "objective_direction": "minimize",
+        "source_files": [
+          {
+            "path": "eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go",
+            "exists": true
+          }
+        ],
+        "benchmark_data": [
+          {
+            "path": "eoh_rag_workspace/problems/mixer_split/testdata/testdata_01.json",
+            "label": "mixer_day_01"
+          }
+        ],
+        "default_metrics": {
+          "primary": "final_cost",
+          "secondary": "valid_rate"
+        },
+        "registered_in_current_formal_runner": false
+      },
+      {
+        "problem_id": "vrp_insertships",
+        "execution_tier": "legacy_go_runner",
+        "registry_source": "eoh_rag.eoh_runner.registry.PROBLEM_SPECS",
+        "language": "go",
+        "objective_direction": "minimize",
+        "source_files": [
+          {
+            "path": "go_solver/main.go",
+            "exists": true
+          },
+          {
+            "path": "go_solver/routing.go",
+            "exists": true
+          }
+        ],
+        "benchmark_data": [
+          {
+            "source_dir": "go_solver/solomon_benchmark_d50",
+            "instances": [
+              "rc101.json",
+              "rc102.json",
+              "rc103.json"
+            ]
+          },
+          {
+            "source_dir": "go_solver/solomon_benchmark_d75",
+            "instances": [
+              "rc101.json",
+              "rc102.json",
+              "rc103.json"
+            ]
+          }
+        ],
+        "default_metrics": {
+          "primary": "best_EOH_J",
+          "secondary": "valid_candidates"
+        },
+        "registered_in_current_formal_runner": false
+      }
+    ]
+  },
+  "manifest_inventory": {
+    "manifest_file_count": 78,
+    "classification_counts": {
+      "declared": 68,
+      "inferred_from_name": 10
+    },
+    "problem_occurrence_counts": {
+      "bp_online": 39,
+      "cvrp_construct": 19,
+      "cvrp_expert_router": 2,
+      "tsp_construct": 16,
+      "tsp_search_controller": 7
+    },
+    "records": [
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/adaptive_bp_online.json",
+        "suite": "adaptive_bp_online",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/adaptive_bp_warm.json",
+        "suite": "adaptive_bp_warm",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_ablation_cards.json",
+        "suite": "bp_ablation_cards",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3.json",
+        "suite": "bp_ablation_cards_q3",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_ablation_cards_q3_proxy.json",
+        "suite": "bp_ablation_cards_q3_proxy",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_ablation_preflight.json",
+        "suite": "bp_ablation_preflight",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_agent_v2_generalization_confirm_v1.json",
+        "suite": "bp_agent_v2_generalization_confirm_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_card_component_q3.json",
+        "suite": "bp_card_component_q3",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_diagnostic_v1.json",
+        "suite": "bp_confirmation_feedback_proxy_diagnostic_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_feedback_proxy_v1.json",
+        "suite": "bp_confirmation_feedback_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_agent_generalization_confirm_v1.json",
+        "suite": "bp_confirmation_gate_agent_generalization_confirm_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_agent_hifo_v1.json",
+        "suite": "bp_confirmation_gate_agent_hifo_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_diagnostic_v1.json",
+        "suite": "bp_confirmation_gate_only_proxy_diagnostic_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_confirmation_gate_only_proxy_v1.json",
+        "suite": "bp_confirmation_gate_only_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_confirmation_proxy_v1.json",
+        "suite": "bp_cross_distribution_confirmation_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_cross_distribution_local_refine_proxy_v1.json",
+        "suite": "bp_cross_distribution_local_refine_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_dual_agent_generalization_confirm_v1.json",
+        "suite": "bp_dual_agent_generalization_confirm_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_m3_confirm.json",
+        "suite": "bp_m3_confirm",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_m3_pilot.json",
+        "suite": "bp_m3_pilot",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_numeric_neighborhood_proxy_v1.json",
+        "suite": "bp_numeric_neighborhood_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_numeric_pair_compensation_proxy_v1.json",
+        "suite": "bp_numeric_pair_compensation_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_confirm_v1.json",
+        "suite": "bp_objective_feedback_confirm_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_objective_feedback_proxy_v1.json",
+        "suite": "bp_objective_feedback_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_q3_fused_confirmation_v1.json",
+        "suite": "bp_q3_fused_confirmation_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_q3_mechanism_discovery_v1.json",
+        "suite": "bp_q3_mechanism_discovery_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_robust_feedback_proxy_diagnostic_v1.json",
+        "suite": "bp_robust_feedback_proxy_diagnostic_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_robust_feedback_proxy_v1.json",
+        "suite": "bp_robust_feedback_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_scale_balanced_feedback_proxy_v1.json",
+        "suite": "bp_scale_balanced_feedback_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_scale_proxy_diagnostic_v1.json",
+        "suite": "bp_scale_proxy_diagnostic_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_scale_structured_feedback_proxy_v1.json",
+        "suite": "bp_scale_structured_feedback_proxy_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/bp_scale_structured_proxy_diagnostic_v1.json",
+        "suite": "bp_scale_structured_proxy_diagnostic_v1",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cross_problem_transfer_v1.json",
+        "suite": "cross_problem_transfer",
+        "problems": [
+          "bp_online",
+          "cvrp_construct",
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_confirmation_portability_proxy_v1.json",
+        "suite": "cvrp_confirmation_portability_proxy_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_core_final_report_v1.json",
+        "suite": "cvrp_core_final_report_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_environment_gate_audit_v1.json",
+        "suite": "cvrp_environment_gate_audit_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_deepseek_fallback_v1.json",
+        "suite": "cvrp_expert_router_proxy_deepseek_fallback_v1",
+        "problems": [
+          "cvrp_expert_router"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_v1.json",
+        "suite": "cvrp_expert_router_proxy_v1",
+        "problems": [
+          "cvrp_expert_router"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_fresh_generated_diagnostic_v1.json",
+        "suite": "cvrp_fresh_generated_diagnostic_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_e1e2_proxy_v1.json",
+        "suite": "cvrp_multi_environment_e1e2_proxy_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_e1e2_retry_v1.json",
+        "suite": "cvrp_multi_environment_e1e2_retry_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_feedback_proxy_v1.json",
+        "suite": "cvrp_multi_environment_feedback_proxy_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_multi_environment_fresh_diagnostic_v1.json",
+        "suite": "cvrp_multi_environment_fresh_diagnostic_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_structural_memory_proxy_v1.json",
+        "suite": "cvrp_structural_memory_proxy_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/cvrp_structure_fresh_diagnostic_v1.json",
+        "suite": "cvrp_structure_fresh_diagnostic_v1",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "inferred_from_name"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/data_collection_bp_online.json",
+        "suite": "data_collection_bp_online",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/data_collection_cvrp.json",
+        "suite": "data_collection_cvrp",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/data_collection_tsp.json",
+        "suite": "data_collection_tsp",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/gen16_bp_online.json",
+        "suite": "gen16_bp_online",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/gen16_cvrp_construct.json",
+        "suite": "gen16_cvrp_construct",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/gen16_tsp_construct.json",
+        "suite": "gen16_tsp_construct",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/high_gen_bp_online.json",
+        "suite": "high_gen_bp_online",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/high_gen_cvrp_construct.json",
+        "suite": "high_gen_cvrp_construct",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/high_gen_tsp_construct.json",
+        "suite": "high_gen_tsp_construct",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/inherited_pool_control_v1.json",
+        "suite": "inherited_pool_control_v1",
+        "problems": [
+          "cvrp_construct",
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/m3_operator_screen_v1.json",
+        "suite": "m3_operator_screen_v1",
+        "problems": [
+          "bp_online",
+          "cvrp_construct",
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/m3_tsp_confirmation_v1.json",
+        "suite": "m3_tsp_confirmation_v1",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_bp_online_ADE2.json",
+        "suite": "phase4b_bp_online_ADE2",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_bp_online_E2_seeded.json",
+        "suite": "phase4b_bp_online_E2_seeded",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp.json",
+        "suite": "phase4b_explore_tsp",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F1.json",
+        "suite": "phase4b_explore_tsp_F1",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F2.json",
+        "suite": "phase4b_explore_tsp_F2",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_explore_tsp_F3.json",
+        "suite": "phase4b_explore_tsp_F3",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_llm_rerank_cvrp.json",
+        "suite": "phase4b_llm_rerank_cvrp",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/phase4b_llm_rerank_tsp.json",
+        "suite": "phase4b_llm_rerank_tsp",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_4arm_cvrp.json",
+        "suite": "rag_ablation_4arm_cvrp",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_4arm_tsp.json",
+        "suite": "rag_ablation_4arm_tsp",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_continue.json",
+        "suite": "rag_ablation_r2_tsp_D_continue",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_only.json",
+        "suite": "rag_ablation_r2_tsp_D_only",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_r2_tsp_D_r4r5.json",
+        "suite": "rag_ablation_r2_tsp_D_r4r5",
+        "problems": [
+          "tsp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/rag_ablation_smoke_cvrp.json",
+        "suite": "rag_ablation_smoke_cvrp",
+        "problems": [
+          "cvrp_construct"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_agent_memory_proxy_v1.json",
+        "suite": "tsp_search_controller_agent_memory_proxy_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_feedback_rag_proxy_v1.json",
+        "suite": "tsp_search_controller_feedback_rag_proxy_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_objective_feedback_proxy_v1.json",
+        "suite": "tsp_search_controller_objective_feedback_proxy_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_proxy_v1.json",
+        "suite": "tsp_search_controller_proxy_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_proxy_v2.json",
+        "suite": "tsp_search_controller_proxy_v2",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_seed_diversity_confirm_v1.json",
+        "suite": "tsp_search_controller_seed_diversity_confirm_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/tsp_search_controller_seed_diversity_proxy_v1.json",
+        "suite": "tsp_search_controller_seed_diversity_proxy_v1",
+        "problems": [
+          "tsp_search_controller"
+        ],
+        "problem_classification": "declared"
+      },
+      {
+        "path": "eoh_rag_workspace/experiments/manifests/warm_fixed_gen40_bp.json",
+        "suite": "warm_fixed_gen40_bp",
+        "problems": [
+          "bp_online"
+        ],
+        "problem_classification": "declared"
+      }
+    ]
+  },
+  "core_benchmarks": {
+    "registry_path": "eoh_rag_workspace/experiments/manifests/core_benchmark_registry.json",
+    "instance_counts": {
+      "cvrp_construct": 10,
+      "tsp_construct": 12
+    },
+    "instance_count": 22,
+    "missing_paths": [],
+    "hash_mismatches": []
+  },
+  "algorithm_assets": {
+    "record_count": 19,
+    "records_with_computed_hash": 18,
+    "unique_computed_code_hashes": 17,
+    "duplicate_hash_groups": {
+      "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8": [
+        "bp_online_agent_discovery_gate_confirmed_v1",
+        "bp_online_agent_discovery_gate_v1"
+      ]
+    },
+    "records": [
+      {
+        "asset_id": "bp_online_agent_discovery_dual_v1",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_dual_v1.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "candidate_under_confirmation",
+          "dual_batch_aggregate",
+          "not_yet_formal_seed"
+        ],
+        "declared_code_sha256": "FF76A8F81571F3583C995929E0BBF983AF1CC545BEA7D2D496E98DE08CA573E1",
+        "computed_code_sha256": "FF76A8F81571F3583C995929E0BBF983AF1CC545BEA7D2D496E98DE08CA573E1",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": false,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_gate_confirmed_v1",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_confirmed_v1.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "large_confirmed",
+          "c100_weibull_generalization",
+          "formal_seed"
+        ],
+        "declared_code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8",
+        "computed_code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": true,
+        "confirmation_gate_passed": true,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_gate_v1",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_gate_v1.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "candidate_under_confirmation",
+          "confirmation_gate",
+          "not_yet_formal_seed"
+        ],
+        "declared_code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8",
+        "computed_code_sha256": "D4CCEE7A223FFF7A2AAFACD08EA2C335116CB753468020AA33E5BD977CD445B8",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": false,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_scale_v1",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_scale_v1.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "proxy_only",
+          "scale_balanced",
+          "unstable_across_runs",
+          "not_for_formal_seed"
+        ],
+        "declared_code_sha256": "CD9817B2861BB6E7DEC3BC14182A89798AC2571EA3B9947DA54268CDB0345585",
+        "computed_code_sha256": "CD9817B2861BB6E7DEC3BC14182A89798AC2571EA3B9947DA54268CDB0345585",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_v1a",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_v1a.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "dev_tied_candidate",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "5BB9E78E19A24912FE0F6D8AAB318F1CF3CBF7EC863C282A48A9A36CA229E276",
+        "computed_code_sha256": "5BB9E78E19A24912FE0F6D8AAB318F1CF3CBF7EC863C282A48A9A36CA229E276",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_v1b",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_v1b.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "dev_tied_candidate",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "BCB57EA0B9758E984CF6CAEB4AC2AA0ED9987E4906C560AFBF122C7CB9A40166",
+        "computed_code_sha256": "BCB57EA0B9758E984CF6CAEB4AC2AA0ED9987E4906C560AFBF122C7CB9A40166",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "bp_online_agent_discovery_v2",
+        "problem_id": "bp_online",
+        "source_path": "eoh_rag_workspace/experiments/assets/bp_online_agent_discovery_v2.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "dev_confirmed",
+          "heldout_mixed",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "B95EA6403F4B5355AF5FBB4EC1B1F771957B8071908C586FF1F7D8D64C03D67D",
+        "computed_code_sha256": "B95EA6403F4B5355AF5FBB4EC1B1F771957B8071908C586FF1F7D8D64C03D67D",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "cross_problem_transfer:bp_online:local_only",
+        "problem_id": "bp_online",
+        "source_path": "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_local_only_best.py",
+        "actor_raw": "Unknown",
+        "origin": "frozen_cross_problem_transfer_output",
+        "declared_roles": [
+          "experiment_best_code"
+        ],
+        "declared_code_sha256": null,
+        "computed_code_sha256": "BB58BCE48535F7E58EAC6E6DE822CA77044833F7B48BC932C10250AE1A6B91D4",
+        "code_hash_status": "computed_file_hash_only",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null,
+        "run_key": "cross_problem_transfer/bp_online/local_only/3101",
+        "score": 0.768
+      },
+      {
+        "asset_id": "cross_problem_transfer:bp_online:mixed_abstract",
+        "problem_id": "bp_online",
+        "source_path": "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_mixed_abstract_best.py",
+        "actor_raw": "Unknown",
+        "origin": "frozen_cross_problem_transfer_output",
+        "declared_roles": [
+          "experiment_best_code"
+        ],
+        "declared_code_sha256": null,
+        "computed_code_sha256": "E6C9A6F5D86BE228CDAC812EF15D23F1C0A0F05D0E8E3CF1EBF54E36EAB5276B",
+        "code_hash_status": "computed_file_hash_only",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null,
+        "run_key": "cross_problem_transfer/bp_online/mixed_abstract/3101",
+        "score": 0.867
+      },
+      {
+        "asset_id": "cross_problem_transfer:cvrp_construct:local_only",
+        "problem_id": "cvrp_construct",
+        "source_path": "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py",
+        "actor_raw": "Unknown",
+        "origin": "frozen_cross_problem_transfer_output",
+        "declared_roles": [
+          "experiment_best_code"
+        ],
+        "declared_code_sha256": null,
+        "computed_code_sha256": "4CF318851137F817FCC83B579A02E3CCC61490E70F5FC8063F4EDF2DA4476852",
+        "code_hash_status": "computed_file_hash_only",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null,
+        "run_key": "cross_problem_transfer/cvrp_construct/local_only/3104",
+        "score": 16.091794264436615
+      },
+      {
+        "asset_id": "cross_problem_transfer:cvrp_construct:mixed_abstract",
+        "problem_id": "cvrp_construct",
+        "source_path": "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_mixed_abstract_best.py",
+        "actor_raw": "Unknown",
+        "origin": "frozen_cross_problem_transfer_output",
+        "declared_roles": [
+          "experiment_best_code"
+        ],
+        "declared_code_sha256": null,
+        "computed_code_sha256": "E0330100C438879423DF611D5E687F7A9656A947C19415F135AD24367CF39A60",
+        "code_hash_status": "computed_file_hash_only",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null,
+        "run_key": "cross_problem_transfer/cvrp_construct/mixed_abstract/3102",
+        "score": 16.55386439732349
+      },
+      {
+        "asset_id": "cvrp_expert_router_v1:density_structure",
+        "problem_id": "cvrp_construct",
+        "source_path": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_structure_candidate_v1.json",
+        "actor_raw": "research_agent",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "selector_expert"
+        ],
+        "declared_code_sha256": "EFBED55F3CBFEC7986FCC012FDEFDFBA7574F2B9FDD2F5F983AEB85E1911AD92",
+        "computed_code_sha256": "EFBED55F3CBFEC7986FCC012FDEFDFBA7574F2B9FDD2F5F983AEB85E1911AD92",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": true,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": "cvrp_expert_router_v1",
+        "summary": "在共同骨架上加入附近客户平均距离，容量宽松时更偏向较孤立的客户"
+      },
+      {
+        "asset_id": "cvrp_expert_router_v1:multi_environment_variance",
+        "problem_id": "cvrp_construct",
+        "source_path": "official_eoh/examples/cvrp_construct/seeds/cvrp_multi_environment_candidate_v1.json",
+        "actor_raw": "research_agent",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "selector_expert"
+        ],
+        "declared_code_sha256": "2383079CC38C001EF23742C82DC6DA959745A11DFCEB363798203BA7922B52B3",
+        "computed_code_sha256": "2383079CC38C001EF23742C82DC6DA959745A11DFCEB363798203BA7922B52B3",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": true,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": "cvrp_expert_router_v1",
+        "summary": "在共同骨架上按当前未访问客户的需求方差调整需求惩罚"
+      },
+      {
+        "asset_id": "cvrp_expert_router_v1:n1",
+        "problem_id": "cvrp_construct",
+        "source_path": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+        "actor_raw": "research_agent",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "selector_expert"
+        ],
+        "declared_code_sha256": "E428E8AE8ADBD136BD60C0367A5BF7810528887172C67ECDDAD25C4CBFDC4DA0",
+        "computed_code_sha256": "E428E8AE8ADBD136BD60C0367A5BF7810528887172C67ECDDAD25C4CBFDC4DA0",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": true,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": "cvrp_expert_router_v1",
+        "summary": "按节省距离和后悔值选点，使用较温和的提前回仓阈值"
+      },
+      {
+        "asset_id": "cvrp_expert_router_v1:n2",
+        "problem_id": "cvrp_construct",
+        "source_path": "official_eoh/examples/cvrp_construct/seeds/cvrp_agent_numeric_candidates_v1.json",
+        "actor_raw": "research_agent",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "selector_expert"
+        ],
+        "declared_code_sha256": "BC5D55374D323D51C2AD3E22ABC4ADCBCC4559B532CE97BF3A60173E2FA4E5CD",
+        "computed_code_sha256": "BC5D55374D323D51C2AD3E22ABC4ADCBCC4559B532CE97BF3A60173E2FA4E5CD",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": true,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": "cvrp_expert_router_v1",
+        "summary": "沿用节省距离和后悔值骨架，使用更积极的提前回仓阈值"
+      },
+      {
+        "asset_id": "tsp_search_controller_agent_discovery_v1",
+        "problem_id": "tsp_search_controller",
+        "source_path": "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v1.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "target_algorithm",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "3E1E2DA450A771FEEF02EAD292EBEBD646AE6220DDC2D936B889DA222F28E984",
+        "computed_code_sha256": "3E1E2DA450A771FEEF02EAD292EBEBD646AE6220DDC2D936B889DA222F28E984",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "tsp_search_controller_agent_discovery_v2",
+        "problem_id": "tsp_search_controller",
+        "source_path": "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v2.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "target_algorithm",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "D9CDDE9814615D0F5F1AC7E0B6CC32495D1595700AA09047EECD0ADB05B28EA7",
+        "computed_code_sha256": "D9CDDE9814615D0F5F1AC7E0B6CC32495D1595700AA09047EECD0ADB05B28EA7",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "tsp_search_controller_agent_discovery_v3",
+        "problem_id": "tsp_search_controller",
+        "source_path": "eoh_rag_workspace/experiments/assets/tsp_search_controller_agent_discovery_v3.json",
+        "actor_raw": "research_agent_eoh",
+        "origin": "automatic_evolution",
+        "declared_roles": [
+          "agent_discovery",
+          "target_algorithm",
+          "optional_seed"
+        ],
+        "declared_code_sha256": "56E4DB6BEC74FFE1328A47E3C78AE407053410F557D230E7FACA64065A10CBCF",
+        "computed_code_sha256": "56E4DB6BEC74FFE1328A47E3C78AE407053410F557D230E7FACA64065A10CBCF",
+        "code_hash_status": "verified",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      },
+      {
+        "asset_id": "tsp_search_controller_external_teacher_v1",
+        "problem_id": "tsp_search_controller",
+        "source_path": "eoh_rag_workspace/experiments/assets/tsp_search_controller_external_teacher_v1.json",
+        "actor_raw": "codex",
+        "origin": "codex_exploration",
+        "declared_roles": [
+          "external_teacher",
+          "target_algorithm",
+          "optional_seed"
+        ],
+        "declared_code_sha256": null,
+        "computed_code_sha256": null,
+        "code_hash_status": "not_declared",
+        "formal_seed_allowed": null,
+        "confirmation_gate_passed": null,
+        "selector_pool_id": null
+      }
+    ]
+  },
+  "selector_pools": [
+    {
+      "contract_id": "cvrp_expert_router_v1",
+      "contract_path": "official_eoh/examples/cvrp_expert_router/router_contract_v1.json",
+      "scientific_actor": "research_agent",
+      "selector_problem_id": "cvrp_expert_router",
+      "target_problem_id": "cvrp_construct",
+      "expert_ids": [
+        "n1",
+        "n2",
+        "density_structure",
+        "multi_environment_variance"
+      ],
+      "feature_order": [
+        "n_customers",
+        "capacity",
+        "mean_demand_ratio",
+        "demand_cv",
+        "capacity_fill_ratio",
+        "span_aspect_ratio",
+        "depot_distance_ratio",
+        "nearest_neighbor_ratio",
+        "radial_distance_cv"
+      ],
+      "development_split": {
+        "uniform_50": [
+          121000,
+          121029
+        ],
+        "clustered_100": [
+          131000,
+          131029
+        ],
+        "rectangular_200": [
+          141000,
+          141029
+        ]
+      },
+      "confirmation_split": {
+        "uniform_50": [
+          151000,
+          151029
+        ],
+        "clustered_100": [
+          161000,
+          161029
+        ],
+        "rectangular_200": [
+          171000,
+          171029
+        ]
+      },
+      "confirmation_visible_during_evolution": false,
+      "held_out_used": false
+    }
+  ],
+  "knowledge_assets": {
+    "algorithm_cards_path": "eoh_rag_workspace/rag/corpus/algorithm_cards.jsonl",
+    "record_count": 115,
+    "kind_counts": {
+      "algorithm_card": 115
+    },
+    "evidence_boundary": "RAG cards are retrieval knowledge, not automatically verified excellent algorithms."
+  },
+  "structural_boundaries": {
+    "current_formal_runner_problem_count": 5,
+    "legacy_go_runner_problem_count": 4,
+    "per_instance_selector_problem_count": 1,
+    "selector_ready_expert_count": 4,
+    "legacy_go_problems_are_not_current_formal_runner_problems": true,
+    "cross_problem_best_codes_are_not_selector_registered": true
+  }
+}

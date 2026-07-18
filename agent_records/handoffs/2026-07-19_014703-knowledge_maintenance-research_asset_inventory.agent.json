@@ -1,0 +1,54 @@
+{
+  "schema_version": "agent_ad_knowledge_maintenance/v1",
+  "document_id": "agent_ad:2026-07-19:research-asset-inventory-v1",
+  "audience": "agent",
+  "created_at": "2026-07-19T01:47:03+08:00",
+  "phase_id": "knowledge_maintenance",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "a9c0df74d7ba66c32f11163fbafb1d06631f230f",
+  "status": "generated_and_verified",
+  "inventory": {
+    "json_path": "agent_records/inventories/research_assets_v1.json",
+    "markdown_path": "agent_records/inventories/research_assets_v1.md",
+    "current_formal_runner_problems": 5,
+    "legacy_go_runner_problems": 4,
+    "experiment_manifest_files": 78,
+    "manifest_problem_occurrences": {
+      "bp_online": 39,
+      "tsp_construct": 16,
+      "cvrp_construct": 19,
+      "tsp_search_controller": 7,
+      "cvrp_expert_router": 2
+    },
+    "algorithm_asset_records": 19,
+    "unique_computed_code_or_file_hashes": 17,
+    "selector_pools": 1,
+    "selector_ready_experts": 4,
+    "rag_algorithm_cards": 115
+  },
+  "boundaries": {
+    "scientific_ranking_performed": false,
+    "raw_population_ingested": false,
+    "rag_cards_treated_as_verified_algorithms": false,
+    "historical_actor_values_rewritten": false,
+    "only_selector_pool": "cvrp_expert_router_v1"
+  },
+  "evidence_refs": [
+    {
+      "kind": "generator",
+      "path": "scripts/research_asset_inventory.py"
+    },
+    {
+      "kind": "drift_and_hash_tests",
+      "path": "tests/test_research_asset_inventory.py",
+      "result": "4 passed"
+    },
+    {
+      "kind": "human_record",
+      "path": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_014703-knowledge_maintenance-问题集与优秀算法可执行清单勘误.md"
+    }
+  ],
+  "next_action": "keep_inventory_generated_from_existing_sources_and_restore_valid_provider_for_frozen_router_cohort"
+}
