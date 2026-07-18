@@ -28,6 +28,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -81,7 +82,7 @@ PROBLEMS: dict[str, OfficialProblemSpec] = {
 
 # 单次进化运行器还支持只在框架内使用的控制器问题。它没有传统 examples/evaluation
 # 冒烟入口，因此不放进 PROBLEMS，避免默认问题冒烟把它误当成构造式基准。
-RUNNABLE_PROBLEMS = tuple(PROBLEMS) + ("tsp_search_controller",)
+RUNNABLE_PROBLEMS = tuple(PROBLEMS) + ("tsp_search_controller", "cvrp_expert_router")
 
 
 def _safe_float(value: str) -> float | None:

@@ -47,6 +47,7 @@ from eoh_rag.experiments.rag_context_builder import (
     history_card_gate_warnings,
 )
 from eoh_rag.experiments.problem_registry import RUNNABLE_PROBLEMS
+from eoh_rag.experiments.provider import get_provider_config
 from eoh_rag.rag.card_outcomes import load_outcomes, summarize_all_cards
 from eoh_rag.rag.features import load_population_features
 
@@ -118,7 +119,9 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     samples = sorted((run_dir / "results" / "samples").glob("samples_*.json"))
     best_sample = run_dir / "results" / "samples" / "samples_best.json"
     held_out_report_path = run_dir / "held_out_report.json"
+    confirmation_report_path = run_dir / "confirmation_report.json"
     held_out_report: dict[str, Any] = {}
+    confirmation_report: dict[str, Any] = {}
     if held_out_report_path.is_file():
         try:
             loaded_report = _load_json(held_out_report_path)
@@ -127,6 +130,13 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             # held-out 报告属于补充指标；文件损坏时保留主摘要，并显式标记为不可用。
             held_out_report = {}
+    if confirmation_report_path.is_file():
+        try:
+            loaded_confirmation = _load_json(confirmation_report_path)
+            if isinstance(loaded_confirmation, dict):
+                confirmation_report = loaded_confirmation
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            confirmation_report = {}
     summary: dict[str, Any] = {
         "run_dir": str(run_dir),
         "ok": False,
@@ -143,6 +153,10 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "best_sample_path": str(best_sample) if best_sample.exists() else None,
         "held_out_report": held_out_report,
         "held_out_report_path": str(held_out_report_path) if held_out_report_path.is_file() else None,
+        "confirmation_report": confirmation_report,
+        "confirmation_report_path": (
+            str(confirmation_report_path) if confirmation_report_path.is_file() else None
+        ),
         "population_diversity": [],
     }
     if not populations:
@@ -223,6 +237,12 @@ def _api_context(problem: str) -> str:
         return (
             "API RULES: implement select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix). "
             "Return one int from unvisited_nodes, or depot only when intentionally ending the route."
+        )
+    if problem == "cvrp_expert_router":
+        return (
+            "API RULES: implement select_expert(instance_features, expert_summaries). "
+            "Use only the nine numeric features and listed summaries. Return exactly one listed expert_id. "
+            "Do not import modules, mutate inputs, or access files, network, environment, randomness, or time."
         )
     raise ValueError(f"unknown problem: {problem}")
 
@@ -332,6 +352,12 @@ def _runner_script() -> str:
                     "API RULES: implement build_search_plan(problem_size, total_budget). Return only a list of "
                     "(primitive, budget, minimum_relative_gain) tuples using the documented whitelist and budget."
                 )
+            if problem == "cvrp_expert_router":
+                return (
+                    "API RULES: implement select_expert(instance_features, expert_summaries). "
+                    "Use only the nine numeric features and listed summaries. Return exactly one listed expert_id. "
+                    "Do not import modules, mutate inputs, or access files, network, environment, randomness, or time."
+                )
             raise ValueError(f"unknown problem: {problem}")
 
 
@@ -384,6 +410,13 @@ def _runner_script() -> str:
                     budget_policy=controller_budget_policy,
                     dev_suite_name=controller_dev_suite,
                     confirm_suite_name=controller_confirm_suite,
+                )
+            if problem == "cvrp_expert_router":
+                # 唯一模块名避免 Windows spawn 把多个 examples/prob.py 混为同一 pickle 模块。
+                from cvrp_expert_router_problem import CVRPEXPERTROUTER
+                return CVRPEXPERTROUTER(
+                    timeout=eval_timeout_s,
+                    n_processes=n_processes,
                 )
             raise ValueError(f"unknown problem: {problem}")
 
@@ -445,6 +478,56 @@ def _runner_script() -> str:
             os.replace(temporary_path, report_path)
 
 
+        def persist_best_confirmation_report(task, output_dir: Path) -> None:
+            """候选冻结后只读运行 confirmation；结果不得回流到本次进化。"""
+            if not hasattr(task, "confirmation_report") or not hasattr(task, "report_confirmation"):
+                return
+
+            def generation_number(path: Path) -> int:
+                match = re.search(r"population_generation_(\d+)\.json$", path.name)
+                return int(match.group(1)) if match else -1
+
+            population_paths = sorted(
+                (output_dir / "results" / "pops").glob("population_generation_*.json"),
+                key=generation_number,
+            )
+            if not population_paths:
+                logger.warning("No final population found; confirmation report was not generated")
+                return
+            try:
+                population = json.loads(population_paths[-1].read_text(encoding="utf-8"))
+                valid_candidates = [
+                    item
+                    for item in population
+                    if isinstance(item, dict)
+                    and item.get("objective") is not None
+                    and item.get("code")
+                ]
+                best_candidate = min(valid_candidates, key=lambda item: item["objective"])
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.warning("Cannot select the best candidate for confirmation: %s", exc)
+                return
+
+            task.report_confirmation = True
+            try:
+                if task.evaluate(best_candidate["code"]) is None:
+                    logger.warning("Best candidate could not be evaluated on confirmation")
+                    return
+            finally:
+                task.report_confirmation = False
+            report = getattr(task, "confirmation_report", None)
+            if not isinstance(report, dict) or not report:
+                logger.warning("Confirmation report has an unexpected value")
+                return
+            report_path = output_dir / "confirmation_report.json"
+            temporary_path = report_path.with_suffix(".json.tmp")
+            temporary_path.write_text(
+                json.dumps(report, ensure_ascii=True, indent=2),
+                encoding="utf-8",
+            )
+            os.replace(temporary_path, report_path)
+
+
         def apply_arm_context(task, problem: str, arm: str, context_file: str) -> None:
             context = ""
             if arm == "api_only":
@@ -467,7 +550,7 @@ def _runner_script() -> str:
             parser.add_argument(
                 "--problem",
                 required=True,
-                choices=["bp_online", "tsp_construct", "cvrp_construct", "tsp_search_controller"],
+                choices=["bp_online", "tsp_construct", "cvrp_construct", "tsp_search_controller", "cvrp_expert_router"],
             )
             parser.add_argument("--arm", required=True, choices=["pure_eoh", "api_only", "context_file"])
             parser.add_argument("--context-file", default="")
@@ -493,6 +576,7 @@ def _runner_script() -> str:
                     "objective_aware",
                     "scale_aware",
                     "robust_aware",
+                    "router_aware",
                     "confirmation_aware",
                     "confirmation_observe_only",
                     "confirmation_gate_only",
@@ -618,6 +702,7 @@ def _runner_script() -> str:
             )
             eoh.run()
             persist_best_held_out_report(task, Path(args.output_dir))
+            persist_best_confirmation_report(task, Path(args.output_dir))
 
 
         if __name__ == "__main__":
@@ -656,11 +741,27 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     # 预先探测三项 API 环境是否就绪（endpoint 需能解析出 host）
     operators = [item.strip() for item in args.operators.split(",") if item.strip()]
     offline_operator_run = bool(operators) and set(operators) <= {"n1", "n2"}
-    endpoint_present = bool(normalize_api_endpoint(os.environ.get(args.api_endpoint_env, "")))
+    provider_name = getattr(args, "provider", "")
+    provider_config = (
+        get_provider_config(provider_name)
+        if provider_name and provider_name != "offline"
+        else None
+    )
+    # CLI 的 provider 是正式事实源；旧的自定义 env 参数只用于未声明 provider 的兼容调用。
+    resolved_api_key_env = provider_config.api_key_env if provider_config else args.api_key_env
+    resolved_endpoint = (
+        provider_config.endpoint
+        if provider_config
+        else os.environ.get(args.api_endpoint_env, "")
+    )
+    endpoint_present = bool(normalize_api_endpoint(resolved_endpoint))
     # 实际解析出的模型名(非密钥,可安全落盘):写进 summary 以便追溯每个 run 究竟用了哪个模型。
-    resolved_model = args.llm_model or os.environ.get(args.model_env, "")
+    resolved_model = (
+        args.llm_model
+        or (provider_config.model if provider_config else os.environ.get(args.model_env, ""))
+    )
     model_present = bool(resolved_model)
-    api_key_present = bool(os.environ.get(args.api_key_env, ""))
+    api_key_present = bool(os.environ.get(resolved_api_key_env, ""))
     payload: dict[str, Any] = {
         "problem": args.problem,
         "arm": args.arm,
@@ -674,6 +775,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "use_official_seed": args.use_official_seed,
         "seed": getattr(args, "seed", 2024),
         "provider": getattr(args, "provider", "opencode-go"),
+        "provider_audit": provider_config.audit_record() if provider_config else None,
         "temperature_schedule": getattr(args, "temperature_schedule", "fixed"),
         "evolution_feedback_policy": getattr(args, "evolution_feedback_policy", "legacy"),
         "controller_budget_policy": getattr(args, "controller_budget_policy", "strict"),
@@ -765,7 +867,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     payload["rag_trace"] = rag_trace
     # 三项环境变量逐一校验，缺失即记录具体缺哪一项并提前返回
     if not offline_operator_run and not api_key_present:
-        payload["failure_reason"] = f"missing_env_{args.api_key_env}"
+        payload["failure_reason"] = f"missing_env_{resolved_api_key_env}"
         _write_outputs(output_root, payload)
         return payload
     if not offline_operator_run and not endpoint_present:
@@ -802,11 +904,11 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "--operators",
         args.operators,
         "--api-key-env",
-        args.api_key_env,
+        resolved_api_key_env,
         "--api-endpoint-env",
-        args.api_endpoint_env,
+        "EOH_RESOLVED_API_ENDPOINT",
         "--model-env",
-        args.model_env,
+        "EOH_RESOLVED_MODEL",
         "--seed",
         str(getattr(args, "seed", 2024)),
         "--provider",
@@ -855,6 +957,9 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
     return_code: int | None = None
     try:
         # 运行子进程并捕获输出，run_timeout_s 为整体墙钟超时上限
+        child_env = os.environ.copy()
+        child_env["EOH_RESOLVED_API_ENDPOINT"] = resolved_endpoint
+        child_env["EOH_RESOLVED_MODEL"] = resolved_model
         proc = subprocess.run(
             cmd,
             text=True,
@@ -862,6 +967,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
             stderr=subprocess.PIPE,
             timeout=args.run_timeout_s,
             check=False,
+            env=child_env,
         )
         return_code = proc.returncode
         payload["return_code"] = return_code
@@ -1027,6 +1133,7 @@ def main() -> None:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
             "confirmation_gate_only",

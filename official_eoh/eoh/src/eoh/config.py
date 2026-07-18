@@ -68,6 +68,7 @@ class EoHConfig:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
             "confirmation_gate_only",

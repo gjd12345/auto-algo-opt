@@ -28,6 +28,13 @@ _BASE_MODULE = importlib.util.module_from_spec(_BASE_SPEC)
 _BASE_SPEC.loader.exec_module(_BASE_MODULE)
 CVRPCONST = _BASE_MODULE.CVRPCONST
 
+# 选择器与广训练评测器共享同一环境定义，避免节点数、容量或几何分布各自复制后漂移。
+CVRP_MULTI_ENVIRONMENT_SPECS = (
+    {"name": "uniform_50", "geometry": "uniform_square", "n_customers": 50, "capacity": 40, "demand_max": 3},
+    {"name": "clustered_100", "geometry": "clustered", "n_customers": 100, "capacity": 60, "demand_max": 6},
+    {"name": "rectangular_200", "geometry": "rectangular", "n_customers": 200, "capacity": 80, "demand_max": 8},
+)
+
 class CVRPCONSTBroad(CVRPCONST):
     """CVRP 广训练池 + held-out 评测器。
     
@@ -102,11 +109,7 @@ class CVRPCONSTBroad(CVRPCONST):
                 "demand_max": max(1, cap // 10 - 1),
             }]
         elif training_profile == "multi_env_50_100_200":
-            specs = [
-                {"name": "uniform_50", "geometry": "uniform_square", "n_customers": 50, "capacity": 40, "demand_max": 3},
-                {"name": "clustered_100", "geometry": "clustered", "n_customers": 100, "capacity": 60, "demand_max": 6},
-                {"name": "rectangular_200", "geometry": "rectangular", "n_customers": 200, "capacity": 80, "demand_max": 8},
-            ]
+            specs = list(CVRP_MULTI_ENVIRONMENT_SPECS)
         else:
             raise ValueError(f"unknown CVRP training profile: {training_profile}")
 

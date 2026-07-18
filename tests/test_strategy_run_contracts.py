@@ -28,6 +28,16 @@ def test_run_specs_expand_seed_problem_arm_and_scope(tmp_path: Path) -> None:
     assert all("tsp_only" not in spec.run_key for spec in specs if spec.problem == "bp_online")
 
 
+def test_multiple_generations_have_distinct_run_keys_and_directories(tmp_path: Path) -> None:
+    manifest = _manifest()
+    manifest["generations"] = [4, 8]
+    specs = expand_run_specs(manifest, tmp_path)
+
+    assert len({spec.run_key for spec in specs}) == len(specs)
+    assert len({spec.output_dir for spec in specs}) == len(specs)
+    assert {spec.run_key.rsplit("/", 1)[-1] for spec in specs} == {"g4", "g8"}
+
+
 def test_seed_list_must_match_repeats() -> None:
     manifest = _manifest()
     manifest["repeats"] = 3

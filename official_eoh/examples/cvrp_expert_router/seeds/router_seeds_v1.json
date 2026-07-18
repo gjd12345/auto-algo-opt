@@ -1,7 +1,8 @@
 [
   {
     "algorithm": "始终选择当前单专家基线 n2，作为可复现的零改善起点",
-    "actor": "framework_baseline",
+    "actor": "codex",
+    "origin": "framework_baseline",
     "code_sha256": "095C6C7546E26A928DE1EC1B6DCA72FCE1164484E9787A62C20C935EF6973931",
     "code": "def select_expert(instance_features: dict[str, float], expert_summaries: list[dict[str, str]]) -> str:\n    del instance_features, expert_summaries\n    return \"n2\""
   }

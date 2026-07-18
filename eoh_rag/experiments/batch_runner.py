@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import logging
 import os
@@ -283,13 +284,14 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
             "confirmation_gate_only",
         }:
             errors.append(
                 f"arm[{i}] evolution_feedback_policy must be 'legacy', "
-                "'objective_aware', 'scale_aware', 'robust_aware', 'confirmation_aware', "
+                "'objective_aware', 'scale_aware', 'robust_aware', 'router_aware', 'confirmation_aware', "
                 "'confirmation_observe_only', or 'confirmation_gate_only'"
             )
 
@@ -301,6 +303,38 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
     gens = manifest.get("generations", [])
     if isinstance(gens, list) and any(not isinstance(g, int) or g < 0 for g in gens):
         errors.append("generations must be a list of non-negative ints")
+
+    # 选择器合同与种子是冻结科学输入；任何字节漂移都必须在创建输出目录前失败。
+    for path_field, hash_field in (
+        ("router_contract", "router_contract_sha256"),
+        ("seed_codes", "seed_codes_sha256"),
+    ):
+        raw_path = manifest.get(path_field)
+        if path_field == "seed_codes" and not raw_path:
+            arm_seed_paths = {
+                arm.get("seed_codes")
+                for arm in manifest.get("arms", [])
+                if arm.get("seed_codes")
+            }
+            if len(arm_seed_paths) == 1:
+                raw_path = arm_seed_paths.pop()
+        expected_hash = manifest.get(hash_field)
+        if expected_hash:
+            if not isinstance(raw_path, str) or not raw_path.strip():
+                errors.append(f"{path_field} must be a non-empty path")
+                continue
+            if not isinstance(expected_hash, str) or len(expected_hash) != 64:
+                errors.append(f"{hash_field} must be a SHA-256 hex digest")
+                continue
+            asset_path = Path(raw_path)
+            if not asset_path.is_absolute():
+                asset_path = _REPO_ROOT / asset_path
+            if not asset_path.is_file():
+                errors.append(f"{path_field} not found: {raw_path}")
+                continue
+            actual_hash = hashlib.sha256(asset_path.read_bytes()).hexdigest()
+            if actual_hash.lower() != expected_hash.lower():
+                errors.append(f"{path_field} SHA-256 mismatch")
 
     controller_budget_policy = manifest.get("controller_budget_policy", "strict")
     if controller_budget_policy not in {"strict", "clip"}:

@@ -101,6 +101,47 @@ class OfficialEohRunTests(unittest.TestCase):
         self.assertTrue(payload["offline_operator_run"])
         self.assertFalse(str(payload.get("failure_reason", "")).startswith("missing_env_"))
 
+    def test_provider_argument_controls_endpoint_model_and_key_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            args = make_official_runner_args(
+                official_root=tmp,
+                output_dir=str(Path(tmp) / "out"),
+                operators="i1",
+                provider="opencode-go",
+                api_key_env="WRONG_LEGACY_KEY",
+                api_endpoint_env="WRONG_LEGACY_ENDPOINT",
+                model_env="WRONG_LEGACY_MODEL",
+            )
+            with patch.dict(os.environ, {"OPENCODE_GO_API_KEY": "secret"}, clear=False):
+                with patch(
+                    "eoh_rag.experiments.eoh_single_runner.subprocess.run",
+                    return_value=subprocess.CompletedProcess(
+                        args=["python"], returncode=1, stdout="", stderr=""
+                    ),
+                ) as run_mock:
+                    payload = run_official_eoh(args)
+
+        command = run_mock.call_args.args[0]
+        child_env = run_mock.call_args.kwargs["env"]
+        self.assertEqual(
+            command[command.index("--api-key-env") + 1],
+            "OPENCODE_GO_API_KEY",
+        )
+        self.assertEqual(
+            child_env["EOH_RESOLVED_API_ENDPOINT"],
+            "https://opencode.ai/zen/go/v1/chat/completions",
+        )
+        self.assertEqual(child_env["EOH_RESOLVED_MODEL"], "deepseek-v4-flash")
+        self.assertEqual(
+            payload["provider_audit"],
+            {
+                "provider_name": "opencode-go",
+                "endpoint_host": "opencode.ai",
+                "model": "deepseek-v4-flash",
+                "key_present": True,
+            },
+        )
+
     def test_redact_log_tail_removes_endpoint_and_bearer_token(self) -> None:
         text = "LLM @ https://api.example.com/v1/chat endpoint=api.example.com Bearer TOKEN"
         redacted = redact_log_tail(text)

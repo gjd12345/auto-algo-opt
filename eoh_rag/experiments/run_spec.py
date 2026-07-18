@@ -48,12 +48,16 @@ def expand_run_specs(manifest: dict[str, Any], output_root: Path) -> list[RunSpe
             arms = [arm for arm in manifest.get("arms", []) if not arm.get("problems") or problem in arm["problems"]]
             for arm in arms:
                 for generation in generations:
-                    run_key = f"{manifest['suite']}/{problem}/{arm['name']}/{seed}"
+                    base_run_key = f"{manifest['suite']}/{problem}/{arm['name']}/{seed}"
+                    # 单代清单保持历史路径；多代清单把 generation 纳入唯一证据坐标。
+                    run_key = (
+                        base_run_key
+                        if len(generations) == 1
+                        else f"{base_run_key}/g{generation}"
+                    )
                     out = output_root / run_key
-                    if len(generations) > 1:
-                        out /= f"g{generation}"
                     specs.append(RunSpec(str(manifest["suite"]), str(problem), str(arm["name"]), int(generation), repeat, int(seed), run_key, out))
-    unique_keys = [(spec.run_key, spec.generation) for spec in specs]
+    unique_keys = [spec.run_key for spec in specs]
     if len(unique_keys) != len(set(unique_keys)):
         raise ValueError("expanded run keys must be unique")
     return specs

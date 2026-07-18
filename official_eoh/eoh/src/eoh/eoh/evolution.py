@@ -237,6 +237,7 @@ def parent_selection(pop, m, feedback_policy="legacy"):
         "objective_aware",
         "scale_aware",
         "robust_aware",
+        "router_aware",
         "confirmation_aware",
         "confirmation_observe_only",
         "confirmation_gate_only",
@@ -315,6 +316,7 @@ class Evolution:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
             "confirmation_gate_only",
@@ -335,12 +337,32 @@ class Evolution:
         if self.feedback_policy not in {
             "scale_aware",
             "robust_aware",
+            "router_aware",
             "confirmation_aware",
         }:
             return ""
         feedback = parent.get("other_inf")
         if not isinstance(feedback, dict):
-            return "Scale feedback unavailable for this parent.\n"
+            return "Structured feedback unavailable for this parent.\n"
+        if self.feedback_policy == "router_aware":
+            environments = feedback.get("environment_relative_cost_vs_n2")
+            counts = feedback.get("expert_selection_counts")
+            if not isinstance(environments, dict) or not isinstance(counts, dict):
+                return "Router feedback unavailable for this parent.\n"
+            environment_text = ", ".join(
+                f"{name}={float(value):.6f}"
+                for name, value in sorted(environments.items())
+            )
+            count_text = ", ".join(
+                f"{name}={int(value)}"
+                for name, value in sorted(counts.items())
+            )
+            return (
+                f"Environment relative cost versus n2 (lower is better): {environment_text}. "
+                f"Expert selections: {count_text}. "
+                f"Invalid outputs: {int(feedback.get('selector_invalid_outputs', 0))}; "
+                f"fallbacks: {int(feedback.get('expert_fallback_count', 0))}.\n"
+            )
         scale_gaps = feedback.get("scale_gap_pct")
         if not isinstance(scale_gaps, dict) or not scale_gaps:
             if self.feedback_policy == "confirmation_aware":
@@ -463,6 +485,27 @@ class Evolution:
                 ),
             }
             return robust_feedback[operator]
+        if self.feedback_policy == "router_aware":
+            router_feedback = {
+                "e1": (
+                    "Use the per-environment relative costs and expert-use counts as feedback. "
+                    "Introduce one deterministic feature-based routing rule that can improve the weakest "
+                    "environment without reading hidden costs or collapsing all instances to one expert.\n"
+                ),
+                "e2": (
+                    "Combine only routing ideas supported by lower development relative cost. Preserve valid "
+                    "feature-only decisions and keep more than one expert reachable. "
+                ),
+                "m1": (
+                    "Preserve the current selector and make one purposeful feature-threshold or interaction "
+                    "change aimed at its weakest environment. Do not use environment labels or hidden costs.\n"
+                ),
+                "m2": (
+                    "Change only one or two numeric thresholds in the selector. Keep deterministic behavior, "
+                    "valid expert ids, and the feature-only information boundary.\n"
+                ),
+            }
+            return router_feedback[operator]
         if self.feedback_policy == "confirmation_aware":
             confirmation_feedback = {
                 "e1": (

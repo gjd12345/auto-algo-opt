@@ -1,10 +1,12 @@
 {
-  "suite": "cvrp_expert_router_proxy_v1",
-  "model": "deepseek-v4-flash",
+  "suite": "cvrp_expert_router_proxy_deepseek_fallback_v1",
+  "model": "deepseek-chat",
   "provider_policy": {
-    "primary": "opencode-go",
-    "fallback": "deepseek",
-    "fallback_requires_new_complete_cohort": true
+    "active": "deepseek",
+    "fallback_from": "opencode-go",
+    "fallback_reason": "primary_key_unavailable_before_cohort_start",
+    "complete_cohort_only": true,
+    "mix_with_primary": false
   },
   "problems": ["cvrp_expert_router"],
   "arms": [
