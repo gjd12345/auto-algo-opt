@@ -1,0 +1,42 @@
+{
+  "schema_version": "agent_ad_branch_handoff/v1",
+  "document_id": "agent_ad:2026-07-19:main-branch-merge",
+  "audience": "agent",
+  "created_at": "2026-07-19T07:14:28+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "source_branch": "feat/q3-v2-cross-transfer",
+  "target_branch": "main",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "merge_method": "fast_forward",
+  "previous_main_commit": "d76bb7c93ccab1d82b3bb692bc76252b061c0a1c",
+  "merged_commit": "f910acfc0c2c1ef53465c6a84456768336cce22f",
+  "remote_main_verified": true,
+  "merged_scope": {
+    "commit_count": 133,
+    "files_changed": 493,
+    "insertions": 48143,
+    "deletions": 2712
+  },
+  "research_status": {
+    "completed_llm_runs": 98,
+    "cvrp_router_v1_gate": "valid_negative_result_single_expert_collapse",
+    "cvrp_router_v2": "frozen_pending_explicit_six_run_budget_approval",
+    "api_calls_started_for_v2": false
+  },
+  "verification": {
+    "test_tier": "skipped",
+    "reason": "User Testing Policy forbids automatic tests and full builds.",
+    "static_checks": [
+      "feature branch secret-pattern scan returned zero files",
+      "main was the merge base",
+      "local main and origin/main resolved to the merged commit"
+    ]
+  },
+  "preserved_user_change": {
+    "path": "eoh_rag_workspace/experiments/EXPERIMENT_PLAN_20260609.md",
+    "working_tree_state": "deleted_uncommitted",
+    "included_in_merge_or_commit": false
+  },
+  "next_action": "obtain explicit approval for six additional LLM runs before launching cvrp_router_reevo_inspired_v2 from main"
+}
