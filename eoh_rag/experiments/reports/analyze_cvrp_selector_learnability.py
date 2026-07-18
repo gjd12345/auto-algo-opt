@@ -14,6 +14,9 @@ from typing import Any, Iterable
 
 import numpy as np
 
+from eoh_rag.experiments.pairwise_selector import (
+    PairwiseCostSensitiveSelector,
+)
 from eoh_rag.experiments.research_contracts import canonical_json_sha256
 from official_eoh.examples.cvrp_expert_router.cvrp_expert_router_problem import (
     CVRPEXPERTROUTER,
@@ -102,6 +105,8 @@ def cross_validated_predictions(
     folds: list[tuple[np.ndarray, np.ndarray]],
     *,
     k_values: tuple[int, ...] = (1, 3, 5, 9),
+    pairwise_n_estimators: int = 99,
+    pairwise_random_state: int = 2011,
 ) -> dict[str, np.ndarray]:
     """每个测试实例只由不含自身的训练折产生一次预测。"""
     sample_count = len(features)
@@ -111,8 +116,14 @@ def cross_validated_predictions(
             f"cost_knn_k{k}": np.full(sample_count, -1, dtype=int)
             for k in k_values
         },
+        "pairwise_forest_unweighted": np.full(sample_count, -1, dtype=int),
+        "pairwise_forest_cost_weighted": np.full(
+            sample_count,
+            -1,
+            dtype=int,
+        ),
     }
-    for train_indices, test_indices in folds:
+    for fold_index, (train_indices, test_indices) in enumerate(folds):
         if len(train_indices) == 0 or len(test_indices) == 0:
             raise ValueError("each fold must contain train and test instances")
         single_best = int(np.argmin(np.mean(relative_costs[train_indices], axis=0)))
@@ -123,6 +134,22 @@ def cross_validated_predictions(
                 relative_costs[train_indices],
                 features[test_indices],
                 k=k,
+            )
+        for method_name, cost_sensitive in (
+            ("pairwise_forest_unweighted", False),
+            ("pairwise_forest_cost_weighted", True),
+        ):
+            selector = PairwiseCostSensitiveSelector(
+                cost_sensitive=cost_sensitive,
+                n_estimators=pairwise_n_estimators,
+                # 两个消融臂使用同一棵随机森林结构；fold 偏移只避免跨折复用随机流。
+                random_state=pairwise_random_state + fold_index,
+            ).fit(
+                features[train_indices],
+                relative_costs[train_indices],
+            )
+            predictions[method_name][test_indices] = selector.predict(
+                features[test_indices]
             )
     if any(np.any(values < 0) for values in predictions.values()):
         raise ValueError("cross-validation did not predict every instance exactly once")
@@ -165,6 +192,55 @@ def summarize_predictions(
             expert_id: int(selection_counts.get(expert_id, 0))
             for expert_id in expert_ids
         },
+    }
+
+
+def assess_pairwise_ablation(
+    *,
+    weighted: dict[str, Any],
+    unweighted: dict[str, Any],
+    current_knn: dict[str, Any],
+) -> dict[str, Any]:
+    """按预注册 development 门禁判断代价权重是否值得进入 selector-v2。"""
+
+    mean_key = "mean_improvement_vs_n2_pct"
+    worst_key = "worst_environment_improvement_vs_n2_pct"
+    weighted_mean = float(weighted[mean_key])
+    unweighted_mean = float(unweighted[mean_key])
+    current_mean = float(current_knn[mean_key])
+    weighted_worst = float(weighted[worst_key])
+    unweighted_worst = float(unweighted[worst_key])
+    current_worst = float(current_knn[worst_key])
+    tolerance = 1e-12
+    gate_checks = {
+        "positive_mean_improvement": weighted_mean > tolerance,
+        "better_mean_than_unweighted": (
+            weighted_mean - unweighted_mean > tolerance
+        ),
+        "better_mean_than_current_knn": (
+            weighted_mean - current_mean > tolerance
+        ),
+        "worst_environment_not_worse_than_unweighted": (
+            weighted_worst + tolerance >= unweighted_worst
+        ),
+        "worst_environment_not_worse_than_current_knn": (
+            weighted_worst + tolerance >= current_worst
+        ),
+    }
+    return {
+        "primary_protocol": "leave_one_environment_out",
+        "weighted_minus_unweighted_mean_improvement_pct": (
+            weighted_mean - unweighted_mean
+        ),
+        "weighted_minus_current_knn_mean_improvement_pct": (
+            weighted_mean - current_mean
+        ),
+        "gate_checks": gate_checks,
+        "decision": (
+            "promote_to_selector_v2_dev_candidate"
+            if all(gate_checks.values())
+            else "do_not_promote"
+        ),
     }
 
 
@@ -285,6 +361,12 @@ def analyze_development_learnability() -> dict[str, Any]:
 
     stratified_k5 = protocols["stratified_5fold"]["methods"]["cost_knn_k5"]
     loeo_k5 = protocols["leave_one_environment_out"]["methods"]["cost_knn_k5"]
+    loeo_methods = protocols["leave_one_environment_out"]["methods"]
+    pairwise_ablation = assess_pairwise_ablation(
+        weighted=loeo_methods["pairwise_forest_cost_weighted"],
+        unweighted=loeo_methods["pairwise_forest_unweighted"],
+        current_knn=loeo_k5,
+    )
     if (
         stratified_k5["mean_improvement_vs_n2_pct"] > 0
         and loeo_k5["mean_improvement_vs_n2_pct"] > 0
@@ -296,7 +378,7 @@ def analyze_development_learnability() -> dict[str, Any]:
         assessment = "fixed_k5_has_no_positive_cross_validated_signal"
 
     return {
-        "schema_version": "cvrp_selector_learnability_dev/v1",
+        "schema_version": "cvrp_selector_learnability_dev/v2",
         "status": "exploratory_complete",
         "actor": "codex",
         "provenance": "external_teacher_diagnostic",
@@ -306,6 +388,14 @@ def analyze_development_learnability() -> dict[str, Any]:
         **data,
         "oracle_report_only": oracle_metrics,
         "protocols": protocols,
+        "pairwise_ablation": {
+            "provenance": "Hydra-MIP external method reference",
+            "n_estimators": 99,
+            "random_state": 2011,
+            "weighted_sample_rule": "absolute pairwise relative-cost difference",
+            "unweighted_sample_rule": "uniform weight on non-tie pairwise labels",
+            **pairwise_ablation,
+        },
         "primary_diagnostic": {
             "method": "cost_knn_k5",
             "assessment": assessment,
@@ -358,6 +448,31 @@ def _write_markdown(path: Path, result: dict[str, Any]) -> None:
         lines.append("")
     lines.extend(
         [
+            "## Pairwise cost-sensitive ablation",
+            "",
+            f"- decision: `{result['pairwise_ablation']['decision']}`",
+            (
+                "- primary_protocol: "
+                f"`{result['pairwise_ablation']['primary_protocol']}`"
+            ),
+            (
+                "- weighted_minus_unweighted_mean_improvement_pct: "
+                f"`{result['pairwise_ablation']['weighted_minus_unweighted_mean_improvement_pct']:.6f}`"
+            ),
+            (
+                "- weighted_minus_current_knn_mean_improvement_pct: "
+                f"`{result['pairwise_ablation']['weighted_minus_current_knn_mean_improvement_pct']:.6f}`"
+            ),
+            "",
+            "### Gate checks",
+            "",
+            *[
+                f"- {name}: `{passed}`"
+                for name, passed in result["pairwise_ablation"][
+                    "gate_checks"
+                ].items()
+            ],
+            "",
             "## Evidence boundary",
             "",
             "- This is a deterministic development-only external-teacher diagnostic.",

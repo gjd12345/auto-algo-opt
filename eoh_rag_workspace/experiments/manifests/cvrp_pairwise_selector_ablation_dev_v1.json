@@ -1,0 +1,85 @@
+{
+  "schema_version": "cvrp_pairwise_selector_ablation/v1",
+  "status": "frozen_development_only",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "provenance": "external_teacher_diagnostic",
+  "research_question": "Does Hydra-MIP-style pairwise cost weighting improve realized CVRP expert-selection cost over the same unweighted model and the current cost-kNN diagnostic?",
+  "paper_reference": {
+    "title": "Hydra-MIP: Automated Algorithm Configuration and Selection for Mixed Integer Programming",
+    "technical_report": "UBC Computer Science TR-2011-01",
+    "pdf_url": "https://www.cs.ubc.ca/~hoos/Publ/XuEtAl11.pdf"
+  },
+  "data": {
+    "scope": "development_only",
+    "source": "official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py",
+    "router_contract": "official_eoh/examples/cvrp_expert_router/router_contract_v1.json",
+    "router_contract_sha256": "9d62cdd88b4cd06b8b5c99e8a797be81407da4ba999071a8c089b26ffe222ab3",
+    "expected_dataset_sha256": "0e2af1c19042f749b636205c8cd916b28facb0a9f9bf266af8ca0bae9c6cc78f",
+    "sample_count": 90,
+    "feature_count": 9,
+    "expert_count": 4,
+    "confirmation_accessed": false
+  },
+  "protocols": {
+    "primary": "leave_one_environment_out",
+    "secondary": "stratified_5fold",
+    "fold_assignment": "deterministic_frozen_order",
+    "hyperparameter_search": false
+  },
+  "arms": {
+    "current_cost_knn": {
+      "method": "cost_knn_k5",
+      "k": 5
+    },
+    "pairwise_unweighted": {
+      "method": "pairwise_forest_unweighted",
+      "n_estimators": 99,
+      "random_state": 2011,
+      "sample_weight": "1 for non-ties, 0 for ties"
+    },
+    "pairwise_cost_weighted": {
+      "method": "pairwise_forest_cost_weighted",
+      "n_estimators": 99,
+      "random_state": 2011,
+      "sample_weight": "absolute pairwise relative-cost difference"
+    }
+  },
+  "metrics": {
+    "direction": "higher_is_better",
+    "primary": "mean_improvement_vs_n2_pct",
+    "safety": "worst_environment_improvement_vs_n2_pct",
+    "diagnostics": [
+      "mean_regret_to_oracle_pct",
+      "oracle_cost_match_rate",
+      "better_same_worse_vs_n2",
+      "expert_selection_counts"
+    ]
+  },
+  "promotion_gate": {
+    "all_required": true,
+    "checks": [
+      "weighted mean improvement is strictly positive",
+      "weighted mean improvement is strictly better than unweighted",
+      "weighted mean improvement is strictly better than current cost_knn_k5",
+      "weighted worst-environment improvement is not worse than unweighted",
+      "weighted worst-environment improvement is not worse than current cost_knn_k5"
+    ]
+  },
+  "run_budget": {
+    "deterministic_passes": 1,
+    "llm_calls": 0,
+    "formal_coordinates": 0,
+    "stop_after_report": true
+  },
+  "output": {
+    "json": "eoh_rag_workspace/reports/formal/cvrp_pairwise_selector_ablation_dev_v1/ablation.json",
+    "markdown": "eoh_rag_workspace/reports/formal/cvrp_pairwise_selector_ablation_dev_v1/ablation.md"
+  },
+  "activation_boundary": {
+    "frozen_cvrp_router_v1_changed": false,
+    "formal_manifest_changed": false,
+    "confirmation_may_be_loaded": false,
+    "promotion_only_means": "eligible for a separately frozen selector-v2 development protocol"
+  }
+}
