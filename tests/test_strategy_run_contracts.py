@@ -1,12 +1,19 @@
 import json
 from argparse import Namespace
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
+from urllib.error import HTTPError
 
 import pytest
 
 from eoh_rag.experiments import batch_runner
-from eoh_rag.experiments.provider import classify_provider_error, get_provider_config, temperature_for
+from eoh_rag.experiments.provider import (
+    classify_provider_error,
+    get_provider_config,
+    probe_provider,
+    temperature_for,
+)
 from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
 
@@ -74,6 +81,48 @@ def test_provider_error_and_temperature_contracts() -> None:
     assert temperature_for("fixed", 4, 8, None) is None
     assert temperature_for("linear", 7, 8, 1.0) == 0.0
     assert temperature_for("step-down", 7, 8, 1.0) == 0.5
+
+
+def test_provider_preflight_is_secret_free_and_classifies_auth(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret = "must-not-appear"
+    monkeypatch.setenv("DEEPSEEK_API_KEY", secret)
+
+    def reject_auth(request, timeout):
+        assert request.headers["Authorization"] == f"Bearer {secret}"
+        assert timeout == 9
+        body = BytesIO(
+            json.dumps(
+                {
+                    "error": {
+                        "type": "authentication_error",
+                        "message": "Authentication Fails",
+                    }
+                }
+            ).encode("utf-8")
+        )
+        raise HTTPError(request.full_url, 401, "Unauthorized", {}, body)
+
+    monkeypatch.setattr("urllib.request.urlopen", reject_auth)
+    result = probe_provider("deepseek", timeout=9, model="frozen-model")
+
+    assert result["ok"] is False
+    assert result["model"] == "frozen-model"
+    assert result["http_status"] == 401
+    assert result["error_class"] == "provider_auth_invalid"
+    assert result["error_code"] == "authentication_error"
+    assert secret not in repr(result)
+
+
+def test_provider_preflight_reports_missing_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OPENCODE_GO_API_KEY", raising=False)
+    result = probe_provider("opencode-go")
+    assert result["ok"] is False
+    assert result["error_class"] == "provider_auth_missing"
+    assert result["key_present"] is False
 
 
 def test_reproducible_manifest_fails_fast_on_invalid_provider_auth(

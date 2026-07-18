@@ -49,7 +49,7 @@ from typing import Any
 
 from eoh_rag.experiments.pool_api import PoolAPI
 from eoh_rag.experiments.problem_registry import RUNNABLE_PROBLEMS
-from eoh_rag.experiments.provider import classify_provider_error
+from eoh_rag.experiments.provider import classify_provider_error, probe_provider
 from eoh_rag.experiments.run_spec import expand_run_specs, validate_run_manifest
 
 logger = logging.getLogger(__name__)
@@ -682,6 +682,38 @@ def main() -> None:
             print(f"ERROR: manifest requires confirmation for real runs (require_confirm_for_real_run=true).")
             print(f"Use --force to acknowledge.")
             sys.exit(1)
+
+    # 正式 seed cohort 在创建任何 run 坐标前做一次 Provider 预检。这样认证或连通性故障
+    # 只留下一个脱敏批次记录，不会并发扩散成多个不完整实验目录。
+    if (
+        manifest.get("seed_list")
+        and not args.dry_run
+        and not args.no_run
+        and args.provider != "offline"
+    ):
+        preflight = probe_provider(
+            args.provider,
+            model=str(manifest.get("model") or ""),
+        )
+        output_root.mkdir(parents=True, exist_ok=True)
+        preflight_path = output_root / "_provider_preflight.json"
+        preflight_path.write_text(
+            json.dumps(preflight, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        if not preflight.get("ok"):
+            print(
+                "[PROVIDER_PREFLIGHT_FAILED] "
+                f"provider={preflight.get('provider_name')} "
+                f"status={preflight.get('http_status')} "
+                f"class={preflight.get('error_class')}"
+            )
+            raise SystemExit(2)
+        print(
+            "[PROVIDER_PREFLIGHT_OK] "
+            f"provider={preflight.get('provider_name')} "
+            f"status={preflight.get('http_status')}"
+        )
 
     if not args.no_run:
         output_root.mkdir(parents=True, exist_ok=True)

@@ -6,7 +6,9 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from eoh_rag.experiments import batch_runner
 from eoh_rag.experiments.batch_runner import _build_cmd, _validate_manifest
 
 
@@ -146,6 +148,58 @@ class ExperimentManifestRunnerTests(unittest.TestCase):
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn("--force", proc.stdout + proc.stderr)
             self.assertFalse(output_dir.exists())
+
+    def test_formal_seed_cohort_stops_before_run_directories_when_preflight_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = {
+                "suite": "preflight_suite",
+                "problems": ["tsp_construct"],
+                "arms": [{"name": "api", "runner_arm": "api_only"}],
+                "generations": [0],
+                "pop_size": 1,
+                "repeats": 1,
+                "seed_list": [2024],
+                "max_runs": 1,
+                "require_confirm_for_real_run": False,
+            }
+            manifest_path = self._write_manifest(root, manifest)
+            output_dir = root / "out"
+            argv = [
+                "batch_runner",
+                "--manifest",
+                str(manifest_path),
+                "--output-dir",
+                str(output_dir),
+                "--provider",
+                "deepseek",
+            ]
+            preflight = {
+                "provider_name": "deepseek",
+                "endpoint_host": "api.deepseek.com",
+                "model": "deepseek-chat",
+                "key_present": True,
+                "ok": False,
+                "http_status": 401,
+                "error_class": "provider_auth_invalid",
+                "error_code": "authentication_error",
+            }
+
+            with patch("sys.argv", argv), patch.object(
+                batch_runner,
+                "probe_provider",
+                return_value=preflight,
+            ):
+                with self.assertRaisesRegex(SystemExit, "2"):
+                    batch_runner.main()
+
+            suite_dir = output_dir / "preflight_suite"
+            self.assertTrue((suite_dir / "_provider_preflight.json").is_file())
+            self.assertFalse((suite_dir / "run_index.json").exists())
+            self.assertEqual(
+                ["_provider_preflight.json"],
+                [path.name for path in suite_dir.iterdir()],
+            )
 
     def test_validate_manifest_lists_all_supported_card_fields_for_tocc_strategy(self) -> None:
         manifest = self._minimal_manifest()
