@@ -1,0 +1,112 @@
+{
+  "suite": "bp_fme_action_order_v2_proposal",
+  "document_id": "agent_ad:2026-07-23:bp-fme-action-order-v2-proposal",
+  "status": "frozen_unapproved_proposal",
+  "launch_authorized": false,
+  "actor": "research_agent",
+  "design_actor": "codex",
+  "implementation_commit": "5db1d745a49a7748801ec86e107ac4c75a56fc85",
+  "model": "deepseek-v4-flash",
+  "provider_policy": {
+    "primary": "opencode-go",
+    "fallback": "deepseek",
+    "mix_cohorts": false
+  },
+  "problems": [
+    "bp_online"
+  ],
+  "arms": [
+    {
+      "name": "order_scalar_control",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "shared_order_aware_development_objective_only",
+      "evolution_feedback_policy": "objective_aware",
+      "bp_training_profile": "fme_dev_distribution_order_v2",
+      "bp_heldout_profile": "fme_unseen_v2",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    },
+    {
+      "name": "fme_v2_anti_collapse_order_feedback",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "behavior_counterexample_mechanism_and_order_feedback",
+      "evolution_feedback_policy": "fme_aware",
+      "bp_training_profile": "fme_dev_distribution_order_v2",
+      "bp_heldout_profile": "fme_unseen_v2",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    }
+  ],
+  "generations": [
+    5
+  ],
+  "pop_size": 4,
+  "repeats": 3,
+  "seed_list": [
+    24001,
+    24002,
+    24003
+  ],
+  "max_runs": 0,
+  "proposed_max_runs_after_explicit_approval": 6,
+  "candidate_evaluation_cap_per_run": 24,
+  "generated_candidate_cap_per_run": 20,
+  "dynamic_counterexample_cap_per_fme_run": 12,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 12,
+  "bp_training_profile": "fme_dev_distribution_order_v2",
+  "bp_heldout_profile": "fme_unseen_v2",
+  "seed_codes_sha256": "a1b47700fed79e14cc316d7d930fa2311ed0ac278e76aee13b2ad686d9a90e63",
+  "eval_timeout_s": 120,
+  "run_timeout_s": 7200,
+  "require_confirm_for_real_run": true,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "heldout_visible_during_evolution": false,
+  "same_initial_code_and_development_instances": true,
+  "equal_model_call_and_output_token_budget": true,
+  "final_candidate_selection_rule": "minimum_shared_development_objective_before_heldout_generation",
+  "primary_metric": "worst_fme_unseen_v2_suite_gap_pct",
+  "secondary_metrics": [
+    "heldout_order_quantile_blocks_minus_order_random_gap_pct",
+    "valid_generated_candidate_rate",
+    "transfer_action_share",
+    "new_behavior_profile_count",
+    "supported_development_only_claim_count"
+  ],
+  "pilot_gate": {
+    "evidence_completeness": "6_of_6_runs_and_3_paired_seeds",
+    "direction_consistency": "fme_v2_better_primary_metric_on_3_of_3_seeds",
+    "minimum_median_relative_primary_metric_reduction_pct": 2.0,
+    "stratified_bootstrap_confidence_interval": "95_percent_interval_excludes_zero",
+    "maximum_transfer_action_share": 0.5,
+    "minimum_fme_valid_generation_rate_relative_to_control": 0.9,
+    "feasibility_or_timeout_degradation_allowed": false,
+    "mechanism_discovery_requirement": "at_least_one_new_order_sensitive_behavior_profile_and_supported_claim_survives_recorded_development_counterexamples"
+  },
+  "automatic_decisions": {
+    "pass": "freeze_discovery_packet_and_prepare_unlaunched_cross_problem_abstraction_proposal",
+    "mechanism_only": "retain_fme_v2_as_optional_research_instrument_and_stop_quality_claim",
+    "controller_only": "retain_anti_collapse_controller_and_redesign_behavior_descriptor_offline",
+    "complete_fail": "stop_bp_fme_v2_branch_and_archive_negative_result",
+    "inconclusive": "resume_missing_frozen_coordinates_only"
+  },
+  "integrity_constraints": {
+    "v1_heldout_is_consumed": true,
+    "v1_heldout_may_not_be_reused_as_unseen": true,
+    "v2_development_seed_ranges": [
+      "81000-81001",
+      "82000-82001",
+      "83000-83001"
+    ],
+    "v2_heldout_seed_ranges": [
+      "91000-91005",
+      "92000-92003",
+      "93000-93003"
+    ],
+    "v2_heldout_generation_time": "after_final_candidate_freeze_only",
+    "additional_llm_runs_scheduled": 0
+  },
+  "official_root": "official_eoh"
+}

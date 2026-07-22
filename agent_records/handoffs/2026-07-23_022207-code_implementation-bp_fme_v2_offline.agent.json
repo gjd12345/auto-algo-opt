@@ -1,0 +1,102 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-23:bp-fme-v2-offline-redesign",
+  "audience": "agent",
+  "created_at": "2026-07-23T02:22:07+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "5db1d745a49a7748801ec86e107ac4c75a56fc85",
+  "status": "implemented_offline_proposal_unapproved",
+  "research_mapping": {
+    "research_question": "RQ1_feedback_and_autonomous_decision_quality",
+    "effect_axes": [
+      "algorithm_quality",
+      "generalization"
+    ],
+    "formal_execution_actor": "research_agent",
+    "implementation_actor": "codex"
+  },
+  "changes": {
+    "controller": {
+      "transfer_cooldown_actions": 1,
+      "recent_generation_window": 8,
+      "unstable_generation_rule": "at_least_2_recent_attempts_and_failure_rate_greater_than_0.5",
+      "unstable_generation_action": "repair_failed_mechanism_via_m1",
+      "concurrent_selection_state_update": "serialized_by_fme_action_lock"
+    },
+    "development_behavior_profile": {
+      "name": "fme_dev_distribution_order_v2",
+      "distributions": [
+        "uniform",
+        "small_item_dense",
+        "large_item_dense"
+      ],
+      "paired_order_variants": [
+        "random",
+        "alternating_extremes"
+      ],
+      "multisets_per_distribution": 2,
+      "development_instance_count": 12,
+      "new_feedback_fields": [
+        "per_order_variant_relative_gap",
+        "pair_order_sensitivity_pct",
+        "order_sensitivity_pct"
+      ]
+    },
+    "clean_heldout_profile": {
+      "name": "fme_unseen_v2",
+      "generation_policy": "lazy_after_final_candidate_freeze_only",
+      "suites": [
+        "unseen_trimodal",
+        "unseen_scale_12k",
+        "order_random",
+        "order_quantile_blocks"
+      ],
+      "executed": false
+    }
+  },
+  "proposal": {
+    "path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "paired_run_count_after_explicit_approval": 6,
+    "launch_authorized": false,
+    "max_runs": 0,
+    "additional_llm_runs_scheduled": 0
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_020751-result_analysis-bp_fme_mechanism_only.agent.json",
+      "sha256": "e31e52eed5695f16a20b9fefaf46e75cc1ce4543a8b3e75d839122b7ec5c0239"
+    },
+    {
+      "path": "eoh_rag/fme/controller.py",
+      "sha256": "bfd1998d0064ac88184b5ef64cf8bb311ed849f26fabb607344dac07f48b22e2"
+    },
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "1b5f4e66f86c74efc7cbfa76f5a67e9b5252621d4f257ecc0e96061df580d2ec"
+    },
+    {
+      "path": "official_eoh/eoh/src/eoh/eoh/eoh.py",
+      "sha256": "59372517540638a4a5e2aa2c426fdc1eb57b904c861ed49a52785a385c2a0050"
+    }
+  ],
+  "constraints": {
+    "v1_cohort_modified": false,
+    "v1_heldout_reused_as_unseen": false,
+    "v2_heldout_observed": false,
+    "quality_claim_allowed": false,
+    "additional_llm_budget_available": 0,
+    "api_called_in_this_tick": false,
+    "tests_executed": false,
+    "verification_tier": "static_inspection_only",
+    "static_checks": [
+      "python_ast_parse_changed_files",
+      "git_diff_check",
+      "json_parse"
+    ]
+  },
+  "next_action": "perform_an_offline_literature_and_official_code_audit_for_order_robust_online_bin_packing_then_map_at_most_three_mechanisms_to_fme_v2_without_launching_llm_runs"
+}
