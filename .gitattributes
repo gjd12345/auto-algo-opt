@@ -1,6 +1,11 @@
 # Shell 脚本固定 LF，避免 Windows 检出后无法执行；不触碰其他历史文本换行。
 *.sh text eol=lf
 
+# 冻结实验输入的 SHA-256 按 LF 字节计算；固定换行避免 Windows 检出后误报资产漂移。
+eoh_rag_workspace/experiments/manifests/cvrp_router_reevo_inspired_v2.json text eol=lf
+official_eoh/examples/cvrp_expert_router/router_contract_v2.json text eol=lf
+eoh_rag_workspace/experiments/assets/cvrp_router_reevo_inspired_memory_v1.txt text eol=lf
+
 # 实验数据和文档资源按二进制处理，禁止换行转换破坏内容。
 *.pkl binary
 *.pdf binary

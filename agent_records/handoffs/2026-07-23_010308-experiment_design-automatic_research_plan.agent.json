@@ -1,0 +1,129 @@
+{
+  "schema_version": "agent_ad_auto_experiment_plan/v1",
+  "document_id": "agent_ad:2026-07-23:automatic-research-plan-v1",
+  "audience": "agent",
+  "created_at": "2026-07-23T01:03:08+08:00",
+  "phase_id": "experiment_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "8c5ea96cc8fa1b65dd7700899e8558397f3cf1e2",
+  "status": "approved_pending_secure_provider_credential_injection",
+  "research_direction": {
+    "primary_question": "At equal generator budget, can structured reflection memory prevent CVRP selector collapse and improve independent confirmation performance over router-aware feedback alone?",
+    "research_questions": ["RQ1", "RQ3"],
+    "effect_axes": ["memory_reuse", "frozen_heldout_objective", "llm_budget"],
+    "selected_mechanism": "reevo_inspired_reflection_memory",
+    "rejected_immediate_directions": [
+      "add_more_handwritten_cvrp_experts",
+      "retune_pairwise_selector_on_the_same_90_development_samples",
+      "run_unbounded_repeats_until_a_positive_result",
+      "start_repository_wide_refactoring_before_the_frozen_cohort"
+    ]
+  },
+  "authorization": {
+    "source": "user_instruction_to_use_the_supplied_api_and_start_formal_research",
+    "additional_llm_runs_approved": 6,
+    "cumulative_run_cap": 104,
+    "tests_approved": false,
+    "secret_persistence_allowed": false
+  },
+  "evidence_refs": [
+    {
+      "kind": "frozen_manifest",
+      "path": "eoh_rag_workspace/experiments/manifests/cvrp_router_reevo_inspired_v2.json",
+      "sha256_lf": "d43e1e5f4d457e1c0ddee227cf37421099f3f6183d2f76afaaa30dadeeedfc77"
+    },
+    {
+      "kind": "router_contract",
+      "path": "official_eoh/examples/cvrp_expert_router/router_contract_v2.json",
+      "sha256_lf": "44aac84170f565c80968c72291dba286c0606f6e0328b3465ec74e5b906772c8"
+    },
+    {
+      "kind": "reflection_memory",
+      "path": "eoh_rag_workspace/experiments/assets/cvrp_router_reevo_inspired_memory_v1.txt",
+      "sha256_lf": "094ba4d327d66a0ac51a1a078256bb6146a8db55c87d084cc45ccfb98163caf8"
+    },
+    {
+      "kind": "prior_negative_result",
+      "path": "agent_records/handoffs/2026-07-19_065408-result_analysis-cvrp_router_proxy_v1_gate.agent.json"
+    },
+    {
+      "kind": "research_asset_inventory",
+      "path": "agent_records/inventories/research_assets_v1.json"
+    },
+    {
+      "kind": "paired_gate_analyzer",
+      "path": "eoh_rag/experiments/reports/analyze_cvrp_router_paired_gate.py"
+    }
+  ],
+  "constraints": {
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "provider_cohorts_may_not_mix": true,
+    "arms": ["router_aware_control", "reevo_inspired_memory"],
+    "paired_seeds": [20201, 20202, 20203],
+    "generations_per_run": 4,
+    "population_size": 4,
+    "max_runs": 6,
+    "confirmation_visible_during_evolution": false,
+    "held_out_visible": false,
+    "post_hoc_threshold_changes": false,
+    "failed_coordinates_removed": false,
+    "api_key_storage": "forbidden",
+    "test_policy": "skip_tests_until_explicit_user_approval"
+  },
+  "automatic_steps": [
+    {
+      "step_id": "S0",
+      "action": "verify_main_commit_and_lf_normalized_frozen_asset_hashes",
+      "status": "completed",
+      "api_runs": 0
+    },
+    {
+      "step_id": "S1",
+      "action": "perform_one_redacted_provider_preflight_then_launch_the_six_frozen_paired_runs",
+      "status": "pending_secure_credential_injection",
+      "api_runs": 6
+    },
+    {
+      "step_id": "S2",
+      "action": "run_the_frozen_paired_gate_analyzer_and_record_all_coordinates_failures_costs_and_expert_usage",
+      "status": "pending_S1",
+      "api_runs": 0
+    },
+    {
+      "step_id": "S3_PASS",
+      "condition": "paired_gate_passed",
+      "action": "freeze_the_best_memory_router_and_prepare_a_new_unseen_generalization_manifest_without_launching_additional_llm_runs",
+      "status": "conditional",
+      "api_runs": 0
+    },
+    {
+      "step_id": "S3_FAIL",
+      "condition": "paired_gate_failed_with_complete_evidence",
+      "action": "record_the_negative_result_stop_cvrp_router_expansion_and_design_the_next_cross_problem_abstract_memory_ablation_using_verified_bp_and_tsp_assets",
+      "status": "conditional",
+      "api_runs": 0
+    },
+    {
+      "step_id": "S3_INCONCLUSIVE",
+      "condition": "provider_or_infrastructure_failure_or_missing_coordinate",
+      "action": "retain_the_same_frozen_coordinates_and_resume_only_missing_coordinates_without_changing_scientific_inputs",
+      "status": "conditional",
+      "api_runs": 0
+    }
+  ],
+  "gate": {
+    "completed_runs_min": 6,
+    "valid_generated_runs_min": 6,
+    "paired_seed_count_min": 3,
+    "memory_minus_control_confirmation_improvement_pct_min": 0.2,
+    "memory_confirmation_mean_improvement_vs_n2_pct_min": 0.3,
+    "memory_confirmation_environment_degradation_pct_max": 0.5,
+    "memory_runs_using_at_least_two_experts_min": 2,
+    "selector_invalid_outputs_max": 0,
+    "missing_coordinates_max": 0
+  },
+  "next_action": "securely inject OPENCODE_GO_API_KEY into the process environment, then launch the unchanged frozen v2 manifest from main"
+}
