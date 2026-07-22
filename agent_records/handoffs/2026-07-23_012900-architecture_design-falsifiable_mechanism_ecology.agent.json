@@ -1,0 +1,204 @@
+{
+  "schema_version": "agent_ad_innovation_plan/v1",
+  "document_id": "agent_ad:2026-07-23:falsifiable-mechanism-ecology-v1",
+  "audience": "agent",
+  "created_at": "2026-07-23T01:29:00+08:00",
+  "phase_id": "architecture_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "3fd6a7150151b4f4ad1b5502cab014582be76f90",
+  "status": "approved_for_implementation_pending_frozen_manifest",
+  "supersedes": "agent_ad:2026-07-23:automatic-research-plan-v1",
+  "innovation": {
+    "name": "Falsifiable Mechanism Ecology",
+    "short_name": "FME",
+    "classification": "candidate_innovation_not_yet_confirmed_original_contribution",
+    "design_origin": "codex_exploration",
+    "formal_execution_actor": "research_agent",
+    "core_unit": "algorithm_counterexample_mechanism_claim_triple",
+    "primary_question": "Can a research agent invent more robust algorithms by co-evolving executable candidates, discriminating development-domain counterexamples, and falsifiable mechanism claims instead of selecting candidates only by scalar fitness?",
+    "research_questions": ["RQ1", "RQ2", "RQ3", "RQ4"],
+    "effect_axes": [
+      "frozen_heldout_objective",
+      "cross_distribution_generalization",
+      "cross_problem_reuse",
+      "memory_reuse",
+      "multi_population_collaboration",
+      "llm_budget"
+    ]
+  },
+  "literature_boundary": {
+    "existing_components_not_claimed_as_new": [
+      "llm_program_evolution",
+      "reflection_memory",
+      "map_elites_and_island_populations",
+      "multi_objective_heuristic_evolution",
+      "complete_program_tree_evolution",
+      "knowledge_first_heuristic_search",
+      "solver_instance_coevolution",
+      "adversarial_instance_search",
+      "descendant_productivity_for_self_improvement"
+    ],
+    "candidate_novel_combination": "use discriminating counterexamples to connect behavior-space quality-diversity, structured falsifiable mechanism memory, and autonomous research-action selection across combinatorial optimization problems",
+    "claim_rule": "Do not claim originality or superiority until a broader literature audit and frozen experiments support the exact integrated mechanism."
+  },
+  "architecture": {
+    "algorithm_archive": {
+      "key": "behavior_profile_hash",
+      "descriptors": [
+        "per_distribution_relative_gap",
+        "feasibility_and_timeout_profile",
+        "runtime_profile",
+        "scale_sensitivity",
+        "feature_sensitivity",
+        "distinguishing_counterexample_ids"
+      ],
+      "selection": "quality_diversity_not_single_global_best"
+    },
+    "counterexample_archive": {
+      "scope": "development_domain_only",
+      "admission_rules": [
+        "at_least_one_archived_algorithm_solves_the_instance_validly",
+        "at_least_one_current_strong_algorithm_degrades",
+        "instance_adds_a_new_feature_region_or_algorithm_ranking",
+        "instance_is_independent_of_confirmation_and_heldout"
+      ]
+    },
+    "mechanism_claim_archive": {
+      "required_fields": [
+        "claim",
+        "source_problem",
+        "supporting_case_ids",
+        "counterexample_ids",
+        "linked_candidate_and_diff_hashes",
+        "applicability",
+        "evidence_level",
+        "actor",
+        "content_hash",
+        "cheapest_next_falsification"
+      ],
+      "state_transitions": ["proposed", "supported", "weakened", "refuted", "transferred"]
+    },
+    "research_controller_actions": [
+      "invent_algorithm",
+      "generate_counterexample",
+      "compare_on_counterexample",
+      "repair_failed_mechanism",
+      "transfer_abstract_mechanism",
+      "retest_or_refute_claim",
+      "stop_branch"
+    ],
+    "research_controller_rule": "choose exactly one action per tick by expected information gain per evaluation cost under a frozen budget"
+  },
+  "implementation_milestones": [
+    {
+      "id": "M0",
+      "action": "add CounterexampleArtifact MechanismClaim AlgorithmBehaviorProfile and DiscoveryPacket contracts",
+      "api_runs": 0
+    },
+    {
+      "id": "M1",
+      "action": "implement the three archives and deterministic admission rules using existing EvaluationResult and DecisionRecord",
+      "api_runs": 0
+    },
+    {
+      "id": "M2",
+      "action": "implement one-action-per-tick FME controller and BP development-domain counterexample generator",
+      "api_runs": 0
+    },
+    {
+      "id": "M3",
+      "action": "replay historical BP traces offline to calibrate descriptors and freeze the six-run creation pilot manifest without reading formal heldout",
+      "api_runs": 0
+    },
+    {
+      "id": "M4",
+      "action": "launch the frozen paired creation pilot after secure provider credential injection",
+      "api_runs": 6
+    }
+  ],
+  "pilot": {
+    "suite": "bp_falsifiable_mechanism_ecology_creation_pilot_v1",
+    "problem": "bp_online",
+    "status": "design_frozen_at_concept_level_manifest_not_yet_created",
+    "arms": ["scalar_reflection_control", "falsifiable_mechanism_ecology"],
+    "paired_seeds_count": 3,
+    "max_runs": 6,
+    "candidate_evaluation_cap_per_run": 24,
+    "dynamic_counterexample_cap_per_fme_run": 12,
+    "counterexample_llm_calls": 0,
+    "equal_model_call_and_output_token_budget": true,
+    "same_initial_code_and_base_development_instances": true,
+    "final_candidate_selection_rule_shared_between_arms": true,
+    "development_distributions": ["uniform", "small_item_dense", "large_item_dense"],
+    "heldout_distributions": ["unseen_mixture", "unseen_scale", "order_perturbation"],
+    "heldout_visible_during_evolution": false
+  },
+  "pilot_gate": {
+    "evidence_completeness": "6_of_6_runs_and_3_paired_seeds",
+    "direction_consistency": "fme_better_worst_distribution_excess_on_3_of_3_seeds",
+    "minimum_median_relative_worst_distribution_excess_reduction_pct": 2.0,
+    "stratified_bootstrap_confidence_interval": "95_percent_interval_excludes_zero",
+    "feasibility_or_timeout_degradation_allowed": false,
+    "mechanism_discovery_requirement": "at_least_one_confirmed_candidate_with_a_new_behavior_profile_and_a_supported_claim_that_survives_its_recorded_counterexamples",
+    "diversity_only_boundary": "archive coverage gain without heldout quality gain is not an algorithm quality success"
+  },
+  "automatic_decisions": {
+    "pass": "freeze the discovery packet and prepare a cross_problem_transfer_manifest for TSP and CVRP without launching it",
+    "mechanism_only": "record tentative innovation evidence and perform offline causal analysis without more LLM runs",
+    "complete_fail": "record the negative result and stop expanding FME under the current representation and budget",
+    "inconclusive": "resume only missing frozen coordinates after infrastructure recovery"
+  },
+  "evidence_refs": [
+    {
+      "kind": "primary_source",
+      "title": "AlphaEvolve",
+      "url": "https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf"
+    },
+    {
+      "kind": "primary_source",
+      "title": "FunSearch",
+      "url": "https://www.nature.com/articles/s41586-023-06924-6"
+    },
+    {
+      "kind": "primary_source",
+      "title": "ReEvo",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/4ced59d480e07d290b6f29fc8798f195-Paper-Conference.pdf"
+    },
+    {
+      "kind": "primary_source",
+      "title": "A2DEPT",
+      "url": "https://arxiv.org/abs/2604.24043"
+    },
+    {
+      "kind": "primary_source",
+      "title": "Knowledge-first heuristic design",
+      "url": "https://arxiv.org/abs/2605.06123"
+    },
+    {
+      "kind": "primary_source",
+      "title": "ASRO solver-instance coevolution",
+      "url": "https://arxiv.org/abs/2601.22896"
+    },
+    {
+      "kind": "primary_source",
+      "title": "RAISE adversarial instance search",
+      "url": "https://arxiv.org/abs/2606.31801"
+    },
+    {
+      "kind": "local_asset_inventory",
+      "path": "agent_records/inventories/research_assets_v1.json"
+    }
+  ],
+  "constraints": {
+    "existing_cvrp_reflection_manifest": "retained_as_calibration_asset_not_immediate_mainline",
+    "approved_additional_llm_runs": 6,
+    "scheduled_llm_runs_before_manifest_freeze": 0,
+    "formal_heldout_feedback": "forbidden",
+    "cross_problem_executable_code_injection": "forbidden_by_default",
+    "secret_persistence": "forbidden",
+    "tests_approved": false
+  },
+  "next_action": "implement M0 contracts without changing evaluation semantics, then continue through M1-M3 before any API run"
+}
