@@ -235,6 +235,8 @@ class BPONLINEBroad(BPONLINE):
                     lower_bound_sum / len(dataset), 4
                 )
             return instances, lower_bounds
+        if training_profile == "fme_dev_order_regime_feedback_v1":
+            return BPONLINEBroad._gen_order_regime_feedback_instances(capacity)
         if training_profile == "fme_dev_distribution_order_v2":
             instances = {}
             lower_bounds = {}
@@ -290,6 +292,113 @@ class BPONLINEBroad(BPONLINE):
             }
             lb_sum += np.ceil(items.sum() / capacity)
         return instances, {"broad_train": round(lb_sum / n_train, 4)}
+
+    @staticmethod
+    def _gen_order_regime_feedback_instances(capacity: int):
+        """生成独立的顺序区间开发集，不复用 v1/v2 的开发或 held-out 坐标。"""
+        small_item_upper = capacity // 3
+        if small_item_upper < 1:
+            raise ValueError("order-regime profile requires capacity of at least 3")
+
+        instances = {}
+        lower_bounds = {}
+        regime_specs = {
+            "small_dominant": (84000, "small"),
+            "mixed": (85000, "mixed"),
+            "large_dominant": (86000, "large"),
+        }
+        for regime_id, (seed_start, sampler_kind) in regime_specs.items():
+            dataset_name = f"fme_dev_order_regime_v1_{regime_id}"
+            dataset = {}
+            lower_bound_sum = 0.0
+            for multiset_index in range(2):
+                rng = np.random.default_rng(seed_start + multiset_index)
+                if sampler_kind == "small":
+                    sampled_multiset = rng.integers(
+                        1, small_item_upper + 1, size=2048
+                    )
+                elif sampler_kind == "mixed":
+                    small_items = rng.integers(
+                        1, small_item_upper + 1, size=1024
+                    )
+                    large_items = rng.integers(
+                        small_item_upper + 1, capacity + 1, size=1024
+                    )
+                    sampled_multiset = np.concatenate((small_items, large_items))
+                else:
+                    sampled_multiset = rng.integers(
+                        small_item_upper + 1, capacity + 1, size=2048
+                    )
+
+                # 先冻结同一多重集，再由两个排列共享它；这使顺序而非样本组成成为
+                # 唯一的比较变量，也避免复用已消费的升序/降序 held-out 坐标。
+                random_order = rng.permutation(sampled_multiset)
+                ordered_multiset = np.sort(sampled_multiset)
+                midpoint = len(ordered_multiset) // 2
+                alternating_extremes = np.column_stack(
+                    (ordered_multiset[midpoint:][::-1], ordered_multiset[:midpoint])
+                ).reshape(-1)
+                large_item_count = int(
+                    np.count_nonzero(sampled_multiset * 3 > capacity)
+                )
+                large_item_fraction = large_item_count / len(sampled_multiset)
+                multiset_hash = hashlib.sha256(
+                    json.dumps(
+                        {
+                            "capacity": capacity,
+                            "sorted_items": ordered_multiset.tolist(),
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()
+                for order_variant, items in (
+                    ("random", random_order),
+                    ("alternating_extremes", alternating_extremes),
+                ):
+                    order_payload = {
+                        "capacity": capacity,
+                        "items": items.tolist(),
+                    }
+                    order_hash = hashlib.sha256(
+                        json.dumps(
+                            order_payload, sort_keys=True, separators=(",", ":")
+                        ).encode("utf-8")
+                    ).hexdigest()
+                    instance_hash = hashlib.sha256(
+                        json.dumps(
+                            {
+                                "problem": "bp_online",
+                                "capacity": capacity,
+                                "regime_id": regime_id,
+                                "multiset_id": str(multiset_index),
+                                "order_variant": order_variant,
+                                "items": items.tolist(),
+                            },
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    ).hexdigest()
+                    instance_id = f"{multiset_index}-{order_variant}"
+                    dataset[instance_id] = {
+                        "items": items.tolist(),
+                        "capacity": capacity,
+                        "num_items": len(items),
+                        "regime_id": regime_id,
+                        "multiset_id": str(multiset_index),
+                        "order_variant": order_variant,
+                        "large_item_count": large_item_count,
+                        "large_item_fraction": large_item_fraction,
+                        "multiset_hash": multiset_hash,
+                        "order_hash": order_hash,
+                        "instance_hash": instance_hash,
+                    }
+                    lower_bound_sum += np.ceil(items.sum() / capacity)
+            instances[dataset_name] = dataset
+            lower_bounds[dataset_name] = round(
+                lower_bound_sum / len(dataset), 4
+            )
+        return instances, lower_bounds
 
     @staticmethod
     def _load_held_out(held_out_set: list | None) -> list:
@@ -438,7 +547,14 @@ class BPONLINEBroad(BPONLINE):
             fitness, scale_feedback = self._evaluate_with_confirmation_feedback(callable_func)
             evaluation_result = {"objective": fitness, "feedback": scale_feedback}
         elif self.structured_feedback:
-            fitness, scale_feedback = self._evaluate_with_scale_feedback(callable_func)
+            candidate_id = None
+            if self.training_profile == "fme_dev_order_regime_feedback_v1":
+                candidate_id = hashlib.sha256(
+                    program_str.encode("utf-8")
+                ).hexdigest()
+            fitness, scale_feedback = self._evaluate_with_scale_feedback(
+                callable_func, candidate_id=candidate_id
+            )
             evaluation_result = {"objective": fitness, "feedback": scale_feedback}
         else:
             fitness = super().evaluate_program(program_str, callable_func)
@@ -525,8 +641,14 @@ class BPONLINEBroad(BPONLINE):
         }
         return search_objective, feedback
 
-    def _evaluate_with_scale_feedback(self, callable_func):
+    def _evaluate_with_scale_feedback(self, callable_func, candidate_id: str | None = None):
         """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
+        if self.training_profile == "fme_dev_order_regime_feedback_v1":
+            if not candidate_id:
+                raise ValueError("order-regime feedback requires a candidate code hash")
+            return self._evaluate_with_order_regime_feedback(
+                callable_func, candidate_id
+            )
         if self.training_profile in {
             "fme_dev_distributions_v1",
             "fme_dev_distribution_order_v2",
@@ -569,6 +691,49 @@ class BPONLINEBroad(BPONLINE):
             )
             return mean_objective + variation_penalty, feedback
         return mean_objective, feedback
+
+    def _evaluate_with_order_regime_feedback(self, callable_func, candidate_id: str):
+        """把隔离开发实例转为轻量观察，再委托深 Module 编译反馈。"""
+        from eoh_rag.fme.order_regime_feedback import (
+            DEVELOPMENT_SUITE,
+            OrderPairObservation,
+            OrderRegimeFeedbackAdapter,
+        )
+
+        observations = []
+        objective_gaps = []
+        for dataset in self.instances.values():
+            for instance in dataset.values():
+                capacity = int(instance["capacity"])
+                items = np.array(instance["items"])
+                bins = np.array([capacity] * instance["num_items"])
+                _, bins_packed = self.online_binpack(items, bins, callable_func)
+                used_bins = int((bins_packed != capacity).sum())
+                lower_bound = float(np.ceil(np.sum(items) / capacity))
+                gap = (used_bins - lower_bound) / lower_bound
+                objective_gaps.append(float(gap))
+                observations.append(
+                    OrderPairObservation(
+                        candidate_id=candidate_id,
+                        development_suite=DEVELOPMENT_SUITE,
+                        regime_id=str(instance["regime_id"]),
+                        multiset_id=str(instance["multiset_id"]),
+                        order_variant=str(instance["order_variant"]),
+                        capacity=capacity,
+                        item_count=int(instance["num_items"]),
+                        large_item_count=int(instance["large_item_count"]),
+                        large_item_fraction=float(instance["large_item_fraction"]),
+                        multiset_hash=str(instance["multiset_hash"]),
+                        order_hash=str(instance["order_hash"]),
+                        instance_hash=str(instance["instance_hash"]),
+                        relative_gap_pct=float(gap * 100.0),
+                        valid=True,
+                    )
+                )
+        summary = OrderRegimeFeedbackAdapter().compile(observations)
+        # 标量适应度仍是全部 12 个开发实例的均值；新的信息只进入反馈字段，
+        # 不会改变候选函数可见输入或既有 FME v2 的目标定义。
+        return float(np.mean(objective_gaps)), summary.to_feedback()
 
     def _evaluate_with_fme_feedback(self, callable_func):
         """在冻结开发反例上形成行为画像，不读取 confirmation 或 held-out。"""
