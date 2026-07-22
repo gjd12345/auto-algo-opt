@@ -375,9 +375,21 @@ class Evolution:
             )
             counterexamples = feedback.get("distinguishing_counterexample_ids") or []
             claim_state = feedback.get("mechanism_claim_state", "proposed")
+            order_gaps = feedback.get("per_order_variant_relative_gap") or {}
+            order_clause = ""
+            if order_gaps:
+                order_clause = (
+                    "Development order-variant gaps: "
+                    + ", ".join(
+                        f"{name}={float(value):.6f}%"
+                        for name, value in sorted(order_gaps.items())
+                    )
+                    + f"; max paired order sensitivity={float(feedback.get('order_sensitivity_pct', 0.0)):.6f}%. "
+                )
             return (
                 f"Development distribution gaps (lower is better): {gap_text}. "
                 f"Worst distribution: {feedback.get('worst_distribution', 'unknown')}. "
+                f"{order_clause}"
                 f"Distinguishing counterexamples: {counterexamples}. "
                 f"Mechanism claim state: {claim_state}.\n"
             )

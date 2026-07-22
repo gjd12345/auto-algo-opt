@@ -630,6 +630,7 @@ def _runner_script() -> str:
                     "dual_batch_1k_5k_10k",
                     "dual_env_1k_5k_10k",
                     "fme_dev_distributions_v1",
+                    "fme_dev_distribution_order_v2",
                 ],
                 default="single_5k",
             )
@@ -638,7 +639,11 @@ def _runner_script() -> str:
                 choices=["uniform_50", "multi_env_50_100_200"],
                 default="uniform_50",
             )
-            parser.add_argument("--bp-heldout-profile", choices=["", "fme_unseen_v1"], default="")
+            parser.add_argument(
+                "--bp-heldout-profile",
+                choices=["", "fme_unseen_v1", "fme_unseen_v2"],
+                default="",
+            )
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
 
@@ -1153,6 +1158,7 @@ def main() -> None:
             "dual_batch_1k_5k_10k",
             "dual_env_1k_5k_10k",
             "fme_dev_distributions_v1",
+            "fme_dev_distribution_order_v2",
         ],
         default="single_5k",
     )
@@ -1161,7 +1167,11 @@ def main() -> None:
         choices=["uniform_50", "multi_env_50_100_200"],
         default="uniform_50",
     )
-    parser.add_argument("--bp-heldout-profile", choices=["", "fme_unseen_v1"], default="")
+    parser.add_argument(
+        "--bp-heldout-profile",
+        choices=["", "fme_unseen_v1", "fme_unseen_v2"],
+        default="",
+    )
     parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组")
     parser.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
     parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")

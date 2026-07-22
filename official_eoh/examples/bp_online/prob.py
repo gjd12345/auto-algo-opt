@@ -235,6 +235,46 @@ class BPONLINEBroad(BPONLINE):
                     lower_bound_sum / len(dataset), 4
                 )
             return instances, lower_bounds
+        if training_profile == "fme_dev_distribution_order_v2":
+            instances = {}
+            lower_bounds = {}
+            # v2 使用全新的开发 seed，并对同一多重集构造两种顺序。交替大小顺序是
+            # 通用在线装箱压力测试，不复用首轮已查看 held-out 的升序/降序坐标。
+            distribution_specs = {
+                "uniform": (81000, 1, capacity),
+                "small_item_dense": (82000, 1, max(2, int(capacity * 0.35))),
+                "large_item_dense": (83000, max(1, int(capacity * 0.55)), capacity),
+            }
+            for distribution, (seed_start, lower, upper) in distribution_specs.items():
+                dataset_name = f"fme_dev_v2_{distribution}"
+                dataset = {}
+                lower_bound_sum = 0.0
+                for multiset_index in range(2):
+                    rng = np.random.default_rng(seed_start + multiset_index)
+                    random_order = rng.integers(lower, upper + 1, size=2048)
+                    ordered = np.sort(random_order)
+                    midpoint = len(ordered) // 2
+                    alternating_extremes = np.column_stack(
+                        (ordered[midpoint:][::-1], ordered[:midpoint])
+                    ).reshape(-1)
+                    for order_variant, items in (
+                        ("random", random_order),
+                        ("alternating_extremes", alternating_extremes),
+                    ):
+                        instance_id = f"{multiset_index}-{order_variant}"
+                        dataset[instance_id] = {
+                            "items": items.tolist(),
+                            "capacity": capacity,
+                            "num_items": len(items),
+                            "multiset_id": str(multiset_index),
+                            "order_variant": order_variant,
+                        }
+                        lower_bound_sum += np.ceil(items.sum() / capacity)
+                instances[dataset_name] = dataset
+                lower_bounds[dataset_name] = round(
+                    lower_bound_sum / len(dataset), 4
+                )
+            return instances, lower_bounds
         if training_profile != "single_5k":
             raise ValueError(f"unknown BP training profile: {training_profile}")
 
@@ -278,8 +318,15 @@ class BPONLINEBroad(BPONLINE):
         return data
 
     @staticmethod
-    def _gen_fme_held_out(capacity: int = 100) -> list:
-        """候选冻结后才生成的三个预注册 held-out 分布，不参与进化反馈。"""
+    def _gen_fme_held_out(
+        capacity: int = 100, profile: str = "fme_unseen_v1"
+    ) -> list:
+        """候选冻结后才生成的预注册 held-out 分布，不参与进化反馈。"""
+        if profile == "fme_unseen_v2":
+            return BPONLINEBroad._gen_fme_held_out_v2(capacity)
+        if profile != "fme_unseen_v1":
+            raise ValueError(f"unknown FME held-out profile: {profile}")
+
         suites = []
 
         mixture_instances = []
@@ -323,6 +370,69 @@ class BPONLINEBroad(BPONLINE):
         )
         return suites
 
+    @staticmethod
+    def _gen_fme_held_out_v2(capacity: int = 100) -> list:
+        """生成与 v1、开发 v2 均不重合的二阶段确认套件。"""
+        suites = []
+
+        trimodal_instances = []
+        for instance_index in range(6):
+            rng = np.random.default_rng(91000 + instance_index)
+            small = rng.integers(1, 26, size=2048)
+            medium = rng.integers(35, 66, size=2048)
+            large = rng.integers(75, capacity + 1, size=2048)
+            items = np.concatenate([small, medium, large])
+            rng.shuffle(items)
+            trimodal_instances.append(items.astype(np.float64))
+        suites.append(
+            {
+                "path": "runtime://fme-heldout/v2/unseen_trimodal",
+                "instances": trimodal_instances,
+            }
+        )
+
+        scale_instances = []
+        for instance_index in range(4):
+            rng = np.random.default_rng(92000 + instance_index)
+            scale_instances.append(
+                rng.integers(1, capacity + 1, size=12288).astype(np.float64)
+            )
+        suites.append(
+            {
+                "path": "runtime://fme-heldout/v2/unseen_scale_12k",
+                "instances": scale_instances,
+            }
+        )
+
+        random_order_instances = []
+        quantile_block_instances = []
+        for instance_index in range(4):
+            rng = np.random.default_rng(93000 + instance_index)
+            random_order = rng.integers(1, capacity + 1, size=4096)
+            ordered = np.sort(random_order)
+            blocks = np.split(ordered, 16)
+            block_order = rng.permutation(len(blocks))
+            quantile_block_order = np.concatenate(
+                [blocks[index] for index in block_order]
+            )
+            random_order_instances.append(random_order.astype(np.float64))
+            quantile_block_instances.append(
+                quantile_block_order.astype(np.float64)
+            )
+        suites.extend(
+            [
+                {
+                    "path": "runtime://fme-heldout/v2/order_random",
+                    "instances": random_order_instances,
+                },
+                {
+                    "path": "runtime://fme-heldout/v2/order_quantile_blocks",
+                    "instances": quantile_block_instances,
+                },
+            ]
+        )
+        return suites
+
     def evaluate_program(self, program_str: str, callable_func) -> float | dict | None:
         if self.confirmation_feedback:
             fitness, scale_feedback = self._evaluate_with_confirmation_feedback(callable_func)
@@ -336,9 +446,11 @@ class BPONLINEBroad(BPONLINE):
         if not self.report_held_out:
             return evaluation_result
 
-        if self.held_out_profile == "fme_unseen_v1" and not self.held_out_data:
+        if self.held_out_profile in {"fme_unseen_v1", "fme_unseen_v2"} and not self.held_out_data:
             # 延迟生成确保正式候选冻结前，进化进程既不计算也不读取 held-out。
-            self.held_out_data = self._gen_fme_held_out()
+            self.held_out_data = self._gen_fme_held_out(
+                profile=self.held_out_profile
+            )
         self.held_out_report = {}
         for entry in self.held_out_data:
             items_list = entry["instances"]
@@ -356,7 +468,7 @@ class BPONLINEBroad(BPONLINE):
                 mean_used = -np.mean(used_list)
                 mean_lb = np.mean(lb_list)
                 aggregate_gap = round((mean_used - mean_lb) / mean_lb * 100, 6)
-                if self.held_out_profile == "fme_unseen_v1":
+                if self.held_out_profile in {"fme_unseen_v1", "fme_unseen_v2"}:
                     instance_gap_pct = [
                         round((used - lower_bound) / lower_bound * 100.0, 6)
                         for used, lower_bound in zip(
@@ -415,7 +527,10 @@ class BPONLINEBroad(BPONLINE):
 
     def _evaluate_with_scale_feedback(self, callable_func):
         """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
-        if self.training_profile == "fme_dev_distributions_v1":
+        if self.training_profile in {
+            "fme_dev_distributions_v1",
+            "fme_dev_distribution_order_v2",
+        }:
             return self._evaluate_with_fme_feedback(callable_func)
         fitness_per_dataset = []
         gap_by_scale = {}
@@ -456,14 +571,20 @@ class BPONLINEBroad(BPONLINE):
         return mean_objective, feedback
 
     def _evaluate_with_fme_feedback(self, callable_func):
-        """在 12 个开发反例候选上形成行为画像，不读取 confirmation 或 held-out。"""
+        """在冻结开发反例上形成行为画像，不读取 confirmation 或 held-out。"""
+        order_sensitive_profile = (
+            self.training_profile == "fme_dev_distribution_order_v2"
+        )
         distribution_gaps = {}
+        order_variant_gaps = {}
+        order_pair_gaps = {}
         distinguishing_counterexamples = []
         counterexample_gap_pct = {}
         counterexample_artifacts = {}
         all_dataset_gaps = []
         for dataset_name, dataset in self.instances.items():
-            distribution = dataset_name.removeprefix("fme_dev_")
+            prefix = "fme_dev_v2_" if order_sensitive_profile else "fme_dev_"
+            distribution = dataset_name.removeprefix(prefix)
             instance_gaps = []
             for instance_id, instance in dataset.items():
                 capacity = instance["capacity"]
@@ -474,13 +595,35 @@ class BPONLINEBroad(BPONLINE):
                 lower_bound = float(np.ceil(np.sum(items) / capacity))
                 gap = (used_bins - lower_bound) / lower_bound
                 instance_gaps.append((instance_id, float(gap)))
-                counterexample_id = f"bp-dev-{distribution}-{instance_id}"
+                counterexample_prefix = (
+                    "bp-dev-v2" if order_sensitive_profile else "bp-dev"
+                )
+                counterexample_id = (
+                    f"{counterexample_prefix}-{distribution}-{instance_id}"
+                )
+                order_variant = instance.get("order_variant")
+                multiset_id = instance.get("multiset_id")
+                if order_sensitive_profile:
+                    pair_key = f"{distribution}:{multiset_id}"
+                    order_pair_gaps.setdefault(pair_key, {})[
+                        str(order_variant)
+                    ] = float(gap)
+                    order_variant_gaps.setdefault(str(order_variant), []).append(
+                        float(gap)
+                    )
                 instance_payload = {
                     "problem": "bp_online",
                     "distribution": distribution,
                     "capacity": capacity,
                     "items": instance["items"],
                 }
+                if order_sensitive_profile:
+                    instance_payload.update(
+                        {
+                            "multiset_id": multiset_id,
+                            "order_variant": order_variant,
+                        }
+                    )
                 instance_hash = hashlib.sha256(
                     json.dumps(
                         instance_payload,
@@ -491,17 +634,25 @@ class BPONLINEBroad(BPONLINE):
                 counterexample_gap_pct[counterexample_id] = round(gap * 100.0, 6)
                 counterexample_artifacts[counterexample_id] = {
                     "source_distribution": distribution,
-                    "feature_region": f"{distribution}:n{instance['num_items']}:c{capacity}",
+                    "feature_region": (
+                        f"{distribution}:order={order_variant}:n{instance['num_items']}:c{capacity}"
+                        if order_sensitive_profile
+                        else f"{distribution}:n{instance['num_items']}:c{capacity}"
+                    ),
                     "instance_hash": instance_hash,
                     "instance_ref": f"runtime://fme/bp/{counterexample_id}",
-                    "generation_method": "frozen_distribution_sampler_v1",
+                    "generation_method": (
+                        "frozen_distribution_order_pair_sampler_v2"
+                        if order_sensitive_profile
+                        else "frozen_distribution_sampler_v1"
+                    ),
                 }
             mean_gap = float(np.mean([gap for _, gap in instance_gaps]))
             distribution_gaps[distribution] = round(mean_gap * 100.0, 6)
             all_dataset_gaps.append(mean_gap)
             worst_instance_id, _ = max(instance_gaps, key=lambda item: item[1])
             distinguishing_counterexamples.append(
-                f"bp-dev-{distribution}-{worst_instance_id}"
+                f"{'bp-dev-v2' if order_sensitive_profile else 'bp-dev'}-{distribution}-{worst_instance_id}"
             )
 
         worst_distribution = max(distribution_gaps, key=distribution_gaps.get)
@@ -512,6 +663,25 @@ class BPONLINEBroad(BPONLINE):
             - min(distribution_gaps.values()),
             "distinguishing_counterexample_ids": distinguishing_counterexamples,
         }
+        if order_sensitive_profile:
+            per_order_variant_relative_gap = {
+                order_variant: round(float(np.mean(gaps)) * 100.0, 6)
+                for order_variant, gaps in order_variant_gaps.items()
+            }
+            pair_order_sensitivity_pct = {
+                pair_key: round(
+                    (max(gaps.values()) - min(gaps.values())) * 100.0, 6
+                )
+                for pair_key, gaps in order_pair_gaps.items()
+            }
+            order_sensitivity_pct = max(pair_order_sensitivity_pct.values())
+            profile_payload.update(
+                {
+                    "per_order_variant_relative_gap": per_order_variant_relative_gap,
+                    "pair_order_sensitivity_pct": pair_order_sensitivity_pct,
+                    "order_sensitivity_pct": order_sensitivity_pct,
+                }
+            )
         behavior_profile_hash = hashlib.sha256(
             json.dumps(
                 profile_payload,
@@ -532,5 +702,21 @@ class BPONLINEBroad(BPONLINE):
             "behavior_profile_hash": behavior_profile_hash,
             "visible_scope": "dev_only",
         }
+        if order_sensitive_profile:
+            feedback.update(
+                {
+                    "per_order_variant_relative_gap": profile_payload[
+                        "per_order_variant_relative_gap"
+                    ],
+                    "pair_order_sensitivity_pct": profile_payload[
+                        "pair_order_sensitivity_pct"
+                    ],
+                    "order_sensitivity_pct": profile_payload[
+                        "order_sensitivity_pct"
+                    ],
+                    "behavior_profile_version": "bp_fme_distribution_order_v2",
+                    "development_suite": "fme_development_distribution_order_v2",
+                }
+            )
         # 两臂共享同一标量适应度；FME 的差异只来自结构化证据与动作选择。
         return float(np.mean(all_dataset_gaps)), feedback

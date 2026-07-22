@@ -28,6 +28,9 @@ class FMEControllerState:
     pending_counterexample_comparisons: int
     transferable_claim_count: int
     stalled_ticks: int = 0
+    recent_generation_attempts: int = 0
+    recent_generation_failures: int = 0
+    consecutive_transfer_actions: int = 0
 
 
 @dataclass(frozen=True)
@@ -103,17 +106,36 @@ class FMEController:
         self, state: FMEControllerState
     ) -> list[tuple[FMEAction, float, float, str]]:
         candidates: list[tuple[FMEAction, float, float, str]] = []
+        recent_attempts = max(0, state.recent_generation_attempts)
+        recent_failures = min(
+            max(0, state.recent_generation_failures), recent_attempts
+        )
+        generation_failure_rate = (
+            recent_failures / recent_attempts if recent_attempts else 0.0
+        )
+        generation_is_unstable = (
+            recent_attempts >= 2 and generation_failure_rate > 0.5
+        )
+        transfer_is_cooling_down = state.consecutive_transfer_actions >= 1
+
         if state.algorithm_archive_size == 0:
             candidates.append(
                 (FMEAction.INVENT_ALGORITHM, 1.0, 1.0, "algorithm_archive_empty")
             )
         else:
+            invent_gain = max(0.2, 0.7 - 0.08 * state.stalled_ticks)
+            invent_reason = "seek_new_behavior_cell"
+            if transfer_is_cooling_down:
+                # 首轮 pilot 连续把 48/60 槽位交给 e2+m2。一次迁移后强制回到
+                # 创造或修复，让“已有支持主张”不能永久压制新行为单元。
+                invent_gain = max(invent_gain, 0.95)
+                invent_reason = "transfer_cooldown_seek_new_behavior_cell"
             candidates.append(
                 (
                     FMEAction.INVENT_ALGORITHM,
-                    max(0.2, 0.7 - 0.08 * state.stalled_ticks),
+                    invent_gain,
                     1.0,
-                    "seek_new_behavior_cell",
+                    invent_reason,
                 )
             )
         if state.counterexample_archive_size == 0 or state.stalled_ticks >= 2:
@@ -134,7 +156,18 @@ class FMEController:
                     "resolve_pending_algorithm_ranking",
                 )
             )
-        if state.weakened_claim_count > 0:
+        if generation_is_unstable:
+            # 空输出或不可执行代码没有机制主张可供“weakened”计数；因此生成可靠性
+            # 必须成为独立修复信号，否则控制器会在失败后继续重复迁移算子。
+            candidates.append(
+                (
+                    FMEAction.REPAIR_FAILED_MECHANISM,
+                    1.35,
+                    1.0,
+                    "repair_recent_generation_failures",
+                )
+            )
+        elif state.weakened_claim_count > 0:
             candidates.append(
                 (
                     FMEAction.REPAIR_FAILED_MECHANISM,
@@ -152,7 +185,12 @@ class FMEController:
                     "reduce_unresolved_mechanism_claims",
                 )
             )
-        if state.transferable_claim_count > 0 and state.supported_claim_count > 0:
+        if (
+            state.transferable_claim_count > 0
+            and state.supported_claim_count > 0
+            and not transfer_is_cooling_down
+            and not generation_is_unstable
+        ):
             candidates.append(
                 (
                     FMEAction.TRANSFER_ABSTRACT_MECHANISM,

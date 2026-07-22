@@ -69,11 +69,18 @@ class FMEPilotEvidenceRecorder:
                     "parent_candidate_ids": list(parent_candidate_ids),
                 }
             )
+            profile_version = str(
+                feedback.get("behavior_profile_version", "bp_fme_distribution_v1")
+            )
             candidate = CandidateArtifact(
                 candidate_id=candidate_id,
                 problem="bp_online",
                 origin="research_agent",
-                generator="eoh_fme_generation_adapter_v1",
+                generator=(
+                    "eoh_fme_generation_adapter_v2"
+                    if profile_version == "bp_fme_distribution_order_v2"
+                    else "eoh_fme_generation_adapter_v1"
+                ),
                 parent_ids=parent_candidate_ids,
                 code_hash=candidate_id,
                 prompt_hash=prompt_hash,
@@ -84,6 +91,16 @@ class FMEPilotEvidenceRecorder:
             decimal_gaps = {
                 str(name): float(value) / 100.0 for name, value in raw_gaps.items()
             }
+            feature_sensitivity = {
+                "distribution_gap_range": float(
+                    feedback.get("feature_sensitivity", 0.0)
+                )
+                / 100.0
+            }
+            if feedback.get("order_sensitivity_pct") is not None:
+                feature_sensitivity["max_paired_order_gap_range"] = (
+                    float(feedback["order_sensitivity_pct"]) / 100.0
+                )
             profile = AlgorithmBehaviorProfile.create(
                 candidate_id=candidate_id,
                 problem="bp_online",
@@ -93,27 +110,25 @@ class FMEPilotEvidenceRecorder:
                 runtime_profile_seconds={"development": evaluation_runtime_seconds},
                 scale_sensitivity=float(feedback.get("feature_sensitivity", 0.0))
                 / 100.0,
-                feature_sensitivity={
-                    "distribution_gap_range": float(
-                        feedback.get("feature_sensitivity", 0.0)
-                    )
-                    / 100.0
-                },
+                feature_sensitivity=feature_sensitivity,
                 distinguishing_counterexample_ids=tuple(
                     feedback.get("distinguishing_counterexample_ids") or ()
                 ),
             )
-            evaluation_hash = canonical_json_sha256(
-                {
-                    "per_distribution_relative_gap": raw_gaps,
-                    "counterexample_gap_pct": feedback.get(
-                        "counterexample_gap_pct", {}
-                    ),
-                }
-            )
+            evaluation_descriptor = {
+                "per_distribution_relative_gap": raw_gaps,
+                "counterexample_gap_pct": feedback.get(
+                    "counterexample_gap_pct", {}
+                ),
+            }
+            if feedback.get("pair_order_sensitivity_pct") is not None:
+                evaluation_descriptor["pair_order_sensitivity_pct"] = feedback[
+                    "pair_order_sensitivity_pct"
+                ]
+            evaluation_hash = canonical_json_sha256(evaluation_descriptor)
             evaluation = EvaluationResult(
                 candidate_id=candidate_id,
-                suite="fme_development_v1",
+                suite=str(feedback.get("development_suite", "fme_development_v1")),
                 objective=float(objective),
                 feasible=True,
                 runtime_seconds=float(evaluation_runtime_seconds),

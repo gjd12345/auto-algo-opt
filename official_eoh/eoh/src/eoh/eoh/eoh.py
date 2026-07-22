@@ -123,6 +123,9 @@ class EOH:
         self._gen_best_hist = []    # 逐代 checkpoint 处的 best-so-far 目标值
         self._stop = False          # 自适应早停触发后置 True，worker 提前返回
         self._fme_stalled_ticks = 0
+        self._fme_recent_generation_outcomes = []
+        self._fme_consecutive_transfer_actions = 0
+        self._fme_action_lock = threading.Lock()
         self._fme_controller = None
         self._fme_recorder = None
         if config.feedback_policy == "fme_aware":
@@ -393,8 +396,12 @@ class EOH:
             - self._evo_reserved
             + 1,
         )
-        decision = self._fme_controller.choose_generation_action(
-            FMEControllerState(
+        # 多 sampler 可以同时请求算子；动作选择与迁移冷却状态必须原子更新，
+        # 否则并发线程会在看到同一旧状态后一起选择 e2/m2，重新造成算子坍缩。
+        with self._fme_action_lock:
+            recent_attempts = len(self._fme_recent_generation_outcomes)
+            recent_failures = self._fme_recent_generation_outcomes.count(False)
+            controller_state = FMEControllerState(
                 remaining_evaluation_budget=remaining_budget,
                 algorithm_archive_size=len(behavior_profiles),
                 counterexample_archive_size=len(counterexample_ids),
@@ -404,8 +411,15 @@ class EOH:
                 pending_counterexample_comparisons=0,
                 transferable_claim_count=claim_states.count("supported"),
                 stalled_ticks=self._fme_stalled_ticks,
+                recent_generation_attempts=recent_attempts,
+                recent_generation_failures=recent_failures,
+                consecutive_transfer_actions=self._fme_consecutive_transfer_actions,
             )
-        )
+            decision = self._fme_controller.choose_generation_action(controller_state)
+            if decision.action.value == "transfer_abstract_mechanism":
+                self._fme_consecutive_transfer_actions += 1
+            else:
+                self._fme_consecutive_transfer_actions = 0
         allowed = [
             operator
             for operator in decision.allowed_eoh_operators
@@ -420,6 +434,11 @@ class EOH:
             "score": decision.score,
             "allowed_eoh_operators": list(decision.allowed_eoh_operators),
             "selected_operator": operator,
+            "controller_state": {
+                "recent_generation_attempts": recent_attempts,
+                "recent_generation_failures": recent_failures,
+                "consecutive_transfer_actions": controller_state.consecutive_transfer_actions,
+            },
         }
 
     def _sampler_worker(self, population_ref, target, t0):
@@ -444,6 +463,8 @@ class EOH:
             # a dead worker would silently under-produce and possibly hang the
             # run. So the whole body is defensively guarded.
             off = None
+            op = "?"
+            fme_decision = None
             try:
                 op, fme_decision = self._select_operator(snapshot)
                 off = self._build_offspring(snapshot, op, fme_decision)
@@ -460,6 +481,17 @@ class EOH:
                     improved = self._record(op, off)
                     if self._fme_controller is not None:
                         self._fme_stalled_ticks = 0 if improved else self._fme_stalled_ticks + 1
+                        generation_succeeded = bool(
+                            off is not None and off.get("objective") is not None
+                        )
+                        with self._fme_action_lock:
+                            self._fme_recent_generation_outcomes.append(
+                                generation_succeeded
+                            )
+                            # 只保留最近 8 次，既响应持续失败，也避免一次早期故障永久支配策略。
+                            self._fme_recent_generation_outcomes = (
+                                self._fme_recent_generation_outcomes[-8:]
+                            )
                     if (
                         off
                         and off['objective'] is not None
