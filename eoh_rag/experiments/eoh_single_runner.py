@@ -655,6 +655,9 @@ def _runner_script() -> str:
             np.random.seed(args.seed)
 
             official_root = Path(args.official_root).resolve()
+            # 生成的运行脚本位于深层输出目录；显式加入仓库根目录，确保可导入
+            # eoh_rag.fme 等外层科研模块，而不依赖调用方当前工作目录。
+            sys.path.insert(0, str(official_root.parent))
             sys.path.insert(0, str(official_root / "eoh" / "src"))
             from eoh import EoH, LLMConfig
 
