@@ -390,6 +390,7 @@ def _runner_script() -> str:
                          cvrp_training_profile: str = "uniform_50",
                          bp_structured_feedback: bool = False,
                          bp_robust_feedback: bool = False,
+                         bp_heldout_profile: str = "",
                          confirmation_feedback: bool = False,
                          controller_budget_policy: str = "strict",
                          controller_dev_suite: str = "synthetic_dev_v1",
@@ -406,6 +407,7 @@ def _runner_script() -> str:
                                          training_profile=bp_training_profile,
                                          structured_feedback=bp_structured_feedback,
                                          robust_feedback=bp_robust_feedback,
+                                         held_out_profile=bp_heldout_profile,
                                          confirmation_feedback=confirmation_feedback)
                 from prob import BPONLINE
                 return BPONLINE(capacity=100, timeout=eval_timeout_s, n_processes=n_processes)
@@ -602,6 +604,7 @@ def _runner_script() -> str:
                     "objective_aware",
                     "scale_aware",
                     "robust_aware",
+                    "fme_aware",
                     "router_aware",
                     "confirmation_aware",
                     "confirmation_observe_only",
@@ -626,6 +629,7 @@ def _runner_script() -> str:
                     "robust_folds_1k_5k_10k",
                     "dual_batch_1k_5k_10k",
                     "dual_env_1k_5k_10k",
+                    "fme_dev_distributions_v1",
                 ],
                 default="single_5k",
             )
@@ -634,6 +638,7 @@ def _runner_script() -> str:
                 choices=["uniform_50", "multi_env_50_100_200"],
                 default="uniform_50",
             )
+            parser.add_argument("--bp-heldout-profile", choices=["", "fme_unseen_v1"], default="")
             parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组,如 '[path1,path2]'")
             args = parser.parse_args()
 
@@ -676,8 +681,9 @@ def _runner_script() -> str:
                                 broad_training=args.broad_training, n_train=args.n_train,
                                 held_out_set=held_out_set, bp_training_profile=args.bp_training_profile,
                                 cvrp_training_profile=args.cvrp_training_profile,
-                                bp_structured_feedback=args.evolution_feedback_policy in {"scale_aware", "robust_aware"},
+                                bp_structured_feedback=args.evolution_feedback_policy in {"scale_aware", "robust_aware", "fme_aware"},
                                 bp_robust_feedback=args.evolution_feedback_policy == "robust_aware",
+                                bp_heldout_profile=args.bp_heldout_profile,
                                 # 所有问题共享同一反馈合同；确认批固定且与 held-out 严格分离。
                                 confirmation_feedback=confirmation_policy,
                                 controller_budget_policy=args.controller_budget_policy,
@@ -814,6 +820,7 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         "broad_training": args.broad_training,
         "n_train": args.n_train,
         "bp_training_profile": getattr(args, "bp_training_profile", "single_5k"),
+        "bp_heldout_profile": getattr(args, "bp_heldout_profile", ""),
         "cvrp_training_profile": getattr(args, "cvrp_training_profile", "uniform_50"),
         "held_out_set": args.held_out_set,
         "api_key_present": api_key_present,
@@ -950,6 +957,8 @@ def run_official_eoh(args: argparse.Namespace) -> dict[str, Any]:
         getattr(args, "controller_dev_suite", "synthetic_dev_v1"),
         "--controller-confirm-suite",
         getattr(args, "controller_confirm_suite", "synthetic_confirm_v1"),
+        "--bp-heldout-profile",
+        getattr(args, "bp_heldout_profile", ""),
     ]
     # 以下均为可选项，仅在对应参数存在时追加
     if args.llm_model:
@@ -1140,6 +1149,7 @@ def main() -> None:
             "robust_folds_1k_5k_10k",
             "dual_batch_1k_5k_10k",
             "dual_env_1k_5k_10k",
+            "fme_dev_distributions_v1",
         ],
         default="single_5k",
     )
@@ -1148,6 +1158,7 @@ def main() -> None:
         choices=["uniform_50", "multi_env_50_100_200"],
         default="uniform_50",
     )
+    parser.add_argument("--bp-heldout-profile", choices=["", "fme_unseen_v1"], default="")
     parser.add_argument("--held-out-set", default="", help="held-out pkl 路径 JSON 数组")
     parser.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
     parser.add_argument("--api-endpoint-env", default="DEEPSEEK_API_ENDPOINT")
@@ -1163,6 +1174,7 @@ def main() -> None:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "fme_aware",
             "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",

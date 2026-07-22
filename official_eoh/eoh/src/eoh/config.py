@@ -28,7 +28,7 @@ class EoHConfig:
     operators: list = field(default_factory=lambda: ['e1', 'e2', 'm1', 'm2'])
     operator_weights: list = None
     n_parents: int = 2
-    # legacy 保持论文实现；objective_aware 反馈总目标；后两种逐步加入尺度和稳定性反馈。
+    # legacy 保持论文实现；fme_aware 通过开发域行为画像与机制状态驱动外层动作选择。
     feedback_policy: str = "legacy"
     # Async pipeline concurrency (decoupled from pop_size).
     # num_samplers : concurrent LLM-generation threads (I/O bound).
@@ -68,6 +68,7 @@ class EoHConfig:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "fme_aware",
             "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",

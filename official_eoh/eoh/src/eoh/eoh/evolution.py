@@ -233,6 +233,25 @@ from ..problem import _get_entry_name, _detect_template_kind, _extract_import_li
 def parent_selection(pop, m, feedback_policy="legacy"):
     if not pop:
         raise ValueError("Cannot select parents from an empty population.")
+    if feedback_policy == "fme_aware":
+        # 先保留质量最好的父代，再优先选择不同的行为格，避免源码不同但行为塌缩。
+        ranked = sorted(pop, key=lambda item: float(item["objective"]))
+        selected = [ranked[0]]
+        selected_profiles = {
+            (ranked[0].get("other_inf") or {}).get("behavior_profile_hash")
+        }
+        for candidate in ranked[1:]:
+            profile_hash = (candidate.get("other_inf") or {}).get(
+                "behavior_profile_hash"
+            )
+            if profile_hash not in selected_profiles:
+                selected.append(candidate)
+                selected_profiles.add(profile_hash)
+            if len(selected) >= m:
+                return selected
+        while len(selected) < m:
+            selected.append(ranked[min(len(selected), len(ranked) - 1)])
+        return selected
     if feedback_policy in {
         "objective_aware",
         "scale_aware",
@@ -316,6 +335,7 @@ class Evolution:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "fme_aware",
             "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
@@ -337,6 +357,7 @@ class Evolution:
         if self.feedback_policy not in {
             "scale_aware",
             "robust_aware",
+            "fme_aware",
             "router_aware",
             "confirmation_aware",
         }:
@@ -344,6 +365,22 @@ class Evolution:
         feedback = parent.get("other_inf")
         if not isinstance(feedback, dict):
             return "Structured feedback unavailable for this parent.\n"
+        if self.feedback_policy == "fme_aware":
+            gaps = feedback.get("per_distribution_relative_gap")
+            if not isinstance(gaps, dict) or not gaps:
+                return "FME behavior feedback unavailable for this parent.\n"
+            gap_text = ", ".join(
+                f"{name}={float(value):.6f}%"
+                for name, value in sorted(gaps.items())
+            )
+            counterexamples = feedback.get("distinguishing_counterexample_ids") or []
+            claim_state = feedback.get("mechanism_claim_state", "proposed")
+            return (
+                f"Development distribution gaps (lower is better): {gap_text}. "
+                f"Worst distribution: {feedback.get('worst_distribution', 'unknown')}. "
+                f"Distinguishing counterexamples: {counterexamples}. "
+                f"Mechanism claim state: {claim_state}.\n"
+            )
         if self.feedback_policy == "router_aware":
             environments = feedback.get("environment_relative_cost_vs_n2")
             counts = feedback.get("expert_selection_counts")
@@ -485,6 +522,27 @@ class Evolution:
                 ),
             }
             return robust_feedback[operator]
+        if self.feedback_policy == "fme_aware":
+            mechanism_feedback = {
+                "e1": (
+                    "Use the behavior profile and recorded counterexamples to propose one falsifiable mechanism "
+                    "hypothesis, then create a structurally different algorithm that should occupy a new behavior cell. "
+                    "State the cheapest development-only observation that would refute the hypothesis.\n"
+                ),
+                "e2": (
+                    "Combine only mechanisms that survived their recorded counterexamples. Preserve the stronger "
+                    "distribution behavior of each parent and state which new counterexample would distinguish the combination. "
+                ),
+                "m1": (
+                    "Repair the mechanism weakened by the listed counterexample. Change one causal rule, preserve the "
+                    "unbroken behavior, and state what result would refute the repair.\n"
+                ),
+                "m2": (
+                    "Alter one or two parameters only when the behavior profile suggests a monotone mechanism. "
+                    "State the expected distribution shift and the cheapest observation that would refute it.\n"
+                ),
+            }
+            return mechanism_feedback[operator]
         if self.feedback_policy == "router_aware":
             router_feedback = {
                 "e1": (
@@ -558,9 +616,14 @@ class Evolution:
     def _build_prompt(self, operator: str, parents=None) -> str:
         spec = self._func_spec()
         if operator == "i1":
+            mechanism_request = (
+                "First, state a falsifiable mechanism hypothesis and its cheapest development-only refutation in one sentence. "
+                if self.feedback_policy == "fme_aware"
+                else "First, describe your new algorithm and main steps in one sentence. "
+            )
             return (
                 f"{self.task}\n"
-                "First, describe your new algorithm and main steps in one sentence. "
+                f"{mechanism_request}"
                 f"The description must be inside a brace. Next, {spec}"
             )
         if operator == "e1":

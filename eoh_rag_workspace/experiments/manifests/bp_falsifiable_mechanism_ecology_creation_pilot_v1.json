@@ -1,0 +1,81 @@
+{
+  "suite": "bp_falsifiable_mechanism_ecology_creation_pilot_v1",
+  "document_id": "agent_ad:2026-07-23:bp-fme-creation-pilot-v1",
+  "actor": "research_agent",
+  "model": "deepseek-v4-flash",
+  "provider_policy": {
+    "primary": "opencode-go",
+    "fallback": "deepseek",
+    "mix_cohorts": false
+  },
+  "problems": [
+    "bp_online"
+  ],
+  "arms": [
+    {
+      "name": "scalar_reflection_control",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "shared_scalar_objective_only",
+      "evolution_feedback_policy": "objective_aware",
+      "bp_training_profile": "fme_dev_distributions_v1",
+      "bp_heldout_profile": "fme_unseen_v1",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    },
+    {
+      "name": "falsifiable_mechanism_ecology",
+      "runner_arm": "pure_eoh",
+      "context_strategy": "behavior_counterexample_mechanism_feedback",
+      "evolution_feedback_policy": "fme_aware",
+      "bp_training_profile": "fme_dev_distributions_v1",
+      "bp_heldout_profile": "fme_unseen_v1",
+      "seed_codes": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json"
+    }
+  ],
+  "generations": [
+    5
+  ],
+  "pop_size": 4,
+  "repeats": 3,
+  "seed_list": [
+    23001,
+    23002,
+    23003
+  ],
+  "max_runs": 6,
+  "candidate_evaluation_cap_per_run": 24,
+  "generated_candidate_cap_per_run": 20,
+  "dynamic_counterexample_cap_per_fme_run": 12,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 12,
+  "bp_training_profile": "fme_dev_distributions_v1",
+  "bp_heldout_profile": "fme_unseen_v1",
+  "seed_codes_sha256": "a1b47700fed79e14cc316d7d930fa2311ed0ac278e76aee13b2ad686d9a90e63",
+  "eval_timeout_s": 120,
+  "run_timeout_s": 7200,
+  "require_confirm_for_real_run": false,
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pool_policy": "disabled",
+  "heldout_visible_during_evolution": false,
+  "same_initial_code_and_base_development_instances": true,
+  "equal_model_call_and_output_token_budget": true,
+  "final_candidate_selection_rule": "minimum_shared_development_objective",
+  "primary_metric": "worst_fme_unseen_heldout_gap_pct",
+  "pilot_gate": {
+    "evidence_completeness": "6_of_6_runs_and_3_paired_seeds",
+    "direction_consistency": "fme_better_worst_distribution_excess_on_3_of_3_seeds",
+    "minimum_median_relative_worst_distribution_excess_reduction_pct": 2.0,
+    "stratified_bootstrap_confidence_interval": "95_percent_interval_excludes_zero",
+    "feasibility_or_timeout_degradation_allowed": false,
+    "mechanism_discovery_requirement": "at_least_one_new_behavior_profile_and_supported_claim_survives_recorded_counterexamples"
+  },
+  "automatic_decisions": {
+    "pass": "freeze_discovery_packet_and_prepare_unlaunched_tsp_cvrp_transfer_manifest",
+    "mechanism_only": "record_tentative_innovation_and_run_offline_causal_analysis_only",
+    "complete_fail": "record_negative_result_and_stop_current_fme_representation",
+    "inconclusive": "resume_missing_frozen_coordinates_only"
+  },
+  "official_root": "official_eoh"
+}

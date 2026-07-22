@@ -6,6 +6,7 @@
 #           (ICML), 2024.
 
 import heapq
+import hashlib
 import json
 import os
 import time
@@ -38,6 +39,26 @@ def population_management(pop, size):
             seen.add(ind['objective'])
             unique.append(ind)
     return heapq.nsmallest(min(size, len(unique)), unique, key=lambda x: x['objective'])
+
+
+def behavior_population_management(pop, size):
+    """FME 按行为画像保留每格精英，再按开发目标裁剪到固定种群规模。"""
+    valid = [ind for ind in pop if ind['objective'] is not None]
+    cells = {}
+    for individual in valid:
+        feedback = individual.get("other_inf") or {}
+        profile_hash = feedback.get("behavior_profile_hash")
+        # 缺少画像时按代码隔离，避免把多个未知行为误合并为同一格。
+        code_hash = hashlib.sha256(
+            str(individual.get("code", "")).encode("utf-8")
+        ).hexdigest()
+        cell_key = profile_hash or f"missing:{code_hash}"
+        previous = cells.get(cell_key)
+        if previous is None or individual["objective"] < previous["objective"]:
+            cells[cell_key] = individual
+    return heapq.nsmallest(
+        min(size, len(cells)), cells.values(), key=lambda item: item["objective"]
+    )
 
 
 def confirmation_gate(offspring, parents):
@@ -101,6 +122,17 @@ class EOH:
         self._stop_min_gap = float(getattr(config, "stop_min_gap", 0.0))
         self._gen_best_hist = []    # 逐代 checkpoint 处的 best-so-far 目标值
         self._stop = False          # 自适应早停触发后置 True，worker 提前返回
+        self._fme_stalled_ticks = 0
+        self._fme_controller = None
+        self._fme_recorder = None
+        if config.feedback_policy == "fme_aware":
+            # FME 是外层科研控制模块；这里仅通过生成缝适配既有 EOH 五算子。
+            from eoh_rag.fme.controller import FMEController
+            from eoh_rag.fme.recorder import FMEPilotEvidenceRecorder
+            self._fme_controller = FMEController()
+            self._fme_recorder = FMEPilotEvidenceRecorder(
+                os.path.join(self.output_path, "results", "fme_evidence")
+            )
 
         # Spawn-based subprocess evaluation is set up once in the main thread so
         # the per-call guard in _eval_with_timeout never races across threads.
@@ -234,7 +266,9 @@ class EOH:
 
     # ── async pipeline ─────────────────────────────────────────────────────────
 
-    def _build_offspring(self, population_snapshot, operator):
+    def _build_offspring(
+        self, population_snapshot, operator, fme_action_decision=None
+    ):
         """Producer step: LLM-generate code, then evaluate it on the eval pool.
 
         Runs on a sampler thread. The LLM call (I/O) happens inline here; the
@@ -254,6 +288,7 @@ class EOH:
         if code is None:
             return None
 
+        evaluation_started = time.time()
         try:
             fitness = self._eval_executor.submit(
                 _eval_with_timeout, self.problem, code, self.problem.timeout
@@ -261,6 +296,7 @@ class EOH:
         except Exception as e:
             logger.debug("  [eval] submit failed: %s: %s", type(e).__name__, e)
             fitness = None
+        evaluation_runtime_seconds = time.time() - evaluation_started
 
         objective, feedback = _normalize_evaluation_result(fitness)
         offspring = {
@@ -269,6 +305,51 @@ class EOH:
             'objective': objective,
             'other_inf': feedback,
         }
+        if self.config.feedback_policy == "fme_aware" and objective is not None:
+            if not isinstance(offspring["other_inf"], dict):
+                offspring["other_inf"] = {}
+            parent_list = parents if isinstance(parents, list) else [parents]
+            parent_list = [item for item in parent_list if isinstance(item, dict)]
+            claim_state = "proposed"
+            if parent_list:
+                reference = min(parent_list, key=lambda item: float(item["objective"]))
+                candidate_worst = offspring["other_inf"].get("worst_gap_pct")
+                reference_worst = (reference.get("other_inf") or {}).get("worst_gap_pct")
+                objective_improved = objective < float(reference["objective"])
+                worst_not_worse = (
+                    candidate_worst is not None
+                    and reference_worst is not None
+                    and float(candidate_worst) <= float(reference_worst)
+                )
+                if objective_improved and worst_not_worse:
+                    claim_state = "supported"
+                elif not objective_improved and not worst_not_worse:
+                    claim_state = "weakened"
+            offspring["other_inf"]["mechanism_claim"] = algorithm
+            offspring["other_inf"]["mechanism_claim_state"] = claim_state
+            parent_candidate_ids = tuple(
+                hashlib.sha256(str(item.get("code", "")).encode("utf-8")).hexdigest()
+                for item in parent_list
+                if item.get("code")
+            )
+            action_decision = fme_action_decision or {
+                "action": "invent_algorithm",
+                "reason": "initial_generation",
+                "score": 1.0,
+                "allowed_eoh_operators": ["i1"],
+                "selected_operator": operator,
+            }
+            evidence_summary = self._fme_recorder.record_candidate(
+                code=code,
+                algorithm=algorithm,
+                objective=objective,
+                evaluation_runtime_seconds=evaluation_runtime_seconds,
+                feedback=offspring["other_inf"],
+                parent_candidate_ids=parent_candidate_ids,
+                operator=operator,
+                action_decision=action_decision,
+            )
+            offspring["other_inf"]["fme_evidence"] = evidence_summary
         if self.config.feedback_policy in {
             "confirmation_aware",
             "confirmation_gate_only",
@@ -281,8 +362,65 @@ class EOH:
             offspring["other_inf"]["selection_gate"] = gate_details
         return offspring
 
-    def _select_operator(self):
-        return random.choices(self.operators, weights=self.operator_weights, k=1)[0]
+    def _select_operator(self, population):
+        if self._fme_controller is None:
+            operator = random.choices(
+                self.operators, weights=self.operator_weights, k=1
+            )[0]
+            return operator, None
+
+        from eoh_rag.fme.controller import FMEControllerState
+
+        feedback_rows = [
+            item.get("other_inf") or {}
+            for item in population
+            if isinstance(item, dict)
+        ]
+        behavior_profiles = {
+            row.get("behavior_profile_hash")
+            for row in feedback_rows
+            if row.get("behavior_profile_hash")
+        }
+        counterexample_ids = {
+            counterexample_id
+            for row in feedback_rows
+            for counterexample_id in row.get("distinguishing_counterexample_ids", [])
+        }
+        claim_states = [row.get("mechanism_claim_state") for row in feedback_rows]
+        remaining_budget = max(
+            0,
+            int(self.max_sample_nums or self.n_pop * self.pop_size)
+            - self._evo_reserved
+            + 1,
+        )
+        decision = self._fme_controller.choose_generation_action(
+            FMEControllerState(
+                remaining_evaluation_budget=remaining_budget,
+                algorithm_archive_size=len(behavior_profiles),
+                counterexample_archive_size=len(counterexample_ids),
+                proposed_claim_count=claim_states.count("proposed"),
+                weakened_claim_count=claim_states.count("weakened"),
+                supported_claim_count=claim_states.count("supported"),
+                pending_counterexample_comparisons=0,
+                transferable_claim_count=claim_states.count("supported"),
+                stalled_ticks=self._fme_stalled_ticks,
+            )
+        )
+        allowed = [
+            operator
+            for operator in decision.allowed_eoh_operators
+            if operator in self.operators
+        ]
+        if not allowed:
+            allowed = list(self.operators)
+        operator = random.choice(allowed)
+        return operator, {
+            "action": decision.action.value,
+            "reason": decision.reason,
+            "score": decision.score,
+            "allowed_eoh_operators": list(decision.allowed_eoh_operators),
+            "selected_operator": operator,
+        }
 
     def _sampler_worker(self, population_ref, target, t0):
         """Steady-state evolution loop run by each sampler thread.
@@ -307,22 +445,33 @@ class EOH:
             # run. So the whole body is defensively guarded.
             off = None
             try:
-                op = self._select_operator()
-                off = self._build_offspring(snapshot, op)
+                op, fme_decision = self._select_operator(snapshot)
+                off = self._build_offspring(snapshot, op, fme_decision)
+                if off is not None and fme_decision is not None:
+                    if not isinstance(off.get("other_inf"), dict):
+                        off["other_inf"] = {}
+                    off["other_inf"]["fme_action_decision"] = fme_decision
             except Exception as e:
                 logger.warning("  [sampler] generation error: %s: %s", type(e).__name__, e)
                 op = "?"
 
             with self._lock:
                 try:
-                    self._record(op, off)
+                    improved = self._record(op, off)
+                    if self._fme_controller is not None:
+                        self._fme_stalled_ticks = 0 if improved else self._fme_stalled_ticks + 1
                     if (
                         off
                         and off['objective'] is not None
                         and off.get("selection_accepted", True)
                     ):
                         population_ref[0].append(off)
-                        population_ref[0] = population_management(population_ref[0], self.pop_size)
+                        manager = (
+                            behavior_population_management
+                            if self._fme_controller is not None
+                            else population_management
+                        )
+                        population_ref[0] = manager(population_ref[0], self.pop_size)
                 except Exception as e:
                     logger.warning("  [sampler] registration error: %s: %s", type(e).__name__, e)
                 finally:

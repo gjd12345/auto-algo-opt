@@ -15,6 +15,7 @@ from eoh_rag.fme.controller import (
     FMEController,
     FMEControllerState,
 )
+from eoh_rag.fme.recorder import FMEPilotEvidenceRecorder
 
 __all__ = [
     "ArchiveAdmission",
@@ -25,5 +26,6 @@ __all__ = [
     "FMEArchives",
     "FMEController",
     "FMEControllerState",
+    "FMEPilotEvidenceRecorder",
     "GeneratedBPCounterexample",
 ]

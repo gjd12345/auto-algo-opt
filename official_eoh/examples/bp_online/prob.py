@@ -8,6 +8,8 @@
 import sys
 import os
 import re
+import hashlib
+import json
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -78,12 +80,14 @@ class BPONLINEBroad(BPONLINE):
     def __init__(self, capacity: int = 100, timeout: int = 40, n_processes: int = 1,
                  n_train: int = 128, held_out_set: list | None = None,
                  training_profile: str = "single_5k", structured_feedback: bool = False,
-                 robust_feedback: bool = False, confirmation_feedback: bool = False):
+                 robust_feedback: bool = False, confirmation_feedback: bool = False,
+                 held_out_profile: str = ""):
         super(BPONLINE, self).__init__(timeout=timeout, n_processes=n_processes)
         self.training_profile = training_profile
         self.structured_feedback = structured_feedback
         self.robust_feedback = robust_feedback
         self.confirmation_feedback = confirmation_feedback
+        self.held_out_profile = held_out_profile
         self.instances, self.lb = self._gen_broad_instances(capacity, n_train, training_profile)
         self.held_out_data = self._load_held_out(held_out_set)
         self.held_out_report = {}     # 由 run 结束后读取
@@ -203,6 +207,34 @@ class BPONLINEBroad(BPONLINE):
                     instances[dataset_name] = dataset
                     lower_bounds[dataset_name] = round(lower_bound_sum / len(dataset), 4)
             return instances, lower_bounds
+        if training_profile == "fme_dev_distributions_v1":
+            instances = {}
+            lower_bounds = {}
+            # 三个开发分布各 4 个冻结反例候选，共 12 个；两实验臂共享完全相同的实例。
+            # 规模保持较小，让额外预算用于算法创造，而不是重复消耗在大规模评测上。
+            distribution_specs = {
+                "uniform": (61000, 1, capacity),
+                "small_item_dense": (62000, 1, max(2, int(capacity * 0.35))),
+                "large_item_dense": (63000, max(1, int(capacity * 0.55)), capacity),
+            }
+            for distribution, (seed_start, lower, upper) in distribution_specs.items():
+                dataset_name = f"fme_dev_{distribution}"
+                dataset = {}
+                lower_bound_sum = 0.0
+                for instance_index in range(4):
+                    rng = np.random.default_rng(seed_start + instance_index)
+                    items = rng.integers(lower, upper + 1, size=2048)
+                    dataset[str(instance_index)] = {
+                        "items": items.tolist(),
+                        "capacity": capacity,
+                        "num_items": len(items),
+                    }
+                    lower_bound_sum += np.ceil(items.sum() / capacity)
+                instances[dataset_name] = dataset
+                lower_bounds[dataset_name] = round(
+                    lower_bound_sum / len(dataset), 4
+                )
+            return instances, lower_bounds
         if training_profile != "single_5k":
             raise ValueError(f"unknown BP training profile: {training_profile}")
 
@@ -245,6 +277,52 @@ class BPONLINEBroad(BPONLINE):
                 print(f"[BPONLINEBroad] held-out 加载失败 {fn}: {exc}")
         return data
 
+    @staticmethod
+    def _gen_fme_held_out(capacity: int = 100) -> list:
+        """候选冻结后才生成的三个预注册 held-out 分布，不参与进化反馈。"""
+        suites = []
+
+        mixture_instances = []
+        for instance_index in range(8):
+            rng = np.random.default_rng(71000 + instance_index)
+            small = rng.integers(1, 36, size=2048)
+            large = rng.integers(55, capacity + 1, size=2048)
+            items = np.concatenate([small, large])
+            rng.shuffle(items)
+            mixture_instances.append(items)
+        suites.append(
+            {
+                "path": "runtime://fme-heldout/v1/unseen_mixture",
+                "instances": mixture_instances,
+            }
+        )
+
+        scale_instances = []
+        for instance_index in range(6):
+            rng = np.random.default_rng(72000 + instance_index)
+            scale_instances.append(
+                rng.integers(1, capacity + 1, size=8192).astype(np.float64)
+            )
+        suites.append(
+            {
+                "path": "runtime://fme-heldout/v1/unseen_scale",
+                "instances": scale_instances,
+            }
+        )
+
+        order_instances = []
+        for instance_index in range(3):
+            rng = np.random.default_rng(73000 + instance_index)
+            base = rng.integers(1, capacity + 1, size=4096).astype(np.float64)
+            order_instances.extend([np.sort(base), np.sort(base)[::-1].copy()])
+        suites.append(
+            {
+                "path": "runtime://fme-heldout/v1/order_perturbation",
+                "instances": order_instances,
+            }
+        )
+        return suites
+
     def evaluate_program(self, program_str: str, callable_func) -> float | dict | None:
         if self.confirmation_feedback:
             fitness, scale_feedback = self._evaluate_with_confirmation_feedback(callable_func)
@@ -258,6 +336,9 @@ class BPONLINEBroad(BPONLINE):
         if not self.report_held_out:
             return evaluation_result
 
+        if self.held_out_profile == "fme_unseen_v1" and not self.held_out_data:
+            # 延迟生成确保正式候选冻结前，进化进程既不计算也不读取 held-out。
+            self.held_out_data = self._gen_fme_held_out()
         self.held_out_report = {}
         for entry in self.held_out_data:
             items_list = entry["instances"]
@@ -274,7 +355,21 @@ class BPONLINEBroad(BPONLINE):
                     lb_list.append(np.ceil(np.sum(items) / cap))
                 mean_used = -np.mean(used_list)
                 mean_lb = np.mean(lb_list)
-                self.held_out_report[entry["path"]] = round((mean_used - mean_lb) / mean_lb * 100, 3)
+                aggregate_gap = round((mean_used - mean_lb) / mean_lb * 100, 6)
+                if self.held_out_profile == "fme_unseen_v1":
+                    instance_gap_pct = [
+                        round((used - lower_bound) / lower_bound * 100.0, 6)
+                        for used, lower_bound in zip(
+                            [-value for value in used_list], lb_list
+                        )
+                    ]
+                    self.held_out_report[entry["path"]] = {
+                        "mean_gap_pct": aggregate_gap,
+                        "instance_gap_pct": instance_gap_pct,
+                        "instance_count": len(instance_gap_pct),
+                    }
+                else:
+                    self.held_out_report[entry["path"]] = round(aggregate_gap, 3)
             except Exception as exc:
                 self.held_out_report[entry["path"]] = f"error: {exc}"
         return evaluation_result
@@ -320,6 +415,8 @@ class BPONLINEBroad(BPONLINE):
 
     def _evaluate_with_scale_feedback(self, callable_func):
         """返回聚合目标和各尺度 gap，供 scale_aware 提示定位最差尺度。"""
+        if self.training_profile == "fme_dev_distributions_v1":
+            return self._evaluate_with_fme_feedback(callable_func)
         fitness_per_dataset = []
         gap_by_scale = {}
         for name, dataset in self.instances.items():
@@ -357,3 +454,83 @@ class BPONLINEBroad(BPONLINE):
             )
             return mean_objective + variation_penalty, feedback
         return mean_objective, feedback
+
+    def _evaluate_with_fme_feedback(self, callable_func):
+        """在 12 个开发反例候选上形成行为画像，不读取 confirmation 或 held-out。"""
+        distribution_gaps = {}
+        distinguishing_counterexamples = []
+        counterexample_gap_pct = {}
+        counterexample_artifacts = {}
+        all_dataset_gaps = []
+        for dataset_name, dataset in self.instances.items():
+            distribution = dataset_name.removeprefix("fme_dev_")
+            instance_gaps = []
+            for instance_id, instance in dataset.items():
+                capacity = instance["capacity"]
+                items = np.array(instance["items"])
+                bins = np.array([capacity] * instance["num_items"])
+                _, bins_packed = self.online_binpack(items, bins, callable_func)
+                used_bins = int((bins_packed != capacity).sum())
+                lower_bound = float(np.ceil(np.sum(items) / capacity))
+                gap = (used_bins - lower_bound) / lower_bound
+                instance_gaps.append((instance_id, float(gap)))
+                counterexample_id = f"bp-dev-{distribution}-{instance_id}"
+                instance_payload = {
+                    "problem": "bp_online",
+                    "distribution": distribution,
+                    "capacity": capacity,
+                    "items": instance["items"],
+                }
+                instance_hash = hashlib.sha256(
+                    json.dumps(
+                        instance_payload,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()
+                counterexample_gap_pct[counterexample_id] = round(gap * 100.0, 6)
+                counterexample_artifacts[counterexample_id] = {
+                    "source_distribution": distribution,
+                    "feature_region": f"{distribution}:n{instance['num_items']}:c{capacity}",
+                    "instance_hash": instance_hash,
+                    "instance_ref": f"runtime://fme/bp/{counterexample_id}",
+                    "generation_method": "frozen_distribution_sampler_v1",
+                }
+            mean_gap = float(np.mean([gap for _, gap in instance_gaps]))
+            distribution_gaps[distribution] = round(mean_gap * 100.0, 6)
+            all_dataset_gaps.append(mean_gap)
+            worst_instance_id, _ = max(instance_gaps, key=lambda item: item[1])
+            distinguishing_counterexamples.append(
+                f"bp-dev-{distribution}-{worst_instance_id}"
+            )
+
+        worst_distribution = max(distribution_gaps, key=distribution_gaps.get)
+        profile_payload = {
+            "problem": "bp_online",
+            "per_distribution_relative_gap": distribution_gaps,
+            "feature_sensitivity": max(distribution_gaps.values())
+            - min(distribution_gaps.values()),
+            "distinguishing_counterexample_ids": distinguishing_counterexamples,
+        }
+        behavior_profile_hash = hashlib.sha256(
+            json.dumps(
+                profile_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        feedback = {
+            "scale_gap_pct": distribution_gaps,
+            "per_distribution_relative_gap": distribution_gaps,
+            "worst_scale": worst_distribution,
+            "worst_distribution": worst_distribution,
+            "worst_gap_pct": distribution_gaps[worst_distribution],
+            "feature_sensitivity": profile_payload["feature_sensitivity"],
+            "distinguishing_counterexample_ids": distinguishing_counterexamples,
+            "counterexample_gap_pct": counterexample_gap_pct,
+            "counterexample_artifacts": counterexample_artifacts,
+            "behavior_profile_hash": behavior_profile_hash,
+            "visible_scope": "dev_only",
+        }
+        # 两臂共享同一标量适应度；FME 的差异只来自结构化证据与动作选择。
+        return float(np.mean(all_dataset_gaps)), feedback

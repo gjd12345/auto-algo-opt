@@ -65,6 +65,43 @@ class FMEController:
                 "evaluation_budget_exhausted",
             )
 
+        candidates = self._candidate_actions(state)
+        return self._select_best(candidates)
+
+    def choose_generation_action(
+        self, state: FMEControllerState
+    ) -> FMEActionDecision:
+        """为 EOH 生成缝选择一个可落到五算子的动作。
+
+        反例生成、比较与证伪由评测缝执行，不占 LLM 调用；EOH 在真正请求新代码时
+        只消费含算子适配的动作，从而保持两臂模型调用预算一致。
+        """
+        if state.remaining_evaluation_budget <= 0:
+            return self._decision(
+                FMEAction.STOP_BRANCH,
+                1.0,
+                0.0,
+                "evaluation_budget_exhausted",
+            )
+        candidates = [
+            item
+            for item in self._candidate_actions(state)
+            if self._OPERATOR_ADAPTER[item[0]]
+        ]
+        if not candidates:
+            candidates = [
+                (
+                    FMEAction.INVENT_ALGORITHM,
+                    0.5,
+                    1.0,
+                    "generation_seam_fallback",
+                )
+            ]
+        return self._select_best(candidates)
+
+    def _candidate_actions(
+        self, state: FMEControllerState
+    ) -> list[tuple[FMEAction, float, float, str]]:
         candidates: list[tuple[FMEAction, float, float, str]] = []
         if state.algorithm_archive_size == 0:
             candidates.append(
@@ -129,6 +166,11 @@ class FMEController:
                 (FMEAction.STOP_BRANCH, 0.75, 0.0, "branch_stalled_for_four_ticks")
             )
 
+        return candidates
+
+    def _select_best(
+        self, candidates: list[tuple[FMEAction, float, float, str]]
+    ) -> FMEActionDecision:
         # score 的分母下限只服务零成本停止动作；不会把零成本解释为无限信息增益。
         ranked = sorted(
             candidates,

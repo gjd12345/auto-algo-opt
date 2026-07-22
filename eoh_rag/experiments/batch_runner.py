@@ -284,6 +284,7 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
             "objective_aware",
             "scale_aware",
             "robust_aware",
+            "fme_aware",
             "router_aware",
             "confirmation_aware",
             "confirmation_observe_only",
@@ -291,7 +292,7 @@ def _validate_manifest(manifest: dict[str, Any]) -> list[str]:
         }:
             errors.append(
                 f"arm[{i}] evolution_feedback_policy must be 'legacy', "
-                "'objective_aware', 'scale_aware', 'robust_aware', 'router_aware', 'confirmation_aware', "
+                "'objective_aware', 'scale_aware', 'robust_aware', 'fme_aware', 'router_aware', 'confirmation_aware', "
                 "'confirmation_observe_only', or 'confirmation_gate_only'"
             )
 
@@ -413,6 +414,11 @@ def _build_cmd(
             ),
         ]
     )
+    bp_heldout_profile = arm.get(
+        "bp_heldout_profile", manifest.get("bp_heldout_profile", "")
+    )
+    if bp_heldout_profile:
+        cmd.extend(["--bp-heldout-profile", str(bp_heldout_profile)])
     # strict 是 v1 冻结合同；新 cohort 只有显式声明 clip 才启用确定性预算截断。
     cmd.extend(
         [
