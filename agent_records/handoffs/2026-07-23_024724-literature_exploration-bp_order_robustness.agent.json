@@ -1,0 +1,175 @@
+{
+  "schema_version": "agent_ad_literature_exploration/v1",
+  "document_id": "agent_ad:2026-07-23:bp-order-robustness-mechanism-mapping",
+  "audience": "agent",
+  "created_at": "2026-07-23T02:47:24+08:00",
+  "phase_id": "literature_exploration",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "72e5d6883e8230cc9e9f11e7685a9ff3b4d33e9e",
+  "status": "mapped_optional_mechanisms_no_execution",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ3_cross_distribution_generalization"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "frozen_heldout_objective",
+      "valid_generated_candidate_rate"
+    ],
+    "attribution": "external_teacher_concepts_must_be_called_by_research_agent_under_a_frozen_protocol"
+  },
+  "primary_sources": [
+    {
+      "source_id": "albers_khan_ladewig_2020_random_order",
+      "title": "Best Fit Bin Packing with Random Order Revisited",
+      "url": "https://arxiv.org/abs/2012.00511",
+      "source_type": "peer_reviewed_conference_paper_and_author_preprint",
+      "supported_fact": "The random-order behavior of Best Fit depends materially on items larger than one third of capacity; the paper also identifies a monotonicity property in that restricted regime.",
+      "code_status": "No author-maintained implementation was identified in this bounded primary-source audit; no code is imported."
+    },
+    {
+      "source_id": "balogh_bekesi_dosa_epstein_levin_2017_advanced_harmonic",
+      "title": "A new and improved algorithm for online bin packing",
+      "url": "https://arxiv.org/abs/1707.01728",
+      "source_type": "primary_research_paper",
+      "supported_fact": "Advanced Harmonic partitions items by size and uses multiple bin types for a class, including exact-size treatment for sufficiently large items.",
+      "code_status": "No author-maintained implementation was identified in this bounded primary-source audit; no code is imported."
+    },
+    {
+      "source_id": "angelopoulos_kamali_shadkami_2022_predictions",
+      "title": "Online Bin Packing with Predictions",
+      "url": "https://arxiv.org/abs/2102.03311",
+      "source_type": "IJCAI_2022_paper_and_author_preprint",
+      "supported_fact": "Frequency predictions can be traded against adversarial prediction error through an explicit consistency-versus-robustness design.",
+      "code_status": "No author-maintained implementation was identified in this bounded primary-source audit; no code is imported."
+    },
+    {
+      "source_id": "fei_liu_eoh_official",
+      "title": "Evolution of Heuristics official repository",
+      "url": "https://github.com/FeiLiu36/EOH",
+      "source_type": "official_code_repository",
+      "supported_fact": "Upstream EOH supports function, multi-function, and class templates; the vendored local BP adapter currently uses only a function template.",
+      "license": "MIT_for_vendored_EOH_code",
+      "code_status": "Audited as an interface option only; no upstream code was copied in this tick."
+    }
+  ],
+  "local_interface_audit": {
+    "bp_template_path": "official_eoh/examples/bp_online/prob.py",
+    "bp_template_sha256": "1b5f4e66f86c74efc7cbfa76f5a67e9b5252621d4f257ecc0e96061df580d2ec",
+    "current_candidate_contract": "score(item, bins) -> priority_vector",
+    "visible_candidate_state": [
+      "current_item",
+      "remaining_capacities_of_feasible_bins"
+    ],
+    "not_visible_to_current_candidate": [
+      "original_bin_capacity_reliably_after_all_bins_are_used",
+      "arrival_index",
+      "prefix_size_histogram",
+      "future_item_frequency"
+    ],
+    "existing_fme_hooks": [
+      "eoh_rag/fme/controller.py",
+      "official_eoh/eoh/src/eoh/eoh/evolution.py",
+      "official_eoh/examples/bp_online/prob.py",
+      "eoh_rag/fme/recorder.py"
+    ]
+  },
+  "mechanisms": [
+    {
+      "mechanism_id": "order_regime_feedback_v1",
+      "origin": "external_teacher",
+      "source_id": "albers_khan_ladewig_2020_random_order",
+      "priority": 1,
+      "classification": "direct_optional_feedback_module",
+      "hypothesis": "Separating paired order sensitivity by the proportion of items above one third of capacity will make FME counterexamples more discriminating than one aggregate order gap.",
+      "integration": {
+        "module": "feedback_compiler_and_counterexample_archive",
+        "changes": [
+          "Add large_dominant, mixed, and small_dominant development strata with fresh seeds.",
+          "Record per-stratum paired order gap and a large-item order-sensitivity feature.",
+          "Let the controller prioritize a counterexample comparison when a candidate improves one order regime but regresses another."
+        ],
+        "does_not_change_candidate_signature": true,
+        "heldout_access_during_evolution": false
+      },
+      "minimum_future_validation": "Freeze a new development-only stratum manifest and verify that the descriptor separates at least two pre-existing distinct candidate codes before any LLM cohort is considered.",
+      "exit_condition": "Reject the module if the new descriptor cannot distinguish existing behavior profiles or if its counterexamples duplicate the same ranking signature.",
+      "expected_effect": "More informative feedback and safer order-generalization diagnosis; no quality-improvement claim is implied."
+    },
+    {
+      "mechanism_id": "class_conditioned_residual_reservation_v1",
+      "origin": "external_teacher",
+      "source_id": "balogh_bekesi_dosa_epstein_levin_2017_advanced_harmonic",
+      "priority": 2,
+      "classification": "requires_normalized_adapter_extension",
+      "hypothesis": "A score family that conditions on normalized current-item class and residual-capacity class can preserve complementary residual space under adversarial order better than an unstructured scalar score.",
+      "integration": {
+        "module": "BP_problem_adapter_and_optional_strategy_card",
+        "required_contract": "score(item_ratio, feasible_remaining_ratio, context) or a class-policy equivalent with explicit capacity.",
+        "current_blocker": "The current score(item, bins) contract cannot reliably normalize by original capacity after all bins have been used.",
+        "safe_fallback": "Keep the current stateless score contract and store the mechanism only as an external_teacher strategy card."
+      },
+      "minimum_future_validation": "First freeze the normalized adapter contract and a non-LLM static interface review; only then decide whether a new cohort is warranted.",
+      "exit_condition": "Reject if implementation needs hard-coded capacity constants, future-item access, or problem-specific state that cannot be represented in a portable adapter.",
+      "expected_effect": "Potentially reduces destructive use of residual capacities; this is a hypothesis, not an imported Advanced Harmonic implementation."
+    },
+    {
+      "mechanism_id": "confidence_gated_prefix_profile_v1",
+      "origin": "external_teacher",
+      "source_id": "angelopoulos_kamali_shadkami_2022_predictions",
+      "priority": 3,
+      "classification": "requires_stateful_adapter_and_memory_contract",
+      "hypothesis": "A policy may use only prefix-observed size frequencies plus a provenance-tagged memory prior when confidence is high, and must fall back to a stateless score when drift is high.",
+      "integration": {
+        "module": "stateful_BP_adapter_RAG_memory_and_FME_controller",
+        "required_contract": "OnlinePackingPolicy.score(...) plus observe(pre_item_state, post_item_state), with a serialized prediction_error and confidence field.",
+        "memory_rule": "Any prior frequency profile is a dev-only strategy asset with source and applicability metadata, never a held-out-derived value.",
+        "controller_rule": "Low confidence suppresses prediction-guided transfer and records a repair or counterexample action."
+      },
+      "minimum_future_validation": "Freeze a no-lookahead adapter contract and demonstrate that all predictor inputs are available before the current placement; do not use a future frequency oracle.",
+      "exit_condition": "Reject if any feature requires future sequence information, if confidence cannot be logged and replayed, or if the module cannot fall back to the stateless baseline.",
+      "expected_effect": "A high-upside RAG/feedback mechanism for nonstationary order regimes, with no inherited theoretical guarantee for this empirical adaptation."
+    }
+  ],
+  "decision": {
+    "selected_next_module": "order_regime_feedback_v1",
+    "reason": "It is the only mapped mechanism that improves the existing feedback loop without changing the candidate API, using held-out data, or requiring a new LLM budget.",
+    "deferred_modules": [
+      "class_conditioned_residual_reservation_v1",
+      "confidence_gated_prefix_profile_v1"
+    ],
+    "deferred_reason": "Both require a new normalized or stateful problem-adapter contract and therefore must not be silently mixed into the already frozen FME v2 proposal."
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_022207-code_implementation-bp_fme_v2_offline.agent.json",
+      "sha256": "f614124f1dc361bdc194023384b0d9e151c71b559512353a5bf9f3e407f245eb"
+    },
+    {
+      "path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+      "sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5"
+    },
+    {
+      "path": "eoh_rag/fme/controller.py",
+      "sha256": "bfd1998d0064ac88184b5ef64cf8bb311ed849f26fabb607344dac07f48b22e2"
+    },
+    {
+      "path": "official_eoh/eoh/src/eoh/eoh/evolution.py",
+      "sha256": "262e7d4b92ec26df2feb539f8e3915859924b80affce0dcf74416b9674319e0c"
+    }
+  ],
+  "constraints": {
+    "additional_llm_runs_scheduled": 0,
+    "api_called_in_this_tick": false,
+    "tests_executed": false,
+    "test_tier": "skipped_by_project_testing_policy",
+    "new_external_code_imported": false,
+    "existing_fme_v2_manifest_modified": false,
+    "heldout_observed_in_this_tick": false,
+    "formal_quality_claim_allowed": false
+  },
+  "next_action": "freeze_an_optional_order_regime_feedback_v1_adapter_contract_without_modifying_or_launching_the_unapproved_fme_v2_cohort"
+}
