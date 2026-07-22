@@ -1,0 +1,81 @@
+{
+  "schema_version": "agent_ad_result_analysis/v1",
+  "document_id": "agent_ad:2026-07-23:bp-fme-pilot-result-v1",
+  "audience": "agent",
+  "created_at": "2026-07-23T02:07:51+08:00",
+  "phase_id": "result_analysis",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "16d1bd319c8ddd23200e44268f54c1b9a5b531eb",
+  "status": "mechanism_only_tentative",
+  "formal_execution_actor": "research_agent",
+  "manifest": {
+    "path": "eoh_rag_workspace/experiments/manifests/bp_falsifiable_mechanism_ecology_creation_pilot_v1.json",
+    "sha256": "4f9002792e87025237c340ae3f62a0f253c5f280de518837e6832c8ad981755d"
+  },
+  "execution": {
+    "completed_runs": 6,
+    "paired_seeds": 3,
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "infrastructure_failure": "fme_child_process_missing_repository_root_on_sys_path",
+    "infrastructure_fix_commit": "16d1bd3",
+    "resume_policy": "same_failed_coordinates_only",
+    "control_coordinates_repeated": false
+  },
+  "gate_result": {
+    "decision": "mechanism_only",
+    "directional_pairs": 0,
+    "paired_seed_count": 3,
+    "median_relative_worst_gap_reduction_pct": 0.0,
+    "stratified_bootstrap_mean_difference_95pct": [0.0, 0.0],
+    "quality_gate": false,
+    "mechanism_gate": true,
+    "new_behavior_profile_count": 14,
+    "supported_development_only_claim_count": 3,
+    "admitted_counterexample_count": 4
+  },
+  "paired_worst_heldout_gap_pct": [
+    {"seed": 23001, "control": 14.285714, "fme": 14.285714},
+    {"seed": 23002, "control": 14.285714, "fme": 14.285714},
+    {"seed": 23003, "control": 14.285714, "fme": 14.285714}
+  ],
+  "offline_causal_analysis": {
+    "control_valid_generated_candidates": 44,
+    "control_submitted_candidates": 60,
+    "fme_valid_generated_candidates": 14,
+    "fme_submitted_candidates": 60,
+    "fme_transfer_operator_slots_e2_plus_m2": 48,
+    "fme_repair_operator_slots_m1": 0,
+    "failure_mode": "transfer_action_collapse_and_generation_validity_loss",
+    "final_code_hashes_distinct": true,
+    "heldout_outcomes_identical_across_all_six_final_candidates": true,
+    "unmodeled_behavior_axis": "online_item_order_sensitivity",
+    "order_perturbation_observation": {
+      "ascending_instance_gap_pct_range": [27.473583, 28.393285],
+      "descending_instance_gap_pct_range": [0.434783, 1.056676]
+    }
+  },
+  "evidence_refs": [
+    {
+      "path": "eoh_rag_workspace/reports/auto_experiment_reports/bp_falsifiable_mechanism_ecology_creation_pilot_v1/run_index.json",
+      "sha256": "fafabc67a88701fcd3c599e2b5003ae3e9396c3f5f7eb89cd417016853aefa54"
+    },
+    {
+      "path": "eoh_rag_workspace/reports/auto_experiment_reports/bp_falsifiable_mechanism_ecology_creation_pilot_v1/fme_gate_analysis.json",
+      "sha256": "291b01dfd692f12842925a953ec1c700e6c1b55e3cf5b1d61cfff757b841a379"
+    }
+  ],
+  "constraints": {
+    "claim_level": "tentative_mechanism_evidence_only",
+    "quality_improvement_claim_allowed": false,
+    "originality_claim_allowed": false,
+    "current_heldout_consumed": true,
+    "reuse_current_heldout_as_unseen": false,
+    "additional_llm_runs_scheduled": 0,
+    "secret_persisted": false,
+    "test_tier": "static_inspection_only_no_test_suite"
+  },
+  "next_action": "redesign_the_fme_action_policy_to_prevent_transfer_collapse_and_add_order_sensitive_development_descriptors_then_prepare_a_new_clean_heldout_proposal_without_launching_it"
+}
