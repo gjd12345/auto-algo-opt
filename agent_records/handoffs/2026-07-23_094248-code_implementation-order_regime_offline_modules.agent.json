@@ -1,0 +1,102 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-offline-integration-modules",
+  "audience": "agent",
+  "created_at": "2026-07-23T09:42:48+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "2234ed9",
+  "status": "offline_modules_implemented_static_acceptance_passed_unintegrated",
+  "implementation": {
+    "files": [
+      {
+        "path": "eoh_rag/fme/order_regime_integration.py",
+        "sha256": "46f0fba9c8e7bf6c54138303bf936bf565efaabcc05c4dd488a1211b8b1362c1",
+        "module": "OrderRegimeDiagnosticCoordinator",
+        "interface": "diagnose(FrozenCandidateCheckpoint, OrderRegimeDiagnosticPolicy) -> OrderRegimeDiagnosticOutcome",
+        "default_enabled": false,
+        "side_effect_scope": "injected in-memory cache only when enabled"
+      },
+      {
+        "path": "eoh_rag/fme/order_regime_memory.py",
+        "sha256": "6e49a16d24b5351bfc64e576f8d726c8ac51a0e52ec190e37512c75d60047fdd",
+        "module": "OrderRegimeEvidenceProjector",
+        "interface": "project(OrderRegimeDiagnosticOutcome) -> OrderRegimeEvidenceProjection",
+        "side_effect_scope": "none"
+      }
+    ],
+    "implemented_invariants": [
+      "disabled policy returns before checkpoint, cache, or evaluator access",
+      "enabled v1 policy values cannot tune frozen candidate counts, threshold, profile size, or retries",
+      "2-4 feasible unique frozen candidates are sorted by code hash",
+      "full symmetric item-placement budget is checked before cache or evaluator access",
+      "complete and failed exact-key diagnostics are cached in memory and reused without retry",
+      "every cache miss is attempted once even after another coordinate fails",
+      "ranking flips are computed by one checkpoint-owned OrderRegimeRankingTracker",
+      "scientific outcome identity excludes runtime and cache hit/miss but includes coordinate failures",
+      "projection preserves source_actor and labels created memory as development_diagnostic_only",
+      "failed coordinates never create archive candidates, memories, or prompt summaries",
+      "prompt summaries are fixed-template, bounded, metadata-only records"
+    ],
+    "necessary_contract_clarification": "OrderRegimeCandidateDiagnostic carries source_actor copied by the coordinator from FrozenDiagnosticCandidate. This is required for the one-argument projector Interface to preserve historical_eoh versus research_agent attribution without reading external state."
+  },
+  "static_acceptance": {
+    "python_ast_parse": "pass",
+    "disabled_first_return_branch": "pass",
+    "forbidden_import_and_side_effect_call_scan": "pass",
+    "concrete_secret_shape_scan": "pass",
+    "concrete_absolute_path_scan": "pass",
+    "forbidden_dependency_scan": "pass",
+    "git_diff_check": "pass",
+    "fme_v2_anchor_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "fme_v2_anchor_check": "pass",
+    "initial_scan_false_positives": [
+      "The first scanner treated an Interface method named compile as Python's compile builtin.",
+      "The first two path scans treated the security regex pattern itself as a concrete home path.",
+      "The final AST parent-aware scanner excluded regex pattern constants and explicitly checked the Python exit code."
+    ]
+  },
+  "unchanged_paths": [
+    "all existing Python files",
+    "runner and manifest paths",
+    "FME controller, recorder, archives, and __init__",
+    "generic RAG and memory paths",
+    "official_eoh",
+    "FME v2 proposal and all cohort state"
+  ],
+  "suggested_tests_not_run": [
+    "disabled policy causes zero evaluator and cache calls",
+    "insufficient budget skips before dependency access",
+    "complete two-candidate checkpoint has deterministic outcome and projection hashes",
+    "one evaluator failure preserves all remaining coordinates and returns inconclusive",
+    "failed cache entry is reused without retry",
+    "malformed cache, candidate, summary, scope, or identity raises a stable contract error",
+    "projection contains no raw code, item sequence, held-out value, path, provider field, or secret"
+  ],
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_092311-code_implementation-order_regime_minimal_card.agent.json",
+      "purpose": "frozen implementation card"
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_feedback.py",
+      "sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+      "purpose": "unchanged compiler and ranking tracker"
+    }
+  ],
+  "constraints": {
+    "tests_executed": false,
+    "test_tier": "skipped_by_project_testing_policy_and_implementation_card",
+    "type_check_or_build_executed": false,
+    "module_imported_or_executed": false,
+    "candidate_evaluations": 0,
+    "api_or_llm_called": false,
+    "held_out_observed": false,
+    "runner_manifest_recorder_rag_or_fme_v2_modified": false,
+    "cohort_created_or_launched": false,
+    "raw_responses_logs_items_code_or_secrets_persisted": false
+  },
+  "next_action": "perform_a_read_only_code_and_contract_review_of_only_the_two_new_modules_against_the_frozen_card_without_importing_or_testing_them"
+}
