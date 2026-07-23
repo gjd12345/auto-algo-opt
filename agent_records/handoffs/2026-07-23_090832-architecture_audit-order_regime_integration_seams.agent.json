@@ -1,0 +1,223 @@
+{
+  "schema_version": "agent_ad_static_integration_audit/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-integration-seams-audit",
+  "audience": "agent",
+  "created_at": "2026-07-23T09:08:32+08:00",
+  "phase_id": "architecture_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "08099d1",
+  "status": "static_audit_complete_minimal_seams_named_unimplemented",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ2_rag_adds_value_on_top_of_feedback",
+      "RQ3_memory_reuse_and_cross_distribution_generalization"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "memory_reuse",
+      "evaluation_cost",
+      "evidence_integrity"
+    ]
+  },
+  "audit_scope": {
+    "configuration": [
+      "eoh_rag/experiments/run_spec.py",
+      "eoh_rag/experiments/batch_runner.py",
+      "eoh_rag/experiments/eoh_single_runner.py"
+    ],
+    "controller": [
+      "eoh_rag/fme/controller.py"
+    ],
+    "recorder": [
+      "eoh_rag/fme/recorder.py",
+      "eoh_rag/fme/archives.py",
+      "eoh_rag/experiments/research_contracts.py"
+    ],
+    "memory_and_rag": [
+      "eoh_rag/experiments/feedback_memory.py",
+      "eoh_rag/experiments/rag_context_builder.py",
+      "eoh_rag/rag/schemas.py",
+      "eoh_rag/rag/retriever.py",
+      "eoh_rag/rag/prompt_context.py"
+    ]
+  },
+  "existing_reusable_interfaces": [
+    {
+      "module": "OrderRegimeFeedbackAdapter",
+      "interface": "compile(observations) -> OrderFeedbackSummary",
+      "reuse": "Keep unchanged as the per-candidate pure compiler."
+    },
+    {
+      "module": "OrderRegimeRankingTracker",
+      "interface": "record(summary) -> ranking_flip_records",
+      "reuse": "Instantiate inside one checkpoint coordinator; do not make recorder callers manage it."
+    },
+    {
+      "module": "FMEController",
+      "interface": "choose_action(FMEControllerState) -> FMEActionDecision",
+      "reuse": "Consume only a completed diagnostic outcome projected to pending_counterexample_comparisons; do not add candidate evaluation or cache logic to the controller."
+    },
+    {
+      "module": "FMEArchives",
+      "interface": "admit_counterexample(artifact, evidence) -> ArchiveAdmission",
+      "reuse": "Use unchanged behind an evidence Adapter after a complete symmetric checkpoint."
+    },
+    {
+      "module": "RagContextBuilder",
+      "interface": "build_rag_context(project_root, request) -> context_and_trace",
+      "reuse": "Continue consuming CorpusItem only after scoped behavior memory has passed its own retrieval gate."
+    },
+    {
+      "module": "PromptContext",
+      "interface": "format_prompt_context_with_audit(items, max_chars, global_items) -> context_and_audit",
+      "reuse": "Reuse character budgeting and injection audit; do not teach it order-regime semantics."
+    }
+  ],
+  "gaps": [
+    {
+      "priority": "P0",
+      "id": "missing_symmetric_checkpoint_interface",
+      "evidence": "FMEPilotEvidenceRecorder.record_candidate is called one candidate at a time and immediately mutates archives and local score maps.",
+      "risk": "It cannot prove that all 2-4 frozen candidates were evaluated under one profile, budget reservation, and implementation hash set.",
+      "resolution_seam": "OrderRegimeDiagnosticCoordinator"
+    },
+    {
+      "priority": "P0",
+      "id": "missing_disabled_typed_policy",
+      "evidence": "Current manifest-to-runner configuration is a set of flat feedback-policy and training-profile strings; RunSpec carries no optional diagnostic policy.",
+      "risk": "Adding another feedback-policy string would couple activation, profile choice, budget, and evidence projection across batch_runner and eoh_single_runner.",
+      "resolution_seam": "OrderRegimeDiagnosticPolicy parsed as one immutable record with enabled=false default"
+    },
+    {
+      "priority": "P0",
+      "id": "memory_contract_lacks_scope_and_evidence",
+      "evidence": "CorpusItem contains generic text fields but no actor, evidence_level, applicability_scope, evidence hash, or content hash.",
+      "risk": "Writing the diagnostic directly as a CorpusItem would make scope enforcement depend on prose and allow development evidence to be retrieved as general quality knowledge.",
+      "resolution_seam": "ScopedBehaviorMemory plus a gated CorpusItem Adapter"
+    },
+    {
+      "priority": "P1",
+      "id": "controller_state_is_aggregate_only",
+      "evidence": "FMEControllerState has pending_counterexample_comparisons but no candidate set, trigger reason, cache key, or reserved diagnostic budget.",
+      "risk": "Putting those fields into FMEControllerState would widen the controller Interface with problem-specific detail.",
+      "resolution_seam": "Project only completed outcome counts into existing state; keep trigger data inside the coordinator."
+    },
+    {
+      "priority": "P1",
+      "id": "prompt_formatter_should_remain_semantics_free",
+      "evidence": "PromptContext already renders generic CorpusItem records and audits character use.",
+      "risk": "Adding order-regime branches would create a shallow pass-through and spread semantics into presentation code.",
+      "resolution_seam": "Build a bounded memory summary before converting to CorpusItem."
+    }
+  ],
+  "minimal_future_modules": [
+    {
+      "path": "eoh_rag/fme/order_regime_integration.py",
+      "module": "OrderRegimeDiagnosticCoordinator",
+      "interface": "diagnose(checkpoint: FrozenCandidateCheckpoint, policy: OrderRegimeDiagnosticPolicy, evaluator: OrderRegimeEvaluator) -> OrderRegimeDiagnosticOutcome",
+      "depth": "Hide activation, 2-4 candidate validation, near-tie reason validation, symmetric budget reservation, exact cache keys, evaluation ordering, failure retention, summary compilation, ranking tracking, and outcome hashing.",
+      "dependency_category": "local_substitutable",
+      "adapter_rule": "The existing BP development evaluator is the production Adapter; a deterministic in-memory evaluator is the future verification Adapter, making this a real seam.",
+      "default_behavior": "OrderRegimeDiagnosticPolicy.enabled=false returns a skipped outcome without constructing the evaluator."
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_memory.py",
+      "module": "OrderRegimeEvidenceProjector",
+      "interface": "project(outcome: OrderRegimeDiagnosticOutcome) -> OrderRegimeEvidenceProjection",
+      "depth": "Hide archive artifacts, DecisionRecord inputs, typed scoped memories, deduplication hashes, bounded prompt summaries, and provenance fields behind one pure projection.",
+      "dependency_category": "in_process",
+      "adapter_rule": "Persistence adapters consume the projection; the Module itself performs no file I/O."
+    }
+  ],
+  "minimal_existing_file_touches_for_a_future_milestone": [
+    {
+      "path": "eoh_rag/fme/__init__.py",
+      "change": "Export the two new Module interfaces only."
+    },
+    {
+      "path": "eoh_rag/experiments/research_contracts.py",
+      "change": "Add immutable checkpoint, outcome, and scoped-memory records only if keeping them in the shared contract package reduces duplicate serialization."
+    }
+  ],
+  "deferred_until_a_separately_frozen_runnable_manifest": [
+    {
+      "path": "eoh_rag/experiments/run_spec.py",
+      "reason": "No runnable manifest is authorized; parsing activation now would create a launch surface."
+    },
+    {
+      "path": "eoh_rag/experiments/batch_runner.py",
+      "reason": "Do not add CLI forwarding or another evolution_feedback_policy value."
+    },
+    {
+      "path": "eoh_rag/experiments/eoh_single_runner.py",
+      "reason": "Do not wire profile construction or candidate evaluation before a separate launch contract."
+    },
+    {
+      "path": "eoh_rag/fme/recorder.py",
+      "reason": "Do not add checkpoint orchestration to the per-candidate recorder; a future persistence Adapter may consume the pure projection."
+    },
+    {
+      "path": "eoh_rag/experiments/rag_context_builder.py",
+      "reason": "Do not load scoped memories through generic extra_corpus_paths until the applicability gate is implemented."
+    },
+    {
+      "path": "eoh_rag/rag/schemas.py",
+      "reason": "Do not widen every CorpusItem caller with order-specific evidence fields; use a typed domain record and gated Adapter."
+    }
+  ],
+  "couplings_to_avoid": [
+    "Do not encode activation as a new evolution_feedback_policy string.",
+    "Do not let batch_runner calculate near ties, candidate-set hashes, or diagnostic budgets.",
+    "Do not let FMEController evaluate candidates, construct BP profiles, or own cache entries.",
+    "Do not call OrderRegimeRankingTracker from multiple recorder calls without an explicit checkpoint owner.",
+    "Do not add order-regime branches to PromptContext or the generic keyword retriever.",
+    "Do not serialize scoped behavior memory directly as a generic CorpusItem before applicability and evidence gates pass.",
+    "Do not reuse the FME v2 manifest, profile, recorder state, result directories, or held-out coordinates."
+  ],
+  "deletion_test": {
+    "coordinator": "Deleting it would redistribute trigger, budget, cache, symmetry, failure, and ranking logic across at least runner, controller, and recorder, so the Module earns its seam.",
+    "projector": "Deleting it would duplicate provenance, scope, hashing, archive, prompt, and memory projection rules across persistence and RAG callers, so the Module earns its seam."
+  },
+  "fme_v2_isolation": {
+    "anchor_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "anchor_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "modified": false,
+    "cohort_started": false
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_085242-architecture_design-order_regime_optional_integration.agent.json",
+      "purpose": "frozen optional integration proposal"
+    },
+    {
+      "path": "eoh_rag/fme/controller.py",
+      "purpose": "existing aggregate controller Interface"
+    },
+    {
+      "path": "eoh_rag/fme/recorder.py",
+      "purpose": "existing per-candidate evidence recorder"
+    },
+    {
+      "path": "eoh_rag/experiments/rag_context_builder.py",
+      "purpose": "existing generic RAG Interface and extra-corpus path"
+    },
+    {
+      "path": "eoh_rag/rag/schemas.py",
+      "purpose": "existing generic CorpusItem contract"
+    }
+  ],
+  "constraints": {
+    "static_inspection_only": true,
+    "code_or_manifest_modified": false,
+    "tests_executed": false,
+    "api_or_llm_called": false,
+    "candidate_evaluations": 0,
+    "held_out_observed": false,
+    "cohort_created_or_launched": false,
+    "raw_responses_logs_items_code_or_secrets_persisted": false
+  },
+  "next_action": "freeze_a_code_implementation_card_for_only_the_two_new_disabled_by_default_modules_and_shared_immutable_records_without_touching_runner_manifest_recorder_or_fme_v2"
+}
