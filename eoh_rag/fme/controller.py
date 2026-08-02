@@ -58,6 +58,11 @@ class FMEController:
         FMEAction.STOP_BRANCH: (),
     }
 
+    def __init__(self, profile: str = "depth_first_core") -> None:
+        if profile not in {"depth_first_core", "legacy_stacked"}:
+            raise ValueError(f"unsupported_fme_controller_profile:{profile}")
+        self.profile = profile
+
     def choose_action(self, state: FMEControllerState) -> FMEActionDecision:
         """返回唯一最高分动作；同分时按固定动作顺序消除运行时随机性。"""
         if state.remaining_evaluation_budget <= 0:
@@ -125,7 +130,7 @@ class FMEController:
         else:
             invent_gain = max(0.2, 0.7 - 0.08 * state.stalled_ticks)
             invent_reason = "seek_new_behavior_cell"
-            if transfer_is_cooling_down:
+            if self.profile == "legacy_stacked" and transfer_is_cooling_down:
                 # 首轮 pilot 连续把 48/60 槽位交给 e2+m2。一次迁移后强制回到
                 # 创造或修复，让“已有支持主张”不能永久压制新行为单元。
                 invent_gain = max(invent_gain, 0.95)
@@ -156,7 +161,18 @@ class FMEController:
                     "resolve_pending_algorithm_ranking",
                 )
             )
-        if generation_is_unstable:
+        if self.profile == "depth_first_core" and state.weakened_claim_count > 0:
+            # 深度优先主线必须让已接纳反例直接改变下一生成动作，不能被历史阶段的
+            # 失败率稳定化或迁移冷却规则遮蔽。
+            candidates.append(
+                (
+                    FMEAction.REPAIR_FAILED_MECHANISM,
+                    1.35,
+                    1.0,
+                    "repair_a_mechanism_broken_by_recorded_counterexample",
+                )
+            )
+        elif generation_is_unstable:
             # 空输出或不可执行代码没有机制主张可供“weakened”计数；因此生成可靠性
             # 必须成为独立修复信号，否则控制器会在失败后继续重复迁移算子。
             candidates.append(
@@ -186,7 +202,8 @@ class FMEController:
                 )
             )
         if (
-            state.transferable_claim_count > 0
+            self.profile == "legacy_stacked"
+            and state.transferable_claim_count > 0
             and state.supported_claim_count > 0
             and not transfer_is_cooling_down
             and not generation_is_unstable

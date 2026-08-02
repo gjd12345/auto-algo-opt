@@ -17,6 +17,10 @@ from eoh_rag.experiments.research_contracts import (
     canonical_json_sha256,
 )
 from eoh_rag.fme.archives import CounterexampleAdmissionEvidence, FMEArchives
+from eoh_rag.fme.challenge_evidence import (
+    ActionReceipt,
+    FMEChallengeEvidenceCompiler,
+)
 from eoh_rag.utils.file_lock import exclusive_lock
 
 
@@ -27,8 +31,16 @@ class FMEPilotEvidenceRecorder:
     机制状态迁移及追加式落盘，避免实验入口重复实现证据规则。
     """
 
-    def __init__(self, output_dir: str | Path) -> None:
+    def __init__(
+        self,
+        output_dir: str | Path,
+        problem: str = "bp_online",
+    ) -> None:
         self.output_dir = Path(output_dir)
+        self.problem = str(problem).strip()
+        if not self.problem:
+            raise ValueError("missing_problem")
+        self._challenge_evidence = FMEChallengeEvidenceCompiler(self.problem)
         self.archives = FMEArchives(self.output_dir / "archives")
         self._lock = threading.Lock()
         self._candidate_objectives: dict[str, float] = {}
@@ -46,6 +58,48 @@ class FMEPilotEvidenceRecorder:
                 stream.write(
                     json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
                 )
+
+    def record_action_receipt(
+        self,
+        *,
+        attempt_id: str,
+        generation: int,
+        action_decision: dict[str, Any],
+        parent_candidate_ids: tuple[str, ...],
+    ) -> ActionReceipt:
+        """在候选生成前记录控制器动作，不写入 prompt、代码或模型响应。"""
+        with self._lock:
+            receipt = self._challenge_evidence.compile_action(
+                attempt_id=attempt_id,
+                generation=generation,
+                action_decision=action_decision,
+                parent_candidate_ids=parent_candidate_ids,
+            )
+            self._append_jsonl("action_receipts.jsonl", receipt.to_dict())
+            return receipt
+
+    def record_outcome_receipt(
+        self,
+        *,
+        action_receipt: ActionReceipt,
+        candidate_id: str | None,
+        outcome: str,
+        failure_type: str | None,
+    ) -> None:
+        """把一次动作绑定到唯一终态，失败坐标同样保留。"""
+        with self._lock:
+            receipt = self._challenge_evidence.compile_outcome(
+                action_receipt=action_receipt,
+                candidate_id=candidate_id,
+                outcome=outcome,
+                failure_type=failure_type,
+            )
+            self._append_jsonl("outcome_receipts.jsonl", receipt.to_dict())
+
+    def archive_snapshot(self) -> dict[str, Any]:
+        """返回一次一致的三档案快照，供控制器构造开发域状态。"""
+        with self._lock:
+            return self.archives.snapshot()
 
     def record_candidate(
         self,
@@ -74,7 +128,7 @@ class FMEPilotEvidenceRecorder:
             )
             candidate = CandidateArtifact(
                 candidate_id=candidate_id,
-                problem="bp_online",
+                problem=self.problem,
                 origin="research_agent",
                 generator=(
                     "eoh_fme_generation_adapter_v2"
@@ -154,14 +208,14 @@ class FMEPilotEvidenceRecorder:
             claim = MechanismClaim.create(
                 claim_id=claim_id,
                 claim=claim_text or "candidate mechanism description unavailable",
-                source_problem="bp_online",
+                source_problem=self.problem,
                 supporting_case_ids=tuple(sorted(raw_gaps)),
                 counterexample_ids=tuple(
                     feedback.get("distinguishing_counterexample_ids") or ()
                 ),
                 linked_candidate_ids=(candidate_id,),
                 linked_diff_hashes=(diff_hash,),
-                applicability="bp_online development distributions",
+                applicability=f"{self.problem} development observations",
                 evidence_level="development_only",
                 actor="research_agent",
                 cheapest_next_falsification=(
@@ -239,7 +293,7 @@ class FMEPilotEvidenceRecorder:
                 continue
             artifact = CounterexampleArtifact(
                 counterexample_id=str(counterexample_id),
-                problem="bp_online",
+                problem=self.problem,
                 source_distribution=str(metadata["source_distribution"]),
                 feature_region=str(metadata["feature_region"]),
                 instance_hash=str(metadata["instance_hash"]),

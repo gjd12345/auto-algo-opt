@@ -73,6 +73,8 @@ class EoH:
         adaptive_stop: bool = False,
         stop_window: int = 5,
         stop_min_gap: float = 0.0,
+        problem_id: str = "unknown_problem",
+        fme_controller_profile: str = "depth_first_core",
     ):
         # num_samplers / num_evaluators are the direct concurrency controls for
         # EoH — they are NOT read from the problem or the LLM config. -1 → all
@@ -109,6 +111,8 @@ class EoH:
             operator_weights=operator_weights,
             n_parents=n_parents,
             feedback_policy=feedback_policy,
+            problem_id=problem_id,
+            fme_controller_profile=fme_controller_profile,
             num_samplers=num_samplers,
             num_evaluators=num_evaluators,
             max_sample_nums=max_sample_nums,

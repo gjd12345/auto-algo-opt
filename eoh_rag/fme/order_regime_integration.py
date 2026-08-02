@@ -14,16 +14,74 @@ from typing import Any, MutableMapping, Protocol
 
 from eoh_rag.fme.order_regime_feedback import (
     DEVELOPMENT_SUITE,
+    ORDER_VARIANTS,
     OrderFeedbackSummary,
     OrderRegimeRankingTracker,
+    REGIME_IDS,
 )
 
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_COUNTEREXAMPLE_ID_RE = re.compile(
+    r"^bp-dev-order-regime-v1-(?:small_dominant|mixed|large_dominant)-"
+    r"(?:0|1)-(?:random|alternating_extremes|pair)$"
+)
+_FORBIDDEN_EVIDENCE_TEXT = re.compile(
+    r"(?:sk-[A-Za-z0-9_-]{12,}|https?://|[A-Za-z]:\\|/Users/|/home/)",
+    re.IGNORECASE,
+)
 _TRIGGER_REASONS = {
     "aggregate_near_tie",
     "suspected_order_fragility",
     "pending_counterexample_comparison",
+}
+_PAIR_KEYS = tuple(
+    f"{regime_id}:{multiset_id}"
+    for regime_id in REGIME_IDS
+    for multiset_id in ("0", "1")
+)
+_SUMMARY_FIELDS = {
+    "candidate_id",
+    "per_regime_relative_gap_pct",
+    "per_order_variant_relative_gap",
+    "pair_order_variant_gap_pct",
+    "pair_order_sensitivity_pct",
+    "large_item_order_sensitivity_pct",
+    "order_sensitivity_pct",
+    "worst_regime",
+    "worst_pair",
+    "feature_sensitivity",
+    "distinguishing_counterexample_ids",
+    "counterexample_gap_pct",
+    "counterexample_artifacts",
+    "behavior_profile_hash",
+    "ranking_flip_pairs",
+    "invalid_observation_ids",
+}
+_FEEDBACK_FIELDS = {
+    "schema_version",
+    "visible_scope",
+    "candidate_id",
+    "development_suite",
+    "scale_gap_pct",
+    "per_distribution_relative_gap",
+    "per_order_variant_relative_gap",
+    "pair_order_variant_gap_pct",
+    "pair_order_sensitivity_pct",
+    "large_item_order_sensitivity_pct",
+    "order_sensitivity_pct",
+    "worst_scale",
+    "worst_distribution",
+    "worst_gap_pct",
+    "worst_pair",
+    "feature_sensitivity",
+    "distinguishing_counterexample_ids",
+    "counterexample_gap_pct",
+    "counterexample_artifacts",
+    "behavior_profile_hash",
+    "behavior_profile_version",
+    "ranking_flip_pairs",
+    "invalid_observation_ids",
 }
 _POLICY_V1 = {
     "near_tie_threshold": 0.01,
@@ -44,6 +102,126 @@ def _canonical_sha256(payload: Any) -> str:
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
+
+
+def _require_finite_float(value: Any, error_code: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise OrderRegimeContractError(error_code)
+    if not math.isfinite(float(value)):
+        raise OrderRegimeContractError(error_code)
+
+
+def _require_safe_text(value: Any, error_code: str) -> str:
+    if not isinstance(value, str) or not value or _FORBIDDEN_EVIDENCE_TEXT.search(value):
+        raise OrderRegimeContractError(error_code)
+    return value
+
+
+def _validate_counterexample_id(counterexample_id: Any, error_code: str) -> str:
+    value = _require_safe_text(counterexample_id, error_code)
+    if _COUNTEREXAMPLE_ID_RE.fullmatch(value) is None:
+        raise OrderRegimeContractError(error_code)
+    return value
+
+
+def _complete_summary_evidence_sha256(
+    summary: OrderFeedbackSummary,
+    candidate_id: str,
+) -> str:
+    """验证闭合摘要 schema，并为任何可投影完整证据生成规范身份。"""
+    if set(summary.__dict__) != _SUMMARY_FIELDS:
+        raise OrderRegimeContractError("summary_fields_invalid")
+    if summary.candidate_id != candidate_id or _SHA256_RE.fullmatch(candidate_id) is None:
+        raise OrderRegimeContractError("summary_candidate_mismatch")
+    if set(summary.per_regime_relative_gap_pct) != set(REGIME_IDS):
+        raise OrderRegimeContractError("summary_regime_keys_invalid")
+    if set(summary.per_order_variant_relative_gap) != set(ORDER_VARIANTS):
+        raise OrderRegimeContractError("summary_order_variant_keys_invalid")
+    if set(summary.pair_order_variant_gap_pct) != set(_PAIR_KEYS):
+        raise OrderRegimeContractError("summary_pair_variant_keys_invalid")
+    if set(summary.pair_order_sensitivity_pct) != set(_PAIR_KEYS):
+        raise OrderRegimeContractError("summary_pair_sensitivity_keys_invalid")
+    for value in summary.per_regime_relative_gap_pct.values():
+        _require_finite_float(value, "summary_regime_value_invalid")
+    for value in summary.per_order_variant_relative_gap.values():
+        _require_finite_float(value, "summary_order_variant_value_invalid")
+    for pair_key, variant_gaps in summary.pair_order_variant_gap_pct.items():
+        if pair_key not in _PAIR_KEYS or set(variant_gaps) != set(ORDER_VARIANTS):
+            raise OrderRegimeContractError("summary_pair_variant_shape_invalid")
+        for value in variant_gaps.values():
+            _require_finite_float(value, "summary_pair_variant_value_invalid")
+    for value in summary.pair_order_sensitivity_pct.values():
+        _require_finite_float(value, "summary_pair_sensitivity_value_invalid")
+    for value in (
+        summary.large_item_order_sensitivity_pct,
+        summary.order_sensitivity_pct,
+        summary.feature_sensitivity,
+    ):
+        _require_finite_float(value, "summary_scalar_invalid")
+    if summary.worst_regime not in REGIME_IDS or summary.worst_pair not in _PAIR_KEYS:
+        raise OrderRegimeContractError("summary_worst_key_invalid")
+    if _SHA256_RE.fullmatch(summary.behavior_profile_hash) is None:
+        raise OrderRegimeContractError("summary_behavior_hash_invalid")
+    if not isinstance(summary.distinguishing_counterexample_ids, tuple):
+        raise OrderRegimeContractError("summary_distinguishing_ids_invalid")
+    for counterexample_id in summary.distinguishing_counterexample_ids:
+        _validate_counterexample_id(counterexample_id, "summary_distinguishing_id_invalid")
+    for counterexample_id, gap in summary.counterexample_gap_pct.items():
+        _validate_counterexample_id(counterexample_id, "summary_counterexample_gap_key_invalid")
+        _require_finite_float(gap, "summary_counterexample_gap_invalid")
+    for counterexample_id, metadata in summary.counterexample_artifacts.items():
+        _validate_counterexample_id(counterexample_id, "summary_artifact_id_invalid")
+        if set(metadata) != {
+            "source_distribution",
+            "feature_region",
+            "instance_hash",
+            "instance_ref",
+            "generation_method",
+            "actor",
+            "visible_scope",
+        }:
+            raise OrderRegimeContractError("summary_artifact_fields_invalid")
+        if metadata["actor"] != "research_agent" or metadata["visible_scope"] != "dev_only":
+            raise OrderRegimeContractError("summary_artifact_scope_invalid")
+        if _SHA256_RE.fullmatch(metadata["instance_hash"]) is None:
+            raise OrderRegimeContractError("summary_artifact_hash_invalid")
+        for key, value in metadata.items():
+            _require_safe_text(value, f"summary_artifact_{key}_invalid")
+    if summary.invalid_observation_ids:
+        raise OrderRegimeContractError("summary_invalid_observations_present")
+    if not isinstance(summary.ranking_flip_pairs, tuple):
+        raise OrderRegimeContractError("summary_ranking_flips_invalid")
+    for ranking_flip in summary.ranking_flip_pairs:
+        if set(ranking_flip) != {"pair_key", "candidate_ids", "order_variants"}:
+            raise OrderRegimeContractError("summary_ranking_flip_fields_invalid")
+        if ranking_flip["pair_key"] not in _PAIR_KEYS:
+            raise OrderRegimeContractError("summary_ranking_flip_pair_invalid")
+        candidate_ids = ranking_flip["candidate_ids"]
+        if (
+            not isinstance(candidate_ids, list)
+            or len(candidate_ids) != 2
+            or candidate_ids != sorted(candidate_ids)
+            or any(_SHA256_RE.fullmatch(value) is None for value in candidate_ids)
+        ):
+            raise OrderRegimeContractError("summary_ranking_flip_candidates_invalid")
+        if ranking_flip["order_variants"] != list(ORDER_VARIANTS):
+            raise OrderRegimeContractError("summary_ranking_flip_variants_invalid")
+    feedback = summary.to_feedback()
+    if (
+        set(feedback) != _FEEDBACK_FIELDS
+        or feedback["schema_version"] != "bp_order_regime_feedback/v1"
+        or feedback["visible_scope"] != "dev_only"
+        or feedback["development_suite"] != DEVELOPMENT_SUITE
+        or feedback["candidate_id"] != candidate_id
+    ):
+        raise OrderRegimeContractError("summary_feedback_contract_invalid")
+    return _canonical_sha256(
+        {
+            "schema_version": "bp_order_regime_complete_summary_evidence/v1",
+            "summary": summary.__dict__,
+            "feedback": feedback,
+        }
+    )
 
 
 class OrderRegimeContractError(ValueError):
@@ -135,8 +313,11 @@ def _diagnostic_identity(diagnostic: OrderRegimeCandidateDiagnostic) -> dict[str
         "failure_type": diagnostic.failure_type,
         "failure_message_hash": diagnostic.failure_message_hash,
         "source_actor": diagnostic.source_actor,
-        "behavior_profile_hash": (
-            diagnostic.summary.behavior_profile_hash
+        "complete_summary_evidence_sha256": (
+            _complete_summary_evidence_sha256(
+                diagnostic.summary,
+                diagnostic.candidate_id,
+            )
             if diagnostic.summary is not None
             else None
         ),
@@ -350,9 +531,14 @@ class OrderRegimeDiagnosticCoordinator:
             if not candidate.primary_evaluation_hash or not candidate.source_actor:
                 raise OrderRegimeContractError("candidate_provenance_incomplete")
         if checkpoint.trigger_reason == "aggregate_near_tie":
-            best = min(item.primary_objective for item in candidates)
+            best_candidate = min(
+                candidates,
+                key=lambda item: (item.primary_objective, item.candidate_id),
+            )
             if not any(
-                0.0 < abs(item.primary_objective - best) <= policy.near_tie_threshold
+                item.candidate_id != best_candidate.candidate_id
+                and abs(item.primary_objective - best_candidate.primary_objective)
+                <= policy.near_tie_threshold
                 for item in candidates
             ):
                 raise OrderRegimeContractError("near_tie_not_demonstrated")
@@ -369,6 +555,7 @@ class OrderRegimeDiagnosticCoordinator:
                     {
                         "candidate_id": item.candidate_id,
                         "primary_evaluation_hash": item.primary_evaluation_hash,
+                        "source_actor": item.source_actor,
                     }
                     for item in candidates
                 ],
@@ -390,6 +577,7 @@ class OrderRegimeDiagnosticCoordinator:
                 "profile_spec_sha256": checkpoint.profile_spec_sha256,
                 "evaluator_sha256": checkpoint.evaluator_sha256,
                 "feedback_module_sha256": checkpoint.feedback_module_sha256,
+                "source_actor": candidate.source_actor,
             }
         )
 
@@ -404,6 +592,8 @@ class OrderRegimeDiagnosticCoordinator:
         prefix = "cache" if from_cache else "evaluator"
         if diagnostic.candidate_id != candidate.candidate_id or diagnostic.cache_key != cache_key:
             raise OrderRegimeContractError(f"{prefix}_coordinate_mismatch")
+        if from_cache and diagnostic.source_actor != candidate.source_actor:
+            raise OrderRegimeContractError("cache_source_actor_mismatch")
         if diagnostic.status not in {"complete", "failed"}:
             raise OrderRegimeContractError(f"{prefix}_status_invalid")
         if diagnostic.placements_attempted < 0 or not math.isfinite(diagnostic.runtime_seconds):
@@ -417,13 +607,15 @@ class OrderRegimeDiagnosticCoordinator:
                 raise OrderRegimeContractError(f"{prefix}_complete_cost_invalid")
             if diagnostic.summary.candidate_id != candidate.candidate_id:
                 raise OrderRegimeContractError(f"{prefix}_summary_candidate_mismatch")
-            feedback = diagnostic.summary.to_feedback()
-            if (
-                feedback.get("visible_scope") != "dev_only"
-                or feedback.get("development_suite") != DEVELOPMENT_SUITE
-            ):
-                raise OrderRegimeContractError(f"{prefix}_summary_scope_invalid")
-        elif diagnostic.summary is not None or not diagnostic.failure_type:
+            _complete_summary_evidence_sha256(
+                diagnostic.summary,
+                candidate.candidate_id,
+            )
+        elif (
+            diagnostic.summary is not None
+            or not diagnostic.failure_type
+            or _SHA256_RE.fullmatch(diagnostic.failure_message_hash or "") is None
+        ):
             raise OrderRegimeContractError(f"{prefix}_failed_shape_invalid")
 
     @staticmethod

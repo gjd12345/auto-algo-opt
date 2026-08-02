@@ -10,6 +10,7 @@ from typing import Any
 from eoh_rag.fme.order_regime_feedback import DEVELOPMENT_SUITE
 from eoh_rag.fme.order_regime_integration import (
     OrderRegimeCandidateDiagnostic,
+    OrderRegimeContractError,
     OrderRegimeDiagnosticOutcome,
     verify_outcome_identity,
 )
@@ -102,7 +103,13 @@ class OrderRegimeEvidenceProjector:
     ) -> OrderRegimeEvidenceProjection:
         if outcome.visible_scope != "dev_only":
             raise OrderRegimeProjectionError("outcome_scope_not_dev_only")
-        if not verify_outcome_identity(outcome):
+        try:
+            outcome_identity_valid = verify_outcome_identity(outcome)
+        except OrderRegimeContractError as exc:
+            raise OrderRegimeProjectionError(
+                f"outcome_evidence_contract_invalid:{exc.error_code}"
+            ) from exc
+        if not outcome_identity_valid:
             raise OrderRegimeProjectionError("outcome_hash_mismatch")
         if outcome.status == "skipped":
             return self._build_projection(outcome, (), (), (), ())

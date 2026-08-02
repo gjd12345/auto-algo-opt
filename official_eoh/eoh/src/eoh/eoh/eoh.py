@@ -132,9 +132,12 @@ class EOH:
             # FME 是外层科研控制模块；这里仅通过生成缝适配既有 EOH 五算子。
             from eoh_rag.fme.controller import FMEController
             from eoh_rag.fme.recorder import FMEPilotEvidenceRecorder
-            self._fme_controller = FMEController()
+            self._fme_controller = FMEController(
+                profile=config.fme_controller_profile
+            )
             self._fme_recorder = FMEPilotEvidenceRecorder(
-                os.path.join(self.output_path, "results", "fme_evidence")
+                os.path.join(self.output_path, "results", "fme_evidence"),
+                problem=config.problem_id,
             )
 
         # Spawn-based subprocess evaluation is set up once in the main thread so
@@ -432,6 +435,7 @@ class EOH:
             "action": decision.action.value,
             "reason": decision.reason,
             "score": decision.score,
+            "controller_profile": self._fme_controller.profile,
             "allowed_eoh_operators": list(decision.allowed_eoh_operators),
             "selected_operator": operator,
             "controller_state": {

@@ -1,0 +1,78 @@
+{
+  "schema_version": "agent_ad_d1_causal_chain_correction/v2",
+  "contract_id": "d1_core_causal_chain_correction_v2",
+  "created_at": "2026-07-30T09:00:00+08:00",
+  "status": "frozen_for_zero_api_implementation_and_replay",
+  "authority": "D1_v1_first_failure_exit_under_explicit_user_automatic_research_instruction",
+  "supersedes_execution_assumptions_in": "agent_records/contracts/d1_cvrp_connected_fme_episode_capture_v1.json",
+  "source_result": {
+    "analysis": "eoh_rag_workspace/reports/auto_experiment_reports/d1_cvrp_connected_fme_episode_capture_v1/d1_episode_capture_analysis_v1.json",
+    "sha256": "0b5355ffc03e7567e8f8ffd8ea73afa1901a25071341d4626815c44a85cc422b",
+    "disposition": "first_failure_exit_triggered_root_cause_analysis_required"
+  },
+  "scientific_hypothesis": "A domain-valid accepted counterexample affects the real FME controller only if it weakens an already-recorded claim linked to the degraded candidate and that canonical claim transition changes the next generation action.",
+  "confirmed_defects": [
+    {
+      "id": "D1-RC-01",
+      "finding": "EOH initialization sampled two times population size but the frozen budget counted only evolution samples.",
+      "correction": "Make initial_sample_nums explicit and validate the manifest remote-call lower bound before output creation."
+    },
+    {
+      "id": "D1-RC-02",
+      "finding": "Eight model-generated initialization candidates had no action or outcome receipt.",
+      "correction": "Receipt every initialization generation attempt and join successful candidate evidence to its action receipt."
+    },
+    {
+      "id": "D1-RC-03",
+      "finding": "Two domain-valid counterexamples were admitted but neither transitioned an existing claim.",
+      "correction": "On admission, transition eligible claims linked to degraded strong candidates using the counterexample constraint evidence hash."
+    },
+    {
+      "id": "D1-RC-04",
+      "finding": "The observed repair action was selected to stabilize generation failures, not because counterevidence weakened a claim.",
+      "correction": "Replay the same evidence with and without the accepted counterexample and require the recorded-counterexample repair reason only in the intervention state."
+    }
+  ],
+  "allowed_changes": [
+    "explicit initial_sample_nums configuration and CLI propagation",
+    "initialization action and outcome receipts",
+    "candidate-to-claim runtime index reconstructed from the canonical archive",
+    "counterexample-driven transition of an existing eligible claim",
+    "manifest remote-call lower-bound validation",
+    "zero-API deterministic D1 replay"
+  ],
+  "forbidden_changes": [
+    "new controller action",
+    "new prompt or generation policy",
+    "new model or provider",
+    "objective evaluator or selector change",
+    "counterexample admission threshold change",
+    "confirmation or heldout feedback into evolution",
+    "new API call before offline acceptance",
+    "rewrite of the D1 v1 contract manifest or reports"
+  ],
+  "remote_call_accounting": {
+    "batch_provider_preflight": 1,
+    "runner_connection_probe_per_coordinate": 1,
+    "generated_initialization_samples_per_coordinate": "initial_sample_nums unless frozen seeds are used",
+    "evolution_samples_per_coordinate": "generations times pop_size unless max_sample_nums is explicit",
+    "minimum_formula": "batch_preflight + coordinates * (runner_probe + initialization_generation + evolution_generation)",
+    "internal_provider_retries": "must be separately bounded and reported"
+  },
+  "zero_api_acceptance": [
+    "four initialization attempts produce four action receipts and four outcome receipts with no model call in the harness",
+    "successful initialization evidence receipts join to their action receipts",
+    "a second candidate admits a domain-valid counterexample that degrades the first candidate",
+    "the first candidate existing claim transitions from proposed to weakened",
+    "the next controller action is repair_failed_mechanism with reason repair_a_mechanism_broken_by_recorded_counterexample",
+    "removing the counterexample and transition changes the counterfactual action",
+    "the corrected manifest budget validator rejects D1 v1 and accepts a correctly accounted v2 fixture"
+  ],
+  "budget": {
+    "api_calls": 0,
+    "llm_calls": 0,
+    "candidate_program_executions": 0,
+    "heldout_reads": 0
+  },
+  "next_gate": "Only after all zero-API checks pass may a new versioned D1 API manifest be frozen with a corrected numeric budget."
+}

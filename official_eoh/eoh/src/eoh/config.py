@@ -30,6 +30,9 @@ class EoHConfig:
     n_parents: int = 2
     # legacy 保持论文实现；fme_aware 通过开发域行为画像与机制状态驱动外层动作选择。
     feedback_policy: str = "legacy"
+    # FME 证据身份由入口显式注入，不能从反馈文本或本地路径猜测。
+    problem_id: str = "unknown_problem"
+    fme_controller_profile: str = "depth_first_core"
     # Async pipeline concurrency (decoupled from pop_size).
     # num_samplers : concurrent LLM-generation threads (I/O bound).
     # num_evaluators: concurrent evaluation workers (CPU bound, each isolated
@@ -76,3 +79,13 @@ class EoHConfig:
         }:
             warnings.warn("unknown feedback_policy, resetting to legacy.")
             self.feedback_policy = "legacy"
+        self.problem_id = str(self.problem_id).strip()
+        if not self.problem_id:
+            raise ValueError("problem_id must be non-empty")
+        if self.fme_controller_profile not in {
+            "depth_first_core",
+            "legacy_stacked",
+        }:
+            raise ValueError(
+                f"unsupported_fme_controller_profile:{self.fme_controller_profile}"
+            )

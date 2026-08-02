@@ -733,6 +733,7 @@ def _runner_script() -> str:
                 n_pop=args.generations,
                 operators=operators,
                 feedback_policy=args.evolution_feedback_policy,
+                problem_id=args.problem,
                 output_dir=args.output_dir,
                 n_processes=args.n_processes,
                 use_seed=use_seed,
