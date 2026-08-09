@@ -35,6 +35,7 @@ def make_official_runner_args(**overrides) -> Namespace:
         problem="bp_online",
         arm="pure_eoh",
         context_file="",
+        router_contract="",
         pop_size=2,
         generations=1,
         operators="i1",
