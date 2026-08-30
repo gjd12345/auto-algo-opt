@@ -1,0 +1,123 @@
+{
+  "schema_version": "refactor0830-phase6-generalization-readiness/v1",
+  "status": "contract_ready_single_domain_pilot_not_started",
+  "claim_boundary": "Static contract coverage only. No new-domain solver, candidate evaluation, LLM call, or generalization effect is claimed.",
+  "active_mainline_unchanged": [
+    "bp_online",
+    "tsp_construct",
+    "cvrp_construct"
+  ],
+  "candidate_domains": [
+    {
+      "problem_id": "maxcut_construct",
+      "domain_family": "graph_partition",
+      "objective_direction": "maximize",
+      "instance_schema": [
+        "weighted_undirected_graph",
+        "node_count",
+        "edge_weights"
+      ],
+      "solution_schema": [
+        "binary_partition"
+      ],
+      "feasibility_oracle": "every node appears in exactly one partition",
+      "objective_metric": "cut_weight",
+      "deterministic_baseline": "seeded_greedy_gain_local_search",
+      "budget_unit": "evaluated_candidate_algorithm",
+      "dev_split_rule": "seeded graph generators and public instances; hashes frozen before generation",
+      "heldout_split_rule": "unseen generator seeds and instance families; inaccessible to retrieval",
+      "admission_reason": "引入图划分与最大化目标，检验当前路由/装箱机制是否只是表面迁移",
+      "readiness": "contract_only",
+      "contract_hash": "055df1ea8f062aa73d7ddf09428c86461abbd992635925c4bcf0837c94f449a1",
+      "missing_fields": [],
+      "contract_completeness_gate_passed": true
+    },
+    {
+      "problem_id": "knapsack_select",
+      "domain_family": "subset_selection",
+      "objective_direction": "maximize",
+      "instance_schema": [
+        "item_values",
+        "item_weights",
+        "capacity"
+      ],
+      "solution_schema": [
+        "selected_item_indices"
+      ],
+      "feasibility_oracle": "total selected weight does not exceed capacity",
+      "objective_metric": "selected_value",
+      "deterministic_baseline": "density_ordered_greedy_with_single_item_guard",
+      "budget_unit": "evaluated_candidate_algorithm",
+      "dev_split_rule": "seeded value-weight regimes; regime labels visible only on dev",
+      "heldout_split_rule": "unseen correlations and capacity ratios; hashes frozen before pilot",
+      "admission_reason": "与 BP 共享容量概念但解表示和离线目标不同，适合检验抽象机制迁移边界",
+      "readiness": "contract_only",
+      "contract_hash": "1188e01641e3a4b680c31927ed5f46d5c801519d67f5e112f68f51ca817c6d1d",
+      "missing_fields": [],
+      "contract_completeness_gate_passed": true
+    },
+    {
+      "problem_id": "jssp_schedule",
+      "domain_family": "precedence_scheduling",
+      "objective_direction": "minimize",
+      "instance_schema": [
+        "jobs",
+        "machine_routes",
+        "processing_times"
+      ],
+      "solution_schema": [
+        "machine_operation_order",
+        "start_times"
+      ],
+      "feasibility_oracle": "machine non-overlap and job precedence both hold",
+      "objective_metric": "makespan",
+      "deterministic_baseline": "seeded_priority_dispatch_with_left_shift",
+      "budget_unit": "evaluated_candidate_algorithm",
+      "dev_split_rule": "seeded job-machine-size strata with frozen instance hashes",
+      "heldout_split_rule": "unseen size strata and processing-time regimes; retrieval denied",
+      "admission_reason": "引入先后约束与时间结构，覆盖当前三问题不具备的约束族",
+      "readiness": "contract_only",
+      "contract_hash": "a51e7c043b58a4ae9b44d6fd359c65be53d2a530f149c4fdfd67cc294e0bf945",
+      "missing_fields": [],
+      "contract_completeness_gate_passed": true
+    }
+  ],
+  "domain_family_count": 3,
+  "pilot_protocol": {
+    "arms": [
+      "no_transfer",
+      "abstract_transfer",
+      "shuffled_abstract_transfer"
+    ],
+    "paired_seed_count": 3,
+    "candidate_evaluations_per_arm": 30,
+    "primary_metrics": [
+      "quality_potential_auc",
+      "first_budget_reaching_5pct",
+      "analysis_direction_accuracy",
+      "analysis_brier_score",
+      "valid_candidate_rate",
+      "transfer_regret"
+    ],
+    "guardrails": [
+      "same frozen provider and controller configuration across arms",
+      "no source executable code or source solution injection",
+      "no heldout retrieval before the final frozen evaluation",
+      "candidate evaluations, not generations, are the common budget unit"
+    ],
+    "exit_conditions": [
+      "valid candidate rate is below the no-transfer arm by more than 10 percentage points",
+      "abstract transfer does not beat shuffled transfer on at least two paired seeds",
+      "analysis confidence is uncalibrated and does not improve candidate ranking",
+      "the domain requires a second top-level controller or incomparable budget semantics"
+    ],
+    "selected_target_problem": "jssp_schedule",
+    "deferred_candidate_problems": [
+      "maxcut_construct",
+      "knapsack_select"
+    ],
+    "evaluations_per_domain": 270,
+    "total_candidate_evaluations": 270
+  },
+  "snapshot_hash": "e5de835ef9dbee7b052efb1601f72268e184218accef0db297e23103d028093e"
+}

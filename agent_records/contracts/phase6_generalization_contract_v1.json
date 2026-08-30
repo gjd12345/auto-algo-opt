@@ -1,0 +1,67 @@
+{
+  "schema_version": "refactor0830-phase6-generalization-contract/v1",
+  "document_id": "refactor0830-phase6-generalization-contract-v1",
+  "status": "exploratory_contract_only",
+  "objective": "检验 FME 是否能从装箱与路径构造泛化到图划分、子集选择和先后约束调度，而不引入第二顶层控制器。",
+  "active_mainline_change": "none_until_domain_gate_passes",
+  "candidate_domains": [
+    "maxcut_construct",
+    "knapsack_select",
+    "jssp_schedule"
+  ],
+  "selected_pilot_problem": "jssp_schedule",
+  "deferred_candidate_problems": [
+    "maxcut_construct",
+    "knapsack_select"
+  ],
+  "admission_gates": [
+    "instance_and_solution_schema_frozen",
+    "deterministic_feasibility_oracle_available",
+    "deterministic_baseline_available",
+    "dev_and_heldout_hashes_frozen",
+    "candidate_evaluation_is_the_common_budget_unit",
+    "provider_controller_and_seed_protocol_are_shared"
+  ],
+  "transfer_policy": {
+    "allowed": [
+      "mechanism_name",
+      "invariant",
+      "expected_effect",
+      "failure_regime",
+      "development_evidence_hashes"
+    ],
+    "forbidden": [
+      "source_executable_code",
+      "source_solution",
+      "heldout_evidence",
+      "source_problem_conclusion_as_target_fact"
+    ]
+  },
+  "pilot": {
+    "arms": [
+      "no_transfer",
+      "abstract_transfer",
+      "shuffled_abstract_transfer"
+    ],
+    "paired_seed_count": 3,
+    "candidate_evaluations_per_arm": 30,
+    "candidate_evaluations_per_domain": 270,
+    "total_candidate_evaluations": 270,
+    "budget_note": "先只在 JSSP 做最小可证伪 pilot；Max-Cut 与 Knapsack 不并行启动。这不是固定代数或正式统计功效承诺。"
+  },
+  "primary_metrics": [
+    "quality_potential_auc",
+    "first_budget_reaching_5pct",
+    "analysis_direction_accuracy",
+    "analysis_brier_score",
+    "valid_candidate_rate",
+    "transfer_regret"
+  ],
+  "failure_exit": [
+    "valid_candidate_rate_drops_more_than_10pp_vs_no_transfer",
+    "abstract_transfer_fails_to_beat_shuffled_on_at_least_two_paired_seeds",
+    "analysis_is_uncalibrated_and_does_not_improve_candidate_ranking",
+    "domain_requires_a_second_top_level_controller_or_incomparable_budget"
+  ],
+  "claim_boundary": "本契约只冻结泛化问题与 pilot 设计；在 evaluator、baseline、split hashes 和在线 cohort 完成前，不得声称多领域泛化有效。"
+}
