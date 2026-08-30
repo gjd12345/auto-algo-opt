@@ -1,0 +1,31 @@
+{
+  "schema_version": "refactor0830_rq_replay/v1",
+  "suite": "refactor0830_rq1_rq4_offline_replay_v1",
+  "actor": "codex",
+  "evidence_mode": "frozen_historical_replay",
+  "claim_boundary": "protocol_and_directional_evidence_not_new_online_effect_estimate",
+  "research_questions": {
+    "RQ1": "active falsification vs score-only feedback",
+    "RQ2": "outcome-aware history vs no history",
+    "RQ3": "abstract cross-problem transfer vs no transfer",
+    "RQ4": "quality and efficiency across problems plus model-comparison readiness"
+  },
+  "sources": {
+    "rq1": "agent_records/handoffs/2026-07-23_020751-result_analysis-bp_fme_mechanism_only.agent.json",
+    "rq2_tsp": "eoh_rag_workspace/reports/ablation_4arm/tsp_run_index_summary.json",
+    "rq2_cvrp": "eoh_rag_workspace/reports/ablation_4arm/cvrp_run_index_summary.json",
+    "rq3": "reports/strategy_experiments/cross_problem_transfer/decision.json",
+    "rq4_deepseek": "evidence/final_batch_20260630/batch_status.json",
+    "potential_runs": "evidence/final_batch_20260630/shared_pool_snapshot/pool_index.jsonl",
+    "provider_preflight": "agent_records/calibrations/model_router_deepseek_v4_flash_preflight_20260830.json"
+  },
+  "primary_contrasts": {
+    "RQ1": "fme_active_minus_scalar_control",
+    "RQ2": "keyword_outcome_minus_pure",
+    "RQ3": "abstract_transfer_minus_no_transfer",
+    "RQ4": "model_x_controller_requires_same_protocol_future_cohort"
+  },
+  "budget_axis": "cumulative_completed_run_for_historical_curve",
+  "fixed_generation_count_as_primary_axis": false,
+  "heldout_used_for_next_action": false
+}
