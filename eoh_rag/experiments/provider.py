@@ -5,7 +5,27 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlsplit
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_local_env(path: Path | None = None) -> None:
+    """加载仓库根目录的本地 .env，且绝不覆盖进程已显式设置的变量。"""
+    env_path = path or (_REPO_ROOT / ".env")
+    if not env_path.is_file():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or not key.replace("_", "").isalnum():
+            continue
+        os.environ.setdefault(key, value.strip().strip('"').strip("'"))
 
 @dataclass(frozen=True)
 class ProviderConfig:
@@ -19,6 +39,17 @@ class ProviderConfig:
         return {"provider_name": self.name, "endpoint_host": urlsplit(self.endpoint).hostname or "", "model": self.model, "key_present": bool(os.environ.get(self.api_key_env))}
 
 def get_provider_config(name: str) -> ProviderConfig:
+    load_local_env()
+    if name == "model-router":
+        return ProviderConfig(
+            name,
+            os.environ.get(
+                "MODEL_ROUTER_API_ENDPOINT",
+                "https://model-router.edu-aliyun.com/v1/chat/completions",
+            ),
+            os.environ.get("MODEL_ROUTER_MODEL", "deepseek/deepseek-v4-flash"),
+            "MODEL_ROUTER_API_KEY",
+        )
     if name == "opencode-go":
         return ProviderConfig(name, "https://opencode.ai/zen/go/v1/chat/completions", "deepseek-v4-flash", "OPENCODE_GO_API_KEY")
     if name == "deepseek":

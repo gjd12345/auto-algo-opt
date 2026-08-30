@@ -595,7 +595,7 @@ def _runner_script() -> str:
             parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
             parser.add_argument("--llm-model", default="")
             parser.add_argument("--seed", type=int, default=2024)
-            parser.add_argument("--provider", choices=["opencode-go", "deepseek", "offline"], default="opencode-go")
+            parser.add_argument("--provider", choices=["model-router", "opencode-go", "deepseek", "offline"], default="opencode-go")
             parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
             parser.add_argument(
                 "--evolution-feedback-policy",
@@ -1179,7 +1179,7 @@ def main() -> None:
     parser.add_argument("--model-env", default="DEEPSEEK_MODEL")
     parser.add_argument("--llm-model", default="")
     parser.add_argument("--seed", type=int, default=2024)
-    parser.add_argument("--provider", choices=["opencode-go", "deepseek", "offline"], default="opencode-go")
+    parser.add_argument("--provider", choices=["model-router", "opencode-go", "deepseek", "offline"], default="opencode-go")
     parser.add_argument("--temperature-schedule", choices=["fixed", "linear", "step-down"], default="fixed")
     parser.add_argument(
         "--evolution-feedback-policy",
