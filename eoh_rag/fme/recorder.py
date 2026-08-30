@@ -17,6 +17,7 @@ from eoh_rag.experiments.research_contracts import (
     canonical_json_sha256,
 )
 from eoh_rag.fme.archives import CounterexampleAdmissionEvidence, FMEArchives
+from eoh_rag.fme.analysis import AnalysisRecord
 from eoh_rag.fme.challenge_evidence import (
     ActionReceipt,
     FMEChallengeEvidenceCompiler,
@@ -100,6 +101,15 @@ class FMEPilotEvidenceRecorder:
         """返回一次一致的三档案快照，供控制器构造开发域状态。"""
         with self._lock:
             return self.archives.snapshot()
+
+    def record_analysis(self, analysis: AnalysisRecord) -> None:
+        """在候选评测前冻结分析；只接受 research_agent 的开发域记录。"""
+        if analysis.visible_scope != "dev_only" or analysis.actor != "research_agent":
+            raise ValueError("analysis_scope_or_actor_invalid")
+        if analysis.problem != self.problem:
+            raise ValueError("analysis_problem_mismatch")
+        with self._lock:
+            self._append_jsonl("analyses.jsonl", analysis.to_dict())
 
     def record_candidate(
         self,
