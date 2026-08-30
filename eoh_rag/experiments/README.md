@@ -1,6 +1,7 @@
 # 实验脚本目录（experiments）
 
-TOCC 主管线和辅助工具的入口文件。
+Refactor0830 只保留 FME 主线的执行入口。EOH 是候选生成适配器，RAG 是证据检索适配器；
+它们都不能代替 `FMEResearchLoop` 选择科研动作。
 
 ## 主管线（3 个核心入口）
 
@@ -29,7 +30,7 @@ TOCC 主管线和辅助工具的入口文件。
 
 | 文件 | 用途 |
 |------|------|
-| `operator_card_controller.py` | 算子卡控制器入口 → 重导出 `eoh_rag.tocc.controller` |
+旧 TOCC、selector 与 expert-router 代码仅用于历史结果复现，不再由主线注册表暴露。
 
 ## legacy/ — 早期脚本
 

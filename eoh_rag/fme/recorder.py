@@ -157,7 +157,7 @@ class FMEPilotEvidenceRecorder:
                 )
             profile = AlgorithmBehaviorProfile.create(
                 candidate_id=candidate_id,
-                problem="bp_online",
+                problem=self.problem,
                 per_distribution_relative_gap=decimal_gaps,
                 feasibility_rate=1.0,
                 timeout_rate=0.0,

@@ -1,10 +1,10 @@
 # auto-algo-opt
 
-> 用大模型驱动的「启发式算法自动优化」框架：让 LLM 在一个共享种群上做进化式代码搜索，
-> 并用 RAG（检索增强）层把文献策略与历史进化经验注入生成过程，自动为组合优化问题
-> 演化出更好的启发式算法。
+> 面向组合优化的可证伪机制生态科研 Agent：系统不仅生成算法，还记录算法行为、提出
+> 可检验机制、主动寻找反例，并在冻结证据边界下决定下一项科研动作。
 
-Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small-Model Controllers for Heuristic Evolution** —— 用「进化轨迹」条件化一个小模型控制器来引导启发式进化。
+Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism Ecology · FME**。
+唯一顶层科学控制器是 `FMEResearchLoop`；EOH、RAG 和问题实现都是可替换适配器。
 
 ---
 
@@ -12,13 +12,14 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 
 给定一个组合优化问题（例如在线装箱、TSP、CVRP），本框架自动完成：
 
-1. **生成**：让大模型基于当前种群 + RAG 上下文，写出候选启发式函数。主线三个问题的候选是 **Python 函数**（`bp_online` 实现 `score(item, bins)`，`tsp/cvrp` 实现 `select_next_node(...)`，均基于 numpy）。
-2. **评测**：把候选交给官方 EoH 引擎，在基准算例上跑分，得到目标值（越小越好）。
-3. **守卫 & 记忆**：用规则守卫过滤异常候选；把失败模式与高质量代码沉淀成结构化记忆。
-4. **进化**：选优作为下一代父本，跨进程共享种群（Island Model），逐代逼近更优解。
-5. **反哺**：把进化出的好策略合成为「历史卡片」写回 RAG 语料，供后续检索复用。
+1. **观察**：把候选在开发域的表现编译为行为档案，失败和反例同样保留。
+2. **分析**：形成机制假设、预测、风险与最便宜的证伪动作。
+3. **决策**：`FMEResearchLoop` 每个 tick 只选择一个科研动作。
+4. **执行**：EOH 生成候选，ProblemAdapter 验证问题约束，评测器返回开发域证据。
+5. **记忆与迁移**：问题内保存可执行谱系；跨问题只迁移抽象机制与证据边界。
 
-> **两条评测轨道**：上面描述的是**主线**（`bp_online`/`tsp_construct`/`cvrp_construct`，Python 候选，即论文证据来源）。此外还有一条独立的 **Go 轨道**——`InsertShips` 及其同族问题（`bin_packing_go`/`knapsack`/`mixer_split`）的候选是 **Go 代码**，经 `go build` 编译成求解器后评测，由内置的 `Agent_EOH/` 承担（见 [`operator/`](eoh_rag/operator/) 与 `prob_*_go.py`）。两条轨道共用 RAG / PoolAPI / evaluator 等上层设施。
+> 旧 Go 轨道、TOCC、search-controller、expert-router 和 selector 资产只用于复现历史探索，
+> 不再进入 Refactor0830 的正式运行注册表。
 
 与「一次性让大模型写个算法」不同，这里是一个**可迭代、有记忆、带证据**的进化闭环。
 
@@ -31,7 +32,6 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 | `bp_online` | 在线装箱（Online Bin Packing，Weibull 分布） | 0.0398 |
 | `tsp_construct` | TSP 构造式启发式（n=100） | 6.560 |
 | `cvrp_construct` | 带容量车辆路径 CVRP 构造式启发式 | 13.519 |
-| `InsertShips` | 派船插入调度（Go 求解器，另一类构造问题） | —— |
 
 基线常量定义在 [`eoh_rag/experiments/baselines.py`](eoh_rag/experiments/baselines.py)。
 
@@ -63,26 +63,17 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Trace-Conditioned Small
 ## 3. 架构与模块地图
 
 ```
-manifest (实验矩阵)
+manifest（冻结实验矩阵）
       │
       ▼
-batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (内置 official_eoh/)
-      │               │                        │
-      │               │  build_official_rag_context (注入 RAG 上下文)
-      │               ▼                        ▼
-      │        rag/ 检索层                在基准算例上评测 Python 候选
-      │        (语料/检索/重排/卡片合成)   (score / select_next_node) → 目标值
-      │               │
-      ▼               ▼
-   PoolAPI ◄────── hooks (跑完后的反馈：入池/记忆/合成卡片)
- (跨进程共享池)          │
-      │                 ▼
-      │            evaluator (目标值 vs 基线 → archive/continue/adjust/escalate)
-      ▼
- RunTracker (标准化 run 目录留痕)
-
-（Go 轨道：InsertShips 家族的候选是 Go 代码，由 operator/ + prob_*_go.py 经 go build
- 编译成 eoh_rag_workspace/problems/ 下的求解器后评测，引擎为内置 Agent_EOH/。）
+FMEResearchLoop（唯一科学控制器）
+      │
+      ├── EvidenceRetrieverAdapter ──► 文献 / 历史机制 / 失败边界
+      ├── CandidateGeneratorAdapter ─► official_eoh/（EOH 仅生成候选）
+      └── ProblemAdapter ────────────► BP / TSP / CVRP 开发域评测
+                                            │
+                                            ▼
+                         行为档案 / 反例档案 / 机制主张 / DecisionRecord
 ```
 
 > **官方 EoH 引擎在哪**：已**内置**在 [`official_eoh/`](official_eoh/)（vendored 自
@@ -96,7 +87,9 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (内�
 | --- | --- |
 | [`experiments/batch_runner.py`](eoh_rag/experiments/batch_runner.py) | 批量实验运行器：读 manifest → 展开实验矩阵 → 逐个调用单次运行器 |
 | [`experiments/eoh_single_runner.py`](eoh_rag/experiments/eoh_single_runner.py) | 单次运行：构造 RAG 上下文 → 调官方 EoH → 汇总 `summary.json` |
-| [`experiments/pool_api.py`](eoh_rag/experiments/pool_api.py) | **PoolAPI**：跨进程共享池统一读写（run 索引 / 精英代码 / 算子成功率 / 失败模式） |
+| [`fme/mainline.py`](eoh_rag/fme/mainline.py) | 唯一组合根：FME 循环、问题适配器、EOH/RAG 适配接口 |
+| [`fme/research_loop.py`](eoh_rag/fme/research_loop.py) | 每 tick 一个科研动作的可重放闭环 |
+| [`fme/recorder.py`](eoh_rag/fme/recorder.py) | 行为、反例、机制与决策的追加式证据记录 |
 | [`experiments/evaluator.py`](eoh_rag/experiments/evaluator.py) | 目标值评价器：算提升、给决策（archive/continue/adjust/escalate） |
 | [`experiments/run_tracker.py`](eoh_rag/experiments/run_tracker.py) | 运行留痕：标准化 run 目录结构 |
 | [`experiments/hooks.py`](eoh_rag/experiments/hooks.py) | 跑完后的反馈钩子：入池、记录算子/失败、合成历史卡片 |
@@ -105,9 +98,7 @@ batch_runner ──► eoh_single_runner ──► 官方 EoH 进化引擎 (内�
 | [`rag/retriever.py`](eoh_rag/rag/retriever.py) · [`rag/reranker.py`](eoh_rag/rag/reranker.py) · [`rag/llm_reranker.py`](eoh_rag/rag/llm_reranker.py) | 关键词检索 → 结果感知重排 → 大模型重排 |
 | [`rag/card_synthesis.py`](eoh_rag/rag/card_synthesis.py) · [`rag/problem_vocab.py`](eoh_rag/rag/problem_vocab.py) | 把进化出的好代码合成「历史卡片」，并保证各问题词表不串味 |
 | [`rag/failure_cases.py`](eoh_rag/rag/failure_cases.py) | curated 失败案例语料（无效候选/超时/异常低目标的通用规则） |
-| [`tocc/`](eoh_rag/tocc/) | 轨迹条件化控制器 + 守门员：校验提案、卡片先验决策、诊断 |
-| [`operator/`](eoh_rag/operator/) | 算子层：编译自修复、定向变异、失败记忆、模板变异 |
-| [`eoh_runner/registry.py`](eoh_rag/eoh_runner/registry.py) | 问题/目标规格注册表（各问题的源文件、函数签名、算例目录） |
+历史 TOCC/router/selector/Go 轨道不属于上述活动主线。
 
 ---
 
@@ -127,14 +118,12 @@ pip install -e ".[official-eoh]"   # 跑真实进化实验时再装（requests/t
 ```
 
 ### 大模型 API 配置
-进化循环需要一个大模型后端。把访问配置写进 `~/.config/auto-algo-opt/opencode.env`（键值对形式），
-运行脚本会 `export` 之后再启动，例如：
+复制 `.env.example` 为本地 `.env`，填入 Model Router 配置；`.env` 已被 Git 忽略：
 
 ```bash
-# ~/.config/auto-algo-opt/opencode.env
-DEEPSEEK_API_KEY=...
-DEEPSEEK_API_ENDPOINT=api.deepseek.com
-DEEPSEEK_MODEL=...
+MODEL_ROUTER_API_KEY=...
+MODEL_ROUTER_API_ENDPOINT=https://model-router.edu-aliyun.com/v1/chat/completions
+MODEL_ROUTER_MODEL=<模型广场中的 symbol/model_code>
 ```
 
 ---

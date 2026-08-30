@@ -577,7 +577,7 @@ def _runner_script() -> str:
             parser.add_argument(
                 "--problem",
                 required=True,
-                choices=["bp_online", "tsp_construct", "cvrp_construct", "tsp_search_controller", "cvrp_expert_router"],
+                choices=sorted(RUNNABLE_PROBLEMS),
             )
             parser.add_argument("--arm", required=True, choices=["pure_eoh", "api_only", "context_file"])
             parser.add_argument("--context-file", default="")

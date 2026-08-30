@@ -1,13 +1,9 @@
-"""Falsifiable Mechanism Ecology（FME）科研控制模块。"""
+"""Falsifiable Mechanism Ecology（FME）唯一科研主线公开入口。"""
 
 from eoh_rag.fme.archives import (
     ArchiveAdmission,
     CounterexampleAdmissionEvidence,
     FMEArchives,
-)
-from eoh_rag.fme.bp_counterexamples import (
-    BPCounterexampleGenerator,
-    GeneratedBPCounterexample,
 )
 from eoh_rag.fme.controller import (
     FMEAction,
@@ -15,27 +11,45 @@ from eoh_rag.fme.controller import (
     FMEController,
     FMEControllerState,
 )
-from eoh_rag.fme.order_regime_feedback import (
-    OrderFeedbackSummary,
-    OrderPairObservation,
-    OrderRegimeFeedbackAdapter,
-    OrderRegimeRankingTracker,
+from eoh_rag.fme.mainline import (
+    CandidateGeneratorAdapter,
+    EvidenceRetrieverAdapter,
+    FMEComposition,
+    GeneratedCandidate,
+    GenerationRequest,
+    MAINLINE_PROBLEMS,
+    RetrievedEvidence,
+    build_fme_mainline,
+)
+from eoh_rag.fme.problem_adapters import (
+    BPProblemAdapter,
+    CVRPProblemAdapter,
+    ProblemAdapter,
+    TSPProblemAdapter,
 )
 from eoh_rag.fme.recorder import FMEPilotEvidenceRecorder
+from eoh_rag.fme.research_loop import FMEResearchLoop
 
 __all__ = [
     "ArchiveAdmission",
-    "BPCounterexampleGenerator",
+    "BPProblemAdapter",
+    "CVRPProblemAdapter",
+    "CandidateGeneratorAdapter",
     "CounterexampleAdmissionEvidence",
+    "EvidenceRetrieverAdapter",
     "FMEAction",
     "FMEActionDecision",
     "FMEArchives",
     "FMEController",
     "FMEControllerState",
+    "FMEComposition",
     "FMEPilotEvidenceRecorder",
-    "GeneratedBPCounterexample",
-    "OrderFeedbackSummary",
-    "OrderPairObservation",
-    "OrderRegimeFeedbackAdapter",
-    "OrderRegimeRankingTracker",
+    "FMEResearchLoop",
+    "GeneratedCandidate",
+    "GenerationRequest",
+    "MAINLINE_PROBLEMS",
+    "ProblemAdapter",
+    "RetrievedEvidence",
+    "TSPProblemAdapter",
+    "build_fme_mainline",
 ]

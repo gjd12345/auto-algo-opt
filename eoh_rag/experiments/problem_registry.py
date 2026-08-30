@@ -80,9 +80,9 @@ PROBLEMS: dict[str, OfficialProblemSpec] = {
     ),
 }
 
-# 单次进化运行器还支持只在框架内使用的控制器问题。它没有传统 examples/evaluation
-# 冒烟入口，因此不放进 PROBLEMS，避免默认问题冒烟把它误当成构造式基准。
-RUNNABLE_PROBLEMS = tuple(PROBLEMS) + ("tsp_search_controller", "cvrp_expert_router")
+# Refactor0830 的正式运行面只包含三个组合优化问题。旧 search-controller / expert-router
+# 资产仍留在冻结历史中用于复现，但不能再被新 manifest 当成科研主线问题。
+RUNNABLE_PROBLEMS = tuple(PROBLEMS)
 
 
 def _safe_float(value: str) -> float | None:
