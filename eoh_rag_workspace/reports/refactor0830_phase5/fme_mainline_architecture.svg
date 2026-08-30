@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1130" viewBox="0 0 1500 1130">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#57708f"/></marker>
+    <marker id="arrow-warm" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#a56a5a"/></marker>
+    <style>
+      .sans{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif}.title{font-size:28px;font-weight:700;fill:#1b365d}.sub{font-size:14px;fill:#6b6a64}.lane-title{font-size:15px;font-weight:700;fill:#1b365d}.box-title{font-size:15px;font-weight:700}.box-sub{font-size:12px}.edge{fill:none;stroke:#57708f;stroke-width:2;marker-end:url(#arrow)}.edge-warm{fill:none;stroke:#a56a5a;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#arrow-warm)}.edge-label{font-size:11px;fill:#4f6175}.edge-label-warm{font-size:11px;fill:#6b3d31}.node{rx:8;ry:8;stroke-width:1.5}.lane{rx:12;ry:12;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect width="1500" height="1130" fill="#faf9f5"/>
+  <text x="40" y="46" class="sans title">Refactor0830：FME 单一科研主线</text>
+  <text x="40" y="74" class="sans sub">EOH、RAG、模型与问题域均为可替换适配器；证据边界与可证伪问题由 FME 统一控制</text>
+
+  <rect x="40" y="100" width="1420" height="140" class="lane" fill="#f7f3ea" stroke="#c8bfaf"/><text x="60" y="128" class="sans lane-title">1 研究输入</text>
+  <rect x="220" y="150" width="350" height="70" class="node" fill="#f4f0e6" stroke="#9b8c72"/><text x="395" y="178" text-anchor="middle" class="sans box-title" fill="#1e2f45">冻结研究契约</text><text x="395" y="200" text-anchor="middle" class="sans box-sub" fill="#1e2f45">RQ1–RQ4 · budget · held-out boundary</text>
+  <rect x="930" y="150" width="350" height="70" class="node" fill="#f4f0e6" stroke="#9b8c72"/><text x="1105" y="178" text-anchor="middle" class="sans box-title" fill="#1e2f45">问题栈与前瞻分析</text><text x="1105" y="200" text-anchor="middle" class="sans box-sub" fill="#1e2f45">假设 · 预测效果 · 置信度 · 最小证伪</text>
+
+  <rect x="40" y="280" width="1420" height="140" class="lane" fill="#f1f4f7" stroke="#9aa9b8"/><text x="60" y="308" class="sans lane-title">2 科学控制（唯一顶层）</text>
+  <rect x="550" y="330" width="400" height="72" class="node" fill="#1b365d" stroke="#102844" stroke-width="2"/><text x="750" y="359" text-anchor="middle" class="sans box-title" fill="#fff">FME Research Loop</text><text x="750" y="383" text-anchor="middle" class="sans box-sub" fill="#fff">反馈 → 机制选择 → 证据更新 → 决策</text>
+
+  <path d="M395 220 V260 H680 V330" class="edge"/><text x="510" y="254" class="sans edge-label">约束</text>
+  <path d="M1105 220 V260 H820 V330" class="edge"/><text x="930" y="254" class="sans edge-label">待证伪假设</text>
+
+  <rect x="40" y="460" width="1420" height="180" class="lane" fill="#f2f5f7" stroke="#a7b3c0"/><text x="60" y="488" class="sans lane-title">3 可替换适配器（EOH / RAG 不再是第二控制器）</text>
+  <rect x="80" y="520" width="270" height="76" class="node" fill="#e9eef4" stroke="#57708f"/><text x="215" y="550" text-anchor="middle" class="sans box-title" fill="#1e2f45">证据检索适配器</text><text x="215" y="574" text-anchor="middle" class="sans box-sub" fill="#1e2f45">相关历史 · 文献 · 进化结果</text>
+  <rect x="430" y="520" width="270" height="76" class="node" fill="#e9eef4" stroke="#57708f"/><text x="565" y="550" text-anchor="middle" class="sans box-title" fill="#1e2f45">EOH 候选生成适配器</text><text x="565" y="574" text-anchor="middle" class="sans box-sub" fill="#1e2f45">生成 · 变异 · 反思提示</text>
+  <rect x="780" y="520" width="270" height="76" class="node" fill="#e9eef4" stroke="#57708f"/><text x="915" y="550" text-anchor="middle" class="sans box-title" fill="#1e2f45">ProblemAdapter</text><text x="915" y="574" text-anchor="middle" class="sans box-sub" fill="#1e2f45">BP-online · TSP · CVRP</text>
+  <rect x="1130" y="520" width="280" height="76" class="node" fill="#faf7f0" stroke="#a56a5a" stroke-dasharray="7 6"/><text x="1270" y="548" text-anchor="middle" class="sans box-title" fill="#6b3d31">Model Router / DeepSeek V4 Flash</text><text x="1270" y="572" text-anchor="middle" class="sans box-sub" fill="#6b3d31">当前：403，模型符号或权限待开通</text>
+
+  <path d="M650 402 V445 H215 V520" class="edge"/><text x="360" y="440" class="sans edge-label">检索需求</text>
+  <path d="M750 402 V470 H565 V520" class="edge"/><text x="610" y="466" class="sans edge-label">生成动作</text>
+  <path d="M850 402 V445 H915 V520" class="edge"/><text x="870" y="440" class="sans edge-label">评估调用</text>
+  <path d="M1130 558 H1040 V500 H700 V558" class="edge-warm"/><text x="820" y="493" class="sans edge-label-warm">OpenAI-compatible API</text>
+
+  <rect x="40" y="680" width="1420" height="170" class="lane" fill="#f6f3ea" stroke="#b9ad96"/><text x="60" y="708" class="sans lane-title">4 证据与边界</text>
+  <path d="M215 596 V760 H590" class="edge"/><text x="330" y="746" class="sans edge-label">引用哈希</text>
+  <path d="M565 596 V730 H710 V760" class="edge"/><text x="590" y="724" class="sans edge-label">候选与分析记录</text>
+  <path d="M915 596 V730 H830 V760" class="edge"/><text x="836" y="724" class="sans edge-label">观测与反例</text>
+  <rect x="140" y="730" width="270" height="88" class="node" fill="#eee9dc" stroke="#8a806b"/><text x="275" y="762" text-anchor="middle" class="sans box-title" fill="#1e2f45">冻结冷启动快照</text><text x="275" y="786" text-anchor="middle" class="sans box-sub" fill="#1e2f45">152 条：44 进化 / 3 失败 / 105 文献</text>
+  <rect x="615" y="730" width="270" height="88" class="node" fill="#eee9dc" stroke="#8a806b"/><text x="750" y="762" text-anchor="middle" class="sans box-title" fill="#1e2f45">Dev 证据归档</text><text x="750" y="786" text-anchor="middle" class="sans box-sub" fill="#1e2f45">行为 · 反例 · claim · decision</text>
+  <rect x="1090" y="730" width="270" height="88" class="node" fill="#faf7f0" stroke="#a56a5a" stroke-dasharray="7 6"/><text x="1225" y="762" text-anchor="middle" class="sans box-title" fill="#6b3d31">Held-out</text><text x="1225" y="786" text-anchor="middle" class="sans box-sub" fill="#6b3d31">冻结后一次性评估；禁止冷启动注入</text>
+  <path d="M275 730 V660 H130 V596" class="edge-warm"/><text x="145" y="654" class="sans edge-label-warm">仅相关 / 抽象证据</text>
+
+  <rect x="40" y="890" width="1420" height="180" class="lane" fill="#f0f4f1" stroke="#9aab9f"/><text x="60" y="918" class="sans lane-title">5 可证伪输出</text>
+  <rect x="140" y="950" width="270" height="76" class="node" fill="#dde5e0" stroke="#597063"/><text x="275" y="980" text-anchor="middle" class="sans box-title" fill="#1e2f45">RQ1–RQ4 对比</text><text x="275" y="1004" text-anchor="middle" class="sans box-sub" fill="#1e2f45">反馈 / 冷启动 / 迁移 / 模型</text>
+  <rect x="615" y="950" width="270" height="76" class="node" fill="#dde5e0" stroke="#597063"/><text x="750" y="980" text-anchor="middle" class="sans box-title" fill="#1e2f45">双潜力曲线</text><text x="750" y="1004" text-anchor="middle" class="sans box-sub" fill="#1e2f45">质量潜力 Q(b) + 分析潜力 calibration</text>
+  <rect x="1090" y="950" width="270" height="76" class="node" fill="#1b365d" stroke="#102844"/><text x="1225" y="980" text-anchor="middle" class="sans box-title" fill="#fff">人审决策</text><text x="1225" y="1004" text-anchor="middle" class="sans box-sub" fill="#fff">保留 / 修订 / 证伪 / 升级正式实验</text>
+  <path d="M700 818 V870 H275 V950" class="edge"/><text x="420" y="864" class="sans edge-label">可比 cohort</text>
+  <path d="M1225 818 V870 H385 V950" class="edge-warm"/><text x="915" y="864" class="sans edge-label-warm">冻结后评估</text>
+  <path d="M410 988 H615" class="edge"/><text x="478" y="978" class="sans edge-label">按候选预算 b</text>
+  <path d="M885 988 H1090" class="edge"/><text x="950" y="978" class="sans edge-label">证据边界</text>
+  <path d="M1360 988 H1435 V185 H1280" class="edge" stroke-dasharray="7 6"/><text x="1370" y="638" class="sans edge-label" transform="rotate(-90 1370 638)">下一轮问题</text>
+  <text x="40" y="1105" class="sans sub">图例：墨蓝 = 唯一控制器 / 人审；浅蓝 = 适配器；暖灰 = 冻结证据；绿灰 = 可证伪输出；红色虚线 = 当前阻塞或严格边界。</text>
+</svg>
