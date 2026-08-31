@@ -1,0 +1,23 @@
+{
+  "contract_id": "refactor0830_opencode_amendment_v2",
+  "amends": "agent_records/contracts/refactor0830_execution_contract_v1.json",
+  "authority": "explicit_user_OpenCode_key_and_resume_RQ1_RQ4_instruction_2026_08_31",
+  "branch": "Refactor0830",
+  "status": "authorized_for_independent_exploratory_pilot",
+  "provider": "opencode-go",
+  "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+  "secret_env": "OPENCODE_GO_API_KEY",
+  "primary_model": "deepseek-v4-flash",
+  "reference_model": "deepseek-v4-pro",
+  "manifest": "eoh_rag_workspace/experiments/manifests/refactor0830_opencode_go_pilot_v4.json",
+  "boundaries": [
+    "Keep historical RQ1-RQ4 evidence separate from the new cohort",
+    "Same-provider Flash versus Pro comparison, not model-family generalization",
+    "Freeze prospective analysis and claims before candidate evaluation",
+    "Counterexamples are selected from frozen development instances, not new distributions",
+    "Abstract historical hints are Codex-authored hypotheses, not autonomous transfer evidence",
+    "Unseal heldout only after all incumbent hashes are frozen",
+    "No fixture results may support scientific effects"
+  ],
+  "phase6": "deferred_until_RQ1_RQ4_delivery"
+}

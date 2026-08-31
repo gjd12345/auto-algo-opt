@@ -1,0 +1,16 @@
+{
+  "extends": "eoh_rag_workspace/experiments/manifests/refactor0830_online_pilot_v2.json",
+  "schema_version": "fme-online-pilot/v2",
+  "study_id": "refactor0830_opencode_pilot_v3",
+  "provider": "opencode-zen",
+  "model_slots": {"primary": "OPENCODE_MODEL", "reference": "OPENCODE_COMPARISON_MODEL"},
+  "thinking": "disabled",
+  "provider_timeout_seconds": 90,
+  "generation_max_tokens": 3072,
+  "analysis_max_tokens": 1536,
+  "provider_sources": ["https://opencode.ai/docs/zen/", "https://api-docs.deepseek.com/guides/thinking_mode/"],
+  "model_comparison_scope": "DeepSeek V4 Flash versus V4 Pro under the same provider and requested non-thinking configuration; not cross-family generalization",
+  "transfer_boundary": "Abstract-history cold-start ablation only. Codex-authored unconfirmed hypotheses, not autonomous mechanism migration. Same retrieved-item sets in random controls must be reported.",
+  "claim_retest_boundary": "Supported means development improvement direction agrees with prospective prediction; no causal mechanism claim without targeted intervention.",
+  "note": "New independent cohort authorized 2026-08-31 after Model Router blocking. Historical RQ table remains unchanged until online evidence exists. Candidate budget 12 is an engineering pilot budget, not a literature optimum."
+}

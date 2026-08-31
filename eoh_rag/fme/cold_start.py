@@ -18,6 +18,7 @@ class ColdStartMode(str, Enum):
     RELEVANT = "relevant_history"
     SHUFFLED = "shuffled_history"
     ABSTRACT_TRANSFER = "abstract_transfer"
+    SHUFFLED_ABSTRACT_TRANSFER = "shuffled_abstract_transfer"
 
 
 @dataclass(frozen=True)
@@ -67,6 +68,17 @@ class FrozenEvidenceRetriever:
             raise ValueError("cold_start_snapshot_empty")
         if any(item.visible_scope != "dev_only" or item.contains_heldout for item in self._items):
             raise ValueError("cold_start_snapshot_contains_forbidden_evidence")
+        if len({item.item_id for item in self._items}) != len(self._items):
+            raise ValueError("cold_start_duplicate_item_id")
+        for item in self._items:
+            rebuilt = HistoricalEvidenceItem.create(
+                item_id=item.item_id, text=item.text, source_kind=item.source_kind,
+                source_problem=item.source_problem,
+                contains_executable_code=item.contains_executable_code,
+                contains_heldout=item.contains_heldout,
+            )
+            if rebuilt.evidence_hash != item.evidence_hash:
+                raise ValueError("cold_start_item_hash_mismatch")
 
     @staticmethod
     def _tokens(text: str) -> set[str]:
@@ -86,18 +98,18 @@ class FrozenEvidenceRetriever:
         if mode is ColdStartMode.NO_HISTORY or limit == 0:
             return ()
         safe = [item for item in self._items if not item.contains_heldout]
-        if mode is ColdStartMode.ABSTRACT_TRANSFER:
+        if mode in {ColdStartMode.ABSTRACT_TRANSFER, ColdStartMode.SHUFFLED_ABSTRACT_TRANSFER}:
             safe = [
                 item
                 for item in safe
                 if item.source_problem != problem
-                and item.source_kind in {"mechanism", "literature"}
+                and item.source_kind == "mechanism"
                 and not item.contains_executable_code
             ]
-        elif mode is ColdStartMode.RELEVANT:
+        elif mode in {ColdStartMode.RELEVANT, ColdStartMode.SHUFFLED}:
             safe = [item for item in safe if item.source_problem in {problem, "shared"}]
 
-        if mode is ColdStartMode.SHUFFLED:
+        if mode in {ColdStartMode.SHUFFLED, ColdStartMode.SHUFFLED_ABSTRACT_TRANSFER}:
             shuffled = list(safe)
             random.Random(seed).shuffle(shuffled)
             selected = shuffled[:limit]

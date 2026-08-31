@@ -52,6 +52,9 @@ def get_provider_config(name: str) -> ProviderConfig:
         )
     if name == "opencode-go":
         return ProviderConfig(name, "https://opencode.ai/zen/go/v1/chat/completions", "deepseek-v4-flash", "OPENCODE_GO_API_KEY")
+    if name == "opencode-zen":
+        return ProviderConfig(name, "https://opencode.ai/zen/v1/chat/completions",
+                              os.environ.get("OPENCODE_MODEL", "deepseek-v4-flash"), "OPENCODE_API_KEY")
     if name == "deepseek":
         return ProviderConfig(name, "https://api.deepseek.com/chat/completions", "deepseek-chat", "DEEPSEEK_API_KEY")
     raise ValueError(f"unsupported provider: {name}")

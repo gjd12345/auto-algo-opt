@@ -1,0 +1,17 @@
+{
+  "extends": "eoh_rag_workspace/experiments/manifests/refactor0830_online_pilot_v2.json",
+  "schema_version": "fme-online-pilot/v2",
+  "study_id": "refactor0830_opencode_go_pilot_v4",
+  "provider": "opencode-go",
+  "model_slots": {"primary": "OPENCODE_MODEL", "reference": "OPENCODE_COMPARISON_MODEL"},
+  "thinking": "disabled",
+  "cell_concurrency": 3,
+  "provider_timeout_seconds": 90,
+  "generation_max_tokens": 3072,
+  "analysis_max_tokens": 1536,
+  "provider_sources": ["https://opencode.ai/docs/go/", "https://api-docs.deepseek.com/guides/thinking_mode/"],
+  "model_comparison_scope": "DeepSeek V4 Flash versus V4 Pro under OpenCode Go and the same requested non-thinking configuration; not cross-family generalization",
+  "transfer_boundary": "Abstract-history cold-start ablation only. Codex-authored unconfirmed hypotheses, not autonomous mechanism migration. Same retrieved-item sets in random controls must be reported.",
+  "claim_retest_boundary": "Supported means development improvement direction agrees with prospective prediction; no causal mechanism claim without targeted intervention.",
+  "note": "Independent cohort authorized 2026-08-31. Zen preflight returned 401; Go Flash credential probe returned 200. Historical RQ table unchanged until online evidence. Twelve candidate attempts are an engineering pilot budget, not a literature-derived optimum."
+}

@@ -79,6 +79,7 @@ class AnalysisRecord:
         evidence_hashes: tuple[str, ...],
         prompt_hash: str,
         question_ids: tuple[str, ...] = (),
+        actor: str = "research_agent",
     ) -> "AnalysisRecord":
         texts = (
             problem,
@@ -96,6 +97,8 @@ class AnalysisRecord:
             raise ValueError("analysis_predicted_effect_invalid")
         if not 0.0 <= predicted_success_probability <= 1.0:
             raise ValueError("analysis_probability_out_of_range")
+        if actor not in {"research_agent", "integration_fixture", "external_teacher"}:
+            raise ValueError("analysis_actor_invalid")
         if not evidence_hashes or any(len(value) != 64 for value in evidence_hashes):
             raise ValueError("analysis_dev_evidence_missing")
         payload = {
@@ -114,14 +117,14 @@ class AnalysisRecord:
             "prompt_hash": prompt_hash,
             "question_ids": question_ids,
             "visible_scope": "dev_only",
-            "actor": "research_agent",
+            "actor": actor,
         }
         content_hash = _hash(payload)
         return cls(
             analysis_id=f"analysis-{content_hash[:16]}",
             content_hash=content_hash,
             visible_scope="dev_only",
-            actor="research_agent",
+            actor=actor,
             **{key: value for key, value in payload.items() if key not in {"visible_scope", "actor", "next_action"}},
             next_action=next_action,
         )

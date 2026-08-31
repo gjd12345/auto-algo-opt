@@ -33,6 +33,7 @@ def quality_potential_curve(
     initial_objective: float,
     observations: Sequence[QualityObservation],
     maximum_budget: int,
+    integration: str = "trapezoid",
 ) -> PotentialCurve:
     if not math.isfinite(initial_objective) or maximum_budget <= 0:
         raise ValueError("potential_curve_contract_invalid")
@@ -51,8 +52,12 @@ def quality_potential_curve(
         )
     if points[-1][0] < maximum_budget:
         points.append((maximum_budget, points[-1][1]))
+    if integration not in {"trapezoid", "step"}:
+        raise ValueError("potential_curve_integration_invalid")
     area = sum(
-        (right_budget - left_budget) * (left_value + right_value) / 2.0
+        (right_budget - left_budget) * (
+            left_value if integration == "step" else (left_value + right_value) / 2.0
+        )
         for (left_budget, left_value), (right_budget, right_value) in zip(points, points[1:])
     )
     return PotentialCurve(initial_objective, tuple(points), area / maximum_budget)

@@ -6,6 +6,11 @@
 Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism Ecology · FME**。
 唯一顶层科学控制器是 `FMEResearchLoop`；EOH、RAG 和问题实现都是可替换适配器。
 
+当前 Refactor0830 在线入口为 `python -m eoh_rag.experiments.fme_pilot`。
+它实际调用 FME 调度、EOH 提示/提取适配器、前瞻分析、三类档案及独立进程评测器。
+旧 `batch_runner` / `eoh_single_runner` 仍走 EOH 主循环，只用于历史复现，不能作为新闭环已运行的证据。
+新 pilot 使用独立合成实例；其装箱箱数、路线长度与下列历史 gap / 基线常量不可混算。
+
 ---
 
 ## 1. 这是什么
@@ -85,15 +90,19 @@ FMEResearchLoop（唯一科学控制器）
 
 | 模块 | 作用 |
 | --- | --- |
-| [`experiments/batch_runner.py`](eoh_rag/experiments/batch_runner.py) | 批量实验运行器：读 manifest → 展开实验矩阵 → 逐个调用单次运行器 |
-| [`experiments/eoh_single_runner.py`](eoh_rag/experiments/eoh_single_runner.py) | 单次运行：构造 RAG 上下文 → 调官方 EoH → 汇总 `summary.json` |
+| [`experiments/fme_pilot.py`](eoh_rag/experiments/fme_pilot.py) | 活动入口：冻结矩阵、双模型预检、FME 在线 pilot |
+| [`fme/online_pilot.py`](eoh_rag/fme/online_pilot.py) | 完整科研循环、档案准入、配对对照、全 cohort 冻结后 held-out |
+| [`fme/pilot_evaluation.py`](eoh_rag/fme/pilot_evaluation.py) | 三问题真实数值评测、超时与接口有效性检查；不是操作系统安全沙箱 |
+| [`experiments/batch_runner.py`](eoh_rag/experiments/batch_runner.py) | 历史 EOH 批量复现入口 |
+| [`experiments/eoh_single_runner.py`](eoh_rag/experiments/eoh_single_runner.py) | 历史 EOH 单次复现入口 |
 | [`fme/mainline.py`](eoh_rag/fme/mainline.py) | 唯一组合根：FME 循环、问题适配器、EOH/RAG 适配接口 |
 | [`fme/research_loop.py`](eoh_rag/fme/research_loop.py) | 每 tick 一个科研动作的可重放闭环 |
 | [`fme/recorder.py`](eoh_rag/fme/recorder.py) | 行为、反例、机制与决策的追加式证据记录 |
 | [`experiments/evaluator.py`](eoh_rag/experiments/evaluator.py) | 目标值评价器：算提升、给决策（archive/continue/adjust/escalate） |
 | [`experiments/run_tracker.py`](eoh_rag/experiments/run_tracker.py) | 运行留痕：标准化 run 目录结构 |
 | [`experiments/hooks.py`](eoh_rag/experiments/hooks.py) | 跑完后的反馈钩子：入池、记录算子/失败、合成历史卡片 |
-| [`experiments/rag_context_builder.py`](eoh_rag/experiments/rag_context_builder.py) | **主线 RAG 入口**：为官方问题组装检索增强上下文（文献卡 + 历史卡 + API 约束） |
+| [`fme/cold_start.py`](eoh_rag/fme/cold_start.py) | 活动 pilot 的冻结历史检索与随机控制 |
+| [`experiments/rag_context_builder.py`](eoh_rag/experiments/rag_context_builder.py) | 历史 EOH 路径的检索上下文构建 |
 | [`rag/build_corpus.py`](eoh_rag/rag/build_corpus.py) | 语料构建：文献卡、API 约束、失败案例、历史卡 |
 | [`rag/retriever.py`](eoh_rag/rag/retriever.py) · [`rag/reranker.py`](eoh_rag/rag/reranker.py) · [`rag/llm_reranker.py`](eoh_rag/rag/llm_reranker.py) | 关键词检索 → 结果感知重排 → 大模型重排 |
 | [`rag/card_synthesis.py`](eoh_rag/rag/card_synthesis.py) · [`rag/problem_vocab.py`](eoh_rag/rag/problem_vocab.py) | 把进化出的好代码合成「历史卡片」，并保证各问题词表不串味 |
@@ -118,19 +127,36 @@ pip install -e ".[official-eoh]"   # 跑真实进化实验时再装（requests/t
 ```
 
 ### 大模型 API 配置
-复制 `.env.example` 为本地 `.env`，填入 Model Router 配置；`.env` 已被 Git 忽略：
+将凭据填入本地 `.env`，不要覆盖已有其他配置；`.env` 已被 Git 忽略。
+当前用户授权改用 OpenCode Go（不是 Zen 端点）：
 
 ```bash
-MODEL_ROUTER_API_KEY=...
-MODEL_ROUTER_API_ENDPOINT=https://model-router.edu-aliyun.com/v1/chat/completions
-MODEL_ROUTER_MODEL=<模型广场中的 symbol/model_code>
+OPENCODE_GO_API_KEY=...
+OPENCODE_MODEL=deepseek-v4-flash
+OPENCODE_COMPARISON_MODEL=deepseek-v4-pro
 ```
 
 ---
 
 ## 5. 快速开始
 
-### 跑测试
+### 新 FME 在线对照
+
+默认仅生成冻结协议，不调用 API；每次使用新输出目录，禁止覆盖旧证据。
+完整矩阵为 3 问题 × 3 seed × 9 实验臂，每坐标 12 次候选尝试（包含失败）。
+12 是工程 pilot 预算，不是论文规定的最优次数，也不构成统计功效保证。
+
+```bash
+python -m eoh_rag.experiments.fme_pilot --output outputs/fme_pilot/prepared
+python -m eoh_rag.experiments.fme_pilot --preflight --output outputs/fme_pilot/preflight
+python -m eoh_rag.experiments.fme_pilot --execute --output outputs/fme_pilot/online
+```
+
+`--integration-smoke` 使用显式 fixture 和真实求解评测，只验证执行链，不能支持研究结论。
+开发域主张的 `supported` 只表示预测方向与独立开发探测的改善相符，尚非机制因果证据。
+RQ3 仅检验外部编写的跨问题抽象提示，不声称自主机制迁移已实现。
+
+### 可选历史测试（不作为默认步骤）
 ```bash
 python3 -m pytest tests/ -q
 ```

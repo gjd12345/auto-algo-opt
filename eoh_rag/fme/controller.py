@@ -31,6 +31,8 @@ class FMEControllerState:
     recent_generation_attempts: int = 0
     recent_generation_failures: int = 0
     consecutive_transfer_actions: int = 0
+    counterexample_searches_since_generation: int = 0
+    remaining_generation_budget: int | None = None
 
 
 @dataclass(frozen=True)
@@ -143,7 +145,10 @@ class FMEController:
                     invent_reason,
                 )
             )
-        if state.counterexample_archive_size == 0 or state.stalled_ticks >= 2:
+        # 比较性反例必须有至少两个算法；否则空档案会优先消耗全部 tick 却无法证伪。
+        if state.algorithm_archive_size >= 2 and state.counterexample_searches_since_generation == 0 and (
+            state.counterexample_archive_size == 0 or state.stalled_ticks >= 2
+        ):
             candidates.append(
                 (
                     FMEAction.GENERATE_COUNTEREXAMPLE,
@@ -221,6 +226,11 @@ class FMEController:
                 (FMEAction.STOP_BRANCH, 0.75, 0.0, "branch_stalled_for_four_ticks")
             )
 
+        if state.remaining_generation_budget == 0:
+            candidates = [item for item in candidates if not self._OPERATOR_ADAPTER[item[0]]
+                          and item[0] is not FMEAction.STOP_BRANCH]
+            if not candidates:
+                candidates = [(FMEAction.STOP_BRANCH, 1.0, 0.0, "candidate_budget_exhausted")]
         return candidates
 
     def _select_best(

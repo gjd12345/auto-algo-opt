@@ -1,0 +1,11 @@
+{
+  "schema_version": "fme-abstract-transfer-hypotheses/v1",
+  "actor": "codex_exploration",
+  "status": "unconfirmed_target_hypotheses",
+  "visible_scope": "dev_only",
+  "items": [
+    {"item_id": "abstract:bp:reserve_flexibility", "source_problem": "bp_online", "text": "Abstract hypothesis, not a confirmed target result (codex_exploration): retain scarce future flexibility instead of always optimizing immediate local gain. Invariant: feasibility must remain exact. Predict benefit only when early irreversible choices restrict later options. Failure boundary: excessive reservation may waste resources. Cheapest target falsification: compare immediate-gain and flexibility-preserving choices on independent development cases. No source executable code or source performance claim is transferred."},
+    {"item_id": "abstract:tsp:lookahead_tradeoff", "source_problem": "tsp_construct", "text": "Abstract hypothesis, not a confirmed target result (codex_exploration): a cheap estimate of downstream cost may correct short-sighted local choices. Invariant: compare candidates using the same total evaluation budget. Failure boundary: the proxy may correlate poorly with the true remaining cost or overfit size. Cheapest target falsification: compare the predicted direction with independent development outcomes across sizes. This is a proposal only; no source code, target result or held-out conclusion is supplied."},
+    {"item_id": "abstract:cvrp:feasibility_slack", "source_problem": "cvrp_construct", "text": "Abstract hypothesis, not a confirmed target result (codex_exploration): normalize local opportunity by remaining feasibility slack to expose impending constraint bottlenecks. Invariant: all hard constraints remain checked by the target evaluator. Failure boundary: tiny denominators or noisy slack estimates can destabilize choices. Cheapest target falsification: separately check tight and loose development regimes before accepting the mechanism. No executable implementation or confirmed source-to-target effect is transferred."}
+  ]
+}
