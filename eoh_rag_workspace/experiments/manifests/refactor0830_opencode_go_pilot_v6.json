@@ -1,0 +1,28 @@
+{
+  "extends": "eoh_rag_workspace/experiments/manifests/refactor0830_online_pilot_v2.json",
+  "schema_version": "fme-online-pilot/v2",
+  "study_id": "refactor0830_opencode_go_pilot_v6",
+  "provider": "opencode-go",
+  "model_slots": {"primary": "OPENCODE_MODEL", "reference": "OPENCODE_COMPARISON_MODEL"},
+  "thinking": "disabled",
+  "thinking_gateway_compatibility": "Also send reasoning.effort=none to Go; record reasoning character count without storing reasoning text",
+  "stream": true,
+  "cell_concurrency": 6,
+  "provider_timeout_seconds": 180,
+  "generation_max_tokens": 3072,
+  "analysis_max_tokens": 1536,
+  "planned_early_stop_reasons": ["branch_stalled_for_four_ticks"],
+  "planned_stop_accounting": "The frozen controller may stop after four stalled ticks. Preserve its incumbent, failures and unused slots; hold quality flat to the common allocated budget. Provider interruption and action-credit exhaustion are not successful early stops.",
+  "provider_sources": ["https://opencode.ai/docs/go/", "https://api-docs.deepseek.com/guides/thinking_mode/"],
+  "model_comparison_scope": "Same-provider Flash versus Pro, requested non-thinking setting; no cross-family generalization claim",
+  "transfer_boundary": "Codex-authored abstract-history cold-start ablation, not autonomous mechanism migration; report overlapping randomized controls",
+  "claim_retest_boundary": "Development direction consistency is not causal mechanism validation",
+  "supersedes_failed_pilot": "refactor0830_opencode_go_pilot_v5",
+  "amendments_before_restart": [
+    "Require numeric predicted_effect/probability and exact typed JSON fields; request JSON-object response format for analysis",
+    "Use streaming and Go non-thinking compatibility fields identically for both models",
+    "Register planned scientific stopping separately from failed execution; no replacement of failed attempts",
+    "Start every coordinate fresh; no v4/v5 or diagnostic samples enter this cohort"
+  ],
+  "note": "Twelve maximum candidate attempts are an engineering pilot budget, not a literature optimum or a power guarantee. User authorized unlimited API and end-to-end execution."
+}

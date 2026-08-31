@@ -120,7 +120,8 @@ def preflight(protocol: dict[str, Any], journal: EvidenceJournal) -> dict[str, A
             results[slot] = {"ok": False, "error_code": "model_slot_not_configured"}
             continue
         transport = ChatCompletionTransport(model, journal, temperature=0, generation_tokens=64, analysis_tokens=64,
-            timeout=protocol["provider_timeout_seconds"], provider=protocol["provider"], thinking=protocol.get("thinking"))
+            timeout=protocol["provider_timeout_seconds"], provider=protocol["provider"], thinking=protocol.get("thinking"),
+            stream=protocol.get("stream", False))
         try:
             transport.request("Reply only OK.", purpose="preflight", problem="none")
             results[slot] = {"ok": True, "model": model}
@@ -174,7 +175,7 @@ class PilotCell:
         self.transport = FixtureTransport(model, self.journal, self.spec) if self.fixture else ChatCompletionTransport(
             model, self.journal, temperature=protocol["temperature"], generation_tokens=protocol["generation_max_tokens"],
             analysis_tokens=protocol["analysis_max_tokens"], timeout=protocol["provider_timeout_seconds"],
-            provider=protocol["provider"], thinking=protocol.get("thinking"))
+            provider=protocol["provider"], thinking=protocol.get("thinking"), stream=protocol.get("stream", False))
         self.generator = EOHGeneratorAdapter(self.spec, self.transport)
         self.retriever = make_retriever(protocol, ColdStartMode(arm["history"]))
         composition = build_fme_mainline(generator=self.generator, evidence_retriever=self.retriever)
@@ -295,7 +296,12 @@ class PilotCell:
                 question_stack=self.questions)
             analysis_prompt += ("\nPredict relative improvement of THIS candidate versus the provided parent on dev_train "
                 "before evaluation: (parent_objective-candidate_objective)/abs(parent_objective). "
-                "Probability means strictly positive improvement. next_action must be one of " + ", ".join(a.value for a in FMEAction))
+                "predicted_effect MUST be a JSON number, never prose, a percentage string or a range. "
+                "predicted_success_probability MUST be a JSON number in [0,1]. "
+                "observation, mechanism_hypothesis, predicted_regime, predicted_risk, cheapest_falsification "
+                "MUST be nonempty JSON strings. The supplied objective belongs to the PARENT; "
+                "the candidate has NOT been evaluated. Probability means strictly positive improvement. "
+                "Return exactly one JSON object without Markdown. next_action must be one of " + ", ".join(a.value for a in FMEAction))
             analysis_raw = self.transport.request(analysis_prompt, purpose="analysis", problem=self.problem)
             fields = _parse_analysis(analysis_raw)
             analysis = AnalysisRecord.create(problem=self.problem, candidate_id=candidate_id,
@@ -480,9 +486,11 @@ class PilotCell:
         incumbent_path = self.journal.save_candidate(incumbent["candidate_id"], incumbent["code"])
         curve = quality_potential_curve(initial_objective=self.initial_objective, observations=self.observations,
                                         maximum_budget=self.protocol["candidate_attempts"], integration="step") if self.observations else None
+        planned_stop = stop_reason in self.protocol.get("planned_early_stop_reasons", [])
         result = {"cell_id": f"{self.problem}/{self.seed}/{self.arm['id']}", "problem": self.problem,
             "seed": self.seed, "arm": self.arm, "actor": self.actor, "model": self.transport.model,
-            "status": "completed" if self.attempts == self.protocol["candidate_attempts"] else "incomplete",
+            "status": "completed" if self.attempts == self.protocol["candidate_attempts"] or planned_stop else "incomplete",
+            "planned_early_stop": planned_stop, "unused_candidate_slots": self.protocol["candidate_attempts"]-self.attempts,
             "stop_reason": stop_reason, "candidate_attempts": self.attempts, "valid_candidates": self.valid,
             "failed_attempts": self.failures, "development_solver_calls": self.solver_calls,
             "request_count": len(self.transport.usage), "usage": self.transport.usage,

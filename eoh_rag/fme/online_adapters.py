@@ -74,9 +74,11 @@ class ChatCompletionTransport:
 
     def __init__(self, model: str, journal: EvidenceJournal, *, temperature: float,
                  generation_tokens: int, analysis_tokens: int, timeout: int = 90,
-                 provider: str = "model-router", thinking: str | None = None) -> None:
+                 provider: str = "model-router", thinking: str | None = None,
+                 stream: bool = False) -> None:
         self.config = get_provider_config(provider)
         self.thinking = thinking
+        self.stream = stream
         self.model = model
         self.journal = journal
         self.temperature = temperature
@@ -100,17 +102,63 @@ class ChatCompletionTransport:
                        self.analysis_tokens if purpose == "analysis" else self.generation_tokens)}
         if self.thinking is not None:
             payload["thinking"] = {"type": self.thinking}
+        if self.config.name == "opencode-go" and self.thinking == "disabled":
+            # Go 网关兼容字段；两模型相同发送，并记录 reasoning 是否仍有输出。
+            payload["reasoning"] = {"effort": "none"}
+        if purpose == "analysis" and self.model.startswith("deepseek"):
+            payload["response_format"] = {"type": "json_object"}
+        if self.stream:
+            payload.update(stream=True, stream_options={"include_usage": True})
         request = urllib.request.Request(self.config.endpoint, data=json.dumps(payload).encode(),
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
                      "User-Agent": "agent-ad-provider-preflight/1.0"}, method="POST")
         receipt: dict[str, Any] = {"provider": self.config.name, "model": self.model, "problem": problem, "purpose": purpose,
             "prompt_hash": digest(prompt), "http_status": None, "ok": False,
-            "input_tokens": None, "output_tokens": None, "error_code": None}
+            "input_tokens": None, "output_tokens": None, "error_code": None,
+            "reasoning_characters": 0, "stream": self.stream}
         started = time.monotonic()
+        self.journal.append("model_request_started", {"model": self.model, "purpose": purpose,
+            "prompt_hash": digest(prompt), "stream": self.stream})
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 receipt["http_status"] = response.status
-                parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
+                if self.stream:
+                    parts, usage, model, finish_reason = [], {}, None, None
+                    text_size = 0
+                    complete = False
+                    for line in response:
+                        if time.monotonic()-started > self.timeout:
+                            raise ProviderFailure("stream_total_timeout")
+                        if not line.startswith(b"data:"):
+                            continue
+                        value = line[5:].strip()
+                        if value == b"[DONE]":
+                            complete = True
+                            break
+                        chunk = json.loads(value)
+                        if chunk.get("error"):
+                            raise ProviderFailure("stream_provider_error", response.status)
+                        model = chunk.get("model") or model
+                        usage = chunk.get("usage") or usage
+                        for choice in chunk.get("choices", []):
+                            finish_reason = choice.get("finish_reason") or finish_reason
+                            receipt["reasoning_characters"] += len(choice.get("delta", {}).get("reasoning_content") or "")
+                            part = choice.get("delta", {}).get("content")
+                            if part:
+                                if not isinstance(part, str):
+                                    raise ProviderFailure("nontext_stream_chunk")
+                                if not parts:
+                                    receipt["first_text_seconds"] = round(time.monotonic()-started, 4)
+                                parts.append(part)
+                                text_size += len(part)
+                                if text_size > 4*1024*1024:
+                                    raise ProviderFailure("response_size_limit")
+                    if not complete:
+                        raise ProviderFailure("stream_missing_terminal_marker")
+                    parsed = {"model": model, "usage": usage,
+                        "choices": [{"message": {"content": "".join(parts)}, "finish_reason": finish_reason}]}
+                else:
+                    parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
             choices = parsed.get("choices", [])
             content = choices[0].get("message", {}).get("content") if choices else None
             usage = parsed.get("usage") or {}

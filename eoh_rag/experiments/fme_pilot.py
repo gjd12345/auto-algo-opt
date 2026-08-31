@@ -11,7 +11,7 @@ from eoh_rag.fme.online_pilot import freeze_protocol, load_protocol, run_study
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, default=ROOT / "eoh_rag_workspace/experiments/manifests/refactor0830_opencode_go_pilot_v5.json")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "eoh_rag_workspace/experiments/manifests/refactor0830_opencode_go_pilot_v6.json")
     parser.add_argument("--output", type=Path, required=True, help="New directory; existing output is never overwritten.")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--execute", action="store_true", help="Preflight all model slots then execute the complete frozen cohort.")
