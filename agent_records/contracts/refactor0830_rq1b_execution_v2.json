@@ -1,0 +1,15 @@
+{
+  "contract_id": "refactor0830_rq1b_execution_v2",
+  "status": "authorized_for_actual_independent_execution",
+  "authority": "explicit_current_user_request_to_call_API_complete_experiments_clean_useless_intermediates_and_deliver_final_report",
+  "accepts_proposal": "agent_records/proposals/rq1b_restart_after_transport_failure_v1.json",
+  "inherits": "agent_records/contracts/refactor0830_rq1b_amendment_v1.json",
+  "scope": "CVRP/Flash RQ1b three-arm study only; do not expand RQ2-RQ4",
+  "manifest": "eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v2.json",
+  "budget": {"candidate_slots":384,"logical_requests_max":805,"http_attempts_max":7245},
+  "implementation_changes": ["Persist original prompt/response and parent algorithm descriptions in ignored evidence", "Save synchronized cell state", "Collect every scheduled cell success/failure independently", "Allow at most two additional transport-only recovery cycles with frozen waits10s/30s"],
+  "scientific_policy": "Same scientific design and scoring as v1; new independent cohort from initial baseline. Never pool partial v1 outcomes. No heldout before all incumbents frozen.",
+  "cleanup_policy": "After audit/report, remove only explicitly enumerated regenerable intermediate artifacts inside this task workspace. Keep raw scientific evidence, failures, manifests, code hashes, successful request checkpoints and final report. No repository-wide deletion.",
+  "frozen_policy": "No existing canonical documents, v1 manifest or historical result overwritten. Implementation lives in v2 module.",
+  "verification": "Compile/static checks then user-requested real cohort and read-only audit; no full test suite."
+}
