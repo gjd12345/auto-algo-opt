@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!-- ==================================================================
+     LONG DOCUMENT TEMPLATE · parchment design system
+     多页 A4 白皮书/技术报告/年度总结
+     结构：封面 -> 目录 -> 执行摘要 -> 正文章节 -> 附录
+     ================================================================== -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>FME RQ1-RQ4 在线实验审阅报告</title>
+<meta name="author" content="agent_ad · Refactor0830">
+<meta name="description" content="FME 在线对照、前瞻分析潜力与证据边界">
+<meta name="keywords" content="FME, EOH, RAG, algorithm discovery, RQ1-RQ4">
+<meta name="generator" content="Kami">
+<style>
+  /* Regular weight */
+  @font-face {
+    font-family: "TsangerJinKai02";
+    src: url("../fonts/TsangerJinKai02-W04.ttf") format("truetype"),
+       url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W04.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  /* Bold weight - W05 for all bold variants */
+  @font-face {
+    font-family: "TsangerJinKai02";
+    src: url("../fonts/TsangerJinKai02-W05.ttf") format("truetype"),
+       url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W05.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm 22mm 22mm 22mm;
+    background: #f5f4ed;
+
+    @top-right {
+      content: string(section-title);
+      font-family: "TsangerJinKai02", "Source Han Serif SC",
+                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+      font-size: 8pt;
+      color: #6b6a64;
+    }
+
+    @bottom-center {
+      content: counter(page) "  ·  FME 单一科研主线";
+      font-family: "TsangerJinKai02", "Source Han Serif SC",
+                   "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+      font-size: 9pt;
+      color: #6b6a64;
+    }
+  }
+
+  @page:first {
+    @top-right { content: ""; }
+    @bottom-center { content: ""; }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment: #f5f4ed;
+    --ivory:     #faf9f5;
+    --near-black:#141413;
+    --dark-warm: #3d3d3a;
+    --olive:     #504e49;
+    --stone:     #6b6a64;
+    --brand:     #1B365D;
+    --border:    #e8e6dc;
+    --border-soft:#e5e3d8;
+    --tag-bg:    #E4ECF5;
+    --serif: "TsangerJinKai02", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif;
+    --sans: var(--serif);
+
+    --rhythm-module:  14pt;
+    --rhythm-section: 18pt;
+  }
+
+  html, body { background: var(--parchment); }
+
+  @media screen {
+    body { max-width: 210mm; margin: 0 auto; padding: 20mm 22mm 22mm 22mm; }
+  }
+
+  body {
+    color: var(--near-black);
+    font-family: var(--serif);
+    font-size: 10.5pt;
+    line-height: 1.55;
+    letter-spacing: 0.3pt;
+    widows: 3;
+    orphans: 3;
+  }
+
+  .sans {
+    font-family: var(--sans);
+  }
+
+  /* ========== COVER ========== */
+  .cover {
+    min-height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40mm 0 0 0;
+    break-after: page;
+  }
+  .cover-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8pt;
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--brand);
+    letter-spacing: 1.5pt;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 18pt;
+  }
+  .cover-eyebrow::before {
+    content: "";
+    width: 9pt;
+    height: 1.5pt;
+    border-radius: 0.75pt;
+    background: var(--brand);
+    flex-shrink: 0;
+  }
+  .cover-title {
+    font-size: 36pt;
+    font-weight: 500;
+    color: var(--near-black);
+    line-height: 1.15;
+    letter-spacing: 0.3pt;
+    margin-bottom: 16pt;
+  }
+  .cover-sub {
+    font-family: var(--sans);
+    font-size: 14pt;
+    color: var(--olive);
+    line-height: 1.5;
+    max-width: 85%;
+    margin-bottom: 30pt;
+  }
+  .cover-meta {
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .cover-meta strong {
+    color: var(--dark-warm);
+    font-weight: 500;
+  }
+
+  /* ========== TOC（目录）========== */
+  .toc { break-after: page; }
+  .toc h2 {
+    font-size: 22pt;
+    font-weight: 500;
+    margin-bottom: var(--rhythm-module);
+    border-left: 2.5pt solid var(--brand);
+    border-radius: 1.5pt;
+    padding-left: 8pt;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6pt 0;
+    border-bottom: 0.3pt dotted var(--border);
+    font-size: 11pt;
+  }
+  .toc-item:last-of-type { border-bottom: none; }
+  .toc-num {
+    color: var(--brand);
+    font-weight: 500;
+    min-width: 30pt;
+  }
+  .toc-title {
+    flex: 1;
+    color: var(--near-black);
+    padding-left: 6pt;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 12pt;
+  }
+  .toc-title[href]::after {
+    content: target-counter(attr(href), page);
+    color: var(--stone);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  /* ========== HEADINGS ========== */
+  h1 {
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0 0 10pt 0;
+    border-left: 2.5pt solid var(--brand);
+    border-radius: 1.5pt;
+    padding-left: 8pt;
+    color: var(--near-black);
+    break-after: avoid;
+    string-set: section-title content();
+  }
+
+  .running-title { string-set: section-title content(); }
+
+  h2 {
+    font-size: 16pt;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 24pt 0 8pt 0;
+    color: var(--near-black);
+    break-after: avoid;
+  }
+
+  h3 {
+    font-size: 13pt;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 18pt 0 6pt 0;
+    color: var(--dark-warm);
+    break-after: avoid;
+  }
+
+  .chapter-num {
+    font-family: var(--sans);
+    font-size: 10pt;
+    color: var(--brand);
+    letter-spacing: 1pt;
+    text-transform: uppercase;
+    margin-bottom: 6pt;
+  }
+
+  /* ========== PARAGRAPHS ========== */
+  p {
+    margin: 0 0 10pt 0;
+    line-height: 1.55;
+    color: var(--near-black);
+    widows: 2;
+    orphans: 2;
+  }
+
+  .lead {
+    font-size: 12pt;
+    line-height: 1.55;
+    color: var(--dark-warm);
+    margin-bottom: var(--rhythm-module);
+  }
+
+  .hl { color: var(--brand); font-weight: 500; }
+  strong { font-weight: 500; }
+
+  /* ========== LISTS ========== */
+  ul, ol {
+    margin: 6pt 0 10pt 0;
+    padding-left: 20pt;
+    line-height: 1.55;
+  }
+  ul li::marker { color: var(--brand); }
+  ol li::marker { color: var(--brand); font-weight: 500; }
+
+  /* ========== QUOTE ========== */
+  blockquote, .quote {
+    border-left: 2pt solid var(--brand);
+    margin: 12pt 0;
+    padding: 4pt 0 4pt 16pt;
+    color: var(--olive);
+    line-height: 1.55;
+    break-inside: avoid;
+  }
+  blockquote .cite, .quote .cite {
+    display: block;
+    font-size: 9pt;
+    color: var(--stone);
+    margin-top: 4pt;
+  }
+
+  /* ========== CODE ========== */
+  /* Mono first for English glyphs, then CJK fallback so Chinese comments
+     inside code/pre render correctly. A mono-only chain causes missing
+     glyphs rendered as "?" or missing-glyph boxes in WeasyPrint when the system lacks
+     a mono font with CJK coverage. */
+  code {
+    font-family: "JetBrains Mono", "SF Mono", Consolas,
+                 "TsangerJinKai02", "Source Han Serif SC",
+                 "Noto Serif CJK SC", "Songti SC", monospace;
+    font-size: 9pt;
+    background: var(--ivory);
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+    color: var(--dark-warm);
+  }
+  pre {
+    font-family: "JetBrains Mono", "SF Mono", Consolas,
+                 "TsangerJinKai02", "Source Han Serif SC",
+                 "Noto Serif CJK SC", "Songti SC", monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    background: var(--ivory);
+    border-radius: 4pt;
+    padding: 10pt 14pt;
+    margin: 10pt 0;
+    white-space: pre-wrap;
+    color: var(--near-black);
+    break-inside: avoid;
+  }
+  pre code { background: transparent; padding: 0; font-size: inherit; }
+
+  /* ========== TABLE (kami-table) ========== */
+  table, .kami-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin: 12pt 0;
+    break-inside: avoid;
+  }
+  table th, .kami-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--dark-warm);
+    padding: 6pt 8pt;
+    border-bottom: 1pt solid var(--border);
+    background: transparent;
+  }
+  table td, .kami-table td {
+    padding: 5pt 8pt;
+    border-bottom: 0.3pt solid var(--border-soft);
+    vertical-align: top;
+  }
+  table.compact th, .kami-table.compact th { padding: 3pt 6pt; font-size: 8pt; }
+  table.compact td, .kami-table.compact td { padding: 2pt 6pt; font-size: 8pt; line-height: 1.4; }
+  table.financial td:not(:first-child), .kami-table.financial td:not(:first-child) {
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  table.financial th:not(:first-child), .kami-table.financial th:not(:first-child) { text-align: right; }
+  table.striped tbody tr:nth-child(even) td, .kami-table.striped tbody tr:nth-child(even) td {
+    background: var(--ivory);
+  }
+  table .total td, .kami-table .total td {
+    font-weight: 500; border-top: 1pt solid var(--brand); border-bottom: none; color: var(--near-black);
+  }
+
+  /* ========== CALLOUT ========== */
+  .callout {
+    background: var(--ivory);
+    border-left: 2pt solid var(--brand);
+    padding: 10pt 14pt;
+    border-radius: 3pt;
+    margin: 12pt 0;
+    line-height: 1.55;
+    break-inside: avoid;
+  }
+  .callout blockquote,
+  .callout .quote {
+    border-left: none;
+    padding-left: 0;
+    margin: 6pt 0;
+    color: var(--olive);
+  }
+  .callout blockquote:first-child,
+  .callout .quote:first-child { margin-top: 0; }
+  .callout blockquote:last-child,
+  .callout .quote:last-child  { margin-bottom: 0; }
+
+  .takeaway {
+    background: var(--ivory);
+    border-radius: 4pt;
+    padding: 10pt 14pt;
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  .takeaway-label {
+    font-family: var(--sans);
+    font-size: 9pt;
+    color: var(--brand);
+    letter-spacing: 0.5pt;
+    text-transform: uppercase;
+    margin-bottom: 4pt;
+  }
+
+  /* ========== TAG ========== */
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--brand);
+    font-family: var(--sans);
+    font-size: 9pt;
+    font-weight: 500;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    margin-right: 4pt;
+  }
+
+  /* ========== FIGURE ========== */
+  figure {
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  figure img {
+    max-width: 100%;
+    border-radius: 4pt;
+  }
+  /* Inline diagrams (e.g. a Mermaid-sourced SVG via scripts/mermaid_normalize.py):
+     center and cap width so the figure never bleeds past the text column. */
+  figure svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 78%;
+    height: auto;
+  }
+  figcaption {
+    font-family: var(--sans);
+    font-size: 9pt;
+    color: var(--stone);
+    margin-top: 6pt;
+    text-align: center;
+  }
+
+  /* ========== EXECUTIVE SUMMARY ========== */
+  .exec-summary {
+    background: var(--ivory);
+    border-left: 1.4pt solid var(--brand);
+    border-radius: 6pt;
+    padding: 16pt 20pt;
+    margin: 14pt 0;
+    break-inside: avoid;
+  }
+  .exec-summary h2 {
+    margin-top: 0;
+    font-size: 13pt;
+  }
+
+  /* ========== CHAPTER BREAK ========== */
+  .chapter { break-before: page; }
+</style>
+</head>
+<body><section class="cover"><div><div class="cover-eyebrow">FME · 在线实验审阅版</div>
+    <div class="cover-title">分析是否带来<br>可复用的算法改进？</div>
+    <div class="cover-sub">RQ1-RQ4 · OpenCode Go · DeepSeek V4 Flash / Pro<br>历史结论与新增在线证据分开呈现</div></div>
+    <div class="cover-meta">agent_ad · Refactor0830<br>2026-08-31 · 人审 / 对外沟通</div></section>
+    <section class="chapter" id="summary"><div class="chapter-num">01 · 结论</div><h1>完整在线 pilot 已完成，结果仅具探索性</h1>
+    <p>研究主线只有一条：把算法分析变成可在评测前冻结、在评测后核对的预测，并检验它是否改善后续算法搜索。历史文献、进化记录和模型差异是同一主线上的实验变量，不另起框架。</p>
+    <table><thead><tr><th>问题</th><th>历史结论（保留原口径）</th></tr></thead><tbody><tr><td>RQ1</td><td>机制记录改善，但有效候选率下降，质量门未通过</td></tr><tr><td>RQ2</td><td>TSP +0.83%、CVRP +5.95%，仅方向性支持</td></tr><tr><td>RQ3</td><td>迁移效果不确定，配对不完整</td></tr><tr><td>RQ4</td><td>旧 Model Router 在线实验未完成，返回 403</td></tr></tbody></table><h2>本轮新增证据</h2>
+    <p>协议计划 81 个坐标，已返回 81 个坐标，其中完成或按预注册规则停止 81 个。已返回坐标累计 935 次候选尝试、738 个有效候选。该运行目录共记录 1867 次请求，其中 1 次失败；包含中断坐标和预检，但不包含独立诊断。</p>
+    <table><thead><tr><th>问题</th><th>本轮主对照</th><th>保留集配对中位改善</th></tr></thead><tbody><tr><td>RQ1</td><td>主动分析 / 标量</td><td>在线装箱 +0.00%；TSP +0.00%；CVRP +2.60%</td></tr><tr><td>RQ2</td><td>相关历史 / 无历史</td><td>在线装箱 +0.00%；TSP +0.00%；CVRP +0.36%</td></tr><tr><td>RQ3</td><td>抽象提示 / 无提示</td><td>在线装箱 +0.00%；TSP +0.00%；CVRP -1.87%</td></tr><tr><td>RQ4</td><td>Pro / Flash · 主动分析</td><td>在线装箱 +0.00%；TSP +0.00%；CVRP -1.87%</td></tr></tbody></table>
+    <p>状态：pilot_completed。以上仅为三 seed 探索性结果，旧质量门不直接移用；随机历史对照与模型交互见正文。预检或单次诊断成功不构成算法增益。</p>
+    <p>本轮未建立主动控制的稳定额外收益。被动分析相对标量反馈在 TSP、CVRP 上有小幅方向性信号，值得作为最小主线继续研究；历史注入、主动反例和模型规模保留为可选消融。</p></section>
+<section class="chapter" id="protocol"><div class="chapter-num">02 · 对照协议</div>
+    <h1>预算一致，失败不补抽，结果不跨问题混算</h1>
+    <p>3 个问题、3 个随机种子、9 个实验臂构成 81 个坐标。每坐标计划 12 次候选尝试，生成失败和分析格式失败同样占用预算。这个次数是工程 pilot 选择，没有“8 次或 12 次最优”的文献依据，也不是统计功效保证。</p><table><thead><tr><th>实验臂</th><th>控制策略</th><th>历史输入</th><th>模型</th></tr></thead><tbody><tr><td>标量</td><td>仅目标值反馈</td><td>无</td><td>Flash</td></tr><tr><td>被动分析</td><td>分析与问题栈回流</td><td>无</td><td>Flash</td></tr><tr><td>主动分析</td><td>增加反例与主张复核</td><td>无</td><td>Flash</td></tr><tr><td>相关历史</td><td>增加反例与主张复核</td><td>相关历史结果</td><td>Flash</td></tr><tr><td>随机历史</td><td>增加反例与主张复核</td><td>随机历史结果</td><td>Flash</td></tr><tr><td>抽象提示</td><td>增加反例与主张复核</td><td>跨问题抽象提示</td><td>Flash</td></tr><tr><td>随机抽象提示</td><td>增加反例与主张复核</td><td>随机抽象提示</td><td>Flash</td></tr><tr><td>Pro 标量</td><td>仅目标值反馈</td><td>无</td><td>Pro</td></tr><tr><td>Pro 主动分析</td><td>增加反例与主张复核</td><td>无</td><td>Pro</td></tr></tbody></table>
+    <p>所有臂都生成评测前分析；标量组仅保存而不向后续生成提供，被动组复用分析和问题栈，主动组还执行开发反例与主张复核。预注册连续四次停滞可提前停止，保留最终算法和未用预算，曲线延伸为常数。实际 API 次数、token 和耗时另记，不能把预算上限当作等成本。</p>
+    <p>仅未交付完整响应的传输故障最多重试 2 次，两模型参数一致，每次 HTTP 都记账；完整但低质量或无效的算法不重试。请求已消耗但供应商未返回用量的成本保持未知，不能算作零。</p>
+    <p>每个 seed 冻结独立的开发训练、开发探测和最终保留集。先冻结全部坐标的最终算法哈希，才解封保留集。主张中的 supported 只表示开发改善方向相符，不等于因果机制得到验证。</p>
+    <p>新合成数据中，装箱目标为使用箱数，TSP/CVRP 为路线长度。它们不能与历史 gap 常量混算。EOH 只负责提示与代码提取，检索只提供冻结证据，科研动作由同一个 FME 控制器类决定。</p></section>
+<section class="chapter"><div class="chapter-num">03 · 配对结果</div><h1>分析与历史输入的收益分别检验</h1>
+        <p>正值表示处理组更好。每一行先比较同一问题、同一 seed 的两个实验臂，再汇总配对中位数。¹ 面积是预算范围内的平均改善率，差值以百分点计；模型交互为 Pro 的主动控制增益减去 Flash 的增益。3 个 seed 只用于探索，不提供显著性或稳定泛化保证。</p><table><thead><tr><th>RQ</th><th>问题</th><th>对照 → 处理</th><th>配对</th><th>面积差¹</th><th>保留集改善</th><th>边界</th></tr></thead><tbody><tr><td>RQ1</td><td>在线装箱</td><td>标量 → 被动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ1</td><td>TSP</td><td>标量 → 被动分析</td><td>3</td><td>+0.19</td><td>+0.26%</td><td>探索性</td></tr><tr><td>RQ1</td><td>CVRP</td><td>标量 → 被动分析</td><td>3</td><td>+2.48</td><td>+1.08%</td><td>探索性</td></tr><tr><td>RQ1</td><td>在线装箱</td><td>被动分析 → 主动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ1</td><td>TSP</td><td>被动分析 → 主动分析</td><td>3</td><td>-0.19</td><td>-1.23%</td><td>探索性</td></tr><tr><td>RQ1</td><td>CVRP</td><td>被动分析 → 主动分析</td><td>3</td><td>-2.60</td><td>-3.87%</td><td>探索性</td></tr><tr><td>RQ1</td><td>在线装箱</td><td>标量 → 主动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ1</td><td>TSP</td><td>标量 → 主动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ1</td><td>CVRP</td><td>标量 → 主动分析</td><td>3</td><td>-5.04</td><td>+2.60%</td><td>探索性</td></tr><tr><td>RQ2</td><td>在线装箱</td><td>主动分析 → 相关历史</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ2</td><td>TSP</td><td>主动分析 → 相关历史</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ2</td><td>CVRP</td><td>主动分析 → 相关历史</td><td>3</td><td>+1.22</td><td>+0.36%</td><td>探索性</td></tr><tr><td>RQ2</td><td>在线装箱</td><td>随机历史 → 相关历史</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ2</td><td>TSP</td><td>随机历史 → 相关历史</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ2</td><td>CVRP</td><td>随机历史 → 相关历史</td><td>3</td><td>+2.64</td><td>-0.90%</td><td>探索性</td></tr></tbody></table>
+        <h2>本轮判断</h2><p>被动分析相对标量反馈在 TSP、CVRP 的保留集配对中位改善为 +0.26%、+1.08%，仅有方向性信号。主动分析相对被动分析为 -1.23%、-3.87%，未显示稳定额外收益。主动相对标量的 CVRP 最终改善 +2.60%，但预算曲线面积差 -5.04 个百分点，不能只挑最终值。</p><p>相关历史相对无历史的 CVRP 保留集改善为 +0.36%，相对随机历史为 -0.90%；装箱与 TSP 的配对中位数为零。未建立稳定的相关性特异冷启动收益，开发集与保留集也有方向分歧。</p></section>
+<section class="chapter"><div class="chapter-num">04 · 配对结果</div><h1>抽象提示与模型差异不等同于泛化</h1>
+        <p>正值表示处理组更好。每一行先比较同一问题、同一 seed 的两个实验臂，再汇总配对中位数。¹ 面积是预算范围内的平均改善率，差值以百分点计；模型交互为 Pro 的主动控制增益减去 Flash 的增益。3 个 seed 只用于探索，不提供显著性或稳定泛化保证。</p><table><thead><tr><th>RQ</th><th>问题</th><th>对照 → 处理</th><th>配对</th><th>面积差¹</th><th>保留集改善</th><th>边界</th></tr></thead><tbody><tr><td>RQ3</td><td>在线装箱</td><td>主动分析 → 抽象提示</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ3</td><td>TSP</td><td>主动分析 → 抽象提示</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ3</td><td>CVRP</td><td>主动分析 → 抽象提示</td><td>3</td><td>+1.43</td><td>-1.87%</td><td>探索性</td></tr><tr><td>RQ3</td><td>在线装箱</td><td>随机抽象提示 → 抽象提示</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ3</td><td>TSP</td><td>随机抽象提示 → 抽象提示</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ3</td><td>CVRP</td><td>随机抽象提示 → 抽象提示</td><td>3</td><td>+0.96</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ4</td><td>在线装箱</td><td>标量 → Pro 标量</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ4</td><td>TSP</td><td>标量 → Pro 标量</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ4</td><td>CVRP</td><td>标量 → Pro 标量</td><td>3</td><td>-3.10</td><td>+2.67%</td><td>探索性</td></tr><tr><td>RQ4</td><td>在线装箱</td><td>主动分析 → Pro 主动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ4</td><td>TSP</td><td>主动分析 → Pro 主动分析</td><td>3</td><td>+0.00</td><td>+0.00%</td><td>探索性</td></tr><tr><td>RQ4</td><td>CVRP</td><td>主动分析 → Pro 主动分析</td><td>3</td><td>-0.71</td><td>-1.87%</td><td>探索性</td></tr></tbody></table><p>模型 × 主动控制的配对中位交互（面积 / 保留集，百分点）：在线装箱 +0.00 / +0.00；TSP +0.00 / +0.00；CVRP +3.10 / -4.93。各 seed 明细保留在机读结果中，不以中位数掩盖方向不一致。</p>
+        <h2>本轮判断</h2><p>抽象提示相对无提示的 CVRP 保留集改善为 -1.87%，相对随机抽象提示为零；装箱与 TSP 的中位数为零。本轮是 Codex 编写、未经确认的外部抽象提示消融，不是科研 Agent 自主发现后的机制迁移。</p><p>在线对照已完成，不再受旧 Model Router 403 阻塞。CVRP 上 Pro 相对 Flash：标量组 +2.67%，主动组 -1.87%；装箱与 TSP 的配对中位数为零。未发现稳定模型优势或模型与控制器交互，只适用于同供应商 Flash/Pro 的本次非思考设置。</p><p>随机抽象对照与相关抽象提示选中相同条目集合的配对：在线装箱 1/3、TSP 2/3、CVRP 2/3。因此不能将整个对照差异归因于提示相关性。</p></section>
+<section class="chapter"><div class="chapter-num">05 · 分析潜力</div><h1>分析先预测，再接受核对</h1>
+    <p>每个候选的分析、预期改善幅度和成功概率先写入追加式哈希账本并落盘，再运行候选评测。算法质量使用随候选预算变化的阶梯曲线；最后一次生成的收益不能提前计入前面的面积。</p>
+    <table><thead><tr><th>问题</th><th>实验臂</th><th>有效/尝试</th><th>分析数</th><th>方向正确</th><th>全猜无增益</th><th>Brier</th></tr></thead><tbody><tr><td>在线装箱</td><td>标量</td><td>31/36</td><td>31</td><td>51.6%</td><td>100.0%</td><td>0.203</td></tr><tr><td>在线装箱</td><td>被动分析</td><td>26/36</td><td>26</td><td>80.8%</td><td>100.0%</td><td>0.132</td></tr><tr><td>在线装箱</td><td>主动分析</td><td>34/36</td><td>34</td><td>91.2%</td><td>100.0%</td><td>0.035</td></tr><tr><td>在线装箱</td><td>Pro 标量</td><td>29/36</td><td>29</td><td>72.4%</td><td>100.0%</td><td>0.123</td></tr><tr><td>在线装箱</td><td>Pro 主动分析</td><td>29/36</td><td>29</td><td>93.1%</td><td>100.0%</td><td>0.056</td></tr><tr><td>TSP</td><td>标量</td><td>31/36</td><td>31</td><td>9.7%</td><td>100.0%</td><td>0.246</td></tr><tr><td>TSP</td><td>被动分析</td><td>31/36</td><td>31</td><td>6.5%</td><td>93.5%</td><td>0.305</td></tr><tr><td>TSP</td><td>主动分析</td><td>27/36</td><td>27</td><td>51.9%</td><td>96.3%</td><td>0.139</td></tr><tr><td>TSP</td><td>Pro 标量</td><td>24/36</td><td>24</td><td>66.7%</td><td>100.0%</td><td>0.154</td></tr><tr><td>TSP</td><td>Pro 主动分析</td><td>32/36</td><td>32</td><td>78.1%</td><td>93.8%</td><td>0.107</td></tr><tr><td>CVRP</td><td>标量</td><td>30/36</td><td>30</td><td>23.3%</td><td>80.0%</td><td>0.296</td></tr><tr><td>CVRP</td><td>被动分析</td><td>30/36</td><td>30</td><td>16.7%</td><td>83.3%</td><td>0.251</td></tr><tr><td>CVRP</td><td>主动分析</td><td>22/31</td><td>22</td><td>59.1%</td><td>90.9%</td><td>0.148</td></tr><tr><td>CVRP</td><td>Pro 标量</td><td>28/36</td><td>28</td><td>71.4%</td><td>82.1%</td><td>0.181</td></tr><tr><td>CVRP</td><td>Pro 主动分析</td><td>27/36</td><td>27</td><td>74.1%</td><td>100.0%</td><td>0.119</td></tr></tbody></table>
+    <p>Brier 衡量概率预测偏差，越低越好。“全猜无增益”检查类别不平衡造成的虚高；恒定概率 0.5 的 Brier 为 0.25。两项只作事后描述参照，不修改预注册质量门。秩相关和 top-k 命中率见机读结果，样本或预测变化不足时不估计相关性。</p>
+    <p>以上仅覆盖分析与算法评测均有效的样本，须结合有效率阅读。预测准确不证明因果作用；只有其回流能改善搜索，才支持主线能力。增加文字、档案或主张数量本身不是成功。</p>
+    <p>全矩阵 738 个可匹配有效样本中仅 43 个改善；模型方向准确率 57.2%，全猜无改善为 94.2%。此合并数字只描述类别不平衡，不用于跨问题效果推断。</p></section>
+<section class="chapter"><div class="chapter-num">06 · 分析案例</div><h1>机制说得通，还要预测得准</h1>
+    <p>每个问题选取一个有效候选中预测误差最大的案例，供人审查分析与实现是否对应。这是事后诊断，不代表平均水平，不是新增成功门槛；原始全文留在本地账本。</p>
+    <h2>在线装箱 · bp_online/202/reference_active</h2>
+        <p>评测前预测 +3.00%，实际开发集相对父算法改善 -210.30%，预测成功概率 55%。分析编号：analysis-8299fc7a8dfb112b。</p>
+        <p>代码核对：实际评分为 -r + 0.5r²，r 是放入物品后的余量，评测器取最大分。r&gt;1 时分数随余量增大，奖励更空的箱子；“平衡浪费”的解释没有核对符号与尺度。</p><p>证伪核对：所写最小证伪只是重新比较开发集均值，未直接检验余量排序是否与紧凑装箱相反。</p><h2>TSP · tsp_construct/202/transfer</h2>
+        <p>评测前预测 +2.00%，实际开发集相对父算法改善 -328.27%，预测成功概率 35%。分析编号：analysis-0501b7f3444a82bc。</p>
+        <p>代码核对：代码最大化“距当前点距离 − 距其他未访问点的最近距离”。它偏向距当前点远、却靠近其他点的节点。分析已提到该风险，但没有说明为何仍预测正收益，也未验证“避免遗留孤立点”的排序依据。</p><p>证伪核对：所写最小证伪仍是整批目标值比较，不是针对孤立点的定向构造。</p><h2>CVRP · cvrp_construct/303/reference_scalar</h2>
+        <p>评测前预测 -200.00%，实际开发集相对父算法改善 -4.27%，预测成功概率 25%。分析编号：analysis-f5e0643d2f63c917。</p>
+        <p>代码核对：代码按归一化当前距离加半权仓库距离排序，没有直接控制提前返仓；该风险可能由访问顺序间接产生，但分析未给出可检查的因果链。原始预测值为 -2.0（-200%），不得事后改写成 -2%。</p><p>证伪核对：方向判断正确而幅度偏差大，提示先统一数值尺度与机制到代码的对应关系。</p>
+    <div class="takeaway"><div class="takeaway-label">主线如何收敛</div>先研究分析能否识别代码的真实排序与约束行为，形成可校准的预测，再检验其被动回流是否改善同预算搜索。不要把解释更长、档案更多当作算法潜力。</div></section>
+<section class="chapter"><div class="chapter-num">07 · 复现与限制</div><h1>保留失败，定位每个结论的证据</h1>
+    <p>本版研究 ID：refactor0830_opencode_go_pilot_v7。协议哈希为下方 64 位摘要。源码、历史输入和数据划分均绑定该协议；旧运行不迁移进新坐标。</p><pre>c889504f947ab22a9410db04040507a8e8ef373b979f027d2564d17070e72a72</pre>
+    <h2>运行边界</h2><p>真实运行目录含请求成本、前瞻分析、候选评测、三类档案和动作记录。原始候选与大日志仅保存在本地忽略目录；Git 保存配置、精简结果和本报告，绝不保存 API key。</p>
+    <p>协议落盘到结果落盘的观测时长约 59.9 分钟，来源为本机文件时间，非单调计时。已知输入 / 输出用量为 3,268,396 / 728,114 token，另有 1 次请求用量未知；不据此猜测费用。并发请求耗时之和不是实际运行时长。</p>
+    <p>评测器使用独立进程、超时和数值接口检查，但不是操作系统安全沙箱。仅适用于本项目受限候选，不可用来执行不受信任的任意程序。</p>
+    <h2>中断与更新原则</h2><p>Zen 返回 401，Go 的两个模型均通过简短预检。早期运行暴露超时、代码说明缺失和分析字段不明确；v6 共记录 423 次请求，其中一次连接重置，17/81 坐标返回后停止，保留集未解封。失败批次独立保留，v7 事先登记有限传输重试后全量重启，不拼接旧结果。</p>
+    <p>证据审计状态：evidence_integrity_verified。账本哈希、分析先于评测、反例准入、保留集顺序和配对结果均从原始记录复核；这只证明证据一致性，不证明效果显著。</p>
+    <p>同模型重跑不保证逐 token 复现；本报告支持协议、数据和证据链复核，不把随机生成伪装成确定性计算。模型比较仅覆盖本次请求的非思考设置及供应商实际返回的模型标识。</p>
+    <h2>直接来源</h2><ul><li>历史表：refactor0830_phase4/rq1_rq4_offline_replay.json。</li>
+    <li>本轮：随报告提供的 online_review.json 与本地冻结协议。</li>
+    <li><a href="https://opencode.ai/docs/go/">OpenCode Go 官方接口说明</a>，核对于 2026-08-31。</li>
+    <li><a href="https://api-docs.deepseek.com/guides/thinking_mode/">DeepSeek 思考模式参数</a>，核对于 2026-08-31。</li></ul>
+    <p>Phase 6 的多领域扩展暂不推进，先完成 RQ1-RQ4 的质量、有效性与证据完整性复核。</p></section></body></html>

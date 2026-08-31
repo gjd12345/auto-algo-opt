@@ -11,6 +11,28 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism E
 旧 `batch_runner` / `eoh_single_runner` 仍走 EOH 主循环，只用于历史复现，不能作为新闭环已运行的证据。
 新 pilot 使用独立合成实例；其装箱箱数、路线长度与下列历史 gap / 基线常量不可混算。
 
+### 最新交付：RQ1–RQ4 在线 pilot（2026-08-31）
+
+OpenCode Go 的 DeepSeek V4 Flash / Pro 已完成 **81/81 坐标**：935 次候选尝试、
+738 个有效候选、929 份评测前分析、23 个接纳反例。全部最终算法先冻结再评保留集；
+账本、配对结果和 22 个源码/资产哈希的独立审计通过。五个坐标按预注册停滞规则提前停止。
+这证明执行与证据完整，**不代表效果显著或旧质量门通过**。
+
+| 问题 | 新在线证据（各问题 3 个配对 seed，仅探索性） |
+| --- | --- |
+| RQ1 分析回流 | 被动分析相对标量：TSP +0.26%、CVRP +1.08%；主动相对被动：−1.23%、−3.87%。未建立主动控制的稳定额外收益。 |
+| RQ2 冷启动 | CVRP 相关历史相对无历史 +0.36%，相对随机历史 −0.90%；未建立稳定相关性收益。 |
+| RQ3 抽象提示 | CVRP 相对无提示 −1.87%；随机抽象对照存在条目重合，不构成自主机制迁移证据。 |
+| RQ4 模型对照 | 旧 403 阻塞已绕开并完成在线矩阵；CVRP 上 Pro 相对 Flash，标量 +2.67%、主动 −1.87%，没有稳定模型优势。 |
+
+表中百分比是保留集相对改善的配对中位数；装箱均为零，其余完整对照及开发预算曲线见报告。
+建议收敛到“**评测前分析能否识别代码行为、校准预测，并通过被动回流改善同预算搜索**”。
+主动反例、历史输入与模型大小保留为消融变量，Phase 6 暂缓。历史四行结论不被新 cohort 覆盖。
+
+- [Kami 审阅报告（PDF）](eoh_rag_workspace/reports/refactor0830_online_review/online_review.pdf) / [HTML](eoh_rag_workspace/reports/refactor0830_online_review/online_review.html)
+- [可编辑 Draw.io 架构图](eoh_rag_workspace/reports/refactor0830_online_review/online_architecture.drawio)
+- [完整精简结果与审计](eoh_rag_workspace/reports/refactor0830_online_review/online_review.json) / [终态回执与三个代码审阅案例](agent_records/calibrations/refactor0830_v7_result_review_20260831.json)
+
 ---
 
 ## 1. 这是什么
@@ -143,7 +165,7 @@ OPENCODE_COMPARISON_MODEL=deepseek-v4-pro
 ### 新 FME 在线对照
 
 默认仅生成冻结协议，不调用 API；每次使用新输出目录，禁止覆盖旧证据。
-完整矩阵为 3 问题 × 3 seed × 9 实验臂，每坐标 12 次候选尝试（包含失败）。
+完整矩阵为 3 问题 × 3 seed × 9 实验臂，每坐标最多 12 次候选尝试（包含失败，允许登记的提前停止）。
 12 是工程 pilot 预算，不是论文规定的最优次数，也不构成统计功效保证。
 
 ```bash
@@ -155,6 +177,24 @@ python -m eoh_rag.experiments.fme_pilot --execute --output outputs/fme_pilot/onl
 `--integration-smoke` 使用显式 fixture 和真实求解评测，只验证执行链，不能支持研究结论。
 开发域主张的 `supported` 只表示预测方向与独立开发探测的改善相符，尚非机制因果证据。
 RQ3 仅检验外部编写的跨问题抽象提示，不声称自主机制迁移已实现。
+
+### 已有在线证据的只读复核与报告重建（不调用 API）
+
+```bash
+python scripts/audit_fme_pilot.py outputs/fme_pilot/opencode_go_online_20260831_v7
+python scripts/build_fme_online_report.py --run-dir outputs/fme_pilot/opencode_go_online_20260831_v7 --output eoh_rag_workspace/reports/refactor0830_online_review
+weasyprint eoh_rag_workspace/reports/refactor0830_online_review/online_review.html eoh_rag_workspace/reports/refactor0830_online_review/online_review.pdf
+```
+
+预期审计状态为 `evidence_integrity_verified`；构建报告时会再次核对原始证据，
+报告中的人工解释只绑定指定原始 summary 哈希，不挪用于重跑结果。
+Windows 缺少 WeasyPrint 的系统库时可在 WSL 中渲染。PDF 已逐页排版审查，
+Draw.io 文件已做 XML 结构校验；当前环境缺少 Draw.io 桌面导出器，未提供原生渲染图片。
+
+原始运行目录在 `.gitignore` 中，不随克隆分发。Git 提供精简结果、哈希、manifest 与代码；
+完整账本审计需保留本机 `outputs/fme_pilot/opencode_go_online_20260831_v7`。
+如需独立重新生成实验，使用 `--execute` 和全新输出目录，会重新调用付费 API，结果不保证逐 token 一致。
+当前执行源码对应 `0159cd6`，后续交付只更新审计、报告和说明。
 
 ### 可选历史测试（不作为默认步骤）
 ```bash
