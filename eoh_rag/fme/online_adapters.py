@@ -199,8 +199,14 @@ class EOHGeneratorAdapter:
         self.last_prompt_hash = digest(prompt)
         response = self.transport.request(prompt, purpose="generation", problem=request.problem)
         algorithms, codes = self.eoh._extract(response)
-        if not codes or not algorithms:
+        if not codes:
             return ()
+        if not algorithms:
+            # 一些模型只返回代码。说明缺失不等于算法无效；机制分析由独立前瞻调用完成。
+            # 这里仅标记缺失，不能替模型编造科学解释。
+            algorithms = ["Candidate program; no separate algorithm description was supplied."]
+        self.transport.journal.append("generation_extraction", {"operator": operator,
+            "code_count": len(codes), "separate_description_present": algorithms[0] != "Candidate program; no separate algorithm description was supplied."})
         return (GeneratedCandidate(code=self.eoh._prepend_imports(codes[0]), algorithm=algorithms[0],
             parent_candidate_ids=request.parent_candidate_ids, operator=operator),)
 

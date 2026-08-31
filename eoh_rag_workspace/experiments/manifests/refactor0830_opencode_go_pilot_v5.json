@@ -1,0 +1,23 @@
+{
+  "extends": "eoh_rag_workspace/experiments/manifests/refactor0830_online_pilot_v2.json",
+  "schema_version": "fme-online-pilot/v2",
+  "study_id": "refactor0830_opencode_go_pilot_v5",
+  "provider": "opencode-go",
+  "model_slots": {"primary": "OPENCODE_MODEL", "reference": "OPENCODE_COMPARISON_MODEL"},
+  "thinking": "disabled",
+  "cell_concurrency": 3,
+  "provider_timeout_seconds": 180,
+  "generation_max_tokens": 3072,
+  "analysis_max_tokens": 1536,
+  "provider_sources": ["https://opencode.ai/docs/go/", "https://api-docs.deepseek.com/guides/thinking_mode/"],
+  "model_comparison_scope": "DeepSeek V4 Flash versus V4 Pro under OpenCode Go; same requested non-thinking setting, not cross-family generalization",
+  "transfer_boundary": "Abstract-history cold-start ablation with Codex-authored unconfirmed hypotheses, not autonomous mechanism migration; report overlapping retrieval controls",
+  "claim_retest_boundary": "Supported means development improvement direction agrees with a prospective prediction, not causal mechanism validation",
+  "supersedes_failed_pilot": "refactor0830_opencode_go_pilot_v4",
+  "amendments_before_restart": [
+    "Accept code-only completions without inventing a missing description; independent prospective analysis is still required",
+    "Raise HTTP timeout from 90 to 180 seconds after observed transport timeouts; no hidden retries",
+    "Restart all coordinates under the new frozen protocol; do not import v4 attempts or outcomes"
+  ],
+  "note": "Independent exploratory pilot, 12 attempts per coordinate. Budget is engineering choice, not literature optimum or power guarantee. v4 remains a failed execution record and never unsealed heldout."
+}
