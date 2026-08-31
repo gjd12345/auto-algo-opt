@@ -13,16 +13,20 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism E
 
 ### 当前聚焦：RQ1b — Behavior-Grounded Analysis
 
-**本轮终态（2026-08-31）：incomplete，不能判定三臂优劣。**
-网络连接错误耗尽预设重试后停止。原始日志保留14个完整、4个部分、6个未启动单元，
-已评测246/384槽位；同代码诊断与 held-out 尚未开启。部分证据哈希、标签和完整单元指标可重算。
-主线程汇总只回收12个结果，另2个完整单元保存在独立日志；没有覆盖原记录。
-父代 algorithm 描述未持久化使精确提示续跑无法保证；[修复与独立重跑提案](agent_records/proposals/rq1b_restart_after_transport_failure_v1.json)待用户批准。
+**最新 v2 终态（2026-08-31）：incomplete，完整对比尚未完成。**
+用户批准独立真实重跑后，已实际调用 OpenCode Go / Flash：337 次 HTTP 尝试、165/384 个已评测槽位，
+10 个完整、2 个部分、12 个未启动单元。同代码诊断与 held-out 尚未开启，不能发布三臂优劣。
+两次 HTTP200 流 JSON 解析错误被冻结传输层判为不可重试；另一次 HTTP500 与一次流缺终止标记已按原规则恢复。
+本轮全部10个完整结果都被主线程回收；成功响应、完整提示、原始父代描述和状态断点已保存并通过部分只读审计。
+没有修改运行中的冻结代码，也没有重抽成功候选。自动断点重放尚未实现/验证。
 
-- [本轮可携带审阅报告](eoh_rag_workspace/reports/rq1b_20260831/report.html) / [精简证据](eoh_rag_workspace/reports/rq1b_20260831/results.json)
-- [部分完整性审计](agent_records/calibrations/rq1b_online_20260831_v1_audit.json)；HTML已做结构与嵌入数据检查，本机缺少所需 headless Chromium，未做浏览器视觉检查。
-- 审计复现：`python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v1 --partial`
-- 以下命令是冻结入口说明，不是继续使用已存在输出目录的恢复命令；当前不得用它静默补跑。
+- [v2 部分完整性审计](agent_records/calibrations/rq1b_online_20260831_v2_audit.json) / [执行授权与预算](agent_records/contracts/refactor0830_rq1b_execution_v2.json)
+- 外部知识库报告：`0724/过程文档/2026-08-31/RQ1b-v2-API实验报告/report.html`；同目录保留 results.json 与可重建 artifact.json。
+- HTML结构与嵌入数据检查通过；本机缺少 headless Chromium，未做浏览器视觉或交互检查。
+- 审计复现：`python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v2 --partial`
+- [仅传输层续跑提案](agent_records/proposals/rq1b_v2_stream_resume_v1.json)等待用户确认：复用成功响应、校验精确提示，不增加候选或每请求9次HTTP上限；未执行续跑。
+- 历史 v1 独立保留：[中断报告](eoh_rag_workspace/reports/rq1b_20260831/report.html) / [审计](agent_records/calibrations/rq1b_online_20260831_v1_audit.json)。v1 的14完整/4部分/6未启动、246槽位、514次HTTP不并入v2效果。
+- 以下命令仅为冻结入口说明，不是恢复命令；不得用既有输出目录补跑，也不得未经新授权再次启动独立队列。
 
 根据 2026-08-31 用户指示，仅继续 CVRP / DeepSeek V4 Flash 的三臂比较：
 A 标量反馈（分析影子留存）、B 普通被动分析、C 代码行为约束的被动分析。
@@ -35,15 +39,15 @@ RQ2 历史、RQ3 迁移、RQ4 模型比较及 Phase 6 暂停。沿用唯一 `FME
 行为/定向测量的实测标签不回流，最终保留集只在全部算法冻结后开启。
 B/C 回流的是评测前预测，A 永远不回流；本轮 B 已增加共同预测题，不能与 v7 B 数值混算。
 
-- [RQ1b 协议](eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v1.json) / [用户授权范围](agent_records/contracts/refactor0830_rq1b_amendment_v1.json)
-- 原始证据：`outputs/fme_pilot/rq1b_online_20260831_v1`（Git 忽略）
+- [RQ1b v2 协议](eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v2.json) / [科学范围](agent_records/contracts/refactor0830_rq1b_amendment_v1.json)
+- 最新原始证据：`outputs/fme_pilot/rq1b_online_20260831_v2`（Git 忽略）；v1目录不覆盖、不删除
 - 数字预算是工程探索选择，没有“8 seed / 16 次最优”的文献保证；仅达到预先写下的多层信号才建议继续，不为过门槛补跑。
 
 ```bash
 # 默认仅冻结，不调用 API；每次需要全新输出目录
-python -m eoh_rag.fme.rq1b --output outputs/fme_pilot/rq1b_prepared
+python -m eoh_rag.fme.rq1b_v2 --output outputs/fme_pilot/rq1b_prepared_new
 # 显式执行全部三臂与同代码诊断；会调用已配置的 OpenCode Go API
-python -m eoh_rag.fme.rq1b --execute --output outputs/fme_pilot/rq1b_online_20260831_v1
+python -m eoh_rag.fme.rq1b_v2 --execute --output outputs/fme_pilot/rq1b_online_new_authorized
 ```
 
 行为测量借鉴 [CRUXEval-O](https://proceedings.mlr.press/v235/gu24c.html) 的“给定代码和输入，预测执行输出”定义，

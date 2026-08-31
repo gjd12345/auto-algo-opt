@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 from statistics import median
+import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from eoh_rag.fme.online_adapters import ROOT, digest, file_hash, verify_journal
@@ -19,11 +20,85 @@ from scripts.audit_fme_pilot import require, verify_transport_retries
 def read(path):
     return json.loads(path.read_text(encoding='utf-8'))
 
-def records(path, protocol):
+def _verify_v2_recovery(events, protocol, checkpoint_root, allow_terminal_failure=False):
+    """Validate outer durable cycles in addition to the v1 inner retries."""
+    recovery = protocol.get('transport_recovery', {})
+    expected_policy={'additional_cycles': 2, 'delays_seconds': [10, 30],
+                     'max_http_attempts_per_logical_request': 9}
+    require(all(recovery.get(k)==v for k,v in expected_policy.items()),
+            'v2_recovery_policy_mismatch')
+    max_inner = protocol['network_retries'] + 1
+    active = None; next_ordinal = 1; checkpoints = set(); final_cell_hash = None
+    for event in events:
+        kind, payload = event['kind'], event['payload']
+        if kind == 'cell_checkpoint_saved':
+            require(event.get('actor') == 'research_agent' and payload.get('path') == 'cell_checkpoint.json', 'cell_checkpoint_identity_mismatch')
+            final_cell_hash = payload.get('content_hash')
+            continue
+        if kind == 'recovery_started':
+            require(active is None or (not active.get('finished') and not active.get('ok')), 'recovery_cycle_overlap')
+            cycle = payload.get('cycle'); require(cycle in (1, 2, 3), 'recovery_cycle_invalid')
+            if active is not None:
+                require(cycle == active['cycle'] + 1, 'recovery_cycle_nonsequential')
+                require(payload.get('delay_seconds') == recovery['delays_seconds'][cycle - 2], 'recovery_delay_mismatch')
+                require(active['attempt'] == max_inner and not active.get('ok'), 'recovery_before_inner_exhaustion')
+                failed=active['last_request']; status=failed.get('http_status'); code=failed.get('error_code')
+                require(status in {408,429,500,502,503,504} or code in {'stream_total_timeout','stream_missing_terminal_marker','URLError','OSError','TimeoutError','ConnectionResetError','ConnectionAbortedError','BrokenPipeError','SSLError','RemoteDisconnected'}, 'recovery_after_nonretryable_failure')
+                require(all(payload.get(k) == active[k] for k in ('model','purpose','problem','prompt_hash')), 'recovery_identity_changed')
+            else:
+                require(cycle == 1 and payload.get('delay_seconds') == 0, 'recovery_initial_cycle_invalid')
+            active = {'cycle': cycle, 'model': payload.get('model'), 'purpose': payload.get('purpose'),
+                      'problem': payload.get('problem'), 'prompt_hash': payload.get('prompt_hash'),
+                      'attempt': 0, 'total_attempts': (active.get('total_attempts', 0) if active else 0),
+                      'ok': False, 'finished': False}
+        elif kind == 'model_request':
+            require(active is not None and not active['finished'], 'request_without_recovery_cycle')
+            attempt = payload.get('transport_attempt', 1)
+            require(1 <= attempt <= max_inner and attempt == active['attempt'] + 1, 'inner_retry_sequence_invalid')
+            active['total_attempts'] += 1
+            require(active['total_attempts'] <= recovery['max_http_attempts_per_logical_request'], 'outer_retry_budget_exceeded')
+            require(all(payload.get(k) == active[k] for k in ('model', 'purpose', 'problem', 'prompt_hash')),
+                    'recovery_request_identity_mismatch')
+            active['attempt'] = attempt; active['ok'] = bool(payload.get('ok')); active['last_request'] = payload
+            if active['ok']: active['finished'] = True
+        elif kind == 'checkpoint_saved':
+            require(active is not None and active['finished'] and active['ok'], 'checkpoint_without_success')
+            ordinal = payload.get('ordinal'); require(ordinal == next_ordinal, 'checkpoint_ordinal_mismatch')
+            rel = payload.get('path'); require(isinstance(rel, str) and Path(rel).name == rel and rel.endswith('.json'), 'checkpoint_path_invalid')
+            target = (checkpoint_root / rel).resolve()
+            require(target.parent == checkpoint_root.resolve() and target.is_file(), 'checkpoint_missing')
+            data = json.loads(target.read_text(encoding='utf-8'))
+            require(data.get('schema_version')=='rq1b-request-checkpoint/v1' and data.get('protocol_hash')==protocol['protocol_hash'] and data.get('actor')==event['actor'], 'checkpoint_protocol_or_actor_mismatch')
+            require(data.get('ordinal') == ordinal and data.get('prompt_hash') == active['prompt_hash'], 'checkpoint_request_identity_mismatch')
+            require(data.get('model') == active['model'] and data.get('purpose') == active['purpose'] and data.get('problem') == active['problem'], 'checkpoint_request_shape_mismatch')
+            spec=data.get('request_spec'); expected_spec={'model':protocol['resolved_model'],'purpose':active['purpose'],'problem':active['problem'],'max_tokens':64 if active['purpose']=='preflight' else (protocol['analysis_max_tokens'] if active['purpose']=='analysis' else protocol['generation_max_tokens']),'temperature':protocol['temperature'],'thinking':protocol['thinking'],'stream':protocol['stream'],'provider':protocol['provider'],'prompt_hash':active['prompt_hash'],'response_format':{'type':'json_object'} if active['purpose']=='analysis' and protocol['resolved_model'].startswith('deepseek') else None,'reasoning':{'effort':'none'} if protocol['provider']=='opencode-go' and protocol['thinking']=='disabled' else None,'stream_options':{'include_usage':True} if protocol['stream'] else None}
+            require(spec == expected_spec, 'checkpoint_request_spec_mismatch')
+            require(data.get('prompt_hash') == digest(data.get('prompt', '')) and data.get('response_hash') == digest(data.get('response', '')) and data.get('request_spec_hash') == digest(data.get('request_spec')), 'checkpoint_hash_mismatch')
+            require(payload.get('prompt_hash') == data['prompt_hash'] and payload.get('response_hash') == data['response_hash'] and payload.get('request_spec_hash') == data['request_spec_hash'], 'checkpoint_event_hash_mismatch')
+            require(rel not in checkpoints, 'duplicate_checkpoint_path'); checkpoints.add(rel); next_ordinal += 1
+            active = None
+    require(active is None or (allow_terminal_failure and active.get('last_request') and not active['ok'] and any(e['kind']=='action_aborted' for e in events)), 'unterminated_recovery_cycle')
+    require({p.name for p in checkpoint_root.glob('request-*.json')}==checkpoints,'unreceipted_success_checkpoint')
+    if final_cell_hash is not None:
+        target=checkpoint_root.parent / 'cell_checkpoint.json'; require(target.is_file(), 'cell_checkpoint_missing')
+        data=json.loads(target.read_text(encoding='utf-8')); saved_hash=data.pop('content_hash',None)
+        require(data.get('protocol_hash') == protocol['protocol_hash'] and saved_hash == digest(data) == final_cell_hash, 'cell_checkpoint_hash_mismatch')
+
+
+def records(path, protocol, check_v2=True):
     verify_journal(path)
     result = [json.loads(x) for x in path.read_text(encoding='utf-8').splitlines()]
     verify_transport_retries(result, protocol['network_retries'])
+    if check_v2 and protocol.get('execution_version') == 2:
+        _verify_v2_recovery(result, protocol, path.parent / 'checkpoints')
     return result
+
+def outer_retry_count(events):
+    cycle=1; count=0
+    for event in events:
+        if event['kind']=='recovery_started': cycle=event['payload']['cycle']
+        elif event['kind']=='model_request' and cycle>1 and event['payload'].get('transport_attempt',1)==1: count+=1
+    return count
 
 def equal(a, b):
     if isinstance(a,(int,float)) and not isinstance(a,bool) and isinstance(b,(int,float)) and not isinstance(b,bool):
@@ -67,15 +142,44 @@ def panel_check(panel, expected):
     sha=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
     require(sha==panel['content_hash']==expected,'panel_content_mismatch')
 
+def forecast_check(forecast, panel):
+    fields=forecast.get('fields',{})
+    states={str(s['state_id']):s for s in panel['states']}
+    behavior=fields.get('behavior_predictions',{}); families=fields.get('behavior_families',{})
+    require(set(behavior)==set(states)==set(families), 'forecast_state_domain_mismatch')
+    require(all(families[sid]==str(state['family']) for sid,state in states.items()),'forecast_family_domain_mismatch')
+    for sid,value in behavior.items():
+        require(value is None or (isinstance(value,int) and not isinstance(value,bool) and value in set(states[sid]['unvisited_nodes'])|{0}), 'forecast_node_domain_mismatch')
+    targeted=fields.get('targeted_predictions',{})
+    require(set(targeted)==set(TARGET_DESCRIPTIONS), 'forecast_target_domain_mismatch')
+    for prediction in targeted.values():
+        probability=prediction.get('failure_probability')
+        require(probability is None or (isinstance(probability,(int,float)) and not isinstance(probability,bool) and math.isfinite(probability) and 0 <= probability <= 1), 'forecast_probability_invalid')
+        effect=prediction.get('predicted_effect')
+        require(effect is None or (isinstance(effect,(int,float)) and not isinstance(effect,bool) and math.isfinite(effect) and effect<=1),'forecast_target_effect_invalid')
+    effect=fields.get('predicted_effect'); success=fields.get('predicted_success_probability')
+    require(effect is None or (isinstance(effect,(int,float)) and not isinstance(effect,bool) and math.isfinite(effect) and effect<=1), 'forecast_effect_invalid')
+    require(success is None or (isinstance(success,(int,float)) and not isinstance(success,bool) and math.isfinite(success) and 0 <= success <= 1), 'forecast_success_probability_invalid')
+
 def suite_check(results, hashes):
     require(set(results)==set(hashes),'suite_family_mismatch')
     for name,result in results.items():
         require(result.get('suite_hash')==hashes[name],'result_suite_hash_mismatch')
+        objective=result.get('objective',result.get('candidate_objective'))
+        if result.get('valid', True):
+            require(isinstance(objective,(int,float)) and not isinstance(objective,bool) and math.isfinite(objective), 'objective_not_finite')
 
 def audit(run_dir):
     summary,protocol=read(run_dir/'summary.json'),read(run_dir/'protocol_frozen.json')
     require(summary['status'] in {'pilot_completed','integration_smoke_completed'},'study_not_complete')
     require(digest({k:v for k,v in protocol.items() if k!='protocol_hash'})==protocol['protocol_hash'],'protocol_hash_mismatch')
+    if protocol.get('execution_version') == 2:
+        require({'eoh_rag/fme/rq1b_v2.py','eoh_rag/fme/rq1b_transport.py'} <= set(protocol.get('source_hashes',{})), 'v2_runner_sources_missing')
+        head=protocol.get('execution_head','')
+        require(isinstance(head,str) and len(head)==40 and all(c in '0123456789abcdef' for c in head.lower()), 'execution_commit_invalid')
+        require(subprocess.run(['git','cat-file','-e',head+'^{commit}'],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0,'execution_commit_missing')
+        expected_recovery={'additional_cycles': 2, 'delays_seconds': [10, 30], 'max_http_attempts_per_logical_request': 9}
+        require(all(protocol.get('transport_recovery',{}).get(k)==v for k,v in expected_recovery.items()), 'v2_recovery_policy_missing')
     source={n:(ROOT/n).is_file() and file_hash(ROOT/n)==h for n,h in protocol['source_hashes'].items()}
     require(all(source.values()),'frozen_source_mismatch')
     study=records(run_dir/'events.jsonl',protocol)
@@ -84,10 +188,12 @@ def audit(run_dir):
     cells={(c['seed'],c['arm']['id']):c for c in summary['cells']}
     require(len(summary['cells'])==len(cells)==protocol['expected_cells'] and set(cells)==expected,'cell_coordinates_mismatch')
     require(len(list((run_dir/'cells').glob('*/*/*/events.jsonl')))==len(cells),'cell_journal_count_mismatch')
-    requests=[e['payload'] for e in study if e['kind']=='model_request']
+    completions=[e for e in study if e['kind']=='cell_completed']
+    require(len(completions)==len(cells) and {e['payload'].get('cell_id') for e in completions}==set(c['cell_id'] for c in summary['cells']), 'cell_completion_coordinates_mismatch')
+    requests=[e['payload'] for e in study if e['kind']=='model_request']; outer_retries=outer_retry_count(study)
     spec=get_problem_spec('cvrp_construct'); baseline_id=digest(spec['baseline_code']); cell_checks=[]
     for (seed,arm),cell in sorted(cells.items()):
-        path=run_dir/'cells'/cell['cell_id']; stream=records(path/'events.jsonl',protocol)
+        path=run_dir/'cells'/cell['cell_id']; stream=records(path/'events.jsonl',protocol); outer_retries += outer_retry_count(stream)
         ordinary_hashes={s:protocol['suite_hashes'][f'{seed}/{s}'] for s in ('dev_train','dev_probe')}
         target_hashes={f:protocol['suite_hashes'][f'{seed}/target/{f}'] for f in TARGET_DESCRIPTIONS}
         for split,h in ordinary_hashes.items():
@@ -99,7 +205,7 @@ def audit(run_dir):
         baseline_targets=next(e['payload'] for e in stream if e['kind']=='external_teacher_target_baseline'); suite_check(baseline_targets,target_hashes)
         population={baseline_id:{'objective':initial,'code':spec['baseline_code'],'targets':baseline_targets}}
         best_id=baseline_id; prior=None; scalar={}; attempts=[]; all_rows={'behavior':[],'targeted':[]}
-        analyses={}; evaluations={}; traces=[]; points=[[0,0.0]]; local_requests=[]; exposure=None; forecast_count=0
+        analyses={}; evaluations={}; seen_attempts=set(); traces=[]; points=[[0,0.0]]; local_requests=[]; exposure=None; forecast_count=0
         for event in stream:
             k,p=event['kind'],event['payload']
             if k=='model_request':
@@ -118,8 +224,10 @@ def audit(run_dir):
             elif k=='prospective_analysis':
                 require(exposure is not None,'analysis_without_generation_exposure')
                 attempt=len(attempts)+1
+                require(attempt not in seen_attempts, 'duplicate_attempt')
                 panel_check(p['panel'],protocol['panel_hashes'][f'{seed}/{attempt}'])
                 require(equal(build_probe_panel(seed,attempt),p['panel']),'panel_rebuild_mismatch')
+                forecast_check(p['forecast'],p['panel'])
                 require(p['target_suite_hashes']==target_hashes and p['parent_candidate_ids']==[best_id],'analysis_parent_or_target_mismatch')
                 code=(path/'candidates'/f'{p["candidate_id"]}.py').read_text(encoding='utf-8')
                 require(digest(code)==p['candidate_id'],'prospective_code_hash_mismatch')
@@ -129,10 +237,12 @@ def audit(run_dir):
                 if protocol['mode']=='online':
                     require(local_requests[-1]['ok'] and local_requests[-1]['purpose']=='analysis' and local_requests[-1]['prompt_hash']==p['prompt_hash'],'analysis_request_identity_mismatch')
                 require(p['analysis_id']=='rq1b-analysis-'+digest({key:value for key,value in p.items() if key!='analysis_id'})[:20],'analysis_identity_mismatch')
-                analyses[p['analysis_id']]=event; forecast_count+=bool(p['forecast']['valid'])
+                require(p['analysis_id'] not in analyses, 'duplicate_analysis_id')
+                analyses[p['analysis_id']]=event; seen_attempts.add(attempt); forecast_count+=bool(p['forecast']['valid'])
             elif k in {'candidate_evaluation','candidate_attempt_failure'}:
                 attempt=len(attempts)+1
                 require(p['attempt']==attempt and exposure is not None,'attempt_sequence_mismatch')
+                require(p['attempt'] not in {x.get('attempt') for x in attempts}, 'duplicate_attempt')
                 attempts.append(p); parent=population[best_id]
                 if k=='candidate_attempt_failure':
                     rows=failed_rows(build_probe_panel(seed,attempt)); scalar={'valid':False,'error':'generation_extraction_failed'}; prior=None
@@ -189,7 +299,9 @@ def audit(run_dir):
         require(equal(traces,cell['descendant_traces']) and sum(t['strict_supported_trace'] for t in traces)==cell['strict_supported_traces'],'trace_summary_mismatch')
         require(forecast_count==cell['forecast_valid_count'],'forecast_count_mismatch')
         freezes=[e for e in stream if e['kind']=='cell_frozen']; require(len(freezes)==1 and freezes[0]['payload']['incumbent_id']==best_id,'cell_freeze_mismatch')
-        completed=next(e for e in study if e['kind']=='cell_completed' and e['payload']['cell_id']==cell['cell_id'])
+        completions=[e for e in study if e['kind']=='cell_completed' and e['payload']['cell_id']==cell['cell_id']]
+        require(len(completions)==1,'cell_completion_count_mismatch')
+        completed=completions[0]
         original={k:v for k,v in cell.items() if k not in {'heldout','heldout_valid'}}
         require(completed['payload']['result_hash']==digest(original),'cell_result_hash_mismatch')
         cell_checks.append({'cell_id':cell['cell_id'],'attempts':len(attempts),'valid':cell['valid_candidates'],
@@ -208,11 +320,12 @@ def audit(run_dir):
     coordinates={(s,n,a) for s in protocol['diagnostic_seeds'] for n in programs for a in ('passive','behavior_grounded')}
     require(len(diagnostics)==protocol['expected_diagnostic_rows']==len(coordinates) and {(d['seed'],d['program'],d['style']) for d in diagnostics}==coordinates,'diagnostic_coordinates_mismatch')
     for d in diagnostics:
-        path=run_dir/'diagnostic'/str(d['seed'])/d['program']/d['style']/'events.jsonl'; stream=records(path,protocol)
+        path=run_dir/'diagnostic'/str(d['seed'])/d['program']/d['style']/'events.jsonl'; stream=records(path,protocol); outer_retries += outer_retry_count(stream)
         requests.extend(e['payload'] for e in stream if e['kind']=='model_request')
         before=[e for e in stream if e['kind']=='diagnostic_prospective']; after=[e for e in stream if e['kind']=='diagnostic_evaluation']
         require(len(before)==len(after)==1 and before[0]['sequence']<after[0]['sequence'],'diagnostic_prospective_order_mismatch')
         ap=before[0]['payload']; panel_check(ap['panel'],protocol['panel_hashes'][f'diagnostic/{d["seed"]}'])
+        forecast_check(ap['forecast'],ap['panel'])
         code=programs[d['program']]
         require(digest(code)==d['candidate_id']==ap['candidate_id']==protocol['diagnostic_program_hashes'][d['program']],'diagnostic_code_mismatch')
         prompt=build_analysis_prompt(d['style'],code,json.dumps({'code':spec['baseline_code'],'scope':'external_teacher_reference_not_search_parent'}),ap['panel'],TARGET_DESCRIPTIONS)
@@ -242,7 +355,7 @@ def audit(run_dir):
     require(len(terminal)==1 and terminal[0]['payload']['summary_hash']==digest({k:v for k,v in summary.items() if k!='journal_integrity'}),'summary_terminal_hash_mismatch')
     require(len(requests)<=protocol['budget']['http_requests_max_with_two_transport_retries'],'transport_budget_exceeded')
     transport={'http_requests':len(requests),'by_purpose':dict(Counter(r['purpose'] for r in requests)),
-        'failed_http':sum(not r['ok'] for r in requests),'retry_http':sum(r.get('transport_attempt',1)>1 for r in requests),
+        'failed_http':sum(not r['ok'] for r in requests),'retry_http':sum(r.get('transport_attempt',1)>1 for r in requests)+outer_retries,
         'known_input_tokens':sum(r.get('input_tokens') or 0 for r in requests),'known_output_tokens':sum(r.get('output_tokens') or 0 for r in requests),
         'requests_missing_usage':sum(r.get('input_tokens') is None or r.get('output_tokens') is None for r in requests),
         'response_models':dict(Counter(r.get('response_model') or 'missing' for r in requests)),
@@ -278,10 +391,12 @@ def audit_partial(run_dir):
             if not path.exists():
                 cells.append({'cell_id':cid,'seed':seed,'arm':arm['id'],'status':'not_started','evaluated_slots':0,'started_slots':0,'requests':0,'failed_requests':0})
                 continue
-            stream=records(path,protocol); local=[e['payload'] for e in stream if e['kind']=='model_request']; requests.extend(local)
+            stream=records(path,protocol,check_v2=False); local=[e['payload'] for e in stream if e['kind']=='model_request']; requests.extend(local)
+            if protocol.get('execution_version')==2:
+                _verify_v2_recovery(stream,protocol,path.parent/'checkpoints',allow_terminal_failure=True)
             reqstarts=[e['payload'] for e in stream if e['kind']=='model_request_started']
             require(len(reqstarts)==len(local) and all(all(x[k]==y[k] for k in ('model','purpose','prompt_hash','transport_attempt')) for x,y in zip(reqstarts,local)),'request_receipt_mismatch')
-            pending_analysis={}; targets={}; outcomes={'behavior':[],'targeted':[]}; count=0; initial=best=None; points=[[0,0.0]]
+            pending_analysis={}; targets={}; outcomes={'behavior':[],'targeted':[]}; seen_analysis=set(); count=0; initial=best=None; points=[[0,0.0]]
             for e in stream:
                 k,p=e['kind'],e['payload']
                 if k=='external_teacher_baseline': initial=best=p['dev_train']['objective']
@@ -289,6 +404,8 @@ def audit_partial(run_dir):
                 elif k=='feedback_exposure': require(digest(p['generation_context'])==p['context_hash'] and (arm['id']!='scalar' or not p['included_forecast']),'feedback_integrity_mismatch')
                 elif k=='prospective_analysis':
                     panel_check(p['panel'],protocol['panel_hashes'][f'{seed}/{count+1}']); pending_analysis[p['analysis_id']]=e
+                    require(p['analysis_id'] not in seen_analysis,'duplicate_analysis_id'); seen_analysis.add(p['analysis_id'])
+                    forecast_check(p['forecast'],p['panel'])
                 elif k in {'candidate_evaluation','candidate_attempt_failure'}:
                     count+=1; require(p['attempt']==count,'attempt_sequence_mismatch')
                     if k=='candidate_attempt_failure': rows=failed_rows(build_probe_panel(seed,count))
@@ -327,7 +444,10 @@ def audit_partial(run_dir):
         'interrupted_cells':sum(c['status']=='interrupted' for c in cells),'not_started_cells':sum(c['status']=='not_started' for c in cells),
         'evaluated_slots':total_rows,'started_slots':sum(c['started_slots'] for c in cells),'planned_candidate_slots':protocol['budget']['candidate_slots'],
         'diagnostic_rows':0,'heldout_evaluations':0,'cells':cells,'transport':transport,'failure_receipts':failure_receipts,
-        'boundary':'Partial journal/code/panel/label integrity and complete-cell endpoint recalculation only. No paired effect claim, gate verdict, heldout result or full-cohort causal/lineage validation. Summary collector loses later completed batch members after first exception; local frozen records retained separately without rewriting historical summary.'}
+        'execution_version':protocol.get('execution_version',1),
+        'durable_checkpoints_verified':protocol.get('execution_version')==2,
+        'raw_evidence_directory':'outputs/fme_pilot/'+run_dir.name,
+        'boundary':'Partial journal/code/panel/label integrity and complete-cell endpoint recalculation only. No paired effect claim, gate verdict, heldout result or full-cohort causal/lineage validation. '+('v2 successful-response checkpoints and terminal interrupted state verified; no automatic response replay or resume has been executed.' if protocol.get('execution_version')==2 else 'Summary collector loses later completed batch members after first exception; local frozen records retained separately without rewriting historical summary.')}
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)

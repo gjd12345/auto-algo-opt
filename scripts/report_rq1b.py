@@ -75,7 +75,7 @@ def project(run, audit):
                     failures[f'{arm}/{split}/{result.get("error_code",result.get("error","invalid"))}'] += 1
             forecast = analyses[p['analysis_id']]['forecast']
             wrong = next((r for r in p['measurement_rows']['behavior'] if r['valid_execution'] and r['predicted'] is not None and not r['correct']), None)
-            if arm == 'behavior_grounded' and forecast['valid'] and wrong:
+            if arm == 'behavior_grounded' and forecast['valid'] and forecast['code_reference_valid'] and forecast['grounding_compliant'] and wrong:
                 cases.append({'seed': c['seed'], 'attempt': p['attempt'], 'candidate_id': p['candidate_id'],
                     'analysis_id': p['analysis_id'], 'state_id': wrong['state_id'], 'family': wrong['family'],
                     'predicted_node': wrong['predicted'], 'actual_node': wrong['actual'],
@@ -94,7 +94,7 @@ def project(run, audit):
             'mean_auc': mean(c['quality_curve']['auc'] for c in group),
             'median_auc': median(c['quality_curve']['auc'] for c in group),
             'mean_final_dev_gain': mean(c['quality_curve']['points'][-1][1] for c in group),
-            'mean_heldout_gain_vs_baseline': mean((c['heldout']['baseline']['objective']-c['heldout']['incumbent']['objective'])/c['heldout']['baseline']['objective'] for c in group),
+            'mean_heldout_gain_vs_baseline': mean((c['heldout']['baseline']['objective']-c['heldout']['incumbent']['objective'])/max(abs(c['heldout']['baseline']['objective']),1e-12) for c in group),
             'strict_traces': sum(c['strict_supported_traces'] for c in group),
             'strict_trace_cells': sum(c['strict_supported_traces'] > 0 for c in group),
             **{k: m[k] for k in ('behavior_itt_accuracy', 'behavior_conditional_accuracy', 'target_brier_itt',
@@ -136,7 +136,7 @@ def project(run, audit):
     primary = next(c for c in contrasts if c['control'] == 'passive' and c['treatment'] == 'behavior_grounded')
     b, c = arm_rows[1:]
     gates = [
-        {'gate': 'Integrity', 'passed': all(audit['source_integrity'].values()), 'rule': '完整 24 单元、36 同代码诊断；哈希、前瞻顺序和数据隔离审计通过'},
+        {'gate': 'Integrity', 'passed': all(audit['source_integrity'].values()) and audit['returned_cells']==audit['expected_cells']==24 and audit['returned_diagnostic_rows']==audit['expected_diagnostic_rows']==36 and audit['heldout_after_global_freeze'] is True, 'rule': '完整 24 单元、36 同代码诊断；哈希、前瞻顺序和数据隔离审计通过'},
         {'gate': 'Behavior', 'passed': common['mean_accuracy_delta'] >= .05,
             'rule': '同代码 C−B 行为准确率均值 ≥5 pp', 'observed': common['mean_accuracy_delta']},
         {'gate': 'Target', 'passed': primary['median_target_brier_reduction'] > 0 and min(b['target_label_coverage'],c['target_label_coverage']) >= .90,
@@ -158,7 +158,9 @@ def project(run, audit):
     return {'schema_version': 'rq1b-readout/v1', 'study_id': summary['study_id'], 'scientific_status': 'exploratory_not_confirmation',
         'source_commit': protocol['execution_head'], 'protocol_hash': protocol['protocol_hash'],
         'summary_sha256': file_hash(run/'summary.json'), 'raw_evidence_directory': 'outputs/fme_pilot/'+run.name,
-        'wall_time_seconds': summary['wall_time_seconds'], 'arms': arm_rows, 'contrasts': contrasts,
+        'wall_time_seconds': summary['wall_time_seconds'], 'transport': audit['transport'],
+        'execution_version': protocol.get('execution_version',1),
+        'transport_recovery': protocol.get('transport_recovery'), 'arms': arm_rows, 'contrasts': contrasts,
         'common_code': common, 'gates': gates, 'all_gates_pass': all(g['passed'] for g in gates),
         'curves': curves, 'cells': compact_cells, 'strict_traces': traces, 'counterexample_cases': unique_cases,
         'failure_counts_by_suite': dict(failures), 'parse_error_counts': dict(parse_errors),
@@ -176,9 +178,9 @@ def artifact(r, audit):
     ci = primary['auc_median_bootstrap95']
     sources = [{'id': 'rq1b', 'label': 'Frozen RQ1b online evidence and read-only projection',
         'path': 'results.json', 'query': {'language': 'python', 'engine': 'Python / JSON journals',
-        'query': 'python scripts/report_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v1 --audit agent_records/calibrations/rq1b_online_20260831_v1_audit.json --output eoh_rag_workspace/reports/rq1b_20260831',
-        'description': 'summary.json + hash-linked events.jsonl; no SQL, no new model or solver execution. Source commit '+r['source_commit'],
-        'tables_used': ['protocol_frozen.json','summary.json','cells/*/*/*/events.jsonl','diagnostic/*/*/*/events.jsonl','rq1b_online_20260831_v1_audit.json'],
+        'query': 'python scripts/report_rq1b.py '+r['raw_evidence_directory']+' --audit '+r['audit_reference']+' --output '+r['report_directory'],
+        'description': 'summary.json + hash-linked events.jsonl independently audited; Python metrics and seed-level bootstrap produce results.json. Native tables/charts below additionally execute explicitly identified SQLite JSON1 projections of that same results.json. No new model or solver execution. Source commit '+r['source_commit'],
+        'tables_used': ['protocol_frozen.json','summary.json','cells/*/*/*/events.jsonl','diagnostic/*/*/*/events.jsonl',r['audit_reference']],
         'metric_definitions': [r['metric_boundary'],r['uncertainty']]}}]
     datasets = {'arms': r['arms'], 'curves': [{'budget':p['budget'],'arm':LABELS[a],'improvement':p[a]} for p in r['curves'] for a in ARMS], 'programs': r['common_code']['programs'],
         'diagnostic_seeds': r['common_code']['seeds'], 'pairs': primary['pairs'],
@@ -192,6 +194,7 @@ def artifact(r, audit):
     def table(tid, heading, columns, subtitle):
         tables.append({'id': tid, 'title': heading, 'subtitle': subtitle, 'showDescription': True,
             'dataset': tid, 'sourceId': 'rq1b', 'layout': 'full',
+            'defaultSort':{'field':columns[0][0],'direction':'asc'},
             'columns': [{'field':key,'label':label, **({'format':fmt} if fmt else {'type':'text'})} for key,label,fmt in columns]})
     table('gates','预设继续门槛', [('gate','门槛',None),('status','结果',None),('rule','冻结规则',None)], '先冻结后评测；未按结果改门槛。通过不等于统计显著。')
     table('arms','三臂搜索与行为测量', [('label','Arm',None),('valid_candidates','有效/128','number'),('mean_auc','均值 AUC','percent'),('behavior_itt_accuracy','行为 ITT','percent'),('behavior_conditional_accuracy','行为条件准确率','percent'),('target_brier_itt','目标惩罚损失','number'),('target_brier_conditional','条件 Brier','number'),('strict_traces','严格链数','number')], '每臂8种子×16候选。条件准确率排除无效执行，ITT 不排除；二者不可混用。')
@@ -209,12 +212,57 @@ def artifact(r, audit):
         'encodings':{'x':{'field':'budget','type':'ordinal','label':'候选槽位'},'y':{'field':'improvement','type':'quantitative','label':'开发集改善','format':'percent'},'color':{'field':'arm','type':'nominal','label':'实验臂'}},
         'xAxisTitle': '已消耗候选槽位（无效也计入）', 'yAxisTitle': '相对初始算法的开发集改善',
         'valueFormat':'percent', 'layout':'full'}]
+    # These are actual local JSON1 queries, not invented warehouse provenance.
+    # Python above creates the bounded statistical projection; SQL below is run
+    # against that exact results.json object to populate every native visual.
+    source_paths = {'gates':'$.gates','arms':'$.arms','programs':'$.common_code.programs',
+        'diagnostic_seeds':'$.common_code.seeds','coverage':'$.arms','contrasts':'$.contrasts'}
+    arm_case = lambda field: 'CASE '+field+''.join(" WHEN '"+arm+"' THEN '"+LABELS[arm]+"'" for arm in ARMS)+' END'
+    def visual_source(name, sql):
+        source_id='projection_'+name
+        with sqlite3.connect(':memory:') as db:
+            db.row_factory=sqlite3.Row
+            datasets[name]=[dict(row) for row in db.execute(sql,{'results_json':json.dumps(r,allow_nan=False)})]
+        sources.append({'id':source_id,'label':'Audited RQ1b / '+name,'path':'results.json',
+            'query':{'language':'sql','engine':'SQLite JSON1 / local statistical projection','sql':sql,
+                'description':'Executed by scripts/report_rq1b.py; :results_json is the exact delivered results.json, derived from '+r['raw_evidence_directory']+'/summary.json and audited journals. Python calculates metrics/paired bootstrap before this display projection. No remote database or new experiment.',
+                'tables_used':['results.json'], 'metric_definitions':[r['metric_boundary'],r['uncertainty']]}})
+        return source_id
+    for item in tables:
+        name=item['id']; row='j.value'
+        if name=='pairs':
+            sql="SELECT json_extract(p.value, '$.seed') AS seed, "+', '.join("json_extract(p.value, '$."+key+"') AS "+key for key in ('quality_auc_delta','heldout_relative_gain','behavior_accuracy_delta','target_brier_reduction'))+" FROM json_each(:results_json, '$.contrasts') AS c, json_each(c.value, '$.pairs') AS p WHERE json_extract(c.value, '$.control')='passive' AND json_extract(c.value, '$.treatment')='behavior_grounded' ORDER BY seed"
+        else:
+            expressions=[]
+            for col in item['columns']:
+                key=col['field']
+                if key=='status': expression="CASE json_extract(j.value,'$.passed') WHEN 1 THEN '通过' ELSE '未通过' END"
+                elif key=='contrast': expression=arm_case("json_extract(j.value,'$.treatment')")+" || ' − ' || "+arm_case("json_extract(j.value,'$.control')")
+                elif key=='auc_pp': expression="100*json_extract(j.value,'$.median_auc_delta')"
+                elif key in {'heldout_gain','positive','target_loss_reduction'}:
+                    field={'heldout_gain':'median_heldout_gain','positive':'positive_auc_pairs','target_loss_reduction':'median_target_brier_reduction'}[key]
+                    expression="json_extract(j.value,'$."+field+"')"
+                else: expression="json_extract(j.value,'$."+key+"')"
+                expressions.append(expression+' AS '+key)
+            sql='SELECT '+', '.join(expressions)+" FROM json_each(:results_json, '"+source_paths[name]+"') AS j ORDER BY j.key"
+        item['sourceId']=visual_source(name,sql)
+    curve_sql="""SELECT json_extract(p.value,'$[0]') AS budget,
+       CASE json_extract(c.value,'$.arm.id') WHEN 'scalar' THEN 'A · Scalar'
+       WHEN 'passive' THEN 'B · Passive' ELSE 'C · Grounded' END AS arm,
+       AVG(json_extract(p.value,'$[1]')) AS improvement,
+       COUNT(*) AS seed_count, MIN(json_extract(p.value,'$[1]')) AS minimum,
+       MAX(json_extract(p.value,'$[1]')) AS maximum
+FROM json_each(:results_json,'$.cells') AS c,
+     json_each(c.value,'$.quality_curve.points') AS p
+GROUP BY budget, arm ORDER BY budget, arm"""
+    charts[0]['sourceId']=visual_source('curves',curve_sql)
     blocks = []
     def md(name, body):
         blocks.append({'id':name,'type':'markdown','body':body,'sourceId':'rq1b'})
     def tb(name):
         blocks.append({'id':'table_'+name,'type':'table','tableId':name})
     md('title', '# '+title)
+    blocks[-1].pop('sourceId')
     md('summary', '## 技术摘要\n\n'+verdict+f'\n\n在 CVRP24 / DeepSeek V4 Flash / 8×16 的冻结 pilot 中，同代码行为准确率 C−B 为 **{pp(r["common_code"]["mean_accuracy_delta"])}**；配对中位 Potential-AUC 差 **{pp(primary["median_auc_delta"])}**（{primary["positive_auc_pairs"]}/8 正向），保留集配对中位改善 **{pct(primary["median_heldout_gain"])}**。C 有 **{c["strict_traces"]}** 条严格一致性链，来自 {c["strict_trace_cells"]} 个单元。\n\n这是新队列的独立结果，不与旧 v7 合并；未重新启动 RQ2–RQ4。')
     tb('gates')
     md('scope','## 问题、边界与指标\n\n研究问题：强制核对代码行为，是否能比普通分析更有效地改善同预算搜索？三臂使用同一个 FME loop、EOH 生成适配器、单 elite 父代和 dev_train 选择规则。A 的分析仅影子记录；B/C 回流前瞻预测，但不回流行为探针或目标实例的实测结果。没有历史检索、跨问题迁移或模型比较。\n\nB 也回答完全相同的数值行为题、定向失败题和下一步编辑题；C 仅额外强制代码引用与 claim→behavior→condition 解释。因此本轮是“共同测量下增加 grounding 要求”，不是“无探针 B 对有探针 C”，也不能与旧 v7 被动组数值直接拼接。\n\n行为真值是候选代码实际返回的节点，不是最优节点；预测最优动作却看错代码仍算错。Target failure 指相对父算法退化或执行无效，平局不是失败。目标 ITT 损失给缺失概率/缺失参照标签记1，必须与只用可评分样本的 Brier 分开。')
@@ -234,8 +282,12 @@ def artifact(r, audit):
         chain_text.append(f'- `{trace["cell_id"]}` / 槽位 {trace["attempt"]}：源节点 {trace["source_actual_choice"]} → 预期编辑后节点 {trace["expected_child_choice"]} → 实际子代节点 {trace["child_actual_choice"]}；开发改善 {pct(trace["child_dev_gain"])}，定向改善 {pct(trace["child_target_gain"])}。')
     md('cases','## 可追溯机制案例\n\n按种子、槽位排序，最多展示三个不同 C 种子的首个“结构合规但行为预测错误”案例；不是按故事精彩程度挑选。完整分析 ID 与候选哈希保留在 results.json，原始响应不进入 Git。\n\n'+ ('\n'.join(case_text) or '没有满足该筛选条件的案例；不以缺失替代正确。')+'\n\n严格链要求直接父代、已回流预测、源行为预测正确、子代在同一旧状态上按预期改变，而且开发与定向结果都改善。以下最多三条按运行记录顺序展示；即使成立，也只证明轨迹一致性，不证明改进由分析因果中介。\n\n'+ ('\n'.join(chain_text) or '本轮没有严格支持链，不能把普通后代改善改称为机制证据。'))
     md('method','## 方法与复现\n\n冻结源码 `'+r['source_commit']+'`；协议哈希 `'+r['protocol_hash']+'`。搜索种子811–818，24单元，每单元16槽位；每个普通 dev_train/dev_probe 各8实例，heldout24实例。目标族 clustered_far、capacity_tight、radial_mixed 各2实例。每个候选6个行为干预状态，使用同一份四舍五入后的距离矩阵供模型读取与代码执行。状态可由合法路线前缀到达，但不保证候选自身会走到该状态。\n\n先写入前瞻分析并 fsync，再执行评测；选择仅依 dev_train，所有24 incumbent 冻结后才做同代码诊断和 heldout，之后不重排、不改代码。生成3072 token 上限、分析2048，温度0.7；两次重试只处理网络故障，不能按质量补抽。API token 消耗并不严格相等：这里控制候选次数和请求上限，不声称等 token 或等秒。\n\n8个种子、16次候选是本轮工程预算，不是文献最优值，也不是效能分析结论。代码输出预测的测量思想可参照 [CRUXEval（ICML 2024）](https://proceedings.mlr.press/v235/gu24c.html)；本轮未使用其数据、代码或性能数字。\n\n只读复核入口：`scripts/audit_rq1b.py`；报告重建：`scripts/report_rq1b.py`。精简证据在 results.json，审计回执在 agent_records/calibrations；原始日志和模型响应留在 ignored outputs，须具有该本地证据目录才能完整重放审计。')
+    if r['execution_version']==2:
+        blocks[-1]['body']=blocks[-1]['body'].replace('两次重试只处理网络故障，不能按质量补抽。',
+            '每周期最多2次传输重试，最多3个周期（后两周期等待10/30秒），每逻辑请求最多9次HTTP；只恢复未成功的网络请求，成功但低质的输出不能补抽。已冻结上限805个逻辑请求、7245次HTTP，不代表实际全部消耗。成功响应、完整提示和父代描述原子保存；这些提供断点证据，但本轮未验证进程崩溃后的自动续跑。')
+    blocks[-1]['body']=blocks[-1]['body'].replace('代码输出预测的测量思想可参照 [CRUXEval（ICML 2024）](https://proceedings.mlr.press/v235/gu24c.html)；本轮未使用其数据、代码或性能数字。','本轮不新增外部论文机制或数据。')
     transport = audit.get('transport', {})
-    md('audit','## 完整性与成本\n\n'+f'运行壁钟时间 {r["wall_time_seconds"]/60:.1f} 分钟。审计通过表示记录内部一致、冻结源码匹配、预测先于评测；不等于算法正确性的数学证明。\n\n传输账本（包含预检、搜索、诊断和已记录重试）：\n\n```json\n'+json.dumps(transport,ensure_ascii=False,indent=2)+'\n```\n\n只做必要编译、diff 检查、一次已授权的 fixture 接线 E2E 和本轮真实实验；没有执行全量单元测试。真实输出的审计与报告包装验证不是额外科研 cohort。')
+    md('audit','## 完整性与成本\n\n'+f'运行壁钟时间 {r["wall_time_seconds"]/60:.1f} 分钟。审计通过表示记录内部一致、冻结源码匹配、预测先于评测；不等于算法正确性的数学证明。\n\n传输账本（包含预检、搜索、诊断和已记录重试）：\n\n```json\n'+json.dumps(transport,ensure_ascii=False,indent=2)+'\n```\n\n'+(f'此前中断 v1 单独消耗 {r["prior_interrupted_cost"]["http_requests"]} 次 HTTP 尝试、已知输入 {r["prior_interrupted_cost"]["known_input_tokens"]:,} / 输出 {r["prior_interrupted_cost"]["known_output_tokens"]:,} token。两轮累计 HTTP {transport["http_requests"]+r["prior_interrupted_cost"]["http_requests"]} 次。旧轮效果不并入本轮；缺失 usage 不能按零计，也不据 token 猜测账单金额。\n\n' if r.get('prior_interrupted_cost') else '')+'本轮只做必要编译、diff 检查、实际实验与只读证据审计；没有执行全量单元测试，也没有为调整审计脚本重新生成候选。真实输出审计与报告包装验证不是额外科研 cohort。')
     md('limits','## 局限、不确定性与退出条件\n\n单模型、单问题、24客户合成实例，只能说明该受限 CVRP 构造器接口。目标族仅各2个实例；代码状态探针是离线干预，不是策略访问分布。结构标签和代码子串匹配只检查格式，真正的行为能力必须靠执行真值。\n\n对话预测不是确定性随机过程；配对种子控制评测数据和探针，不能固定服务端随机采样。Prompt/style 与生成后的候选分布仍会相互影响；相同代码诊断只缓解能力测量混淆，不提供搜索增益的因果中介识别。\n\n目标错误可能来自程序无效、概率缺失、参照缺失或真正的泛化误判，必须同时看 ITT、条件指标和覆盖率。全部失败与零效果保留；不补种子、不改门槛、不按结果放宽链定义。')
     md('next','## 下一步\n\n'+ ('本轮仅达到预设工程继续条件。下一步应先独立复现 RQ1b，并扩展同代码程序覆盖；仍不把 pilot 写成已确认结论。' if r['all_gates_pass'] else '本轮停止扩展。保留 RQ1b 为唯一主线，但不恢复历史注入、迁移和模型比较，也不追加试验来把门槛“跑过去”。先依据失败门槛修订一个可检验假设，再单独冻结下一版协议。')+'\n\n可保留的系统资产：真实代码行为探针、前瞻预测日志、无泄漏三臂反馈开关、缺失显式计分和严格后代链审计。这些是可复用的研究 Agent 测量能力，不等于一个已验证有效的算法设计 Skill。')
     md('questions','## 后续问题\n\n1. 同代码上的差距主要是代码算错、变量符号读错，还是输出格式丢失？\n2. 即使读对当前行为，提出的下一步编辑能否真的改变关键决策，而不仅改变解释文字？\n3. 如果预测能力提高但 AUC 不提高，是建议本身无用，还是生成器没有执行建议？这些问题需在新冻结协议中逐一分开，不在本轮追加臂。')
@@ -304,6 +356,51 @@ ORDER BY seed, arm"""
         'snapshot':{'version':1,'generatedAt':now,'status':'partial','datasets':{'progress':progress,'counts':[{'seed':r['seed'],'arm':LABELS[a],'evaluated':r[a]} for r in counts for a in ARMS]}},'sources':[source]}
 
 
+def partial_execution_artifact(audit):
+    """Evidence-based v2 interruption readout; no partial effect estimates."""
+    title='RQ1b API Execution Report'; now=datetime.now(timezone.utc).isoformat()
+    transport=audit['transport']; datasets={}; sources=[]; tables=[]; blocks=[]
+    def source(name,path,fields):
+        sql='SELECT '+', '.join("json_extract(value,'$."+f+"') AS "+f for f in fields)+" FROM json_each(:audit_json,'$."+path+"') ORDER BY key"
+        with sqlite3.connect(':memory:') as db:
+            db.row_factory=sqlite3.Row
+            datasets[name]=[dict(row) for row in db.execute(sql,{'audit_json':json.dumps(audit,allow_nan=False)})]
+        sources.append({'id':name,'label':'RQ1b v2 read-only audit / '+name,'path':'results.json',
+            'query':{'language':'sql','engine':'SQLite JSON1 / local audit JSON','sql':sql,
+                'description':'Executed against the exact delivered results.json audit receipt; upstream '+audit['raw_evidence_directory']+'/summary.json and all hash-linked journals. No model or solver execution in the report.',
+                'tables_used':['results.json'], 'metric_definitions':['Slots evaluated include invalid candidates; no partial effect estimate is authorized. Token sums exclude unknown usage; historical cohorts are not pooled.']}})
+    source('progress','cells',['seed','arm','status','evaluated_slots','started_slots','requests','failed_requests'])
+    source('failures','failure_receipts',['cell_id','purpose','http_status','error_code','transport_attempt','elapsed_seconds'])
+    for name,title_text,cols in [
+        ('progress','完整24坐标的执行状态',[('seed','种子','number'),('arm','实验臂',None),('status','状态',None),('evaluated_slots','已评测/16','number'),('started_slots','已启动/16','number'),('requests','HTTP尝试','number')]),
+        ('failures','所有失败请求：未隐藏或记作零成本',[('cell_id','单元',None),('purpose','用途',None),('http_status','HTTP状态','number'),('error_code','错误类别',None),('transport_attempt','周期内次数','number'),('elapsed_seconds','耗时/秒','number')])]:
+        tables.append({'id':name,'title':title_text,'dataset':name,'sourceId':name,'layout':'full',
+            'defaultSort':{'field':cols[0][0],'direction':'asc'},
+            'columns':[{'field':f,'label':label,**({'format':fmt} if fmt else {'type':'text'})} for f,label,fmt in cols]})
+    def md(name,body): blocks.append({'id':name,'type':'markdown','body':body,'sourceId':'progress'})
+    blocks.append({'id':'title','type':'markdown','body':'# '+title})
+    md('summary',f'## 技术摘要：已实际调用 API，但完整对比仍未完成\n\n独立 v2 队列完成 **{audit["locally_frozen_cells"]}/24 个完整单元**，另有 **{audit["interrupted_cells"]} 个部分单元、{audit["not_started_cells"]} 个未启动单元**；已评测 **{audit["evaluated_slots"]}/{audit["planned_candidate_slots"]} 个候选槽位**。同代码诊断 **0/36**，held-out **0/24**。本报告不发布任何三臂优劣、配对效应或成功门判定。\n\nOpenCode Go / DeepSeek V4 Flash 已实际运行，不是 dry-run。发生 HTTP 200 响应流中的 JSON 解析错误，传输层将其归类为不可重试，固定队列在当前批收尾后停止。这既不能证明模型拒绝，也不能证明 C 方法有效或无效。')
+    md('scope','## 研究范围与口径\n\n只做 CVRP24。A 为标量反馈、分析影子留存；B 回流普通前瞻分析；C 在相同预测任务上增加精确代码引用及 claim→behavior→condition 要求。每臂8个配对种子，每单元16个候选；失败/无效候选也占槽位。B/C 不读取行为探针或目标实例实测结果，只回流事前预测。\n\n行为标签是代码实际返回值，不是最佳动作；定向失败是执行无效或相对父算法退化，平局不是失败。最终研究目标是同代码行为识别→定向预测→全预算 Potential-AUC，而不是解释文笔或最终 best。由于队列中断，本报告只报告执行事实。')
+    blocks.append({'id':'coverage_chart','type':'chart','chartId':'coverage'})
+    blocks.append({'id':'progress_table','type':'table','tableId':'progress'})
+    md('finding',f'## 关键发现：收集与断点已改善，流式协议处理仍阻塞\n\n本轮独立日志保存 {audit["locally_frozen_cells"]} 个完整单元，主线程也回收 {audit["summary_returned_cells"]} 个；不再因为一个 future 失败漏收同批其他结果。成功响应、完整提示、请求参数以及含原始描述的父代状态已经保存并经只读哈希复核。\n\n失败位于流式传输 JSON 解析，不是对完整模型输出进行评分时失败。HTTP 200 只表示服务器接受并开始响应，不能保证整条响应流正确结束。当前证据不能进一步区分网关输出异常、流截断或客户端 SSE 解析边界问题。没有保存错误分片，不能臆造更细的根因。')
+    blocks.append({'id':'failure_table','type':'table','tableId':'failures'})
+    md('cost',f'## 成本与预算\n\n本轮壁钟时间 {audit["wall_time_seconds"]/60:.1f} 分钟，HTTP 尝试 {transport["http_requests"]} 次，其中失败 {transport["failed_http"]} 次，传输重试 {transport["retry_http"]} 次。已知输入 {transport["known_input_tokens"]:,}、输出 {transport["known_output_tokens"]:,} token；{transport["requests_missing_usage"]} 次请求缺少 usage，不能当作零，也不能据此推算精确账单。\n\n冻结上限是805个逻辑请求、每请求最多9次HTTP（每周期2次内层重试，最多3个周期），并非本轮实际全部耗尽。此次 JSON 解析错误在第一周期即被判不可重试；未为了完成队列擅自改变冻结错误分类或增加 API 调用。8种子、16候选是工程预算，不是文献最优值或统计功效保证。'+ (f'\n\n旧 v1 中断队列另有 {audit["prior_interrupted_cost"]["http_requests"]} 次 HTTP、已知输入 {audit["prior_interrupted_cost"]["known_input_tokens"]:,} / 输出 {audit["prior_interrupted_cost"]["known_output_tokens"]:,} token。两轮累计 {transport["http_requests"]+audit["prior_interrupted_cost"]["http_requests"]} 次 HTTP；成本单独列示、效果绝不合并。' if audit.get('prior_interrupted_cost') else ''))
+    md('audit','## 完整性、复现与验证边界\n\n冻结执行提交 `'+audit['source_commit']+'`，协议哈希 `'+audit['protocol_hash']+'`。只读审计核对源码、日志链、候选文件、前瞻顺序、探针身份、标签重算、完整单元 AUC，以及 v2 成功响应/状态断点。没有重新执行候选程序或调用模型；这不是完整队列的科学有效性证明。\n\n原始证据位于 `'+audit['raw_evidence_directory']+'`（Git 忽略），精简审计为 `agent_records/calibrations/rq1b_online_20260831_v2_audit.json`。复核命令：`python scripts/audit_rq1b.py '+audit['raw_evidence_directory']+' --partial`。没有运行全量测试；代码只做必要编译检查。自动崩溃恢复尚未实现或验证，持久断点不能被写作“已验证无损续跑”。')
+    md('limits','## 局限与不能得出的结论\n\n缺少完整八组配对、36条同代码诊断和24个保留集评测，不能判断行为识别、Brier、校准或搜索收益谁更好。不能把未启动槽位当作算法失败，也不能只挑已完成种子估算胜率。与旧 v1、旧 RQ1–RQ4 的数据保持独立。所有失败和原始终态保留，未为了过门槛改种子、预算或案例。')
+    md('next','## 下一步需要的批准\n\n仅提出传输层补充协议：将“未取得完整响应”的流解析失败纳入有界恢复，并用已保存的成功响应重放及逐提示哈希校验恢复状态；不重新抽取成功输出，不追加候选，不提高原有每请求9次上限。原始 incomplete 队列不可覆盖，续跑必须单独保留证据关联。\n\n当前补充协议等待用户确认，未启动续跑。若精确提示或状态重建不一致，应停止并报告差异，不能由人工补写父代描述后称为无损。RQ2–RQ4 及 Phase 6 继续暂停。')
+    md('questions','## 后续核对问题\n\n1. 失败来自非法 SSE 分片、截断，还是客户端按行解析的边界？需要在获批恢复中记录脱敏诊断，不增加独立科研请求。\n2. 已完成请求重放后，生成提示、父代选择及当前状态能否逐项匹配？\n3. 仅在全队列完成后，C 能否同时跨过行为识别、目标预测、AUC、有效率及严格后代链门槛？')
+    chart={'id':'coverage','title':'各配对种子的候选评测进度','subtitle':'每臂每种子目标16；图中是执行覆盖，不是算法成绩。','showDescription':True,
+        'question':'缺失评测分布在哪些种子和实验臂？','rationale':'24坐标同时展示，避免把完整单元误当作完整配对队列。',
+        'intent':'comparison','type':'bar','dataset':'progress','sourceId':'progress','layout':'full',
+        'encodings':{'x':{'field':'seed','type':'ordinal','label':'配对种子'},'y':{'field':'evaluated_slots','type':'quantitative','label':'已评测槽位'},'color':{'field':'arm','type':'nominal','label':'实验臂'}},
+        'xAxisTitle':'配对种子','yAxisTitle':'已评测候选槽位 / 16','valueFormat':'number',
+        'referenceLines':[{'axis':'y','value':16,'label':'固定预算16','lineStyle':'dashed','color':'neutral'}]}
+    return {'surface':'report','manifest':{'version':1,'surface':'report','title':title,'description':'真实 API 实验中断后的可复核执行报告；不发布部分赢家',
+        'generatedAt':now,'sources':sources,'tables':tables,'charts':[chart],'blocks':blocks},
+        'snapshot':{'version':1,'generatedAt':now,'status':'partial','datasets':datasets},'sources':sources}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_dir',type=Path)
@@ -314,9 +411,20 @@ def main():
     audit = read(args.audit)
     if args.partial:
         if audit['status']!='partial_integrity_verified': raise ValueError('partial_audit_required')
-        result=audit; payload=partial_artifact(audit)
+        result=dict(audit)
+        if audit.get('execution_version')==2:
+            prior=Path(__file__).resolve().parents[1]/'agent_records/calibrations/rq1b_online_20260831_v1_audit.json'
+            if prior.exists(): result['prior_interrupted_cost']=read(prior)['transport']
+            payload=partial_execution_artifact(result)
+        else: payload=partial_artifact(audit)
     else:
         result = project(args.run_dir,audit)
+        root=Path(__file__).resolve().parents[1]
+        result['audit_reference']=args.audit.resolve().relative_to(root).as_posix()
+        result['report_directory']=args.output.resolve().relative_to(root).as_posix()
+        prior=root/'agent_records/calibrations/rq1b_online_20260831_v1_audit.json'
+        if result['execution_version']==2 and prior.exists():
+            result['prior_interrupted_cost']=read(prior)['transport']
         payload = artifact(result,audit)
     args.output.mkdir(parents=True,exist_ok=True)
     for name,value in [('results.json',result),('artifact.json',payload)]:
