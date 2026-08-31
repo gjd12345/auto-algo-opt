@@ -1,0 +1,72 @@
+{
+  "document_id": "refactor0830_v7_result_review_20260831",
+  "study_id": "refactor0830_opencode_go_pilot_v7",
+  "review_type": "Post-run descriptive interpretation and terminal evidence receipt; not a protocol amendment or preregistered success gate",
+  "branch": "Refactor0830",
+  "execution_head": "0159cd6f2e0e7ab221828ff6b7bd42f95e516fe0",
+  "manifest": "eoh_rag_workspace/experiments/manifests/refactor0830_opencode_go_pilot_v7.json",
+  "run_path": "outputs/fme_pilot/opencode_go_online_20260831_v7",
+  "protocol_hash": "c889504f947ab22a9410db04040507a8e8ef373b979f027d2564d17070e72a72",
+  "raw_summary_sha256": "57ff3e11f149c58d528381fe8d5d08f5d876b4e271aca7c52def3f00d081ddb0",
+  "terminal_status": "pilot_completed",
+  "audit_status": "evidence_integrity_verified",
+  "counts": {
+    "completed_cells": 81,
+    "expected_cells": 81,
+    "maximum_candidate_slots": 972,
+    "actual_candidate_attempts": 935,
+    "valid_candidates": 738,
+    "prospective_analyses": 929,
+    "admitted_counterexamples": 23,
+    "planned_early_stops": 5,
+    "unused_candidate_slots": 37,
+    "all_heldout_valid": true,
+    "source_hashes_independently_matched": 22,
+    "all_incumbents_frozen_before_heldout": true
+  },
+  "cost": {
+    "http_requests_including_preflight_and_retry": 1867,
+    "failed_requests": 1,
+    "recovered_transport_retries": 1,
+    "known_input_tokens": 3268396,
+    "known_output_tokens": 728114,
+    "requests_with_unknown_usage": 1,
+    "observed_file_timestamp_span_seconds": 3593.6096647,
+    "boundary": "Excludes separate diagnostics and older failed cohorts. File timestamp span is not monotonic process timing. Unknown usage is not zero; no monetary cost inferred."
+  },
+  "RQ1": "被动分析相对标量反馈在 TSP、CVRP 的保留集配对中位改善为 +0.26%、+1.08%，仅有方向性信号。主动分析相对被动分析为 -1.23%、-3.87%，未显示稳定额外收益。主动相对标量的 CVRP 最终改善 +2.60%，但预算曲线面积差 -5.04 个百分点，不能只挑最终值。",
+  "RQ2": "相关历史相对无历史的 CVRP 保留集改善为 +0.36%，相对随机历史为 -0.90%；装箱与 TSP 的配对中位数为零。未建立稳定的相关性特异冷启动收益，开发集与保留集也有方向分歧。",
+  "RQ3": "抽象提示相对无提示的 CVRP 保留集改善为 -1.87%，相对随机抽象提示为零；装箱与 TSP 的中位数为零。本轮是 Codex 编写、未经确认的外部抽象提示消融，不是科研 Agent 自主发现后的机制迁移。",
+  "RQ4": "在线对照已完成，不再受旧 Model Router 403 阻塞。CVRP 上 Pro 相对 Flash：标量组 +2.67%，主动组 -1.87%；装箱与 TSP 的配对中位数为零。未发现稳定模型优势或模型与控制器交互，只适用于同供应商 Flash/Pro 的本次非思考设置。",
+  "random_abstract_itemset_overlap_pairs": {"bp_online": 1, "tsp_construct": 2, "cvrp_construct": 2, "pairs_per_problem": 3},
+  "prediction_diagnostic": {
+    "conditioning": "Both prospective analysis and candidate evaluation valid; pooled values are descriptive, not cross-problem effect estimates",
+    "matched_samples": 738,
+    "positive_actual_outcomes": 43,
+    "direction_accuracy": 0.5718157181571816,
+    "brier_score": 0.15151382113821135,
+    "always_no_improvement_accuracy": 0.9417344173441734,
+    "always_no_improvement_brier": 0.058265582655826556,
+    "interpretation": "全猜无改善的方向准确率高于模型，类别极不平衡；分析潜力未由这些指标建立，不能用低于 0.25 的 Brier 单独宣称有效。"
+  },
+  "case_selection": "Largest absolute prediction error among valid samples per problem, selected after the run; diagnostic, not representative",
+  "case_reviews": {
+    "analysis-8299fc7a8dfb112b": {
+      "candidate_id": "7d6ae10cb9db15d9234871be62763e52db3f5486d0c6dc7e71b364b587b69999",
+      "code_grounded_review": "实际评分为 -r + 0.5r²，r 是放入物品后的余量，评测器取最大分。r>1 时分数随余量增大，奖励更空的箱子；“平衡浪费”的解释没有核对符号与尺度。",
+      "falsification_review": "所写最小证伪只是重新比较开发集均值，未直接检验余量排序是否与紧凑装箱相反。"
+    },
+    "analysis-0501b7f3444a82bc": {
+      "candidate_id": "bbeaea9f024b74d7a38f5dfec8f8da0c378d8063b229549a1c2234bf920fce7a",
+      "code_grounded_review": "代码最大化“距当前点距离 − 距其他未访问点的最近距离”。它偏向距当前点远、却靠近其他点的节点。分析已提到该风险，但没有说明为何仍预测正收益，也未验证“避免遗留孤立点”的排序依据。",
+      "falsification_review": "所写最小证伪仍是整批目标值比较，不是针对孤立点的定向构造。"
+    },
+    "analysis-f5e0643d2f63c917": {
+      "candidate_id": "dae69b4d6d5d1f6c0aac94bdf8b71803fe0a69e0a2fd8c9c5fdd88a890d07ba5",
+      "code_grounded_review": "代码按归一化当前距离加半权仓库距离排序，没有直接控制提前返仓；该风险可能由访问顺序间接产生，但分析未给出可检查的因果链。原始预测值为 -2.0（-200%），不得事后改写成 -2%。",
+      "falsification_review": "方向判断正确而幅度偏差大，提示先统一数值尺度与机制到代码的对应关系。"
+    }
+  },
+  "narrowed_mainline_recommendation": "收敛为：评测前分析能否正确识别代码的排序与约束行为，形成可校准、可证伪的预测，并通过被动回流改善同预算搜索？保留被动分析作为最小研究核心；主动反例、历史注入和模型规模作为可选消融，不把增加模块视作贡献。此建议不修改冻结协议，不追加实验；Phase 6 暂缓。",
+  "claim_boundary": "Three matched seeds per problem. Integrity passed, not statistical significance, causal proof, autonomous transfer, or universal improvement. Historical RQ table remains separate. Raw candidates, responses and journals remain local and Git-ignored."
+}

@@ -9,7 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from eoh_rag.fme.online_adapters import digest, verify_journal
+from eoh_rag.fme.online_adapters import ROOT, digest, file_hash, verify_journal
 from eoh_rag.fme.potential import AnalysisOutcome, QualityObservation, analysis_potential_metrics, quality_potential_curve
 from eoh_rag.fme.online_pilot import summarize_contrasts
 
@@ -48,6 +48,8 @@ def audit(directory):
     summary=json.loads((directory/'summary.json').read_text(encoding='utf-8'))
     protocol=json.loads((directory/'protocol_frozen.json').read_text(encoding='utf-8'))
     require(digest({k:v for k,v in protocol.items() if k!='protocol_hash'})==protocol['protocol_hash'], 'protocol_hash_mismatch')
+    current_source_hash_matches={name:(ROOT/name).is_file() and file_hash(ROOT/name)==expected
+                                 for name,expected in protocol['source_hashes'].items()}
     study=records(directory/'events.jsonl')
     verify_transport_retries(study,protocol.get('network_retries',0))
     require(study[0]['kind']=='protocol_frozen', 'missing_initial_protocol')
@@ -59,6 +61,8 @@ def audit(directory):
     actions=Counter()
     requests=[]
     valid=attempts=admitted=prospective=0
+    prediction_reference_checks=[]
+    case_candidates=[]
     cells_by_id={cell['cell_id']:cell for cell in summary['cells']}
     for journal in directory.glob('cells/*/*/*/events.jsonl'):
         events=records(journal)
@@ -100,6 +104,15 @@ def audit(directory):
                     value=payload['results']['dev_train']['objective']
                     actual=(parent-value)/max(abs(parent),1e-12)
                     outcomes.append(AnalysisOutcome(prediction['analysis_id'],prediction['predicted_effect'],prediction['predicted_success_probability'],actual))
+                    case_candidates.append({
+                        'cell_id':cell_id,'problem':cell_id.split('/')[0],
+                        'analysis_id':prediction['analysis_id'],'candidate_id':payload['candidate_id'],
+                        'predicted_effect':prediction['predicted_effect'],'actual_dev_train_effect':actual,
+                        'predicted_success_probability':prediction['predicted_success_probability'],
+                        'mechanism_excerpt':prediction['mechanism_hypothesis'][:260],
+                        'risk_excerpt':prediction['predicted_risk'][:160],
+                        'falsification_excerpt':prediction['cheapest_falsification'][:200],
+                        'excerpt_boundary':'Truncated structured fields for review; full text remains in local ignored journal'})
                     best=min(best,value)
                     objective_by_candidate[payload['candidate_id']]=value
             if kind=='action_finished' and payload['action'] in {'invent_algorithm','repair_failed_mechanism','transfer_abstract_mechanism'}:
@@ -127,6 +140,13 @@ def audit(directory):
                     require(digest(asdict(curve))==digest(row['quality_curve']), 'quality_curve_recalculation_mismatch')
                 metrics=analysis_potential_metrics(outcomes) if outcomes else None
                 require(digest(metrics)==digest(row['analysis_metrics']), 'analysis_metrics_recalculation_mismatch')
+                successes=sum(outcome.actual_effect>0 for outcome in outcomes)
+                prediction_reference_checks.append({
+                    'cell_id':cell_id,'count':len(outcomes),'positive_outcomes':successes,
+                    'always_no_improvement_accuracy':1-successes/len(outcomes) if outcomes else None,
+                    'always_no_improvement_brier':successes/len(outcomes) if outcomes else None,
+                    'constant_probability_half_brier':0.25 if outcomes else None,
+                    'boundary':'Descriptive post-run reference, not a preregistered quality gate; same valid-sample conditioning'})
                 require(set(c['counterexample_id'] for c in row['archives']['counterexamples'])==admitted_ids, 'counterexample_archive_mismatch')
                 require(not ((rejected_ids-admitted_ids)&{c['counterexample_id'] for c in row['archives']['counterexamples']}), 'rejected_counterexample_counted')
                 if row['status']=='completed' and row['candidate_attempts']<protocol['candidate_attempts']:
@@ -140,6 +160,7 @@ def audit(directory):
         require(all(freeze[0]['payload'][cell_id]==row['incumbent_id'] for cell_id,row in cells_by_id.items()), 'global_incumbent_freeze_mismatch')
         require(all(digest(event['payload']['results'])==digest(cells_by_id[event['payload']['cell_id']]['heldout']) for event in heldout), 'heldout_results_summary_mismatch')
     if summary.get('scientific_claim_allowed'):
+        require(all(current_source_hash_matches.values()), 'current_sources_differ_from_frozen_protocol_checkout_recorded_version')
         require(protocol['mode']=='online' and len(heldout)==expected, 'scientific_claim_without_complete_heldout')
         require(summary['all_heldout_valid'] and all(summary['source_integrity'].values()), 'scientific_claim_without_integrity')
         require(all(c['status']=='completed' and c['heldout_valid'] for c in cells_by_id.values()), 'scientific_claim_with_incomplete_cells')
@@ -150,6 +171,13 @@ def audit(directory):
         'valid_candidates':valid,'prospective_analyses':prospective,'admitted_counterexamples':admitted,
         'actions':dict(actions),'requests':len(requests),'failed_requests':sum(not r['ok'] for r in requests),
         'scientific_claim_allowed':summary.get('scientific_claim_allowed',False),
+        'current_source_hash_matches':current_source_hash_matches,
+        'prediction_reference_checks':prediction_reference_checks,
+        'analysis_review_cases':[
+            max((case for case in case_candidates if case['problem']==problem),
+                key=lambda case:(abs(case['predicted_effect']-case['actual_dev_train_effect']),case['analysis_id']))
+            for problem in protocol['problems'] if any(case['problem']==problem for case in case_candidates)],
+        'case_selection':'Post-run descriptive selection: largest absolute prediction error among valid evaluated candidates per problem; not representative, not a preregistered gate',
         'recalculated_from_journals':['quality_curves','analysis_prediction_metrics','paired_RQ_contrasts'],
         'boundary':'Integrity audit, not statistical significance or causal mechanism validation'}
 
