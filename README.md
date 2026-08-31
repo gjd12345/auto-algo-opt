@@ -13,18 +13,21 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism E
 
 ### 当前聚焦：RQ1b — Behavior-Grounded Analysis
 
-**最新 v2 终态（2026-08-31）：incomplete，完整对比尚未完成。**
-用户批准独立真实重跑后，已实际调用 OpenCode Go / Flash：337 次 HTTP 尝试、165/384 个已评测槽位，
-10 个完整、2 个部分、12 个未启动单元。同代码诊断与 held-out 尚未开启，不能发布三臂优劣。
-两次 HTTP200 流 JSON 解析错误被冻结传输层判为不可重试；另一次 HTTP500 与一次流缺终止标记已按原规则恢复。
-本轮全部10个完整结果都被主线程回收；成功响应、完整提示、原始父代描述和状态断点已保存并通过部分只读审计。
-没有修改运行中的冻结代码，也没有重抽成功候选。自动断点重放尚未实现/验证。
+**最新 v2 续跑终态（2026-08-31）：pilot_completed；完整性通过，科研继续门槛未通过。**
+原冻结队列全部完成：24单元 × 16槽位 = 384候选尝试；全局冻结后完成36条同代码诊断与24个 held-out 单元。
+共804/805个逻辑请求，809次HTTP（原337 + 新增472，含5次失败）；每请求仍最多9次。
+续跑前12个历史单元的 prompt/state/lineage/hash 精确匹配，复用333个成功响应；原 incomplete 目录全文件哈希未变。
+只增加有界传输恢复和独立证据留痕，没有修改分析、EOH、Evaluator、Potential或门槛。这是同一v2队列，不是新的独立cohort。
 
-- [v2 部分完整性审计](agent_records/calibrations/rq1b_online_20260831_v2_audit.json) / [执行授权与预算](agent_records/contracts/refactor0830_rq1b_execution_v2.json)
-- 外部知识库报告：`0724/过程文档/2026-08-31/RQ1b-v2-API实验报告/report.html`；同目录保留 results.json 与可重建 artifact.json。
+主要 C−B：同代码行为准确率 −0.93 pp（B 48.15%、C 47.22%）；Potential-AUC配对中位 +1.24 pp，7/8种子正向；
+held-out中位 +0.52%。但有效候选率从87.50%降至82.03%（−5.47 pp），超过允许降幅；目标惩罚损失中位增加0.1921，C严格链为0。
+Integrity通过，Behavior/Target/Search/Chain均未通过；不能将AUC改善归因于更准确的行为理解。RQ2–RQ4不恢复。
+
+- [完整续跑审计](agent_records/calibrations/rq1b_online_20260831_v2_resume_v1_audit.json) / [已批准续跑边界](agent_records/contracts/refactor0830_rq1b_v2_resume_v1.json)
+- 外部知识库新报告：`0724/过程文档/2026-08-31/RQ1b-v2-完整续跑实验报告/report.html`；同目录保留 results.json 与可重建 artifact.json。
 - HTML结构与嵌入数据检查通过；本机缺少 headless Chromium，未做浏览器视觉或交互检查。
-- 审计复现：`python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v2 --partial`
-- [仅传输层续跑提案](agent_records/proposals/rq1b_v2_stream_resume_v1.json)等待用户确认：复用成功响应、校验精确提示，不增加候选或每请求9次HTTP上限；未执行续跑。
+- 审计复现：`python scripts/audit_rq1b_resume.py outputs/fme_pilot/rq1b_online_20260831_v2_resume_v1 --output outputs/rq1b_resume_audit_recheck.json`（只读，不调用模型/solver）
+- 原v2中断记录保持历史原状：[部分审计](agent_records/calibrations/rq1b_online_20260831_v2_audit.json)，旧报告 `RQ1b-v2-API实验报告/report.html` 不覆盖；旧提案由新授权契约接受，不改历史状态。
 - 历史 v1 独立保留：[中断报告](eoh_rag_workspace/reports/rq1b_20260831/report.html) / [审计](agent_records/calibrations/rq1b_online_20260831_v1_audit.json)。v1 的14完整/4部分/6未启动、246槽位、514次HTTP不并入v2效果。
 - 以下命令仅为冻结入口说明，不是恢复命令；不得用既有输出目录补跑，也不得未经新授权再次启动独立队列。
 
@@ -40,7 +43,7 @@ RQ2 历史、RQ3 迁移、RQ4 模型比较及 Phase 6 暂停。沿用唯一 `FME
 B/C 回流的是评测前预测，A 永远不回流；本轮 B 已增加共同预测题，不能与 v7 B 数值混算。
 
 - [RQ1b v2 协议](eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v2.json) / [科学范围](agent_records/contracts/refactor0830_rq1b_amendment_v1.json)
-- 最新原始证据：`outputs/fme_pilot/rq1b_online_20260831_v2`（Git 忽略）；v1目录不覆盖、不删除
+- 最新原始证据：`outputs/fme_pilot/rq1b_online_20260831_v2_resume_v1`（Git 忽略）；原v1、v2目录不覆盖、不删除
 - 数字预算是工程探索选择，没有“8 seed / 16 次最优”的文献保证；仅达到预先写下的多层信号才建议继续，不为过门槛补跑。
 
 ```bash

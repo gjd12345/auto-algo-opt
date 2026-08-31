@@ -20,7 +20,7 @@ from scripts.audit_fme_pilot import require, verify_transport_retries
 def read(path):
     return json.loads(path.read_text(encoding='utf-8'))
 
-def _verify_v2_recovery(events, protocol, checkpoint_root, allow_terminal_failure=False):
+def _verify_v2_recovery(events, protocol, checkpoint_root, allow_terminal_failure=False, allow_stream_json=False):
     """Validate outer durable cycles in addition to the v1 inner retries."""
     recovery = protocol.get('transport_recovery', {})
     expected_policy={'additional_cycles': 2, 'delays_seconds': [10, 30],
@@ -43,7 +43,7 @@ def _verify_v2_recovery(events, protocol, checkpoint_root, allow_terminal_failur
                 require(payload.get('delay_seconds') == recovery['delays_seconds'][cycle - 2], 'recovery_delay_mismatch')
                 require(active['attempt'] == max_inner and not active.get('ok'), 'recovery_before_inner_exhaustion')
                 failed=active['last_request']; status=failed.get('http_status'); code=failed.get('error_code')
-                require(status in {408,429,500,502,503,504} or code in {'stream_total_timeout','stream_missing_terminal_marker','URLError','OSError','TimeoutError','ConnectionResetError','ConnectionAbortedError','BrokenPipeError','SSLError','RemoteDisconnected'}, 'recovery_after_nonretryable_failure')
+                require(status in {408,429,500,502,503,504} or code in {'stream_total_timeout','stream_missing_terminal_marker','URLError','OSError','TimeoutError','ConnectionResetError','ConnectionAbortedError','BrokenPipeError','SSLError','RemoteDisconnected'} or (allow_stream_json and status==200 and code=='JSONDecodeError'), 'recovery_after_nonretryable_failure')
                 require(all(payload.get(k) == active[k] for k in ('model','purpose','problem','prompt_hash')), 'recovery_identity_changed')
             else:
                 require(cycle == 1 and payload.get('delay_seconds') == 0, 'recovery_initial_cycle_invalid')
@@ -85,12 +85,12 @@ def _verify_v2_recovery(events, protocol, checkpoint_root, allow_terminal_failur
         require(data.get('protocol_hash') == protocol['protocol_hash'] and saved_hash == digest(data) == final_cell_hash, 'cell_checkpoint_hash_mismatch')
 
 
-def records(path, protocol, check_v2=True):
+def records(path, protocol, check_v2=True, allow_stream_json=False):
     verify_journal(path)
     result = [json.loads(x) for x in path.read_text(encoding='utf-8').splitlines()]
     verify_transport_retries(result, protocol['network_retries'])
     if check_v2 and protocol.get('execution_version') == 2:
-        _verify_v2_recovery(result, protocol, path.parent / 'checkpoints')
+        _verify_v2_recovery(result, protocol, path.parent / 'checkpoints',allow_stream_json=allow_stream_json)
     return result
 
 def outer_retry_count(events):
@@ -169,7 +169,7 @@ def suite_check(results, hashes):
         if result.get('valid', True):
             require(isinstance(objective,(int,float)) and not isinstance(objective,bool) and math.isfinite(objective), 'objective_not_finite')
 
-def audit(run_dir):
+def audit(run_dir, *, allow_stream_json=False):
     summary,protocol=read(run_dir/'summary.json'),read(run_dir/'protocol_frozen.json')
     require(summary['status'] in {'pilot_completed','integration_smoke_completed'},'study_not_complete')
     require(digest({k:v for k,v in protocol.items() if k!='protocol_hash'})==protocol['protocol_hash'],'protocol_hash_mismatch')
@@ -182,7 +182,7 @@ def audit(run_dir):
         require(all(protocol.get('transport_recovery',{}).get(k)==v for k,v in expected_recovery.items()), 'v2_recovery_policy_missing')
     source={n:(ROOT/n).is_file() and file_hash(ROOT/n)==h for n,h in protocol['source_hashes'].items()}
     require(all(source.values()),'frozen_source_mismatch')
-    study=records(run_dir/'events.jsonl',protocol)
+    study=records(run_dir/'events.jsonl',protocol,allow_stream_json=allow_stream_json)
     require(study[0]['kind']=='protocol_frozen' and equal(study[0]['payload'],protocol),'initial_protocol_mismatch')
     expected={(seed,arm['id']) for seed in protocol['seeds'] for arm in protocol['arms']}
     cells={(c['seed'],c['arm']['id']):c for c in summary['cells']}
@@ -193,7 +193,7 @@ def audit(run_dir):
     requests=[e['payload'] for e in study if e['kind']=='model_request']; outer_retries=outer_retry_count(study)
     spec=get_problem_spec('cvrp_construct'); baseline_id=digest(spec['baseline_code']); cell_checks=[]
     for (seed,arm),cell in sorted(cells.items()):
-        path=run_dir/'cells'/cell['cell_id']; stream=records(path/'events.jsonl',protocol); outer_retries += outer_retry_count(stream)
+        path=run_dir/'cells'/cell['cell_id']; stream=records(path/'events.jsonl',protocol,allow_stream_json=allow_stream_json); outer_retries += outer_retry_count(stream)
         ordinary_hashes={s:protocol['suite_hashes'][f'{seed}/{s}'] for s in ('dev_train','dev_probe')}
         target_hashes={f:protocol['suite_hashes'][f'{seed}/target/{f}'] for f in TARGET_DESCRIPTIONS}
         for split,h in ordinary_hashes.items():
@@ -320,7 +320,7 @@ def audit(run_dir):
     coordinates={(s,n,a) for s in protocol['diagnostic_seeds'] for n in programs for a in ('passive','behavior_grounded')}
     require(len(diagnostics)==protocol['expected_diagnostic_rows']==len(coordinates) and {(d['seed'],d['program'],d['style']) for d in diagnostics}==coordinates,'diagnostic_coordinates_mismatch')
     for d in diagnostics:
-        path=run_dir/'diagnostic'/str(d['seed'])/d['program']/d['style']/'events.jsonl'; stream=records(path,protocol); outer_retries += outer_retry_count(stream)
+        path=run_dir/'diagnostic'/str(d['seed'])/d['program']/d['style']/'events.jsonl'; stream=records(path,protocol,allow_stream_json=allow_stream_json); outer_retries += outer_retry_count(stream)
         requests.extend(e['payload'] for e in stream if e['kind']=='model_request')
         before=[e for e in stream if e['kind']=='diagnostic_prospective']; after=[e for e in stream if e['kind']=='diagnostic_evaluation']
         require(len(before)==len(after)==1 and before[0]['sequence']<after[0]['sequence'],'diagnostic_prospective_order_mismatch')

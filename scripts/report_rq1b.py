@@ -160,6 +160,7 @@ def project(run, audit):
         'summary_sha256': file_hash(run/'summary.json'), 'raw_evidence_directory': 'outputs/fme_pilot/'+run.name,
         'wall_time_seconds': summary['wall_time_seconds'], 'transport': audit['transport'],
         'execution_version': protocol.get('execution_version',1),
+        'continuation': summary.get('continuation'), 'continuation_audit': audit.get('continuation_audit'),
         'transport_recovery': protocol.get('transport_recovery'), 'arms': arm_rows, 'contrasts': contrasts,
         'common_code': common, 'gates': gates, 'all_gates_pass': all(g['passed'] for g in gates),
         'curves': curves, 'cells': compact_cells, 'strict_traces': traces, 'counterexample_cases': unique_cases,
@@ -264,6 +265,9 @@ GROUP BY budget, arm ORDER BY budget, arm"""
     md('title', '# '+title)
     blocks[-1].pop('sourceId')
     md('summary', '## 技术摘要\n\n'+verdict+f'\n\n在 CVRP24 / DeepSeek V4 Flash / 8×16 的冻结 pilot 中，同代码行为准确率 C−B 为 **{pp(r["common_code"]["mean_accuracy_delta"])}**；配对中位 Potential-AUC 差 **{pp(primary["median_auc_delta"])}**（{primary["positive_auc_pairs"]}/8 正向），保留集配对中位改善 **{pct(primary["median_heldout_gain"])}**。C 有 **{c["strict_traces"]}** 条严格一致性链，来自 {c["strict_trace_cells"]} 个单元。\n\n这是新队列的独立结果，不与旧 v7 合并；未重新启动 RQ2–RQ4。')
+    if r.get('continuation'):
+        blocks[-1]['body']=blocks[-1]['body'].replace('这是新队列的独立结果，不与旧 v7 合并；未重新启动 RQ2–RQ4。',
+            '这是原 RQ1b-v2 冻结队列的完整续跑结果，不是新增独立 cohort。全部384候选槽位、36同代码诊断及24个 held-out 单元均已完成；原 incomplete 运行保持只读。v1、旧 v7 不并入效果；RQ2–RQ4 继续暂停。')
     tb('gates')
     md('scope','## 问题、边界与指标\n\n研究问题：强制核对代码行为，是否能比普通分析更有效地改善同预算搜索？三臂使用同一个 FME loop、EOH 生成适配器、单 elite 父代和 dev_train 选择规则。A 的分析仅影子记录；B/C 回流前瞻预测，但不回流行为探针或目标实例的实测结果。没有历史检索、跨问题迁移或模型比较。\n\nB 也回答完全相同的数值行为题、定向失败题和下一步编辑题；C 仅额外强制代码引用与 claim→behavior→condition 解释。因此本轮是“共同测量下增加 grounding 要求”，不是“无探针 B 对有探针 C”，也不能与旧 v7 被动组数值直接拼接。\n\n行为真值是候选代码实际返回的节点，不是最优节点；预测最优动作却看错代码仍算错。Target failure 指相对父算法退化或执行无效，平局不是失败。目标 ITT 损失给缺失概率/缺失参照标签记1，必须与只用可评分样本的 Brier 分开。')
     tb('arms')
@@ -272,8 +276,15 @@ GROUP BY budget, arm ORDER BY budget, arm"""
     md('search','## 关键发现二：用全预算轨迹判断搜索收益\n\n左阶梯 AUC = Σ(q[t−1])/16，q[t] 为截至第 t 个槽位的最好开发集相对改善。最后一轮改善进入最终 best，但不能获得过去预算的面积。全部无效候选同样消耗槽位。\n\n主要 C−B 中位 AUC 差的配对种子 bootstrap 95% 描述性区间：'+pp(ci[0])+' 至 '+pp(ci[1])+'。区间用8个种子为重采样单位，不把数百个探针伪装成独立实验；无多重比较校正，不作为显著性声明。')
     blocks.append({'id':'chart_potential','type':'chart','chartId':'potential'})
     tb('pairs'); tb('contrasts')
+    scalar_contrast=next(x for x in r['contrasts'] if x['control']=='scalar' and x['treatment']=='behavior_grounded')
+    md('interpretation','## 如何解读：搜索信号不等于机制已被验证\n\n'+
+        f'C−B 的搜索 AUC 中位差为 {pp(primary["median_auc_delta"])}，{primary["positive_auc_pairs"]}/8 个种子正向；但有效候选率 B 为 {b["valid_rate"]:.2%}、C 为 {c["valid_rate"]:.2%}，差 {pp(c["valid_rate"]-b["valid_rate"])}。Search 是多个条件的合取门槛，不能只凭 AUC 正向宣告通过。\n\n'+
+        f'相对标量 A，C 的中位 AUC 差为 {pp(scalar_contrast["median_auc_delta"])}，{scalar_contrast["positive_auc_pairs"]}/8 正向，而 held-out 中位改善为 {pct(scalar_contrast["median_heldout_gain"])}。因此 C−B 的信号不能替代对 A 的稳健优势，更不能在同代码能力没有支持、严格链缺失时解释为“读懂行为导致搜索更好”。')
     md('calibration','## 关键发现三：预测、校准与算法潜力分开报告\n\n主要比较的目标惩罚损失配对中位下降为 '+f'{primary["median_target_brier_reduction"]:+.4f}'+f'。B/C 目标标签覆盖率分别为 {b["target_label_coverage"]:.1%}/{c["target_label_coverage"]:.1%}；有效候选率变化为 {pp(c["valid_rate"]-b["valid_rate"])}。\n\n下表的校准与简单基线是可评分样本池化后的描述量，不能与带缺失惩罚的 ITT 直接比较。分箱固定为5个等宽区间，仅正/负类各至少10个时报告 ECE、ROC 和 balanced accuracy。它们不是新的独立成功门槛，也不替代搜索收益。')
     tb('coverage')
+    md('format_failures','## 执行和分析格式的失败同样保留\n\n'+
+        f'完整结构有效的分析为 B {b["forecast_valid"]}/128、C {c["forecast_valid"]}/128；结构有效不等于行为预测正确，局部有效概率仍按冻结规则计分。下一步编辑的目标族字段不合规：B {r["parse_error_counts"].get("passive/next_edit_target_family_invalid",0)} 次、C {r["parse_error_counts"].get("behavior_grounded/next_edit_target_family_invalid",0)} 次；C grounding 链字段不合规 {r["parse_error_counts"].get("behavior_grounded/grounding_link_invalid",0)} 次，同一分析可能包含多种错误，不把错误种类数当分析数。\n\n'+
+        '程序失败在 results.json 按开发数据分组列出；同一候选在 dev_train/dev_probe 的两条失败回执不可相加当作两个候选。格式约束和程序有效性是需要解释的成本，但本轮未做中介消融，不能把搜索差异归因于某一具体错误。')
     case_text = []
     for case in r['counterexample_cases']:
         case_text.append(f'- 种子 {case["seed"]}，候选槽位 {case["attempt"]}，状态 `{case["state_id"]}`：预测节点 {case["predicted_node"]}，真实代码返回 {case["actual_node"]}。引用片段存在且结构完整，仍未读对行为。候选 `{case["candidate_id"][:16]}`。')
@@ -286,9 +297,22 @@ GROUP BY budget, arm ORDER BY budget, arm"""
         blocks[-1]['body']=blocks[-1]['body'].replace('两次重试只处理网络故障，不能按质量补抽。',
             '每周期最多2次传输重试，最多3个周期（后两周期等待10/30秒），每逻辑请求最多9次HTTP；只恢复未成功的网络请求，成功但低质的输出不能补抽。已冻结上限805个逻辑请求、7245次HTTP，不代表实际全部消耗。成功响应、完整提示和父代描述原子保存；这些提供断点证据，但本轮未验证进程崩溃后的自动续跑。')
     blocks[-1]['body']=blocks[-1]['body'].replace('代码输出预测的测量思想可参照 [CRUXEval（ICML 2024）](https://proceedings.mlr.press/v235/gu24c.html)；本轮未使用其数据、代码或性能数字。','本轮不新增外部论文机制或数据。')
+    if r.get('continuation_audit'):
+        ca=r['continuation_audit']
+        blocks[-1]['body']=blocks[-1]['body'].replace('这些提供断点证据，但本轮未验证进程崩溃后的自动续跑。',
+            '本次在新 API 调用前精确重放12个已有单元，核对完整提示、状态、谱系、日志及文件哈希；复用333个成功响应，检查阶段新增 HTTP 与 solver 调用均为0。此结论仅覆盖本次已验证恢复，不宣称任意崩溃场景都能自动恢复。')
+        blocks[-1]['body']=blocks[-1]['body'].replace('`scripts/audit_rq1b.py`','`scripts/audit_rq1b_resume.py`')
+        md('resume','## 续跑关联与授权边界\n\n传输补充执行提交 `'+ca['execution_commit']+'`；续跑 manifest 哈希 `'+ca['manifest_hash']+'`。科学协议及原24项冻结源文件保持原值；仅新增恢复执行与证据留痕，不改变分析方法、EOH、Evaluator、Potential 或实验门槛。\n\n仅把未获得完整响应的 HTTP 200 / JSONDecodeError 纳入原剩余尝试额度；没有改变流解析算法，不能据此宣称已确定或修复底层 SSE 根因。原失败 HTTP 仍计入各自请求，原成功响应没有重新抽取。原目录全文件哈希与续跑前一致；新证据单独关联原记录。\n\n执行顺序为全24单元完成 → 全局 incumbent 冻结 → 36条同代码诊断 → 24个 held-out 单元。历史缓存评测用于精确状态恢复，不作为新评测次数。')
     transport = audit.get('transport', {})
     md('audit','## 完整性与成本\n\n'+f'运行壁钟时间 {r["wall_time_seconds"]/60:.1f} 分钟。审计通过表示记录内部一致、冻结源码匹配、预测先于评测；不等于算法正确性的数学证明。\n\n传输账本（包含预检、搜索、诊断和已记录重试）：\n\n```json\n'+json.dumps(transport,ensure_ascii=False,indent=2)+'\n```\n\n'+(f'此前中断 v1 单独消耗 {r["prior_interrupted_cost"]["http_requests"]} 次 HTTP 尝试、已知输入 {r["prior_interrupted_cost"]["known_input_tokens"]:,} / 输出 {r["prior_interrupted_cost"]["known_output_tokens"]:,} token。两轮累计 HTTP {transport["http_requests"]+r["prior_interrupted_cost"]["http_requests"]} 次。旧轮效果不并入本轮；缺失 usage 不能按零计，也不据 token 猜测账单金额。\n\n' if r.get('prior_interrupted_cost') else '')+'本轮只做必要编译、diff 检查、实际实验与只读证据审计；没有执行全量单元测试，也没有为调整审计脚本重新生成候选。真实输出审计与报告包装验证不是额外科研 cohort。')
     md('limits','## 局限、不确定性与退出条件\n\n单模型、单问题、24客户合成实例，只能说明该受限 CVRP 构造器接口。目标族仅各2个实例；代码状态探针是离线干预，不是策略访问分布。结构标签和代码子串匹配只检查格式，真正的行为能力必须靠执行真值。\n\n对话预测不是确定性随机过程；配对种子控制评测数据和探针，不能固定服务端随机采样。Prompt/style 与生成后的候选分布仍会相互影响；相同代码诊断只缓解能力测量混淆，不提供搜索增益的因果中介识别。\n\n目标错误可能来自程序无效、概率缺失、参照缺失或真正的泛化误判，必须同时看 ITT、条件指标和覆盖率。全部失败与零效果保留；不补种子、不改门槛、不按结果放宽链定义。')
+    if r.get('continuation_audit'):
+        ca=r['continuation_audit']
+        cost=next(block for block in blocks if block['id']=='audit')
+        cost['body']=cost['body'].replace(f'运行壁钟时间 {r["wall_time_seconds"]/60:.1f} 分钟。',
+            f'原 v2 运行 {ca["original_wall_time_seconds"]/60:.1f} 分钟，续跑 {r["wall_time_seconds"]/60:.1f} 分钟；两段活跃运行时间合计 {(ca["original_wall_time_seconds"]+r["wall_time_seconds"])/60:.1f} 分钟，不含等待批准的间隔。')
+        cost['body']+=f'\n\n本队列 HTTP 总计 {ca["cumulative_http"]} = 原 {ca["original_http"]} + 续跑新增 {ca["new_http"]}；以上累计成本已经包含原337次，未重复相加。共 {ca["logical_requests"]}/805 个逻辑请求，各请求 HTTP 均不超过9次。重放的成功响应与历史评测未重复计费计数。'
+        blocks[-1]['body']+='\n\n同一冻结队列因传输中断分两段执行；固定模型标识不等于服务端权重与采样环境恒定。时间间隔与服务端不可控变化是本次续跑的局限。'
     md('next','## 下一步\n\n'+ ('本轮仅达到预设工程继续条件。下一步应先独立复现 RQ1b，并扩展同代码程序覆盖；仍不把 pilot 写成已确认结论。' if r['all_gates_pass'] else '本轮停止扩展。保留 RQ1b 为唯一主线，但不恢复历史注入、迁移和模型比较，也不追加试验来把门槛“跑过去”。先依据失败门槛修订一个可检验假设，再单独冻结下一版协议。')+'\n\n可保留的系统资产：真实代码行为探针、前瞻预测日志、无泄漏三臂反馈开关、缺失显式计分和严格后代链审计。这些是可复用的研究 Agent 测量能力，不等于一个已验证有效的算法设计 Skill。')
     md('questions','## 后续问题\n\n1. 同代码上的差距主要是代码算错、变量符号读错，还是输出格式丢失？\n2. 即使读对当前行为，提出的下一步编辑能否真的改变关键决策，而不仅改变解释文字？\n3. 如果预测能力提高但 AUC 不提高，是建议本身无用，还是生成器没有执行建议？这些问题需在新冻结协议中逐一分开，不在本轮追加臂。')
     return {'surface':'report','manifest':{'version':1,'surface':'report','title':title,'description':'CVRP / Flash / 三臂前瞻分析 pilot：能力、目标预测与搜索收益分层审查',
@@ -402,6 +426,7 @@ def partial_execution_artifact(audit):
 
 
 def main():
+    if hasattr(sys.stdout,'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_dir',type=Path)
     parser.add_argument('--audit',type=Path,required=True)
