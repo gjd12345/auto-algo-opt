@@ -11,6 +11,34 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism E
 旧 `batch_runner` / `eoh_single_runner` 仍走 EOH 主循环，只用于历史复现，不能作为新闭环已运行的证据。
 新 pilot 使用独立合成实例；其装箱箱数、路线长度与下列历史 gap / 基线常量不可混算。
 
+### 当前聚焦：RQ1b — Behavior-Grounded Analysis
+
+根据 2026-08-31 用户指示，仅继续 CVRP / DeepSeek V4 Flash 的三臂比较：
+A 标量反馈（分析影子留存）、B 普通被动分析、C 代码行为约束的被动分析。
+RQ2 历史、RQ3 迁移、RQ4 模型比较及 Phase 6 暂停。沿用唯一 `FMEResearchLoop`，
+三臂均按固定生成节奏、同一父算法选择与预算运行，没有主动反例或提示自进化。
+
+冻结配置为 8 个新配对 seed × 3 臂 × 16 个候选槽，另有 6 个固定外部诊断程序 × 3 seed × B/C 的同代码分析面板。
+后者不进入搜索，用于区分分析能力与“生成了更易分析的代码”。
+预测先落盘，后测真实节点选择、三个可执行几何/需求条件及普通开发目标；
+行为/定向测量的实测标签不回流，最终保留集只在全部算法冻结后开启。
+B/C 回流的是评测前预测，A 永远不回流；本轮 B 已增加共同预测题，不能与 v7 B 数值混算。
+
+- [RQ1b 协议](eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v1.json) / [用户授权范围](agent_records/contracts/refactor0830_rq1b_amendment_v1.json)
+- 原始证据：`outputs/fme_pilot/rq1b_online_20260831_v1`（Git 忽略）
+- 数字预算是工程探索选择，没有“8 seed / 16 次最优”的文献保证；仅达到预先写下的多层信号才建议继续，不为过门槛补跑。
+
+```bash
+# 默认仅冻结，不调用 API；每次需要全新输出目录
+python -m eoh_rag.fme.rq1b --output outputs/fme_pilot/rq1b_prepared
+# 显式执行全部三臂与同代码诊断；会调用已配置的 OpenCode Go API
+python -m eoh_rag.fme.rq1b --execute --output outputs/fme_pilot/rq1b_online_20260831_v1
+```
+
+行为测量借鉴 [CRUXEval-O](https://proceedings.mlr.press/v235/gu24c.html) 的“给定代码和输入，预测执行输出”定义，
+但这里是独立构造的 CVRP 干预状态，不使用其数据、成绩或预算。状态来自合法前缀，
+不保证当前候选自己会走到该状态；因此只称干预下代码行为预测，不能外推为整条轨迹理解。
+
 ### 最新交付：RQ1–RQ4 在线 pilot（2026-08-31）
 
 OpenCode Go 的 DeepSeek V4 Flash / Pro 已完成 **81/81 坐标**：935 次候选尝试、
