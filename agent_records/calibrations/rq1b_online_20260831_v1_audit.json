@@ -1,0 +1,478 @@
+{
+  "status": "partial_integrity_verified",
+  "study_status": "incomplete",
+  "scientific_claim_allowed": false,
+  "protocol_hash": "3b13dbed7e492aeafe46aa04691961e0a52f0a25700edb577004980264db0471",
+  "source_commit": "127bf6e5a5aaf3537e626d70077bb006da652ad1",
+  "source_integrity": {
+    "eoh_rag/fme/rq1b.py": true,
+    "eoh_rag/fme/behavior_analysis.py": true,
+    "eoh_rag/fme/behavior_probes.py": true,
+    "eoh_rag/fme/online_pilot.py": true,
+    "eoh_rag/fme/online_adapters.py": true,
+    "eoh_rag/fme/pilot_evaluation.py": true,
+    "eoh_rag/fme/research_loop.py": true,
+    "eoh_rag/fme/controller.py": true,
+    "eoh_rag/fme/archives.py": true,
+    "eoh_rag/fme/potential.py": true,
+    "eoh_rag/fme/mainline.py": true,
+    "eoh_rag/fme/problem_adapters.py": true,
+    "eoh_rag/fme/analysis.py": true,
+    "eoh_rag/fme/cold_start.py": true,
+    "scripts/rq1b_probe_worker.py": true,
+    "scripts/fme_pilot_eval_worker.py": true,
+    "eoh_rag/experiments/provider.py": true,
+    "eoh_rag/experiments/research_contracts.py": true,
+    "official_eoh/eoh/src/eoh/eoh/evolution.py": true,
+    "official_eoh/examples/cvrp_construct/prob.py": true,
+    "agent_records/contracts/refactor0830_rq1b_amendment_v1.json": true,
+    "eoh_rag_workspace/experiments/manifests/refactor0830_rq1b_v1.json": true
+  },
+  "summary_sha256": "3aefee3f48655853203a50e3d27d505222a1afc6f3a34a13162a742fdbe5962a",
+  "wall_time_seconds": 1088.3291928999824,
+  "summary_returned_cells": 12,
+  "locally_frozen_cells": 14,
+  "interrupted_cells": 4,
+  "not_started_cells": 6,
+  "evaluated_slots": 246,
+  "started_slots": 250,
+  "planned_candidate_slots": 384,
+  "diagnostic_rows": 0,
+  "heldout_evaluations": 0,
+  "cells": [
+    {
+      "cell_id": "cvrp_construct/811/scalar",
+      "seed": 811,
+      "arm": "scalar",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 34,
+      "failed_requests": 2,
+      "journal_terminal_hash": "d3d337a50444abae3ae353c867e9e31c7ec929dec5cc5d25756e170fe20c0188"
+    },
+    {
+      "cell_id": "cvrp_construct/811/passive",
+      "seed": 811,
+      "arm": "passive",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "25d4e709fa0abd6bad9367084b0b183f44e5cc0fbc6327ce74273effaf5663c9"
+    },
+    {
+      "cell_id": "cvrp_construct/811/behavior_grounded",
+      "seed": 811,
+      "arm": "behavior_grounded",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "39ba6af34b57f53a5fbc64230ff71ffbd39f1f8cf12154e476a8763425814cee"
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "seed": 812,
+      "arm": "scalar",
+      "status": "interrupted",
+      "evaluated_slots": 8,
+      "started_slots": 9,
+      "requests": 22,
+      "failed_requests": 5,
+      "journal_terminal_hash": "d8dc7e85ac73ce6cea1105a937a20d041bf06054e3ff705ae4a8448edeaf0e9e"
+    },
+    {
+      "cell_id": "cvrp_construct/812/passive",
+      "seed": 812,
+      "arm": "passive",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "78169bfa1cfb8b1e335c6030e191f21ff6ecaab1577fc328934047e7510e920e"
+    },
+    {
+      "cell_id": "cvrp_construct/812/behavior_grounded",
+      "seed": 812,
+      "arm": "behavior_grounded",
+      "status": "interrupted",
+      "evaluated_slots": 6,
+      "started_slots": 7,
+      "requests": 15,
+      "failed_requests": 3,
+      "journal_terminal_hash": "837c96e40422e92fafdd5eae5f66b918df47b93943b6e7b2823e6f62fb8847a4"
+    },
+    {
+      "cell_id": "cvrp_construct/813/scalar",
+      "seed": 813,
+      "arm": "scalar",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "cell_id": "cvrp_construct/813/passive",
+      "seed": 813,
+      "arm": "passive",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "cell_id": "cvrp_construct/813/behavior_grounded",
+      "seed": 813,
+      "arm": "behavior_grounded",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "943c84cf29a1333fe52160eb362ac9f72085436d1347eee794ee645c6a002faf"
+    },
+    {
+      "cell_id": "cvrp_construct/814/scalar",
+      "seed": 814,
+      "arm": "scalar",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "8b5039bf02a536f90b4852d446005dfaa5afe1a4fb3ca06135c4a4976f0ea616"
+    },
+    {
+      "cell_id": "cvrp_construct/814/passive",
+      "seed": 814,
+      "arm": "passive",
+      "status": "interrupted",
+      "evaluated_slots": 5,
+      "started_slots": 6,
+      "requests": 13,
+      "failed_requests": 3,
+      "journal_terminal_hash": "1e17015f1fac58f664dfb74246b0ea820cf6b98939f7c0737fa3390b5659cddb"
+    },
+    {
+      "cell_id": "cvrp_construct/814/behavior_grounded",
+      "seed": 814,
+      "arm": "behavior_grounded",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "91c9a42d6190053e67f829f924896ba3167610d3624806a7b29bec0bc1e15626"
+    },
+    {
+      "cell_id": "cvrp_construct/815/scalar",
+      "seed": 815,
+      "arm": "scalar",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "a84db300744f5decdbc968698924962e7565b9e866782836e3cf995669e88115"
+    },
+    {
+      "cell_id": "cvrp_construct/815/passive",
+      "seed": 815,
+      "arm": "passive",
+      "status": "interrupted",
+      "evaluated_slots": 3,
+      "started_slots": 4,
+      "requests": 9,
+      "failed_requests": 3,
+      "journal_terminal_hash": "d8ca8a8c2239d8bd14db997116f7c9a4634e8c62e00d46e194de6cd86e364124"
+    },
+    {
+      "cell_id": "cvrp_construct/815/behavior_grounded",
+      "seed": 815,
+      "arm": "behavior_grounded",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 36,
+      "failed_requests": 4,
+      "journal_terminal_hash": "ba5ac9fef603952db78073e5cc061d29e9fdaadbf618ad5094ce0db1c9ba16af"
+    },
+    {
+      "cell_id": "cvrp_construct/816/scalar",
+      "seed": 816,
+      "arm": "scalar",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "cell_id": "cvrp_construct/816/passive",
+      "seed": 816,
+      "arm": "passive",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "cell_id": "cvrp_construct/816/behavior_grounded",
+      "seed": 816,
+      "arm": "behavior_grounded",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "b677391a672f07f7ff098902f0a569677a77d3c938d9a1e198cf0d1ee91de49d"
+    },
+    {
+      "cell_id": "cvrp_construct/817/scalar",
+      "seed": 817,
+      "arm": "scalar",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "9294b1284ec3c3ae32379d0fed9f8015c00f8215195148ea3df09a4247734d74"
+    },
+    {
+      "cell_id": "cvrp_construct/817/passive",
+      "seed": 817,
+      "arm": "passive",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "08118ab78a2b61be9601ae3c4eeb49b8571b7f115862341101e2b20a186feef7"
+    },
+    {
+      "cell_id": "cvrp_construct/817/behavior_grounded",
+      "seed": 817,
+      "arm": "behavior_grounded",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    },
+    {
+      "cell_id": "cvrp_construct/818/scalar",
+      "seed": 818,
+      "arm": "scalar",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "131a9087aff1ce358b38aef7166402a714faee7beb2dff348071a1acd263d040"
+    },
+    {
+      "cell_id": "cvrp_construct/818/passive",
+      "seed": 818,
+      "arm": "passive",
+      "status": "cell_frozen",
+      "evaluated_slots": 16,
+      "started_slots": 16,
+      "requests": 32,
+      "failed_requests": 0,
+      "journal_terminal_hash": "c471051578765dbb6ee143a07066af12ce7c5b5840006d69d1d119e28c8960d1"
+    },
+    {
+      "cell_id": "cvrp_construct/818/behavior_grounded",
+      "seed": 818,
+      "arm": "behavior_grounded",
+      "status": "not_started",
+      "evaluated_slots": 0,
+      "started_slots": 0,
+      "requests": 0,
+      "failed_requests": 0
+    }
+  ],
+  "transport": {
+    "http_requests": 514,
+    "by_purpose": {
+      "preflight": 1,
+      "generation": 262,
+      "analysis": 251
+    },
+    "failed_http": 20,
+    "retry_http": 16,
+    "known_input_tokens": 1215418,
+    "known_output_tokens": 197977,
+    "requests_missing_usage": 20
+  },
+  "failure_receipts": [
+    {
+      "cell_id": "cvrp_construct/811/scalar",
+      "purpose": "analysis",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0091
+    },
+    {
+      "cell_id": "cvrp_construct/811/scalar",
+      "purpose": "analysis",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.022
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0177
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0321
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "purpose": "analysis",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0182
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "purpose": "analysis",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0122
+    },
+    {
+      "cell_id": "cvrp_construct/812/scalar",
+      "purpose": "analysis",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 3,
+      "elapsed_seconds": 5.0082
+    },
+    {
+      "cell_id": "cvrp_construct/812/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 8.7062
+    },
+    {
+      "cell_id": "cvrp_construct/812/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0177
+    },
+    {
+      "cell_id": "cvrp_construct/812/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 3,
+      "elapsed_seconds": 5.0385
+    },
+    {
+      "cell_id": "cvrp_construct/814/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0412
+    },
+    {
+      "cell_id": "cvrp_construct/814/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0073
+    },
+    {
+      "cell_id": "cvrp_construct/814/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 3,
+      "elapsed_seconds": 5.0081
+    },
+    {
+      "cell_id": "cvrp_construct/815/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0057
+    },
+    {
+      "cell_id": "cvrp_construct/815/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0101
+    },
+    {
+      "cell_id": "cvrp_construct/815/passive",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 3,
+      "elapsed_seconds": 5.0387
+    },
+    {
+      "cell_id": "cvrp_construct/815/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0062
+    },
+    {
+      "cell_id": "cvrp_construct/815/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 2,
+      "elapsed_seconds": 5.0309
+    },
+    {
+      "cell_id": "cvrp_construct/815/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 5.0201
+    },
+    {
+      "cell_id": "cvrp_construct/815/behavior_grounded",
+      "purpose": "generation",
+      "http_status": null,
+      "error_code": "URLError",
+      "transport_attempt": 1,
+      "elapsed_seconds": 3.5762
+    }
+  ],
+  "boundary": "Partial journal/code/panel/label integrity and complete-cell endpoint recalculation only. No paired effect claim, gate verdict, heldout result or full-cohort causal/lineage validation. Summary collector loses later completed batch members after first exception; local frozen records retained separately without rewriting historical summary."
+}

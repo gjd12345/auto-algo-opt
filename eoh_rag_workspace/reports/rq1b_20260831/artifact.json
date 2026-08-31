@@ -1,0 +1,372 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "RQ1b Interrupted Pilot",
+    "description": "RQ1b 在线实验中断报告：保全证据、明确缺失，不发布部分赢家",
+    "generatedAt": "2026-08-31T05:50:00.768264+00:00",
+    "sources": [
+      {
+        "id": "audit",
+        "label": "Read-only partial evidence audit",
+        "path": "results.json",
+        "query": {
+          "language": "sql",
+          "engine": "SQLite JSON1 / local JSON projection",
+          "sql": "SELECT json_extract(value, '$.seed') AS seed,\n       json_extract(value, '$.arm') AS arm,\n       json_extract(value, '$.status') AS status,\n       json_extract(value, '$.evaluated_slots') AS evaluated_slots\nFROM json_each(:audit_json, '$.cells')\nORDER BY seed, arm",
+          "query": "python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v1 --partial --output agent_records/calibrations/rq1b_online_20260831_v1_audit.json",
+          "description": "Executed by scripts/report_rq1b.py with :audit_json bound to results.json (the exact audit receipt). SQL extracts status rows; Python pivots seed/arm for the table and maps labels for the chart. Cost figures are direct audit JSON fields. Source commit 127bf6e5a5aaf3537e626d70077bb006da652ad1; historical evidence unchanged.",
+          "tables_used": [
+            "json_each(:audit_json, $.cells)"
+          ],
+          "metric_definitions": [
+            "Complete cell=16 evaluated slots plus cell_frozen and rq1b_cell_endpoints. Evaluation does not imply valid candidate. Started slot=action_started. No scientific effect estimated from the incomplete cohort."
+          ]
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "progress",
+        "title": "全部八个种子的三臂执行状态",
+        "dataset": "progress",
+        "sourceId": "audit",
+        "layout": "full",
+        "subtitle": "分母均为16个候选槽位；已评测不等于算法有效。状态来自逐单元日志，而不是主线程部分汇总。",
+        "showDescription": true,
+        "columns": [
+          {
+            "field": "seed",
+            "label": "种子",
+            "format": "number"
+          },
+          {
+            "field": "scalar",
+            "label": "A · Scalar",
+            "type": "text"
+          },
+          {
+            "field": "passive",
+            "label": "B · Passive",
+            "type": "text"
+          },
+          {
+            "field": "behavior_grounded",
+            "label": "C · Grounded",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "coverage",
+        "title": "未完成槽位分散在不同种子与实验臂",
+        "subtitle": "每根柱只表示已评测槽位数，统一目标16；不是算法效果或有效率。",
+        "showDescription": true,
+        "question": "哪些配对坐标还不足16次评测，因而不能汇成完整三臂比较？",
+        "rationale": "八个种子与三臂的24个预算坐标同时比较，显示缺失并非完整的配对子队列。",
+        "intent": "comparison",
+        "type": "bar",
+        "dataset": "counts",
+        "sourceId": "audit",
+        "layout": "full",
+        "encodings": {
+          "x": {
+            "field": "seed",
+            "type": "ordinal",
+            "label": "配对种子"
+          },
+          "y": {
+            "field": "evaluated",
+            "type": "quantitative",
+            "label": "已评测槽位"
+          },
+          "color": {
+            "field": "arm",
+            "type": "nominal",
+            "label": "实验臂"
+          }
+        },
+        "xAxisTitle": "配对种子",
+        "yAxisTitle": "已评测候选槽位（目标16）",
+        "valueFormat": "number",
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 16,
+            "label": "冻结预算16",
+            "lineStyle": "dashed",
+            "color": "neutral"
+          }
+        ]
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# RQ1b Interrupted Pilot",
+        "sourceId": "audit"
+      },
+      {
+        "id": "summary",
+        "type": "markdown",
+        "body": "## 技术摘要：实验中断，不能判定三臂优劣\n\nRQ1b 的 CVRP 三臂实现、协议冻结和真实在线实验已执行，但网络请求在连接阶段反复失败，达到预设两次重试上限后停止。实际日志保留 **14个完整单元、4个部分单元、6个未启动单元**；已评测 **246/384个候选槽位**。同代码诊断 **0/36**，held-out **0/24单元**，所以行为能力、目标预测和搜索增益的完整比较均未成立。\n\n这不是 C 方法有效或无效的证据。旧 v7 与本次队列不混合；没有挑已完成种子宣布赢家，也没有追加生成把门槛跑过去。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "findings",
+        "type": "markdown",
+        "body": "## 关键发现：14个单元已保存，主线程只回收了12个\n\n批量并发收集在遇到第一个异常时退出；同批后续已有两个单元完成并写入独立日志，却未进入主线程 summary。逐目录审计重建了真实状态，下表展示所有坐标，不修改旧 summary，也不丢弃它漏收的有效记录。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "progress_chart",
+        "type": "chart",
+        "chartId": "coverage"
+      },
+      {
+        "id": "progress_table",
+        "type": "table",
+        "tableId": "progress"
+      },
+      {
+        "id": "transport",
+        "type": "markdown",
+        "body": "## 中断来自连接错误，不是模型质量筛选\n\n本轮共514次 HTTP 尝试：1次预检、262次生成、251次分析。其中20次失败、16次为传输重试；4个最终失败的逻辑请求各用尽1次初始尝试与2次重试。失败回执为 URLError、HTTP状态为空，不能据此断言是密钥、配额或模型拒绝。具体根因无法从经过脱敏的旧回执恢复。\n\n18.1分钟运行中记录输入1,215,418 token、输出197,977 token；20次失败请求没有 usage，不能把已知 token 和当成精确账单。已启动250个槽位，其中246个有完整候选评测；812/A 的第9个槽位生成已成功，但分析尚未取得成功响应，恢复时不应重新抽取它的代码。\n\n事后不带认证的只读连接检查可以取得 HTTP 响应，但该检查没有调用模型，不能据此声称认证服务已恢复。没有修改用户代理设置或绕过网关权限。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "scope",
+        "type": "markdown",
+        "body": "## 已冻结的研究范围与测量口径\n\n只做 CVRP24、DeepSeek V4 Flash；A 标量反馈（影子分析不回流），B 普通被动分析，C 行为落地分析。B/C 都回答相同六个代码返回值问题、三个目标族失败预测和下一步编辑问题；C 额外要求精确代码引用与 claim→behavior→condition 结构。本轮 B 已被共同测量题增强，不能与旧版 B 数字直接合并。\n\n分析必须在代码执行前写入日志。行为真值是代码真实返回节点，而非最优动作；目标失败为执行无效或相对父算法退化，平局不是失败。缺失概率或无法比较的目标标签记最大 ITT 损失1，并与条件 Brier 分开。Potential-AUC 用全部16槽位左阶梯积分，无效候选也占预算。\n\n预定主要比较 C−B；同代码诊断六个 external_teacher 程序×三个种子×B/C，全部搜索 incumbent 冻结后才执行；之后评测 held-out。历史注入、迁移、模型比较继续暂停。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "method",
+        "type": "markdown",
+        "body": "## 方法、完整性审计与复现\n\n冻结源码 `127bf6e5a5aaf3537e626d70077bb006da652ad1`；协议哈希 `3b13dbed7e492aeafe46aa04691961e0a52f0a25700edb577004980264db0471`。所有22项冻结文件哈希仍匹配。只读审计验证了日志哈希链、传输重试顺序、候选文件哈希、前瞻预测先于评测、探针身份与目标标签重算；对14个完整单元重算了记录中的指标和左阶梯 AUC。没有重新执行候选程序或调用模型。\n\n部分审计通过只表示现有记录内部一致；不表示完整三臂比较通过、没有任何统计偏差或存在因果机制。完整队列审计分支目前只做过编译检查，因真实队列未完成而没有执行验证，不写作“全审计通过”。\n\n可复核回执：`agent_records/calibrations/rq1b_online_20260831_v1_audit.json`。原始证据位于 ignored `outputs/fme_pilot/rq1b_online_20260831_v1`，不包含在 Git 交付中；需要该本地目录才能重算审计。报告的 results.json 仅含状态、成本和哈希，不发布候选程序、模型原始响应或密钥。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "limits",
+        "type": "markdown",
+        "body": "## 局限与不确定性：现在没有可用的效果区间\n\n缺少完整配对种子、同代码面板和 held-out，不能估计完整协议下的效果或置信区间，也不能将缺失结果补零。此处不给 C 对 B 的 AUC、行为或 Brier 胜负结论；不根据已完成子集改变后续协议或选择恢复对象。8种子与16次生成是工程预算，不是文献最优值或统计功效保证。\n\n独立单元已冻结不等于研究全局已冻结；本次尚未到达全局 held-out 门禁。所有恢复都必须保存原始 terminal=incomplete，并用独立补充协议说明网络中断与旧记录关联。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "next",
+        "type": "markdown",
+        "body": "## 建议下一步：先修复断点记录，再批准独立重跑\n\n进一步检查发现不能保证无损续跑：EOH 的父代提示会使用 algorithm 一句描述（evolution.py 的父代格式化路径），但当前只保存代码、前瞻分析和提示哈希，没有保存该原始描述。4个中断单元的当前父代都不是初始算法，无法用固定基线描述恢复。哈希不能反推原始文本；不能由我重新编写一段描述后声称提示完全相同。\n\n因此撤回“只补剩余请求即可无损恢复”的初步方案。建议保留本轮 incomplete 为独立证据，先新增持久断点：保存完整已解析候选的描述、代码哈希、父代选择、分析回流状态、未完成请求身份和版本号；验证精确提示哈希后才可恢复。原始响应及断点仅写 ignored outputs，不写 Git。\n\n用户批准后，另立版本化协议，从头跑完整三臂，保持科学问题、每单元16槽位、模型、数据和门槛，不把本轮部分结果合并进新队列，不挑“看起来更好”的单元保留。新旧 API 成本分开且累计披露；明确一次网络重试上限和恢复上限，再启动。当前没有自行修改冻结文件、添加候选、增加重试次数或启动补跑。",
+        "sourceId": "audit"
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "body": "## 后续要核对的问题\n\n1. 网络恢复后，所有原坐标是否能按相同数据与预算完整结束？\n2. B/C 在固定同代码面板上是否真的出现行为识别差异？\n3. 若差异存在，它能否跨过目标预测、有效率、全预算搜索与严格后代链四项限制？目前这些问题均未被本轮回答。",
+        "sourceId": "audit"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-31T05:50:00.768264+00:00",
+    "status": "partial",
+    "datasets": {
+      "progress": [
+        {
+          "seed": 811,
+          "behavior_grounded": "16/16 · 已冻结",
+          "passive": "16/16 · 已冻结",
+          "scalar": "16/16 · 已冻结"
+        },
+        {
+          "seed": 812,
+          "behavior_grounded": "6/16 · 中断",
+          "passive": "16/16 · 已冻结",
+          "scalar": "8/16 · 中断"
+        },
+        {
+          "seed": 813,
+          "behavior_grounded": "16/16 · 已冻结",
+          "passive": "未启动",
+          "scalar": "未启动"
+        },
+        {
+          "seed": 814,
+          "behavior_grounded": "16/16 · 已冻结",
+          "passive": "5/16 · 中断",
+          "scalar": "16/16 · 已冻结"
+        },
+        {
+          "seed": 815,
+          "behavior_grounded": "16/16 · 已冻结",
+          "passive": "3/16 · 中断",
+          "scalar": "16/16 · 已冻结"
+        },
+        {
+          "seed": 816,
+          "behavior_grounded": "16/16 · 已冻结",
+          "passive": "未启动",
+          "scalar": "未启动"
+        },
+        {
+          "seed": 817,
+          "behavior_grounded": "未启动",
+          "passive": "16/16 · 已冻结",
+          "scalar": "16/16 · 已冻结"
+        },
+        {
+          "seed": 818,
+          "behavior_grounded": "未启动",
+          "passive": "16/16 · 已冻结",
+          "scalar": "16/16 · 已冻结"
+        }
+      ],
+      "counts": [
+        {
+          "seed": "811",
+          "arm": "A · Scalar",
+          "evaluated": 16
+        },
+        {
+          "seed": "811",
+          "arm": "B · Passive",
+          "evaluated": 16
+        },
+        {
+          "seed": "811",
+          "arm": "C · Grounded",
+          "evaluated": 16
+        },
+        {
+          "seed": "812",
+          "arm": "A · Scalar",
+          "evaluated": 8
+        },
+        {
+          "seed": "812",
+          "arm": "B · Passive",
+          "evaluated": 16
+        },
+        {
+          "seed": "812",
+          "arm": "C · Grounded",
+          "evaluated": 6
+        },
+        {
+          "seed": "813",
+          "arm": "A · Scalar",
+          "evaluated": 0
+        },
+        {
+          "seed": "813",
+          "arm": "B · Passive",
+          "evaluated": 0
+        },
+        {
+          "seed": "813",
+          "arm": "C · Grounded",
+          "evaluated": 16
+        },
+        {
+          "seed": "814",
+          "arm": "A · Scalar",
+          "evaluated": 16
+        },
+        {
+          "seed": "814",
+          "arm": "B · Passive",
+          "evaluated": 5
+        },
+        {
+          "seed": "814",
+          "arm": "C · Grounded",
+          "evaluated": 16
+        },
+        {
+          "seed": "815",
+          "arm": "A · Scalar",
+          "evaluated": 16
+        },
+        {
+          "seed": "815",
+          "arm": "B · Passive",
+          "evaluated": 3
+        },
+        {
+          "seed": "815",
+          "arm": "C · Grounded",
+          "evaluated": 16
+        },
+        {
+          "seed": "816",
+          "arm": "A · Scalar",
+          "evaluated": 0
+        },
+        {
+          "seed": "816",
+          "arm": "B · Passive",
+          "evaluated": 0
+        },
+        {
+          "seed": "816",
+          "arm": "C · Grounded",
+          "evaluated": 16
+        },
+        {
+          "seed": "817",
+          "arm": "A · Scalar",
+          "evaluated": 16
+        },
+        {
+          "seed": "817",
+          "arm": "B · Passive",
+          "evaluated": 16
+        },
+        {
+          "seed": "817",
+          "arm": "C · Grounded",
+          "evaluated": 0
+        },
+        {
+          "seed": "818",
+          "arm": "A · Scalar",
+          "evaluated": 16
+        },
+        {
+          "seed": "818",
+          "arm": "B · Passive",
+          "evaluated": 16
+        },
+        {
+          "seed": "818",
+          "arm": "C · Grounded",
+          "evaluated": 0
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "audit",
+      "label": "Read-only partial evidence audit",
+      "path": "results.json",
+      "query": {
+        "language": "sql",
+        "engine": "SQLite JSON1 / local JSON projection",
+        "sql": "SELECT json_extract(value, '$.seed') AS seed,\n       json_extract(value, '$.arm') AS arm,\n       json_extract(value, '$.status') AS status,\n       json_extract(value, '$.evaluated_slots') AS evaluated_slots\nFROM json_each(:audit_json, '$.cells')\nORDER BY seed, arm",
+        "query": "python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v1 --partial --output agent_records/calibrations/rq1b_online_20260831_v1_audit.json",
+        "description": "Executed by scripts/report_rq1b.py with :audit_json bound to results.json (the exact audit receipt). SQL extracts status rows; Python pivots seed/arm for the table and maps labels for the chart. Cost figures are direct audit JSON fields. Source commit 127bf6e5a5aaf3537e626d70077bb006da652ad1; historical evidence unchanged.",
+        "tables_used": [
+          "json_each(:audit_json, $.cells)"
+        ],
+        "metric_definitions": [
+          "Complete cell=16 evaluated slots plus cell_frozen and rq1b_cell_endpoints. Evaluation does not imply valid candidate. Started slot=action_started. No scientific effect estimated from the incomplete cohort."
+        ]
+      }
+    }
+  ]
+}

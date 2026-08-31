@@ -1,0 +1,28 @@
+{
+  "document_id": "rq1b-partial-delivery-20260831",
+  "status": "interrupted_evidence_delivered_research_not_complete",
+  "research_claim_allowed": false,
+  "report": "eoh_rag_workspace/reports/rq1b_20260831/report.html",
+  "report_sha256": "49b2bbe9d012f56e5bce404b0ef276ee33ffc2e2de00a24fd1c93f06612fa60a",
+  "artifact_sha256": "9667a048e08f0ec34081f58b3b1117f5290aee1befc10b20c6e0a31128c8e702",
+  "result_sha256": "4f44cd0d10b96b6cd9c4683bfea8056198a0ad25423f704508e83d4bd36bd1e0",
+  "evidence_audit": "agent_records/calibrations/rq1b_online_20260831_v1_audit.json",
+  "next_proposal": "agent_records/proposals/rq1b_restart_after_transport_failure_v1.json",
+  "verification": {
+    "python_compile": "passed_for_audit_and_report_scripts",
+    "json_parse": "passed",
+    "diff_whitespace": "passed",
+    "partial_evidence_recalculation": "passed",
+    "full_cohort_audit": "not_run_cohort_incomplete",
+    "full_result_report_path": "not_exercised_cohort_incomplete",
+    "portable_artifact_validation": "passed",
+    "portable_package": "passed",
+    "portable_verification": "structural_only",
+    "portable_block_counts": {"markdown": 9, "charts": 1, "tables": 1},
+    "browser_check": "not_run_no_installed_Chromium_headless_shell",
+    "unit_test_suite": "not_run_per_user_instruction"
+  },
+  "manual_review": "Open report.html in a modern browser. Expected: interrupted status, 14 complete / 4 partial / 6 not started, 246 evaluated slots, no effect winner. The semantic chart table and source text remain readable without the enhanced reader.",
+  "raw_evidence_policy": "Original journals and candidates remain in ignored outputs; no raw model responses, API keys or logs staged.",
+  "skill_influence": "Technical-report guidance separated execution evidence from scientific effect claims and provided canonical portable HTML with explicit structural-only QA. No plugins installed and no external publication."
+}

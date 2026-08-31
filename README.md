@@ -13,6 +13,17 @@ Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism E
 
 ### 当前聚焦：RQ1b — Behavior-Grounded Analysis
 
+**本轮终态（2026-08-31）：incomplete，不能判定三臂优劣。**
+网络连接错误耗尽预设重试后停止。原始日志保留14个完整、4个部分、6个未启动单元，
+已评测246/384槽位；同代码诊断与 held-out 尚未开启。部分证据哈希、标签和完整单元指标可重算。
+主线程汇总只回收12个结果，另2个完整单元保存在独立日志；没有覆盖原记录。
+父代 algorithm 描述未持久化使精确提示续跑无法保证；[修复与独立重跑提案](agent_records/proposals/rq1b_restart_after_transport_failure_v1.json)待用户批准。
+
+- [本轮可携带审阅报告](eoh_rag_workspace/reports/rq1b_20260831/report.html) / [精简证据](eoh_rag_workspace/reports/rq1b_20260831/results.json)
+- [部分完整性审计](agent_records/calibrations/rq1b_online_20260831_v1_audit.json)；HTML已做结构与嵌入数据检查，本机缺少所需 headless Chromium，未做浏览器视觉检查。
+- 审计复现：`python scripts/audit_rq1b.py outputs/fme_pilot/rq1b_online_20260831_v1 --partial`
+- 以下命令是冻结入口说明，不是继续使用已存在输出目录的恢复命令；当前不得用它静默补跑。
+
 根据 2026-08-31 用户指示，仅继续 CVRP / DeepSeek V4 Flash 的三臂比较：
 A 标量反馈（分析影子留存）、B 普通被动分析、C 代码行为约束的被动分析。
 RQ2 历史、RQ3 迁移、RQ4 模型比较及 Phase 6 暂停。沿用唯一 `FMEResearchLoop`，
