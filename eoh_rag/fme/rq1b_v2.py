@@ -28,7 +28,8 @@ def atomic_json(path, payload):
 
 def freeze(manifest):
     protocol=science.load_and_freeze(manifest)
-    if protocol.get('execution_version')!=2 or protocol['transport_recovery']!={'additional_cycles':2,'delays_seconds':[10,30],'max_http_attempts_per_logical_request':9}:
+    recovery=protocol.get('transport_recovery',{})
+    if protocol.get('execution_version')!=2 or any(recovery.get(k)!=v for k,v in {'additional_cycles':2,'delays_seconds':[10,30],'max_http_attempts_per_logical_request':9}.items()):
         raise ValueError('unsupported_rq1b_execution_policy')
     for name in ('eoh_rag/fme/rq1b_v2.py','eoh_rag/fme/rq1b_transport.py'):
         protocol['source_hashes'][name]=file_hash(ROOT/name)
