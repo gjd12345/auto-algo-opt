@@ -63,9 +63,10 @@ class EvidenceJournal:
 
 
 class ProviderFailure(RuntimeError):
-    def __init__(self, error_code: str, status: int | None = None) -> None:
+    def __init__(self, error_code: str, status: int | None = None, *, retryable: bool = False) -> None:
         self.error_code = error_code
         self.status = status
+        self.retryable = retryable
         super().__init__(error_code)
 
 
@@ -75,7 +76,7 @@ class ChatCompletionTransport:
     def __init__(self, model: str, journal: EvidenceJournal, *, temperature: float,
                  generation_tokens: int, analysis_tokens: int, timeout: int = 90,
                  provider: str = "model-router", thinking: str | None = None,
-                 stream: bool = False) -> None:
+                 stream: bool = False, network_retries: int = 0) -> None:
         self.config = get_provider_config(provider)
         self.thinking = thinking
         self.stream = stream
@@ -85,9 +86,31 @@ class ChatCompletionTransport:
         self.generation_tokens = generation_tokens
         self.analysis_tokens = analysis_tokens
         self.timeout = timeout
+        if not isinstance(network_retries, int) or not 0 <= network_retries <= 2:
+            raise ValueError("network_retries_must_be_zero_to_two")
+        self.network_retries = network_retries
         self.usage: list[dict[str, Any]] = []
 
     def request(self, prompt: str, *, purpose: str, problem: str) -> str:
+        # 只补偿未交付完整响应的传输故障；不因代码/分析质量重采样。
+        # 完整请求参数保持相同，每次真实 HTTP 尝试都记账，失败用量未知不算零。
+        for attempt in range(self.network_retries + 1):
+            try:
+                return self._request_once(prompt, purpose=purpose, problem=problem,
+                                          transport_attempt=attempt + 1)
+            except ProviderFailure as exc:
+                if not exc.retryable or attempt == self.network_retries:
+                    raise
+                delay = 2 ** (attempt + 1)
+                self.journal.append("transport_retry_scheduled", {
+                    "model": self.model, "purpose": purpose, "prompt_hash": digest(prompt),
+                    "failed_transport_attempt": attempt + 1, "delay_seconds": delay,
+                    "error_code": exc.error_code, "boundary": "no_complete_response_was_delivered"})
+                time.sleep(delay)
+        raise AssertionError("unreachable_transport_retry_state")
+
+    def _request_once(self, prompt: str, *, purpose: str, problem: str,
+                      transport_attempt: int) -> str:
         api_key = os.environ.get(self.config.api_key_env, "")
         if not api_key or not self.model:
             raise ProviderFailure("missing_model_or_key")
@@ -115,10 +138,11 @@ class ChatCompletionTransport:
         receipt: dict[str, Any] = {"provider": self.config.name, "model": self.model, "problem": problem, "purpose": purpose,
             "prompt_hash": digest(prompt), "http_status": None, "ok": False,
             "input_tokens": None, "output_tokens": None, "error_code": None,
-            "reasoning_characters": 0, "stream": self.stream}
+            "reasoning_characters": 0, "stream": self.stream,
+            "transport_attempt": transport_attempt}
         started = time.monotonic()
         self.journal.append("model_request_started", {"model": self.model, "purpose": purpose,
-            "prompt_hash": digest(prompt), "stream": self.stream})
+            "prompt_hash": digest(prompt), "stream": self.stream, "transport_attempt": transport_attempt})
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 receipt["http_status"] = response.status
@@ -128,7 +152,7 @@ class ChatCompletionTransport:
                     complete = False
                     for line in response:
                         if time.monotonic()-started > self.timeout:
-                            raise ProviderFailure("stream_total_timeout")
+                            raise ProviderFailure("stream_total_timeout", retryable=True)
                         if not line.startswith(b"data:"):
                             continue
                         value = line[5:].strip()
@@ -154,7 +178,7 @@ class ChatCompletionTransport:
                                 if text_size > 4*1024*1024:
                                     raise ProviderFailure("response_size_limit")
                     if not complete:
-                        raise ProviderFailure("stream_missing_terminal_marker")
+                        raise ProviderFailure("stream_missing_terminal_marker", retryable=True)
                     parsed = {"model": model, "usage": usage,
                         "choices": [{"message": {"content": "".join(parts)}, "finish_reason": finish_reason}]}
                 else:
@@ -174,13 +198,15 @@ class ChatCompletionTransport:
             receipt["http_status"] = exc.code
             # 不把网关原始正文写到异常/日志，避免认证信息或响应内容泄漏。
             receipt["error_code"] = "model_or_permission_denied" if exc.code in {401, 403} else f"http_{exc.code}"
-            raise ProviderFailure(receipt["error_code"], exc.code) from None
+            raise ProviderFailure(receipt["error_code"], exc.code,
+                                  retryable=exc.code in {408, 429, 500, 502, 503, 504}) from None
         except ProviderFailure as exc:
             receipt["error_code"] = exc.error_code
             raise
         except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
             receipt["error_code"] = type(exc).__name__
-            raise ProviderFailure("provider_connectivity_or_protocol_error") from None
+            raise ProviderFailure("provider_connectivity_or_protocol_error",
+                                  retryable=isinstance(exc, OSError)) from None
         finally:
             receipt["elapsed_seconds"] = round(time.monotonic() - started, 4)
             self.usage.append(receipt)

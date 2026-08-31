@@ -121,7 +121,7 @@ def preflight(protocol: dict[str, Any], journal: EvidenceJournal) -> dict[str, A
             continue
         transport = ChatCompletionTransport(model, journal, temperature=0, generation_tokens=64, analysis_tokens=64,
             timeout=protocol["provider_timeout_seconds"], provider=protocol["provider"], thinking=protocol.get("thinking"),
-            stream=protocol.get("stream", False))
+            stream=protocol.get("stream", False), network_retries=protocol.get("network_retries", 0))
         try:
             transport.request("Reply only OK.", purpose="preflight", problem="none")
             results[slot] = {"ok": True, "model": model}
@@ -175,7 +175,8 @@ class PilotCell:
         self.transport = FixtureTransport(model, self.journal, self.spec) if self.fixture else ChatCompletionTransport(
             model, self.journal, temperature=protocol["temperature"], generation_tokens=protocol["generation_max_tokens"],
             analysis_tokens=protocol["analysis_max_tokens"], timeout=protocol["provider_timeout_seconds"],
-            provider=protocol["provider"], thinking=protocol.get("thinking"), stream=protocol.get("stream", False))
+            provider=protocol["provider"], thinking=protocol.get("thinking"), stream=protocol.get("stream", False),
+            network_retries=protocol.get("network_retries", 0))
         self.generator = EOHGeneratorAdapter(self.spec, self.transport)
         self.retriever = make_retriever(protocol, ColdStartMode(arm["history"]))
         composition = build_fme_mainline(generator=self.generator, evidence_retriever=self.retriever)

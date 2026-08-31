@@ -1,0 +1,36 @@
+{
+  "extends": "eoh_rag_workspace/experiments/manifests/refactor0830_online_pilot_v2.json",
+  "schema_version": "fme-online-pilot/v2",
+  "study_id": "refactor0830_opencode_go_pilot_v7",
+  "provider": "opencode-go",
+  "model_slots": {"primary": "OPENCODE_MODEL", "reference": "OPENCODE_COMPARISON_MODEL"},
+  "thinking": "disabled",
+  "thinking_gateway_compatibility": "Also send reasoning.effort=none to Go; record reasoning character count without storing reasoning text",
+  "stream": true,
+  "cell_concurrency": 6,
+  "provider_timeout_seconds": 180,
+  "generation_max_tokens": 3072,
+  "analysis_max_tokens": 1536,
+  "network_retries": 2,
+  "transport_retry_policy": {
+    "max_http_attempts_per_logical_request": 3,
+    "delays_seconds": [2, 4],
+    "retry_only": ["OS transport errors", "HTTP 408/429/500/502/503/504", "stream timeout or missing DONE marker"],
+    "never_retry": ["authentication denial", "complete but invalid code", "complete but invalid analysis", "unrecognized protocol error"],
+    "accounting": "Identical prompt and parameters for both models. Journal every HTTP attempt and retry. Partial response never reaches generation/analysis. Unknown billed usage stays unknown; candidate budget counts logical attempts, HTTP cost includes all retries. Exhausted transport errors still interrupt the cohort."
+  },
+  "planned_early_stop_reasons": ["branch_stalled_for_four_ticks"],
+  "planned_stop_accounting": "The frozen controller may stop after four stalled ticks. Preserve its incumbent, failures and unused slots; hold quality flat to the common allocated budget. Provider interruption and action-credit exhaustion are not successful early stops.",
+  "provider_sources": ["https://opencode.ai/docs/go/", "https://api-docs.deepseek.com/guides/thinking_mode/"],
+  "model_comparison_scope": "Same-provider Flash versus Pro, requested non-thinking setting; no cross-family generalization claim",
+  "transfer_boundary": "Codex-authored abstract-history cold-start ablation, not autonomous mechanism migration; report overlapping randomized controls",
+  "claim_retest_boundary": "Development direction consistency is not causal mechanism validation",
+  "supersedes_failed_pilot": "refactor0830_opencode_go_pilot_v6",
+  "amendments_before_restart": [
+    "v6 stopped at 17/81 cells after one ConnectionResetError in 423 HTTP requests; its heldout remained sealed",
+    "Add bounded, explicit transport-only retries; retain every failed HTTP receipt",
+    "Scientific parameters, candidate budgets, prompts, gates, seeds and arms remain those of v6",
+    "Start every coordinate fresh; no earlier pilot or diagnostic samples enter this cohort"
+  ],
+  "note": "Twelve maximum candidate attempts are an engineering pilot budget, not a literature optimum or a power guarantee. User authorized unlimited API and end-to-end execution."
+}
