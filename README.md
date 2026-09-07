@@ -158,7 +158,8 @@ FMEResearchLoop（唯一科学控制器）
 
 | 模块 | 作用 |
 | --- | --- |
-| [`experiments/fme_pilot.py`](eoh_rag/experiments/fme_pilot.py) | 活动入口：冻结矩阵、双模型预检、FME 在线 pilot |
+| [`fme/rq1b_v2.py`](eoh_rag/fme/rq1b_v2.py) | **当前聚焦**：RQ1b CVRP 三臂行为分析（默认只冻结） |
+| [`experiments/fme_pilot.py`](eoh_rag/experiments/fme_pilot.py) | RQ1–RQ4 三问题在线对照入口；RQ2–RQ4 已暂停 |
 | [`fme/online_pilot.py`](eoh_rag/fme/online_pilot.py) | 完整科研循环、档案准入、配对对照、全 cohort 冻结后 held-out |
 | [`fme/pilot_evaluation.py`](eoh_rag/fme/pilot_evaluation.py) | 三问题真实数值评测、超时与接口有效性检查；不是操作系统安全沙箱 |
 | [`experiments/batch_runner.py`](eoh_rag/experiments/batch_runner.py) | 历史 EOH 批量复现入口 |
@@ -208,65 +209,50 @@ OPENCODE_COMPARISON_MODEL=deepseek-v4-pro
 
 ## 5. 快速开始
 
-### 新 FME 在线对照
+当前默认动作是**冻结协议或只读审计**。`--execute` 会调用付费 API，必须新授权和新输出目录。
 
-默认仅生成冻结协议，不调用 API；每次使用新输出目录，禁止覆盖旧证据。
-完整矩阵为 3 问题 × 3 seed × 9 实验臂，每坐标最多 12 次候选尝试（包含失败，允许登记的提前停止）。
-12 是工程 pilot 预算，不是论文规定的最优次数，也不构成统计功效保证。
+### RQ1b（当前聚焦）
+
+```bash
+# 只冻结，不调 API
+python -m eoh_rag.fme.rq1b_v2 --output outputs/fme_pilot/rq1b_prepared_new
+
+# 只读续跑审计（不调模型、不跑 solver）
+python scripts/audit_rq1b_resume.py \
+  outputs/fme_pilot/rq1b_online_20260831_v2_resume_v1 \
+  --output outputs/rq1b_resume_audit_recheck.json
+```
+
+完整账本在 `.gitignore` 中，不随克隆分发。本机需保留
+`outputs/fme_pilot/rq1b_online_20260831_v2` 与 `..._v2_resume_v1`。
+审计会核对这些目录下的 `checks/` 快照与原始 journal 字节级一致；
+若曾删除与 `cells/` 哈希相同的 `checks/` 副本，需从原始 v2 目录按哈希恢复后再审。
+
+### RQ1–RQ4 在线对照（已完成，RQ2–RQ4 暂停）
+
+默认只冻结协议。完整矩阵为 3 问题 × 3 seed × 9 臂，每坐标最多 12 次候选尝试。
+12 是工程预算，不是文献最优次数。
 
 ```bash
 python -m eoh_rag.experiments.fme_pilot --output outputs/fme_pilot/prepared
-python -m eoh_rag.experiments.fme_pilot --preflight --output outputs/fme_pilot/preflight
-python -m eoh_rag.experiments.fme_pilot --execute --output outputs/fme_pilot/online
-```
-
-`--integration-smoke` 使用显式 fixture 和真实求解评测，只验证执行链，不能支持研究结论。
-开发域主张的 `supported` 只表示预测方向与独立开发探测的改善相符，尚非机制因果证据。
-RQ3 仅检验外部编写的跨问题抽象提示，不声称自主机制迁移已实现。
-
-### 已有在线证据的只读复核与报告重建（不调用 API）
-
-```bash
 python scripts/audit_fme_pilot.py outputs/fme_pilot/opencode_go_online_20260831_v7
-python scripts/build_fme_online_report.py --run-dir outputs/fme_pilot/opencode_go_online_20260831_v7 --output eoh_rag_workspace/reports/refactor0830_online_review
-weasyprint eoh_rag_workspace/reports/refactor0830_online_review/online_review.html eoh_rag_workspace/reports/refactor0830_online_review/online_review.pdf
 ```
 
-预期审计状态为 `evidence_integrity_verified`；构建报告时会再次核对原始证据，
-报告中的人工解释只绑定指定原始 summary 哈希，不挪用于重跑结果。
-Windows 缺少 WeasyPrint 的系统库时可在 WSL 中渲染。PDF 已逐页排版审查，
-Draw.io 文件已做 XML 结构校验；当前环境缺少 Draw.io 桌面导出器，未提供原生渲染图片。
+`--integration-smoke` 只验证执行链，不能支持研究结论。
 
-原始运行目录在 `.gitignore` 中，不随克隆分发。Git 提供精简结果、哈希、manifest 与代码；
-完整账本审计需保留本机 `outputs/fme_pilot/opencode_go_online_20260831_v7`。
-如需独立重新生成实验，使用 `--execute` 和全新输出目录，会重新调用付费 API，结果不保证逐 token 一致。
-当前执行源码对应 `0159cd6`，后续交付只更新审计、报告和说明。
+### 历史 EOH 复现（不是新闭环证据）
 
-### 可选历史测试（不作为默认步骤）
 ```bash
 python3 -m pytest tests/ -q
-```
-（依赖 Go 的评测测试在无 Go 环境自动跳过；CI 见 `.github/workflows/tests.yml`。）
-
-### 跑一次进化实验（单进程）
-```bash
 python3 -m eoh_rag.experiments.batch_runner \
   --manifest eoh_rag_workspace/experiments/manifests/high_gen_bp_online.json \
   --force \
   --shared-pool-dir eoh_rag_workspace/shared_pool \
   --output-dir eoh_rag_workspace/reports/auto_experiment_reports/run1
-```
-
-### Island Model（多进程共享种群）
-仓库自带便捷脚本（已改为可移植，自动定位仓库根）：
-```bash
 bash scripts/launch_island.sh
 ```
-它会对 3 个问题各起若干进程，共享同一个 `--shared-pool-dir`，跑完后可用
-`eoh_rag/experiments/reports/run_summarizer.py` 汇总。
 
-> 注意：实验会写入 `eoh_rag_workspace/` 下的 `runs/`、`reports/` 等目录（这些原始输出已被
-> `.gitignore` 忽略，不进版本库）。
+岛屿模型结果属于 2026-06-30 冻结批次，不可与 FME 新合成实例混算。
 
 ---
 
@@ -275,25 +261,19 @@ bash scripts/launch_island.sh
 ```
 auto-algo-opt/
 ├── eoh_rag/                     # 主线 Python 包
-│   ├── experiments/             # 运行器、PoolAPI、evaluator、run_tracker、hooks、RAG 上下文
-│   ├── rag/                     # 语料构建、检索、重排、卡片合成、词表、失败案例
-│   ├── tocc/                    # 轨迹条件化控制器 + 守门员
-│   ├── operator/                # 编译自修复、定向变异、失败记忆
-│   ├── eoh_runner/              # 问题/目标规格注册表
+│   ├── fme/                     # 唯一科学控制器、RQ1b、在线对照、档案
+│   ├── experiments/             # fme_pilot CLI；其余为历史 EOH 复现
+│   ├── rag/                     # 语料构建、检索、重排、卡片合成（历史路径）
+│   ├── tocc/ · operator/ · eoh_runner/  # 仅复现，不进正式运行注册表
 │   ├── llm/                     # 大模型客户端
 │   ├── memory.py · store.py · strategy_router.py · solver_adapter/
-├── Agent_EOH/                   # vendored：EoH 的 Go 问题轨道（InsertShips 家族评估器，编译 Go）
-├── official_eoh/                # vendored：主线 EoH 评测引擎（bp/tsp/cvrp，源自 FeiLiu36/EoH，MIT）
-├── eoh_rag_workspace/           # 运行期数据
-│   ├── problems/                # 各问题的 Go 求解器 + 算例 testdata
-│   ├── rag/                     # RAG 语料（corpus / literature / manual_contexts）
-│   ├── experiments/manifests/   # 实验 manifest 配置
-│   └── ...                      # 卡片先验、算子记忆、训练数据等
-├── go_solver/                   # Go 求解器骨架（main.go · routing.go · go.mod · go.sum）+ CVRP Solomon 算例
-├── evidence/                    # 冻结实验证据（结果表、最优代码、复现说明）
-├── docs/                        # 设计规格（SPEC）与说明
-├── scripts/                     # 便捷运行脚本
-└── tests/                       # 单元 + 集成测试
+├── agent_records/               # 契约、校准、交接；执行授权以 contracts 为准
+├── official_eoh/                # vendored：主线 EoH 评测引擎（bp/tsp/cvrp）
+├── Agent_EOH/ · go_solver/      # Go 轨道，已退出正式注册表
+├── eoh_rag_workspace/           # manifest、语料、冻结报告
+├── evidence/                    # 岛屿模型等冻结实验证据
+├── docs/ · scripts/ · tests/
+└── outputs/                     # 原始运行账本（gitignore，不随克隆分发）
 ```
 
 ---
