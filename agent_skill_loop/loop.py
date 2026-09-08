@@ -18,20 +18,17 @@ from agent_skill_loop.contracts import (
     DEFAULT_SOLVER_TIMEOUT,
     DEFAULT_SPLIT,
     DEFAULT_WALL_SECONDS,
-    ENTRYPOINT_CVRP,
     PROBLEM_CVRP,
-    STAGNATION_E1_STREAK,
     AttemptRecord,
     EvaluationResult,
     RunSummary,
     SkillVersion,
-    better_objective,
-    choose_operator,
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.generator import PromptFeedback, build_prompt, extract
 from agent_skill_loop.journal import Journal, sha256_text
-from agent_skill_loop.problems.cvrp import BASELINE_CODE, PROBLEM_NAME, build_suite
+from agent_skill_loop.policy import FixedSearchPolicy, search_policy_identity
+from agent_skill_loop.problems.base import ProblemSpec, get_problem
 from agent_skill_loop.report import write_run_report
 from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill
 
@@ -56,10 +53,13 @@ class AgentLoop:
         count: int = DEFAULT_COUNT,
         split: str = DEFAULT_SPLIT,
         model: str | None = None,
+        problem_spec: ProblemSpec | None = None,
     ) -> None:
         self.output_dir = Path(output_dir)
         self.transport = transport
         self.execution_mode = execution_mode
+        self.problem_spec = problem_spec if problem_spec is not None else get_problem(PROBLEM_CVRP)
+        self.policy = FixedSearchPolicy()
         self.candidate_attempts_limit = candidate_attempts
         self.max_llm_requests = max_llm_requests
         self.request_timeout = request_timeout
@@ -73,7 +73,7 @@ class AgentLoop:
         self.size = size
         self.count = count
         self.split = split
-        self.suite = suite or build_suite(seed, split=split, count=count, size=size)
+        self.suite = suite or self.problem_spec.build_suite(seed, split=split, count=count, size=size)
         self.parent_skill = parent_skill
         self.model = model if model is not None else getattr(transport, "model", None)
         self.llm_requests = 0
@@ -99,7 +99,7 @@ class AgentLoop:
         path = self.output_dir / "skills" / folder
         save_skill(path, skill)
         if generated and skill.valid:
-            if self.best_generated is None or better_objective(skill.mean_objective, self.best_generated.mean_objective):
+            if self.best_generated is None or self.policy.accept(skill.mean_objective, self.best_generated.mean_objective):
                 self.best_generated = skill
                 publish_export_ref(self.output_dir, path)
         return path
@@ -125,15 +125,18 @@ class AgentLoop:
             parent_version_id=parent_version_id,
             source_attempt_id=source_attempt_id,
             description=description,
-            problem=PROBLEM_CVRP,
-            entrypoint=ENTRYPOINT_CVRP,
+            problem=self.problem_spec.problem_id,
+            entrypoint=self.problem_spec.entrypoint,
             repair_of_attempt_id=repair_of_attempt_id,
+            search_policy_id=self.policy.policy_id,
+            search_policy_version=self.policy.policy_version,
         )
 
     def _install_incumbent(self, skill: SkillVersion, *, generated: bool) -> None:
         if not skill.valid:
             return
-        if self.incumbent is None or better_objective(skill.mean_objective, self.incumbent.mean_objective):
+        incumbent_objective = None if self.incumbent is None else self.incumbent.mean_objective
+        if self.policy.accept(skill.mean_objective, incumbent_objective):
             self.incumbent = skill
             self.incumbent_is_generated = generated
 
@@ -154,10 +157,10 @@ class AgentLoop:
             self._install_incumbent(parent, generated=False)
             self.seen_code.add(sha256_text(parent.code))
             return
-        evaluation = self._evaluate(BASELINE_CODE)
+        evaluation = self._evaluate(self.problem_spec.baseline_code)
         baseline = self._bind_skill(
             version_id="baseline",
-            code=BASELINE_CODE,
+            code=self.problem_spec.baseline_code,
             evaluation=evaluation,
             parent_version_id=None,
             source_attempt_id=None,
@@ -171,7 +174,7 @@ class AgentLoop:
 
     def _write_frozen_config(self) -> None:
         config = {
-            "problem": PROBLEM_CVRP,
+            "problem": self.problem_spec.problem_id,
             "seed": self.seed,
             "size": self.size,
             "count": self.count,
@@ -185,6 +188,7 @@ class AgentLoop:
             "execution_mode": self.execution_mode,
             "model": self.model,
             "parent_skill_id": None if self.parent_skill is None else self.parent_skill.version_id,
+            "search_policy": search_policy_identity(),
         }
         (self.output_dir / "config_frozen.json").write_text(
             json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -206,7 +210,7 @@ class AgentLoop:
             incumbent_objective=self.incumbent.mean_objective,
             incumbent_instances=self.incumbent.instance_objectives,
             structural_explore=structural_explore and operator == "e1",
-            edit_target="incumbent",
+            edit_target=self.policy.edit_target(operator=operator, last=last),
         )
         if last is None:
             return feedback
@@ -227,10 +231,7 @@ class AgentLoop:
             feedback.error_detail = last.evaluation.error_detail
             feedback.raw_reply = last.raw_response or None
             feedback.failed_code = last.code or None
-            feedback.edit_target = "raw_reply" if not last.code else "failed_code"
             feedback.structural_explore = False
-        elif last.code and last.code != self.incumbent.code:
-            feedback.edit_target = "incumbent"
         return feedback
 
     def _usage_snapshot(self) -> dict[str, Any]:
@@ -387,21 +388,16 @@ class AgentLoop:
                     return self._finish(True, self._status(), "wall_time_limit")
                 if self.llm_requests >= self.max_llm_requests:
                     return self._finish(True, self._status(), "request_limit")
-                operator = choose_operator(
+                operator = self.policy.choose_operator(
                     attempts_done=len(self.attempts),
                     has_explicit_parent=self.parent_skill is not None,
                     last_valid=last_valid,
                 )
                 attempt_id = len(self.attempts) + 1
-                if operator == "i1":
-                    parent_id = None
-                elif operator == "e1":
-                    parent_id = self.incumbent.version_id if self.incumbent else None
-                else:
-                    parent_id = None
+                parent_id = self.policy.select_parent(operator=operator, incumbent=self.incumbent, last=last)
                 repair_of = last.attempt_id if operator == "m1" and last is not None else None
                 failed_hash = sha256_text(last.code or last.raw_response) if operator == "m1" and last is not None else None
-                structural = operator == "e1" and self.non_improving_e1 >= STAGNATION_E1_STREAK
+                structural = self.policy.structural_explore(operator=operator, non_improving_e1=self.non_improving_e1)
                 feedback = self._feedback(operator, last, structural_explore=structural)
                 prompt = build_prompt(operator, feedback)
                 prompt_path, prompt_hash = self.journal.save_prompt(attempt_id, prompt)
@@ -427,7 +423,7 @@ class AgentLoop:
                     response = self.transport.request(
                         prompt,
                         purpose="generation",
-                        problem=PROBLEM_NAME,
+                        problem=self.problem_spec.problem_id,
                         timeout=request_timeout,
                     )
                 except ProviderFailure as exc:
@@ -526,7 +522,7 @@ class AgentLoop:
         if provider_error_code:
             payload["provider_error_code"] = provider_error_code
         payload.update({
-            "problem": PROBLEM_CVRP,
+            "problem": self.problem_spec.problem_id,
             "suite_hash": self.suite["content_hash"],
             "model": self.model,
             "candidate_attempts_limit": self.candidate_attempts_limit,
@@ -547,9 +543,10 @@ class AgentLoop:
 def prepare_output(path: Path, **suite_kwargs) -> dict:
     path = Path(path)
     path.mkdir(parents=True, exist_ok=False)
-    suite = build_suite(**suite_kwargs)
+    spec = get_problem(PROBLEM_CVRP)
+    suite = spec.build_suite(**suite_kwargs)
     config = {
-        "problem": PROBLEM_CVRP,
+        "problem": spec.problem_id,
         "seed": suite_kwargs.get("seed", DEFAULT_SEED),
         "size": suite_kwargs.get("size", DEFAULT_SIZE),
         "count": suite_kwargs.get("count", DEFAULT_COUNT),
@@ -560,6 +557,7 @@ def prepare_output(path: Path, **suite_kwargs) -> dict:
         "request_timeout": DEFAULT_REQUEST_TIMEOUT,
         "wall_seconds": DEFAULT_WALL_SECONDS,
         "suite_hash": suite["content_hash"],
+        "search_policy": search_policy_identity(),
     }
     (path / "config_frozen.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     (path / "dev_suite.json").write_text(json.dumps(suite, indent=2) + "\n", encoding="utf-8")

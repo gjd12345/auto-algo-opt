@@ -21,6 +21,7 @@ from agent_skill_loop.contracts import (
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.loop import AgentLoop, prepare_output
+from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.problems.cvrp import BASELINE_CODE
 from agent_skill_loop.skill_store import load_skill
 
@@ -142,8 +143,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if getattr(args, "problem", PROBLEM_CVRP) != PROBLEM_CVRP:
+    problem_id = getattr(args, "problem", PROBLEM_CVRP)
+    if problem_id != PROBLEM_CVRP:
         raise SystemExit("first version supports only cvrp_construct")
+    # Resolve from the spec registry so the guard and the loop agree on identity.
+    get_problem(problem_id)
     return int(args.func(args))
 
 

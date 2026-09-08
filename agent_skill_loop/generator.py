@@ -14,7 +14,8 @@ import ast
 import re
 from dataclasses import dataclass
 
-from agent_skill_loop.problems.cvrp import TASK_DESCRIPTION, TEMPLATE_PROGRAM
+from agent_skill_loop.problems.base import ProblemSpec, get_problem
+from agent_skill_loop.problems.cvrp import PROBLEM_NAME
 
 _EXECUTION_CONTRACT = (
     "NUMERIC EXECUTION CONTRACT: numpy/math only; no files, network, reflection "
@@ -90,24 +91,25 @@ def _last_block(feedback: PromptFeedback) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _function_spec() -> str:
+def _function_spec(spec: ProblemSpec) -> str:
     return (
         "implement the following Python function:\n"
-        f"```python\n{TEMPLATE_PROGRAM.strip()}\n```\n"
+        f"```python\n{spec.template_program.strip()}\n```\n"
         "Do not give additional explanations."
     )
 
 
-def build_prompt(operator: str, feedback: PromptFeedback | None = None) -> str:
-    spec = _function_spec()
-    header = f"{TASK_DESCRIPTION}\n{_INTERFACE_BOUNDARY}\n"
+def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: ProblemSpec | None = None) -> str:
+    spec = spec or get_problem(PROBLEM_NAME)
+    program_spec = _function_spec(spec)
+    header = f"{spec.task_description}\n{_INTERFACE_BOUNDARY}\n"
     if operator == "i1":
         if feedback is not None:
             raise ValueError("i1_must_not_carry_parent_or_failure")
         return (
             f"{header}"
             "First, describe your new algorithm and main steps in one sentence. "
-            f"The description must be inside a brace. Next, {spec}\n"
+            f"The description must be inside a brace. Next, {program_spec}\n"
             f"{_EXECUTION_CONTRACT}\n"
         )
     if operator == "e1":
@@ -138,7 +140,7 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None) -> str:
             "Use the measured values as feedback. Preserve effective parts of the edit target, "
             "then introduce one clear alternative. Do not reset to a generic default.\n"
             "First, describe your new algorithm and main steps in one sentence. "
-            f"The description must be inside a brace. Next, {spec}\n"
+            f"The description must be inside a brace. Next, {program_spec}\n"
             f"{_EXECUTION_CONTRACT}\n"
         )
     if operator == "m1":
@@ -160,7 +162,7 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None) -> str:
             "Change the failed program so it satisfies the function contract and returns a "
             "feasible node index (or 0 for an early depot return).\n"
             "First, describe your repaired algorithm and main steps in one sentence. "
-            f"The description must be inside a brace. Next, {spec}\n"
+            f"The description must be inside a brace. Next, {program_spec}\n"
             f"{_EXECUTION_CONTRACT}\n"
         )
     raise ValueError(f"unknown_operator:{operator}")

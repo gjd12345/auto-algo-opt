@@ -12,6 +12,7 @@ from typing import Any, Mapping
 
 from agent_skill_loop.contracts import SKILL_SCHEMA, SkillVersion
 from agent_skill_loop.evaluator import evaluator_source_hash
+from agent_skill_loop.policy import POLICY_ID, POLICY_VERSION
 
 SKILL_REF_SCHEMA = "algorithm-skill-ref/v1"
 
@@ -79,6 +80,8 @@ def _load_materialized(directory: Path) -> SkillVersion:
         source_attempt_id=meta.get("source_attempt_id"),
         description=str(meta.get("description") or ""),
         repair_of_attempt_id=meta.get("repair_of_attempt_id"),
+        search_policy_id=str((meta.get("search_policy") or {}).get("id") or POLICY_ID),
+        search_policy_version=str((meta.get("search_policy") or {}).get("version") or POLICY_VERSION),
     )
 
 
@@ -147,6 +150,8 @@ def make_skill(
     problem: str,
     entrypoint: str,
     repair_of_attempt_id: int | None = None,
+    search_policy_id: str = POLICY_ID,
+    search_policy_version: str = POLICY_VERSION,
 ) -> SkillVersion:
     return SkillVersion(
         version_id=version_id,
@@ -163,4 +168,6 @@ def make_skill(
         source_attempt_id=source_attempt_id,
         description=description,
         repair_of_attempt_id=repair_of_attempt_id,
+        search_policy_id=search_policy_id,
+        search_policy_version=search_policy_version,
     )

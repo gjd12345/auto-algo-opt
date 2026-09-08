@@ -74,6 +74,8 @@ class SkillVersion:
     source_attempt_id: int | None
     description: str = ""
     repair_of_attempt_id: int | None = None
+    search_policy_id: str = "fixed"
+    search_policy_version: str = "v1"
 
     def metadata(self) -> dict[str, Any]:
         return {
@@ -92,6 +94,7 @@ class SkillVersion:
             "instance_objectives": list(self.instance_objectives),
             "source_attempt_id": self.source_attempt_id,
             "description": self.description,
+            "search_policy": {"id": self.search_policy_id, "version": self.search_policy_version},
         }
 
 

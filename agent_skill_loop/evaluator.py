@@ -22,8 +22,19 @@ try:
 except Exception:  # pragma: no cover
     np = None  # type: ignore[assignment]
 
-from agent_skill_loop.contracts import ENTRYPOINT_CVRP, PROBLEM_CVRP, EvaluationResult
-from agent_skill_loop.problems.cvrp import SPLIT_OFFSETS, finite_float, suite_hash
+from agent_skill_loop.contracts import EvaluationResult
+from agent_skill_loop.problems.base import ProblemSpec, get_problem, register_problem
+from agent_skill_loop.problems.cvrp import (
+    BASELINE_CODE,
+    ENTRYPOINT,
+    PROBLEM_NAME,
+    SPLIT_OFFSETS,
+    TASK_DESCRIPTION,
+    TEMPLATE_PROGRAM,
+    build_suite,
+    finite_float,
+    suite_hash,
+)
 
 _SAFE_BUILTINS = {
     "abs": abs, "all": all, "any": any, "bool": bool, "dict": dict,
@@ -92,6 +103,7 @@ def evaluator_source_hash() -> str:
     import hashlib
     parts = [Path(__file__).read_bytes()]
     parts.append(Path(__file__).resolve().parent.joinpath("problems", "cvrp.py").read_bytes())
+    parts.append(Path(__file__).resolve().parent.joinpath("problems", "base.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
 
 
@@ -151,21 +163,28 @@ def _attribute_root_id(node: ast.Attribute) -> str | None:
     return None
 
 
-def _restricted_import(name: str, globals: Any = None, locals: Any = None, fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
-    # Candidate AST cannot emit ImportFrom/relative import. Numpy ndarray methods
-    # still call __import__ from the candidate frame for numpy.* submodules.
-    if level:
-        module_name = str(globals.get("__name__") or "") if isinstance(globals, dict) else ""
-        if not (module_name == "numpy" or module_name.startswith("numpy.") or module_name == "math" or module_name.startswith("math.")):
+def _make_restricted_import(allowed_roots: set[str]) -> Any:
+    """Return a __import__ wrapper that only allows the spec's import roots.
+
+    Candidate AST cannot emit ImportFrom/relative import. Numpy ndarray methods
+    still call __import__ from the candidate frame for numpy.* submodules.
+    """
+
+    def restricted_import(name: str, globals: Any = None, locals: Any = None, fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
+        if level:
+            module_name = str(globals.get("__name__") or "") if isinstance(globals, dict) else ""
+            if not (module_name == "numpy" or module_name.startswith("numpy.") or module_name == "math" or module_name.startswith("math.")):
+                raise ImportError("restricted_import")
+            return _REAL_IMPORT(name, globals, locals, fromlist, level)
+        root = (name or "").split(".", 1)[0]
+        if root not in allowed_roots:
             raise ImportError("restricted_import")
         return _REAL_IMPORT(name, globals, locals, fromlist, level)
-    root = (name or "").split(".", 1)[0]
-    if root not in _ALLOWED_IMPORT_ROOTS:
-        raise ImportError("restricted_import")
-    return _REAL_IMPORT(name, globals, locals, fromlist, level)
+
+    return restricted_import
 
 
-def _validate_candidate_ast(code: str, required_entry: str) -> ast.Module:
+def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
     if not isinstance(code, str) or not code.strip() or len(code.encode("utf-8")) > 100_000:
         raise ValueError("invalid_code")
     try:
@@ -174,26 +193,26 @@ def _validate_candidate_ast(code: str, required_entry: str) -> ast.Module:
     except (SyntaxError, ValueError, TypeError, UnicodeError) as exc:
         raise ValueError("invalid_code") from exc
     function_names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    if required_entry not in function_names:
+    if spec.entrypoint not in function_names:
         raise ValueError("missing_entrypoint")
+    allowed_aliases = {root: (None, "np" if root == "numpy" else root) for root in spec.allowed_import_roots}
     for node in ast.walk(tree):
         if isinstance(node, ast.AsyncFunctionDef):
             raise ValueError("forbidden_syntax")
         if isinstance(node, ast.Import):
             for alias in node.names:
-                allowed_aliases = {"numpy": (None, "np"), "math": (None, "math")}
                 if alias.name not in allowed_aliases or alias.asname not in allowed_aliases[alias.name]:
                     raise EvalError("forbidden_import", alias.name)
         elif isinstance(node, ast.ImportFrom):
             raise EvalError("forbidden_import", node.module or "from_import")
         elif isinstance(node, ast.Name):
-            if node.id in _FORBIDDEN_NAMES or node.id.startswith("__"):
+            if node.id in spec.forbidden_names or node.id.startswith("__"):
                 raise EvalError("forbidden_name", node.id)
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("_"):
                 raise EvalError("forbidden_attribute", node.attr)
             root = _attribute_root_id(node)
-            if root in _NP_MATH_ROOTS and node.attr not in (_NUMPY_ATTRIBUTES | _MATH_ATTRIBUTES):
+            if root in spec.np_math_roots and node.attr not in spec.allowed_attributes:
                 raise EvalError("forbidden_attribute", node.attr)
         elif isinstance(node, (ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise, ast.Delete, ast.Global, ast.Nonlocal)):
             raise ValueError("forbidden_syntax")
@@ -225,20 +244,23 @@ def _as_index(value: Any, allowed: set[int]) -> int | None:
     return integer
 
 
-def _validate_suite(suite: Mapping[str, Any], problem: str) -> tuple[list[Mapping[str, Any]], str]:
-    if problem != PROBLEM_CVRP:
-        raise ValueError("unsupported_problem")
+def _validate_cvrp_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
     split = suite.get("split") if isinstance(suite, Mapping) else None
-    if not isinstance(suite, Mapping) or suite.get("problem") != PROBLEM_CVRP or not isinstance(split, str) or split not in SPLIT_OFFSETS:
+    if not isinstance(suite, Mapping) or suite.get("problem") != PROBLEM_NAME or not isinstance(split, str) or split not in SPLIT_OFFSETS:
         raise ValueError("invalid_suite")
     instances = suite.get("instances")
     given_hash = suite.get("content_hash")
     if not isinstance(instances, list) or not instances or not isinstance(given_hash, str):
         raise ValueError("invalid_suite")
-    expected = suite_hash(PROBLEM_CVRP, split, instances)
+    expected = suite_hash(PROBLEM_NAME, split, instances)
     if given_hash != expected:
         raise ValueError("suite_hash_mismatch")
     return instances, expected
+
+
+def _validate_suite(spec: ProblemSpec, suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
+    """Validate a suite against a resolved problem spec (problem-driven)."""
+    return spec.validate_suite(suite)
 
 
 def _distance_matrix(points: list[list[float]]):
@@ -249,7 +271,7 @@ def _distance_matrix(points: list[list[float]]):
     return np.sqrt(np.sum(delta * delta, axis=2))
 
 
-def _evaluate_cvrp(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
     objectives = []
     for instance in instances:
         depot, customers, demands, capacity = (instance.get(key) for key in ("depot", "customer_coordinates", "demands", "capacity"))
@@ -301,6 +323,11 @@ def _evaluate_cvrp(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
     return objectives
 
 
+def _evaluate_problem(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+    """Per-instance objective evaluation dispatched by problem spec."""
+    return spec.evaluate_instances(fn, instances)
+
+
 def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
     started = time.monotonic()
     problem = request.get("problem")
@@ -308,22 +335,21 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
     code = request.get("code")
     suite_hash_value: str | None = None
     try:
-        if problem != PROBLEM_CVRP:
-            raise ValueError("unsupported_problem")
-        instances, expected = _validate_suite(suite, PROBLEM_CVRP)
+        spec = get_problem(problem)
+        instances, expected = _validate_suite(spec, suite)
         suite_hash_value = expected
-        tree = _validate_candidate_ast(code, ENTRYPOINT_CVRP)
+        tree = _validate_candidate_ast(code, spec)
 
-        builtins_dict = dict(_SAFE_BUILTINS)
-        builtins_dict["__import__"] = _restricted_import
+        builtins_dict = dict(spec.safe_builtins)
+        builtins_dict["__import__"] = _make_restricted_import(spec.allowed_import_roots)
         globals_dict = {"__builtins__": builtins_dict, "np": np, "numpy": np, "math": math}
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
             exec(compile(tree, "<candidate>", "exec"), globals_dict, globals_dict)
-        fn = globals_dict.get(ENTRYPOINT_CVRP)
+        fn = globals_dict.get(spec.entrypoint)
         if not callable(fn):
             raise ValueError("missing_entrypoint")
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-            per_instance = _evaluate_cvrp(fn, instances)
+            per_instance = _evaluate_problem(spec, fn, instances)
         objective = float(sum(per_instance) / len(per_instance))
         if not math.isfinite(objective) or any(not math.isfinite(float(x)) for x in per_instance):
             raise ValueError("nonfinite_objective")
@@ -398,14 +424,15 @@ class SubprocessEvaluator:
 
     def evaluate(self, code: str, suite: Mapping[str, Any]) -> EvaluationResult:
         started = time.monotonic()
+        spec = get_problem(PROBLEM_NAME)
         try:
-            instances, expected_hash = _validate_suite(suite, PROBLEM_CVRP)
+            instances, expected_hash = _validate_suite(spec, suite)
             if not isinstance(code, str):
                 raise ValueError("invalid_code")
         except (ValueError, TypeError) as exc:
             error = str(exc) if str(exc) in {"unsupported_problem", "invalid_suite", "suite_hash_mismatch", "invalid_code"} else "invalid_request"
             return EvaluationResult(False, None, (), None, error, time.monotonic() - started)
-        request = {"problem": PROBLEM_CVRP, "code": code, "suite": dict(suite)}
+        request = {"problem": spec.problem_id, "code": code, "suite": dict(suite)}
         package_root = Path(__file__).resolve().parents[1]
         safe_env = {key: os.environ[key] for key in ("PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL") if key in os.environ}
         safe_env["PYTHONPATH"] = str(package_root)
@@ -463,3 +490,32 @@ class SubprocessEvaluator:
             return _result_from_dict(result)
         except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
             return EvaluationResult(False, None, (), expected_hash, "worker_protocol", time.monotonic() - started)
+
+
+# --- problem spec registration ---------------------------------------------
+# The CVRP spec encapsulates exactly the pre-refactor literals (identity,
+# entrypoint, prompt strings, suite builder/hash/validation, objective math,
+# and the execution capability whitelist). Registering here makes the evaluator
+# problem-driven while keeping every observable behavior identical.
+CVRP_SPEC = ProblemSpec(
+    problem_id=PROBLEM_NAME,
+    entrypoint=ENTRYPOINT,
+    interface_version="v1",
+    task_description=TASK_DESCRIPTION,
+    template_program=TEMPLATE_PROGRAM,
+    baseline_code=BASELINE_CODE,
+    objective_direction="minimize",
+    split_offsets=SPLIT_OFFSETS,
+    build_suite=build_suite,
+    suite_hash=suite_hash,
+    validate_suite=_validate_cvrp_suite,
+    evaluate_instances=_evaluate_cvrp_instances,
+    safe_builtins=_SAFE_BUILTINS,
+    forbidden_names=frozenset(_FORBIDDEN_NAMES),
+    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    math_attributes=frozenset(_MATH_ATTRIBUTES),
+    np_math_roots=frozenset(_NP_MATH_ROOTS),
+    allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+)
+
+register_problem(CVRP_SPEC)
