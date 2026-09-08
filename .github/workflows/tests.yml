@@ -4,9 +4,9 @@ name: tests
 # （见 tests/test_eoh_runner_specs.py 的 _HAS_GO 门控），因此 CI 不安装 Go。
 on:
   push:
-    branches: [main]
+    branches: [main, Refactor0830, agent-skill-loop-0908]
   pull_request:
-    branches: [main]
+    branches: [main, Refactor0830]
 
 jobs:
   test:
@@ -19,5 +19,7 @@ jobs:
           python-version: "3.11"
       - name: Install package (with test deps)
         run: pip install -e ".[dev]"
+      - name: Run kernel tests
+        run: python -m pytest tests/kernel -q
       - name: Run tests
         run: python -m pytest tests/ -q
