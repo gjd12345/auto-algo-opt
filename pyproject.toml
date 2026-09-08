@@ -13,9 +13,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+eoh = ["eoh @ git+https://github.com/FeiLiu36/EoH.git@472545785c936dcfc863d2bc0d6109cf23c7ce62#subdirectory=eoh"]
 
 [tool.setuptools.packages.find]
-include = ["agent_skill_loop*"]
+include = ["agent_skill_loop*", "eoh_frozen*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/kernel"]
+testpaths = ["tests/kernel", "tests/eoh_frozen"]

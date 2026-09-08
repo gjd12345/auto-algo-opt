@@ -17,6 +17,13 @@ py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/age
 
 Live model runs need `--model` and a **separate authorization**. An existing API key is not authorization.
 
+Official EoH (`FeiLiu36/EoH` current `main`) is an optional extra. It keeps upstream operators (`e1`/`e2`/`m1`/`m2`) and scores the same frozen three-instance suite:
+
+```powershell
+py -3.11 -m pip install -e ".[dev,eoh]"
+py -3.11 -m eoh_frozen run --model MODEL_NAME --output outputs/eoh_frozen/live --pop-size 4 --n-pop 5
+```
+
 ```powershell
 py -3.11 -m agent_skill_loop run --problem cvrp_construct --model MODEL_NAME --output outputs/agent_skill/live
 py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/agent_skill/live/exported_skill --suite outputs/agent_skill/live/dev_suite.json
