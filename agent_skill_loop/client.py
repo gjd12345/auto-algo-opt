@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import uuid
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -89,6 +90,7 @@ class LiveTransport:
             "https://model-router.edu-aliyun.com/v1/chat/completions",
         )
         self.api_key_env = api_key_env
+        self.session_id = str(uuid.uuid4())
         self.usage: list[UsageReceipt] = []
 
     def request(self, prompt: str, *, purpose: str, problem: str) -> str:
@@ -107,14 +109,17 @@ class LiveTransport:
             "temperature": 1.0,
             "max_tokens": 4096,
         }
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "agent-skill-loop/0908",
+        }
+        if host.endswith("opencode.ai"):
+            headers["x-opencode-session"] = self.session_id
         request = urllib.request.Request(
             self.endpoint,
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": "agent-skill-loop/0908",
-            },
+            headers=headers,
             method="POST",
         )
         started = time.monotonic()
