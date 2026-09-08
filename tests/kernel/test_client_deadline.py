@@ -9,7 +9,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 
 from agent_skill_loop import client as client_mod
-from agent_skill_loop.client import LiveTransport, ProviderFailure, _open_url_with_deadline
+from agent_skill_loop.client import LiveTransport, ProviderFailure, _open_url_with_deadline, http_post_with_deadline
 
 
 class _SlowHandler(BaseHTTPRequestHandler):
@@ -109,14 +109,37 @@ def test_open_url_with_deadline_allows_fast_body():
         server.server_close()
 
 
+class _HangHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:
+        time.sleep(30)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+def test_http_post_kills_hanging_request():
+    server = _start_server(_HangHandler)
+    try:
+        url = f"http://127.0.0.1:{server.server_address[1]}/v1/chat/completions"
+        started = time.monotonic()
+        with pytest.raises(ProviderFailure) as raised:
+            http_post_with_deadline(url, {"Content-Type": "application/json"}, b"{}", 0.5)
+        elapsed = time.monotonic() - started
+        assert raised.value.error_code == "request_deadline"
+        assert elapsed < 3.0
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_live_transport_uses_deadline_helper(monkeypatch):
     seen: dict[str, float] = {}
 
-    def fake_open(request, timeout, max_bytes=4 * 1024 * 1024):
+    def fake_post(url, headers, data, timeout, max_bytes=4 * 1024 * 1024):
         seen["timeout"] = timeout
         return 200, b'{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":3,"completion_tokens":4}}'
 
-    monkeypatch.setattr(client_mod, "_open_url_with_deadline", fake_open)
+    monkeypatch.setattr(client_mod, "http_post_with_deadline", fake_post)
     monkeypatch.setenv("MODEL_ROUTER_API_KEY", "test-key")
     transport = LiveTransport(
         "deepseek-v4-flash",

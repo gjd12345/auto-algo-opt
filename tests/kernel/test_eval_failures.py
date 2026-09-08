@@ -46,6 +46,20 @@ def test_invalid_return_type():
     assert result.error_code == "invalid_return"
 
 
+def test_forbidden_attribute_names_the_helper():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "import numpy as np\n"
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    _ = np.ix_(unvisited_nodes, unvisited_nodes)\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "ix_"
+
+
 def test_baseline_is_valid_and_finite():
     suite = build_suite(DEFAULT_SEED, count=3, size=8)
     result = SubprocessEvaluator(timeout=10.0).evaluate(BASELINE_CODE, suite)

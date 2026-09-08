@@ -9,11 +9,14 @@ from pathlib import Path
 
 from agent_skill_loop.client import FixtureTransport, LiveTransport, load_local_env
 from agent_skill_loop.contracts import (
+    DEFAULT_CANDIDATE_ATTEMPTS,
     DEFAULT_COUNT,
+    DEFAULT_MAX_LLM_REQUESTS,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_SEED,
     DEFAULT_SIZE,
     DEFAULT_SPLIT,
+    DEFAULT_WALL_SECONDS,
     PROBLEM_CVRP,
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
@@ -81,7 +84,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         transport=transport,
         parent_skill=parent,
         execution_mode="live",
+        candidate_attempts=args.candidate_attempts,
+        max_llm_requests=args.max_llm_requests,
+        wall_seconds=args.wall_seconds,
         request_timeout=args.request_timeout,
+        model=args.model,
     )
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
@@ -121,6 +128,9 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--endpoint")
     run.add_argument("--api-key-env", default="MODEL_ROUTER_API_KEY")
     run.add_argument("--request-timeout", type=float, default=max(DEFAULT_REQUEST_TIMEOUT, 180.0))
+    run.add_argument("--candidate-attempts", type=int, default=DEFAULT_CANDIDATE_ATTEMPTS)
+    run.add_argument("--max-llm-requests", type=int, default=DEFAULT_MAX_LLM_REQUESTS)
+    run.add_argument("--wall-seconds", type=float, default=DEFAULT_WALL_SECONDS)
     run.set_defaults(func=cmd_run)
 
     evaluate = sub.add_parser("evaluate-skill")

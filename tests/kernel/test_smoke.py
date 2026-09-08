@@ -9,6 +9,7 @@ from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.journal import verify_journal
 from agent_skill_loop.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, build_suite
+from agent_skill_loop.skill_store import load_skill
 from tests.kernel.conftest import invalid_response, valid_response
 
 
@@ -34,13 +35,16 @@ def test_smoke_valid_candidate_exports_and_consumes_feedback(tmp_path, canary):
     assert "baseline" not in summary.exported_skill_ids
     prompts = transport.prompts
     assert len(prompts) == 3
-    assert "Dev objective:" not in prompts[0]
-    assert "Failed code:" not in prompts[0]
-    assert "Dev objective:" in prompts[1]
-    assert "Last candidate objective:" in prompts[1]
+    assert "INCUMBENT:" not in prompts[0]
+    assert "LAST CANDIDATE:" not in prompts[0]
+    assert "INCUMBENT:" in prompts[1]
+    assert "LAST CANDIDATE:" in prompts[1]
     assert "argmax" in prompts[1]
     assert "argmin" in prompts[1]
-    assert "Error code:" in prompts[2]
+    assert "error_code:" in prompts[2]
+    assert (out / "report.md").is_file()
+    assert summary.best_generated_version_id is not None
+    assert summary.feedback_then_regenerated is True
     assert all(canary not in prompt for prompt in prompts)
     assert all("STRATEGY_CARD" not in prompt for prompt in prompts)
     verify_journal(out / "run" / "events.jsonl")
@@ -59,7 +63,7 @@ def test_all_invalid_is_no_valid_candidate(tmp_path):
     assert summary.stop_reason == "candidate_limit"
     assert summary.feedback_consumed_count >= 1
     assert not (out / "exported_skill" / "code.py").exists()
-    assert "Error code:" in transport.prompts[1]
+    assert "error_code:" in transport.prompts[1]
 
 
 def test_request_limit_stops(tmp_path):
@@ -137,7 +141,7 @@ def test_prose_only_reply_consumes_parse_error(tmp_path):
     assert results[0]["evaluation"]["error_code"] == "generation_parse_error"
     assert results[0]["evaluation"]["valid"] is False
     assert "Previous model reply (no executable code extracted):" in transport.prompts[1]
-    assert "Error code: generation_parse_error" in transport.prompts[1]
+    assert "error_code: generation_parse_error" in transport.prompts[1]
     assert PROSE_ONLY_REPLY in transport.prompts[1]
     verify_journal(out / "run" / "events.jsonl")
 
@@ -274,7 +278,9 @@ def test_e1_keeps_non_improving_candidate_feedback(tmp_path):
     assert summary.loop_completed is True
     assert summary.feedback_consumed_count >= 1
     assert summary.incumbent_version_id == "baseline"
-    assert "Last candidate objective:" in transport.prompts[1]
+    assert "LAST CANDIDATE:" in transport.prompts[1]
+    assert "accept_reason:" in transport.prompts[1]
+    assert "delta_vs_incumbent:" in transport.prompts[1]
     assert "argmax" in transport.prompts[1]
     assert "argmin" in transport.prompts[1]
     assert BASELINE_CODE.strip() in transport.prompts[1]
@@ -283,7 +289,7 @@ def test_e1_keeps_non_improving_candidate_feedback(tmp_path):
     assert results[0]["evaluation"]["valid"] is True
     last_obj = results[0]["evaluation"]["objective"]
     assert last_obj is not None and last_obj > 10
-    assert "Last candidate objective:" in transport.prompts[1]
+    assert "LAST CANDIDATE:" in transport.prompts[1]
 
 
 def test_attempt_result_records_usage_nulls(tmp_path):
@@ -335,3 +341,106 @@ def test_attempt_result_records_known_usage(tmp_path):
     assert payload["input_tokens"] == 11
     assert payload["output_tokens"] == 22
     assert payload["request_elapsed_seconds"] == 1.5
+
+
+def _started_events(output_dir):
+    events = [
+        json.loads(line)
+        for line in (output_dir / "run" / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    return [event["payload"] for event in events if event["kind"] == "attempt_started"]
+
+
+def test_i1_has_no_parent_and_m1_points_at_failed_attempt(tmp_path):
+    out = tmp_path / "lineage"
+    out.mkdir()
+    transport = FixtureTransport([invalid_response(), valid_response()])
+    summary = AgentLoop(out, transport=transport, candidate_attempts=2, max_llm_requests=2).run()
+    started = _started_events(out)
+    assert started[0]["operator"] == "i1"
+    assert started[0]["parent_version_id"] is None
+    assert started[1]["operator"] == "m1"
+    assert started[1]["parent_version_id"] is None
+    assert started[1]["repair_of_attempt_id"] == 1
+    assert started[1]["feedback_attempt_id"] == 1
+    assert started[1]["edit_target"] == "failed_code"
+    assert summary.feedback_consumed_count == 1
+    assert "error_detail:" in transport.prompts[1] or "error_code:" in transport.prompts[1]
+
+
+def test_worse_generated_does_not_overwrite_best_export(tmp_path):
+    out = tmp_path / "export_best"
+    out.mkdir()
+    nn = BASELINE_CODE.replace(
+        "return unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])]",
+        "idx = np.argmin(distance_matrix[current_node][unvisited_nodes])\n    return unvisited_nodes[idx]",
+    )
+    better = "{Nearest neighbor with named index}\n```python\n" + nn.strip() + "\n```\n"
+    transport = FixtureTransport([better, valid_response()])
+    summary = AgentLoop(out, transport=transport, candidate_attempts=2, max_llm_requests=2).run()
+    assert summary.best_generated_version_id == "generated_1"
+    assert summary.exported_skill_ids == ["generated_1"]
+    exported = (out / "exported_skill" / "code.py").read_text(encoding="utf-8")
+    assert "argmin" in exported
+    assert summary.incumbent_is_generated is False or summary.incumbent_version_id in {"baseline", "generated_1"}
+
+
+def test_stagnation_rule_on_third_e1(tmp_path):
+    out = tmp_path / "stagnate"
+    out.mkdir()
+    transport = FixtureTransport([valid_response(), valid_response(), valid_response(), valid_response()])
+    AgentLoop(out, transport=transport, candidate_attempts=4, max_llm_requests=4).run()
+    started = _started_events(out)
+    assert started[0]["operator"] == "i1"
+    assert started[1]["operator"] == "e1"
+    assert started[2]["operator"] == "e1"
+    assert started[3]["operator"] == "e1"
+    assert started[3]["structural_explore"] is True
+    assert "STAGNATION:" in transport.prompts[3]
+
+
+def test_explicit_parent_continue_re_evaluates(tmp_path):
+    first = tmp_path / "first"
+    first.mkdir()
+    AgentLoop(first, transport=FixtureTransport([valid_response()]), candidate_attempts=1, max_llm_requests=1).run()
+    parent = load_skill(first / "exported_skill")
+    second = tmp_path / "second"
+    second.mkdir()
+    transport = FixtureTransport([valid_response()])
+    summary = AgentLoop(
+        second,
+        transport=transport,
+        parent_skill=parent,
+        candidate_attempts=1,
+        max_llm_requests=1,
+    ).run()
+    started = _started_events(second)
+    assert started[0]["operator"] == "e1"
+    assert "INCUMBENT:" in transport.prompts[0]
+    assert parent.description not in transport.prompts[0]
+    assert (second / "skills" / "parent_reloaded" / "skill.json").is_file()
+    assert summary.solver_calls >= 2
+
+
+def test_invalid_parent_is_input_failure(tmp_path):
+    from agent_skill_loop.skill_store import make_skill
+
+    suite = build_suite(DEFAULT_SEED, count=3, size=20)
+    bad = make_skill(
+        version_id="bad_parent",
+        code="def select_next_node(*args):\n    return 'nope'\n",
+        suite_hash=suite["content_hash"],
+        valid=True,
+        mean_objective=1.0,
+        instance_objectives=(1.0, 1.0, 1.0),
+        parent_version_id=None,
+        source_attempt_id=1,
+        problem="cvrp_construct",
+        entrypoint="select_next_node",
+    )
+    out = tmp_path / "bad_parent_run"
+    out.mkdir()
+    summary = AgentLoop(out, transport=FixtureTransport([valid_response()]), parent_skill=bad).run()
+    assert summary.status == "parent_invalid"
+    assert summary.loop_completed is False
+    assert summary.stop_reason == "invalid_parent"

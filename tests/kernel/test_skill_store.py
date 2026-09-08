@@ -33,3 +33,30 @@ def test_save_load_re_evaluate_matches(tmp_path):
     assert second.valid
     assert second.instance_objectives == first.instance_objectives
     assert second.objective == first.objective
+
+
+def test_save_skill_refuses_silent_overwrite(tmp_path):
+    suite = build_suite(DEFAULT_SEED, count=3, size=8)
+    first = SubprocessEvaluator(timeout=10.0).evaluate(BASELINE_CODE, suite)
+    skill = make_skill(
+        version_id="t1",
+        code=BASELINE_CODE,
+        suite_hash=suite["content_hash"],
+        valid=True,
+        mean_objective=first.objective,
+        instance_objectives=first.instance_objectives,
+        parent_version_id=None,
+        source_attempt_id=1,
+        problem=PROBLEM_NAME,
+        entrypoint=ENTRYPOINT,
+    )
+    path = tmp_path / "skill"
+    save_skill(path, skill)
+    try:
+        save_skill(path, skill)
+        raise AssertionError("expected skill_directory_exists")
+    except ValueError as exc:
+        assert str(exc) == "skill_directory_exists"
+    save_skill(path, skill, overwrite=True)
+    loaded = load_skill(path)
+    assert loaded.version_id == "t1"

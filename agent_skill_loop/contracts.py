@@ -22,6 +22,8 @@ DEFAULT_SOLVER_TIMEOUT = 20.0
 DEFAULT_REQUEST_TIMEOUT = 90.0
 DEFAULT_WALL_SECONDS = 420.0
 
+STAGNATION_E1_STREAK = 2
+
 
 class Transport(Protocol):
     def request(
@@ -42,6 +44,7 @@ class EvaluationResult:
     suite_hash: str | None
     error_code: str | None
     elapsed_seconds: float
+    error_detail: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -50,6 +53,7 @@ class EvaluationResult:
             "instance_objectives": list(self.instance_objectives),
             "suite_hash": self.suite_hash,
             "error_code": self.error_code,
+            "error_detail": self.error_detail,
             "elapsed_seconds": round(self.elapsed_seconds, 4),
         }
 
@@ -69,6 +73,7 @@ class SkillVersion:
     instance_objectives: tuple[float, ...]
     source_attempt_id: int | None
     description: str = ""
+    repair_of_attempt_id: int | None = None
 
     def metadata(self) -> dict[str, Any]:
         return {
@@ -78,6 +83,7 @@ class SkillVersion:
             "entrypoint": self.entrypoint,
             "code_sha256": self.code_sha256,
             "parent_version_id": self.parent_version_id,
+            "repair_of_attempt_id": self.repair_of_attempt_id,
             "suite_hash": self.suite_hash,
             "evaluator_hash": self.evaluator_hash,
             "valid": self.valid,
@@ -104,6 +110,10 @@ class AttemptRecord:
     llm_requests: int
     solver_calls: int
     raw_response: str = ""
+    repair_of_attempt_id: int | None = None
+    feedback_attempt_id: int | None = None
+    accept_reason: str | None = None
+    edit_target: str | None = None
 
 
 @dataclass
@@ -121,6 +131,8 @@ class RunSummary:
     wall_seconds: float = 0.0
     incumbent_version_id: str | None = None
     incumbent_is_generated: bool = False
+    best_generated_version_id: str | None = None
+    feedback_then_regenerated: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -131,12 +143,14 @@ class RunSummary:
             "generated_valid_candidates": self.generated_valid_candidates,
             "exported_skill_ids": list(self.exported_skill_ids),
             "feedback_consumed_count": self.feedback_consumed_count,
+            "feedback_then_regenerated": self.feedback_then_regenerated,
             "candidate_attempts": self.candidate_attempts,
             "llm_requests": self.llm_requests,
             "solver_calls": self.solver_calls,
             "wall_seconds": round(self.wall_seconds, 4),
             "incumbent_version_id": self.incumbent_version_id,
             "incumbent_is_generated": self.incumbent_is_generated,
+            "best_generated_version_id": self.best_generated_version_id,
         }
 
 

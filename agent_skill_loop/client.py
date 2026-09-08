@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import socket
+import subprocess
+import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -253,6 +257,68 @@ def _open_url_with_deadline(
     raise ProviderFailure("request_deadline", retryable=True)
 
 
+def _kill_process(proc: subprocess.Popen[bytes]) -> None:
+    try:
+        proc.kill()
+    except OSError:
+        pass
+    try:
+        proc.wait(timeout=2.0)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def http_post_with_deadline(
+    url: str,
+    headers: dict[str, str],
+    data: bytes,
+    timeout: float,
+    *,
+    max_bytes: int = _MAX_BODY_BYTES,
+) -> tuple[int, bytes]:
+    """POST in a child process so a hung connect/read can be killed at the deadline."""
+    if timeout <= 0:
+        raise ProviderFailure("request_deadline", retryable=True)
+    spec = {
+        "url": url,
+        "headers": headers,
+        "body_b64": base64.b64encode(data).decode("ascii"),
+        "timeout": float(timeout),
+        "max_bytes": int(max_bytes),
+    }
+    package_root = Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(package_root) + os.pathsep + env.get("PYTHONPATH", "")
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "agent_skill_loop.http_worker"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        cwd=tempfile.gettempdir(),
+        env=env,
+    )
+    try:
+        stdout, _ = proc.communicate(json.dumps(spec).encode("utf-8"), timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_process(proc)
+        raise ProviderFailure("request_deadline", retryable=True) from None
+    if proc.poll() is None:
+        _kill_process(proc)
+        raise ProviderFailure("request_deadline", retryable=True)
+    try:
+        parsed = json.loads((stdout or b"").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        raise ProviderFailure("provider_connectivity_or_protocol_error", retryable=True) from None
+    if parsed.get("ok") is True:
+        return int(parsed["status"]), base64.b64decode(parsed["body_b64"])
+    error_code = parsed.get("error_code") or "provider_connectivity_or_protocol_error"
+    status = parsed.get("status")
+    retryable = error_code == "request_deadline" or (
+        isinstance(status, int) and status in {408, 429, 500, 502, 503, 504}
+    )
+    raise ProviderFailure(str(error_code), status if isinstance(status, int) else None, retryable=retryable)
+
+
 class LiveTransport:
     """OpenAI-compatible chat completions. network_retries is always 0 for v1."""
 
@@ -293,12 +359,6 @@ class LiveTransport:
         }
         if host.endswith("opencode.ai"):
             headers["x-opencode-session"] = self.session_id
-        request = urllib.request.Request(
-            self.endpoint,
-            data=json.dumps(payload).encode("utf-8"),
-            headers=headers,
-            method="POST",
-        )
         started = time.monotonic()
         receipt_error: str | None = None
         content = ""
@@ -306,7 +366,9 @@ class LiveTransport:
         in_tokens = out_tokens = None
         effective_timeout = self.timeout if timeout is None else min(self.timeout, float(timeout))
         try:
-            status, raw = _open_url_with_deadline(request, effective_timeout)
+            status, raw = http_post_with_deadline(
+                self.endpoint, headers, json.dumps(payload).encode("utf-8"), effective_timeout
+            )
             parsed = json.loads(raw.decode("utf-8"))
             choices = parsed.get("choices") or []
             content = choices[0].get("message", {}).get("content") if choices else None

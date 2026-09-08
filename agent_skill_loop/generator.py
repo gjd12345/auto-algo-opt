@@ -12,13 +12,82 @@ from __future__ import annotations
 
 import ast
 import re
+from dataclasses import dataclass
 
 from agent_skill_loop.problems.cvrp import TASK_DESCRIPTION, TEMPLATE_PROGRAM
 
 _EXECUTION_CONTRACT = (
     "NUMERIC EXECUTION CONTRACT: numpy/math only; no files, network, reflection "
-    "or imports of other modules."
+    "or imports of other modules. Basic ndarray indexing and reductions are allowed; "
+    "helpers such as np.ix_ are not."
 )
+_INTERFACE_BOUNDARY = (
+    "INTERFACE BOUNDARY: only select_next_node is evolved. Route construction, "
+    "capacity filtering, and objective computation stay in the evaluator."
+)
+
+
+@dataclass
+class PromptFeedback:
+    incumbent_id: str | None = None
+    incumbent_code: str | None = None
+    incumbent_objective: float | None = None
+    incumbent_instances: tuple[float, ...] = ()
+    last_attempt_id: int | None = None
+    last_code: str | None = None
+    last_code_hash: str | None = None
+    last_valid: bool | None = None
+    last_objective: float | None = None
+    last_instances: tuple[float, ...] = ()
+    delta_vs_incumbent: float | None = None
+    accepted: bool | None = None
+    accept_reason: str | None = None
+    error_code: str | None = None
+    error_detail: str | None = None
+    raw_reply: str | None = None
+    edit_target: str = "incumbent"
+    structural_explore: bool = False
+    failed_code: str | None = None
+
+
+def _fmt_nums(values: tuple[float, ...] | list[float]) -> str:
+    return "[" + ", ".join(str(v) for v in values) + "]"
+
+
+def _incumbent_block(feedback: PromptFeedback) -> str:
+    return (
+        "INCUMBENT:\n"
+        f"version_id: {feedback.incumbent_id}\n"
+        f"mean_objective: {feedback.incumbent_objective} (lower is better).\n"
+        f"instance_objectives: {_fmt_nums(feedback.incumbent_instances)}\n"
+        f"code:\n{feedback.incumbent_code}\n"
+    )
+
+
+def _last_block(feedback: PromptFeedback) -> str:
+    lines = [
+        "LAST CANDIDATE:",
+        f"attempt_id: {feedback.last_attempt_id}",
+        f"code_hash: {feedback.last_code_hash}",
+        f"valid: {feedback.last_valid}",
+        f"mean_objective: {feedback.last_objective}",
+        f"instance_objectives: {_fmt_nums(feedback.last_instances)}",
+        f"delta_vs_incumbent: {feedback.delta_vs_incumbent} (candidate minus incumbent; negative is better).",
+        f"accepted: {feedback.accepted}",
+        f"accept_reason: {feedback.accept_reason}",
+    ]
+    if feedback.error_code:
+        lines.append(f"error_code: {feedback.error_code}")
+    if feedback.error_detail:
+        lines.append(f"error_detail: {feedback.error_detail}")
+    if feedback.last_code:
+        lines.append(f"code:\n{feedback.last_code}")
+    elif feedback.raw_reply:
+        lines.append("Previous model reply (no executable code extracted):")
+        lines.append(feedback.raw_reply)
+    elif feedback.failed_code:
+        lines.append(f"Failed code:\n{feedback.failed_code}")
+    return "\n".join(lines) + "\n"
 
 
 def _function_spec() -> str:
@@ -29,79 +98,65 @@ def _function_spec() -> str:
     )
 
 
-def build_prompt(
-    operator: str,
-    *,
-    parent_code: str | None = None,
-    parent_objective: float | None = None,
-    last_code: str | None = None,
-    last_objective: float | None = None,
-    failed_code: str | None = None,
-    error_code: str | None = None,
-    raw_reply: str | None = None,
-    incumbent_code: str | None = None,
-    incumbent_objective: float | None = None,
-) -> str:
+def build_prompt(operator: str, feedback: PromptFeedback | None = None) -> str:
     spec = _function_spec()
+    header = f"{TASK_DESCRIPTION}\n{_INTERFACE_BOUNDARY}\n"
     if operator == "i1":
-        if parent_code or failed_code:
+        if feedback is not None:
             raise ValueError("i1_must_not_carry_parent_or_failure")
         return (
-            f"{TASK_DESCRIPTION}\n"
+            f"{header}"
             "First, describe your new algorithm and main steps in one sentence. "
             f"The description must be inside a brace. Next, {spec}\n"
             f"{_EXECUTION_CONTRACT}\n"
         )
     if operator == "e1":
-        if not parent_code or parent_objective is None:
+        if feedback is None or not feedback.incumbent_code or feedback.incumbent_objective is None:
             raise ValueError("e1_requires_single_parent")
-        if failed_code:
+        if feedback.error_code or feedback.failed_code:
             raise ValueError("e1_must_not_carry_failure")
         last_block = ""
-        if last_code and last_objective is not None:
-            last_block = (
-                "A later measured candidate was valid but not accepted as incumbent. "
-                "Keep this measurement as additional feedback; do not ignore it.\n"
-                f"Last candidate objective: {last_objective} (lower is better).\n"
-                f"Last candidate code:\n{last_code}\n"
-            )
+        if (
+            feedback.last_code
+            and feedback.last_objective is not None
+            and feedback.last_code != feedback.incumbent_code
+        ):
+            last_block = _last_block(feedback)
+        explore = (
+            "STAGNATION: previous measured e1 steps did not improve the incumbent. "
+            "Change one structural element (scoring combination, capacity remainder, "
+            "candidate ordering, or early depot return). Do not emit a near-copy.\n"
+            if feedback.structural_explore
+            else ""
+        )
         return (
-            f"{TASK_DESCRIPTION}\n"
-            "I have one existing algorithm with its measured development objective.\n"
-            f"Dev objective: {parent_objective} (lower is better).\n"
-            f"Code:\n{parent_code}\n"
+            f"{header}"
+            f"{_incumbent_block(feedback)}"
             f"{last_block}"
-            "Use the measured objective as feedback. Preserve effective parts of this parent, "
-            "then introduce one clear structural alternative. Do not reset to a generic default.\n"
+            f"EDIT TARGET: {feedback.edit_target}\n"
+            f"{explore}"
+            "Use the measured values as feedback. Preserve effective parts of the edit target, "
+            "then introduce one clear alternative. Do not reset to a generic default.\n"
             "First, describe your new algorithm and main steps in one sentence. "
             f"The description must be inside a brace. Next, {spec}\n"
             f"{_EXECUTION_CONTRACT}\n"
         )
     if operator == "m1":
-        if not error_code:
+        if feedback is None or not feedback.error_code:
             raise ValueError("m1_requires_failed_code_and_error")
-        if failed_code:
-            failed_section = f"Failed code:\n{failed_code}\n"
-        else:
-            reply = raw_reply if raw_reply else "# no code extracted"
-            failed_section = (
-                "Previous model reply (no executable code extracted):\n"
-                f"{reply}\n"
-            )
+        body = _last_block(feedback)
         incumbent = ""
-        if incumbent_code and incumbent_objective is not None:
+        if feedback.incumbent_code and feedback.incumbent_objective is not None:
             incumbent = (
                 "A currently legal incumbent (do not treat it as the code to repair):\n"
-                f"Incumbent objective: {incumbent_objective} (lower is better).\n"
-                f"Incumbent code:\n{incumbent_code}\n"
+                f"{_incumbent_block(feedback)}"
             )
         return (
-            f"{TASK_DESCRIPTION}\n"
-            "I have one algorithm that failed evaluation. Repair THAT failed code. "
-            "Do not invent a score for the failed candidate.\n"
-            f"Error code: {error_code}\n"
-            f"{failed_section}"
+            f"{header}"
+            "Repair the failed candidate. Do not invent a score for it.\n"
+            f"{body}"
             f"{incumbent}"
+            f"EDIT TARGET: {feedback.edit_target}\n"
             "Change the failed program so it satisfies the function contract and returns a "
             "feasible node index (or 0 for an early depot return).\n"
             "First, describe your repaired algorithm and main steps in one sentence. "

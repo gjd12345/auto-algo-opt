@@ -58,6 +58,21 @@ _KNOWN_ERRORS = {
 }
 
 
+class EvalError(ValueError):
+    def __init__(self, code: str, detail: str | None = None) -> None:
+        super().__init__(code)
+        self.error_code = code
+        self.detail = sanitize_error_detail(detail)
+
+
+def sanitize_error_detail(value: str | None) -> str | None:
+    if not value:
+        return None
+    cleaned = "".join(ch if ch.isalnum() or ch in "._:-" else "_" for ch in str(value).strip())[:80]
+    cleaned = cleaned.strip(".:-")
+    return cleaned or None
+
+
 def evaluator_source_hash() -> str:
     import hashlib
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
@@ -81,15 +96,15 @@ def _validate_candidate_ast(code: str, required_entry: str) -> ast.Module:
             for alias in node.names:
                 allowed_aliases = {"numpy": (None, "np"), "math": (None, "math")}
                 if alias.name not in allowed_aliases or alias.asname not in allowed_aliases[alias.name]:
-                    raise ValueError("forbidden_import")
+                    raise EvalError("forbidden_import", alias.name)
         elif isinstance(node, ast.ImportFrom):
-            raise ValueError("forbidden_import")
+            raise EvalError("forbidden_import", node.module or "from_import")
         elif isinstance(node, ast.Name):
             if node.id in _FORBIDDEN_NAMES or node.id.startswith("__"):
-                raise ValueError("forbidden_name")
+                raise EvalError("forbidden_name", node.id)
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("_") or node.attr not in (_NUMPY_ATTRIBUTES | _MATH_ATTRIBUTES):
-                raise ValueError("forbidden_attribute")
+                raise EvalError("forbidden_attribute", node.attr)
         elif isinstance(node, (ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise, ast.Delete, ast.Global, ast.Nonlocal)):
             raise ValueError("forbidden_syntax")
         elif isinstance(node, ast.Constant) and isinstance(node.value, (bytes, bytearray)):
@@ -227,12 +242,54 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         objective = float(sum(per_instance) / len(per_instance))
         if not math.isfinite(objective) or any(not math.isfinite(float(x)) for x in per_instance):
             raise ValueError("nonfinite_objective")
-        return {"valid": True, "objective": objective, "instance_objectives": per_instance, "suite_hash": expected, "error_code": None, "elapsed_seconds": time.monotonic() - started}
+        return {
+            "valid": True,
+            "objective": objective,
+            "instance_objectives": per_instance,
+            "suite_hash": expected,
+            "error_code": None,
+            "error_detail": None,
+            "elapsed_seconds": time.monotonic() - started,
+        }
+    except EvalError as exc:
+        return {
+            "valid": False,
+            "objective": None,
+            "instance_objectives": [],
+            "suite_hash": suite_hash_value,
+            "error_code": exc.error_code,
+            "error_detail": exc.detail,
+            "elapsed_seconds": time.monotonic() - started,
+        }
     except ValueError as exc:
         error_code = str(exc) if str(exc) in _KNOWN_ERRORS else "candidate_error"
-        return {"valid": False, "objective": None, "instance_objectives": [], "suite_hash": suite_hash_value, "error_code": error_code, "elapsed_seconds": time.monotonic() - started}
-    except Exception:
-        return {"valid": False, "objective": None, "instance_objectives": [], "suite_hash": suite_hash_value, "error_code": "candidate_exception", "elapsed_seconds": time.monotonic() - started}
+        return {
+            "valid": False,
+            "objective": None,
+            "instance_objectives": [],
+            "suite_hash": suite_hash_value,
+            "error_code": error_code,
+            "error_detail": None,
+            "elapsed_seconds": time.monotonic() - started,
+        }
+    except Exception as exc:
+        lineno = None
+        frame = exc.__traceback__
+        while frame is not None:
+            if frame.tb_frame.f_code.co_filename == "<candidate>":
+                lineno = frame.tb_lineno
+                break
+            frame = frame.tb_next
+        detail = type(exc).__name__ + (f":line_{lineno}" if lineno else "")
+        return {
+            "valid": False,
+            "objective": None,
+            "instance_objectives": [],
+            "suite_hash": suite_hash_value,
+            "error_code": "candidate_exception",
+            "error_detail": sanitize_error_detail(detail),
+            "elapsed_seconds": time.monotonic() - started,
+        }
 
 
 def _result_from_dict(payload: Mapping[str, Any]) -> EvaluationResult:
@@ -244,6 +301,7 @@ def _result_from_dict(payload: Mapping[str, Any]) -> EvaluationResult:
         suite_hash=payload.get("suite_hash"),
         error_code=payload.get("error_code"),
         elapsed_seconds=float(payload.get("elapsed_seconds") or 0.0),
+        error_detail=payload.get("error_detail"),
     )
 
 
