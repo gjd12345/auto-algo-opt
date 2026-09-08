@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from agent_skill_loop.client import FixtureTransport, LiveTransport
+from agent_skill_loop.client import FixtureTransport, LiveTransport, load_local_env
 from agent_skill_loop.contracts import (
     DEFAULT_COUNT,
     DEFAULT_SEED,
@@ -65,6 +65,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
+    load_local_env()
     path = _require_new_dir(Path(args.output))
     path.mkdir(parents=True)
     parent = load_skill(Path(args.parent_skill)) if args.parent_skill else None
