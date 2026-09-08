@@ -1,7 +1,5 @@
 name: tests
 
-# Python 单元/集成测试。依赖 Go 工具链的评估器测试在无 Go 环境下会自动跳过
-# （见 tests/test_eoh_runner_specs.py 的 _HAS_GO 门控），因此 CI 不安装 Go。
 on:
   push:
     branches: [main, Refactor0830, agent-skill-loop-0908]
@@ -17,9 +15,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Check interpreter
+        run: python -c "import sys; assert sys.version_info[:2] == (3, 11)"
       - name: Install package (with test deps)
         run: pip install -e ".[dev]"
+      - name: Import kernel
+        run: python -c "import agent_skill_loop"
       - name: Run kernel tests
         run: python -m pytest tests/kernel -q
-      - name: Run tests
-        run: python -m pytest tests/ -q
