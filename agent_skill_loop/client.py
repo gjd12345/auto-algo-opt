@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import json
 import os
+import socket
+import threading
 import time
 import uuid
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 
 
@@ -84,6 +87,172 @@ def _hash(prompt: str) -> str:
     return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
 
 
+_MAX_BODY_BYTES = 4 * 1024 * 1024
+_READ_CHUNK = 8 * 1024
+
+
+def _is_timeout(exc: BaseException) -> bool:
+    if isinstance(exc, urllib.error.HTTPError):
+        return False
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, TimeoutError):
+            return True
+        text = str(reason).lower()
+        if "timed out" in text or "timeout" in text:
+            return True
+    return False
+
+
+def _socket_from_response(response: object) -> Any:
+    fp = getattr(response, "fp", None)
+    if fp is None:
+        return None
+    raw = getattr(fp, "raw", None)
+    sock = getattr(raw, "_sock", None) if raw is not None else None
+    if sock is not None and hasattr(sock, "settimeout"):
+        return sock
+    if hasattr(fp, "settimeout"):
+        return fp
+    return None
+
+
+def _close_response(response: Any) -> None:
+    if response is None:
+        return
+    sock = _socket_from_response(response)
+    if sock is not None:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
+            sock.close()
+        except OSError:
+            pass
+    try:
+        response.close()
+    except Exception:
+        pass
+
+
+def _read_some(response: Any, nbytes: int) -> bytes:
+    """Read at most one underlying recv when possible.
+
+    HTTPResponse.read(n) loops until n bytes or EOF, so a slow trickle can
+    outlive the remaining budget even with a socket timeout.
+    """
+    if nbytes <= 0:
+        return b""
+    if getattr(response, "chunked", False):
+        return response.read(1)
+    fp = getattr(response, "fp", None)
+    read1 = getattr(fp, "read1", None) if fp is not None else None
+    if callable(read1):
+        data = read1(nbytes)
+        if data:
+            length = getattr(response, "length", None)
+            if isinstance(length, int):
+                response.length = max(0, length - len(data))
+        return data
+    return response.read(1)
+
+
+def _read_response_until_deadline(response: Any, max_bytes: int, deadline: float) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    expected = getattr(response, "length", None)
+    sock = _socket_from_response(response)
+    while total < max_bytes:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("request_deadline")
+        if isinstance(expected, int) and total >= expected:
+            break
+        if sock is not None:
+            try:
+                sock.settimeout(remaining)
+            except OSError:
+                pass
+        want = min(_READ_CHUNK, max_bytes - total)
+        if isinstance(expected, int):
+            want = min(want, max(0, expected - total))
+        try:
+            chunk = _read_some(response, want)
+        except TimeoutError:
+            raise TimeoutError("request_deadline") from None
+        except OSError as exc:
+            if _is_timeout(exc) or deadline - time.monotonic() <= 0:
+                raise TimeoutError("request_deadline") from exc
+            raise
+        if not chunk:
+            break
+        chunks.append(chunk)
+        total += len(chunk)
+    return b"".join(chunks)
+
+
+def _reraise_worker_error(exc: BaseException) -> None:
+    if isinstance(exc, urllib.error.HTTPError):
+        raise exc
+    if isinstance(exc, ProviderFailure):
+        raise exc
+    if _is_timeout(exc):
+        raise ProviderFailure("request_deadline", retryable=True) from exc
+    if isinstance(exc, (OSError, ValueError, TypeError, KeyError, IndexError)):
+        raise ProviderFailure("provider_connectivity_or_protocol_error", retryable=True) from exc
+    raise exc
+
+
+def _open_url_with_deadline(
+    request: urllib.request.Request,
+    timeout: float,
+    *,
+    max_bytes: int = _MAX_BODY_BYTES,
+) -> tuple[int, bytes]:
+    """Open and read the HTTP body under a total deadline, not per-recv timeout.
+
+    urlopen(timeout=...) only bounds each blocking syscall. This function also
+    cancels the in-flight response when the whole request exceeds `timeout`.
+    """
+    if timeout <= 0:
+        raise ProviderFailure("request_deadline", retryable=True)
+    deadline = time.monotonic() + float(timeout)
+    box: dict[str, Any] = {}
+    done = threading.Event()
+
+    def work() -> None:
+        response = None
+        try:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("request_deadline")
+            response = urllib.request.urlopen(request, timeout=remaining)
+            box["response"] = response
+            body = _read_response_until_deadline(response, max_bytes, deadline)
+            box["result"] = (int(response.status), body)
+        except BaseException as exc:
+            box["error"] = exc
+        finally:
+            _close_response(response)
+            done.set()
+
+    thread = threading.Thread(target=work, name="agent-skill-http", daemon=True)
+    thread.start()
+    thread.join(timeout=max(0.0, deadline - time.monotonic()))
+    if thread.is_alive() or not done.is_set():
+        _close_response(box.get("response"))
+        raise ProviderFailure("request_deadline", retryable=True)
+    if "result" in box:
+        return box["result"]
+    error = box.get("error")
+    if error is not None:
+        _reraise_worker_error(error)
+    raise ProviderFailure("request_deadline", retryable=True)
+
+
 class LiveTransport:
     """OpenAI-compatible chat completions. network_retries is always 0 for v1."""
 
@@ -137,9 +306,8 @@ class LiveTransport:
         in_tokens = out_tokens = None
         effective_timeout = self.timeout if timeout is None else min(self.timeout, float(timeout))
         try:
-            with urllib.request.urlopen(request, timeout=effective_timeout) as response:
-                status = response.status
-                parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
+            status, raw = _open_url_with_deadline(request, effective_timeout)
+            parsed = json.loads(raw.decode("utf-8"))
             choices = parsed.get("choices") or []
             content = choices[0].get("message", {}).get("content") if choices else None
             usage = parsed.get("usage") or {}

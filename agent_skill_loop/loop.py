@@ -320,7 +320,9 @@ class AgentLoop:
                 self.llm_requests += 1
                 if operator in {"e1", "m1"}:
                     self.feedback_consumed += 1
-                request_timeout = min(self.request_timeout, max(0.0, self.remaining_wall()))
+                remaining_before = max(0.0, self.remaining_wall())
+                request_timeout = min(self.request_timeout, remaining_before)
+                deadline_is_wall = remaining_before <= self.request_timeout
                 try:
                     response = self.transport.request(
                         prompt,
@@ -328,8 +330,8 @@ class AgentLoop:
                         problem=PROBLEM_NAME,
                         timeout=request_timeout,
                     )
-                except ProviderFailure:
-                    if self.remaining_wall() <= 0:
+                except ProviderFailure as exc:
+                    if exc.error_code == "request_deadline" and deadline_is_wall:
                         last = self._record_attempt(
                             attempt_id=attempt_id,
                             operator=operator,

@@ -142,6 +142,82 @@ def test_prose_only_reply_consumes_parse_error(tmp_path):
     verify_journal(out / "run" / "events.jsonl")
 
 
+def test_delayed_auth_failure_is_not_wall_time_limit(tmp_path):
+    out = tmp_path / "auth_wall"
+    out.mkdir()
+
+    class Clock:
+        def __init__(self) -> None:
+            self.t = 0.0
+
+        def __call__(self) -> float:
+            return self.t
+
+    clock = Clock()
+
+    class DelayedAuthTransport:
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            clock.t += 20.0
+            raise ProviderFailure("provider_auth_invalid", 401, retryable=False)
+
+    summary = AgentLoop(
+        out,
+        transport=DelayedAuthTransport(),
+        execution_mode="fixture",
+        wall_seconds=10.0,
+        monotonic=clock,
+    ).run()
+    assert summary.status == "provider_failed"
+    assert summary.loop_completed is False
+    assert summary.stop_reason == "provider_error"
+    payload = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert payload["provider_error_code"] == "provider_auth_invalid"
+    assert payload["stop_reason"] != "wall_time_limit"
+
+
+def test_request_deadline_stops_as_wall_when_wall_is_binding(tmp_path):
+    out = tmp_path / "deadline_wall"
+    out.mkdir()
+
+    class DeadlineTransport:
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            raise ProviderFailure("request_deadline", retryable=True)
+
+    summary = AgentLoop(
+        out,
+        transport=DeadlineTransport(),
+        execution_mode="fixture",
+        wall_seconds=10.0,
+        request_timeout=90.0,
+    ).run()
+    assert summary.stop_reason == "wall_time_limit"
+    assert summary.loop_completed is True
+    results = _attempt_results(out)
+    assert results[-1]["evaluation"]["error_code"] == "wall_time_limit"
+
+
+def test_request_deadline_stays_provider_failed_when_request_timeout_binds(tmp_path):
+    out = tmp_path / "deadline_req"
+    out.mkdir()
+
+    class DeadlineTransport:
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            raise ProviderFailure("request_deadline", retryable=True)
+
+    summary = AgentLoop(
+        out,
+        transport=DeadlineTransport(),
+        execution_mode="fixture",
+        wall_seconds=420.0,
+        request_timeout=1.0,
+    ).run()
+    assert summary.status == "provider_failed"
+    assert summary.loop_completed is False
+    assert summary.stop_reason == "provider_error"
+    payload = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert payload["provider_error_code"] == "request_deadline"
+
+
 def test_wall_clock_bounds_in_flight_request(tmp_path):
     out = tmp_path / "wall_inflight"
     out.mkdir()
