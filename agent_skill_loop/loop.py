@@ -180,7 +180,7 @@ class AgentLoop:
         try:
             self.seed_start()
         except ProviderFailure as exc:
-            return self._finish(False, "provider_failed", "provider_error")
+            return self._finish(False, "provider_failed", "provider_error", provider_error_code=exc.error_code)
         last: AttemptRecord | None = None
         last_valid: bool | None = None
         try:
@@ -267,15 +267,22 @@ class AgentLoop:
                 self.attempts.append(last)
                 last_valid = evaluation.valid
             return self._finish(True, self._status(), "candidate_limit")
-        except ProviderFailure:
-            return self._finish(False, "provider_failed", "provider_error")
+        except ProviderFailure as exc:
+            return self._finish(False, "provider_failed", "provider_error", provider_error_code=exc.error_code)
 
     def _status(self) -> str:
         if self.generated_valid > 0:
             return "completed_with_valid_candidate"
         return "no_valid_candidate"
 
-    def _finish(self, loop_completed: bool, status: str, stop_reason: str) -> RunSummary:
+    def _finish(
+        self,
+        loop_completed: bool,
+        status: str,
+        stop_reason: str,
+        *,
+        provider_error_code: str | None = None,
+    ) -> RunSummary:
         summary = RunSummary(
             execution_mode=self.execution_mode,
             loop_completed=loop_completed,
@@ -291,9 +298,12 @@ class AgentLoop:
             incumbent_version_id=self.incumbent.version_id if self.incumbent else None,
             incumbent_is_generated=self.incumbent_is_generated,
         )
-        self.journal.append("run_finished", summary.as_dict())
+        payload = summary.as_dict()
+        if provider_error_code:
+            payload["provider_error_code"] = provider_error_code
+        self.journal.append("run_finished", payload)
         (self.output_dir / "summary.json").write_text(
-            json.dumps(summary.as_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         return summary
 

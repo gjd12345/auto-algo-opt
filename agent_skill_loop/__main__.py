@@ -10,6 +10,7 @@ from pathlib import Path
 from agent_skill_loop.client import FixtureTransport, LiveTransport, load_local_env
 from agent_skill_loop.contracts import (
     DEFAULT_COUNT,
+    DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_SEED,
     DEFAULT_SIZE,
     DEFAULT_SPLIT,
@@ -69,7 +70,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     path = _require_new_dir(Path(args.output))
     path.mkdir(parents=True)
     parent = load_skill(Path(args.parent_skill)) if args.parent_skill else None
-    transport = LiveTransport(args.model, endpoint=args.endpoint, api_key_env=args.api_key_env)
+    transport = LiveTransport(
+        args.model,
+        timeout=args.request_timeout,
+        endpoint=args.endpoint,
+        api_key_env=args.api_key_env,
+    )
     loop = AgentLoop(path, transport=transport, parent_skill=parent, execution_mode="live")
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
@@ -108,6 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--parent-skill")
     run.add_argument("--endpoint")
     run.add_argument("--api-key-env", default="MODEL_ROUTER_API_KEY")
+    run.add_argument("--request-timeout", type=float, default=max(DEFAULT_REQUEST_TIMEOUT, 180.0))
     run.set_defaults(func=cmd_run)
 
     evaluate = sub.add_parser("evaluate-skill")

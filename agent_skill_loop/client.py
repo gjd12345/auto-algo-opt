@@ -109,6 +109,9 @@ class LiveTransport:
             "temperature": 1.0,
             "max_tokens": 16384,
         }
+        if host.endswith("opencode.ai"):
+            payload["thinking"] = {"type": "disabled"}
+            payload["reasoning"] = {"effort": "none"}
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
