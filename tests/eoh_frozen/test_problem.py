@@ -33,6 +33,18 @@ def test_frozen_problem_invalid_code_is_none():
     assert problem.evaluate("def select_next_node(*args):\n    return 'nope'\n") is None
 
 
+def test_frozen_problem_writes_eval_failure_log(tmp_path):
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    fail_log = tmp_path / "eval_failures.jsonl"
+    problem = FrozenCVRPConstruct(suite, timeout=10, fail_log=fail_log)
+    assert problem.evaluate("def select_next_node(*args):\n    return 'nope'\n") is None
+    lines = fail_log.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1
+    payload = json.loads(lines[0])
+    assert payload["error_code"] == "invalid_return"
+    assert "select_next_node" in payload["code"]
+
+
 def test_export_best_from_official_population(tmp_path):
     suite = build_suite(DEFAULT_SEED, count=3, size=20)
     out = tmp_path / "eoh_out"

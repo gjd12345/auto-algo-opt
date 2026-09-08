@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import builtins
 import contextlib
 import io
 import json
@@ -44,7 +45,13 @@ _NUMPY_ATTRIBUTES = {
     "reshape", "round", "shape", "sin", "size", "sort", "sqrt", "square", "std", "sum", "tile",
     "tolist", "trunc", "unique", "where", "zeros", "zip", "repeat", "floor", "ceil", "int32",
     "int64", "uint32", "uint64", "bool_", "newaxis", "T", "flatten", "item",
+    "isinf", "isnan", "arctan2", "arccos", "arcsin", "arctan", "acos", "asin", "atan", "tan",
+    "log", "log1p", "log2", "log10", "expm1", "hypot", "isclose", "fabs",
+    "zeros_like", "ones_like", "full_like", "eye", "maximum",
 }
+_NP_MATH_ROOTS = {"np", "numpy", "math"}
+_ALLOWED_IMPORT_ROOTS = {"numpy", "math"}
+_REAL_IMPORT = builtins.__import__
 _MATH_ATTRIBUTES = {
     "acos", "asin", "atan", "atan2", "ceil", "cos", "e", "exp", "fabs", "floor", "fmod",
     "hypot", "inf", "isfinite", "isclose", "log", "log10", "pi", "sin", "sqrt", "tan", "trunc",
@@ -78,6 +85,29 @@ def evaluator_source_hash() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
+def _attribute_root_id(node: ast.Attribute) -> str | None:
+    current: ast.AST = node.value
+    while isinstance(current, ast.Attribute):
+        current = current.value
+    if isinstance(current, ast.Name):
+        return current.id
+    return None
+
+
+def _restricted_import(name: str, globals: Any = None, locals: Any = None, fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
+    # Candidate AST cannot emit ImportFrom/relative import. Numpy ndarray methods
+    # still call __import__ from the candidate frame for numpy.* submodules.
+    if level:
+        module_name = str(globals.get("__name__") or "") if isinstance(globals, dict) else ""
+        if not (module_name == "numpy" or module_name.startswith("numpy.") or module_name == "math" or module_name.startswith("math.")):
+            raise ImportError("restricted_import")
+        return _REAL_IMPORT(name, globals, locals, fromlist, level)
+    root = (name or "").split(".", 1)[0]
+    if root not in _ALLOWED_IMPORT_ROOTS:
+        raise ImportError("restricted_import")
+    return _REAL_IMPORT(name, globals, locals, fromlist, level)
+
+
 def _validate_candidate_ast(code: str, required_entry: str) -> ast.Module:
     if not isinstance(code, str) or not code.strip() or len(code.encode("utf-8")) > 100_000:
         raise ValueError("invalid_code")
@@ -103,7 +133,10 @@ def _validate_candidate_ast(code: str, required_entry: str) -> ast.Module:
             if node.id in _FORBIDDEN_NAMES or node.id.startswith("__"):
                 raise EvalError("forbidden_name", node.id)
         elif isinstance(node, ast.Attribute):
-            if node.attr.startswith("_") or node.attr not in (_NUMPY_ATTRIBUTES | _MATH_ATTRIBUTES):
+            if node.attr.startswith("_"):
+                raise EvalError("forbidden_attribute", node.attr)
+            root = _attribute_root_id(node)
+            if root in _NP_MATH_ROOTS and node.attr not in (_NUMPY_ATTRIBUTES | _MATH_ATTRIBUTES):
                 raise EvalError("forbidden_attribute", node.attr)
         elif isinstance(node, (ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise, ast.Delete, ast.Global, ast.Nonlocal)):
             raise ValueError("forbidden_syntax")
@@ -223,11 +256,6 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         instances, expected = _validate_suite(suite, PROBLEM_CVRP)
         suite_hash_value = expected
         tree = _validate_candidate_ast(code, ENTRYPOINT_CVRP)
-
-        def _restricted_import(name: str, globals: Any = None, locals: Any = None, fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
-            if level or name not in ("numpy", "math"):
-                raise ImportError("restricted_import")
-            return np if name == "numpy" else math
 
         builtins_dict = dict(_SAFE_BUILTINS)
         builtins_dict["__import__"] = _restricted_import

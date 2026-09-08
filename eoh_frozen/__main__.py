@@ -73,7 +73,14 @@ def cmd_run(args: argparse.Namespace) -> int:
             model=args.model,
             timeout=int(args.request_timeout),
         )
-    task = FrozenCVRPConstruct(suite, timeout=int(args.solver_timeout), n_processes=1)
+    fail_log = output / "results" / "eval_failures.jsonl"
+    fail_log.parent.mkdir(parents=True, exist_ok=True)
+    task = FrozenCVRPConstruct(
+        suite,
+        timeout=int(args.solver_timeout),
+        n_processes=1,
+        fail_log=fail_log,
+    )
     config = {
         "problem": "cvrp_construct",
         "suite_hash": suite["content_hash"],
