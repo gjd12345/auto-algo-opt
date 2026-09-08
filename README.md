@@ -5,6 +5,7 @@
 
 Python 包名：`eoh-rag`（v0.2.0）。核心命题：**Falsifiable Mechanism Ecology · FME**。
 唯一顶层科学控制器是 `FMEResearchLoop`；EOH、RAG 和问题实现都是可替换适配器。
+历史路线与当前主线的对照见 [`docs/RESEARCH_MAINLINE.md`](docs/RESEARCH_MAINLINE.md)。活的问题只有 RQ1b；岛屿 605 与 Q3 是冻结支柱，不可与 RQ1b 混算。
 
 当前 Refactor0830 在线入口为 `python -m eoh_rag.experiments.fme_pilot`。
 它实际调用 FME 调度、EOH 提示/提取适配器、前瞻分析、三类档案及独立进程评测器。
