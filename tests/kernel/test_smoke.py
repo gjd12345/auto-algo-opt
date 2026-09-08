@@ -31,7 +31,9 @@ def test_smoke_valid_candidate_exports_and_consumes_feedback(tmp_path, canary):
     assert summary.generated_valid_candidates >= 1
     assert summary.feedback_consumed_count >= 1
     assert summary.status == "completed_with_valid_candidate"
-    assert (out / "exported_skill" / "code.py").is_file()
+    assert (out / "exported_skill" / "ref.json").is_file()
+    assert not (out / "exported_skill" / "skill.json").exists()
+    assert load_skill(out / "exported_skill").code
     assert "baseline" not in summary.exported_skill_ids
     prompts = transport.prompts
     assert len(prompts) == 3
@@ -62,7 +64,7 @@ def test_all_invalid_is_no_valid_candidate(tmp_path):
     assert summary.generated_valid_candidates == 0
     assert summary.stop_reason == "candidate_limit"
     assert summary.feedback_consumed_count >= 1
-    assert not (out / "exported_skill" / "code.py").exists()
+    assert not (out / "exported_skill" / "ref.json").exists()
     assert "error_code:" in transport.prompts[1]
 
 
@@ -380,8 +382,10 @@ def test_worse_generated_does_not_overwrite_best_export(tmp_path):
     summary = AgentLoop(out, transport=transport, candidate_attempts=2, max_llm_requests=2).run()
     assert summary.best_generated_version_id == "generated_1"
     assert summary.exported_skill_ids == ["generated_1"]
-    exported = (out / "exported_skill" / "code.py").read_text(encoding="utf-8")
+    exported = load_skill(out / "exported_skill").code
     assert "argmin" in exported
+    assert (out / "skills" / "generated_1" / "code.py").is_file()
+    assert json.loads((out / "exported_skill" / "ref.json").read_text(encoding="utf-8"))["skill_dir"] == "skills/generated_1"
     assert summary.incumbent_is_generated is False or summary.incumbent_version_id in {"baseline", "generated_1"}
 
 

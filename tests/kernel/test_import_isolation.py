@@ -22,3 +22,7 @@ def test_importing_kernel_does_not_load_fme_or_official_eoh():
     evaluator = Path(agent_skill_loop.evaluator.__file__).read_text(encoding="utf-8")
     assert "official_eoh" not in evaluator
     assert "eoh_rag.fme" not in evaluator
+    import eoh_frozen.export  # noqa: F401
+
+    after_export = [name for name in sys.modules if name == "eoh" or name.startswith("eoh_rag.fme") or name.startswith("eoh.eoh")]
+    assert after_export == forbidden

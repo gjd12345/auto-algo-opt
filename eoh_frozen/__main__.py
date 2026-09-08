@@ -114,8 +114,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     finally:
         if bridge is not None:
             bridge.stop()
-    export_best_skill(output, suite, timeout=float(args.solver_timeout))
+    exported = export_best_skill(output, suite, timeout=float(args.solver_timeout))
     best = load_best_individual(output)
+    rejected = output / "results" / "export_rejected.json"
     summary = {
         "search": "official_eoh",
         "suite_hash": suite["content_hash"],
@@ -124,7 +125,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         "n_pop": args.n_pop,
         "operators": args.operators,
         "best_objective": None if best is None else best.get("objective"),
-        "exported_skill": "exported_skill" if (output / "exported_skill" / "skill.json").exists() else None,
+        "best_generated_path": None if exported is None else "skills/eoh_best",
+        "exported_skill": None if exported is None else "exported_skill",
+        "export_rejected": "results/export_rejected.json" if rejected.is_file() else None,
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))

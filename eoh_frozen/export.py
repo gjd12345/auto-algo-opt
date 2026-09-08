@@ -8,7 +8,7 @@ from typing import Any
 
 from agent_skill_loop.contracts import ENTRYPOINT_CVRP, PROBLEM_CVRP
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from agent_skill_loop.skill_store import make_skill, save_skill
+from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill, sha256_text
 
 
 def _generation_index(path: Path) -> int:
@@ -34,17 +34,39 @@ def load_best_individual(output_dir: Path) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _write_export_rejected(output_dir: Path, payload: dict[str, Any]) -> Path:
+    path = Path(output_dir) / "results" / "export_rejected.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def export_best_skill(output_dir: Path, suite: dict[str, Any], *, timeout: float = 20.0) -> Path | None:
+    output_dir = Path(output_dir)
     individual = load_best_individual(output_dir)
     if not individual or not individual.get("code"):
+        _write_export_rejected(output_dir, {"reason": "missing_best_individual"})
         return None
     code = str(individual["code"])
     evaluation = SubprocessEvaluator(timeout=timeout).evaluate(code, suite)
+    if not evaluation.valid or evaluation.objective is None:
+        _write_export_rejected(
+            output_dir,
+            {
+                "reason": "reeval_invalid",
+                "error_code": evaluation.error_code,
+                "error_detail": evaluation.error_detail,
+                "official_objective": individual.get("objective"),
+                "code_sha256": sha256_text(code),
+                "suite_hash": suite.get("content_hash"),
+            },
+        )
+        return None
     skill = make_skill(
         version_id="eoh_best",
         code=code,
         suite_hash=str(suite["content_hash"]),
-        valid=evaluation.valid,
+        valid=True,
         mean_objective=evaluation.objective,
         instance_objectives=evaluation.instance_objectives,
         parent_version_id=None,
@@ -53,5 +75,7 @@ def export_best_skill(output_dir: Path, suite: dict[str, Any], *, timeout: float
         problem=PROBLEM_CVRP,
         entrypoint=ENTRYPOINT_CVRP,
     )
-    save_skill(Path(output_dir) / "exported_skill", skill, overwrite=True)
-    return Path(output_dir) / "exported_skill"
+    skill_dir = output_dir / "skills" / "eoh_best"
+    save_skill(skill_dir, skill)
+    publish_export_ref(output_dir, skill_dir)
+    return skill_dir

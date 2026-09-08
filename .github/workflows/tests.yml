@@ -7,7 +7,7 @@ on:
     branches: [main, Refactor0830]
 
 jobs:
-  test:
+  kernel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,9 +17,30 @@ jobs:
           python-version: "3.11"
       - name: Check interpreter
         run: python -c "import sys; assert sys.version_info[:2] == (3, 11)"
-      - name: Install package (with test deps)
+      - name: Install kernel
         run: pip install -e ".[dev]"
-      - name: Import kernel
-        run: python -c "import agent_skill_loop"
+      - name: Import kernel without eoh
+        run: |
+          python -c "import importlib.util; assert importlib.util.find_spec('eoh') is None"
+          python -c "import agent_skill_loop, agent_skill_loop.loop, eoh_frozen.export; import sys; assert 'eoh' not in sys.modules"
       - name: Run kernel tests
         run: python -m pytest tests/kernel -q
+
+  eoh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check interpreter
+        run: python -c "import sys; assert sys.version_info[:2] == (3, 11)"
+      - name: Install kernel and pinned EoH extra
+        run: pip install -e ".[dev,eoh]"
+      - name: Require official EoH import
+        run: python -c "import eoh, eoh_frozen.problem"
+      - name: Run adapter tests
+        env:
+          EOH_REQUIRED: "1"
+        run: python -m pytest tests/eoh_frozen -q

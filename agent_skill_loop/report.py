@@ -71,6 +71,7 @@ def write_run_report(output_dir: Path, summary: dict[str, Any]) -> Path:
             "",
             "## artifacts",
             f"- best generated skill: {summary.get('best_generated_path')}",
+            f"- export reference: {summary.get('exported_skill')}",
             f"- run incumbent: {summary.get('incumbent_path')}",
         ]
     )

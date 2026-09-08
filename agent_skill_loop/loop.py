@@ -33,7 +33,7 @@ from agent_skill_loop.generator import PromptFeedback, build_prompt, extract
 from agent_skill_loop.journal import Journal, sha256_text
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, PROBLEM_NAME, build_suite
 from agent_skill_loop.report import write_run_report
-from agent_skill_loop.skill_store import make_skill, save_skill
+from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill
 
 
 class AgentLoop:
@@ -97,11 +97,11 @@ class AgentLoop:
 
     def _store(self, skill: SkillVersion, folder: str, *, generated: bool) -> Path:
         path = self.output_dir / "skills" / folder
-        save_skill(path, skill, overwrite=False)
+        save_skill(path, skill)
         if generated and skill.valid:
             if self.best_generated is None or better_objective(skill.mean_objective, self.best_generated.mean_objective):
                 self.best_generated = skill
-                save_skill(self.output_dir / "exported_skill", skill, overwrite=True)
+                publish_export_ref(self.output_dir, path)
         return path
 
     def _bind_skill(
@@ -532,7 +532,8 @@ class AgentLoop:
             "candidate_attempts_limit": self.candidate_attempts_limit,
             "max_llm_requests": self.max_llm_requests,
             "wall_seconds_budget": self.wall_seconds,
-            "best_generated_path": None if self.best_generated is None else "exported_skill",
+            "best_generated_path": None if self.best_generated is None else f"skills/{self.best_generated.version_id}",
+            "exported_skill": None if self.best_generated is None else "exported_skill",
             "incumbent_path": None if self.incumbent is None else f"skills/{self.incumbent.version_id}",
         })
         self.journal.append("run_finished", payload)

@@ -63,5 +63,12 @@ def test_export_best_from_official_population(tmp_path):
     assert meta["version_id"] == "eoh_best"
     assert meta["valid"] is True
     assert meta["suite_hash"] == suite["content_hash"]
+    assert path == out / "skills" / "eoh_best"
+    from agent_skill_loop.skill_store import load_skill
+
+    exported = load_skill(out / "exported_skill")
+    assert exported.code == BASELINE_CODE
+    assert (out / "exported_skill" / "ref.json").is_file()
+    assert not (out / "exported_skill" / "skill.json").exists()
     loaded = load_best_individual(out)
     assert loaded["code"] == BASELINE_CODE
