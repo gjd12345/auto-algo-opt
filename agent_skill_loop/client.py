@@ -107,7 +107,7 @@ class LiveTransport:
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 1.0,
-            "max_tokens": 4096,
+            "max_tokens": 16384,
         }
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -137,7 +137,11 @@ class LiveTransport:
             in_tokens = usage.get("prompt_tokens")
             out_tokens = usage.get("completion_tokens")
             if not isinstance(content, str) or not content.strip():
-                raise ProviderFailure("empty_or_nontext_completion", status)
+                reasoning = choices[0].get("message", {}).get("reasoning_content") if choices else None
+                if isinstance(reasoning, str) and reasoning.strip():
+                    content = reasoning
+                else:
+                    raise ProviderFailure("empty_or_nontext_completion", status)
             return content
         except urllib.error.HTTPError as exc:
             receipt_error = "provider_auth_invalid" if exc.code in {401, 403} else f"http_{exc.code}"
