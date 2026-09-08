@@ -403,8 +403,6 @@ class AgentLoop:
                 failed_hash = sha256_text(last.code or last.raw_response) if operator == "m1" and last is not None else None
                 structural = operator == "e1" and self.non_improving_e1 >= STAGNATION_E1_STREAK
                 feedback = self._feedback(operator, last, structural_explore=structural)
-                if feedback is not None:
-                    self.feedback_consumed += 1
                 prompt = build_prompt(operator, feedback)
                 prompt_path, prompt_hash = self.journal.save_prompt(attempt_id, prompt)
                 feedback_attempt_id = None if last is None or operator == "i1" else last.attempt_id
@@ -455,6 +453,8 @@ class AgentLoop:
                     raise
                 wall_exhausted = self.remaining_wall() <= 0
                 description, code = extract(response)
+                if feedback is not None:
+                    self.feedback_consumed += 1
                 if wall_exhausted:
                     evaluation = EvaluationResult(
                         False, None, (), self.suite["content_hash"], "wall_time_limit", 0.0

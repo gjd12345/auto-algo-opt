@@ -3,25 +3,63 @@
 Official EoH remote client always POSTs https://{host}/v1/chat/completions.
 OpenCode Go uses a path under /zen/go/. This process-local HTTP server accepts
 EoH's local-LLM JSON and forwards it without changing EoH source.
+
+Every outbound POST is charged against a shared RequestBudget. EoH's
+InterfaceLocalLLM retries each call up to 5x; each retry is a real outbound
+attempt, so a budget-rejected call raises BudgetExhausted and the handler
+returns 500 {"error":"BudgetExhausted"} WITHOUT any outbound POST.
 """
 
 from __future__ import annotations
 
 import json
 import threading
+import time
+import urllib.error
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+from agent_skill_loop.contracts import PROBLEM_CVRP
+from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget, RequestSlot
+
+
+def _is_timeout(exc: BaseException) -> bool:
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, TimeoutError):
+            return True
+        text = str(reason).lower()
+        if "timed out" in text or "timeout" in text:
+            return True
+    return False
+
 
 class OpenAIPathBridge:
-    def __init__(self, target_url: str, api_key: str, model: str, *, timeout: float = 180.0) -> None:
+    def __init__(
+        self,
+        target_url: str,
+        api_key: str,
+        model: str,
+        *,
+        timeout: float = 180.0,
+        budget: RequestBudget | None = None,
+        request_log: Path | None = None,
+    ) -> None:
         self.target_url = target_url
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
+        self.budget = budget
+        self.request_log = Path(request_log) if request_log is not None else None
+        self._log_lock = threading.Lock()
+        if self.request_log is not None:
+            self.request_log.parent.mkdir(parents=True, exist_ok=True)
         self.session_id = str(uuid.uuid4())
         self._server: ThreadingHTTPServer | None = None
         host = urlsplit(target_url).hostname or ""
@@ -73,6 +111,19 @@ class OpenAIPathBridge:
             self._server.server_close()
             self._server = None
 
+    def _log_event(self, event: dict[str, Any] | None) -> None:
+        if event is None or self.request_log is None:
+            return
+        with self._log_lock:
+            with self.request_log.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+    def _record(self, slot: RequestSlot, state: str, **fields: Any) -> None:
+        if self.budget is None:
+            return
+        event = self.budget.finish(slot, state, **fields)
+        self._log_event(event)
+
     def _forward(self, prompt: str) -> str:
         payload: dict[str, Any] = {
             "model": self.model,
@@ -96,13 +147,74 @@ class OpenAIPathBridge:
             headers=headers,
             method="POST",
         )
-        with urlopen(request, timeout=self.timeout) as response:
-            parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
+        slot: RequestSlot | None = None
+        if self.budget is not None:
+            slot = self.budget.reserve(purpose="eoh_generation", problem=PROBLEM_CVRP, model=self.model)
+            if slot is None:
+                raise BudgetExhausted("request_budget_exhausted")
+            self._log_event(slot.reserved_event)
+        started = time.monotonic()
+        try:
+            with urlopen(request, timeout=self.timeout) as response:
+                status = int(response.status)
+                parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            error_code = "provider_auth_invalid" if exc.code in {401, 403} else f"http_{exc.code}"
+            if slot is not None:
+                self._record(
+                    slot,
+                    "http_error",
+                    status=exc.code,
+                    error_code=error_code,
+                    elapsed_seconds=time.monotonic() - started,
+                )
+            raise
+        except Exception as exc:
+            if slot is not None:
+                if _is_timeout(exc):
+                    self._record(
+                        slot,
+                        "killed_unknown",
+                        error_code="request_deadline",
+                        elapsed_seconds=time.monotonic() - started,
+                    )
+                else:
+                    self._record(
+                        slot,
+                        "connectivity_failed",
+                        error_code="provider_connectivity_or_protocol_error",
+                        elapsed_seconds=time.monotonic() - started,
+                    )
+            raise
         choices = parsed.get("choices") or []
         content = choices[0].get("message", {}).get("content") if choices else None
         if isinstance(content, str) and content.strip():
+            if slot is not None:
+                self._record(
+                    slot,
+                    "complete",
+                    status=status,
+                    error_code=None,
+                    elapsed_seconds=time.monotonic() - started,
+                )
             return content
         reasoning = choices[0].get("message", {}).get("reasoning_content") if choices else None
         if isinstance(reasoning, str) and reasoning.strip():
+            if slot is not None:
+                self._record(
+                    slot,
+                    "complete",
+                    status=status,
+                    error_code=None,
+                    elapsed_seconds=time.monotonic() - started,
+                )
             return reasoning
+        if slot is not None:
+            self._record(
+                slot,
+                "complete",
+                status=status,
+                error_code="empty_or_nontext_completion",
+                elapsed_seconds=time.monotonic() - started,
+            )
         raise RuntimeError("empty_or_nontext_completion")

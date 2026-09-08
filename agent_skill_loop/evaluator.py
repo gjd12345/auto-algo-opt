@@ -9,6 +9,7 @@ import io
 import json
 import math
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -81,8 +82,64 @@ def sanitize_error_detail(value: str | None) -> str | None:
 
 
 def evaluator_source_hash() -> str:
+    """Hash of the evaluator and suite-generator sources.
+
+    Identity covers worker semantics (validation + suite generation), not just
+    this file: the worker imports evaluator.py, and problems/cvrp.py defines
+    TASK_DESCRIPTION / TEMPLATE_PROGRAM / BASELINE_CODE plus the suite
+    instances the worker validates against.
+    """
     import hashlib
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    parts = [Path(__file__).read_bytes()]
+    parts.append(Path(__file__).resolve().parent.joinpath("problems", "cvrp.py").read_bytes())
+    return hashlib.sha256(b"|".join(parts)).hexdigest()
+
+
+def kill_process_tree(proc: subprocess.Popen) -> None:
+    """Best-effort kill of *proc* and its entire descendant tree.
+
+    On Windows the official EoH outer process cannot reach our grandchild
+    (os.setsid/killpg is POSIX-only), so the tree must be torn down here.
+    """
+    if proc is None:
+        return
+    pid = proc.pid
+    if pid is None or pid <= 0:
+        return
+    if os.name == "nt":
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
+        if proc.poll() is None:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+    else:
+        try:
+            pgid = os.getpgid(pid)
+        except OSError:
+            pgid = None
+        if pgid:
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except OSError:
+                pass
+        else:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+    try:
+        proc.wait(timeout=2.0)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
 
 
 def _attribute_root_id(node: ast.Attribute) -> str | None:
@@ -369,10 +426,7 @@ class SubprocessEvaluator:
                     stdout, _ = proc.communicate(payload, timeout=self.timeout)
                 except subprocess.TimeoutExpired:
                     if proc is not None:
-                        try:
-                            proc.kill()
-                        except OSError:
-                            pass
+                        kill_process_tree(proc)
                         try:
                             proc.communicate(timeout=1.0)
                         except subprocess.TimeoutExpired:
@@ -382,6 +436,8 @@ class SubprocessEvaluator:
                                 pass
                     return EvaluationResult(False, None, (), expected_hash, "timeout", time.monotonic() - started)
         except subprocess.TimeoutExpired:
+            if proc is not None:
+                kill_process_tree(proc)
             return EvaluationResult(False, None, (), expected_hash, "timeout", time.monotonic() - started)
         except (OSError, TypeError, ValueError):
             return EvaluationResult(False, None, (), expected_hash, "worker_error", time.monotonic() - started)

@@ -104,6 +104,37 @@ def test_provider_failed_status(tmp_path):
     assert summary.stop_reason == "provider_error"
 
 
+def test_feedback_not_consumed_when_request_never_sent(tmp_path):
+    out = tmp_path / "auth_fb"
+    out.mkdir()
+    summary = AgentLoop(out, transport=AuthFailTransport(), execution_mode="fixture").run()
+    assert summary.status == "provider_failed"
+    assert summary.loop_completed is False
+    assert summary.stop_reason == "provider_error"
+    assert summary.feedback_consumed_count == 0
+
+
+def test_feedback_not_consumed_when_request_fails_after_first(tmp_path):
+    out = tmp_path / "fb_fail"
+    out.mkdir()
+
+    class FailAfterFirstTransport(FixtureTransport):
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            if len(self.prompts) >= 1:
+                raise ProviderFailure("provider_auth_invalid", 401, retryable=False)
+            return super().request(prompt, purpose=purpose, problem=problem, timeout=timeout)
+
+    summary = AgentLoop(
+        out,
+        transport=FailAfterFirstTransport([valid_response()]),
+        execution_mode="fixture",
+    ).run()
+    assert summary.status == "provider_failed"
+    assert summary.loop_completed is False
+    assert summary.stop_reason == "provider_error"
+    assert summary.feedback_consumed_count == 0
+
+
 def test_live_transport_is_not_used_in_kernel(monkeypatch):
     from agent_skill_loop import client as client_mod
 

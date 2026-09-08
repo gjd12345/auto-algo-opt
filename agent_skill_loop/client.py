@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from agent_skill_loop.request_budget import RequestBudget, RequestSlot
+
 
 class ProviderFailure(RuntimeError):
     def __init__(self, error_code: str, status: int | None = None, *, retryable: bool = False) -> None:
@@ -322,7 +324,15 @@ def http_post_with_deadline(
 class LiveTransport:
     """OpenAI-compatible chat completions. network_retries is always 0 for v1."""
 
-    def __init__(self, model: str, *, timeout: float = 90.0, endpoint: str | None = None, api_key_env: str = "MODEL_ROUTER_API_KEY") -> None:
+    def __init__(
+        self,
+        model: str,
+        *,
+        timeout: float = 90.0,
+        endpoint: str | None = None,
+        api_key_env: str = "MODEL_ROUTER_API_KEY",
+        budget: RequestBudget | None = None,
+    ) -> None:
         self.model = model
         self.timeout = timeout
         self.endpoint = endpoint or os.environ.get(
@@ -330,6 +340,7 @@ class LiveTransport:
             "https://model-router.edu-aliyun.com/v1/chat/completions",
         )
         self.api_key_env = api_key_env
+        self.budget = budget
         self.session_id = str(uuid.uuid4())
         self.usage: list[UsageReceipt] = []
 
@@ -365,6 +376,11 @@ class LiveTransport:
         status = None
         in_tokens = out_tokens = None
         effective_timeout = self.timeout if timeout is None else min(self.timeout, float(timeout))
+        slot: RequestSlot | None = None
+        if self.budget is not None:
+            slot = self.budget.reserve(purpose=purpose, problem=problem, model=self.model)
+            if slot is None:
+                raise ProviderFailure("request_budget_exhausted", retryable=False)
         try:
             status, raw = http_post_with_deadline(
                 self.endpoint, headers, json.dumps(payload).encode("utf-8"), effective_timeout
@@ -381,15 +397,70 @@ class LiveTransport:
                     content = reasoning
                 else:
                     raise ProviderFailure("empty_or_nontext_completion", status)
+            if slot is not None:
+                self.budget.finish(
+                    slot,
+                    "complete",
+                    status=status,
+                    error_code=None,
+                    elapsed_seconds=time.monotonic() - started,
+                    model=self.model,
+                    input_tokens=in_tokens,
+                    output_tokens=out_tokens,
+                )
             return content
         except urllib.error.HTTPError as exc:
             receipt_error = "provider_auth_invalid" if exc.code in {401, 403} else f"http_{exc.code}"
+            if slot is not None:
+                self.budget.finish(
+                    slot,
+                    "http_error",
+                    status=exc.code,
+                    error_code=receipt_error,
+                    elapsed_seconds=time.monotonic() - started,
+                    model=self.model,
+                )
             raise ProviderFailure(receipt_error, exc.code, retryable=exc.code in {408, 429, 500, 502, 503, 504}) from None
         except ProviderFailure as exc:
             receipt_error = exc.error_code
+            if slot is not None:
+                if exc.error_code == "request_deadline":
+                    self.budget.finish(
+                        slot,
+                        "killed_unknown",
+                        error_code="request_deadline",
+                        elapsed_seconds=time.monotonic() - started,
+                        model=self.model,
+                    )
+                elif exc.error_code == "empty_or_nontext_completion":
+                    self.budget.finish(
+                        slot,
+                        "complete",
+                        status=exc.status,
+                        error_code="empty_or_nontext_completion",
+                        elapsed_seconds=time.monotonic() - started,
+                        model=self.model,
+                    )
+                else:
+                    self.budget.finish(
+                        slot,
+                        "connectivity_failed",
+                        status=exc.status,
+                        error_code=exc.error_code,
+                        elapsed_seconds=time.monotonic() - started,
+                        model=self.model,
+                    )
             raise
         except (OSError, ValueError, TypeError, KeyError, IndexError):
             receipt_error = "provider_connectivity_or_protocol_error"
+            if slot is not None:
+                self.budget.finish(
+                    slot,
+                    "connectivity_failed",
+                    error_code=receipt_error,
+                    elapsed_seconds=time.monotonic() - started,
+                    model=self.model,
+                )
             raise ProviderFailure(receipt_error, retryable=True) from None
         finally:
             self.usage.append(UsageReceipt(

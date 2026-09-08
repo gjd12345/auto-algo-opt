@@ -17,6 +17,7 @@ from agent_skill_loop.contracts import (
     DEFAULT_SPLIT,
 )
 from agent_skill_loop.problems.cvrp import build_suite
+from agent_skill_loop.request_budget import RequestBudget
 from eoh_frozen.export import export_best_skill, load_best_individual
 from eoh_frozen.problem import FrozenCVRPConstruct
 
@@ -56,9 +57,21 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not api_key:
         raise SystemExit(f"missing API key in {args.api_key_env}")
     endpoint = args.endpoint
+    if args.max_requests is None:
+        max_requests = (2 * args.pop_size + args.pop_size * args.n_pop) * 6 + 20
+    else:
+        max_requests = args.max_requests
+    budget = RequestBudget(max_requests)
     bridge: OpenAIPathBridge | None = None
     if _endpoint_needs_bridge(endpoint):
-        bridge = OpenAIPathBridge(endpoint, api_key, args.model, timeout=args.request_timeout)
+        bridge = OpenAIPathBridge(
+            endpoint,
+            api_key,
+            args.model,
+            timeout=args.request_timeout,
+            budget=budget,
+            request_log=output / "results" / "requests.jsonl",
+        )
         local_url = bridge.start()
         llm = LLMConfig(
             use_local=True,
@@ -96,6 +109,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "max_sample_nums": args.max_sample_nums,
         "search": "official_eoh",
         "eoh_package": "FeiLiu36/EoH",
+        "request_budget": max_requests,
     }
     (output / "config_frozen.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     eoh = EoH(
@@ -128,6 +142,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         "best_generated_path": None if exported is None else "skills/eoh_best",
         "exported_skill": None if exported is None else "exported_skill",
         "export_rejected": "results/export_rejected.json" if rejected.is_file() else None,
+        "request_budget": max_requests,
+        "http_requests": budget.used,
+        "request_rejected": budget.rejected,
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
@@ -150,6 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--pop-size", type=int, default=4)
     run.add_argument("--n-pop", type=int, default=5)
     run.add_argument("--max-sample-nums", type=int, default=None)
+    run.add_argument("--max-requests", type=int, default=None)
     run.add_argument("--operators", nargs="+", default=["e1", "e2", "m1", "m2"])
     run.set_defaults(func=cmd_run)
     return parser
