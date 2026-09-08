@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from agent_skill_loop.client import ProviderFailure
 from agent_skill_loop.contracts import (
@@ -46,6 +46,7 @@ class AgentLoop:
         candidate_attempts: int = DEFAULT_CANDIDATE_ATTEMPTS,
         max_llm_requests: int = DEFAULT_MAX_LLM_REQUESTS,
         solver_timeout: float = DEFAULT_SOLVER_TIMEOUT,
+        request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
         wall_seconds: float = DEFAULT_WALL_SECONDS,
         monotonic: Callable[[], float] = time.monotonic,
         seed: int = DEFAULT_SEED,
@@ -58,6 +59,7 @@ class AgentLoop:
         self.execution_mode = execution_mode
         self.candidate_attempts_limit = candidate_attempts
         self.max_llm_requests = max_llm_requests
+        self.request_timeout = request_timeout
         self.wall_seconds = wall_seconds
         self.monotonic = monotonic
         self.started = monotonic()
@@ -162,16 +164,121 @@ class AgentLoop:
             return {}
         if operator == "e1":
             assert self.incumbent is not None
-            return {
+            kwargs: dict[str, Any] = {
                 "parent_code": self.incumbent.code,
                 "parent_objective": self.incumbent.mean_objective,
             }
+            if (
+                last is not None
+                and last.evaluation.valid
+                and last.code
+                and last.code != self.incumbent.code
+                and last.evaluation.objective is not None
+            ):
+                kwargs["last_code"] = last.code
+                kwargs["last_objective"] = last.evaluation.objective
+            return kwargs
         assert last is not None
-        kwargs = {"failed_code": last.code, "error_code": last.evaluation.error_code}
+        kwargs = {
+            "failed_code": last.code or "",
+            "error_code": last.evaluation.error_code,
+            "raw_reply": last.raw_response,
+        }
         if self.incumbent is not None:
             kwargs["incumbent_code"] = self.incumbent.code
             kwargs["incumbent_objective"] = self.incumbent.mean_objective
         return kwargs
+
+    def _usage_snapshot(self) -> dict[str, Any]:
+        receipts = getattr(self.transport, "usage", None)
+        if not receipts:
+            return {
+                "model": None,
+                "input_tokens": None,
+                "output_tokens": None,
+                "request_elapsed_seconds": None,
+            }
+        last = receipts[-1]
+        elapsed = getattr(last, "elapsed_seconds", None)
+        return {
+            "model": getattr(last, "model", None),
+            "input_tokens": last.input_tokens,
+            "output_tokens": last.output_tokens,
+            "request_elapsed_seconds": None if elapsed is None else round(float(elapsed), 4),
+        }
+
+    def _record_attempt(
+        self,
+        *,
+        attempt_id: int,
+        operator: str,
+        parent_id: str | None,
+        failed_hash: str | None,
+        prompt_hash: str,
+        prompt_path: str,
+        code: str,
+        evaluation: EvaluationResult,
+        raw_response: str,
+        description: str = "",
+    ) -> AttemptRecord:
+        stored = code if code else f"# no code extracted\n{raw_response}"
+        code_path, code_hash = self.journal.save_code(attempt_id, stored or "# empty\n")
+        duplicate = bool(code) and code_hash in self.seen_code
+        self.seen_code.add(code_hash)
+        accepted = False
+        if evaluation.valid and not duplicate:
+            self.generated_valid += 1
+            skill = self._bind_skill(
+                version_id=f"generated_{attempt_id}",
+                code=code,
+                evaluation=evaluation,
+                parent_version_id=parent_id,
+                source_attempt_id=attempt_id,
+                description=description,
+            )
+            self._store(skill, skill.version_id, generated=True)
+            before = self.incumbent.version_id if self.incumbent else None
+            self._install_incumbent(skill, generated=True)
+            accepted = (
+                self.incumbent is not None
+                and self.incumbent.version_id != before
+                and self.incumbent.version_id == skill.version_id
+            )
+            if skill.valid:
+                self.exported.append(skill.version_id)
+        usage = self._usage_snapshot()
+        self.journal.append("attempt_result", {
+            "attempt_id": attempt_id,
+            "operator": operator,
+            "code_hash": code_hash,
+            "code_path": code_path,
+            "duplicate": bool(duplicate),
+            "evaluation": evaluation.as_dict(),
+            "accepted_as_incumbent": accepted,
+            "llm_requests": self.llm_requests,
+            "solver_calls": self.solver_calls,
+            "model": usage["model"],
+            "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"],
+            "request_elapsed_seconds": usage["request_elapsed_seconds"],
+        })
+        record = AttemptRecord(
+            attempt_id=attempt_id,
+            operator=operator,
+            parent_version_id=parent_id,
+            failed_code_hash=failed_hash,
+            prompt_hash=prompt_hash,
+            prompt_path=prompt_path,
+            code=code,
+            code_hash=code_hash,
+            evaluation=evaluation,
+            accepted_as_incumbent=accepted,
+            llm_requests=self.llm_requests,
+            solver_calls=self.solver_calls,
+            raw_response=raw_response,
+        )
+        self.attempts.append(record)
+        return record
 
     def run(self) -> RunSummary:
         (self.output_dir / "dev_suite.json").write_text(
@@ -196,7 +303,10 @@ class AgentLoop:
                 )
                 attempt_id = len(self.attempts) + 1
                 parent_id = self.incumbent.version_id if self.incumbent else None
-                failed_hash = sha256_text(last.code) if operator == "m1" and last is not None else None
+                if operator == "m1" and last is not None:
+                    failed_hash = sha256_text(last.code or last.raw_response)
+                else:
+                    failed_hash = None
                 prompt = build_prompt(operator, **self._prompt_kwargs(operator, last))
                 prompt_path, prompt_hash = self.journal.save_prompt(attempt_id, prompt)
                 self.journal.append("attempt_started", {
@@ -210,62 +320,61 @@ class AgentLoop:
                 self.llm_requests += 1
                 if operator in {"e1", "m1"}:
                     self.feedback_consumed += 1
-                response = self.transport.request(prompt, purpose="generation", problem=PROBLEM_NAME)
+                request_timeout = min(self.request_timeout, max(0.0, self.remaining_wall()))
+                try:
+                    response = self.transport.request(
+                        prompt,
+                        purpose="generation",
+                        problem=PROBLEM_NAME,
+                        timeout=request_timeout,
+                    )
+                except ProviderFailure:
+                    if self.remaining_wall() <= 0:
+                        last = self._record_attempt(
+                            attempt_id=attempt_id,
+                            operator=operator,
+                            parent_id=parent_id,
+                            failed_hash=failed_hash,
+                            prompt_hash=prompt_hash,
+                            prompt_path=prompt_path,
+                            code="",
+                            evaluation=EvaluationResult(
+                                False, None, (), self.suite["content_hash"], "wall_time_limit", 0.0
+                            ),
+                            raw_response="",
+                        )
+                        last_valid = False
+                        return self._finish(True, self._status(), "wall_time_limit")
+                    raise
+                wall_exhausted = self.remaining_wall() <= 0
                 description, code = extract(response)
-                if not code:
-                    evaluation = EvaluationResult(False, None, (), self.suite["content_hash"], "generation_parse_error", 0.0)
+                if wall_exhausted:
+                    evaluation = EvaluationResult(
+                        False, None, (), self.suite["content_hash"], "wall_time_limit", 0.0
+                    )
+                    code = code or ""
+                elif not code:
+                    evaluation = EvaluationResult(
+                        False, None, (), self.suite["content_hash"], "generation_parse_error", 0.0
+                    )
                     code = ""
                 else:
                     evaluation = self._evaluate(code)
-                code_path, code_hash = self.journal.save_code(attempt_id, code or "# empty\n")
-                duplicate = code_hash in self.seen_code and code
-                self.seen_code.add(code_hash)
-                accepted = False
-                exported_id = None
-                if evaluation.valid and not duplicate:
-                    self.generated_valid += 1
-                    skill = self._bind_skill(
-                        version_id=f"generated_{attempt_id}",
-                        code=code,
-                        evaluation=evaluation,
-                        parent_version_id=parent_id,
-                        source_attempt_id=attempt_id,
-                        description=description,
-                    )
-                    self._store(skill, skill.version_id, generated=True)
-                    before = self.incumbent.version_id if self.incumbent else None
-                    self._install_incumbent(skill, generated=True)
-                    accepted = self.incumbent is not None and self.incumbent.version_id != before and self.incumbent.version_id == skill.version_id
-                    exported_id = skill.version_id
-                    if skill.valid:
-                        self.exported.append(skill.version_id)
-                self.journal.append("attempt_result", {
-                    "attempt_id": attempt_id,
-                    "operator": operator,
-                    "code_hash": code_hash,
-                    "code_path": code_path,
-                    "duplicate": bool(duplicate),
-                    "evaluation": evaluation.as_dict(),
-                    "accepted_as_incumbent": accepted,
-                    "llm_requests": self.llm_requests,
-                    "solver_calls": self.solver_calls,
-                })
-                last = AttemptRecord(
+                last = self._record_attempt(
                     attempt_id=attempt_id,
                     operator=operator,
-                    parent_version_id=parent_id,
-                    failed_code_hash=failed_hash,
+                    parent_id=parent_id,
+                    failed_hash=failed_hash,
                     prompt_hash=prompt_hash,
                     prompt_path=prompt_path,
                     code=code,
-                    code_hash=code_hash,
                     evaluation=evaluation,
-                    accepted_as_incumbent=accepted,
-                    llm_requests=self.llm_requests,
-                    solver_calls=self.solver_calls,
+                    raw_response=response,
+                    description=description,
                 )
-                self.attempts.append(last)
                 last_valid = evaluation.valid
+                if wall_exhausted:
+                    return self._finish(True, self._status(), "wall_time_limit")
             return self._finish(True, self._status(), "candidate_limit")
         except ProviderFailure as exc:
             return self._finish(False, "provider_failed", "provider_error", provider_error_code=exc.error_code)

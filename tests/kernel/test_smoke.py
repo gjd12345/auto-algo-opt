@@ -4,11 +4,11 @@ import json
 
 import pytest
 
-from agent_skill_loop.client import AuthFailTransport, FixtureTransport, ProviderFailure
+from agent_skill_loop.client import AuthFailTransport, FixtureTransport, ProviderFailure, UsageReceipt
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.journal import verify_journal
 from agent_skill_loop.loop import AgentLoop, prepare_output
-from agent_skill_loop.problems.cvrp import build_suite
+from agent_skill_loop.problems.cvrp import BASELINE_CODE, build_suite
 from tests.kernel.conftest import invalid_response, valid_response
 
 
@@ -37,6 +37,9 @@ def test_smoke_valid_candidate_exports_and_consumes_feedback(tmp_path, canary):
     assert "Dev objective:" not in prompts[0]
     assert "Failed code:" not in prompts[0]
     assert "Dev objective:" in prompts[1]
+    assert "Last candidate objective:" in prompts[1]
+    assert "argmax" in prompts[1]
+    assert "argmin" in prompts[1]
     assert "Error code:" in prompts[2]
     assert all(canary not in prompt for prompt in prompts)
     assert all("STRATEGY_CARD" not in prompt for prompt in prompts)
@@ -106,3 +109,153 @@ def test_live_transport_is_not_used_in_kernel(monkeypatch):
     transport.request("hello", purpose="generation", problem="cvrp_construct")
     with pytest.raises(ProviderFailure):
         AuthFailTransport().request("hello", purpose="generation", problem="cvrp_construct")
+
+
+PROSE_ONLY_REPLY = (
+    "The heuristic should prefer nearby customers with leftover capacity. "
+    "I will not write any function."
+)
+
+
+def _attempt_results(output_dir):
+    events = [
+        json.loads(line)
+        for line in (output_dir / "run" / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    return [event["payload"] for event in events if event["kind"] == "attempt_result"]
+
+
+def test_prose_only_reply_consumes_parse_error(tmp_path):
+    out = tmp_path / "prose"
+    out.mkdir()
+    transport = FixtureTransport([PROSE_ONLY_REPLY, valid_response(), valid_response()])
+    summary = AgentLoop(out, transport=transport, execution_mode="fixture").run()
+    assert (out / "summary.json").is_file()
+    assert summary.loop_completed is True
+    assert summary.stop_reason == "candidate_limit"
+    results = _attempt_results(out)
+    assert results[0]["evaluation"]["error_code"] == "generation_parse_error"
+    assert results[0]["evaluation"]["valid"] is False
+    assert "Previous model reply (no executable code extracted):" in transport.prompts[1]
+    assert "Error code: generation_parse_error" in transport.prompts[1]
+    assert PROSE_ONLY_REPLY in transport.prompts[1]
+    verify_journal(out / "run" / "events.jsonl")
+
+
+def test_wall_clock_bounds_in_flight_request(tmp_path):
+    out = tmp_path / "wall_inflight"
+    out.mkdir()
+
+    class Clock:
+        def __init__(self) -> None:
+            self.t = 0.0
+
+        def __call__(self) -> float:
+            return self.t
+
+    clock = Clock()
+
+    class SlowTransport(FixtureTransport):
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            clock.t += 20.0
+            return super().request(prompt, purpose=purpose, problem=problem, timeout=timeout)
+
+    transport = SlowTransport([valid_response(), valid_response(), valid_response()])
+    summary = AgentLoop(
+        out,
+        transport=transport,
+        execution_mode="fixture",
+        wall_seconds=10.0,
+        monotonic=clock,
+        candidate_attempts=3,
+        max_llm_requests=3,
+    ).run()
+    assert (out / "summary.json").is_file()
+    assert summary.stop_reason == "wall_time_limit"
+    assert summary.loop_completed is True
+    assert summary.llm_requests == 1
+    assert summary.solver_calls == 1
+    assert summary.generated_valid_candidates == 0
+    assert transport.timeouts and transport.timeouts[0] is not None
+    assert transport.timeouts[0] <= 10.0
+    results = _attempt_results(out)
+    assert len(results) == 1
+    assert results[0]["evaluation"]["error_code"] == "wall_time_limit"
+    verify_journal(out / "run" / "events.jsonl")
+
+
+def test_e1_keeps_non_improving_candidate_feedback(tmp_path):
+    out = tmp_path / "e1_last"
+    out.mkdir()
+    transport = FixtureTransport([valid_response(), valid_response()])
+    summary = AgentLoop(
+        out,
+        transport=transport,
+        execution_mode="fixture",
+        candidate_attempts=2,
+        max_llm_requests=2,
+    ).run()
+    assert summary.loop_completed is True
+    assert summary.feedback_consumed_count >= 1
+    assert summary.incumbent_version_id == "baseline"
+    assert "Last candidate objective:" in transport.prompts[1]
+    assert "argmax" in transport.prompts[1]
+    assert "argmin" in transport.prompts[1]
+    assert BASELINE_CODE.strip() in transport.prompts[1]
+    results = _attempt_results(out)
+    assert results[0]["accepted_as_incumbent"] is False
+    assert results[0]["evaluation"]["valid"] is True
+    last_obj = results[0]["evaluation"]["objective"]
+    assert last_obj is not None and last_obj > 10
+    assert "Last candidate objective:" in transport.prompts[1]
+
+
+def test_attempt_result_records_usage_nulls(tmp_path):
+    out = tmp_path / "usage_null"
+    out.mkdir()
+    transport = FixtureTransport([valid_response()])
+    AgentLoop(out, transport=transport, max_llm_requests=1, candidate_attempts=1).run()
+    payload = _attempt_results(out)[0]
+    assert "model" in payload
+    assert "input_tokens" in payload
+    assert "output_tokens" in payload
+    assert "request_elapsed_seconds" in payload
+    assert payload["model"] is None
+    assert payload["input_tokens"] is None
+    assert payload["output_tokens"] is None
+    assert payload["request_elapsed_seconds"] == 0.0
+    raw = (out / "run" / "events.jsonl").read_text(encoding="utf-8")
+    assert '"model": null' in raw
+    assert '"input_tokens": null' in raw
+    assert '"output_tokens": null' in raw
+
+
+def test_attempt_result_records_known_usage(tmp_path):
+    out = tmp_path / "usage_known"
+    out.mkdir()
+
+    class TokenTransport(FixtureTransport):
+        def request(self, prompt, *, purpose, problem, timeout=None):
+            text = super().request(prompt, purpose=purpose, problem=problem, timeout=timeout)
+            last = self.usage[-1]
+            self.usage[-1] = UsageReceipt(
+                purpose=last.purpose,
+                problem=last.problem,
+                prompt_hash=last.prompt_hash,
+                ok=True,
+                error_code=None,
+                input_tokens=11,
+                output_tokens=22,
+                elapsed_seconds=1.5,
+                network_request=False,
+                model="deepseek-v4-flash",
+            )
+            return text
+
+    transport = TokenTransport([valid_response()])
+    AgentLoop(out, transport=transport, max_llm_requests=1, candidate_attempts=1).run()
+    payload = _attempt_results(out)[0]
+    assert payload["model"] == "deepseek-v4-flash"
+    assert payload["input_tokens"] == 11
+    assert payload["output_tokens"] == 22
+    assert payload["request_elapsed_seconds"] == 1.5

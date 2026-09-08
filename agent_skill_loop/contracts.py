@@ -24,7 +24,14 @@ DEFAULT_WALL_SECONDS = 420.0
 
 
 class Transport(Protocol):
-    def request(self, prompt: str, *, purpose: str, problem: str) -> str: ...
+    def request(
+        self,
+        prompt: str,
+        *,
+        purpose: str,
+        problem: str,
+        timeout: float | None = None,
+    ) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -96,6 +103,7 @@ class AttemptRecord:
     accepted_as_incumbent: bool
     llm_requests: int
     solver_calls: int
+    raw_response: str = ""
 
 
 @dataclass

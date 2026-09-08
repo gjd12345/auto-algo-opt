@@ -32,6 +32,7 @@ class UsageReceipt:
     output_tokens: int | None
     elapsed_seconds: float
     network_request: bool
+    model: str | None = None
 
 
 class FixtureTransport:
@@ -40,21 +41,25 @@ class FixtureTransport:
     def __init__(self, responses: list[str]) -> None:
         self._responses = list(responses)
         self.prompts: list[str] = []
+        self.timeouts: list[float | None] = []
         self.usage: list[UsageReceipt] = []
 
-    def request(self, prompt: str, *, purpose: str, problem: str) -> str:
+    def request(self, prompt: str, *, purpose: str, problem: str, timeout: float | None = None) -> str:
         if purpose != "generation":
             raise ProviderFailure("unexpected_purpose")
         self.prompts.append(prompt)
+        self.timeouts.append(timeout)
         if not self._responses:
             raise ProviderFailure("fixture_exhausted")
         text = self._responses.pop(0)
-        self.usage.append(UsageReceipt(purpose, problem, _hash(prompt), True, None, None, None, 0.0, False))
+        self.usage.append(UsageReceipt(
+            purpose, problem, _hash(prompt), True, None, None, None, 0.0, False, None,
+        ))
         return text
 
 
 class AuthFailTransport:
-    def request(self, prompt: str, *, purpose: str, problem: str) -> str:
+    def request(self, prompt: str, *, purpose: str, problem: str, timeout: float | None = None) -> str:
         raise ProviderFailure("provider_auth_invalid", 401, retryable=False)
 
 
@@ -93,7 +98,7 @@ class LiveTransport:
         self.session_id = str(uuid.uuid4())
         self.usage: list[UsageReceipt] = []
 
-    def request(self, prompt: str, *, purpose: str, problem: str) -> str:
+    def request(self, prompt: str, *, purpose: str, problem: str, timeout: float | None = None) -> str:
         if purpose != "generation":
             raise ProviderFailure("unexpected_purpose")
         api_key = os.environ.get(self.api_key_env, "")
@@ -130,8 +135,9 @@ class LiveTransport:
         content = ""
         status = None
         in_tokens = out_tokens = None
+        effective_timeout = self.timeout if timeout is None else min(self.timeout, float(timeout))
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=effective_timeout) as response:
                 status = response.status
                 parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
             choices = parsed.get("choices") or []
@@ -158,5 +164,5 @@ class LiveTransport:
         finally:
             self.usage.append(UsageReceipt(
                 purpose, problem, _hash(prompt), receipt_error is None, receipt_error,
-                in_tokens, out_tokens, time.monotonic() - started, True,
+                in_tokens, out_tokens, time.monotonic() - started, True, self.model,
             ))

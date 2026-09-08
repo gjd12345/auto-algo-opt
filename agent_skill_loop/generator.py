@@ -34,8 +34,11 @@ def build_prompt(
     *,
     parent_code: str | None = None,
     parent_objective: float | None = None,
+    last_code: str | None = None,
+    last_objective: float | None = None,
     failed_code: str | None = None,
     error_code: str | None = None,
+    raw_reply: str | None = None,
     incumbent_code: str | None = None,
     incumbent_objective: float | None = None,
 ) -> str:
@@ -54,11 +57,20 @@ def build_prompt(
             raise ValueError("e1_requires_single_parent")
         if failed_code:
             raise ValueError("e1_must_not_carry_failure")
+        last_block = ""
+        if last_code and last_objective is not None:
+            last_block = (
+                "A later measured candidate was valid but not accepted as incumbent. "
+                "Keep this measurement as additional feedback; do not ignore it.\n"
+                f"Last candidate objective: {last_objective} (lower is better).\n"
+                f"Last candidate code:\n{last_code}\n"
+            )
         return (
             f"{TASK_DESCRIPTION}\n"
             "I have one existing algorithm with its measured development objective.\n"
             f"Dev objective: {parent_objective} (lower is better).\n"
             f"Code:\n{parent_code}\n"
+            f"{last_block}"
             "Use the measured objective as feedback. Preserve effective parts of this parent, "
             "then introduce one clear structural alternative. Do not reset to a generic default.\n"
             "First, describe your new algorithm and main steps in one sentence. "
@@ -66,8 +78,16 @@ def build_prompt(
             f"{_EXECUTION_CONTRACT}\n"
         )
     if operator == "m1":
-        if not failed_code or not error_code:
+        if not error_code:
             raise ValueError("m1_requires_failed_code_and_error")
+        if failed_code:
+            failed_section = f"Failed code:\n{failed_code}\n"
+        else:
+            reply = raw_reply if raw_reply else "# no code extracted"
+            failed_section = (
+                "Previous model reply (no executable code extracted):\n"
+                f"{reply}\n"
+            )
         incumbent = ""
         if incumbent_code and incumbent_objective is not None:
             incumbent = (
@@ -80,7 +100,7 @@ def build_prompt(
             "I have one algorithm that failed evaluation. Repair THAT failed code. "
             "Do not invent a score for the failed candidate.\n"
             f"Error code: {error_code}\n"
-            f"Failed code:\n{failed_code}\n"
+            f"{failed_section}"
             f"{incumbent}"
             "Change the failed program so it satisfies the function contract and returns a "
             "feasible node index (or 0 for an early depot return).\n"

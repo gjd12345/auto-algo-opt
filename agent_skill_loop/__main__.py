@@ -76,7 +76,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         endpoint=args.endpoint,
         api_key_env=args.api_key_env,
     )
-    loop = AgentLoop(path, transport=transport, parent_skill=parent, execution_mode="live")
+    loop = AgentLoop(
+        path,
+        transport=transport,
+        parent_skill=parent,
+        execution_mode="live",
+        request_timeout=args.request_timeout,
+    )
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
     return 0 if summary.status != "provider_failed" else 2
