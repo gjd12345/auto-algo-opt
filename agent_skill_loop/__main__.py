@@ -1,4 +1,4 @@
-"""CLI: prepare / smoke / run / evaluate-skill. No research-protocol flags."""
+"""CLI: prepare / smoke / run / evaluate-skill / import-skill. No research-protocol flags."""
 
 from __future__ import annotations
 
@@ -15,11 +15,13 @@ from agent_skill_loop.contracts import (
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_SEED,
     DEFAULT_SIZE,
+    DEFAULT_SOLVER_TIMEOUT,
     DEFAULT_SPLIT,
     DEFAULT_WALL_SECONDS,
     PROBLEM_CVRP,
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
+from agent_skill_loop.importer import import_skill
 from agent_skill_loop.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.base import ProblemSpec, get_problem
 from agent_skill_loop.skill_store import load_skill
@@ -117,6 +119,31 @@ def cmd_evaluate_skill(args: argparse.Namespace) -> int:
     return 0 if result.valid else 1
 
 
+def cmd_import_skill(args: argparse.Namespace) -> int:
+    path = _require_new_dir(Path(args.output))
+    has_git = bool(args.git_repo or args.git_ref or args.git_path)
+    if args.file and has_git:
+        raise SystemExit("choose either --file or --git-repo/--git-ref/--git-path")
+    if args.file:
+        source = {"kind": "file", "path": args.file}
+    elif args.git_repo and args.git_ref and args.git_path:
+        source = {"kind": "git", "repo": args.git_repo, "ref": args.git_ref, "path": args.git_path}
+    else:
+        raise SystemExit("provide --file or --git-repo/--git-ref/--git-path")
+    record = import_skill(
+        problem_id=args.problem,
+        output_dir=path,
+        source=source,
+        license=args.license,
+        seed=args.seed,
+        size=args.size,
+        count=args.count,
+        solver_timeout=args.solver_timeout,
+    )
+    print(json.dumps(record, ensure_ascii=False, indent=2))
+    return 0 if record["accepted"] else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="agent_skill_loop")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -151,6 +178,20 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--skill", required=True)
     evaluate.add_argument("--suite", required=True)
     evaluate.set_defaults(func=cmd_evaluate_skill)
+
+    imp = sub.add_parser("import-skill")
+    imp.add_argument("--problem", default=PROBLEM_CVRP)
+    imp.add_argument("--output", required=True)
+    imp.add_argument("--file")
+    imp.add_argument("--git-repo")
+    imp.add_argument("--git-ref")
+    imp.add_argument("--git-path")
+    imp.add_argument("--license", default="unspecified")
+    imp.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    imp.add_argument("--size", type=int, default=DEFAULT_SIZE)
+    imp.add_argument("--count", type=int, default=DEFAULT_COUNT)
+    imp.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
+    imp.set_defaults(func=cmd_import_skill)
     return parser
 
 
