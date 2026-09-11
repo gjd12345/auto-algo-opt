@@ -142,3 +142,58 @@ def test_baseline_is_valid_and_finite():
     assert result.valid is True
     assert result.objective is not None and result.objective > 0
     assert len(result.instance_objectives) == 3
+
+
+def test_array_tofile_is_forbidden():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    distance_matrix.tofile('leak.bin')\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "tofile"
+
+
+def test_np_alias_cannot_bypass_whitelist():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    lib = np\n"
+        "    _ = lib.random.rand()\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail in {"random", "rand"}
+
+
+def test_np_alias_chain_cannot_bypass_whitelist():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    a = np\n"
+        "    b = a\n"
+        "    _ = b.ix_(unvisited_nodes, unvisited_nodes)\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "ix_"
+
+
+def test_array_method_save_is_forbidden():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    demands.save('leak.npy')\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "save"

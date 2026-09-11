@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import threading
-import urllib.error
 
 import pytest
 
@@ -165,44 +164,34 @@ def test_live_transport_no_budget_keeps_behavior(monkeypatch):
     assert transport.request("prompt", purpose="generation", problem="cvrp_construct") == "ok"
 
 
-class _FakeResponse:
-    def __init__(self, body: bytes, status: int = 200) -> None:
-        self._body = body
-        self.status = status
-
-    def __enter__(self) -> "_FakeResponse":
-        return self
-
-    def __exit__(self, *exc) -> bool:
-        return False
-
-    def read(self, n: int = -1) -> bytes:
-        return self._body
-
-
-def _bridge(tmp_path, budget):
+def _bridge(tmp_path, budget, *, wall_seconds=None):
     return OpenAIPathBridge(
         "https://opencode.ai/zen/go/v1/chat/completions",
         "secret-key-123",
         "deepseek-v4-flash",
         budget=budget,
         request_log=tmp_path / "results" / "requests.jsonl",
+        wall_seconds=wall_seconds,
     )
 
 
 def test_bridge_budget_reserve_and_log(monkeypatch, tmp_path):
     budget = RequestBudget(1)
     bridge = _bridge(tmp_path, budget)
+    calls = []
 
-    def fake_urlopen(request, timeout=None):
-        return _FakeResponse(b'{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":1,"completion_tokens":2}}')
+    def fake_post(url, headers, data, timeout, *, max_bytes=None):
+        calls.append((url, timeout))
+        return 200, b'{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":1,"completion_tokens":2}}'
 
-    monkeypatch.setattr("eoh_frozen.llm_bridge.urlopen", fake_urlopen)
+    monkeypatch.setattr("eoh_frozen.llm_bridge.http_post_with_deadline", fake_post)
     assert bridge._forward("hello") == "ok"
     assert budget.used == 1
+    assert len(calls) == 1
     with pytest.raises(BudgetExhausted):
         bridge._forward("hello again")
     assert budget.rejected == 1
+    assert len(calls) == 1  # a rejected call is never forwarded
     log_path = tmp_path / "results" / "requests.jsonl"
     lines = log_path.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 2
@@ -211,6 +200,8 @@ def test_bridge_budget_reserve_and_log(monkeypatch, tmp_path):
     assert reserved["state"] == "reserved"
     assert complete["state"] == "complete"
     assert complete["status"] == 200
+    assert complete["input_tokens"] == 1
+    assert complete["output_tokens"] == 2
     for key in REQUIRED_EVENT_FIELDS:
         assert key in reserved
         assert key in complete
@@ -222,28 +213,29 @@ def test_bridge_budget_http_error(monkeypatch, tmp_path):
     budget = RequestBudget(2)
     bridge = _bridge(tmp_path, budget)
 
-    def fake_urlopen(request, timeout=None):
-        raise urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, None)
+    def fake_post(url, headers, data, timeout, *, max_bytes=None):
+        raise ProviderFailure("provider_auth_invalid", 401)
 
-    monkeypatch.setattr("eoh_frozen.llm_bridge.urlopen", fake_urlopen)
-    with pytest.raises(urllib.error.HTTPError):
+    monkeypatch.setattr("eoh_frozen.llm_bridge.http_post_with_deadline", fake_post)
+    with pytest.raises(ProviderFailure):
         bridge._forward("hello")
     log_path = tmp_path / "results" / "requests.jsonl"
     event = json.loads(log_path.read_text(encoding="utf-8").splitlines()[-1])
     assert event["state"] == "http_error"
     assert event["status"] == 401
     assert event["error_code"] == "provider_auth_invalid"
+    assert bridge.last_error == "provider_auth_invalid"
 
 
 def test_bridge_budget_timeout_is_killed_unknown(monkeypatch, tmp_path):
     budget = RequestBudget(2)
     bridge = _bridge(tmp_path, budget)
 
-    def fake_urlopen(request, timeout=None):
-        raise TimeoutError("timed out")
+    def fake_post(url, headers, data, timeout, *, max_bytes=None):
+        raise ProviderFailure("request_deadline", retryable=True)
 
-    monkeypatch.setattr("eoh_frozen.llm_bridge.urlopen", fake_urlopen)
-    with pytest.raises(TimeoutError):
+    monkeypatch.setattr("eoh_frozen.llm_bridge.http_post_with_deadline", fake_post)
+    with pytest.raises(ProviderFailure):
         bridge._forward("hello")
     log_path = tmp_path / "results" / "requests.jsonl"
     event = json.loads(log_path.read_text(encoding="utf-8").splitlines()[-1])
@@ -251,3 +243,20 @@ def test_bridge_budget_timeout_is_killed_unknown(monkeypatch, tmp_path):
     assert event["error_code"] == "request_deadline"
     assert event["input_tokens"] is None
     assert event["output_tokens"] is None
+
+
+def test_bridge_wall_deadline_refuses_without_outbound(monkeypatch, tmp_path):
+    budget = RequestBudget(10)
+    bridge = _bridge(tmp_path, budget, wall_seconds=0.0)
+    calls = []
+
+    def fake_post(url, headers, data, timeout, *, max_bytes=None):
+        calls.append(url)
+        return 200, b'{"choices":[{"message":{"content":"ok"}}]}'
+
+    monkeypatch.setattr("eoh_frozen.llm_bridge.http_post_with_deadline", fake_post)
+    with pytest.raises(BudgetExhausted):
+        bridge._forward("hello")
+    assert calls == []
+    assert budget.used == 0
+    assert bridge.last_error == "wall_time_exhausted"

@@ -91,6 +91,23 @@ _MATH_ATTRIBUTES = {
     "acos", "asin", "atan", "atan2", "ceil", "cos", "e", "exp", "fabs", "floor", "fmod",
     "hypot", "inf", "isfinite", "isclose", "log", "log10", "pi", "sin", "sqrt", "tan", "trunc",
 }
+# Public methods that stay forbidden on non-numpy receivers (plain lists, arrays,
+# objects). Numeric conveniences such as list.append or ndarray.mean stay allowed.
+_FORBIDDEN_METHODS = {
+    # file / serialization IO
+    "tofile", "tostring", "dump", "dumps", "save", "savez", "savez_compressed", "savetxt",
+    "load", "loads", "loadtxt", "fromfile", "frombuffer", "fromiter", "memmap", "genfromtxt",
+    "open", "close", "write", "writelines", "read", "readlines", "readline", "flush", "fileno",
+    "to_csv", "to_json", "to_pickle", "to_parquet", "to_excel", "to_hdf",
+    "read_csv", "read_json", "read_pickle", "read_parquet", "read_excel", "read_hdf",
+    # process / exec / reflection / network
+    "system", "popen", "spawn", "spawnl", "spawnv", "fork", "execv", "execl", "execve",
+    "getenv", "putenv", "environ", "getcwd", "chdir", "listdir", "scandir", "walk", "glob",
+    "remove", "unlink", "rmdir", "mkdir", "makedirs", "rename", "copyfile", "copytree",
+    "run", "call", "check_output", "check_call", "communicate", "terminate", "kill",
+    "send", "recv", "connect", "bind", "listen", "accept", "urlopen",
+    "getattr", "setattr", "delattr", "eval", "exec", "compile",
+}
 _KNOWN_ERRORS = {
     "unsupported_problem", "invalid_suite", "suite_hash_mismatch", "invalid_code",
     "missing_entrypoint", "forbidden_import", "forbidden_name", "forbidden_attribute",
@@ -162,9 +179,13 @@ def kill_process_tree(proc: subprocess.Popen) -> None:
     else:
         try:
             pgid = os.getpgid(pid)
+            own_pgid = os.getpgid(0)
         except OSError:
             pgid = None
-        if pgid:
+            own_pgid = None
+        # Only signal a group we own: the child is started in its own session
+        # (start_new_session=True), so a shared pgid means we must not killpg.
+        if pgid and own_pgid is not None and pgid != own_pgid:
             try:
                 os.killpg(pgid, signal.SIGKILL)
             except OSError:
@@ -210,6 +231,27 @@ def _make_restricted_import(allowed_roots: set[str]) -> Any:
     return restricted_import
 
 
+def _collect_np_math_aliases(tree: ast.Module, roots: set[str] | frozenset[str]) -> set[str]:
+    """Resolve simple ``alias = np`` / ``alias = math`` assignments, chains included."""
+    assignments: list[tuple[str, ast.expr]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            assignments.append((node.targets[0].id, node.value))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None:
+            assignments.append((node.target.id, node.value))
+    aliases: set[str] = set()
+    changed = True
+    while changed:
+        changed = False
+        for name, value in assignments:
+            if name in aliases:
+                continue
+            if isinstance(value, ast.Name) and (value.id in roots or value.id in aliases):
+                aliases.add(name)
+                changed = True
+    return aliases
+
+
 def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
     if not isinstance(code, str) or not code.strip() or len(code.encode("utf-8")) > 100_000:
         raise ValueError("invalid_code")
@@ -222,6 +264,7 @@ def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
     if spec.entrypoint not in function_names:
         raise ValueError("missing_entrypoint")
     allowed_aliases = {root: (None, "np" if root == "numpy" else root) for root in spec.allowed_import_roots}
+    np_math_aliases = _collect_np_math_aliases(tree, spec.np_math_roots)
     for node in ast.walk(tree):
         if isinstance(node, ast.AsyncFunctionDef):
             raise ValueError("forbidden_syntax")
@@ -238,7 +281,10 @@ def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
             if node.attr.startswith("_"):
                 raise EvalError("forbidden_attribute", node.attr)
             root = _attribute_root_id(node)
-            if root in spec.np_math_roots and node.attr not in spec.allowed_attributes:
+            if root in spec.np_math_roots or root in np_math_aliases:
+                if node.attr not in spec.allowed_attributes:
+                    raise EvalError("forbidden_attribute", node.attr)
+            elif node.attr in _FORBIDDEN_METHODS:
                 raise EvalError("forbidden_attribute", node.attr)
         elif isinstance(node, (ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise, ast.Delete, ast.Global, ast.Nonlocal)):
             raise ValueError("forbidden_syntax")
@@ -638,7 +684,7 @@ class SubprocessEvaluator:
         except (ValueError, TypeError) as exc:
             error = str(exc) if str(exc) in {"unsupported_problem", "invalid_suite", "suite_hash_mismatch", "invalid_code"} else "invalid_request"
             return EvaluationResult(False, None, (), None, error, time.monotonic() - started)
-        request = {"problem": spec.problem_id, "code": code, "suite": dict(suite)}
+        request = {"problem": spec.problem_id, "code": code, "suite": dict(suite), "parent_pid": os.getpid()}
         package_root = Path(__file__).resolve().parents[1]
         safe_env = {key: os.environ[key] for key in ("PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL") if key in os.environ}
         safe_env["PYTHONPATH"] = str(package_root)
@@ -647,6 +693,10 @@ class SubprocessEvaluator:
         try:
             with tempfile.TemporaryDirectory(prefix="skill-loop-") as temp_cwd:
                 try:
+                    popen_kwargs: dict[str, Any] = {}
+                    if os.name != "nt":
+                        # Own process group so a timeout killpg never touches the caller.
+                        popen_kwargs["start_new_session"] = True
                     proc = subprocess.Popen(
                         [sys.executable, "-m", "agent_skill_loop.eval_worker"],
                         stdin=subprocess.PIPE,
@@ -654,6 +704,7 @@ class SubprocessEvaluator:
                         stderr=subprocess.DEVNULL,
                         cwd=temp_cwd,
                         env=safe_env,
+                        **popen_kwargs,
                     )
                     payload = json.dumps(request, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
                     stdout, _ = proc.communicate(payload, timeout=self.timeout)

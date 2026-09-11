@@ -59,8 +59,13 @@ def test_fixed_policy_stagnation_streak():
 
 def test_fixed_policy_identity_is_stable():
     policy = FixedSearchPolicy()
-    assert policy.identity() == {"id": "fixed", "version": "v1"}
-    assert search_policy_identity() == {"id": "fixed", "version": "v1"}
+    expected = {
+        "id": "fixed",
+        "version": "v1",
+        "params": {"stagnation_e1_streak": STAGNATION_E1_STREAK},
+    }
+    assert policy.identity() == expected
+    assert search_policy_identity() == expected
 
 
 def test_search_policy_base_requires_implementation():

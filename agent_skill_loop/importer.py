@@ -107,6 +107,10 @@ def import_skill(
     if output_dir.exists():
         raise ValueError(f"output_directory_exists:{output_dir}")
     output_dir.mkdir(parents=True)
+    if suite is not None:
+        suite_problem = suite.get("problem") if isinstance(suite, Mapping) else None
+        if suite_problem != spec.problem_id:
+            raise ValueError(f"suite_problem_mismatch:{suite_problem}->{spec.problem_id}")
     suite_data = (
         dict(suite)
         if suite is not None

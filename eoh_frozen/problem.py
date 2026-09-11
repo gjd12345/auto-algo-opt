@@ -38,9 +38,10 @@ class FrozenCVRPConstruct(BaseProblem):
         self.fail_log = str(fail_log) if fail_log is not None else None
 
     def evaluate(self, code_string: str) -> float | None:
-        # Windows official _kill_process_tree cannot reach our grandchild (the
-        # SubprocessEvaluator worker); the inner must always self-terminate
-        # strictly before the outer solver timeout so the outer never orphans it.
+        # The inner worker carries a parent-pid watchdog (eval_worker.py) so it
+        # exits when this wrapper process is killed by the official outer
+        # timeout. The 1s margin below the outer solver timeout is defense in
+        # depth, not the primary cancellation mechanism.
         result = SubprocessEvaluator(timeout=max(0.5, float(self.timeout) - 1.0)).evaluate(code_string, self.suite)
         if not result.valid or result.objective is None:
             self._record_failure(code_string, result)

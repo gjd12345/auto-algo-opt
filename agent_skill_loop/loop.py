@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -24,13 +25,29 @@ from agent_skill_loop.contracts import (
     RunSummary,
     SkillVersion,
 )
-from agent_skill_loop.evaluator import SubprocessEvaluator
+from agent_skill_loop.evaluator import SubprocessEvaluator, evaluator_source_hash
 from agent_skill_loop.generator import PromptFeedback, build_prompt, extract
 from agent_skill_loop.journal import Journal, sha256_text
 from agent_skill_loop.policy import FixedSearchPolicy, search_policy_identity
 from agent_skill_loop.problems.base import ProblemSpec, get_problem
 from agent_skill_loop.report import write_run_report
 from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill
+
+
+def source_version() -> str | None:
+    """Best-effort git HEAD of the package repo; None when unavailable."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parents[1]), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if proc.returncode == 0:
+            return proc.stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return None
 
 
 class AgentLoop:
@@ -91,6 +108,7 @@ class AgentLoop:
         self.suite = suite or self.problem_spec.build_suite(seed, split=split, count=count, size=size)
         self.parent_skill = parent_skill
         self.model = model if model is not None else getattr(transport, "model", None)
+        self.request_budget = getattr(transport, "budget", None)
         self.llm_requests = 0
         self.solver_calls = 0
         self.generated_valid = 0
@@ -190,6 +208,8 @@ class AgentLoop:
     def _write_frozen_config(self) -> None:
         config = {
             "problem": self.problem_spec.problem_id,
+            "interface_version": self.problem_spec.interface_version,
+            "entrypoint": self.problem_spec.entrypoint,
             "seed": self.seed,
             "size": self.size,
             "count": self.count,
@@ -200,10 +220,14 @@ class AgentLoop:
             "request_timeout": self.request_timeout,
             "wall_seconds": self.wall_seconds,
             "suite_hash": self.suite["content_hash"],
+            "evaluator_hash": evaluator_source_hash(),
             "execution_mode": self.execution_mode,
             "model": self.model,
+            "provider_endpoint": getattr(self.transport, "endpoint", None),
+            "request_budget": None if self.request_budget is None else self.request_budget.max_requests,
             "parent_skill_id": None if self.parent_skill is None else self.parent_skill.version_id,
             "search_policy": search_policy_identity(),
+            "source_version": source_version(),
         }
         (self.output_dir / "config_frozen.json").write_text(
             json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -547,6 +571,9 @@ class AgentLoop:
             "exported_skill": None if self.best_generated is None else "exported_skill",
             "incumbent_path": None if self.incumbent is None else f"skills/{self.incumbent.version_id}",
         })
+        if self.request_budget is not None:
+            payload["http_requests"] = self.request_budget.used
+            payload["request_rejected"] = self.request_budget.rejected
         self.journal.append("run_finished", payload)
         (self.output_dir / "summary.json").write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -562,6 +589,8 @@ def prepare_output(path: Path, *, problem_id: str = PROBLEM_CVRP, **suite_kwargs
     suite = spec.build_suite(**suite_kwargs)
     config = {
         "problem": spec.problem_id,
+        "interface_version": spec.interface_version,
+        "entrypoint": spec.entrypoint,
         "seed": suite_kwargs.get("seed", DEFAULT_SEED),
         "size": suite_kwargs.get("size", DEFAULT_SIZE),
         "count": suite_kwargs.get("count", DEFAULT_COUNT),
@@ -572,7 +601,11 @@ def prepare_output(path: Path, *, problem_id: str = PROBLEM_CVRP, **suite_kwargs
         "request_timeout": DEFAULT_REQUEST_TIMEOUT,
         "wall_seconds": DEFAULT_WALL_SECONDS,
         "suite_hash": suite["content_hash"],
+        "evaluator_hash": evaluator_source_hash(),
+        "provider_endpoint": None,
+        "request_budget": None,
         "search_policy": search_policy_identity(),
+        "source_version": source_version(),
     }
     (path / "config_frozen.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     (path / "dev_suite.json").write_text(json.dumps(suite, indent=2) + "\n", encoding="utf-8")

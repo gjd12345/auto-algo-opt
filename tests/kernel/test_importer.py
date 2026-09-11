@@ -111,6 +111,19 @@ def test_import_missing_source_file_raises(tmp_path):
         )
 
 
+def test_import_rejects_suite_problem_mismatch(tmp_path):
+    from agent_skill_loop.problems.tsp import build_suite as tsp_build_suite
+
+    source = _write(tmp_path / "candidate.py", BASELINE_CODE)
+    with pytest.raises(ValueError, match="suite_problem_mismatch"):
+        import_skill(
+            problem_id="tsp_2opt",
+            output_dir=tmp_path / "x",
+            source={"kind": "file", "path": str(source)},
+            suite=tsp_build_suite(20260908, count=3, size=20),
+        )
+
+
 def test_import_skill_cli(tmp_path, capsys):
     from agent_skill_loop.__main__ import main
 

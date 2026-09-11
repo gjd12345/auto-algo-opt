@@ -18,8 +18,12 @@ POLICY_ID = "fixed"
 POLICY_VERSION = "v1"
 
 
-def search_policy_identity() -> dict[str, str]:
-    return {"id": POLICY_ID, "version": POLICY_VERSION}
+def search_policy_identity() -> dict[str, Any]:
+    return {
+        "id": POLICY_ID,
+        "version": POLICY_VERSION,
+        "params": {"stagnation_e1_streak": STAGNATION_E1_STREAK},
+    }
 
 
 class SearchPolicy:
@@ -44,8 +48,12 @@ class SearchPolicy:
     def structural_explore(self, *, operator: str, non_improving_e1: int) -> bool:
         raise NotImplementedError
 
-    def identity(self) -> dict[str, str]:
-        return {"id": self.policy_id, "version": self.policy_version}
+    def identity(self) -> dict[str, Any]:
+        return {
+            "id": self.policy_id,
+            "version": self.policy_version,
+            "params": {"stagnation_e1_streak": self.stagnation_e1_streak},
+        }
 
 
 class FixedSearchPolicy(SearchPolicy):

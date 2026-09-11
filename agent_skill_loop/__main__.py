@@ -24,6 +24,7 @@ from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.importer import import_skill
 from agent_skill_loop.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.base import ProblemSpec, get_problem
+from agent_skill_loop.request_budget import RequestBudget
 from agent_skill_loop.skill_store import load_skill, validate_skill_for_suite
 
 
@@ -88,11 +89,13 @@ def cmd_run(args: argparse.Namespace) -> int:
     path = _require_new_dir(Path(args.output))
     path.mkdir(parents=True)
     parent = load_skill(Path(args.parent_skill)) if args.parent_skill else None
+    budget = RequestBudget(args.max_llm_requests)
     transport = LiveTransport(
         args.model,
         timeout=args.request_timeout,
         endpoint=args.endpoint,
         api_key_env=args.api_key_env,
+        budget=budget,
     )
     try:
         loop = AgentLoop(

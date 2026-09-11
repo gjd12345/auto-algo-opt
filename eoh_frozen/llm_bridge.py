@@ -8,6 +8,11 @@ Every outbound POST is charged against a shared RequestBudget. EoH's
 InterfaceLocalLLM retries each call up to 5x; each retry is a real outbound
 attempt, so a budget-rejected call raises BudgetExhausted and the handler
 returns 500 {"error":"BudgetExhausted"} WITHOUT any outbound POST.
+
+Requests use the same cancellable subprocess transport as the main loop
+(http_post_with_deadline), so a slow trickle cannot outlive the total
+deadline, and a global wall clock refuses any further outbound attempt once
+the EoH run budget is exhausted.
 """
 
 from __future__ import annotations
@@ -21,23 +26,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
 
+from agent_skill_loop.client import ProviderFailure, http_post_with_deadline
 from agent_skill_loop.contracts import PROBLEM_CVRP
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget, RequestSlot
-
-
-def _is_timeout(exc: BaseException) -> bool:
-    if isinstance(exc, TimeoutError):
-        return True
-    if isinstance(exc, urllib.error.URLError):
-        reason = exc.reason
-        if isinstance(reason, TimeoutError):
-            return True
-        text = str(reason).lower()
-        if "timed out" in text or "timeout" in text:
-            return True
-    return False
 
 
 class OpenAIPathBridge:
@@ -50,6 +42,7 @@ class OpenAIPathBridge:
         timeout: float = 180.0,
         budget: RequestBudget | None = None,
         request_log: Path | None = None,
+        wall_seconds: float | None = None,
     ) -> None:
         self.target_url = target_url
         self.api_key = api_key
@@ -60,6 +53,8 @@ class OpenAIPathBridge:
         self._log_lock = threading.Lock()
         if self.request_log is not None:
             self.request_log.parent.mkdir(parents=True, exist_ok=True)
+        self.wall_deadline = time.monotonic() + float(wall_seconds) if wall_seconds is not None else None
+        self.last_error: str | None = None
         self.session_id = str(uuid.uuid4())
         self._server: ThreadingHTTPServer | None = None
         host = urlsplit(target_url).hostname or ""
@@ -124,7 +119,16 @@ class OpenAIPathBridge:
         event = self.budget.finish(slot, state, **fields)
         self._log_event(event)
 
+    def _remaining_wall(self) -> float | None:
+        if self.wall_deadline is None:
+            return None
+        return self.wall_deadline - time.monotonic()
+
     def _forward(self, prompt: str) -> str:
+        remaining = self._remaining_wall()
+        if remaining is not None and remaining <= 0:
+            self.last_error = "wall_time_exhausted"
+            raise BudgetExhausted("wall_time_exhausted")
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
@@ -141,73 +145,66 @@ class OpenAIPathBridge:
         }
         if self._opencode:
             headers["x-opencode-session"] = self.session_id
-        request = Request(
-            self.target_url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers=headers,
-            method="POST",
-        )
         slot: RequestSlot | None = None
         if self.budget is not None:
             slot = self.budget.reserve(purpose="eoh_generation", problem=PROBLEM_CVRP, model=self.model)
             if slot is None:
+                self.last_error = "request_budget_exhausted"
                 raise BudgetExhausted("request_budget_exhausted")
             self._log_event(slot.reserved_event)
         started = time.monotonic()
+        request_timeout = self.timeout
+        if remaining is not None:
+            request_timeout = min(self.timeout, max(0.05, remaining))
         try:
-            with urlopen(request, timeout=self.timeout) as response:
-                status = int(response.status)
-                parsed = json.loads(response.read(4 * 1024 * 1024).decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            error_code = "provider_auth_invalid" if exc.code in {401, 403} else f"http_{exc.code}"
+            status, raw = http_post_with_deadline(
+                self.target_url, headers, json.dumps(payload).encode("utf-8"), request_timeout
+            )
+            parsed = json.loads(raw.decode("utf-8"))
+        except ProviderFailure as exc:
             if slot is not None:
-                self._record(
-                    slot,
-                    "http_error",
-                    status=exc.code,
-                    error_code=error_code,
-                    elapsed_seconds=time.monotonic() - started,
-                )
-            raise
-        except Exception as exc:
-            if slot is not None:
-                if _is_timeout(exc):
+                if exc.error_code == "request_deadline":
                     self._record(
                         slot,
                         "killed_unknown",
                         error_code="request_deadline",
                         elapsed_seconds=time.monotonic() - started,
                     )
+                elif exc.error_code in {"provider_auth_invalid"} or str(exc.error_code).startswith("http_"):
+                    self._record(
+                        slot,
+                        "http_error",
+                        status=exc.status,
+                        error_code=exc.error_code,
+                        elapsed_seconds=time.monotonic() - started,
+                    )
                 else:
                     self._record(
                         slot,
                         "connectivity_failed",
-                        error_code="provider_connectivity_or_protocol_error",
+                        error_code=exc.error_code,
                         elapsed_seconds=time.monotonic() - started,
                     )
+            self.last_error = exc.error_code
+            raise
+        except Exception as exc:
+            if slot is not None:
+                self._record(
+                    slot,
+                    "connectivity_failed",
+                    error_code="provider_connectivity_or_protocol_error",
+                    elapsed_seconds=time.monotonic() - started,
+                )
+            self.last_error = "provider_connectivity_or_protocol_error"
             raise
         choices = parsed.get("choices") or []
         content = choices[0].get("message", {}).get("content") if choices else None
         if isinstance(content, str) and content.strip():
-            if slot is not None:
-                self._record(
-                    slot,
-                    "complete",
-                    status=status,
-                    error_code=None,
-                    elapsed_seconds=time.monotonic() - started,
-                )
+            self._record_complete(slot, status, started, parsed)
             return content
         reasoning = choices[0].get("message", {}).get("reasoning_content") if choices else None
         if isinstance(reasoning, str) and reasoning.strip():
-            if slot is not None:
-                self._record(
-                    slot,
-                    "complete",
-                    status=status,
-                    error_code=None,
-                    elapsed_seconds=time.monotonic() - started,
-                )
+            self._record_complete(slot, status, started, parsed)
             return reasoning
         if slot is not None:
             self._record(
@@ -217,4 +214,21 @@ class OpenAIPathBridge:
                 error_code="empty_or_nontext_completion",
                 elapsed_seconds=time.monotonic() - started,
             )
+        self.last_error = "empty_or_nontext_completion"
         raise RuntimeError("empty_or_nontext_completion")
+
+    def _record_complete(self, slot: RequestSlot | None, status: int, started: float, parsed: dict[str, Any]) -> None:
+        if slot is None:
+            return
+        usage = parsed.get("usage") or {}
+        in_tokens = usage.get("prompt_tokens")
+        out_tokens = usage.get("completion_tokens")
+        self._record(
+            slot,
+            "complete",
+            status=status,
+            error_code=None,
+            elapsed_seconds=time.monotonic() - started,
+            input_tokens=in_tokens if isinstance(in_tokens, int) else None,
+            output_tokens=out_tokens if isinstance(out_tokens, int) else None,
+        )
