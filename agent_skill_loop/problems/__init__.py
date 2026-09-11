@@ -1,4 +1,4 @@
-"""Problem contracts. First version ships CVRP only."""
+"""Problem contracts. Two constructive problems: CVRP and TSP."""
 
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, ProblemSpec, get_problem, register_problem
 from agent_skill_loop.problems.cvrp import (

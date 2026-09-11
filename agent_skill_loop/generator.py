@@ -26,6 +26,11 @@ _INTERFACE_BOUNDARY = (
     "INTERFACE BOUNDARY: only select_next_node is evolved. Route construction, "
     "capacity filtering, and objective computation stay in the evaluator."
 )
+_REPAIR_HINT = "returns a feasible node index (or 0 for an early depot return)"
+_STAGNATION_HINT = (
+    "Change one structural element (scoring combination, capacity remainder, "
+    "candidate ordering, or early depot return). Do not emit a near-copy."
+)
 
 
 @dataclass
@@ -102,7 +107,8 @@ def _function_spec(spec: ProblemSpec) -> str:
 def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: ProblemSpec | None = None) -> str:
     spec = spec or get_problem(PROBLEM_NAME)
     program_spec = _function_spec(spec)
-    header = f"{spec.task_description}\n{_INTERFACE_BOUNDARY}\n"
+    boundary = spec.interface_boundary or _INTERFACE_BOUNDARY
+    header = f"{spec.task_description}\n{boundary}\n"
     if operator == "i1":
         if feedback is not None:
             raise ValueError("i1_must_not_carry_parent_or_failure")
@@ -126,8 +132,7 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: Pr
             last_block = _last_block(feedback)
         explore = (
             "STAGNATION: previous measured e1 steps did not improve the incumbent. "
-            "Change one structural element (scoring combination, capacity remainder, "
-            "candidate ordering, or early depot return). Do not emit a near-copy.\n"
+            f"{spec.stagnation_hint or _STAGNATION_HINT}\n"
             if feedback.structural_explore
             else ""
         )
@@ -159,8 +164,8 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: Pr
             f"{body}"
             f"{incumbent}"
             f"EDIT TARGET: {feedback.edit_target}\n"
-            "Change the failed program so it satisfies the function contract and returns a "
-            "feasible node index (or 0 for an early depot return).\n"
+            "Change the failed program so it satisfies the function contract and "
+            f"{spec.repair_hint or _REPAIR_HINT}.\n"
             "First, describe your repaired algorithm and main steps in one sentence. "
             f"The description must be inside a brace. Next, {program_spec}\n"
             f"{_EXECUTION_CONTRACT}\n"

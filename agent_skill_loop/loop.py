@@ -399,7 +399,7 @@ class AgentLoop:
                 failed_hash = sha256_text(last.code or last.raw_response) if operator == "m1" and last is not None else None
                 structural = self.policy.structural_explore(operator=operator, non_improving_e1=self.non_improving_e1)
                 feedback = self._feedback(operator, last, structural_explore=structural)
-                prompt = build_prompt(operator, feedback)
+                prompt = build_prompt(operator, feedback, self.problem_spec)
                 prompt_path, prompt_hash = self.journal.save_prompt(attempt_id, prompt)
                 feedback_attempt_id = None if last is None or operator == "i1" else last.attempt_id
                 edit_target = None if feedback is None else feedback.edit_target
@@ -540,10 +540,10 @@ class AgentLoop:
         return summary
 
 
-def prepare_output(path: Path, **suite_kwargs) -> dict:
+def prepare_output(path: Path, *, problem_id: str = PROBLEM_CVRP, **suite_kwargs) -> dict:
     path = Path(path)
     path.mkdir(parents=True, exist_ok=False)
-    spec = get_problem(PROBLEM_CVRP)
+    spec = get_problem(problem_id)
     suite = spec.build_suite(**suite_kwargs)
     config = {
         "problem": spec.problem_id,

@@ -35,6 +35,16 @@ from agent_skill_loop.problems.cvrp import (
     finite_float,
     suite_hash,
 )
+from agent_skill_loop.problems.tsp import (
+    BASELINE_CODE as TSP_BASELINE_CODE,
+    ENTRYPOINT as TSP_ENTRYPOINT,
+    PROBLEM_NAME as TSP_PROBLEM_NAME,
+    SPLIT_OFFSETS as TSP_SPLIT_OFFSETS,
+    TASK_DESCRIPTION as TSP_TASK_DESCRIPTION,
+    TEMPLATE_PROGRAM as TSP_TEMPLATE_PROGRAM,
+    build_suite as tsp_build_suite,
+    suite_hash as tsp_suite_hash,
+)
 
 _SAFE_BUILTINS = {
     "abs": abs, "all": all, "any": any, "bool": bool, "dict": dict,
@@ -102,8 +112,10 @@ def evaluator_source_hash() -> str:
     """
     import hashlib
     parts = [Path(__file__).read_bytes()]
-    parts.append(Path(__file__).resolve().parent.joinpath("problems", "cvrp.py").read_bytes())
-    parts.append(Path(__file__).resolve().parent.joinpath("problems", "base.py").read_bytes())
+    parent = Path(__file__).resolve().parent
+    parts.append(parent.joinpath("problems", "cvrp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "base.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
 
 
@@ -258,6 +270,20 @@ def _validate_cvrp_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, An
     return instances, expected
 
 
+def _validate_tsp_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
+    split = suite.get("split") if isinstance(suite, Mapping) else None
+    if not isinstance(suite, Mapping) or suite.get("problem") != TSP_PROBLEM_NAME or not isinstance(split, str) or split not in TSP_SPLIT_OFFSETS:
+        raise ValueError("invalid_suite")
+    instances = suite.get("instances")
+    given_hash = suite.get("content_hash")
+    if not isinstance(instances, list) or not instances or not isinstance(given_hash, str):
+        raise ValueError("invalid_suite")
+    expected = tsp_suite_hash(TSP_PROBLEM_NAME, split, instances)
+    if given_hash != expected:
+        raise ValueError("suite_hash_mismatch")
+    return instances, expected
+
+
 def _validate_suite(spec: ProblemSpec, suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
     """Validate a suite against a resolved problem spec (problem-driven)."""
     return spec.validate_suite(suite)
@@ -317,6 +343,43 @@ def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> lis
         if set(route) - set(range(len(points))) or set(range(1, len(points))) - set(route) or any(route.count(node) != 1 for node in range(1, len(points))):
             raise ValueError("invalid_route")
         cost = float(sum(matrix[a, b] for a, b in zip(route, route[1:])))
+        if not math.isfinite(cost):
+            raise ValueError("nonfinite_objective")
+        objectives.append(cost)
+    return objectives
+
+
+def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+    """Closed-tour TSP construction. No capacity; every city visited once."""
+    objectives = []
+    for instance in instances:
+        coordinates = instance.get("coordinates")
+        if not isinstance(coordinates, list) or len(coordinates) < 2:
+            raise ValueError("invalid_instance")
+        points = coordinates
+        matrix = _distance_matrix(points)
+        node_count = len(points)
+        unvisited = set(range(1, node_count))
+        tour = [0]
+        current = 0
+        steps = 0
+        while unvisited:
+            steps += 1
+            if steps > node_count * node_count:
+                raise ValueError("invalid_route")
+            candidate_nodes = np.asarray(sorted(unvisited), dtype=int)
+            candidate_matrix = matrix.copy()
+            result = fn(current, 0, candidate_nodes, candidate_matrix)
+            if not np.array_equal(candidate_nodes, np.asarray(sorted(unvisited), dtype=int)) or not np.array_equal(candidate_matrix, matrix):
+                raise ValueError("candidate_mutated_input")
+            nxt = _as_index(result, set(unvisited))
+            if nxt is None:
+                raise ValueError("invalid_return")
+            tour.append(nxt)
+            unvisited.remove(nxt)
+            current = nxt
+        tour.append(0)
+        cost = float(sum(matrix[a, b] for a, b in zip(tour, tour[1:])))
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
         objectives.append(cost)
@@ -424,8 +487,9 @@ class SubprocessEvaluator:
 
     def evaluate(self, code: str, suite: Mapping[str, Any]) -> EvaluationResult:
         started = time.monotonic()
-        spec = get_problem(PROBLEM_NAME)
         try:
+            problem_id = suite.get("problem") if isinstance(suite, Mapping) else None
+            spec = get_problem(problem_id)
             instances, expected_hash = _validate_suite(spec, suite)
             if not isinstance(code, str):
                 raise ValueError("invalid_code")
@@ -519,3 +583,39 @@ CVRP_SPEC = ProblemSpec(
 )
 
 register_problem(CVRP_SPEC)
+
+
+# --- TSP spec registration ---------------------------------------------------
+# Second problem on the same loop: closed-tour construction, no capacity, its
+# own split offsets and suite hash. Shares the execution whitelist.
+TSP_SPEC = ProblemSpec(
+    problem_id=TSP_PROBLEM_NAME,
+    entrypoint=TSP_ENTRYPOINT,
+    interface_version="v1",
+    task_description=TSP_TASK_DESCRIPTION,
+    template_program=TSP_TEMPLATE_PROGRAM,
+    baseline_code=TSP_BASELINE_CODE,
+    objective_direction="minimize",
+    split_offsets=TSP_SPLIT_OFFSETS,
+    build_suite=tsp_build_suite,
+    suite_hash=tsp_suite_hash,
+    validate_suite=_validate_tsp_suite,
+    evaluate_instances=_evaluate_tsp_instances,
+    safe_builtins=_SAFE_BUILTINS,
+    forbidden_names=frozenset(_FORBIDDEN_NAMES),
+    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    math_attributes=frozenset(_MATH_ATTRIBUTES),
+    np_math_roots=frozenset(_NP_MATH_ROOTS),
+    allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+    interface_boundary=(
+        "INTERFACE BOUNDARY: only select_next_node is evolved. Tour construction "
+        "and objective computation stay in the evaluator."
+    ),
+    repair_hint="returns the index of a currently unvisited city",
+    stagnation_hint=(
+        "Change one structural element (scoring combination, candidate ordering, "
+        "or distance-lookahead). Do not emit a near-copy."
+    ),
+)
+
+register_problem(TSP_SPEC)

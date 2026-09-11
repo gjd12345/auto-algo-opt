@@ -47,6 +47,11 @@ class ProblemSpec:
     np_math_roots: frozenset[str]
     allowed_import_roots: frozenset[str]
 
+    # optional prompt fragments; empty means the generator's CVRP defaults
+    interface_boundary: str = ""
+    repair_hint: str = ""
+    stagnation_hint: str = ""
+
     @property
     def allowed_attributes(self) -> frozenset[str]:
         return self.numpy_attributes | self.math_attributes

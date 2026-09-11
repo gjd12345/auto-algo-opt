@@ -21,8 +21,7 @@ from agent_skill_loop.contracts import (
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.loop import AgentLoop, prepare_output
-from agent_skill_loop.problems.base import get_problem
-from agent_skill_loop.problems.cvrp import BASELINE_CODE
+from agent_skill_loop.problems.base import ProblemSpec, get_problem
 from agent_skill_loop.skill_store import load_skill
 
 
@@ -32,21 +31,21 @@ def _require_new_dir(path: Path) -> Path:
     return path
 
 
-def _valid_fixture_response() -> str:
-    farthest = BASELINE_CODE.replace("argmin", "argmax")
+def _valid_fixture_response(spec: ProblemSpec) -> str:
+    farthest = spec.baseline_code.replace("argmin", "argmax")
     return (
-        "{Farthest-neighbor constructive heuristic for CVRP}\n"
+        "{Farthest-neighbor constructive heuristic}\n"
         "```python\n"
         f"{farthest.strip()}\n"
         "```\n"
     )
 
 
-def _invalid_fixture_response() -> str:
+def _invalid_fixture_response(spec: ProblemSpec) -> str:
     return (
         "{Broken return type}\n"
         "```python\n"
-        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        f"def {spec.entrypoint}(*args, **kwargs):\n"
         "    return 'nope'\n"
         "```\n"
     )
@@ -54,16 +53,28 @@ def _invalid_fixture_response() -> str:
 
 def cmd_prepare(args: argparse.Namespace) -> int:
     path = _require_new_dir(Path(args.output))
-    prepare_output(path, seed=args.seed, split=DEFAULT_SPLIT, count=args.count, size=args.size)
+    prepare_output(
+        path,
+        problem_id=args.problem,
+        seed=args.seed,
+        split=DEFAULT_SPLIT,
+        count=args.count,
+        size=args.size,
+    )
     print(path / "config_frozen.json")
     return 0
 
 
 def cmd_smoke(args: argparse.Namespace) -> int:
+    spec = get_problem(args.problem)
     path = _require_new_dir(Path(args.output))
     path.mkdir(parents=True)
-    transport = FixtureTransport([_valid_fixture_response(), _invalid_fixture_response(), _valid_fixture_response()])
-    loop = AgentLoop(path, transport=transport, execution_mode="fixture")
+    transport = FixtureTransport([
+        _valid_fixture_response(spec),
+        _invalid_fixture_response(spec),
+        _valid_fixture_response(spec),
+    ])
+    loop = AgentLoop(path, transport=transport, execution_mode="fixture", problem_spec=spec)
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
     return 0 if summary.loop_completed else 1
@@ -71,6 +82,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
 
 def cmd_run(args: argparse.Namespace) -> int:
     load_local_env()
+    spec = get_problem(args.problem)
     path = _require_new_dir(Path(args.output))
     path.mkdir(parents=True)
     parent = load_skill(Path(args.parent_skill)) if args.parent_skill else None
@@ -90,6 +102,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         wall_seconds=args.wall_seconds,
         request_timeout=args.request_timeout,
         model=args.model,
+        problem_spec=spec,
     )
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
@@ -144,10 +157,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     problem_id = getattr(args, "problem", PROBLEM_CVRP)
-    if problem_id != PROBLEM_CVRP:
-        raise SystemExit("first version supports only cvrp_construct")
-    # Resolve from the spec registry so the guard and the loop agree on identity.
-    get_problem(problem_id)
+    try:
+        # Resolve from the spec registry so the CLI and the loop agree on identity.
+        get_problem(problem_id)
+    except ValueError:
+        raise SystemExit(f"unknown problem: {problem_id}") from None
     return int(args.func(args))
 
 
