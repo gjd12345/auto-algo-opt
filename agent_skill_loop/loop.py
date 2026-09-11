@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from agent_skill_loop.client import ProviderFailure
 from agent_skill_loop.contracts import (
@@ -59,6 +59,21 @@ class AgentLoop:
         self.transport = transport
         self.execution_mode = execution_mode
         self.problem_spec = problem_spec if problem_spec is not None else get_problem(PROBLEM_CVRP)
+        if suite is not None:
+            suite_problem = suite.get("problem") if isinstance(suite, Mapping) else None
+            if suite_problem != self.problem_spec.problem_id:
+                raise ValueError(
+                    f"suite_problem_mismatch:{suite_problem}->{self.problem_spec.problem_id}"
+                )
+        if parent_skill is not None:
+            if parent_skill.problem != self.problem_spec.problem_id:
+                raise ValueError(
+                    f"parent_problem_mismatch:{parent_skill.problem}->{self.problem_spec.problem_id}"
+                )
+            if parent_skill.entrypoint != self.problem_spec.entrypoint:
+                raise ValueError(
+                    f"parent_entrypoint_mismatch:{parent_skill.entrypoint}->{self.problem_spec.entrypoint}"
+                )
         self.policy = FixedSearchPolicy()
         self.candidate_attempts_limit = candidate_attempts
         self.max_llm_requests = max_llm_requests
@@ -164,7 +179,7 @@ class AgentLoop:
             evaluation=evaluation,
             parent_version_id=None,
             source_attempt_id=None,
-            description="deterministic nearest-neighbor baseline",
+            description=self.problem_spec.baseline_description or "deterministic nearest-neighbor baseline",
         )
         self._store(baseline, "baseline", generated=False)
         if not baseline.valid:

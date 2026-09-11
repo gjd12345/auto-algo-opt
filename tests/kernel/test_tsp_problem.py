@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from agent_skill_loop.client import FixtureTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
@@ -43,6 +45,16 @@ def test_tsp_suite_is_deterministic_and_distinct_from_cvrp():
 
     cvrp = cvrp_build_suite(DEFAULT_SEED, split="dev_train", count=3, size=20)
     assert first["content_hash"] != cvrp["content_hash"]
+
+
+def test_tsp_suite_rejects_size_below_two():
+    with pytest.raises(ValueError, match="invalid_size"):
+        build_suite(DEFAULT_SEED, size=1)
+
+
+def test_tsp_spec_has_baseline_description():
+    spec = get_problem("tsp_construct")
+    assert spec.baseline_description
 
 
 def test_tsp_baseline_evaluates_to_finite_objective():

@@ -52,6 +52,8 @@ BASELINE_CODE = """def select_next_node(current_node: int, depot: int, unvisited
     return unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])]
 """
 
+BASELINE_DESCRIPTION = "deterministic nearest-neighbor baseline"
+
 
 def suite_hash(problem: str, split: str, instances: list[Mapping[str, Any]]) -> str:
     payload = {"problem": problem, "split": split, "instances": instances}

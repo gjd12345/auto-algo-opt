@@ -24,7 +24,7 @@ from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.importer import import_skill
 from agent_skill_loop.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.base import ProblemSpec, get_problem
-from agent_skill_loop.skill_store import load_skill
+from agent_skill_loop.skill_store import load_skill, validate_skill_for_suite
 
 
 def _require_new_dir(path: Path) -> Path:
@@ -94,18 +94,21 @@ def cmd_run(args: argparse.Namespace) -> int:
         endpoint=args.endpoint,
         api_key_env=args.api_key_env,
     )
-    loop = AgentLoop(
-        path,
-        transport=transport,
-        parent_skill=parent,
-        execution_mode="live",
-        candidate_attempts=args.candidate_attempts,
-        max_llm_requests=args.max_llm_requests,
-        wall_seconds=args.wall_seconds,
-        request_timeout=args.request_timeout,
-        model=args.model,
-        problem_spec=spec,
-    )
+    try:
+        loop = AgentLoop(
+            path,
+            transport=transport,
+            parent_skill=parent,
+            execution_mode="live",
+            candidate_attempts=args.candidate_attempts,
+            max_llm_requests=args.max_llm_requests,
+            wall_seconds=args.wall_seconds,
+            request_timeout=args.request_timeout,
+            model=args.model,
+            problem_spec=spec,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
     summary = loop.run()
     print(json.dumps(summary.as_dict(), indent=2))
     return 0 if summary.status != "provider_failed" else 2
@@ -114,6 +117,18 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_evaluate_skill(args: argparse.Namespace) -> int:
     skill = load_skill(Path(args.skill))
     suite = json.loads(Path(args.suite).read_text(encoding="utf-8"))
+    mismatch = validate_skill_for_suite(skill, suite)
+    if mismatch:
+        print(json.dumps({
+            "valid": False,
+            "objective": None,
+            "instance_objectives": [],
+            "suite_hash": suite.get("content_hash") if isinstance(suite, dict) else None,
+            "error_code": mismatch,
+            "error_detail": None,
+            "elapsed_seconds": 0.0,
+        }, indent=2))
+        return 1
     result = SubprocessEvaluator().evaluate(skill.code, suite)
     print(json.dumps(result.as_dict(), indent=2))
     return 0 if result.valid else 1

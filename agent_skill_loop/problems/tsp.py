@@ -53,6 +53,8 @@ BASELINE_CODE = """def select_next_node(current_node: int, start_node: int, unvi
     return unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])]
 """
 
+BASELINE_DESCRIPTION = "deterministic nearest-neighbor baseline"
+
 
 def suite_hash(problem: str, split: str, instances: list[Mapping[str, Any]]) -> str:
     payload = {"problem": problem, "split": split, "instances": instances}
@@ -68,7 +70,7 @@ def build_suite(seed: int, split: str = "dev_train", count: int = 3, size: int =
         raise ValueError("invalid_seed")
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 32:
         raise ValueError("invalid_count")
-    if isinstance(size, bool) or not isinstance(size, int) or not 1 <= size <= 2000:
+    if isinstance(size, bool) or not isinstance(size, int) or not 2 <= size <= 2000:
         raise ValueError("invalid_size")
     rng = random.Random(seed + SPLIT_OFFSETS[split])
     instances: list[dict[str, Any]] = []

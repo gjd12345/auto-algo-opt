@@ -58,6 +58,7 @@ def write_run_report(output_dir: Path, summary: dict[str, Any]) -> Path:
                 f"- instance_objectives: {evaluation.get('instance_objectives')}",
                 f"- error_code: {evaluation.get('error_code')}",
                 f"- error_detail: {evaluation.get('error_detail')}",
+                f"- metrics: {evaluation.get('metrics')}",
                 f"- accepted_as_incumbent: {result.get('accepted_as_incumbent')}",
                 f"- accept_reason: {result.get('accept_reason')}",
                 f"- model: {result.get('model')}",

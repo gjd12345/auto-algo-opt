@@ -36,8 +36,9 @@ class ProblemSpec:
     suite_hash: Callable[..., str]
     validate_suite: Callable[[Mapping[str, Any]], tuple[list[Mapping[str, Any]], str]]
 
-    # per-instance objective evaluation used by the worker
-    evaluate_instances: Callable[[Any, list[Mapping[str, Any]]], list[float]]
+    # per-instance objective evaluation used by the worker:
+    # returns (objectives, metrics) where metrics may be None
+    evaluate_instances: Callable[[Any, list[Mapping[str, Any]]], tuple[list[float], dict[str, Any] | None]]
 
     # execution capability whitelist
     safe_builtins: Mapping[str, Any]
@@ -51,6 +52,7 @@ class ProblemSpec:
     interface_boundary: str = ""
     repair_hint: str = ""
     stagnation_hint: str = ""
+    baseline_description: str = ""
 
     @property
     def allowed_attributes(self) -> frozenset[str]:

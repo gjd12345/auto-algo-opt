@@ -13,8 +13,28 @@ from typing import Any, Mapping
 from agent_skill_loop.contracts import SKILL_SCHEMA, SkillVersion
 from agent_skill_loop.evaluator import evaluator_source_hash
 from agent_skill_loop.policy import POLICY_ID, POLICY_VERSION
+from agent_skill_loop.problems.base import get_problem
 
 SKILL_REF_SCHEMA = "algorithm-skill-ref/v1"
+
+
+def validate_skill_for_suite(skill: SkillVersion, suite: Mapping[str, Any]) -> str | None:
+    """Return an error code when a skill does not match the suite's problem/interface.
+
+    Identity is explicit: a skill is only evaluable against a suite of the same
+    problem and the same entrypoint. Re-labelling a skill to fit another
+    interface is never allowed.
+    """
+    problem_id = suite.get("problem") if isinstance(suite, Mapping) else None
+    if skill.problem != problem_id:
+        return "skill_problem_mismatch"
+    try:
+        spec = get_problem(problem_id)
+    except ValueError:
+        return "unsupported_problem"
+    if skill.entrypoint != spec.entrypoint:
+        return "skill_entrypoint_mismatch"
+    return None
 
 
 def sha256_text(text: str) -> str:

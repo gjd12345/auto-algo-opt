@@ -49,6 +49,25 @@ def test_tsp2_baseline_is_valid_and_finite():
     assert len(result.instance_objectives) == 3
 
 
+def test_tsp2_records_operation_metrics():
+    suite = build_suite(DEFAULT_SEED, count=3, size=20)
+    result = SubprocessEvaluator(timeout=10.0).evaluate(BASELINE_CODE, suite)
+    assert result.valid is True
+    metrics = result.metrics
+    assert isinstance(metrics, dict)
+    assert metrics["operation_budget_per_instance"] == [20, 20, 20]
+    assert all(0 <= moves <= 20 for moves in metrics["moves_applied"])
+    assert all(scanned >= 0 for scanned in metrics["pairs_scanned"])
+    assert metrics["total_moves_applied"] == sum(metrics["moves_applied"])
+    assert metrics["total_pairs_scanned"] == sum(metrics["pairs_scanned"])
+
+
+def test_tsp2_spec_has_baseline_description():
+    spec = get_problem("tsp_2opt")
+    assert spec.baseline_description
+    assert "2-opt" in spec.baseline_description
+
+
 def test_tsp2_is_bounded_for_constant_choice():
     """A trivial always-first rule must still terminate with a finite objective."""
     suite = build_suite(DEFAULT_SEED, count=2, size=12)
@@ -126,3 +145,18 @@ def test_tsp2_fixture_smoke_exports_and_reevaluates(tmp_path):
     second = SubprocessEvaluator(timeout=10.0).evaluate(skill.code, suite)
     assert first.valid is True
     assert first.objective == second.objective
+
+    baseline = load_skill(out / "skills" / "baseline")
+    assert baseline.description == spec.baseline_description
+
+    events = [
+        json.loads(line)
+        for line in (out / "run" / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    valid_attempts = [
+        event["payload"]
+        for event in events
+        if event["kind"] == "attempt_result" and event["payload"]["evaluation"]["valid"]
+    ]
+    assert valid_attempts
+    assert valid_attempts[0]["evaluation"]["metrics"]["operation_budget_per_instance"]

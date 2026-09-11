@@ -26,6 +26,7 @@ from agent_skill_loop.contracts import EvaluationResult
 from agent_skill_loop.problems.base import ProblemSpec, get_problem, register_problem
 from agent_skill_loop.problems.cvrp import (
     BASELINE_CODE,
+    BASELINE_DESCRIPTION,
     ENTRYPOINT,
     PROBLEM_NAME,
     SPLIT_OFFSETS,
@@ -37,6 +38,7 @@ from agent_skill_loop.problems.cvrp import (
 )
 from agent_skill_loop.problems.tsp import (
     BASELINE_CODE as TSP_BASELINE_CODE,
+    BASELINE_DESCRIPTION as TSP_BASELINE_DESCRIPTION,
     ENTRYPOINT as TSP_ENTRYPOINT,
     PROBLEM_NAME as TSP_PROBLEM_NAME,
     SPLIT_OFFSETS as TSP_SPLIT_OFFSETS,
@@ -47,6 +49,7 @@ from agent_skill_loop.problems.tsp import (
 )
 from agent_skill_loop.problems.tsp_2opt import (
     BASELINE_CODE as TSP2_BASELINE_CODE,
+    BASELINE_DESCRIPTION as TSP2_BASELINE_DESCRIPTION,
     ENTRYPOINT as TSP2_ENTRYPOINT,
     PROBLEM_NAME as TSP2_PROBLEM_NAME,
     SPLIT_OFFSETS as TSP2_SPLIT_OFFSETS,
@@ -322,7 +325,7 @@ def _distance_matrix(points: list[list[float]]):
     return np.sqrt(np.sum(delta * delta, axis=2))
 
 
-def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], None]:
     objectives = []
     for instance in instances:
         depot, customers, demands, capacity = (instance.get(key) for key in ("depot", "customer_coordinates", "demands", "capacity"))
@@ -371,10 +374,10 @@ def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> lis
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
         objectives.append(cost)
-    return objectives
+    return objectives, None
 
 
-def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], None]:
     """Closed-tour TSP construction. No capacity; every city visited once."""
     objectives = []
     for instance in instances:
@@ -408,7 +411,7 @@ def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
         objectives.append(cost)
-    return objectives
+    return objectives, None
 
 
 def _nearest_neighbour_tour(matrix: Any, node_count: int) -> list[int]:
@@ -423,16 +426,21 @@ def _nearest_neighbour_tour(matrix: Any, node_count: int) -> list[int]:
     return tour
 
 
-def _tsp2_candidates(tour: list[int], matrix: Any) -> tuple[list[int], list[int], list[float]]:
-    """All strictly improving 2-opt moves for a closed tour, in stable order."""
+def _tsp2_candidates(tour: list[int], matrix: Any) -> tuple[list[int], list[int], list[float], int]:
+    """All strictly improving 2-opt moves for a closed tour, in stable order.
+
+    Also returns the number of candidate pairs scanned (enumeration workload).
+    """
     node_count = len(tour)
     starts: list[int] = []
     ends: list[int] = []
     deltas: list[float] = []
+    pairs_scanned = 0
     for i in range(1, node_count - 1):
         for j in range(i + 1, node_count):
             if i == 1 and j == node_count - 1:
                 continue  # reversing the whole tour is a no-op for a closed tour
+            pairs_scanned += 1
             prev, first = tour[i - 1], tour[i]
             last, nxt = tour[j], tour[(j + 1) % node_count]
             delta = float(
@@ -442,17 +450,24 @@ def _tsp2_candidates(tour: list[int], matrix: Any) -> tuple[list[int], list[int]
                 starts.append(i)
                 ends.append(j)
                 deltas.append(delta)
-    return starts, ends, deltas
+    return starts, ends, deltas, pairs_scanned
 
 
-def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any]]:
     """Bounded 2-opt refinement of a fixed nearest-neighbour tour.
 
     The evaluator owns the initial tour, the improving-move enumeration, the
     move application, and the objective. The evolved entrypoint only selects
-    which candidate move to apply, at most ``size`` times per instance.
+    which candidate move to apply, at most one operation per step and at most
+    ``n`` operations per instance (n = city count). The per-instance operation
+    budget, moves applied, and enumeration workload are returned as metrics so
+    they can be recorded next to the wall-clock time.
     """
     objectives = []
+    budget_per_instance: list[int] = []
+    moves_applied: list[int] = []
+    improving_offered: list[int] = []
+    pairs_scanned: list[int] = []
     for instance in instances:
         coordinates = instance.get("coordinates")
         if not isinstance(coordinates, list) or len(coordinates) < 3:
@@ -461,8 +476,13 @@ def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> lis
         node_count = len(coordinates)
         tour = _nearest_neighbour_tour(matrix, node_count)
         budget = node_count
-        for _ in range(budget):
-            starts, ends, deltas = _tsp2_candidates(tour, matrix)
+        moves = 0
+        offered = 0
+        scanned = 0
+        for step in range(budget):
+            starts, ends, deltas, pairs = _tsp2_candidates(tour, matrix)
+            scanned += pairs
+            offered += len(starts)
             if not starts:
                 break
             move_start = np.asarray(starts, dtype=int)
@@ -471,7 +491,7 @@ def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> lis
             tour_array = np.asarray(tour, dtype=int)
             tour_arg, matrix_arg = tour_array.copy(), matrix.copy()
             start_arg, end_arg, delta_arg = move_start.copy(), move_end.copy(), move_delta.copy()
-            result = fn(tour_arg, matrix_arg, start_arg, end_arg, delta_arg, budget - _)
+            result = fn(tour_arg, matrix_arg, start_arg, end_arg, delta_arg, budget - step)
             if (
                 not np.array_equal(tour_arg, tour_array)
                 or not np.array_equal(matrix_arg, matrix)
@@ -485,14 +505,27 @@ def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> lis
                 raise ValueError("invalid_return")
             i, j = starts[pick], ends[pick]
             tour[i:j + 1] = reversed(tour[i:j + 1])
+            moves += 1
         cost = float(sum(matrix[a, b] for a, b in zip(tour, tour[1:] + tour[:1])))
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
         objectives.append(cost)
-    return objectives
+        budget_per_instance.append(budget)
+        moves_applied.append(moves)
+        improving_offered.append(offered)
+        pairs_scanned.append(scanned)
+    metrics = {
+        "operation_budget_per_instance": budget_per_instance,
+        "moves_applied": moves_applied,
+        "improving_candidates_offered": improving_offered,
+        "pairs_scanned": pairs_scanned,
+        "total_moves_applied": sum(moves_applied),
+        "total_pairs_scanned": sum(pairs_scanned),
+    }
+    return objectives, metrics
 
 
-def _evaluate_problem(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+def _evaluate_problem(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any] | None]:
     """Per-instance objective evaluation dispatched by problem spec."""
     return spec.evaluate_instances(fn, instances)
 
@@ -518,7 +551,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         if not callable(fn):
             raise ValueError("missing_entrypoint")
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-            per_instance = _evaluate_problem(spec, fn, instances)
+            per_instance, metrics = _evaluate_problem(spec, fn, instances)
         objective = float(sum(per_instance) / len(per_instance))
         if not math.isfinite(objective) or any(not math.isfinite(float(x)) for x in per_instance):
             raise ValueError("nonfinite_objective")
@@ -530,6 +563,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
             "error_code": None,
             "error_detail": None,
             "elapsed_seconds": time.monotonic() - started,
+            "metrics": metrics,
         }
     except EvalError as exc:
         return {
@@ -574,6 +608,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
 
 def _result_from_dict(payload: Mapping[str, Any]) -> EvaluationResult:
     values = payload.get("instance_objectives") or []
+    metrics = payload.get("metrics")
     return EvaluationResult(
         valid=bool(payload.get("valid")),
         objective=payload.get("objective"),
@@ -582,6 +617,7 @@ def _result_from_dict(payload: Mapping[str, Any]) -> EvaluationResult:
         error_code=payload.get("error_code"),
         elapsed_seconds=float(payload.get("elapsed_seconds") or 0.0),
         error_detail=payload.get("error_detail"),
+        metrics=metrics if isinstance(metrics, dict) else None,
     )
 
 
@@ -644,6 +680,8 @@ class SubprocessEvaluator:
                 raise ValueError
             if not isinstance(result.get("valid"), bool):
                 raise ValueError
+            if "metrics" in result and result["metrics"] is not None and not isinstance(result["metrics"], dict):
+                raise ValueError
             if result["valid"]:
                 values = result.get("instance_objectives")
                 objective = result.get("objective")
@@ -686,6 +724,7 @@ CVRP_SPEC = ProblemSpec(
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+    baseline_description=BASELINE_DESCRIPTION,
 )
 
 register_problem(CVRP_SPEC)
@@ -722,6 +761,7 @@ TSP_SPEC = ProblemSpec(
         "Change one structural element (scoring combination, candidate ordering, "
         "or distance-lookahead). Do not emit a near-copy."
     ),
+    baseline_description=TSP_BASELINE_DESCRIPTION,
 )
 
 register_problem(TSP_SPEC)
@@ -760,6 +800,7 @@ TSP2_SPEC = ProblemSpec(
         "Change one structural element (move scoring, lookahead, or tie-breaking). "
         "Do not emit a near-copy."
     ),
+    baseline_description=TSP2_BASELINE_DESCRIPTION,
 )
 
 register_problem(TSP2_SPEC)

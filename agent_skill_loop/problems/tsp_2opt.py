@@ -62,6 +62,11 @@ BASELINE_CODE = """def select_2opt_move(tour: np.ndarray, distance_matrix: np.nd
     return int(np.argmin(move_delta))
 """
 
+BASELINE_DESCRIPTION = (
+    "nearest-neighbour initial tour refined by bounded best-improvement 2-opt "
+    "(one improving move per step, at most n operations per instance, n = city count)"
+)
+
 
 def suite_hash(problem: str, split: str, instances: list[Mapping[str, Any]]) -> str:
     payload = {"problem": problem, "split": split, "instances": instances}

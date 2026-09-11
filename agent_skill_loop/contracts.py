@@ -45,9 +45,10 @@ class EvaluationResult:
     error_code: str | None
     elapsed_seconds: float
     error_detail: str | None = None
+    metrics: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "valid": self.valid,
             "objective": self.objective,
             "instance_objectives": list(self.instance_objectives),
@@ -56,6 +57,9 @@ class EvaluationResult:
             "error_detail": self.error_detail,
             "elapsed_seconds": round(self.elapsed_seconds, 4),
         }
+        if self.metrics is not None:
+            payload["metrics"] = self.metrics
+        return payload
 
 
 @dataclass(frozen=True)
