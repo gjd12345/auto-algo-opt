@@ -1,4 +1,4 @@
-"""Problem contracts. Two constructive problems: CVRP and TSP."""
+"""Problem contracts: CVRP construct, TSP construct, and TSP 2-opt local search."""
 
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, ProblemSpec, get_problem, register_problem
 from agent_skill_loop.problems.cvrp import (

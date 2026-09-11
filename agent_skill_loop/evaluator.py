@@ -45,6 +45,16 @@ from agent_skill_loop.problems.tsp import (
     build_suite as tsp_build_suite,
     suite_hash as tsp_suite_hash,
 )
+from agent_skill_loop.problems.tsp_2opt import (
+    BASELINE_CODE as TSP2_BASELINE_CODE,
+    ENTRYPOINT as TSP2_ENTRYPOINT,
+    PROBLEM_NAME as TSP2_PROBLEM_NAME,
+    SPLIT_OFFSETS as TSP2_SPLIT_OFFSETS,
+    TASK_DESCRIPTION as TSP2_TASK_DESCRIPTION,
+    TEMPLATE_PROGRAM as TSP2_TEMPLATE_PROGRAM,
+    build_suite as tsp2_build_suite,
+    suite_hash as tsp2_suite_hash,
+)
 
 _SAFE_BUILTINS = {
     "abs": abs, "all": all, "any": any, "bool": bool, "dict": dict,
@@ -115,6 +125,7 @@ def evaluator_source_hash() -> str:
     parent = Path(__file__).resolve().parent
     parts.append(parent.joinpath("problems", "cvrp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
 
@@ -284,6 +295,20 @@ def _validate_tsp_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any
     return instances, expected
 
 
+def _validate_tsp2_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
+    split = suite.get("split") if isinstance(suite, Mapping) else None
+    if not isinstance(suite, Mapping) or suite.get("problem") != TSP2_PROBLEM_NAME or not isinstance(split, str) or split not in TSP2_SPLIT_OFFSETS:
+        raise ValueError("invalid_suite")
+    instances = suite.get("instances")
+    given_hash = suite.get("content_hash")
+    if not isinstance(instances, list) or not instances or not isinstance(given_hash, str):
+        raise ValueError("invalid_suite")
+    expected = tsp2_suite_hash(TSP2_PROBLEM_NAME, split, instances)
+    if given_hash != expected:
+        raise ValueError("suite_hash_mismatch")
+    return instances, expected
+
+
 def _validate_suite(spec: ProblemSpec, suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
     """Validate a suite against a resolved problem spec (problem-driven)."""
     return spec.validate_suite(suite)
@@ -380,6 +405,87 @@ def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list
             current = nxt
         tour.append(0)
         cost = float(sum(matrix[a, b] for a, b in zip(tour, tour[1:])))
+        if not math.isfinite(cost):
+            raise ValueError("nonfinite_objective")
+        objectives.append(cost)
+    return objectives
+
+
+def _nearest_neighbour_tour(matrix: Any, node_count: int) -> list[int]:
+    unvisited = set(range(1, node_count))
+    tour = [0]
+    current = 0
+    while unvisited:
+        nxt = min(unvisited, key=lambda node: (float(matrix[current][node]), node))
+        tour.append(nxt)
+        unvisited.remove(nxt)
+        current = nxt
+    return tour
+
+
+def _tsp2_candidates(tour: list[int], matrix: Any) -> tuple[list[int], list[int], list[float]]:
+    """All strictly improving 2-opt moves for a closed tour, in stable order."""
+    node_count = len(tour)
+    starts: list[int] = []
+    ends: list[int] = []
+    deltas: list[float] = []
+    for i in range(1, node_count - 1):
+        for j in range(i + 1, node_count):
+            if i == 1 and j == node_count - 1:
+                continue  # reversing the whole tour is a no-op for a closed tour
+            prev, first = tour[i - 1], tour[i]
+            last, nxt = tour[j], tour[(j + 1) % node_count]
+            delta = float(
+                matrix[prev][last] + matrix[first][nxt] - matrix[prev][first] - matrix[last][nxt]
+            )
+            if delta < -1e-12:
+                starts.append(i)
+                ends.append(j)
+                deltas.append(delta)
+    return starts, ends, deltas
+
+
+def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> list[float]:
+    """Bounded 2-opt refinement of a fixed nearest-neighbour tour.
+
+    The evaluator owns the initial tour, the improving-move enumeration, the
+    move application, and the objective. The evolved entrypoint only selects
+    which candidate move to apply, at most ``size`` times per instance.
+    """
+    objectives = []
+    for instance in instances:
+        coordinates = instance.get("coordinates")
+        if not isinstance(coordinates, list) or len(coordinates) < 3:
+            raise ValueError("invalid_instance")
+        matrix = _distance_matrix(coordinates)
+        node_count = len(coordinates)
+        tour = _nearest_neighbour_tour(matrix, node_count)
+        budget = node_count
+        for _ in range(budget):
+            starts, ends, deltas = _tsp2_candidates(tour, matrix)
+            if not starts:
+                break
+            move_start = np.asarray(starts, dtype=int)
+            move_end = np.asarray(ends, dtype=int)
+            move_delta = np.asarray(deltas, dtype=float)
+            tour_array = np.asarray(tour, dtype=int)
+            tour_arg, matrix_arg = tour_array.copy(), matrix.copy()
+            start_arg, end_arg, delta_arg = move_start.copy(), move_end.copy(), move_delta.copy()
+            result = fn(tour_arg, matrix_arg, start_arg, end_arg, delta_arg, budget - _)
+            if (
+                not np.array_equal(tour_arg, tour_array)
+                or not np.array_equal(matrix_arg, matrix)
+                or not np.array_equal(start_arg, move_start)
+                or not np.array_equal(end_arg, move_end)
+                or not np.array_equal(delta_arg, move_delta)
+            ):
+                raise ValueError("candidate_mutated_input")
+            pick = _as_index(result, set(range(len(starts))))
+            if pick is None:
+                raise ValueError("invalid_return")
+            i, j = starts[pick], ends[pick]
+            tour[i:j + 1] = reversed(tour[i:j + 1])
+        cost = float(sum(matrix[a, b] for a, b in zip(tour, tour[1:] + tour[:1])))
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
         objectives.append(cost)
@@ -619,3 +725,41 @@ TSP_SPEC = ProblemSpec(
 )
 
 register_problem(TSP_SPEC)
+
+
+# --- TSP 2-opt spec registration ---------------------------------------------
+# Second type of algorithm interface: a bounded local-search decision. The
+# evaluator owns the nearest-neighbour initial tour, the improving-move
+# enumeration, move application, and the objective; the evolved entrypoint
+# only selects among the candidates within a fixed move budget.
+TSP2_SPEC = ProblemSpec(
+    problem_id=TSP2_PROBLEM_NAME,
+    entrypoint=TSP2_ENTRYPOINT,
+    interface_version="v1",
+    task_description=TSP2_TASK_DESCRIPTION,
+    template_program=TSP2_TEMPLATE_PROGRAM,
+    baseline_code=TSP2_BASELINE_CODE,
+    objective_direction="minimize",
+    split_offsets=TSP2_SPLIT_OFFSETS,
+    build_suite=tsp2_build_suite,
+    suite_hash=tsp2_suite_hash,
+    validate_suite=_validate_tsp2_suite,
+    evaluate_instances=_evaluate_tsp2_instances,
+    safe_builtins=_SAFE_BUILTINS,
+    forbidden_names=frozenset(_FORBIDDEN_NAMES),
+    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    math_attributes=frozenset(_MATH_ATTRIBUTES),
+    np_math_roots=frozenset(_NP_MATH_ROOTS),
+    allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+    interface_boundary=(
+        "INTERFACE BOUNDARY: only select_2opt_move is evolved. The initial tour, "
+        "move application, and objective computation stay in the evaluator."
+    ),
+    repair_hint="returns a valid index into the candidate move arrays",
+    stagnation_hint=(
+        "Change one structural element (move scoring, lookahead, or tie-breaking). "
+        "Do not emit a near-copy."
+    ),
+)
+
+register_problem(TSP2_SPEC)
