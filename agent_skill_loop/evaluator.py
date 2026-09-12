@@ -91,22 +91,14 @@ _MATH_ATTRIBUTES = {
     "acos", "asin", "atan", "atan2", "ceil", "cos", "e", "exp", "fabs", "floor", "fmod",
     "hypot", "inf", "isfinite", "isclose", "log", "log10", "pi", "sin", "sqrt", "tan", "trunc",
 }
-# Public methods that stay forbidden on non-numpy receivers (plain lists, arrays,
-# objects). Numeric conveniences such as list.append or ndarray.mean stay allowed.
-_FORBIDDEN_METHODS = {
-    # file / serialization IO
-    "tofile", "tostring", "dump", "dumps", "save", "savez", "savez_compressed", "savetxt",
-    "load", "loads", "loadtxt", "fromfile", "frombuffer", "fromiter", "memmap", "genfromtxt",
-    "open", "close", "write", "writelines", "read", "readlines", "readline", "flush", "fileno",
-    "to_csv", "to_json", "to_pickle", "to_parquet", "to_excel", "to_hdf",
-    "read_csv", "read_json", "read_pickle", "read_parquet", "read_excel", "read_hdf",
-    # process / exec / reflection / network
-    "system", "popen", "spawn", "spawnl", "spawnv", "fork", "execv", "execl", "execve",
-    "getenv", "putenv", "environ", "getcwd", "chdir", "listdir", "scandir", "walk", "glob",
-    "remove", "unlink", "rmdir", "mkdir", "makedirs", "rename", "copyfile", "copytree",
-    "run", "call", "check_output", "check_call", "communicate", "terminate", "kill",
-    "send", "recv", "connect", "bind", "listen", "accept", "urlopen",
-    "getattr", "setattr", "delattr", "eval", "exec", "compile",
+# Default-deny for attributes on receivers that are not a restricted module
+# (np/numpy/math) or a tracked alias of one. Such attributes are allowed only
+# when they appear in the spec's numpy/math whitelist or are one of the small
+# set of ordinary container methods below. Everything else (``arr.tofile``,
+# ``arr.save``, ``obj.foo``) is rejected.
+_CONTAINER_METHODS = {
+    "append", "extend", "insert", "pop", "remove", "sort", "reverse",
+    "count", "index", "clear",
 }
 _KNOWN_ERRORS = {
     "unsupported_problem", "invalid_suite", "suite_hash_mismatch", "invalid_code",
@@ -114,6 +106,7 @@ _KNOWN_ERRORS = {
     "forbidden_syntax", "forbidden_constant", "invalid_instance", "infeasible_instance",
     "candidate_mutated_input", "invalid_return", "capacity_violation", "nonfinite_objective",
     "invalid_route",
+    "forbidden_rebinding",
 }
 
 
@@ -246,10 +239,62 @@ def _collect_np_math_aliases(tree: ast.Module, roots: set[str] | frozenset[str])
         for name, value in assignments:
             if name in aliases:
                 continue
-            if isinstance(value, ast.Name) and (value.id in roots or value.id in aliases):
+            if _expr_is_np_math_alias(value, roots, aliases):
                 aliases.add(name)
                 changed = True
     return aliases
+
+
+def _expr_is_np_math_alias(value: ast.expr, roots: set[str] | frozenset[str], aliases: set[str]) -> bool:
+    """Recognise only transparent alias expressions for restricted modules.
+
+    The previous checker handled ``lib = np`` but missed aliases hidden in a
+    literal/container (``lib = [np][0]``).  Such expressions are still fully
+    static and must retain the source module's attribute whitelist.
+    """
+    if isinstance(value, ast.Name):
+        return value.id in roots or value.id in aliases
+    if isinstance(value, ast.Subscript):
+        return _expr_is_np_math_alias(value.value, roots, aliases)
+    if isinstance(value, (ast.Tuple, ast.List)) and len(value.elts) == 1:
+        return _expr_is_np_math_alias(value.elts[0], roots, aliases)
+    # Be conservative for computed expressions: if a restricted module name is
+    # present anywhere in the value, the assigned name may carry that module or
+    # one of its objects. Treating it as restricted can reject a harmless
+    # numeric expression, but never permits a capability escape.
+    return any(
+        isinstance(node, ast.Name) and (node.id in roots or node.id in aliases)
+        for node in ast.walk(value)
+    )
+
+
+def _check_rebinding_target(target: ast.expr, roots: set[str] | frozenset[str]) -> None:
+    """Reject assignment/loop targets that rebind a restricted module root.
+
+    Handles plain names as well as tuple/list unpacking and starred targets so
+    ``a, b = np, math`` and ``for np in ...`` cannot smuggle a restricted module
+    into a locally named receiver.
+    """
+    if isinstance(target, ast.Name):
+        if target.id in roots:
+            raise EvalError("forbidden_rebinding", target.id)
+    elif isinstance(target, (ast.Tuple, ast.List)):
+        for element in target.elts:
+            _check_rebinding_target(element, roots)
+    elif isinstance(target, ast.Starred):
+        _check_rebinding_target(target.value, roots)
+
+
+def _check_rebinding_args(args: ast.arguments, roots: set[str] | frozenset[str]) -> None:
+    """Reject function/lambda parameters that shadow a restricted module root."""
+    parameters = [*args.posonlyargs, *args.args, *args.kwonlyargs]
+    if args.vararg is not None:
+        parameters.append(args.vararg)
+    if args.kwarg is not None:
+        parameters.append(args.kwarg)
+    for parameter in parameters:
+        if parameter.arg in roots:
+            raise EvalError("forbidden_rebinding", parameter.arg)
 
 
 def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
@@ -258,14 +303,38 @@ def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
     try:
         tree = ast.parse(code, mode="exec")
         compile(tree, "<candidate>", "exec")
-    except (SyntaxError, ValueError, TypeError, UnicodeError) as exc:
-        raise ValueError("invalid_code") from exc
+    except EvalError:
+        raise
+    except SyntaxError as exc:
+        location = f"line_{exc.lineno}" if exc.lineno is not None else None
+        if exc.offset is not None:
+            location = f"{location}_column_{exc.offset}" if location else f"column_{exc.offset}"
+        raise EvalError("invalid_code", location) from None
+    except (ValueError, TypeError, UnicodeError):
+        raise ValueError("invalid_code") from None
     function_names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
     if spec.entrypoint not in function_names:
-        raise ValueError("missing_entrypoint")
+        raise EvalError("missing_entrypoint", spec.entrypoint)
     allowed_aliases = {root: (None, "np" if root == "numpy" else root) for root in spec.allowed_import_roots}
     np_math_aliases = _collect_np_math_aliases(tree, spec.np_math_roots)
     for node in ast.walk(tree):
+        # Rebinding a restricted module root is always forbidden: assignment,
+        # annotated/augmented assignment, loop and comprehension targets, walrus
+        # targets, and function/lambda parameters (nested defs included by walk).
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                _check_rebinding_target(target, spec.np_math_roots)
+        elif isinstance(node, ast.AnnAssign):
+            _check_rebinding_target(node.target, spec.np_math_roots)
+        elif isinstance(node, ast.AugAssign):
+            _check_rebinding_target(node.target, spec.np_math_roots)
+        elif isinstance(node, (ast.For, ast.comprehension)):
+            _check_rebinding_target(node.target, spec.np_math_roots)
+        elif isinstance(node, ast.NamedExpr):
+            _check_rebinding_target(node.target, spec.np_math_roots)
+        elif isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            _check_rebinding_args(node.args, spec.np_math_roots)
+
         if isinstance(node, ast.AsyncFunctionDef):
             raise ValueError("forbidden_syntax")
         if isinstance(node, ast.Import):
@@ -278,13 +347,15 @@ def _validate_candidate_ast(code: str, spec: ProblemSpec) -> ast.Module:
             if node.id in spec.forbidden_names or node.id.startswith("__"):
                 raise EvalError("forbidden_name", node.id)
         elif isinstance(node, ast.Attribute):
+            if isinstance(node.ctx, ast.Store):
+                raise EvalError("forbidden_rebinding", node.attr)
             if node.attr.startswith("_"):
                 raise EvalError("forbidden_attribute", node.attr)
             root = _attribute_root_id(node)
             if root in spec.np_math_roots or root in np_math_aliases:
                 if node.attr not in spec.allowed_attributes:
                     raise EvalError("forbidden_attribute", node.attr)
-            elif node.attr in _FORBIDDEN_METHODS:
+            elif node.attr not in spec.allowed_attributes and node.attr not in _CONTAINER_METHODS:
                 raise EvalError("forbidden_attribute", node.attr)
         elif isinstance(node, (ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise, ast.Delete, ast.Global, ast.Nonlocal)):
             raise ValueError("forbidden_syntax")
@@ -803,15 +874,6 @@ TSP_SPEC = ProblemSpec(
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
-    interface_boundary=(
-        "INTERFACE BOUNDARY: only select_next_node is evolved. Tour construction "
-        "and objective computation stay in the evaluator."
-    ),
-    repair_hint="returns the index of a currently unvisited city",
-    stagnation_hint=(
-        "Change one structural element (scoring combination, candidate ordering, "
-        "or distance-lookahead). Do not emit a near-copy."
-    ),
     baseline_description=TSP_BASELINE_DESCRIPTION,
 )
 
@@ -842,15 +904,6 @@ TSP2_SPEC = ProblemSpec(
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
-    interface_boundary=(
-        "INTERFACE BOUNDARY: only select_2opt_move is evolved. The initial tour, "
-        "move application, and objective computation stay in the evaluator."
-    ),
-    repair_hint="returns a valid index into the candidate move arrays",
-    stagnation_hint=(
-        "Change one structural element (move scoring, lookahead, or tie-breaking). "
-        "Do not emit a near-copy."
-    ),
     baseline_description=TSP2_BASELINE_DESCRIPTION,
 )
 

@@ -1,4 +1,9 @@
-"""Fixed generate / repair / stop loop. No FME actions or analysis calls."""
+"""Injectable fixture loop for offline contract tests.
+
+Production CLI runs use the pinned official EoH adapter.  This harness remains
+useful for deterministic evaluator and persistence tests and is intentionally
+not presented as a second production search engine.
+"""
 
 from __future__ import annotations
 
@@ -9,10 +14,9 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from agent_skill_loop.client import ProviderFailure
+from tests.fixtures.client import LiveTransport
 from agent_skill_loop.contracts import (
-    DEFAULT_CANDIDATE_ATTEMPTS,
     DEFAULT_COUNT,
-    DEFAULT_MAX_LLM_REQUESTS,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_SEED,
     DEFAULT_SIZE,
@@ -20,17 +24,16 @@ from agent_skill_loop.contracts import (
     DEFAULT_SPLIT,
     DEFAULT_WALL_SECONDS,
     PROBLEM_CVRP,
-    AttemptRecord,
     EvaluationResult,
-    RunSummary,
     SkillVersion,
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator, evaluator_source_hash
-from agent_skill_loop.generator import PromptFeedback, build_prompt, extract
 from agent_skill_loop.journal import Journal, sha256_text
-from agent_skill_loop.policy import FixedSearchPolicy, search_policy_identity
+from tests.fixtures.generator import PromptFeedback, build_prompt, extract
+from tests.fixtures.policy import FixedSearchPolicy, fixture_policy_identity
 from agent_skill_loop.problems.base import ProblemSpec, get_problem
-from agent_skill_loop.report import write_run_report
+from tests.fixtures.report import write_run_report
+from tests.fixtures.contracts import DEFAULT_CANDIDATE_ATTEMPTS, DEFAULT_MAX_LLM_REQUESTS, AttemptRecord, RunSummary
 from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill
 
 
@@ -74,7 +77,11 @@ class AgentLoop:
     ) -> None:
         self.output_dir = Path(output_dir)
         self.transport = transport
-        self.execution_mode = execution_mode
+        if execution_mode != "fixture":
+            raise ValueError(f"agent_loop_is_fixture_only:{execution_mode}")
+        self.execution_mode = "fixture"
+        if isinstance(transport, LiveTransport):
+            raise ValueError("live_transport_not_allowed_in_fixture_loop")
         self.problem_spec = problem_spec if problem_spec is not None else get_problem(PROBLEM_CVRP)
         if suite is not None:
             suite_problem = suite.get("problem") if isinstance(suite, Mapping) else None
@@ -163,6 +170,7 @@ class AgentLoop:
             repair_of_attempt_id=repair_of_attempt_id,
             search_policy_id=self.policy.policy_id,
             search_policy_version=self.policy.policy_version,
+            search_policy_fixture_only=True,
         )
 
     def _install_incumbent(self, skill: SkillVersion, *, generated: bool) -> None:
@@ -184,9 +192,12 @@ class AgentLoop:
                 source_attempt_id=None,
                 description="explicit parent re-evaluated on frozen suite",
             )
-            self._store(parent, "parent_reloaded", generated=False)
             if not parent.valid:
                 raise ValueError("parent_skill_invalid_on_suite")
+            # Do not place an invalid re-evaluation in the reusable skill store.
+            # The caller still receives the explicit parent_invalid terminal
+            # state and can inspect the original asset and journal.
+            self._store(parent, "parent_reloaded", generated=False)
             self._install_incumbent(parent, generated=False)
             self.seen_code.add(sha256_text(parent.code))
             return
@@ -226,7 +237,8 @@ class AgentLoop:
             "provider_endpoint": getattr(self.transport, "endpoint", None),
             "request_budget": None if self.request_budget is None else self.request_budget.max_requests,
             "parent_skill_id": None if self.parent_skill is None else self.parent_skill.version_id,
-            "search_policy": search_policy_identity(),
+            "search_policy": fixture_policy_identity(),
+            "fixture_only": True,
             "source_version": source_version(),
         }
         (self.output_dir / "config_frozen.json").write_text(
@@ -604,7 +616,7 @@ def prepare_output(path: Path, *, problem_id: str = PROBLEM_CVRP, **suite_kwargs
         "evaluator_hash": evaluator_source_hash(),
         "provider_endpoint": None,
         "request_budget": None,
-        "search_policy": search_policy_identity(),
+        "search_policy": fixture_policy_identity(),
         "source_version": source_version(),
     }
     (path / "config_frozen.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")

@@ -23,6 +23,10 @@ def _watch_parent(parent_pid: int) -> None:
 
         SYNCHRONIZE = 0x00100000
         kernel32 = ctypes.windll.kernel32
+        kernel32.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+        kernel32.OpenProcess.restype = ctypes.c_void_p
+        kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        kernel32.WaitForSingleObject.restype = ctypes.c_uint32
         handle = kernel32.OpenProcess(SYNCHRONIZE, False, int(parent_pid))
         if not handle:
             os._exit(1)

@@ -1,24 +1,11 @@
 # agent_skill_loop
+本包提供问题合同、隔离评测、模型 HTTP 传输、journal、不可变 skill 存取和显式历史代码导入。生产 run 共用 eoh_frozen 的官方引擎监督实现。
 
-Given a registered problem (`cvrp_construct`, `tsp_construct`, `tsp_2opt`), generate algorithm code, evaluate it in a subprocess, feed the real objective or error into the next prompt, and stop when the budget is exhausted.
-
-This package does **not** import `eoh_rag.fme`. It does not require the incumbent to beat a baseline.
-
-```powershell
-py -3.11 -m agent_skill_loop prepare --problem cvrp_construct --output outputs/agent_skill/prepare
-py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/agent_skill/smoke
-py -3.11 -m pytest tests/kernel -q
-```
-
-Import one named historical candidate (git snapshot or local file). The source
-ref/commit/path/hash/license is recorded, the code is re-evaluated on the
-current suite with the current evaluator, and it is stored as a reusable skill
-only when valid. Historical scores never migrate, and imports are not counted
-as generated candidates.
+当前操作及边界以 [阶段 1、2 运行合同](../docs/stage12_contract.md) 为准。旧 loop、policy、generator、report 和相关循环数据结构已移入 tests/fixtures；不提供生产兼容入口。prepare 生成官方搜索身份的套件配置，smoke 使用真正的官方 EoH 和 localhost 模型 fixture，需要安装 [eoh] extra。
 
 ```powershell
-py -3.11 -m agent_skill_loop import-skill --problem cvrp_construct --output outputs/agent_skill/import_x --git-repo . --git-ref main --git-path evidence/final_batch_20260630/best_codes/cvrp_construct_best.py --license "see repo LICENSE"
-py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/agent_skill/import_x/exported_skill --suite outputs/agent_skill/import_x/dev_suite.json
+py -3.11 -m agent_skill_loop import-skill --problem cvrp_construct --file PATH_TO_CODE --license "SOURCE_LICENSE" --output outputs/imported
+py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/imported/exported_skill --suite outputs/imported/dev_suite.json
 ```
 
-Live model runs need an explicit `--model` and a separate authorization. Existing API keys are not authorization.
+import-skill 保存来源、代码身份和当前重评证据；无效代码不进入可复用 skill 集合。新导出引用使用 algorithm-skill-ref/v2；v1 原始引用仍可读，其已声明字段必须匹配目标资产，缺少问题/接口字段时使用目标资产身份并在使用前重新校验和评测。

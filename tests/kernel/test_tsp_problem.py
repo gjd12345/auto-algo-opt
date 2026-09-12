@@ -4,10 +4,10 @@ import json
 
 import pytest
 
-from agent_skill_loop.client import FixtureTransport
+from tests.fixtures.client import FixtureTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from agent_skill_loop.loop import AgentLoop
+from tests.fixtures.loop import AgentLoop
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, get_problem
 from agent_skill_loop.problems.tsp import (
     BASELINE_CODE,

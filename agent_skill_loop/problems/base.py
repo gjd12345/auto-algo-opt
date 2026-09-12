@@ -48,10 +48,7 @@ class ProblemSpec:
     np_math_roots: frozenset[str]
     allowed_import_roots: frozenset[str]
 
-    # optional prompt fragments; empty means the generator's CVRP defaults
-    interface_boundary: str = ""
-    repair_hint: str = ""
-    stagnation_hint: str = ""
+    # Human-readable baseline provenance, not a search-policy instruction.
     baseline_description: str = ""
 
     @property

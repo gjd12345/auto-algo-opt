@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from agent_skill_loop.contracts import choose_operator
-from agent_skill_loop.generator import PromptFeedback, build_prompt
+from tests.fixtures.policy import choose_operator
+from tests.fixtures.generator import PromptFeedback, build_prompt
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, TASK_DESCRIPTION
 
 

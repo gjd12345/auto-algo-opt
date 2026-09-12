@@ -14,8 +14,10 @@ _ZERO = "0" * 64
 _PROMPT_LIMIT = 256 * 1024
 _EVENT_KINDS = frozenset({
     "run_started",
+    "state_transition",
     "attempt_started",
     "attempt_result",
+    "feedback_consumed",
     "run_finished",
 })
 

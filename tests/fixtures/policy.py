@@ -1,28 +1,41 @@
-"""Search policy abstraction.
+"""Fixture-only deterministic search policy (legacy main loop).
 
-Extracts the deterministic operator / parent / edit-target / acceptance /
-stagnation decisions that the loop used to make inline into a small,
-swappable SearchPolicy. ``FixedSearchPolicy`` reproduces the pre-refactor
-behavior exactly (choose_operator, e1-parent selection, m1 raw_reply/failed_code
-edit target, better_objective acceptance, and the STAGNATION_E1_STREAK rule).
-No model controller is added at this stage.
+Reproduces the pre-refactor loop: ``choose_operator``, e1-parent selection,
+m1 raw_reply/failed_code edit target, better_objective acceptance, and the
+STAGNATION_E1_STREAK rule. Never used by production runs; its identity is
+marked ``fixture_only`` so it cannot share defaults with production skills.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from agent_skill_loop.contracts import STAGNATION_E1_STREAK, better_objective, choose_operator
+from tests.fixtures.contracts import STAGNATION_E1_STREAK, better_objective
 
-POLICY_ID = "fixed"
-POLICY_VERSION = "v1"
+POLICY_ID = "fixture_legacy"
+POLICY_VERSION = "fixed/v1"
 
 
-def search_policy_identity() -> dict[str, Any]:
+def choose_operator(
+    *,
+    attempts_done: int,
+    has_explicit_parent: bool,
+    last_valid: bool | None,
+) -> str:
+    """Fixed policy: i1 cold start, e1 after success, m1 after failure."""
+    if attempts_done == 0:
+        return "e1" if has_explicit_parent else "i1"
+    if last_valid is False:
+        return "m1"
+    return "e1"
+
+
+def fixture_policy_identity() -> dict[str, Any]:
     return {
         "id": POLICY_ID,
         "version": POLICY_VERSION,
         "params": {"stagnation_e1_streak": STAGNATION_E1_STREAK},
+        "fixture_only": True,
     }
 
 
@@ -53,11 +66,12 @@ class SearchPolicy:
             "id": self.policy_id,
             "version": self.policy_version,
             "params": {"stagnation_e1_streak": self.stagnation_e1_streak},
+            "fixture_only": True,
         }
 
 
 class FixedSearchPolicy(SearchPolicy):
-    """Deterministic policy matching the pre-refactor loop exactly."""
+    """Deterministic legacy policy matching the pre-refactor loop exactly."""
 
     policy_id: str = POLICY_ID
     policy_version: str = POLICY_VERSION

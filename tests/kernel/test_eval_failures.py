@@ -186,6 +186,20 @@ def test_np_alias_chain_cannot_bypass_whitelist():
     assert result.error_detail == "ix_"
 
 
+def test_np_alias_container_cannot_bypass_whitelist():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    lib = [np][0]\n"
+        "    _ = lib.random.rand()\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail in {"random", "rand"}
+
+
 def test_array_method_save_is_forbidden():
     suite = build_suite(DEFAULT_SEED, count=2, size=6)
     code = (
@@ -197,3 +211,83 @@ def test_array_method_save_is_forbidden():
     assert result.valid is False
     assert result.error_code == "forbidden_attribute"
     assert result.error_detail == "save"
+
+
+def test_np_rebinding_is_forbidden():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    np = 5\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_rebinding"
+    assert result.error_detail == "np"
+
+
+def test_np_parameter_rebinding_is_forbidden():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def helper(np):\n"
+        "    return np\n"
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_rebinding"
+    assert result.error_detail == "np"
+
+
+def test_np_unpacking_alias_cannot_bypass_whitelist():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    a, b = np, math\n"
+        "    _ = a.ix_(unvisited_nodes, unvisited_nodes)\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "ix_"
+
+
+def test_np_subscript_receiver_cannot_bypass_whitelist():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    _ = (np,)[0].random.rand()\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail in {"random", "rand"}
+
+
+def test_unknown_receiver_method_is_forbidden():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    _ = distance_matrix.foo()\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is False
+    assert result.error_code == "forbidden_attribute"
+    assert result.error_detail == "foo"
+
+
+def test_list_remove_is_allowed():
+    suite = build_suite(DEFAULT_SEED, count=2, size=6)
+    code = (
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    scores = [3, 1, 2]\n"
+        "    scores.remove(min(scores))\n"
+        "    return int(unvisited_nodes[0])\n"
+    )
+    result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
+    assert result.valid is True, (result.error_code, result.error_detail)
+    assert result.objective is not None

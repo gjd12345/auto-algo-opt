@@ -5,8 +5,9 @@ import threading
 
 import pytest
 
-from agent_skill_loop import client as client_mod
-from agent_skill_loop.client import LiveTransport, ProviderFailure
+from tests.fixtures import client as client_mod
+from agent_skill_loop.client import ProviderFailure
+from tests.fixtures.client import LiveTransport
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget
 from eoh_frozen.llm_bridge import OpenAIPathBridge
 
@@ -70,6 +71,27 @@ def test_events_grow_and_carry_all_fields():
     assert complete["input_tokens"] == 10
     assert complete["output_tokens"] == 20
     assert slot.state == "complete"
+
+
+def test_external_reconciliation_preserves_response_metadata():
+    budget = RequestBudget(2)
+    budget.consume_external(
+        1,
+        purpose="eoh_generation",
+        problem="cvrp_construct",
+        records=[{
+            "purpose": "eoh_generation",
+            "status": 200,
+            "elapsed_seconds": 1.2,
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "finish_reason": "stop",
+            "selected_content_field": "content",
+        }],
+    )
+    event = budget.events[-1]
+    assert event["finish_reason"] == "stop"
+    assert event["selected_content_field"] == "content"
 
 
 def test_killed_unknown_tokens_are_none():

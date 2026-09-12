@@ -4,10 +4,11 @@ import json
 
 import pytest
 
-from agent_skill_loop.client import AuthFailTransport, FixtureTransport, ProviderFailure, UsageReceipt
+from agent_skill_loop.client import ProviderFailure
+from tests.fixtures.client import AuthFailTransport, FixtureTransport, UsageReceipt
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.journal import verify_journal
-from agent_skill_loop.loop import AgentLoop, prepare_output
+from tests.fixtures.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, build_suite
 from agent_skill_loop.skill_store import load_skill
 from tests.kernel.conftest import invalid_response, valid_response

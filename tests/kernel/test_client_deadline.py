@@ -8,8 +8,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from agent_skill_loop import client as client_mod
-from agent_skill_loop.client import LiveTransport, ProviderFailure, _open_url_with_deadline, http_post_with_deadline
+from tests.fixtures import client as client_mod
+from agent_skill_loop.client import ProviderFailure, _open_url_with_deadline, http_post_with_deadline
+from tests.fixtures.client import LiveTransport
 
 
 class _SlowHandler(BaseHTTPRequestHandler):

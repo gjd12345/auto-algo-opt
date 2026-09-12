@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 
-from agent_skill_loop.client import FixtureTransport
+from tests.fixtures.client import FixtureTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from agent_skill_loop.loop import AgentLoop
+from tests.fixtures.loop import AgentLoop
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, get_problem
 from agent_skill_loop.problems.tsp_2opt import (
     BASELINE_CODE,

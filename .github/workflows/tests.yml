@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    branches: [main, Refactor0830, agent-skill-loop-0908]
+    branches: [main, agent-skill-loop-0908]
   pull_request:
-    branches: [main, Refactor0830]
+    branches: [main, agent-skill-loop-0908]
 
 jobs:
   kernel:
@@ -22,12 +22,15 @@ jobs:
       - name: Import kernel without eoh
         run: |
           python -c "import importlib.util; assert importlib.util.find_spec('eoh') is None"
-          python -c "import agent_skill_loop, agent_skill_loop.loop, eoh_frozen.export; import sys; assert 'eoh' not in sys.modules"
+          python -c "import agent_skill_loop.__main__, eoh_frozen.export; import sys; assert 'eoh' not in sys.modules; assert 'tests.fixtures.loop' not in sys.modules"
       - name: Run kernel tests
         run: python -m pytest tests/kernel -q
 
   eoh:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -44,3 +47,16 @@ jobs:
         env:
           EOH_REQUIRED: "1"
         run: python -m pytest tests/eoh_frozen -q
+
+  windows-kernel:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install kernel
+        run: python -m pip install -e ".[dev]"
+      - name: Run kernel tests
+        run: python -m pytest tests/kernel -q

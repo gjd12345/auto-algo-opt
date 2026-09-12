@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 
 from agent_skill_loop import client as client_mod
-from agent_skill_loop.client import FixtureTransport, LiveTransport
+from tests.fixtures.client import FixtureTransport, LiveTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import evaluator_source_hash
-from agent_skill_loop.loop import AgentLoop, prepare_output
+from tests.fixtures.loop import AgentLoop, prepare_output
 from agent_skill_loop.problems.cvrp import BASELINE_CODE
 from agent_skill_loop.request_budget import RequestBudget
 
@@ -39,34 +39,13 @@ def test_fixture_run_config_and_summary_identity(tmp_path):
     assert "request_rejected" not in payload
 
 
-def test_live_run_reports_request_budget(tmp_path, monkeypatch):
+def test_live_transport_and_live_mode_rejected_by_fixture(tmp_path, monkeypatch):
+    import pytest
     monkeypatch.setenv("TEST_KEY", "x")
-    body = json.dumps({
-        "choices": [{"message": {"content": "```python\n" + BASELINE_CODE + "```"}}],
-        "usage": {"prompt_tokens": 5, "completion_tokens": 7},
-    }).encode("utf-8")
-    monkeypatch.setattr(client_mod, "http_post_with_deadline", lambda *a, **k: (200, body))
-
-    budget = RequestBudget(1)
-    transport = LiveTransport(
-        "test-model",
-        endpoint="https://opencode.ai/v1/chat/completions",
-        api_key_env="TEST_KEY",
-        budget=budget,
-    )
-    out = tmp_path / "live"
-    out.mkdir()
-    AgentLoop(
-        out,
-        transport=transport,
-        execution_mode="live",
-        candidate_attempts=1,
-        max_llm_requests=1,
-    ).run()
-    payload = json.loads((out / "summary.json").read_text(encoding="utf-8"))
-    assert payload["http_requests"] == 1
-    assert payload["request_rejected"] == 0
-    config = json.loads((out / "config_frozen.json").read_text(encoding="utf-8"))
-    assert config["request_budget"] == 1
-    assert config["provider_endpoint"] == "https://opencode.ai/v1/chat/completions"
-    assert config["model"] == "test-model"
+    transport = LiveTransport("test-model", endpoint="https://example.invalid/v1/chat/completions",
+                              api_key_env="TEST_KEY", budget=RequestBudget(1))
+    with pytest.raises(ValueError, match="fixture_only"):
+        AgentLoop(tmp_path / "live", transport=transport, execution_mode="live")
+    with pytest.raises(ValueError, match="live_transport_not_allowed"):
+        AgentLoop(tmp_path / "fixture", transport=transport)
+    assert not list(tmp_path.iterdir())

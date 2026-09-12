@@ -1,32 +1,35 @@
-# auto-algo-opt (`agent-skill-loop-0908`)
+# auto-algo-opt
+生产搜索使用锁定提交的官方 FeiLiu36/EoH。当前合同见 [阶段 1、2 运行合同](docs/stage12_contract.md)，修复验收见 [13 项自检及真实 API 报告](reports/stage12_acceptance_20260911.md)。
 
-This branch rebuilds the runtime around **one object**: an executable algorithm skill.
-
-Give the loop `cvrp_construct`. It generates heuristic code, scores it in a subprocess, puts the real objective or error into the next prompt, and stops when the budget is exhausted. Beating a baseline is not a completion criterion.
-
-Historical EoH / FME / RQ1b code is on `Refactor0830` (`c8cb66c`). Do not mix those numbers with this suite.
-
-```powershell
-py -3.11 -m pip install -e ".[dev]"
-py -3.11 -c "import sys; assert sys.version_info[:2] == (3, 11); import agent_skill_loop"
-py -3.11 -m pytest tests/kernel -q
-
-py -3.11 -m agent_skill_loop prepare --problem cvrp_construct --output outputs/agent_skill/prepare
-py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/agent_skill/smoke
-```
-
-Live model runs need `--model` and a **separate authorization**. An existing API key is not authorization.
-
-Official EoH (`FeiLiu36/EoH` current `main`) is an optional extra. It keeps upstream operators (`e1`/`e2`/`m1`/`m2`) and scores the same frozen three-instance suite:
+支持 `cvrp_construct`、`tsp_construct`、`tsp_2opt`。官方引擎负责种群、父本选择及 e1/e2/m1/m2；适配层负责隔离评测、预算、进程停止、证据和 skill 发布。
 
 ```powershell
 py -3.11 -m pip install -e ".[dev,eoh]"
-py -3.11 -m eoh_frozen run --model MODEL_NAME --output outputs/eoh_frozen/live --pop-size 4 --n-pop 5
+py -3.11 -m pytest -q
+py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/offline_smoke
 ```
+
+smoke 使用 localhost 模型响应，完整执行官方引擎，无外部模型调用。旧固定策略只在 tests/fixtures 内供历史测试使用，不随软件安装，生产中没有 AgentLoop 入口。
+
+用户授权的真实运行示例（DeepSeek 官方 OpenAI 兼容 API）：
 
 ```powershell
-py -3.11 -m agent_skill_loop run --problem cvrp_construct --model MODEL_NAME --output outputs/agent_skill/live
-py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/agent_skill/live/exported_skill --suite outputs/agent_skill/live/dev_suite.json
+py -3.11 -m agent_skill_loop run --problem cvrp_construct --model deepseek-flash --endpoint https://api.deepseek.com --api-key-env DEEPSEEK_API_KEY --pop-size 2 --n-pop 1 --max-sample-nums 2 --max-requests 7 --wall-seconds 180 --output outputs/live
 ```
 
-Index of the frozen research inventory: [reports/research_convergence_20260908/03_route_catalog.md](reports/research_convergence_20260908/03_route_catalog.md).
+`python -m eoh_frozen run` 与上述 run 共用参数和实现。`max-sample-nums` 仅限制初始化后的进化尝试；冷启动另有 `2 * pop_size` 个初始化尝试。探活、解析/去重重试也消耗真实 HTTP 请求预算，较小预算允许提前停止。
+
+```powershell
+py -3.11 -m agent_skill_loop prepare --problem tsp_construct --output outputs/prepared
+py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/live/exported_skill --suite outputs/live/dev_suite.json
+```
+
+`--parent-skill PATH` 显式导入父本，当前套件检查通过后经官方 seed 路径使用。历史分数不继承。基线、显式父本、本次生成资产分别记录；`best_generated_path` 仅指向本次已评测的有效生成候选。
+
+3+1 workflow 入口会按 Plan → 官方 EoH Execute → Evaluate 运行，并可通过 `--memory-store` 启用版本化轻量 Memory：
+
+```powershell
+py -3.11 -m agent_skill_loop workflow --problem cvrp_construct --model deepseek-flash --endpoint https://api.deepseek.com --api-key-env DEEPSEEK_API_KEY --output outputs/workflow --rounds 1 --max-requests 12 --memory-store outputs/memory_store
+```
+
+历史研究材料保留为追溯证据，不作为当前执行指引。

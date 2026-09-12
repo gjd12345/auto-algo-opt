@@ -1,8 +1,8 @@
-"""Prompt construction and code extraction.
+"""Prompt construction and code extraction for the offline fixture harness.
 
-i1/e1/m1 templates are written for this loop. They are not the official EoH
-_build_prompt strings (those treat m1 as 'repair the incumbent' and e1 as
-multi-parent crossover, and the FME-aware i1 asks for a mechanism hypothesis).
+i1/e1/m1 templates are retained only to test the isolated legacy harness. They
+are not the official EoH operator contracts and must not be used by production
+CLI runs.
 
 Extraction helpers follow the MIT-licensed EoH approach of locating a fenced
 Python block, then a brace description. Copied extraction logic is marked below.
@@ -104,10 +104,37 @@ def _function_spec(spec: ProblemSpec) -> str:
     )
 
 
+
+_LEGACY_HINTS = {
+    "tsp_construct": dict(
+    interface_boundary=(
+        "INTERFACE BOUNDARY: only select_next_node is evolved. Tour construction "
+        "and objective computation stay in the evaluator."
+    ),
+    repair_hint="returns the index of a currently unvisited city",
+    stagnation_hint=(
+        "Change one structural element (scoring combination, candidate ordering, "
+        "or distance-lookahead). Do not emit a near-copy."
+    ),
+    ),
+    "tsp_2opt": dict(
+    interface_boundary=(
+        "INTERFACE BOUNDARY: only select_2opt_move is evolved. The initial tour, "
+        "move application, and objective computation stay in the evaluator."
+    ),
+    repair_hint="returns a valid index into the candidate move arrays",
+    stagnation_hint=(
+        "Change one structural element (move scoring, lookahead, or tie-breaking). "
+        "Do not emit a near-copy."
+    ),
+    ),
+}
+
 def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: ProblemSpec | None = None) -> str:
     spec = spec or get_problem(PROBLEM_NAME)
     program_spec = _function_spec(spec)
-    boundary = spec.interface_boundary or _INTERFACE_BOUNDARY
+    hints = _LEGACY_HINTS.get(spec.problem_id, {})
+    boundary = hints.get("interface_boundary", _INTERFACE_BOUNDARY)
     header = f"{spec.task_description}\n{boundary}\n"
     if operator == "i1":
         if feedback is not None:
@@ -132,7 +159,7 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: Pr
             last_block = _last_block(feedback)
         explore = (
             "STAGNATION: previous measured e1 steps did not improve the incumbent. "
-            f"{spec.stagnation_hint or _STAGNATION_HINT}\n"
+            f"{hints.get('stagnation_hint', _STAGNATION_HINT)}\n"
             if feedback.structural_explore
             else ""
         )
@@ -165,7 +192,7 @@ def build_prompt(operator: str, feedback: PromptFeedback | None = None, spec: Pr
             f"{incumbent}"
             f"EDIT TARGET: {feedback.edit_target}\n"
             "Change the failed program so it satisfies the function contract and "
-            f"{spec.repair_hint or _REPAIR_HINT}.\n"
+            f"{hints.get('repair_hint', _REPAIR_HINT)}.\n"
             "First, describe your repaired algorithm and main steps in one sentence. "
             f"The description must be inside a brace. Next, {program_spec}\n"
             f"{_EXECUTION_CONTRACT}\n"

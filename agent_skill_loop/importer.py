@@ -156,6 +156,8 @@ def import_skill(
             description=f"imported from {_source_label(provenance)}",
             problem=spec.problem_id,
             entrypoint=spec.entrypoint,
+            search_policy_id="external_import",
+            search_policy_version="v1",
         )
         skill_dir = save_skill(output_dir / "skills" / version_id, skill)
         publish_export_ref(output_dir, skill_dir)

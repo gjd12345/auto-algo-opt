@@ -4,27 +4,18 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
-from agent_skill_loop.client import FixtureTransport, LiveTransport, load_local_env
 from agent_skill_loop.contracts import (
-    DEFAULT_CANDIDATE_ATTEMPTS,
     DEFAULT_COUNT,
-    DEFAULT_MAX_LLM_REQUESTS,
-    DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_SEED,
     DEFAULT_SIZE,
     DEFAULT_SOLVER_TIMEOUT,
-    DEFAULT_SPLIT,
-    DEFAULT_WALL_SECONDS,
     PROBLEM_CVRP,
 )
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.importer import import_skill
-from agent_skill_loop.loop import AgentLoop, prepare_output
-from agent_skill_loop.problems.base import ProblemSpec, get_problem
-from agent_skill_loop.request_budget import RequestBudget
+from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill, validate_skill_for_suite
 
 
@@ -34,87 +25,22 @@ def _require_new_dir(path: Path) -> Path:
     return path
 
 
-def _valid_fixture_response(spec: ProblemSpec) -> str:
-    farthest = spec.baseline_code.replace("argmin", "argmax")
-    return (
-        "{Farthest-neighbor constructive heuristic}\n"
-        "```python\n"
-        f"{farthest.strip()}\n"
-        "```\n"
-    )
-
-
-def _invalid_fixture_response(spec: ProblemSpec) -> str:
-    return (
-        "{Broken return type}\n"
-        "```python\n"
-        f"def {spec.entrypoint}(*args, **kwargs):\n"
-        "    return 'nope'\n"
-        "```\n"
-    )
-
-
 def cmd_prepare(args: argparse.Namespace) -> int:
+    from eoh_frozen.__main__ import prepare_output
     path = _require_new_dir(Path(args.output))
-    prepare_output(
-        path,
-        problem_id=args.problem,
-        seed=args.seed,
-        split=DEFAULT_SPLIT,
-        count=args.count,
-        size=args.size,
-    )
+    prepare_output(path, problem_id=args.problem, seed=args.seed, count=args.count, size=args.size)
     print(path / "config_frozen.json")
     return 0
 
 
 def cmd_smoke(args: argparse.Namespace) -> int:
-    spec = get_problem(args.problem)
-    path = _require_new_dir(Path(args.output))
-    path.mkdir(parents=True)
-    transport = FixtureTransport([
-        _valid_fixture_response(spec),
-        _invalid_fixture_response(spec),
-        _valid_fixture_response(spec),
-    ])
-    loop = AgentLoop(path, transport=transport, execution_mode="fixture", problem_spec=spec)
-    summary = loop.run()
-    print(json.dumps(summary.as_dict(), indent=2))
-    return 0 if summary.loop_completed else 1
+    from eoh_frozen.smoke import run_smoke
+    return run_smoke(args.problem, Path(args.output))
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    load_local_env()
-    spec = get_problem(args.problem)
-    path = _require_new_dir(Path(args.output))
-    path.mkdir(parents=True)
-    parent = load_skill(Path(args.parent_skill)) if args.parent_skill else None
-    budget = RequestBudget(args.max_llm_requests)
-    transport = LiveTransport(
-        args.model,
-        timeout=args.request_timeout,
-        endpoint=args.endpoint,
-        api_key_env=args.api_key_env,
-        budget=budget,
-    )
-    try:
-        loop = AgentLoop(
-            path,
-            transport=transport,
-            parent_skill=parent,
-            execution_mode="live",
-            candidate_attempts=args.candidate_attempts,
-            max_llm_requests=args.max_llm_requests,
-            wall_seconds=args.wall_seconds,
-            request_timeout=args.request_timeout,
-            model=args.model,
-            problem_spec=spec,
-        )
-    except ValueError as exc:
-        raise SystemExit(str(exc)) from None
-    summary = loop.run()
-    print(json.dumps(summary.as_dict(), indent=2))
-    return 0 if summary.status != "provider_failed" else 2
+    from eoh_frozen.__main__ import cmd_run as official_cmd_run
+    return official_cmd_run(args)
 
 
 def cmd_evaluate_skill(args: argparse.Namespace) -> int:
@@ -162,6 +88,27 @@ def cmd_import_skill(args: argparse.Namespace) -> int:
     return 0 if record["accepted"] else 1
 
 
+def cmd_workflow(args: argparse.Namespace) -> int:
+    from agent_skill_loop.client import load_local_env
+    from agent_skill_loop.memory import MemoryAPI
+    from agent_skill_loop.workflow import WorkflowRunner
+    load_local_env()
+    memory = MemoryAPI(Path(args.memory_store)) if args.memory_store else None
+    result = WorkflowRunner(
+        Path(args.output), problem=args.problem, model=args.model, endpoint=args.endpoint,
+        api_key_env=args.api_key_env, max_rounds=args.rounds, max_requests=args.max_requests,
+        wall_seconds=args.wall_seconds, seed=args.seed, size=args.size, count=args.count,
+        pop_size=args.pop_size, n_pop=args.n_pop, max_sample_nums=args.max_sample_nums,
+        solver_timeout=args.solver_timeout, request_timeout=args.request_timeout, memory=memory,
+        solution_min_relative_improvement=args.solution_min_relative_improvement,
+        repair_mode=args.repair_mode,
+        max_repairs_per_candidate=args.max_repairs_per_candidate,
+        max_repair_requests_total=args.max_repair_requests_total,
+    ).run()
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["status"] == "completed" else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="agent_skill_loop")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -179,17 +126,9 @@ def build_parser() -> argparse.ArgumentParser:
     smoke.add_argument("--output", required=True)
     smoke.set_defaults(func=cmd_smoke)
 
+    from eoh_frozen.__main__ import add_run_arguments
     run = sub.add_parser("run")
-    run.add_argument("--problem", default=PROBLEM_CVRP)
-    run.add_argument("--model", required=True)
-    run.add_argument("--output", required=True)
-    run.add_argument("--parent-skill")
-    run.add_argument("--endpoint")
-    run.add_argument("--api-key-env", default="MODEL_ROUTER_API_KEY")
-    run.add_argument("--request-timeout", type=float, default=max(DEFAULT_REQUEST_TIMEOUT, 180.0))
-    run.add_argument("--candidate-attempts", type=int, default=DEFAULT_CANDIDATE_ATTEMPTS)
-    run.add_argument("--max-llm-requests", type=int, default=DEFAULT_MAX_LLM_REQUESTS)
-    run.add_argument("--wall-seconds", type=float, default=DEFAULT_WALL_SECONDS)
+    add_run_arguments(run)
     run.set_defaults(func=cmd_run)
 
     evaluate = sub.add_parser("evaluate-skill")
@@ -210,6 +149,30 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--count", type=int, default=DEFAULT_COUNT)
     imp.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
     imp.set_defaults(func=cmd_import_skill)
+
+    workflow = sub.add_parser("workflow", help="Run bounded Plan → official EoH → Evaluate rounds")
+    workflow.add_argument("--problem", default=PROBLEM_CVRP)
+    workflow.add_argument("--model", default="deepseek-flash")
+    workflow.add_argument("--output", required=True)
+    workflow.add_argument("--endpoint", default="https://api.deepseek.com/v1/chat/completions")
+    workflow.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
+    workflow.add_argument("--rounds", type=int, default=1)
+    workflow.add_argument("--max-requests", type=int, default=16)
+    workflow.add_argument("--wall-seconds", type=float, default=420.0)
+    workflow.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    workflow.add_argument("--size", type=int, default=DEFAULT_SIZE)
+    workflow.add_argument("--count", type=int, default=DEFAULT_COUNT)
+    workflow.add_argument("--pop-size", type=int, default=2)
+    workflow.add_argument("--n-pop", type=int, default=1)
+    workflow.add_argument("--max-sample-nums", type=int, default=2)
+    workflow.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
+    workflow.add_argument("--request-timeout", type=float, default=90.0)
+    workflow.add_argument("--memory-store")
+    workflow.add_argument("--solution-min-relative-improvement", type=float, default=0.05)
+    workflow.add_argument("--repair-mode", choices=["off", "bounded"], default="off")
+    workflow.add_argument("--max-repairs-per-candidate", type=int, default=1)
+    workflow.add_argument("--max-repair-requests-total", type=int, default=None)
+    workflow.set_defaults(func=cmd_workflow)
     return parser
 
 

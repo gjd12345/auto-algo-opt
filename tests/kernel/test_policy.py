@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from agent_skill_loop.contracts import STAGNATION_E1_STREAK
-from agent_skill_loop.policy import FixedSearchPolicy, SearchPolicy, search_policy_identity
+from tests.fixtures.contracts import STAGNATION_E1_STREAK
+from tests.fixtures.policy import FixedSearchPolicy, SearchPolicy, fixture_policy_identity
 
 
 class _Last:
@@ -60,12 +60,13 @@ def test_fixed_policy_stagnation_streak():
 def test_fixed_policy_identity_is_stable():
     policy = FixedSearchPolicy()
     expected = {
-        "id": "fixed",
-        "version": "v1",
+        "id": "fixture_legacy",
+        "version": "fixed/v1",
+        "fixture_only": True,
         "params": {"stagnation_e1_streak": STAGNATION_E1_STREAK},
     }
     assert policy.identity() == expected
-    assert search_policy_identity() == expected
+    assert fixture_policy_identity() == expected
 
 
 def test_search_policy_base_requires_implementation():

@@ -1,28 +1,19 @@
-from __future__ import annotations
-
+import subprocess
 import sys
 
 
-def test_importing_kernel_does_not_load_fme_or_official_eoh():
-    forbidden = [name for name in sys.modules if name == "eoh" or name.startswith("eoh_rag.fme") or name.startswith("eoh.eoh")]
-    # Import after snapshot of accidental preloads from other tests in this directory.
-    import agent_skill_loop
-    import agent_skill_loop.loop
-    import agent_skill_loop.generator
-    import agent_skill_loop.evaluator
-
-    assert agent_skill_loop.__name__ == "agent_skill_loop"
-    loaded = [name for name in sys.modules if name == "eoh" or name.startswith("eoh_rag.fme") or name.startswith("eoh.eoh")]
-    assert loaded == forbidden
-    from pathlib import Path
-    generator = Path(agent_skill_loop.generator.__file__).read_text(encoding="utf-8")
-    assert "fme_aware" not in generator
-    assert "from eoh" not in generator
-    assert "eoh_rag.fme" not in generator
-    evaluator = Path(agent_skill_loop.evaluator.__file__).read_text(encoding="utf-8")
-    assert "official_eoh" not in evaluator
-    assert "eoh_rag.fme" not in evaluator
-    import eoh_frozen.export  # noqa: F401
-
-    after_export = [name for name in sys.modules if name == "eoh" or name.startswith("eoh_rag.fme") or name.startswith("eoh.eoh")]
-    assert after_export == forbidden
+def test_production_imports_neither_fixture_search_nor_optional_engine():
+    script = '''
+import importlib.util, sys
+import agent_skill_loop.__main__, agent_skill_loop.evaluator, eoh_frozen.export
+import agent_skill_loop.client
+from agent_skill_loop.problems.base import ProblemSpec
+assert not any(hasattr(agent_skill_loop.client, n) for n in ('LiveTransport', 'FixtureTransport', 'AuthFailTransport'))
+assert not any(n in ProblemSpec.__dataclass_fields__ for n in ('repair_hint', 'stagnation_hint', 'interface_boundary'))
+assert 'eoh' not in sys.modules
+assert not any(n.startswith('tests.fixtures') or n.startswith('eoh_rag') for n in sys.modules)
+for module in ('agent_skill_loop.loop', 'agent_skill_loop.generator', 'agent_skill_loop.policy'):
+    assert importlib.util.find_spec(module) is None, module
+'''
+    result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr

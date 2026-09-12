@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from agent_skill_loop.client import FixtureTransport
+from tests.fixtures.client import FixtureTransport
 from agent_skill_loop.contracts import SkillVersion
-from agent_skill_loop.loop import AgentLoop
+from tests.fixtures.loop import AgentLoop
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, build_suite as cvrp_build_suite
 from agent_skill_loop.problems.tsp import build_suite as tsp_build_suite
