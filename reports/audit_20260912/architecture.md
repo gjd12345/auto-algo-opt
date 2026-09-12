@@ -27,7 +27,7 @@ flowchart TD
     W --> SEED[显式 incumbent seed]
     RC --> SUP[EoH 监督器 / CLI 子进程]
     SEED --> SUP
-    SUP --> CB[子请求预算与子 deadline]
+    SUP --> PROC[受监督官方 EoH 子进程]
     SUP --> MODE{repair_mode}
     MODE -->|off| N[官方 EoH]
     MODE -->|bounded| R[RepairingEOH：私有 offspring 边界适配]
@@ -35,10 +35,10 @@ flowchart TD
     N --> GEN[原生父本选择、算子与生成]
     GEN --> BR[本地 LLM bridge]
     R -->|有界修复请求| BR
-    CB -. 请求扣账 .-> BR
-    BR --> API[模型 API]
-    P --> ROLE[RoleClient：根预算扣账]
-    ROLE --> API
+    BR --> GW[Workflow request gateway：根预算扣账]
+    P --> GW
+    E --> GW
+    GW --> API[模型 API]
     GEN --> EV[独立子进程：确定性合法性与 suite 评测]
     R -->|修复代码重新评测| EV
     EV --> POP[官方种群接受 / checkpoint]
@@ -46,10 +46,8 @@ flowchart TD
     POP --> EX[导出 skill、summary、证据]
     EVID --> EX
     EX --> ACC[Workflow 比较可信结果、更新 incumbent]
-    CB -. 子请求日志事后对账 .-> W
     ACC --> STOP{全局是否允许继续调用}
     STOP -->|允许| E[Evaluate 角色：alignment / 解释 / memory_action]
-    E --> ROLE
     E --> MA[写入适配层：证据与 solution 资格检查]
     MA -->|确定性存储，不调用模型| M
     E --> F
@@ -61,7 +59,7 @@ flowchart TD
 
 说明：Execute 的生成请求就是官方 EoH 的请求，没有额外的 Execute 前置代理。Memory 是横切能力，不是第四个主流程站点。Evaluate 不决定数值接受，也不使已完成的算法资产依赖写入成功。
 
-预算图中的“事后对账”是当前实现；不是共享同一个预算对象的统一网关（A09）。全局终止后不启动新模型请求，Evaluate 可跳过；子额度耗尽不必等于全局终止。
+图中的请求网关是当前真实 workflow 的共享入口：Plan、Evaluate 和官方 EoH 子进程都通过它预留同一个根预算。全局终止后不启动新模型请求，Evaluate 可跳过；子进程结束时不再依赖事后补账。
 
 ## 2. 一次失败候选的修复链路
 
@@ -94,7 +92,7 @@ sequenceDiagram
     J->>J: 保存可复用 skill 与最终导出引用
 ```
 
-必须注意：当前诊断查找主要按代码 hash（A08）；缺诊断成功判定不闭合（A01）；缺终态修复事件可阻断整体导出（A02）。上图中的消息发生顺序不等于跨文件原子事务。
+必须注意：修复版本必须以 candidate、revision、evaluation 和 code hash 的持久化证据闭合；无法闭合的修复记录进入隔离区，不得伪造有效分数或阻断其他可信资产导出。上图中的消息发生顺序不等于跨文件原子事务。
 
 ## 3. 输入、输出与消费方
 
@@ -132,7 +130,7 @@ flowchart LR
     I --> RE[官方重评与新种群初始化]
 ```
 
-这是应可审计的来源关系，不代表当前每条边已具备严格唯一匹配；A01/A08/A13 是当前缺口。不得把 A 的成绩配给 B，也不得因 B 有效就宣称所有修复具有算法收益。
+这是应可审计的来源关系。当前实现要求每条修复版本边以 candidate、revision、evaluation 和 code hash 闭合；不得把 A 的成绩配给 B，也不得因 B 有效就宣称所有修复具有算法收益。
 
 跨轮携带三类不同输入：incumbent 代码引用、真实反馈引用、Agent 选用的记忆版本。三者互不替代。每轮原生种群重新初始化，因此准确名称是“带计划、反馈与记忆的多轮 EoH 重启工作流”。
 

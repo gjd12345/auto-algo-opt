@@ -8,9 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from tests.fixtures import client as client_mod
 from agent_skill_loop.client import ProviderFailure, _open_url_with_deadline, http_post_with_deadline
-from tests.fixtures.client import LiveTransport
 
 
 class _SlowHandler(BaseHTTPRequestHandler):
@@ -91,7 +89,6 @@ def test_open_url_with_deadline_cancels_slow_body():
         server.shutdown()
         server.server_close()
 
-
 def test_open_url_with_deadline_allows_fast_body():
     server = _start_server(_FastHandler)
     try:
@@ -131,25 +128,3 @@ def test_http_post_kills_hanging_request():
     finally:
         server.shutdown()
         server.server_close()
-
-
-def test_live_transport_uses_deadline_helper(monkeypatch):
-    seen: dict[str, float] = {}
-
-    def fake_post(url, headers, data, timeout, max_bytes=4 * 1024 * 1024):
-        seen["timeout"] = timeout
-        return 200, b'{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":3,"completion_tokens":4}}'
-
-    monkeypatch.setattr(client_mod, "http_post_with_deadline", fake_post)
-    monkeypatch.setenv("MODEL_ROUTER_API_KEY", "test-key")
-    transport = LiveTransport(
-        "deepseek-v4-flash",
-        timeout=90.0,
-        endpoint="https://opencode.ai/zen/go/v1/chat/completions",
-    )
-    text = transport.request("prompt", purpose="generation", problem="cvrp_construct", timeout=12.0)
-    assert text == "ok"
-    assert seen["timeout"] == 12.0
-    assert transport.usage[-1].input_tokens == 3
-    assert transport.usage[-1].output_tokens == 4
-    assert transport.usage[-1].model == "deepseek-v4-flash"

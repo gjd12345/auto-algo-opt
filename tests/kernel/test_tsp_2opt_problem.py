@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-import json
-
-from tests.fixtures.client import FixtureTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from tests.fixtures.loop import AgentLoop
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, get_problem
 from agent_skill_loop.problems.tsp_2opt import (
     BASELINE_CODE,
@@ -112,51 +108,3 @@ def test_tsp2_rejects_mutated_input():
     result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
     assert result.valid is False
     assert result.error_code == "candidate_mutated_input"
-
-
-def test_tsp2_fixture_smoke_exports_and_reevaluates(tmp_path):
-    spec = get_problem("tsp_2opt")
-    worst = spec.baseline_code.replace("argmin", "argmax")
-    valid = "{Least-improving 2-opt choice}\n```python\n" + worst.strip() + "\n```\n"
-    invalid = (
-        "{Broken return type}\n"
-        "```python\n"
-        "def select_2opt_move(*args, **kwargs):\n"
-        "    return 'nope'\n"
-        "```\n"
-    )
-    out = tmp_path / "tsp2"
-    out.mkdir()
-    transport = FixtureTransport([valid, invalid, valid])
-    summary = AgentLoop(out, transport=transport, execution_mode="fixture", problem_spec=spec, wall_seconds=120).run()
-    assert summary.loop_completed is True
-    assert summary.status == "completed_with_valid_candidate"
-    assert summary.generated_valid_candidates >= 1
-    assert summary.feedback_consumed_count >= 1
-
-    suite = json.loads((out / "dev_suite.json").read_text(encoding="utf-8"))
-    assert suite["problem"] == "tsp_2opt"
-    from agent_skill_loop.skill_store import load_skill
-
-    skill = load_skill(out / "exported_skill")
-    assert skill.problem == "tsp_2opt"
-    assert skill.entrypoint == "select_2opt_move"
-    first = SubprocessEvaluator(timeout=10.0).evaluate(skill.code, suite)
-    second = SubprocessEvaluator(timeout=10.0).evaluate(skill.code, suite)
-    assert first.valid is True
-    assert first.objective == second.objective
-
-    baseline = load_skill(out / "skills" / "baseline")
-    assert baseline.description == spec.baseline_description
-
-    events = [
-        json.loads(line)
-        for line in (out / "run" / "events.jsonl").read_text(encoding="utf-8").splitlines()
-    ]
-    valid_attempts = [
-        event["payload"]
-        for event in events
-        if event["kind"] == "attempt_result" and event["payload"]["evaluation"]["valid"]
-    ]
-    assert valid_attempts
-    assert valid_attempts[0]["evaluation"]["metrics"]["operation_budget_per_instance"]

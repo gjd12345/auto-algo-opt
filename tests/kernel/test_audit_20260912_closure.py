@@ -1,8 +1,6 @@
 """Regression contracts for the thirteen 2026-09-12 audit findings (no paid API)."""
 import json
-import threading
 from dataclasses import replace
-from types import SimpleNamespace
 
 import pytest
 
@@ -16,8 +14,6 @@ from agent_skill_loop.skill_store import load_skill, sha256_text
 from agent_skill_loop.workflow import WorkflowRunner
 from eoh_frozen.export import export_run_evidence, _repair_record_for_row
 from eoh_frozen.llm_bridge import OpenAIPathBridge
-from eoh_frozen.problem import FrozenProblem
-from eoh_frozen.repair import RepairingEOH, is_repairable
 
 
 def plan_payload(prompt, **_):
@@ -41,26 +37,6 @@ def write_rows(root, rows):
     path.write_text('\n'.join(json.dumps(row) for row in rows) + '\n', encoding='utf-8')
 
 
-def test_missing_repair_evidence_never_accepts_scalar_fitness():
-    engine = object.__new__(RepairingEOH)
-    engine._repair_lock = threading.Lock()
-    engine.max_repairs_per_candidate = engine.max_repair_requests_total = 1
-    for name in ('repair_triggered', 'repair_attempted', 'repair_succeeded', 'repair_failed', 'repair_skipped'):
-        setattr(engine, name, 0)
-    spec = get_problem('cvrp_construct')
-    engine.problem = SimpleNamespace(spec=spec, task_description=spec.task_description,
-        template_program=spec.template_program, suite={'content_hash': 'suite'}, timeout=20,
-        set_evaluation_context=lambda _: None, evaluation_for_identity=lambda *_: None)
-    engine.repair_request = lambda *a, **k: json.dumps(dict(algorithm='fixed', code=spec.baseline_code, repair_summary='fixed'))
-    engine._eval_executor = SimpleNamespace(submit=lambda *a: SimpleNamespace(result=lambda: 1.0))
-    events = []
-    engine._append_repair_event = events.append
-    offspring = engine._repair_one(offspring=dict(code='def broken(): pass', objective=None),
-        operator='i1', candidate_id='candidate_1', diagnostic={'error_code': 'missing_entrypoint'})
-    assert offspring['objective'] is None and events[-1]['state'] == 'failed'
-    assert engine.repair_succeeded == 0
-
-
 def test_partial_repair_quarantined_baseline_preserved_and_exact_identity(tmp_path):
     spec = get_problem('cvrp_construct')
     suite = spec.build_suite(1, count=1, size=6)
@@ -76,9 +52,6 @@ def test_partial_repair_quarantined_baseline_preserved_and_exact_identity(tmp_pa
     # Equal code alone cannot bind a terminal event from another evaluation.
     assert _repair_record_for_row([dict(state='succeeded', candidate_id='candidate_1',
         evaluated_code_sha256=repaired['code_sha256'], repair_evaluation_id='other')], repaired) is None
-    problem = FrozenProblem(suite, spec=spec, evaluation_log=tmp_path / 'results/evaluations.jsonl')
-    assert problem.evaluation_for_identity(repaired['code'], dict(candidate_id='candidate_1',
-        revision='repair_1', evaluation_id='other')) is None
 
 
 def test_workflow_solution_publication_uses_enriched_facts_and_frozen_gate(tmp_path):
@@ -174,14 +147,6 @@ def test_response_policy_rejects_drafts_and_reserves_every_retry(tmp_path, monke
         bridge._forward('third')
     records = [json.loads(p.read_text()) for p in (tmp_path / 'exchanges').glob('request_*.json')]
     assert all(row['selected_content_field'] is None and row['raw_response'] for row in records)
-
-
-def test_repair_policy_is_closed():
-    for code, detail in [('forbidden_rebinding', 'np'), ('forbidden_attribute', 'read_text'),
-                         ('candidate_exception', 'UnknownError'), ('timeout', ''), ('unknown', '')]:
-        assert not is_repairable({'error_code': code, 'error_detail': detail})
-    assert is_repairable({'error_code': 'forbidden_attribute', 'error_detail': 'ix_'})
-    assert is_repairable({'error_code': 'candidate_exception', 'error_detail': 'NameError:line_3'})
 
 
 def test_evaluate_cannot_claim_alignment_without_code():

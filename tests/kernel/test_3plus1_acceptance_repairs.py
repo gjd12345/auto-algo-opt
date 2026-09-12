@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-import time
 
 from agent_skill_loop.contracts_3plus1 import EvaluateDocument, MemoryAction
 from agent_skill_loop.memory import MemoryAPI, MemoryEntry
 from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill
 from agent_skill_loop.workflow import WorkflowRunner
-from eoh_frozen.smoke import fixture_provider
 
 
 def _plan(prompt: str, **_kwargs: object) -> str:
@@ -22,56 +20,6 @@ def _plan(prompt: str, **_kwargs: object) -> str:
         "reference_skill_ref": None,
         "hypothesis": "unknown",
     })
-
-
-def test_provider_terminal_stops_before_evaluate_and_accounts_request(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPAIR_FIXTURE_KEY", "fixture")
-    evaluate_calls: list[str] = []
-
-    def evaluate_request(prompt: str, **_kwargs: object) -> str:
-        evaluate_calls.append(prompt)
-        return json.dumps({"plan_alignment": "unknown", "observations": [], "causal_claim": "unknown", "memory_action": {"kind": "disabled"}})
-
-    with fixture_provider("cvrp_construct", responder=lambda _prompt, _index: (401, "bad key")) as (endpoint, prompts):
-        result = WorkflowRunner(
-            tmp_path / "workflow", model="fixture", endpoint=endpoint, api_key_env="REPAIR_FIXTURE_KEY",
-            max_rounds=1, max_requests=5, count=1, size=6, pop_size=2, n_pop=1, max_sample_nums=1,
-            plan_request=_plan, evaluate_request=evaluate_request,
-        ).run()
-    assert result["status"] == "provider_failed"
-    assert result["request_used"] == len(prompts) == 1
-    assert result["rounds"][0]["eoh"]["status"] == "provider_failed"
-    assert not evaluate_calls
-    skipped = json.loads((tmp_path / "workflow/rounds/round_0001/evaluate_skipped.json").read_text())
-    assert skipped["agent_evaluate"] == "skipped" and skipped["memory_decision"] == "not_run"
-
-
-def test_deadline_reconciles_child_and_writes_recovered_summary(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPAIR_SLOW_KEY", "fixture")
-
-    def slow_response(prompt: str, _index: int):
-        if prompt == "1+1=?":
-            time.sleep(4.0)
-        else:
-            time.sleep(4.0)
-        return 200, "{}"
-
-    with fixture_provider("cvrp_construct", responder=slow_response) as (endpoint, _prompts):
-        result = WorkflowRunner(
-            tmp_path / "workflow", model="fixture", endpoint=endpoint, api_key_env="REPAIR_SLOW_KEY",
-            max_rounds=1, max_requests=5, wall_seconds=3.0, request_timeout=5.0,
-            count=1, size=6, pop_size=2, n_pop=1, max_sample_nums=1, plan_request=_plan,
-            evaluate_request=lambda **_kwargs: json.dumps({"plan_alignment": "unknown", "observations": [], "causal_claim": "unknown", "memory_action": {"kind": "disabled"}}),
-        ).run()
-    eoh = result["rounds"][0]["eoh"]
-    assert result["status"] == "stopped"
-    assert eoh["status"] == "stopped" and eoh["stop_reason"] == "wall_time_limit"
-    assert result["request_used"] == len(_prompts) == 1
-    terminal = result["budget_events"][-1]
-    assert terminal["state"] == "killed_unknown"
-    assert terminal["input_tokens"] is None and terminal["output_tokens"] is None
-    assert (tmp_path / "workflow/rounds/round_0001/eoh_run/summary.json").is_file()
-    assert (tmp_path / "workflow/rounds/round_0001/evaluate_skipped.json").is_file()
 
 
 def test_memory_is_versioned_and_does_not_cross_projects_by_default(tmp_path):

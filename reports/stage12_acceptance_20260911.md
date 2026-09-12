@@ -129,6 +129,6 @@ py -3.11 -m agent_skill_loop run --problem cvrp_construct --model deepseek-chat 
 
 上游丢弃选择后的父本 ID，本次保留实际 prompt/响应、请求索引及评测行，明确记录 upstream_parent_ids_not_exposed，不伪造单父谱系。3+1 的计划对象与多父引用仍属于后续设计。
 
-旧搜索实现和旧报告模板仅在 tests/fixtures 保留作隔离测试辅助；旧计划归档，生产不再打包或导入。历史运行、研究材料和 git 分支未删除。新运行合同见 [stage12_contract.md](../docs/stage12_contract.md)。
+旧搜索实现和旧报告模板仅在 tests/fixtures 保留作隔离测试辅助；旧计划归档，生产不再打包或导入。历史运行、研究材料和 git 分支未删除。本报告是阶段 1、2 的历史验收证据；当前实现与边界见 [audit_20260912/acceptance.md](audit_20260912/acceptance.md)。
 
 自动审批拒绝了删除本次构建生成的 build/ 临时目录。目录保留并列入 .gitignore，不进入 wheel，不作为历史搜索源码；没有通过其他删除方式绕过该拒绝。

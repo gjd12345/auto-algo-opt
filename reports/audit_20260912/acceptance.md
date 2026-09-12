@@ -2,7 +2,7 @@
 
 日期：2026-09-12。修复复核结论：**本文 A01–A13 已完成代码修复与分层本地验收；未重新运行付费 API，不能据此宣称当前版本真实模型五轮验收通过。**
 
-本次复核修改了生产实现、针对性回归及报告，工作分支为 `agent-skill-loop-0908`，基于 `cd438a7`，尚未提交或 push。下面先给当前销项记录；第 1–5 节保留原始审查快照，旧缺陷描述和旧测试数字均不是修复后状态。本文 A01–A13 与更早阶段报告的“13 项”不是同一编号体系。
+本次复核修改了生产实现、针对性回归、仓库边界及报告，工作分支为 `agent-skill-loop-0908`。下面先给当前销项记录；第 1–5 节保留原始审查快照，旧缺陷描述和旧测试数字均不是修复后状态。本文 A01–A13 与更早阶段报告的“13 项”不是同一编号体系。
 
 ## 0. 修复后逐项销项（当前结论）
 
@@ -29,9 +29,11 @@
 - 全量内核及官方接线回归首遍：183 passed、1 skipped、2 failed（170.87 秒）。两项失败同源于 Evaluate 预留为 0 时提前拦截请求，导致拒绝数与停止原因错误；随后已修复。
 - 修复后受影响边界重跑：**32 passed（49.80 秒）**，覆盖上述两项失败、请求账本、截止/认证、solution、Memory、修复 off/bounded、两轮真实官方子进程联调。见 [定向 JUnit](../../outputs/audit_20260912_closure.xml)。
 - 最后上下文转义及相关合同检查：**12 passed（0.87 秒）**。见 [末轮 JUnit](../../outputs/audit_20260912_context_final.xml)。上述两批有重叠，不相加成“44 项独立测试”。最后未重复整套全量回归。
-- 当前适配层 source hash：`eeb188bff33f8fe6a82810975b2879f5f6ea6ff6dd912c7e77e93c466ecd2c7f`。源文件若继续改动应重新计算；不把这个 hash 当成 Git commit。
+- 当前适配层 source hash：`cee79e0b10862913914dbd36b664ef60c39de02a99f1e97c9be590a5888b1ac9`。源文件若继续改动应重新计算；不把这个 hash 当成 Git commit。
+- 本次 repository hygiene 后分层回归：无 EoH 的 kernel **104 passed、1 skipped**；安装固定 EoH 的适配测试 **35 passed**。kernel 不再导入旧 fixture 或启动官方引擎；依赖 EoH 的审计/边界测试集中在 `tests/eoh_frozen`。
+- 清理范围：移除未使用的 `RoleClient`、`Transport` 协议、`FrozenCVRPConstruct` 兼容别名、旧 smoke 配置、重复审计包装脚本，以及旧 `AgentLoop`/固定策略 fixture 测试调用方。问题合同、隔离评测、请求网关、资产、Memory、3+1 和官方 EoH 适配测试仍保留。
 
-复现：`py -3.11 reports/audit_20260912/probes.py`。该入口已从“打印旧缺陷表现”改成有断言的本地销项检查；不会调用外部付费 API。新增集中回归见 [test_audit_20260912_closure.py](../../tests/kernel/test_audit_20260912_closure.py)。
+本地销项检查由 pytest 直接执行，不再维护重复的包装脚本；不会调用外部付费 API。核心纯合同回归见 [test_audit_20260912_closure.py](../../tests/kernel/test_audit_20260912_closure.py)，依赖固定 EoH 的检查见 [test_audit_engine.py](../../tests/eoh_frozen/test_audit_engine.py)。
 
 ### 保留的边界与运维注意
 
@@ -57,10 +59,10 @@
 
 ```powershell
 py -3.11 -m pytest tests/kernel tests/eoh_frozen -q --junitxml=outputs/audit_20260912_final.xml
-py -3.11 reports/audit_20260912/probes.py
+py -3.11 -m pytest tests/kernel/test_audit_20260912_closure.py tests/eoh_frozen/test_audit_engine.py -q --tb=short
 ```
 
-[最终 JUnit](../../outputs/audit_20260912_final.xml)；[定向探针](probes.py)。探针使用临时目录和边界替身复现行为，其输出不是“验收通过”断言。
+[最终 JUnit](../../outputs/audit_20260912_final.xml)。纯合同和 EoH 适配器分开执行，避免 kernel job 因缺少可选 EoH 依赖而丢掉纯合同覆盖。
 
 ## 2. 已落实的部分
 

@@ -215,11 +215,3 @@ class FrozenProblem(BaseProblem):
                 handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
         except OSError:
             return
-
-
-class FrozenCVRPConstruct(FrozenProblem):
-    """Backward-compatible CVRP name for callers of the original adapter."""
-
-    def __init__(self, suite: dict[str, Any] | None = None, **kwargs: Any) -> None:
-        from agent_skill_loop.problems.base import get_problem
-        super().__init__(suite, spec=get_problem("cvrp_construct"), **kwargs)

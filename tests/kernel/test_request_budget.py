@@ -5,9 +5,7 @@ import threading
 
 import pytest
 
-from tests.fixtures import client as client_mod
 from agent_skill_loop.client import ProviderFailure
-from tests.fixtures.client import LiveTransport
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget
 from eoh_frozen.llm_bridge import OpenAIPathBridge
 
@@ -126,64 +124,6 @@ def test_thread_safety_smoke():
     assert not errors
     assert budget.used == 100
     assert len(budget.events) == 200
-
-
-def _live_transport(budget):
-    return LiveTransport(
-        "deepseek-v4-flash",
-        endpoint="https://opencode.ai/v1/chat/completions",
-        api_key_env="TEST_KEY",
-        budget=budget,
-    )
-
-
-def test_live_transport_budget_complete_then_exhausted(monkeypatch):
-    def fake_post(url, headers, data, timeout, max_bytes=4 * 1024 * 1024):
-        return 200, b'{"choices":[{"message":{"content":"ok"}}],"usage":{"prompt_tokens":1,"completion_tokens":2}}'
-
-    monkeypatch.setattr(client_mod, "http_post_with_deadline", fake_post)
-    monkeypatch.setenv("TEST_KEY", "x")
-    budget = RequestBudget(1)
-    transport = _live_transport(budget)
-    text = transport.request("prompt", purpose="generation", problem="cvrp_construct")
-    assert text == "ok"
-    assert budget.used == 1
-    assert budget.events[-1]["state"] == "complete"
-    assert budget.events[-1]["input_tokens"] == 1
-    assert budget.events[-1]["output_tokens"] == 2
-    with pytest.raises(ProviderFailure) as raised:
-        transport.request("prompt2", purpose="generation", problem="cvrp_construct")
-    assert raised.value.error_code == "request_budget_exhausted"
-    assert raised.value.retryable is False
-    assert budget.rejected == 1
-
-
-def test_live_transport_budget_killed_unknown(monkeypatch):
-    def fake_post(url, headers, data, timeout, max_bytes=4 * 1024 * 1024):
-        raise ProviderFailure("request_deadline", retryable=True)
-
-    monkeypatch.setattr(client_mod, "http_post_with_deadline", fake_post)
-    monkeypatch.setenv("TEST_KEY", "x")
-    budget = RequestBudget(1)
-    transport = _live_transport(budget)
-    with pytest.raises(ProviderFailure) as raised:
-        transport.request("prompt", purpose="generation", problem="cvrp_construct")
-    assert raised.value.error_code == "request_deadline"
-    assert budget.used == 1
-    event = budget.events[-1]
-    assert event["state"] == "killed_unknown"
-    assert event["input_tokens"] is None
-    assert event["output_tokens"] is None
-
-
-def test_live_transport_no_budget_keeps_behavior(monkeypatch):
-    def fake_post(url, headers, data, timeout, max_bytes=4 * 1024 * 1024):
-        return 200, b'{"choices":[{"message":{"content":"ok"}}]}'
-
-    monkeypatch.setattr(client_mod, "http_post_with_deadline", fake_post)
-    monkeypatch.setenv("TEST_KEY", "x")
-    transport = _live_transport(None)
-    assert transport.request("prompt", purpose="generation", problem="cvrp_construct") == "ok"
 
 
 def _bridge(tmp_path, budget, *, wall_seconds=None):

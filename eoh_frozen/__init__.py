@@ -4,14 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = ["FrozenProblem", "FrozenCVRPConstruct"]
+__all__ = ["FrozenProblem"]
 
 
 def __getattr__(name: str) -> Any:
-    if name == "FrozenCVRPConstruct":
-        from eoh_frozen.problem import FrozenCVRPConstruct
-
-        return FrozenCVRPConstruct
     if name == "FrozenProblem":
         from eoh_frozen.problem import FrozenProblem
 

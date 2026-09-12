@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Protocol
+from typing import Any, Mapping
 
 
 PROBLEM_CVRP = "cvrp_construct"
@@ -23,19 +23,6 @@ DEFAULT_SPLIT = "dev_train"
 DEFAULT_SOLVER_TIMEOUT = 20.0
 DEFAULT_REQUEST_TIMEOUT = 90.0
 DEFAULT_WALL_SECONDS = 420.0
-
-
-
-class Transport(Protocol):
-    def request(
-        self,
-        prompt: str,
-        *,
-        purpose: str,
-        problem: str,
-        timeout: float | None = None,
-    ) -> str: ...
-
 
 @dataclass(frozen=True)
 class EvaluationResult:

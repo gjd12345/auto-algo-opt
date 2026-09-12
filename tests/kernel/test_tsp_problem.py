@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from tests.fixtures.client import FixtureTransport
 from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from tests.fixtures.loop import AgentLoop
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, get_problem
 from agent_skill_loop.problems.tsp import (
     BASELINE_CODE,
@@ -98,38 +94,3 @@ def test_tsp_rejects_mutated_input():
     result = SubprocessEvaluator(timeout=5.0).evaluate(code, suite)
     assert result.valid is False
     assert result.error_code == "candidate_mutated_input"
-
-
-def test_tsp_fixture_smoke_exports_and_reevaluates(tmp_path):
-    spec = get_problem("tsp_construct")
-    farthest = spec.baseline_code.replace("argmin", "argmax")
-    valid = "{Farthest-neighbor TSP heuristic}\n```python\n" + farthest.strip() + "\n```\n"
-    invalid = (
-        "{Broken return type}\n"
-        "```python\n"
-        "def select_next_node(*args, **kwargs):\n"
-        "    return 'nope'\n"
-        "```\n"
-    )
-    out = tmp_path / "tsp"
-    out.mkdir()
-    transport = FixtureTransport([valid, invalid, valid])
-    summary = AgentLoop(out, transport=transport, execution_mode="fixture", problem_spec=spec, wall_seconds=120).run()
-    assert summary.loop_completed is True
-    assert summary.status == "completed_with_valid_candidate"
-    assert summary.generated_valid_candidates >= 1
-    assert summary.feedback_consumed_count >= 1
-    assert (out / "exported_skill" / "ref.json").is_file()
-
-    suite = json.loads((out / "dev_suite.json").read_text(encoding="utf-8"))
-    assert suite["problem"] == "tsp_construct"
-    from agent_skill_loop.skill_store import load_skill
-
-    skill = load_skill(out / "exported_skill")
-    assert skill.problem == "tsp_construct"
-    first = SubprocessEvaluator(timeout=10.0).evaluate(skill.code, suite)
-    second = SubprocessEvaluator(timeout=10.0).evaluate(skill.code, suite)
-    assert first.valid is True
-    assert first.objective == second.objective
-    summary_data = json.loads((out / "summary.json").read_text(encoding="utf-8"))
-    assert summary_data["problem"] == "tsp_construct"

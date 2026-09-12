@@ -1,5 +1,5 @@
 # auto-algo-opt
-生产搜索使用锁定提交的官方 FeiLiu36/EoH。当前合同见 [阶段 1、2 运行合同](docs/stage12_contract.md)，修复验收见 [13 项自检及真实 API 报告](reports/stage12_acceptance_20260911.md)。
+生产搜索使用锁定提交的官方 FeiLiu36/EoH。当前实现与 3+1 修复边界见 [审计验收报告](reports/audit_20260912/acceptance.md)，阶段 1、2 的运行证据见 [历史验收报告](reports/stage12_acceptance_20260911.md)。
 
 支持 `cvrp_construct`、`tsp_construct`、`tsp_2opt`。官方引擎负责种群、父本选择及 e1/e2/m1/m2；适配层负责隔离评测、预算、进程停止、证据和 skill 发布。
 
@@ -9,7 +9,7 @@ py -3.11 -m pytest -q
 py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/offline_smoke
 ```
 
-smoke 使用 localhost 模型响应，完整执行官方引擎，无外部模型调用。旧固定策略只在 tests/fixtures 内供历史测试使用，不随软件安装，生产中没有 AgentLoop 入口。
+smoke 使用 localhost 模型响应，完整执行官方引擎，无外部模型调用。旧 AgentLoop、固定策略和 fixture harness 已从当前测试入口移除，生产中没有旧循环兼容入口。
 
 用户授权的真实运行示例（DeepSeek 官方 OpenAI 兼容 API）：
 

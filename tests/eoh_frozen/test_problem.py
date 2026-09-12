@@ -10,12 +10,13 @@ from agent_skill_loop.contracts import DEFAULT_SEED
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, TASK_DESCRIPTION, TEMPLATE_PROGRAM, build_suite
 from eoh_frozen.export import export_best_skill, load_best_individual
-from eoh_frozen.problem import FrozenCVRPConstruct
+from eoh_frozen.problem import FrozenProblem
+from agent_skill_loop.problems.base import get_problem
 
 
 def test_frozen_problem_matches_kernel_baseline():
     suite = build_suite(DEFAULT_SEED, count=3, size=20)
-    problem = FrozenCVRPConstruct(suite, timeout=20)
+    problem = FrozenProblem(suite, spec=get_problem("cvrp_construct"), timeout=20)
     assert problem.template_program == TEMPLATE_PROGRAM
     assert problem.task_description == TASK_DESCRIPTION
     assert problem.suite["content_hash"] == suite["content_hash"]
@@ -29,14 +30,14 @@ def test_frozen_problem_matches_kernel_baseline():
 
 def test_frozen_problem_invalid_code_is_none():
     suite = build_suite(DEFAULT_SEED, count=3, size=8)
-    problem = FrozenCVRPConstruct(suite, timeout=10)
+    problem = FrozenProblem(suite, spec=get_problem("cvrp_construct"), timeout=10)
     assert problem.evaluate("def select_next_node(*args):\n    return 'nope'\n") is None
 
 
 def test_frozen_problem_writes_eval_failure_log(tmp_path):
     suite = build_suite(DEFAULT_SEED, count=2, size=6)
     fail_log = tmp_path / "eval_failures.jsonl"
-    problem = FrozenCVRPConstruct(suite, timeout=10, fail_log=fail_log)
+    problem = FrozenProblem(suite, spec=get_problem("cvrp_construct"), timeout=10, fail_log=fail_log)
     assert problem.evaluate("def select_next_node(*args):\n    return 'nope'\n") is None
     lines = fail_log.read_text(encoding="utf-8").strip().splitlines()
     assert len(lines) == 1

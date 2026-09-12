@@ -22,7 +22,7 @@ jobs:
       - name: Import kernel without eoh
         run: |
           python -c "import importlib.util; assert importlib.util.find_spec('eoh') is None"
-          python -c "import agent_skill_loop.__main__, eoh_frozen.export; import sys; assert 'eoh' not in sys.modules; assert 'tests.fixtures.loop' not in sys.modules"
+          python -c "import agent_skill_loop.__main__, eoh_frozen.export; import sys; assert 'eoh' not in sys.modules; assert not any(name.startswith('tests.fixtures') for name in sys.modules)"
       - name: Run kernel tests
         run: python -m pytest tests/kernel -q
 
