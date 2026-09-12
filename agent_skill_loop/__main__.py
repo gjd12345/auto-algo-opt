@@ -16,6 +16,13 @@ from agent_skill_loop.contracts import (
 from agent_skill_loop.evaluator import SubprocessEvaluator
 from agent_skill_loop.importer import import_skill
 from agent_skill_loop.problems.base import get_problem
+from agent_skill_loop.session_runtime import (
+    SessionError,
+    error_envelope,
+    initialize_session,
+    read_state,
+    stop_session,
+)
 from agent_skill_loop.skill_store import load_skill, validate_skill_for_suite
 
 
@@ -109,6 +116,53 @@ def cmd_workflow(args: argparse.Namespace) -> int:
     return 0 if result["status"] == "completed" else 2
 
 
+def _print_session(payload: dict) -> int:
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_session_init(args: argparse.Namespace) -> int:
+    return _print_session(initialize_session(
+        output=Path(args.output),
+        operation_id=args.operation_id,
+        problem=args.problem,
+        eoh_model=args.eoh_model,
+        eoh_endpoint=args.eoh_endpoint,
+        eoh_api_key_env=args.eoh_api_key_env,
+        eoh_max_requests=args.eoh_max_requests,
+        eoh_round_max_requests=args.eoh_round_max_requests,
+        engine_wall_seconds=args.engine_wall_seconds,
+        round_wall_seconds=args.round_wall_seconds,
+        max_solver_calls=args.max_solver_calls,
+        repair_mode=args.repair_mode,
+        repair_max_requests=args.repair_max_requests,
+        memory_store=args.memory_store,
+        solution_threshold=args.solution_min_relative_improvement,
+        seed=args.seed,
+        size=args.size,
+        count=args.count,
+        pop_size=args.pop_size,
+        n_pop=args.n_pop,
+        max_sample_nums=args.max_sample_nums,
+        solver_timeout=args.solver_timeout,
+        request_timeout=args.request_timeout,
+    ))
+
+
+def cmd_session_state(args: argparse.Namespace) -> int:
+    return _print_session(read_state(run=Path(args.run), expected_run_id=args.run_id))
+
+
+def cmd_session_stop(args: argparse.Namespace) -> int:
+    return _print_session(stop_session(
+        run=Path(args.run),
+        operation_id=args.operation_id,
+        expected_state_version=args.expected_state_version,
+        reason=args.reason,
+        expected_run_id=args.run_id,
+    ))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="agent_skill_loop")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -173,18 +227,66 @@ def build_parser() -> argparse.ArgumentParser:
     workflow.add_argument("--max-repairs-per-candidate", type=int, default=1)
     workflow.add_argument("--max-repair-requests-total", type=int, default=None)
     workflow.set_defaults(func=cmd_workflow)
+
+    session = sub.add_parser("session", help="Manage a recoverable Algorithm Optimization session")
+    session_sub = session.add_subparsers(dest="session_action", required=True)
+
+    session_init = session_sub.add_parser("init", help="Create a SQLite-backed session without external effects")
+    session_init.add_argument("--output", required=True)
+    session_init.add_argument("--operation-id", required=True)
+    session_init.add_argument("--problem", default=PROBLEM_CVRP)
+    session_init.add_argument("--eoh-model", required=True)
+    session_init.add_argument("--eoh-endpoint", default="https://api.deepseek.com/v1/chat/completions")
+    session_init.add_argument("--eoh-api-key-env", default="DEEPSEEK_API_KEY")
+    session_init.add_argument("--eoh-max-requests", type=int, default=32)
+    session_init.add_argument("--eoh-round-max-requests", type=int, default=None)
+    session_init.add_argument("--engine-wall-seconds", type=float, default=420.0)
+    session_init.add_argument("--round-wall-seconds", type=float, default=None)
+    session_init.add_argument("--max-solver-calls", type=int, default=None)
+    session_init.add_argument("--repair-mode", choices=["off", "bounded"], default="off")
+    session_init.add_argument("--repair-max-requests", type=int, default=None)
+    session_init.add_argument("--memory-store")
+    session_init.add_argument("--solution-min-relative-improvement", type=float, default=None)
+    session_init.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    session_init.add_argument("--size", type=int, default=DEFAULT_SIZE)
+    session_init.add_argument("--count", type=int, default=DEFAULT_COUNT)
+    session_init.add_argument("--pop-size", type=int, default=4)
+    session_init.add_argument("--n-pop", type=int, default=5)
+    session_init.add_argument("--max-sample-nums", type=int, default=None)
+    session_init.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
+    session_init.add_argument("--request-timeout", type=float, default=180.0)
+    session_init.set_defaults(func=cmd_session_init)
+
+    session_state = session_sub.add_parser("state", help="Read session state without external effects")
+    session_state.add_argument("--run", required=True)
+    session_state.add_argument("--run-id")
+    session_state.set_defaults(func=cmd_session_state)
+
+    session_stop = session_sub.add_parser("stop", help="Stop a session with an idempotent mutation")
+    session_stop.add_argument("--run", required=True)
+    session_stop.add_argument("--run-id")
+    session_stop.add_argument("--operation-id", required=True)
+    session_stop.add_argument("--expected-state-version", type=int, required=True)
+    session_stop.add_argument("--reason", default="user_requested")
+    session_stop.set_defaults(func=cmd_session_stop)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    problem_id = getattr(args, "problem", PROBLEM_CVRP)
     try:
+        if args.command == "session":
+            return int(args.func(args))
+        problem_id = getattr(args, "problem", PROBLEM_CVRP)
         # Resolve from the spec registry so the CLI and the loop agree on identity.
         get_problem(problem_id)
+        return int(args.func(args))
     except ValueError:
+        problem_id = getattr(args, "problem", PROBLEM_CVRP)
         raise SystemExit(f"unknown problem: {problem_id}") from None
-    return int(args.func(args))
+    except SessionError as exc:
+        print(json.dumps(error_envelope(exc), ensure_ascii=False, indent=2))
+        return exc.exit_code
 
 
 if __name__ == "__main__":

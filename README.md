@@ -33,3 +33,13 @@ py -3.11 -m agent_skill_loop workflow --problem cvrp_construct --model deepseek-
 ```
 
 历史研究材料保留为追溯证据，不作为当前执行指引。
+
+Phase 1 已提供不触发外部效果的 SQLite session control plane：
+
+```powershell
+py -3.11 -m agent_skill_loop session init --output outputs/session-001 --operation-id init-001 --eoh-model deepseek-flash
+py -3.11 -m agent_skill_loop session state --run outputs/session-001
+py -3.11 -m agent_skill_loop session stop --run outputs/session-001 --operation-id stop-001 --expected-state-version 1
+```
+
+`session init` 只冻结问题、套件、评测器、EoH 和预算身份，不读取 API key、不调用模型或 solver；`state` 是纯读取，`stop` 使用全局 `state_version` 和 `operation_id` 保证幂等。

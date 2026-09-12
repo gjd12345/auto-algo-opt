@@ -45,11 +45,6 @@ def load_local_env(path: Path | None = None) -> None:
         os.environ.setdefault(key, value.strip().strip('"').strip("'"))
 
 
-def _hash(prompt: str) -> str:
-    import hashlib
-    return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-
-
 _MAX_BODY_BYTES = 4 * 1024 * 1024
 _READ_CHUNK = 8 * 1024
 

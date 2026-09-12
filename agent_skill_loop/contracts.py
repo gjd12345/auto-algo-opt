@@ -9,6 +9,7 @@ from typing import Any, Mapping
 PROBLEM_CVRP = "cvrp_construct"
 ENTRYPOINT_CVRP = "select_next_node"
 JOURNAL_SCHEMA = "agent-skill-journal/v1"
+AUDIT_JOURNAL_SCHEMA = "algorithm-optimization-audit/v1"
 SKILL_SCHEMA = "algorithm-skill/v1"
 OBJECTIVE_DIRECTION = "minimize"
 
