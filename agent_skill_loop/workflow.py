@@ -12,6 +12,9 @@ import subprocess
 import sys
 import tempfile
 import time
+import math
+import hashlib
+import difflib
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -27,7 +30,6 @@ from agent_skill_loop.contracts_3plus1 import (
 from agent_skill_loop.memory import MemoryAPI, MemoryEntry
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.evaluator import evaluator_source_hash
-from agent_skill_loop.roles.client import RoleClient
 from agent_skill_loop.roles.evaluate import EvaluatePrompt, EvaluateRole
 from agent_skill_loop.roles.plan import PlanPrompt, PlanRole
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget
@@ -174,7 +176,7 @@ class WorkflowRunner:
         plan_request: Callable[..., str] | None = None,
         evaluate_request: Callable[..., str] | None = None,
         execute: Callable[..., dict[str, Any]] | None = None,
-        solution_min_relative_improvement: float = 0.05,
+        solution_min_relative_improvement: float | None = None,
         repair_mode: str = "off",
         max_repairs_per_candidate: int = 1,
         max_repair_requests_total: int | None = None,
@@ -183,7 +185,7 @@ class WorkflowRunner:
             raise ValueError("workflow_budget_invalid")
         if not model and (plan_request is None or evaluate_request is None):
             raise ValueError("workflow_model_required")
-        if not isinstance(solution_min_relative_improvement, (int, float)) or isinstance(solution_min_relative_improvement, bool) or not 0 <= solution_min_relative_improvement <= 1:
+        if solution_min_relative_improvement is not None and (not isinstance(solution_min_relative_improvement, (int, float)) or isinstance(solution_min_relative_improvement, bool) or not 0 <= solution_min_relative_improvement <= 1):
             raise ValueError("solution_threshold_invalid")
         if repair_mode not in {"off", "bounded"} or max_repairs_per_candidate not in {0, 1} or (max_repair_requests_total is not None and max_repair_requests_total < 0):
             raise ValueError("repair_config_invalid")
@@ -208,7 +210,7 @@ class WorkflowRunner:
         self._injected_plan_request = plan_request
         self._injected_evaluate_request = evaluate_request
         self._execute = execute
-        self.solution_min_relative_improvement = float(solution_min_relative_improvement)
+        self.solution_min_relative_improvement = solution_min_relative_improvement
         self.repair_mode = repair_mode
         self.max_repairs_per_candidate = int(max_repairs_per_candidate)
         self.max_repair_requests_total = max_repair_requests_total
@@ -230,6 +232,12 @@ class WorkflowRunner:
             "max_requests": self.budget.max_requests, "wall_seconds": self.deadline - self.started_at,
             "memory_enabled": self.memory is not None, "rounds": [],
             "solution_min_relative_improvement": self.solution_min_relative_improvement,
+            "solution_policy": {"enabled": self.solution_min_relative_improvement is not None,
+                                "problem": self.problem, "suite_hash": self.suite["content_hash"],
+                                "evaluator_hash": evaluator_source_hash(), "direction": self.spec.objective_direction,
+                                "comparison": "positive_baseline_relative_improvement_v1",
+                                "baseline_code_sha256": hashlib.sha256(self.spec.baseline_code.encode("utf-8")).hexdigest(),
+                                "minimum": self.solution_min_relative_improvement},
             "repair_mode": self.repair_mode,
             "max_repairs_per_candidate": self.max_repairs_per_candidate,
             "max_repair_requests_total": self.max_repair_requests_total,
@@ -316,22 +324,27 @@ class WorkflowRunner:
             )
             self._save_role_response(round_root, prompt_response)
             controller.record_plan(plan)
-            selected_memory = []
-            for reference in plan.memory_basis:
-                try:
-                    selected_memory.append(dict(self._read_memory_body(reference)))
-                except (OSError, ValueError, KeyError, TypeError) as exc:
-                    _atomic_json(round_root / "memory_read_failed.json", {
-                        "error": str(exc), "reference": reference, "degraded": True,
-                    })
+            selected_memory = [dict(row) for row in plan_role.consumed_memory if row["reference"] in plan.memory_basis]
+            if plan_role.memory_failures:
+                _atomic_json(round_root / "memory_read_failed.json", {"errors": plan_role.memory_failures, "degraded": True})
             if selected_memory:
                 _atomic_json(round_root / "memory_consumed.json", {
                     "references": [item.get("reference") for item in selected_memory],
                     "body_sha256": [item.get("body_sha256") for item in selected_memory],
                 })
-            controller.begin_execute(round_context=compile_round_context(
-                plan, memory_summaries=[*memory_rows, *selected_memory],
-            ))
+            context = compile_round_context(plan, memory_summaries=selected_memory)
+            injected = json.loads(context.split("\n", 1)[1])
+            _atomic_json(round_root / "context_manifest.json", {
+                "context_sha256": hashlib.sha256(context.encode("utf-8")).hexdigest(),
+                "memory_injected": [{"reference": row["reference"],
+                                     "body_sha256": row.get("body_sha256"),
+                                     "injected_sha256": hashlib.sha256(row["body"].encode("utf-8")).hexdigest()}
+                                    for row in injected["memory"]],
+                "omitted_memory_refs": injected.get("omitted_memory_refs", []),
+                "advisory_truncated": injected.get("advisory_truncated", False),
+                "advisory_omitted": injected.get("advisory_omitted", False),
+            })
+            controller.begin_execute(round_context=context)
             execute_summary = self._execute_round(round_root, state, plan)
             facts = self._trusted_facts(round_root, execute_summary)
             controller.record_evaluation(facts)
@@ -370,7 +383,7 @@ class WorkflowRunner:
                 _atomic_json(round_root / "round_summary.json", summary)
                 return summary
             controller.record_memory_decision(evaluation)
-            self._write_memory_action(round_root, evaluation, execute_summary)
+            self._write_memory_action(round_root, evaluation, facts)
             controller.update_remaining_requests(self.budget.remaining)
             controller.finish()
             summary = {"round_id": round_id, "status": controller.state.status,
@@ -416,20 +429,26 @@ class WorkflowRunner:
             elif purpose == "evaluate" and self._injected_evaluate_request is not None:
                 response = self._injected_evaluate_request(prompt, purpose=purpose, problem=problem, timeout=timeout)
             else:
-                client = getattr(self, "_role_client", None)
-                if client is None:
-                    api_key = os.environ.get(self.api_key_env, "")
-                    client = self._role_client = RoleClient(
-                        self.endpoint, model=self.model, api_key=api_key, budget=self.budget,
-                        deadline=self.deadline, request_log=self.root / "role_requests.jsonl",
-                    )
-                response = client.request(prompt, purpose=purpose, problem=problem, timeout=timeout)
+                response = self._request_gateway()._forward(prompt, purpose=purpose)
             capture["exchanges"].append({"purpose": purpose, "prompt": prompt, "response": response})
             # Persist provider I/O before Plan/Evaluate contract validation so
             # malformed live responses remain diagnosable.
             self._save_role_response(round_root, capture)
             return response
         return request
+
+    def _request_gateway(self):
+        from eoh_frozen.llm_bridge import OpenAIPathBridge
+        import secrets
+        if not hasattr(self, "_gateway"):
+            self._gateway = OpenAIPathBridge(
+                self.endpoint, os.environ.get(self.api_key_env, ""), self.model,
+                timeout=self.request_timeout, budget=self.budget,
+                request_log=self.root / "gateway" / "requests.jsonl",
+                wall_seconds=max(0, self._remaining_wall()), problem=self.problem,
+                gateway_token=secrets.token_urlsafe(32))
+            self._gateway.repair_limit = self.max_repair_requests_total
+        return self._gateway
 
     def _save_role_response(self, round_root: Path, capture: Mapping[str, Any]) -> None:
         exchanges = list(capture.get("exchanges") or [])
@@ -488,19 +507,29 @@ class WorkflowRunner:
             if isinstance(attempted, int) and not isinstance(attempted, bool) and attempted >= 0:
                 self._repair_requests_used += attempted
         records = self._request_records(round_root / "eoh_run")
-        self.budget.consume_external(
-            int(used), purpose="eoh", problem=self.problem, model=self.model,
-            records=records if len(records) == used else None,
-        )
+        gateway_record = round_root / "request_gateway.json"
+        if self._execute is None and gateway_record.is_file():
+            used = json.loads(gateway_record.read_text(encoding="utf-8"))["http_requests"]
+            result["http_requests"] = used
+            self._repair_requests_used = self._request_gateway().repair_used
+        if self._execute is not None:  # Explicit offline fixture boundary only.
+            self.budget.consume_external(
+                int(used), purpose="eoh", problem=self.problem, model=self.model,
+                records=records if len(records) == used else None,
+            )
         return result
 
     def _execute_subprocess(self, round_root: Path, max_requests: int, wall_seconds: float) -> dict[str, Any]:
         from agent_skill_loop.evaluator import kill_process_tree
         output = round_root / "eoh_run"
         context_file = round_root / "round_context.txt"
+        gateway = self._request_gateway()
+        gateway.eoh_reserve = 0 if self._injected_evaluate_request is not None else 1
+        gateway.start()
+        before_requests = self.budget.used
         command = [sys.executable, "-m", "agent_skill_loop", "run", "--problem", self.problem,
-                   "--model", self.model, "--output", str(output), "--endpoint", self.endpoint,
-                   "--api-key-env", self.api_key_env, "--seed", str(self.seed), "--size", str(self.size),
+                   "--model", self.model, "--output", str(output), "--endpoint", gateway.local_url,
+                   "--api-key-env", "WORKFLOW_GATEWAY_TOKEN", "--seed", str(self.seed), "--size", str(self.size),
                    "--count", str(self.count), "--pop-size", str(self.pop_size), "--n-pop", str(self.n_pop),
                    "--max-sample-nums", str(self.max_sample_nums), "--max-requests", str(max_requests),
                    "--solver-timeout", str(self.solver_timeout), "--request-timeout", str(self.request_timeout),
@@ -512,10 +541,21 @@ class WorkflowRunner:
                 command.extend(["--max-repair-requests-total", str(remaining_repairs)])
         if self.current_incumbent is not None:
             command.extend(["--parent-skill", str(self.current_incumbent)])
-        env = {key: value for key, value in os.environ.items() if key not in {"PYTHONHOME"}}
+        env = {key: value for key, value in os.environ.items()
+               if key != "PYTHONHOME" and key != self.api_key_env
+               and not any(part in key.upper() for part in ("API_KEY", "TOKEN", "SECRET", "PASSWORD"))}
+        env["WORKFLOW_GATEWAY_TOKEN"] = gateway.gateway_token
+        env["AGENT_SKILL_SKIP_DOTENV"] = "1"
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
-        proc = subprocess.Popen(command, cwd=str(Path(__file__).resolve().parents[1]), env=env,
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        log_file = (round_root / "eoh_process.log").open("w", encoding="utf-8")
+        try:
+            proc = subprocess.Popen(command, cwd=str(Path(__file__).resolve().parents[1]), env=env,
+                                    stdout=log_file, stderr=subprocess.STDOUT, text=True)
+        except OSError:
+            log_file.close()
+            gateway.stop()
+            gateway.eoh_reserve = 0
+            raise
         stopped_reason: str | None = None
         try:
             while proc.poll() is None:
@@ -530,6 +570,19 @@ class WorkflowRunner:
         finally:
             if proc.poll() is None:
                 kill_process_tree(proc)
+            gateway.stop()
+            # Deadline transport closes the outstanding request before final
+            # accounting; child cancellation never turns unknown usage into 0.
+            with gateway._forward_lock:
+                pass
+            gateway.eoh_reserve = 0
+            log_file.close()
+            _atomic_json(round_root / "request_gateway.json", {
+                "first_global_index": before_requests + 1, "last_global_index": self.budget.used,
+                "http_requests": self.budget.used - before_requests,
+                "terminal": gateway.terminal, "last_error": gateway.last_error})
+        if gateway.terminal and stopped_reason is None:
+            stopped_reason = "provider_failed:" + str(gateway.last_error)
         if stopped_reason is not None:
             try:
                 proc.wait(timeout=1.0)
@@ -593,19 +646,32 @@ class WorkflowRunner:
             # that just passed the gate, not a previous Markdown version.  It
             # is provenance, so it must not be sent to the memory version
             # updater.  Insight updates may use a versioned memory reference.
-            memory_base = action.based_on if isinstance(action.based_on, str) and "@v" in action.based_on and "/" in action.based_on else None
-            result = self.memory.write(entry, based_on=memory_base)
+            ref = action.based_on if isinstance(action.based_on, str) and "@v" in action.based_on else None
+            same_entry = ref is not None and ref.rsplit("@v", 1)[0] == f"{entry.project}/{entry.type}_{entry.name}"
+            result = self.memory.write(entry, based_on=ref if same_entry else None,
+                                       related_refs=(ref,) if ref and not same_entry else ())
             _atomic_json(round_root / "memory_result.json", result)
         except (OSError, ValueError) as exc:
             _atomic_json(round_root / "memory_result.json", {"written": False, "error": str(exc)})
 
     def _solution_eligible(self, round_root: Path, facts: Mapping[str, Any], action: Any) -> bool:
+        if self.solution_min_relative_improvement is None:
+            return False
         generated = facts.get("generated_valid_candidates", 0)
         best = facts.get("best_generated_path")
         baseline = facts.get("baseline", {}).get("objective") if isinstance(facts.get("baseline"), dict) else None
-        if not (generated and best and isinstance(baseline, (int, float)) and isinstance(baseline, (int, float))):
+        if not (generated and best and isinstance(baseline, (int, float)) and not isinstance(baseline, bool) and math.isfinite(baseline)):
+            return False
+        if not any(row.get("origin") == "baseline" and
+                   row.get("code_sha256") == hashlib.sha256(self.spec.baseline_code.encode("utf-8")).hexdigest() and
+                   row.get("evaluation", {}).get("valid") is True and
+                   row.get("evaluation", {}).get("objective") == baseline and
+                   row.get("evaluation", {}).get("suite_hash") == self.suite["content_hash"]
+                   for row in facts.get("evaluations", [])):
             return False
         skill = round_root / "eoh_run" / str(best)
+        if (round_root / "eoh_run").resolve() not in skill.resolve().parents:
+            return False
         evidence = skill / "evidence.json"
         reference = action.evidence_ref or action.based_on or ""
         try:
@@ -613,9 +679,8 @@ class WorkflowRunner:
             if validate_skill_for_suite(candidate, self.suite) or candidate.suite_hash != self.suite["content_hash"] or candidate.evaluator_hash != evaluator_source_hash() or not candidate.valid or candidate.mean_objective is None:
                 return False
             objective = float(candidate.mean_objective)
-            denominator = abs(float(baseline))
-            improvement = ((float(baseline) - objective) / denominator) if denominator else (1.0 if objective < baseline else 0.0)
-            if not objective < float(baseline) or improvement < self.solution_min_relative_improvement:
+            improvement = self.spec.solution_improvement(float(baseline), objective)
+            if improvement is None or improvement <= 0 or improvement < self.solution_min_relative_improvement:
                 return False
             if not evidence.is_file() or not isinstance(reference, str) or reference not in {str(best), f"eoh_run/{best}"}:
                 return False
@@ -624,13 +689,15 @@ class WorkflowRunner:
             if not isinstance(line, int) or evidence_payload.get("local_objective") != objective:
                 return False
             evaluations = facts.get("evaluations") or []
-            matching = [row for row in evaluations if row.get("evaluation_line") == line or row.get("code_sha256") == candidate.code_sha256]
+            matching = [row for row in evaluations if row.get("evaluation_line") == line]
             return any(row.get("code_sha256") == candidate.code_sha256 and
                        row.get("problem") == self.problem and
                        row.get("entrypoint") == self.spec.entrypoint and
                        isinstance(row.get("evaluation"), dict) and
                        row["evaluation"].get("suite_hash") == self.suite["content_hash"] and
                        row["evaluation"].get("objective") == objective and
+                       row["evaluation"].get("valid") is True and
+                       bool(row.get("evaluation_id")) and evidence_payload.get("evaluation_id") == row.get("evaluation_id") and
                        evidence_payload.get("source_request_index") == row.get("source_request_index")
                        for row in matching)
         except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
@@ -640,7 +707,7 @@ class WorkflowRunner:
         if self.memory is None:
             return []
         try:
-            result = self.memory.read(f"{self.problem} {self.spec.entrypoint}", project=self.problem, scene=self.spec.entrypoint, limit=4)
+            result = self.memory.read_index(project=self.problem, scene=self.spec.entrypoint, limit=4)
         except (OSError, ValueError) as exc:
             if round_root is not None:
                 _atomic_json(round_root / "memory_read_failed.json", {"error": str(exc), "degraded": True})
@@ -652,7 +719,7 @@ class WorkflowRunner:
         if self.memory is None:
             raise ValueError("memory_disabled")
         result = self.memory.read_version(reference)
-        return {key: result[key] for key in ("reference", "name", "type", "description", "scene", "version", "body_sha256", "body") if key in result}
+        return result
 
     def _trusted_facts(self, round_root: Path, summary: Mapping[str, Any]) -> dict[str, Any]:
         facts = dict(summary)
@@ -666,10 +733,35 @@ class WorkflowRunner:
                     continue
                 facts["evaluations"].append({
                     key: row.get(key) for key in
-                    ("code_sha256", "problem", "entrypoint", "origin", "source_request_index", "evaluation")
+                    ("code_sha256", "problem", "entrypoint", "origin", "source_request_index", "evaluation",
+                     "evaluation_id", "candidate_id", "revision", "original_code_sha256",
+                     "generation_request_ref", "repair_request_ref", "suite_hash", "evaluator_hash")
                     if key in row
                 })
                 facts["evaluations"][-1]["evaluation_line"] = line_number
+        # Read actual code only from hash-validated evaluation evidence. Keep
+        # full identity rows for publication gates; bound advisory source text.
+        from eoh_frozen.export import read_evidence, _read_repair_records
+        rows = read_evidence(round_root / "eoh_run", self.suite)
+        valid = [row for row in rows if row["evaluation"]["valid"]]
+        generated_rows = [row for row in valid if row.get("origin") in {"generated", "generated_repair"}]
+        best = min(generated_rows, key=lambda row: row["evaluation"]["objective"]) if generated_rows else None
+        original = next((row for row in rows if best and row.get("candidate_id") == best.get("candidate_id")
+                         and row.get("revision") == "original"), None)
+        if original is best or original is None:
+            original = next((row for row in valid if row.get("origin") == "explicit_parent"),
+                            next((row for row in valid if row.get("origin") == "baseline"), None))
+        source_rows = [row for row in (original, best) if row]
+        facts["code_evidence"] = [{"evaluation_id": row.get("evaluation_id"), "code_sha256": row["code_sha256"],
+                                  "revision": row.get("revision"), "code": row["code"][:8000],
+                                  "truncated": len(row["code"]) > 8000} for row in source_rows]
+        facts["repair_lineage"] = [{key: row.get(key) for key in (
+            "candidate_id", "state", "revision", "original_code_sha256", "evaluated_code_sha256",
+            "generation_request_ref", "repair_request_ref", "repair_evaluation_id", "repair_summary")}
+            for row in _read_repair_records(round_root / "eoh_run")[-8:]]
+        if original and best and original is not best:
+            diff = "\n".join(difflib.unified_diff(original["code"].splitlines(), best["code"].splitlines()))
+            facts["code_diff"] = {"text": diff[:4000], "truncated": len(diff) > 4000}
         return facts
 
     def _incumbent_fact(self) -> dict[str, Any] | None:
@@ -762,6 +854,8 @@ class WorkflowRunner:
             "evaluator_hash": evaluator_source_hash(), "status": "stopped" if reason in {"wall_time_limit", "request_limit"} else "engine_failed",
             "stop_reason": reason, "loop_completed": False,
         }
+        if reason.startswith("provider_failed:"):
+            summary.update(status="provider_failed", provider_error_code=reason.split(":", 1)[1])
         try:
             summary.update(finalize_evaluations(output, self.suite, stop_reason=reason))
             summary.update(export_run_evidence(output, self.suite))
@@ -815,4 +909,6 @@ class WorkflowRunner:
 
     def _write_root(self, payload: Mapping[str, Any]) -> None:
         if self.root.exists():
-            _atomic_json(self.root / "workflow.json", dict(payload))
+            path = self.root / "workflow.json"
+            previous = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+            _atomic_json(path, {**previous, **dict(payload)})

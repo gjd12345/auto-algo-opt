@@ -29,6 +29,8 @@ class ProviderFailure(RuntimeError):
 
 def load_local_env(path: Path | None = None) -> None:
     """Load repo .env without overriding variables already in the process."""
+    if os.environ.get("AGENT_SKILL_SKIP_DOTENV") == "1":
+        return
     env_path = path or (Path(__file__).resolve().parents[1] / ".env")
     if not env_path.is_file():
         return

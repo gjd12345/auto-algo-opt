@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
 from agent_skill_loop.evaluator import SubprocessEvaluator
-from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill, sha256_text
+from agent_skill_loop.skill_store import make_skill, publish_export_ref, save_skill, sha256_text, load_skill
 
 from agent_skill_loop.contracts import EOH_COMMIT
 from agent_skill_loop.evaluator import evaluator_source_hash
@@ -159,25 +160,21 @@ def _repair_record_for_row(records: list[dict[str, Any]], row: dict[str, Any]) -
     candidate_id = row.get("candidate_id")
     evaluation_id = row.get("evaluation_id")
     code_hash = row.get("code_sha256")
+    if not candidate_id or not evaluation_id or row.get("revision") != "repair_1":
+        return None
     matches = [
         item for item in records
-        if item.get("state") in {"succeeded", "failed"}
+        if item.get("state") == "succeeded"
         and item.get("candidate_id") == candidate_id
         and item.get("evaluated_code_sha256") == code_hash
         and item.get("repair_evaluation_id") == evaluation_id
+        and item.get("revision") == row.get("revision")
+        and item.get("original_code_sha256") == row.get("original_code_sha256")
+        and item.get("repair_request_ref") == row.get("repair_request_ref")
     ]
     if matches:
         return matches[-1]
-    # Backward-compatible fallback for an older event record without the
-    # repair evaluation id.  Candidate id plus code hash still prevents equal
-    # repaired code from being attributed to another candidate.
-    matches = [
-        item for item in records
-        if item.get("state") in {"succeeded", "failed"}
-        and item.get("candidate_id") == candidate_id
-        and item.get("evaluated_code_sha256") == code_hash
-    ]
-    return matches[-1] if matches else None
+    return None
 
 
 def finalize_evaluations(output: Path, suite: dict, *, stop_reason: str) -> dict:
@@ -206,7 +203,9 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
     generated = []
     saved = []
     attempt = 0
-    original_attempt_by_hash: dict[str, int] = {}
+    quarantined = []
+    originals = {row.get("candidate_id"): row for row in rows
+                 if row.get("origin") == "generated" and row.get("candidate_id")}
     for row in rows:
         if row["entrypoint"] != spec.entrypoint:
             raise ValueError("evaluation_entrypoint_mismatch")
@@ -214,40 +213,48 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
         is_repaired = row["origin"] == "generated_repair"
         if is_generated:
             attempt += 1
-            original_attempt_by_hash[row["code_sha256"]] = attempt
+        source_attempt = attempt
+        if (is_generated or is_repaired) and row.get("candidate_id") is not None:
+            if not re.fullmatch(r"candidate_[1-9][0-9]*", str(row["candidate_id"])):
+                quarantined.append({"evaluation_id": row.get("evaluation_id"), "reason": "candidate_identity_invalid"})
+                continue
+            source_attempt = int(row["candidate_id"].split("_")[1])
         repair = _repair_record_for_row(repair_records, row) if is_repaired else None
         if is_repaired:
-            if not isinstance(repair, dict) or repair.get("state") not in {"succeeded", "failed"}:
-                raise ValueError("repair_identity_missing")
-            candidate_id = repair.get("candidate_id")
-            original_hash = repair.get("original_code_sha256")
-            if isinstance(candidate_id, str) and candidate_id.startswith("candidate_"):
-                try:
-                    attempt = int(candidate_id.rsplit("_", 1)[-1])
-                except ValueError:
-                    raise ValueError("repair_identity_missing") from None
-            elif isinstance(original_hash, str) and original_hash in original_attempt_by_hash:
-                attempt = original_attempt_by_hash[original_hash]
-            else:
-                raise ValueError("repair_identity_missing")
+            original = originals.get(row.get("candidate_id"), {})
+            if not isinstance(repair, dict) or original.get("code_sha256") != row.get("original_code_sha256"):
+                quarantined.append({"evaluation_id": row.get("evaluation_id"), "reason": "repair_identity_missing"})
+                continue
         if not row["evaluation"]["valid"]:
             continue
-        version = f"candidate_{attempt}" if is_generated or is_repaired else row["origin"]
+        version = (row.get("candidate_id") or f"candidate_{source_attempt}") if is_generated or is_repaired else row["origin"]
         folder = output / "skills" / version
         if folder.exists():
-            continue  # native EoH re-evaluates the explicit seed again
+            existing = load_skill(folder)
+            if existing.code_sha256 == row["code_sha256"] and existing.mean_objective == row["evaluation"]["objective"]:
+                if not any(path == folder for _, path in saved):
+                    saved.append((existing, folder))
+                    if is_generated or is_repaired:
+                        generated.append((existing, folder))
+            else:
+                quarantined.append({"evaluation_id": row.get("evaluation_id"), "reason": "asset_identity_conflict"})
+            continue
         result = row["evaluation"]
         skill = make_skill(version_id=version, code=row["code"], suite_hash=suite["content_hash"],
                            valid=True, mean_objective=result["objective"], instance_objectives=tuple(result["instance_objectives"]),
                            parent_version_id=parent.version_id if row["origin"] == "explicit_parent" and parent else None,
-                           source_attempt_id=attempt if is_generated or is_repaired else None, problem=spec.problem_id,
+                           source_attempt_id=source_attempt if is_generated or is_repaired else None, problem=spec.problem_id,
                            entrypoint=spec.entrypoint, search_policy_id="official_eoh" if is_generated or is_repaired else row["origin"],
                            search_policy_version=EOH_COMMIT if is_generated or is_repaired else "v1", origin=row["origin"],
-                           repair_of_attempt_id=attempt if is_repaired else None,
+                           repair_of_attempt_id=source_attempt if is_repaired else None,
+                           integration_mode="bounded_repair" if row.get("candidate_id") else "official",
+                           repair_policy_version="bounded_v2" if row.get("candidate_id") else None,
                            official_objective=official.get(row["code_sha256"]))
         # The pinned engine discards selected parent IDs. Keep actual request
         # evidence instead of inventing a single parent for multi-parent EoH.
         evidence = {"evaluation_log": "results/evaluations.jsonl", "evaluation_line": row["evaluation_line"],
+                    "evaluation_id": row.get("evaluation_id"), "candidate_id": row.get("candidate_id"),
+                    "revision": row.get("revision"), "code_sha256": row["code_sha256"],
                     "source_request_index": row.get("source_request_index"), "prompt_sha256": row.get("prompt_sha256"),
                      "lineage": "upstream_parent_ids_not_exposed" if is_generated else ("bounded_repair" if is_repaired else "explicit_source"),
                      "official_objective": official.get(row["code_sha256"]), "local_objective": result["objective"]}
@@ -267,6 +274,7 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
     best_generated = min(generated, key=lambda pair: pair[0].mean_objective) if generated else None
     if best:
         publish_export_ref(output, best[1])
+    _atomic_write_text(output / "results/export_quarantine.json", json.dumps(quarantined, indent=2))
     exchanges = output / "results/exchanges"
     generation_requests = 0
     for path in exchanges.glob("request_*.json"):
@@ -281,7 +289,7 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
             "best_objective": best[0].mean_objective if best else None,
             "incumbent_origin": best[0].origin if best else None,
             "exported_skill": "exported_skill" if best else None,
-            "export_status": "published" if best else "no_valid_asset",
+            "export_status": "published" if best else "no_valid_asset", "quarantined_evaluations": quarantined,
             "repair_triggered": sum(item.get("state") == "request_started" for item in repair_outcomes),
             "repair_succeeded": sum(item.get("state") == "succeeded" for item in repair_outcomes),
             "repair_failed": sum(item.get("state") in {"failed", "request_failed"} for item in repair_outcomes),

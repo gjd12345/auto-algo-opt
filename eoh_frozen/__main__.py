@@ -86,7 +86,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     parent = None
     config.update({"search": "official_eoh", "integration_mode": "bounded_repair" if args.repair_mode == "bounded" else "official_only",
                    "repair_mode": args.repair_mode,
-                   "repair_policy_version": "bounded_v1" if args.repair_mode == "bounded" else None,
+                   "repair_policy_version": "bounded_v2" if args.repair_mode == "bounded" else None,
                    "max_repairs_per_candidate": args.max_repairs_per_candidate,
                    "max_repair_requests_total": args.max_repair_requests_total,
                    "eoh_commit": EOH_COMMIT, "upstream": upstream,

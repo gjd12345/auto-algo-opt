@@ -56,6 +56,10 @@ def test_bounded_repair_re_evaluates_repaired_code_and_exports_b(tmp_path, monke
     assert (out / "skills" / "candidate_1" / "code.py").is_file()
     exported = load_skill(out / "exported_skill")
     assert exported.code == BASELINE_CODE
+    repaired_asset = load_skill(out / "skills" / "candidate_1")
+    assert repaired_asset.integration_mode == "bounded_repair"
+    assert repaired_asset.repair_policy_version == "bounded_v2"
+    assert repaired_asset.origin == "generated_repair"
 
     evaluations = [
         json.loads(line)

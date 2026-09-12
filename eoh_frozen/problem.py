@@ -106,7 +106,7 @@ class FrozenProblem(BaseProblem):
             timeout = min(timeout, self.deadline - time.monotonic())
         if timeout <= 0:
             return EvaluationResult(False, None, (), self.suite.get("content_hash"), "wall_time_limit", 0)
-        evaluation_id = uuid.uuid4().hex
+        evaluation_id = (self.evaluation_context or {}).get("evaluation_id") or uuid.uuid4().hex
         self._record_evaluation(code_string, None, evaluation_id=evaluation_id)
         result = SubprocessEvaluator(timeout=timeout).evaluate(code_string, self.suite)
         self._record_evaluation(code_string, result, evaluation_id=evaluation_id)
@@ -136,6 +136,24 @@ class FrozenProblem(BaseProblem):
                 found = {**row, "evaluation_line": line_number}
         return found
 
+    def evaluation_for_identity(self, code: str, context: dict[str, Any]) -> dict[str, Any] | None:
+        if not self.evaluation_log or not Path(self.evaluation_log).is_file():
+            return None
+        code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
+        for line_number, line in enumerate(Path(self.evaluation_log).read_text(encoding="utf-8").splitlines(), 1):
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if (all(context.get(k) is not None and row.get(k) == context[k]
+                    for k in ("candidate_id", "revision", "evaluation_id"))
+                    and row.get("code_sha256") == code_hash
+                    and row.get("suite_hash") == self.suite["content_hash"]
+                    and row.get("evaluator_hash") == evaluator_source_hash()
+                    and row.get("evaluation") is not None):
+                return {**row, "evaluation_line": line_number}
+        return None
+
     def _record_evaluation(self, code: str, result: EvaluationResult | None, *, evaluation_id: str) -> None:
         if not self.evaluation_log:
             return
@@ -154,12 +172,12 @@ class FrozenProblem(BaseProblem):
         context = dict(self.evaluation_context or {})
         if context:
             payload.update(context)
-        elif self.origin == "engine":
+        if context.get("origin") == "generated" or (not context and self.origin == "engine"):
             latest = Path(self.evaluation_log).parent / "latest_exchange.json"
             exchange = json.loads(latest.read_text(encoding="utf-8")) if latest.is_file() else {}
             # Production uses one sampler/evaluator, so this is the response
             # immediately preceding this evaluation. Seeds follow only probe.
-            payload["origin"] = "generated" if exchange.get("purpose") == "eoh_generation" else "explicit_parent"
+            payload["origin"] = context.get("origin") or ("generated" if exchange.get("purpose") == "eoh_generation" else "explicit_parent")
             payload["source_request_index"] = exchange.get("request_index") if payload["origin"] == "generated" else None
             payload["prompt_sha256"] = exchange.get("prompt_sha256")
         if result is None:

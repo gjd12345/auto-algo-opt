@@ -51,6 +51,13 @@ class ProblemSpec:
     # Human-readable baseline provenance, not a search-policy instruction.
     baseline_description: str = ""
 
+    def solution_improvement(self, baseline: float, objective: float) -> float | None:
+        """Positive cost objectives only; other metrics require a new contract."""
+        import math
+        if self.objective_direction != "minimize" or baseline <= 0 or not all(map(math.isfinite, (baseline, objective))):
+            return None
+        return (baseline - objective) / baseline
+
     @property
     def allowed_attributes(self) -> frozenset[str]:
         return self.numpy_attributes | self.math_attributes

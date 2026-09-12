@@ -13,13 +13,15 @@ def test_runner_consumes_memory_on_next_round_without_second_search_engine(tmp_p
         payload = json.loads(prompt)
         memory = payload["memory"]
         observed_memory.append(memory)
+        if payload.get("mode") == "select_memory":
+            return json.dumps({"memory_refs": [item["reference"] for item in memory]})
         return json.dumps({
             "round_id": payload["round_id"],
             "direction": "改变候选排序",
             "operations": [{"type": "replace", "target": "tie_break", "mechanism": "相对距离"}],
             "preserve": "接口和容量约束",
             "feedback_basis": payload.get("feedback_reference"),
-            "memory_basis": [memory[0]["reference"]] if memory else [],
+            "memory_basis": [item["reference"] for item in payload.get("selected_memory", [])],
             "hypothesis": "仍未证明因果关系",
         })
 

@@ -85,6 +85,8 @@ class SkillVersion:
     origin: str | None = None  # baseline | explicit_parent | generated | imported
     official_objective: float | None = None
     legacy_unverified: bool = False
+    integration_mode: str | None = None
+    repair_policy_version: str | None = None
 
     def metadata(self) -> dict[str, Any]:
         search_policy: dict[str, Any] = {
@@ -93,6 +95,10 @@ class SkillVersion:
         }
         if self.search_policy_fixture_only:
             search_policy["fixture_only"] = True
+        if self.integration_mode is not None:
+            search_policy["integration_mode"] = self.integration_mode
+        if self.repair_policy_version is not None:
+            search_policy["repair_policy_version"] = self.repair_policy_version
         payload = {
             "schema_version": SKILL_SCHEMA,
             "version_id": self.version_id,

@@ -12,6 +12,7 @@ import hashlib
 import json
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -26,13 +27,11 @@ REPAIRABLE_ERRORS = frozenset({
     "invalid_return",
     "candidate_exception",
     "forbidden_attribute",
-    "forbidden_rebinding",
 })
 
-_NON_REPAIRABLE_ATTRIBUTES = frozenset({
-    "open", "read", "write", "tofile", "fromfile", "save", "load",
-    "system", "popen", "socket", "__dict__", "__class__",
-})
+REPAIR_POLICY_VERSION = "bounded_v2"
+_REPAIRABLE_ATTRIBUTES = frozenset({"ix_", "empty_like", "flatnonzero", "empty", "argsort", "argpartition"})
+_REPAIRABLE_EXCEPTIONS = frozenset({"NameError", "TypeError", "IndexError", "ZeroDivisionError"})
 
 
 def _sha256(value: str) -> str:
@@ -48,8 +47,10 @@ def is_repairable(diagnostic: Mapping[str, Any] | None) -> bool:
         return False
     if code == "forbidden_attribute":
         detail = str(diagnostic.get("error_detail") or "").strip().lower()
-        if not detail or detail in _NON_REPAIRABLE_ATTRIBUTES or detail.startswith("__"):
-            return False
+        return detail in _REPAIRABLE_ATTRIBUTES
+    if code == "candidate_exception":
+        detail = str(diagnostic.get("error_detail") or "")
+        return detail.split(":", 1)[0] in _REPAIRABLE_EXCEPTIONS
     return True
 
 
@@ -200,11 +201,11 @@ class RepairingEOH(EOH):
             with path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(dict(payload), ensure_ascii=False, allow_nan=False) + "\n")
 
-    def _diagnose(self, code: str) -> dict[str, Any] | None:
-        method = getattr(self.problem, "latest_evaluation_for_code", None)
+    def _diagnose(self, code: str, context: Mapping[str, Any]) -> dict[str, Any] | None:
+        method = getattr(self.problem, "evaluation_for_identity", None)
         if not callable(method):
             return None
-        row = method(code)
+        row = method(code, context)
         if not isinstance(row, Mapping):
             return None
         evaluation = row.get("evaluation")
@@ -306,6 +307,7 @@ class RepairingEOH(EOH):
             "origin": "generated_repair",
             "candidate_id": candidate_id,
             "revision": "repair_1",
+            "evaluation_id": uuid.uuid4().hex,
             "original_code_sha256": original_hash,
             "generation_request_ref": event_base["generation_request_ref"],
             "repair_request_ref": f"results/exchanges/request_{repair_index}.json" if isinstance(repair_index, int) else None,
@@ -323,9 +325,13 @@ class RepairingEOH(EOH):
         finally:
             if callable(setter):
                 setter(None)
-        repair_eval = self._diagnose(repaired_code) or {}
+        repair_eval = self._diagnose(repaired_code, context) or {}
         repaired_objective = _normalize_fitness(fitness)
-        valid = repaired_objective is not None and bool(repair_eval.get("evaluation", {}).get("valid", True))
+        evaluation = repair_eval.get("evaluation") or {}
+        valid = (repaired_objective is not None and evaluation.get("valid") is True
+                 and _normalize_fitness(evaluation.get("objective")) == repaired_objective
+                 and all(repair_eval.get(key) == context[key] for key in ("candidate_id", "revision", "evaluation_id"))
+                 and repair_eval.get("code_sha256") == repaired_hash)
         result = {
             **event_base,
             "state": "succeeded" if valid else "failed",
@@ -337,6 +343,7 @@ class RepairingEOH(EOH):
             "evaluation": repair_eval.get("evaluation"),
         }
         self._append_repair_event(result)
+        offspring["evaluation_id"] = context["evaluation_id"]
         if not valid:
             self.repair_failed += 1
             offspring.update({
@@ -355,19 +362,32 @@ class RepairingEOH(EOH):
         return offspring
 
     def _build_offspring(self, population_snapshot, operator):
-        offspring = super()._build_offspring(population_snapshot, operator)
+        # The supported configuration has exactly one sampler/evaluator. Bind
+        # identity before upstream generation; a repeated code is a new attempt.
+        candidate_id = self._next_candidate_id()
+        context = {"origin": "generated", "candidate_id": candidate_id,
+                   "revision": "original", "evaluation_id": uuid.uuid4().hex,
+                   "operator": operator}
+        self.problem.set_evaluation_context(context)
+        try:
+            offspring = super()._build_offspring(population_snapshot, operator)
+        finally:
+            self.problem.set_evaluation_context(None)
         if not isinstance(offspring, dict) or not offspring.get("code"):
             return offspring
-        candidate_id = self._next_candidate_id()
-        if offspring.get("objective") is not None:
-            return offspring
-        diagnostic = self._diagnose(str(offspring["code"]))
+        offspring.update(candidate_id=candidate_id, revision="original", evaluation_id=context["evaluation_id"])
+        diagnostic = self._diagnose(str(offspring["code"]), context)
         if diagnostic is None:
+            offspring["objective"] = None
             self.repair_skipped += 1
             self._append_repair_event({
                 "state": "skipped", "reason": "diagnostic_missing", "candidate_id": candidate_id,
                 "operator": operator, "original_code_sha256": _sha256(str(offspring["code"])),
             })
+            return offspring
+        if offspring.get("objective") is not None:
+            if not diagnostic.get("valid") or _normalize_fitness(diagnostic.get("objective")) != offspring["objective"]:
+                offspring["objective"] = None
             return offspring
         return self._repair_one(
             offspring=offspring, operator=operator, candidate_id=candidate_id, diagnostic=diagnostic
@@ -376,6 +396,7 @@ class RepairingEOH(EOH):
     def repair_summary(self) -> dict[str, Any]:
         return {
             "mode": "bounded",
+            "policy_version": REPAIR_POLICY_VERSION,
             "max_repairs_per_candidate": self.max_repairs_per_candidate,
             "max_repair_requests_total": self.max_repair_requests_total,
             "repairable_errors": sorted(REPAIRABLE_ERRORS),

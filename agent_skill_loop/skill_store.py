@@ -124,6 +124,8 @@ def _load_materialized(directory: Path) -> SkillVersion:
         official_objective=meta.get("official_objective"),
         legacy_unverified=bool(meta.get("legacy_unverified", False)),
         search_policy_fixture_only=bool((meta.get("search_policy") or {}).get("fixture_only", False)),
+        integration_mode=(meta.get("search_policy") or {}).get("integration_mode"),
+        repair_policy_version=(meta.get("search_policy") or {}).get("repair_policy_version"),
     )
 
 
@@ -229,6 +231,8 @@ def make_skill(
     origin: str | None = None,
     official_objective: float | None = None,
     search_policy_fixture_only: bool = False,
+    integration_mode: str | None = None,
+    repair_policy_version: str | None = None,
 ) -> SkillVersion:
     return SkillVersion(
         version_id=version_id,
@@ -250,4 +254,6 @@ def make_skill(
         origin=origin,
         official_objective=official_objective,
         search_policy_fixture_only=search_policy_fixture_only,
+        integration_mode=integration_mode,
+        repair_policy_version=repair_policy_version,
     )

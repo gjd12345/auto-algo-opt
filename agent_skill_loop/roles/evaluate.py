@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Mapping
 
 from agent_skill_loop.contracts_3plus1 import EvaluateDocument, strict_json_object
@@ -39,6 +39,7 @@ class EvaluatePrompt:
             },
             "top_level_keys_exactly": ["plan_alignment", "observations", "causal_claim", "memory_action"],
             "nesting_rule": "based_on and evidence_ref belong inside memory_action only; they are forbidden at the top level.",
+            "evidence_rule": "Infer mechanisms only from code_evidence and exact revision references, never from objectives or the Plan alone. If relevant code is absent, truncated, or insufficient, plan_alignment must be unknown and causal_claim unproven. Repairs restore execution, not necessarily optimization. Memory body maximum 8000 characters; based_on updates the same memory name, or attributes a different new entry.",
             "problem": self.problem,
             "suite_hash": self.suite_hash,
             "problem_contract": self.problem_contract,
@@ -75,4 +76,8 @@ class EvaluateRole:
 
     def run(self, prompt: EvaluatePrompt) -> EvaluateDocument:
         response = self._request(prompt.render(), purpose="evaluate", problem=prompt.problem)
-        return EvaluateDocument.from_dict(strict_json_object(response), memory_enabled=prompt.memory_enabled)
+        result = EvaluateDocument.from_dict(strict_json_object(response), memory_enabled=prompt.memory_enabled)
+        sources = prompt.facts.get("code_evidence") or []
+        if not sources or any(item.get("truncated") or not item.get("code") for item in sources):
+            result = replace(result, plan_alignment="unknown", causal_claim="unproven")
+        return result

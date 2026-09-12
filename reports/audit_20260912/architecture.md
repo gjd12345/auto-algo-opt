@@ -1,6 +1,18 @@
 # 3+1 输入输出与实际架构链路
 
-日期：2026-09-12。此图描述审查时实现，不把待修合同画成已完成能力。问题编号见 [验收报告](acceptance.md)。
+日期：2026-09-12。**第 1–5 节图表保留修复前架构快照，不代表当前实现。** 当前差异见本节，逐项状态与验证见 [验收报告第 0 节](acceptance.md)。
+
+## 0. 修复后的架构差异
+
+- 请求：真实 workflow 已统一进入父进程 OpenAIPathBridge，共享 RequestBudget；Plan、Evaluate 直接调用网关，官方 EoH 子进程通过鉴权 localhost 端点转发。`gateway/requests.jsonl` 是全局预留与终态账本，`gateway/exchanges/` 保留原始交换。子交换中的 `gateway_request_index` 对应全局编号；`request_gateway.json` 记录本轮全局区间。历史图中的“子请求事后对账”只剩离线 Execute fixture。
+- 终止：网关保留 Evaluate 的额度；provider 终止、未知请求结果或全局截止后不再外发。请求取消用 killed_unknown/null tokens。监督器把进程输出写到 `eoh_process.log`，避免无人读取的管道阻塞；停止时恢复已完成评测的导出。
+- 候选：bounded 模式在原生生成前绑定 candidate ID，每个 revision 预分配 evaluation ID；只接受完整身份匹配的持久化重评。终态修复事件缺失或身份冲突时隔离该条，其他可信资产继续导出。
+- 响应：统一 content-only 完整输出策略，不再使用 reasoning_content；截断响应留下原文、用量和错误但不进入官方代码提取器。原生重试仍受全局预算约束。
+- Memory：索引无正文，Agent 选读后才形成最终 Plan；版本 hash 校验、显式分页、读取失败降级；正文按 ref 去重、按整条舍弃到上下文预算内。`context_manifest.json` 分别记录完整上下文和实际注入正文 hash，不能把“读过”当成“已注入”。
+- 发布：solution 使用实际 enriched facts，显式门槛未配置则不发布；冻结基线代码、suite/evaluator 与比较规则。Memory 8000 字符、排他写锁、基于最新版本的 CAS、完整快照合并及可恢复索引；Evaluate 决定是否写入，程序只管合同与证据。
+- 解释：Evaluate 输入现在有有界实际代码、修复版本来源与差异；材料不足时 alignment=unknown。技能元数据保留 integration_mode/repair_policy_version，修复仍不意味着优化收益。
+
+下面的图仅用于说明原始审查发现在哪些边上；不要按旧图寻找当前角色请求文件或判断共享预算是否实现。
 
 ## 1. 总体架构
 

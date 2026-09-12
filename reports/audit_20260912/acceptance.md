@@ -1,8 +1,49 @@
 # 3+1 与有界修复：代码、证据和验收报告
 
-日期：2026-09-12。结论：**正常链路已有实现和运行证据，但不能判定“所有修复完善”，完整五轮验收仍未通过。**
+日期：2026-09-12。修复复核结论：**本文 A01–A13 已完成代码修复与分层本地验收；未重新运行付费 API，不能据此宣称当前版本真实模型五轮验收通过。**
 
-本次只做代码审查、本地测试、故障注入和文档整理；没有修改生产实现，没有追加真实 API 请求，没有提交或清理用户的工作区改动。本文的问题编号是本次审查编号，不冒充历史 13 项问题的逐项销项记录。
+本次复核修改了生产实现、针对性回归及报告，工作分支为 `agent-skill-loop-0908`，基于 `cd438a7`，尚未提交或 push。下面先给当前销项记录；第 1–5 节保留原始审查快照，旧缺陷描述和旧测试数字均不是修复后状态。本文 A01–A13 与更早阶段报告的“13 项”不是同一编号体系。
+
+## 0. 修复后逐项销项（当前结论）
+
+| 编号 | 当前处理 | 验证依据 |
+|---|---|---|
+| A01 | 关闭：修复成绩必须与 candidate / revision / evaluation ID / code hash 的持久化有效记录一致；缺记录只保留失败，不接受标量分数。 | `test_missing_repair_evidence_never_accepts_scalar_fitness`；真实官方进程的修复 B 重评测试。 |
+| A02 | 关闭：未完成或身份不匹配的修复进入 `results/export_quarantine.json`，不阻断 baseline 等可信资产；重复导出重新纳入已有匹配资产，不误报无有效资产。 | `test_partial_repair_quarantined_baseline_preserved_and_exact_identity`；截止资产恢复、导出故障回归。 |
+| A03 | 关闭：主循环把 enriched facts 交给 Memory 发布门禁；门禁核对本轮 baseline、具体候选、评测行与唯一 ID。 | `test_workflow_solution_publication_uses_enriched_facts_and_frozen_gate` 从 workflow 入口验证显式门槛允许、未配置拒绝。 |
+| A04 | 关闭：删除选读阶段直接返回 Plan 的旁路；最终 Plan 只能引用本会话实际读到、完整且 hash 一致的正文版本。读取失败降级，失败引用不可采用。 | 未读正文拒绝测试；两轮 localhost 角色 → 官方 EoH → 正文注入联调。 |
+| A05 | 关闭：索引不含正文；`read_version(max_chars, offset)` 真切片，提供总长度、下一页、完整/返回正文 hash 与截断标识；不把部分正文送入 Plan。 | `test_memory_paging_cas_history_merge_and_index_failure`；1 字符读取只返回 1 字符。 |
+| A06 | 关闭：`content_only_complete_v1`，禁止从 reasoning 草稿提取；length/空正文保留原始响应与错误后拒绝交给官方提取器；官方重试再次计账。 | `test_response_policy_rejects_drafts_and_reserves_every_retry`；桥接请求预算回归。 |
+| A07 | 关闭：`bounded_v2` 封闭白名单；普通数值属性、明确运行异常子类才可修，read_text、重绑定、未知异常、超时等不修。 | `test_repair_policy_is_closed`；np.ix_ 的真实隔离重评路径。 |
+| A08 | 关闭：bounded 模式生成前分配 candidate ID；原始版/修复版预分配各自 evaluation ID；诊断按完整身份匹配，导出删除 hash 兜底匹配，offspring 保存修复评测 ID。 | 相同代码但不同评测 ID 的拒绝检查；官方修复集成和资产重载。 |
+| A09 | 关闭：真实 workflow 的 Plan/Evaluate 与 EoH/repair 共用父进程请求网关和根预算，每次外发先预留并持久化全局编号；子账只记录局部调用，成功/失败交换保留 global ID。`consume_external` 仅用于显式注入的离线 Execute fixture。 | 两轮 localhost 联调覆盖五种用途，根账本计数等于服务端请求数；401 后不再 Evaluate；进行中截止记录 `killed_unknown` / null tokens。 |
+| A10 | 关闭：CLI 与 runner 默认门槛为 null，未显式配置不发布 solution；冻结 suite/evaluator、baseline code hash、最小化方向、比较规则和门槛。零/负 baseline 不适用默认相对改善合同，不自行发明收益规则。 | 主链路门槛测试；同一资产/基线证据检查；零 baseline 拒绝。 |
+| A11 | 关闭：Evaluate 收到本轮最好生成版及比较版本的有界实际代码、hash、评测 ID、修复来源和差异；缺代码或截断时程序将 alignment 收口为 unknown、causal_claim 为 unproven。 | solution 主链路检查实际候选代码进入 facts；`test_evaluate_cannot_claim_alignment_without_code`。 |
+| A12 | 关闭：8000 字符（不是 UTF-8 字节）；写入使用 store 级排他文件锁，same-entry based_on 做 CAS；合并为 Agent 提供的新完整快照，related_refs 记录其他来源，旧版本不删除；版本成功但索引失败显式报告且仍可读取。 | 8000 中文字符边界、锁冲突、过期 CAS、历史读取、合并来源 sidecar、索引故障注入。 |
+| A13 | 关闭：正文按引用去重，超预算先整条去掉 Memory；再有界降级模型建议，原始 Plan 保留。`context_manifest.json` 记录实际注入 hash/遗漏/降级；skill 重载保留 bounded_repair、bounded_v2 和原始/修复来源。 | 上下文去重/超限/JSON 转义边界；`test_bounded_repair_re_evaluates_repaired_code_and_exports_b` 的重载身份断言。 |
+
+### 本次测试结果与复现
+
+- Python 3.11：新包及修改模块可 import；未升级 Python/CI。
+- 官方安装校验：固定 commit `472545785c936dcfc863d2bc0d6109cf23c7ce62`，14 个 Python 文件校验通过；未修改 site-packages。
+- 全量内核及官方接线回归首遍：183 passed、1 skipped、2 failed（170.87 秒）。两项失败同源于 Evaluate 预留为 0 时提前拦截请求，导致拒绝数与停止原因错误；随后已修复。
+- 修复后受影响边界重跑：**32 passed（49.80 秒）**，覆盖上述两项失败、请求账本、截止/认证、solution、Memory、修复 off/bounded、两轮真实官方子进程联调。见 [定向 JUnit](../../outputs/audit_20260912_closure.xml)。
+- 最后上下文转义及相关合同检查：**12 passed（0.87 秒）**。见 [末轮 JUnit](../../outputs/audit_20260912_context_final.xml)。上述两批有重叠，不相加成“44 项独立测试”。最后未重复整套全量回归。
+- 当前适配层 source hash：`eeb188bff33f8fe6a82810975b2879f5f6ea6ff6dd912c7e77e93c466ecd2c7f`。源文件若继续改动应重新计算；不把这个 hash 当成 Git commit。
+
+复现：`py -3.11 reports/audit_20260912/probes.py`。该入口已从“打印旧缺陷表现”改成有断言的本地销项检查；不会调用外部付费 API。新增集中回归见 [test_audit_20260912_closure.py](../../tests/kernel/test_audit_20260912_closure.py)。
+
+### 保留的边界与运维注意
+
+1. 这里关闭的是 13 个工程合同缺陷，不是算法提升、Memory 因果收益或真实模型五轮成功的研究验收。两轮联调用的是 localhost fixture 响应，但角色请求、官方 EoH 子进程和隔离评测均真实执行，包含一次候选修复。既有 DeepSeek 输出仍是历史证据。
+2. 官方搜索仍控制父本、算子与种群；bounded 修复仍是固定私有接口适配。首版保持单采样/单评测；原生 off 路径不因本次改动变成第二套搜索引擎。
+3. Memory 替代/合并不是自动语义合并：Agent 提供完整正文；同名必须引用最新版本，异名来源写入 related_refs sidecar。崩溃遗留 `.writer.lock` 时安全拒绝写入，需确认没有写入进程后由操作者处理；不会自动抢锁。派生 `MEMORY.md` 可重新生成。
+4. workflow 的网关只持有配置的 provider 密钥。EoH 子进程获得临时本地网关凭据，不继承 provider key，不加载 `.env`；候选评测子进程仍使用最小环境。直接运行 EoH CLI 时则仍是单运行自己的桥接预算，不存在跨 workflow 共享声明。
+5. 未运行新的付费端到端测试，也未提交/push；若要验真实模型，仍需显式请求/墙钟预算与可用 provider 额度。
+
+---
+
+以下为修复前审查快照，保留用于追溯；以第 0 节为当前状态。
 
 ## 1. 验证范围与版本
 
@@ -34,7 +75,7 @@ py -3.11 reports/audit_20260912/probes.py
 | Memory 基础能力 | 本地 Markdown、版本引用、默认问题隔离、scene 归一化及关闭能力已接入。正文消费和发布边界仍有下表缺口。 |
 | 请求可观测性 | 当前实现已补充子请求 finish_reason / selected_content_field 汇总；仍需区分本地编号、全局编号与实际请求状态。 |
 
-## 3. 尚未闭合的问题
+## 3. 修复前尚未闭合的问题（历史快照）
 
 优先级：P1 应在宣称完整验收前解决；P2 是合同和可观测性完善项。确定性探针与代码推断分别标明。
 

@@ -51,22 +51,25 @@ def test_deadline_reconciles_child_and_writes_recovered_summary(tmp_path, monkey
 
     def slow_response(prompt: str, _index: int):
         if prompt == "1+1=?":
-            time.sleep(2.0)
+            time.sleep(4.0)
         else:
-            time.sleep(2.0)
+            time.sleep(4.0)
         return 200, "{}"
 
     with fixture_provider("cvrp_construct", responder=slow_response) as (endpoint, _prompts):
         result = WorkflowRunner(
             tmp_path / "workflow", model="fixture", endpoint=endpoint, api_key_env="REPAIR_SLOW_KEY",
-            max_rounds=1, max_requests=5, wall_seconds=1.0, request_timeout=5.0,
+            max_rounds=1, max_requests=5, wall_seconds=3.0, request_timeout=5.0,
             count=1, size=6, pop_size=2, n_pop=1, max_sample_nums=1, plan_request=_plan,
             evaluate_request=lambda **_kwargs: json.dumps({"plan_alignment": "unknown", "observations": [], "causal_claim": "unknown", "memory_action": {"kind": "disabled"}}),
         ).run()
     eoh = result["rounds"][0]["eoh"]
     assert result["status"] == "stopped"
     assert eoh["status"] == "stopped" and eoh["stop_reason"] == "wall_time_limit"
-    assert 0 <= result["request_used"] <= 5
+    assert result["request_used"] == len(_prompts) == 1
+    terminal = result["budget_events"][-1]
+    assert terminal["state"] == "killed_unknown"
+    assert terminal["input_tokens"] is None and terminal["output_tokens"] is None
     assert (tmp_path / "workflow/rounds/round_0001/eoh_run/summary.json").is_file()
     assert (tmp_path / "workflow/rounds/round_0001/evaluate_skipped.json").is_file()
 
@@ -89,6 +92,7 @@ def test_incumbent_and_solution_gate_use_same_round_trusted_asset(tmp_path):
     runner = WorkflowRunner(
         tmp_path / "workflow", model="fixture", max_rounds=1, max_requests=1,
         plan_request=_plan, evaluate_request=lambda **_kwargs: "{}",
+        solution_min_relative_improvement=0.05,
     )
     eoh_root = tmp_path / "round" / "eoh_run"
     baseline_code = runner.spec.baseline_code
@@ -108,18 +112,20 @@ def test_incumbent_and_solution_gate_use_same_round_trusted_asset(tmp_path):
     runner._update_incumbent(tmp_path / "round", {"best_generated_path": "skills/generated_1", "exported_skill": "exported_skill"})
     assert runner.current_objective == 10.0
 
-    evidence = {"evaluation_line": 2, "source_request_index": 7, "local_objective": 9.4}
+    evidence = {"evaluation_line": 2, "evaluation_id": "generated-eval", "source_request_index": 7, "local_objective": 9.4}
     put(eoh_root / "skills" / "generated_2", "generated_2", baseline_code + "\n# better\n", 9.4, evidence=evidence)
     action = MemoryAction("solution", based_on="eoh_run/skills/generated_2")
     facts = {
         "generated_valid_candidates": 2, "best_generated_path": "skills/generated_2",
         "best_objective": 1.0,
         "baseline": {"objective": 10.0},
-        "evaluations": [{"evaluation_line": 2, "source_request_index": 7,
+        "evaluations": [{"evaluation_line": 2, "evaluation_id": "generated-eval", "source_request_index": 7,
                           "code_sha256": json.loads((eoh_root / "skills" / "generated_2" / "skill.json").read_text())["code_sha256"],
                           "problem": runner.problem, "entrypoint": runner.spec.entrypoint,
-                          "evaluation": {"suite_hash": runner.suite["content_hash"], "objective": 9.4}}],
+                          "evaluation": {"valid": True, "suite_hash": runner.suite["content_hash"], "objective": 9.4}}],
     }
+    facts["evaluations"].append({"origin": "baseline", "code_sha256": __import__("hashlib").sha256(baseline_code.encode()).hexdigest(),
+                                "evaluation": {"valid": True, "objective": 10.0, "suite_hash": runner.suite["content_hash"]}})
     assert runner._solution_eligible(tmp_path / "round", facts, action)
     assert not runner._solution_eligible(tmp_path / "round", {**facts, "best_generated_path": "skills/generated_1"}, action)
 

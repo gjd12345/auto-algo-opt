@@ -8,10 +8,13 @@ workflow state.
 
 from __future__ import annotations
 
+import json
+
 import os
 import re
 import tempfile
 import hashlib
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,7 +55,7 @@ def _validate_entry(entry: MemoryEntry) -> None:
         raise ValueError("memory_scene_invalid")
     if not entry.description.strip() or len(entry.description) > 512:
         raise ValueError("memory_description_invalid")
-    if not entry.body.strip() or len(entry.body.encode("utf-8")) > 20000:
+    if not entry.body.strip() or len(entry.body) > 8000:
         raise ValueError("memory_body_invalid")
     if _SECRET.search(entry.description) or _SECRET.search(entry.body):
         raise ValueError("memory_sensitive_value")
@@ -144,7 +147,9 @@ class MemoryAPI:
                 "age_days": age_days, "age_label": f"{age_days} days ago", "cross_project": cross_project}
 
     def read_index(self, *, project: str, scene: str, limit: int = 8) -> dict[str, Any]:
-        return self.read(query=scene, project=project, scene=scene, limit=limit)
+        result = self.read(query=scene, project=project, scene=scene, limit=limit)
+        return {key: [{k: v for k, v in row.items() if k != "body"} for row in rows]
+                for key, rows in result.items()}
 
     def read(self, query: str, *, project: str, scene: str | None = None, memory_type: str | None = None,
              limit: int = 8, include_cross_project: bool = False) -> dict[str, Any]:
@@ -185,7 +190,9 @@ class MemoryAPI:
             item.pop("_score", None)
         return {"memories": selected, "local_memories": local[:limit], "cross_project_memories": cross[:limit]}
 
-    def read_version(self, reference: str, *, max_chars: int = 20000) -> dict[str, Any]:
+    def read_version(self, reference: str, *, max_chars: int = 8000, offset: int = 0) -> dict[str, Any]:
+        if isinstance(max_chars, bool) or not isinstance(max_chars, int) or not 1 <= max_chars <= 8000 or isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
+            raise ValueError("memory_page_invalid")
         if not isinstance(reference, str) or not _REFERENCE.fullmatch(reference):
             raise ValueError("memory_reference_invalid")
         match = _REFERENCE.fullmatch(reference)
@@ -202,12 +209,41 @@ class MemoryAPI:
         if self.store not in path.parents:
             raise ValueError("memory_reference_outside_store")
         entry = _parse(path)
-        body = entry.body[:max_chars]
-        return {**entry.as_dict(), "path": path.as_posix(), "reference": reference,
+        if f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}" != reference:
+            raise ValueError("memory_reference_identity_mismatch")
+        body = entry.body[offset:offset + max_chars]
+        return {**entry.as_dict(), "body": body, "path": path.as_posix(), "reference": reference,
                 "version": version, "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest(),
-                "truncated": len(body) < len(entry.body)}
+                "returned_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                "offset": offset, "total_chars": len(entry.body),
+                "next_offset": offset + len(body) if offset + len(body) < len(entry.body) else None,
+                "truncated": offset != 0 or len(body) < len(entry.body)}
 
-    def write(self, entry: MemoryEntry, *, based_on: str | None = None) -> dict[str, Any]:
+    @contextmanager
+    def _writer(self):
+        lock = self.store / ".writer.lock"
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            raise ValueError("memory_writer_busy") from None
+        try:
+            os.write(fd, str(os.getpid()).encode("ascii"))
+            yield
+        finally:
+            os.close(fd)
+            lock.unlink()
+
+    def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = ()) -> dict[str, Any]:
+        # based_on is a CAS update of the SAME entry; related_refs are provenance
+        # for a new or merged full snapshot. Previous versions are never removed.
+        with self._writer():
+            for ref in related_refs:
+                self.read_version(ref)
+            result = self._write_locked(entry, based_on=based_on, related_refs=related_refs)
+            result["related_refs"] = list(related_refs)
+            return result
+
+    def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = ()) -> dict[str, Any]:
         _validate_entry(entry)
         versions = [version for path, existing, version in self._iter()
                     if existing.project == entry.project and existing.type == entry.type and existing.name == entry.name]
@@ -230,9 +266,17 @@ class MemoryAPI:
         path = self.store / entry.project / f"{entry.type}_{entry.name}__v{version:04d}.md"
         if path.exists():
             raise ValueError("memory_version_conflict")
+        _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs),
+                     "update_semantics": "full_snapshot", "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest()}))
         _atomic_text(path, _render(entry))
-        self.reindex()
+        index_error = None
+        try:
+            self.reindex()
+        except OSError as exc:
+            # Version files are authoritative; the index is rebuildable.
+            index_error = type(exc).__name__
         return {"written": True, "path": path.as_posix(),
+                "index_updated": index_error is None, "index_error": index_error,
                 "reference": f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}",
                 "version": version, "name": entry.name, "project": entry.project, "type": entry.type, "based_on": based_on}
 

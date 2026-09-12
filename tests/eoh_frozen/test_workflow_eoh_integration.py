@@ -93,10 +93,15 @@ def test_real_roles_select_and_consume_memory_body_around_official_eoh(tmp_path,
             round_id = payload["plan"]["round_id"]
             action = {"kind": "insight", "name": "role-body-consumption", "description": "角色正文消费证据", "project": "cvrp_construct", "scene": "EOH generated candidate evaluation for suite abc17e...", "body": "正文应先被角色选读。\n\n**Why:** fixture。\n\n**How to apply:** 仅作为下一轮方向参考。"} if round_id == 1 else {"kind": "none"}
             return 200, json.dumps({"plan_alignment": "unknown", "observations": ["读取了可信评测事实"], "causal_claim": "unknown", "memory_action": action})
+        if isinstance(payload, dict) and payload.get("role") == "execute_repair":
+            return 200, json.dumps({"algorithm": "repaired nearest neighbor", "code": spec.baseline_code,
+                                    "repair_summary": "replace ix_ with the permitted argmin"})
         tree = ast.parse(spec.baseline_code)
         fn = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
         fn.body.insert(0, ast.parse(f"fixture_variant = {call_index}").body[0])
         code = ast.unparse(ast.fix_missing_locations(tree))
+        if call_index == 3:
+            code = code.replace("np.argmin", "np.ix_")
         return 200, "2" if prompt == "1+1=?" else "{fixture}\n```python\n" + code + "\n```"
 
     with fixture_provider("cvrp_construct", responder=responder) as (endpoint, _prompts):
@@ -105,9 +110,19 @@ def test_real_roles_select_and_consume_memory_body_around_official_eoh(tmp_path,
             api_key_env="WORKFLOW_ROLE_FIXTURE_KEY", max_rounds=2, max_requests=24,
             count=1, size=6, pop_size=2, n_pop=1, max_sample_nums=1,
             memory=MemoryAPI(tmp_path / "memory_store"),
+            repair_mode="bounded", max_repair_requests_total=2,
         ).run()
 
     assert result["status"] == "completed"
+    assert result["request_used"] == len(_prompts)
+    events = [json.loads(line) for line in (tmp_path / "workflow/gateway/requests.jsonl").read_text().splitlines()]
+    reservations = [row for row in events if row["state"] == "reserved"]
+    assert [row["index"] for row in reservations] == list(range(1, len(_prompts) + 1))
+    assert {row["purpose"] for row in reservations} >= {"plan", "evaluate", "eoh_generation", "eoh_probe", "eoh_repair"}
+    assert result["repair_requests_used"] == 1
+    for path in (tmp_path / "workflow/rounds").glob("*/eoh_run/results/exchanges/request_*.json"):
+        record = json.loads(path.read_text(encoding="utf-8"))
+        assert record["gateway_request_index"] in {row["index"] for row in reservations}
     assert any(item.get("role") == "plan" and item.get("mode") == "select_memory" for item in provider_calls)
     round_two = tmp_path / "workflow/rounds/round_0002"
     assert (round_two / "memory_consumed.json").is_file()

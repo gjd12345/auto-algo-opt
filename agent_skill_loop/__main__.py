@@ -168,7 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
     workflow.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
     workflow.add_argument("--request-timeout", type=float, default=90.0)
     workflow.add_argument("--memory-store")
-    workflow.add_argument("--solution-min-relative-improvement", type=float, default=0.05)
+    workflow.add_argument("--solution-min-relative-improvement", type=float, default=None)
     workflow.add_argument("--repair-mode", choices=["off", "bounded"], default="off")
     workflow.add_argument("--max-repairs-per-candidate", type=int, default=1)
     workflow.add_argument("--max-repair-requests-total", type=int, default=None)

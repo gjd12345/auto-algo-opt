@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass, replace
 from typing import Any, Callable, Mapping
 
@@ -50,7 +51,6 @@ class PlanPrompt:
                 "suite_hash": self.suite_hash,
                 "round_id": self.round_id,
                 "feedback_reference": self.feedback_reference,
-                "memory_index": list(self.memory),
                 "memory": list(self.memory),
             }
             return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
@@ -64,7 +64,7 @@ class PlanPrompt:
                 "operations": [{"type": "add|remove|replace|preserve", "target": "heuristic concept", "mechanism": "non-empty string"}],
                 "preserve": "interface and evaluator invariants",
                 "feedback_basis": "null on round 1; on later rounds copy feedback_reference exactly",
-                "memory_basis": ["exact versioned memory references selected from the index"],
+                "memory_basis": ["exact references from selected_memory bodies actually read; empty if none"],
                 "reference_skill_ref": "null or the exact supplied incumbent/parent skill reference",
                 "hypothesis": "testable but non-authoritative explanation",
             },
@@ -84,21 +84,34 @@ class PlanPrompt:
 class PlanRole:
     def __init__(self, request: Callable[..., str]) -> None:
         self._request = request
+        self.consumed_memory: tuple[Mapping[str, Any], ...] = ()
+        self.memory_failures: list[dict[str, str]] = []
 
     def run(self, prompt: PlanPrompt, *, read_memory: Callable[[str], Mapping[str, Any]] | None = None, **validation: Any) -> PlanDocument:
         if prompt.mode == "select_memory" and prompt.memory:
             response = self._request(prompt.render(), purpose="plan", problem=prompt.problem)
             raw = strict_json_object(response)
-            # A fixture may still return the final plan in one call. Production
-            # models are expected to follow the explicit selection contract.
-            if "round_id" not in raw:
-                selection = MemorySelection.from_dict(raw, available=set(validation.get("available_memory_refs") or set()))
-                if read_memory is None:
-                    raise ValueError("memory_reader_required")
-                selected = tuple(read_memory(ref) for ref in selection.memory_refs)
-                prompt = replace(prompt, mode="final", selected_memory=selected)
-                response = self._request(prompt.render(), purpose="plan", problem=prompt.problem)
-                validation = {**validation, "available_memory_refs": set(selection.memory_refs)}
+            selection = MemorySelection.from_dict(raw, available=set(validation.get("available_memory_refs") or set()))
+            if read_memory is None:
+                raise ValueError("memory_reader_required")
+            selected = []
+            for ref in selection.memory_refs:
+                try:
+                    item = read_memory(ref)
+                    if item.get("reference") != ref or item.get("truncated") or not item.get("body"):
+                        raise ValueError("memory_body_incomplete")
+                    indexed = next((row for row in prompt.memory if row.get("reference") == ref), {})
+                    actual_hash = hashlib.sha256(item["body"].encode("utf-8")).hexdigest()
+                    if item.get("body_sha256") != actual_hash or indexed.get("body_sha256", actual_hash) != actual_hash:
+                        raise ValueError("memory_body_hash_mismatch")
+                    selected.append(item)
+                except (OSError, ValueError) as exc:
+                    self.memory_failures.append({"reference": ref, "error": str(exc)})
+            self.consumed_memory = tuple(selected)
+            prompt = replace(prompt, mode="final", selected_memory=self.consumed_memory)
+            response = self._request(prompt.render(), purpose="plan", problem=prompt.problem)
+            validation = {**validation, "available_memory_refs": {item["reference"] for item in selected}}
         else:
             response = self._request(prompt.render(), purpose="plan", problem=prompt.problem)
+            validation = {**validation, "available_memory_refs": set()}
         return PlanDocument.from_dict(strict_json_object(response), **validation)

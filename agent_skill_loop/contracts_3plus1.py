@@ -237,7 +237,7 @@ class MemoryAction:
             _text(raw.get("description"), "memory_description", max_chars=512),
             _text(raw.get("project"), "memory_project", max_chars=64),
             _text(raw.get("scene"), "memory_scene", max_chars=128),
-            _text(raw.get("body"), "memory_body", max_chars=20000),
+            _text(raw.get("body"), "memory_body", max_chars=8000),
             based_on,
             evidence_ref,
         )
@@ -354,6 +354,8 @@ def compile_round_context(
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
 ) -> str:
     """Compile only advisory plan text for the official EoH task prompt."""
+    unique_memory = {item.get("reference"): item for item in (memory_summaries or [])
+                     if item.get("reference") in set(plan.memory_basis) and item.get("body") and not item.get("truncated")}
     payload = {
         "round": plan.round_id,
         "direction": plan.direction,
@@ -363,13 +365,32 @@ def compile_round_context(
         "hypothesis": plan.hypothesis,
         "memory": [
             {key: item[key] for key in ("reference", "description", "age_label", "body", "body_sha256", "version") if key in item}
-            for item in (memory_summaries or [])
-            if item.get("reference") in set(plan.memory_basis)
+            for item in unique_memory.values()
         ],
     }
-    context = "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n" + json.dumps(
-        payload, ensure_ascii=False, separators=(",", ":"),
-    )
+    prefix = "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n"
+    def render():
+        return prefix + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    # Omit complete memory records rather than cutting away applicability rules.
+    payload["omitted_memory_refs"] = []
+    context = render()
+    while len(context) > max_chars and payload["memory"]:
+        payload["omitted_memory_refs"].append(payload["memory"].pop()["reference"])
+        context = render()
+    if len(context) > max_chars:
+        payload["advisory_truncated"] = True
+        for key in ("direction", "hypothesis"):
+            payload[key] = payload[key][:768]
+        for operation in payload["operations"]:
+            operation["mechanism"] = operation["mechanism"][:256]
+        context = render()
+    context = render()
+    if len(context) > max_chars:
+        # ProblemSpec supplies the actual invariant contract independently.
+        # Drop model-written advisory fields as whole units if JSON escaping
+        # alone would exceed the cap; retain the full original in plan.json.
+        payload.update(advisory_omitted=True, direction="", operations=[], preserve="", hypothesis="")
+        context = render()
     if len(context) > max_chars:
         raise ValueError("plan_context_too_large")
     return context
