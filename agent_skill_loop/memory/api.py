@@ -152,9 +152,12 @@ class MemoryAPI:
                 for key, rows in result.items()}
 
     def read(self, query: str, *, project: str, scene: str | None = None, memory_type: str | None = None,
-             limit: int = 8, include_cross_project: bool = False) -> dict[str, Any]:
+             limit: int = 8, include_cross_project: bool = False, offset: int = 0,
+             include_shared: bool = True) -> dict[str, Any]:
         if limit < 0 or limit > 100:
             raise ValueError("memory_limit_invalid")
+        if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
+            raise ValueError("memory_offset_invalid")
         terms = {item.lower() for item in re.findall(r"[\w-]+", query) if len(item) > 1}
         local: list[dict[str, Any]] = []
         cross: list[dict[str, Any]] = []
@@ -164,6 +167,8 @@ class MemoryAPI:
             if key not in latest or version > latest[key][2]:
                 latest[key] = (path, entry, version)
         for path, entry, version in latest.values():
+            if entry.project == "_shared" and not include_shared:
+                continue
             if scene and entry.scene != scene and entry.project == project:
                 continue
             if memory_type and entry.type != memory_type:
@@ -183,9 +188,8 @@ class MemoryAPI:
                 cross.append(record)
         local.sort(key=lambda item: (-item["_score"], item["age_days"], item["reference"]))
         cross.sort(key=lambda item: (-item["_score"], item["age_days"], item["reference"]))
-        selected = local[:limit]
-        if include_cross_project and len(selected) < limit:
-            selected.extend(cross[:limit - len(selected)])
+        pool = local + cross if include_cross_project else local
+        selected = pool[offset:offset + limit]
         for item in selected:
             item.pop("_score", None)
         return {"memories": selected, "local_memories": local[:limit], "cross_project_memories": cross[:limit]}

@@ -549,6 +549,10 @@ def _envelope(
         "state_version": run["state_version"],
         "allowed_actions": actions,
         "operation_id": operation_id,
+        "evidence_refs": [current_round[key] for key in (
+            "normalized_plan_ref", "round_context_ref", "context_manifest_ref",
+            "evaluation_facts_ref", "submitted_evaluation_ref", "memory_proposal_ref"
+        ) if current_round[key]],
         "result": dict(result or {}),
     }
 
@@ -1014,6 +1018,10 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
         raise SessionError("RUN_NOT_FOUND", f"session database not found: {database}", action=action)
     connection = _connect(database)
     try:
+        # All fields in a state response must describe the same SQLite snapshot.
+        # Autocommit SELECTs can otherwise combine an old version with a new
+        # task terminal while the detached supervisor commits concurrently.
+        connection.execute("BEGIN")
         _require_schema(connection, action=action)
         current_run = _require_run(connection, action=action, run_id=expected_run_id)
         _verify_files(Path(run).resolve(), current_run, action=action)

@@ -1,0 +1,1113 @@
+# Algorithm Optimization Skill v1.1 — Protocol Specification
+
+**版本：** v1.1  
+**日期：** 2026-09-12  
+**状态：** Normative implementation specification  
+**上位文档：** `algorithm_optimization_skill_v1.1.md`
+
+> 本文定义 Coding Agent 与 Algorithm Optimization Skill Runtime 之间的规范协议。本文中的 MUST / MUST NOT / SHOULD / MAY 为实现约束。
+
+---
+
+## 1. 核心定义
+
+Algorithm Optimization Skill 是一个**无自主外层模型调用**的、可恢复、幂等、可审计的算法优化执行协议。
+
+职责固定为：
+
+| 组件 | 权限 |
+|---|---|
+| Coding Agent | Plan、Evaluate/Reflect、Memory 使用决策、是否继续下一轮 |
+| Skill Runtime | Session 状态、幂等、任务、预算、身份、证据引用、确定性校验 |
+| Task Supervisor | 后台任务生命周期、gateway、进程树、硬期限 |
+| Official EoH | 轮内 population、parent selection、e1/e2/m1/m2 和原生种群管理 |
+| DeepSeek API | `eoh_probe`、`eoh_generation`、显式启用的 `eoh_repair` |
+| Deterministic Evaluator | 合法性、隔离执行、suite objective、错误分类 |
+| Memory Backend | 版本化 Markdown 的检索、分页读取、CAS 和发布 |
+
+DeepSeek MUST NOT 用于：
+
+```text
+plan
+evaluate
+reflection
+memory reasoning
+outer-agent reasoning
+```
+
+---
+
+## 2. Authority Model
+
+### 2.1 Control-plane
+
+SQLite 是 mutable control-plane 的唯一权威：
+
+```text
+run state
+round state
+state_version
+operation receipts
+task lifecycle
+request ledger
+solver ledger
+memory read provenance
+memory write provenance
+```
+
+### 2.2 Evidence
+
+以下文件是 execution/evaluation facts 的权威：
+
+```text
+EoH exchanges
+request exchange payloads
+candidate source
+evaluation starts
+completed evaluations
+repair events
+algorithm asset evidence
+task terminal records
+```
+
+SQLite MAY 保存这些事实的 hash/ref/小型摘要，但 MUST NOT 取代原始 evidence。
+
+### 2.3 Derived views
+
+以下内容 MUST 视为派生视图：
+
+```text
+manifest.json
+round_summary.json
+session summary
+human-readable reports
+```
+
+恢复时按：
+
+```text
+SQLite control state
++
+evidence/hash verification
+→ reconcile
+→ regenerate derived views
+```
+
+执行。
+
+---
+
+## 3. Session 状态
+
+### 3.1 Run state
+
+Run-level state：
+
+```text
+RUNNING
+STOPPING
+COMPLETED
+STOPPED
+FAILED
+```
+
+### 3.2 Round state
+
+Round state：
+
+```text
+WAITING_FOR_PLAN
+READY_TO_EXECUTE
+EXECUTING
+WAITING_FOR_EVALUATION
+READY_TO_FINISH
+ROUND_COMPLETED
+STOPPED
+FAILED
+```
+
+正常主链：
+
+```text
+WAITING_FOR_PLAN
+ → READY_TO_EXECUTE
+ → EXECUTING
+ → WAITING_FOR_EVALUATION
+ → READY_TO_FINISH
+ → ROUND_COMPLETED
+```
+
+若 Coding Agent 选择继续，则创建新 Round：
+
+```text
+ROUND_COMPLETED
+ → next round: WAITING_FOR_PLAN
+```
+
+Run 完成：
+
+```text
+READY_TO_FINISH
+ --decision complete-->
+ ROUND_COMPLETED
+ → Run COMPLETED
+```
+
+### 3.3 STOPPING
+
+有活动 Task 时，`stop` MUST 先进入：
+
+```text
+STOPPING
+```
+
+只有满足：
+
+```text
+no live task
+no live child process
+task terminal record durable
+request ledger reconciled
+solver starts reconciled
+```
+
+后才能进入 `STOPPED`。
+
+---
+
+## 4. Global State Version
+
+每个 Run MUST 维护单调递增的：
+
+```text
+state_version
+```
+
+任何成功改变 control-plane 的 mutation 都 MUST 增加 state_version。
+
+Round 可记录：
+
+```text
+updated_state_version
+```
+
+作为最后一次修改该 Round 时的全局版本，但并不拥有独立并发版本。
+
+Coding Agent 所有 mutation 使用：
+
+```text
+expected_state_version
+```
+
+作为 optimistic concurrency token。
+
+---
+
+## 5. Operation Idempotency
+
+### 5.1 操作输入
+
+除 `state`、`memory search`、`memory read`、`read-evaluation` 等只读动作外，mutation MUST 提供：
+
+```text
+operation_id
+expected_state_version
+```
+
+`init` 提供 `operation_id`，但没有 prior `expected_state_version`。
+
+### 5.2 处理顺序
+
+Runtime MUST 严格按以下顺序：
+
+```text
+1. lookup operation_id
+
+2. operation exists:
+      same input_sha256
+          → return stored receipt
+      different input_sha256
+          → OPERATION_ID_CONFLICT
+
+3. operation does not exist:
+      compare expected_state_version
+
+4. mismatch:
+      → STATE_VERSION_CONFLICT
+
+5. perform mutation
+
+6. persist final receipt
+```
+
+即：
+
+> Idempotency lookup precedes optimistic concurrency validation.
+
+### 5.3 Replay
+
+相同 operation ID + 相同输入 MUST：
+
+- 不增加 provider request；
+- 不增加 solver call；
+- 不创建第二个 Task；
+- 不写第二个 Memory version；
+- 返回第一次操作的逻辑结果。
+
+---
+
+## 6. `init`
+
+`session init` MUST：
+
+1. 创建 run directory；
+2. 创建 SQLite；
+3. 冻结 `ProblemSpec`；
+4. 冻结 suite；
+5. 冻结 evaluator hash；
+6. 冻结 EoH commit；
+7. 冻结 EoH model/endpoint/API key env name；
+8. 冻结 request/solver/time budgets；
+9. 冻结 repair policy；
+10. 冻结 Memory store identity；
+11. 冻结 Optimization Skill identity；
+12. 创建 Round 1；
+13. 返回 `WAITING_FOR_PLAN`。
+
+`init` MUST produce:
+
+```text
+0 provider POSTs
+0 solver calls
+```
+
+密钥值 MUST NOT 写入：
+
+```text
+SQLite
+plan
+round context
+logs
+candidate evaluator env
+```
+
+---
+
+## 7. `state`
+
+`state` MUST 是纯读取动作。
+
+必须返回至少：
+
+```json
+{
+  "run_id": "...",
+  "run_state": "RUNNING",
+  "round_id": 1,
+  "state": "WAITING_FOR_PLAN",
+  "state_version": 3,
+  "allowed_actions": ["memory_search", "memory_read", "submit_plan", "stop"],
+  "incumbent": null,
+  "feedback_ref": null,
+  "task": null,
+  "budgets": {},
+  "policy_identity": {}
+}
+```
+
+`state` MUST NOT：
+
+- 调用 provider；
+- 调用 solver；
+- 修改 state_version。
+
+---
+
+## 8. Memory Search
+
+`memory search` MUST 调用摘要型检索接口，不返回正文。
+
+返回记录最多包括：
+
+```json
+{
+  "reference": "cvrp_construct/insight_x@v0003",
+  "name": "x",
+  "description": "...",
+  "type": "insight",
+  "project": "cvrp_construct",
+  "scene": "select_next_node",
+  "version": 3,
+  "body_sha256": "...",
+  "total_chars": 7342
+}
+```
+
+若后端无法廉价返回 `total_chars`，该字段 MAY 为 `null`，首次 `memory read` 后再确定。
+
+Search 结果 MUST NOT 等价于 “Memory 已消费”。
+
+---
+
+## 9. Memory Read
+
+### 9.1 分页单位
+
+v1.1 使用**字符 offset**，与现有 `MemoryAPI.read_version()` 一致：
+
+```text
+offset_chars
+limit_chars
+returned_chars
+total_chars
+next_offset
+```
+
+`body_sha256` 仍按完整正文 UTF-8 bytes 计算 SHA-256。
+
+### 9.2 完整读取证明
+
+Runtime MUST 记录每个 read page：
+
+```text
+reference
+body_sha256
+offset_chars
+returned_chars
+total_chars
+```
+
+只有同一 Round 内，对同一 immutable：
+
+```text
+reference + body_sha256
+```
+
+的读取区间完整覆盖：
+
+```text
+[0, total_chars)
+```
+
+才可标记：
+
+```text
+complete_memory_consumption = true
+```
+
+### 9.3 Plan 授权
+
+`Plan.memory_basis` MUST 满足：
+
+```text
+memory_basis
+⊆
+complete_memory_consumptions_this_round
+```
+
+v1.1 保持原有有界策略：
+
+```text
+len(memory_basis) <= 2
+```
+
+该限制 MUST 移入纯 Plan contract，而不是依赖旧 PlanRole。
+
+---
+
+## 10. Plan Contract
+
+Target Plan JSON：
+
+```json
+{
+  "round_id": 2,
+  "direction": "change candidate ranking",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tie_break",
+      "mechanism": "depot-relative distance"
+    }
+  ],
+  "preserve": "entrypoint and capacity feasibility",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "..."
+  },
+  "memory_basis": [
+    "cvrp_construct/insight_x@v0003"
+  ],
+  "reference_skill_ref": "optional/ref",
+  "hypothesis": "testable but unproven"
+}
+```
+
+### 10.1 允许字段
+
+Plan MUST 只接受明确合同字段和极少量已声明 non-authoritative metadata。
+
+### 10.2 禁止权限
+
+Plan MUST NOT 携带或控制：
+
+```text
+code
+objective
+valid
+instance_objectives
+budget
+deadline
+model
+operator selection
+parent selection
+population
+evaluator
+incumbent acceptance
+stop state
+```
+
+### 10.3 Feedback
+
+Round > 1 时，Plan MUST 引用**上一轮** trusted evaluation reference。
+
+### 10.4 `reference_skill_ref`
+
+只表示 advisory reference。
+
+它 MUST NOT 强制 Official EoH 将该 Skill 作为某个具体 operator 的 parent。
+
+### 10.5 Operations
+
+v1.1 固定 operation type：
+
+```text
+add
+remove
+replace
+preserve
+```
+
+`target` 默认是有界自由文本。
+
+若某 `ProblemSpec` 将来声明 `allowed_plan_targets`，Runtime MAY 进一步限制；在没有该声明时不得声称已执行 target allowlist。
+
+---
+
+## 11. Round Context
+
+只有 advisory content MAY 进入 EoH：
+
+```text
+direction
+operations
+preserve
+reference_skill_ref
+bounded hypothesis
+selected Memory bodies
+```
+
+Round Context MUST 保存：
+
+```text
+plan_sha256
+context_sha256
+memory reference
+memory body_sha256
+injected content hash
+omitted refs
+truncation/omission flags
+```
+
+`compile_round_context()` 的 MAX cap 继续作为硬上限。
+
+Memory 的四个事件 MUST 区分：
+
+```text
+searched
+read
+adopted
+injected
+```
+
+任何一项均不代表候选改善由 Memory 因果导致。
+
+---
+
+## 12. Execute 与 Task Supervisor
+
+### 12.1 创建 Task
+
+`execute` 在 `READY_TO_EXECUTE` 下创建一个 `STARTING` Task，并启动独立 Supervisor。
+
+为支持安全的 pre-effect failure：
+
+- 创建 Supervisor 前 Round MAY 仍保持 `READY_TO_EXECUTE`；
+- Task 的存在会令 `execute` 暂时不再出现在 `allowed_actions`；
+- Supervisor 确认 EoH process 已启动或其它 external effect 开始后，Task 标记 `external_effect_started=1`，Round 转为 `EXECUTING`。
+
+### 12.2 External effect
+
+以下任一发生即视为 external effect：
+
+```text
+EoH process confirmed started
+provider request durable reserve
+solver call durable reserve/start
+```
+
+### 12.3 Pre-effect failure
+
+若 Supervisor/child 在 external effect 前失败：
+
+```text
+external_effect_started = false
+```
+
+Runtime MAY 允许新的 `execute` operation 重试。
+
+### 12.4 Post-effect failure
+
+一旦：
+
+```text
+external_effect_started = true
+```
+
+MUST NOT 自动重跑本轮。
+
+---
+
+## 13. Task 状态
+
+Task lifecycle：
+
+```text
+CREATED
+STARTING
+RUNNING
+STOP_REQUESTED
+EXITED
+COLLECTED
+```
+
+terminal reason：
+
+```text
+SUCCEEDED
+FAILED
+CANCELLED
+DEADLINE_EXCEEDED
+PROVIDER_TERMINAL
+UNKNOWN
+```
+
+Task state 与 Round state MUST 分离。
+
+---
+
+## 14. Provider Gateway
+
+Gateway 必须为 EoH-only。
+
+允许 purpose：
+
+```text
+eoh_probe
+eoh_generation
+eoh_repair
+```
+
+任何：
+
+```text
+plan
+evaluate
+reflection
+memory
+agent_reasoning
+```
+
+MUST 在 gateway forwarding boundary 被拒绝，而不只是 HTTP handler 外层拒绝。
+
+---
+
+## 15. HTTP Request Ledger
+
+每个可能产生真实 outbound POST 的请求 MUST 先获得 durable request ID。
+
+状态：
+
+```text
+reserved
+sent
+complete
+failed
+unknown
+```
+
+v1.1 采取保守预算语义：
+
+> Durable reserve 即消耗一个额度，不自动退还。
+
+原因：
+
+- 崩溃后不能安全证明是否发送；
+- 避免重复付费调用；
+- 简化可恢复语义。
+
+以下全部占 EoH request budget：
+
+```text
+probe
+generation
+retry
+repair
+```
+
+Retry MUST 使用新的 request ID。
+
+`unknown` MUST NOT 退额度。
+
+---
+
+## 16. Solver Ledger
+
+以下完整 suite evaluation MUST 计入 solver：
+
+```text
+baseline
+explicit seed re-evaluation
+generated candidate
+repair revision
+```
+
+每次 solver evaluation MUST 在实际 `SubprocessEvaluator` 启动前产生 durable identity：
+
+```text
+solver_call_id
+candidate_id
+revision
+evaluation_id
+suite_hash
+evaluator_hash
+code_sha256
+```
+
+只读已有 evidence MUST NOT 计 solver。
+
+如果 `max_solver_calls` 配置为 null，则只记录、不限制。
+
+---
+
+## 17. Candidate Identity
+
+正式身份链：
+
+```text
+candidate_id
+ → revision
+ → code_sha256
+ → evaluation_id
+```
+
+Repair 示例：
+
+```text
+candidate_7 / original
+  code_hash=A
+  evaluation_id=E1
+       ↓ repair request R1
+candidate_7 / repair_1
+  code_hash=B
+  evaluation_id=E2
+```
+
+Repair success MUST 同时验证：
+
+```text
+candidate_id
+revision
+evaluation_id
+code_sha256
+original_code_sha256
+repair_request_ref
+evaluation.valid
+objective identity
+```
+
+不得使用“latest row for code hash”作为候选身份。
+
+---
+
+## 18. Collect
+
+`collect` MUST NOT 启动新的 provider/solver 工作。
+
+职责：
+
+```text
+read task terminal state
+reconcile request rows
+reconcile solver starts/completions
+verify evaluation evidence
+verify repair evidence
+verify export evidence
+materialize trusted facts
+deterministically update incumbent
+```
+
+### 18.1 Task 未终止
+
+如果 Task 仍在运行：
+
+```json
+{
+  "collected": false,
+  "task_state": "RUNNING"
+}
+```
+
+此返回 MUST：
+
+- 不修改 state_version；
+- 不消费 operation ID；
+- 不创建 operation receipt。
+
+Coding Agent 后续可使用新的或原来的 operation ID 再次尝试。
+
+### 18.2 Terminal collect
+
+Task terminal 后的 collect 是 mutation：
+
+- 必须执行 idempotency/version 规则；
+- 成功后 Round 进入 `WAITING_FOR_EVALUATION`；
+- Task 进入 `COLLECTED`。
+
+---
+
+## 19. Trusted Evaluation View
+
+`read-evaluation` 返回至少：
+
+```json
+{
+  "round_id": 2,
+  "baseline": {},
+  "incumbent_before": {},
+  "incumbent_after": {},
+  "candidates": [
+    {
+      "candidate_id": "candidate_7",
+      "revision": "original",
+      "origin": "generated",
+      "code_sha256": "...",
+      "evaluation_id": "...",
+      "objective": 5.72,
+      "valid": true,
+      "generation_request_ref": "...",
+      "repair_request_ref": null,
+      "diff": {
+        "text": "...",
+        "truncated": false
+      }
+    }
+  ]
+}
+```
+
+Code diff 必须有界。
+
+---
+
+## 20. Incumbent
+
+顺序固定：
+
+```text
+task terminal
+ → collect
+ → trusted facts
+ → deterministic incumbent update
+ → WAITING_FOR_EVALUATION
+ → Coding Agent reflection
+```
+
+因此：
+
+```text
+Evaluate parse failure
+Memory failure
+Agent disconnect
+```
+
+MUST NOT 回滚已经可信接受的 incumbent。
+
+---
+
+## 21. Evaluate v1.1 Contract
+
+v1.1 采用结构化 facts/hypotheses 分离：
+
+```json
+{
+  "plan_alignment": "aligned|partial|deviated|unknown",
+  "observations": [
+    {
+      "claim": "candidate_7 changed ranking and improved objective",
+      "evidence_refs": [
+        "evaluation:E7"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "depot-relative ranking may explain part of the improvement",
+      "confidence": "low|medium|high",
+      "evidence_refs": [
+        "evaluation:E7"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "test the same mechanism with a smaller perturbation"
+  },
+  "memory_action": {
+    "kind": "none|insight|solution|disabled"
+  }
+}
+```
+
+### 21.1 Evaluate 无权修改
+
+```text
+objective
+validity
+candidate identity
+incumbent
+request budget
+solver budget
+stop state
+```
+
+### 21.2 Evidence
+
+Observation MUST 携带 evidence refs。
+
+Hypothesis MUST 显式表示推断和 confidence。
+
+证据不足时：
+
+```text
+plan_alignment = unknown
+```
+
+不得输出“已证明因果”。
+
+---
+
+## 22. Memory Proposal / Commit
+
+`submit-evaluation` 中可以携带 Memory proposal，但 Runtime 内部 MUST 分离：
+
+```text
+proposal
+ → deterministic eligibility validation
+ → commit
+```
+
+状态至少记录：
+
+```text
+proposed
+accepted
+rejected
+published
+failed
+```
+
+Memory failure MUST NOT 影响：
+
+```text
+evaluation
+incumbent
+algorithm asset
+round execution evidence
+```
+
+---
+
+## 23. Memory CAS
+
+Memory Backend 保持 immutable versions。
+
+同名 entry 更新：
+
+```text
+based_on = exact latest version
+```
+
+否则：
+
+```text
+MEMORY_VERSION_CONFLICT
+```
+
+相关但不同 entry 的来源只能作为 provenance：
+
+```text
+related_refs
+```
+
+而不能伪装成同 entry CAS。
+
+---
+
+## 24. Finish Round
+
+`finish-round` MUST 显式接收：
+
+```text
+decision=continue
+```
+
+或：
+
+```text
+decision=complete
+```
+
+规则：
+
+> Budget 决定是否允许继续；Coding Agent 决定是否希望继续。
+
+`continue` 只有在资源仍允许下一轮时成功。
+
+`complete` 即使仍有预算也必须允许。
+
+---
+
+## 25. Solution Publication
+
+自动发布 solution 必须同时满足：
+
+```text
+same problem
+same suite
+same evaluator
+same interface
+same execution constraints
+frozen baseline identity
+ProblemSpec improvement rule
+complete candidate/evaluation evidence
+```
+
+若未配置 threshold/policy：
+
+```text
+MUST NOT auto-publish solution
+```
+
+`ProblemSpec.solution_improvement()` 是当前可复用的规则入口。
+
+---
+
+## 26. Time Semantics
+
+Task 内部硬 timeout：
+
+```text
+time.monotonic()
+```
+
+跨进程持久化：
+
+```text
+started_at_utc
+finished_at_utc
+engine_elapsed_seconds
+hard_deadline_utc
+```
+
+不得持久化 monotonic timestamp 并在新进程中直接比较。
+
+Agent 思考、用户暂停、轮间等待不计入 engine wall。
+
+---
+
+## 27. Algorithm Asset
+
+v1.1 为降低迁移面，保留当前 machine-readable schema：
+
+```text
+skills/candidate_x/
+├── code.py
+├── skill.json
+├── ALGORITHM.md
+└── evidence.json
+```
+
+说明：
+
+- `skill.json` 继续使用 `algorithm-skill/v1`，除非后续单独批准 schema v2；
+- 新写资产的人读说明改为 `ALGORITHM.md`；
+- 旧资产里的 `SKILL.md` 继续可读；
+- loader 不应依赖 `ALGORITHM.md`/`SKILL.md` 的存在。
+
+`exported_skill/ref.json` 继续作为 immutable pointer。
+
+---
+
+## 28. Optimization Skill Identity
+
+`init` 冻结：
+
+```json
+{
+  "optimization_skill": {
+    "id": "algorithm-optimization",
+    "version": "v1.1",
+    "content_sha256": "..."
+  },
+  "runtime": {
+    "version": "...",
+    "source_sha256": "..."
+  },
+  "memory_policy": {
+    "id": "markdown-memory",
+    "version": "v1"
+  },
+  "eoh_policy": {
+    "engine": "official_eoh",
+    "commit": "...",
+    "repair_policy": "off"
+  }
+}
+```
+
+这是未来 RSI/meta-evolution 的归因基础，但 v1.1 不实现自动 Skill 自修改。
+
+---
+
+## 29. Required Invariants
+
+v1.1 完成后以下 invariants 必须成立：
+
+```text
+I1  Plan/Evaluate 无 provider request
+I2  Gateway purpose ⊆ {eoh_probe,eoh_generation,eoh_repair}
+I3  Round >1 Plan 必须引用上一轮 trusted feedback
+I4  Plan Memory refs 必须完整读过
+I5  operation replay 不产生第二次外部效果
+I6  request reserve 持久且 unknown 不退额度
+I7  solver call 可跨崩溃审计
+I8  repair revision 有独立 evaluation identity
+I9  incumbent 在 Evaluate 前确定
+I10 Memory failure 不回滚 incumbent
+I11 Task 可脱离 Coding Agent 生命周期运行
+I12 SQLite 是 control-plane authority
+I13 manifest 可从 SQLite + evidence 重建
+I14 Coding Agent 显式决定 continue/complete
+I15 evaluator / evidence identity 不可由被评测 Agent 修改
+```

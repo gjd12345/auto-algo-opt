@@ -114,12 +114,16 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8, inclu
         if row["memory_enabled"]:
             try:
                 records = MemoryAPI(Path(row["memory_store"])).read(query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
-                                                                 memory_type=memory_type, limit=100)["memories"]
+                                                                 memory_type=memory_type, limit=min(limit+1,100),
+                                                                 offset=offset, include_shared=include_shared)["memories"]
                 records = [x for x in records if x["project"] == row["problem"] or include_shared and x["project"] == "_shared"]
                 memories = [{k: x[k] for k in ("reference", "name", "description", "type", "project", "scene", "version", "body_sha256")} for x in records]
             except (OSError, ValueError) as exc:
                 error = type(exc).__name__
-        result = {"memories": memories[offset:offset+limit], "next_cursor": str(offset+limit) if offset+limit < len(memories) else None,
+        # A full maximum-size page may require one final empty-page read.
+        # Never claim that the backend's first 100 records are the whole store.
+        has_more = len(memories)>limit or len(memories)==limit==100
+        result = {"memories": memories[:limit], "next_cursor": str(offset+limit) if has_more else None,
                   "enabled": bool(row["memory_enabled"]), "degraded": error is not None, "error": error}
         return db._envelope(con, row, rd, action=action, result=result)
 
@@ -284,7 +288,9 @@ def collect(*, run, operation_id, expected_state_version, expected_run_id=None):
 
 def parse_evaluation(raw, enabled, evidence_refs):
     allowed = {"plan_alignment","observations","hypotheses","next_search_advice","memory_action"}
-    if set(raw)-allowed or raw.get("plan_alignment") not in {"aligned","partial","deviated","unknown"}: fail("EVALUATE_INVALID","submit-evaluation")
+    # misaligned is the architecture contract; deviated remains a read-compatible
+    # submission spelling for existing Session clients and historical runs.
+    if set(raw)-allowed or raw.get("plan_alignment") not in {"aligned","partial","misaligned","deviated","unknown"}: fail("EVALUATE_INVALID","submit-evaluation")
     for field in ("observations","hypotheses"):
         values = raw.get(field,[])
         if not isinstance(values,list) or len(values)>16: fail("EVALUATE_INVALID","submit-evaluation")
@@ -342,6 +348,8 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
             row,rd,ih,result = begin(con,action,operation_id,expected_state_version,{"decision":decision})
             if result is None:
                 require_state(row,rd,action,"READY_TO_FINISH")
+                if rd["memory_commit_status"] in {"proposed","accepted"}:
+                    fail("MEMORY_COMMIT_PENDING",action,"Replay submit-evaluation with its original operation_id before finishing")
                 if decision not in {"continue","complete"}: fail("INVALID_ARGUMENT",action)
                 if decision=="continue":
                     budget=db._budget_view(con,row)

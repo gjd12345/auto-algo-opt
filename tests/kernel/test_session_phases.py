@@ -85,6 +85,88 @@ def test_config_freeze_detects_corruption(tmp_path):
     with pytest.raises(db.SessionError,match="config_hash_mismatch"): db.read_state(run=root)
 
 
+def test_state_is_one_snapshot_during_background_transition(tmp_path, monkeypatch):
+    root=tmp_path/"run"
+    init(root)
+    original=db._round
+    def concurrent_transition(con, run):
+        other=db._connect(root/"session.sqlite3")
+        try:
+            with db._transaction(other):
+                other.execute("UPDATE runs SET state_version=2, state='STOPPED'")
+                other.execute("UPDATE rounds SET state='STOPPED',updated_state_version=2")
+        finally:
+            other.close()
+        return original(con,run)
+    monkeypatch.setattr(db,"_round",concurrent_transition)
+    state=db.read_state(run=root)
+    assert (state["state_version"],state["run_state"],state["state"])==(1,"RUNNING","WAITING_FOR_PLAN")
+    monkeypatch.setattr(db,"_round",original)
+    assert db.read_state(run=root)["state_version"]==2
+
+
+def test_memory_pagination_reaches_records_after_first_hundred(tmp_path):
+    from agent_skill_loop.memory.api import _render
+    root=tmp_path/"run"
+    store=tmp_path/"memory"
+    project=store/"cvrp_construct"
+    project.mkdir(parents=True)
+    for index in range(103):
+        entry=MemoryEntry(f"item-{index:03d}","ranking","insight","cvrp_construct","select_next_node",
+                          "**Why:** fixture\n**How to apply:** test only")
+        (project/f"insight_{entry.name}__v0001.md").write_text(_render(entry),encoding="utf-8")
+    init(root,memory_store=str(store))
+    first=actions.memory_search(run=root,limit=100)["result"]
+    second=actions.memory_search(run=root,limit=100,cursor=first["next_cursor"])["result"]
+    assert len(first["memories"])==100
+    assert len(second["memories"])==3 and second["next_cursor"] is None
+    assert len({x["reference"] for x in first["memories"]+second["memories"]})==103
+    assert not any("body" in x for x in first["memories"]+second["memories"])
+
+
+def test_architecture_evaluate_alignment_and_authority():
+    raw=dict(plan_alignment="misaligned",observations=[],hypotheses=[],next_search_advice={},memory_action={"kind":"none"})
+    assert actions.parse_evaluation(raw,True,set()).kind=="none"
+    with pytest.raises(db.SessionError,match="EVALUATE_INVALID"):
+        actions.parse_evaluation({**raw,"objective":0},False,set())
+
+
+@pytest.mark.parametrize("damage",["changed", "missing"])
+def test_pending_memory_recovery_checks_original_submission(tmp_path,monkeypatch,damage):
+    from agent_skill_loop import session_memory
+    root=tmp_path/"run"
+    init(root,memory_store=str(tmp_path/"memory"))
+    ref="rounds/round_0001/evaluation_facts.json"
+    sha=actions.save(root,ref,{"evidence_refs":[],"candidates":[]})
+    con=db._connect(root/"session.sqlite3")
+    con.execute("UPDATE rounds SET state='WAITING_FOR_EVALUATION',evaluation_facts_ref=?,evaluation_facts_sha256=?",(ref,sha))
+    con.close()
+    raw=dict(plan_alignment="unknown",observations=[],hypotheses=[],next_search_advice={},
+             memory_action=dict(kind="insight",name="original",description="fixture",project="cvrp_construct",
+                                scene="select_next_node",body="**Why:** fixture\n**How to apply:** test only"))
+    file=tmp_path/"evaluation.json"
+    file.write_text(json.dumps(raw),encoding="utf-8")
+    original=session_memory.commit_pending
+    def crash(*args): raise RuntimeError("crash before commit")
+    monkeypatch.setattr(session_memory,"commit_pending",crash)
+    with pytest.raises(RuntimeError,match="crash before commit"):
+        actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=1,file=file)
+    with pytest.raises(db.SessionError,match="Replay submit-evaluation"):
+        actions.finish_round(run=root,operation_id="finish",expected_state_version=2,decision="complete")
+    proposal=root/"rounds/round_0001/memory_proposal.json"
+    if damage=="missing": proposal.unlink()
+    else:
+        content=json.loads(proposal.read_text())
+        content["name"]="not-submitted-by-agent"
+        proposal.write_text(json.dumps(content),encoding="utf-8")
+    monkeypatch.setattr(session_memory,"commit_pending",original)
+    recovered=actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=1,file=file)
+    assert recovered["result"]["evaluation_accepted"]
+    assert recovered["result"]["memory"]["status"]=="rejected"
+    assert not list((tmp_path/"memory").glob("*/*.md"))
+    assert actions.finish_round(run=root,operation_id="finish",expected_state_version=recovered["state_version"],decision="complete")["run_state"]=="COMPLETED"
+
+
 def test_preeffect_launch_failure_can_be_collected_and_retried(tmp_path,monkeypatch):
     root=tmp_path/"run"
     init(root)

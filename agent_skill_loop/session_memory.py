@@ -6,6 +6,7 @@ from agent_skill_loop import session_runtime as db
 from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
+from agent_skill_loop.contracts_3plus1 import MemoryAction, strict_json_object
 
 
 def commit_pending(root, operation_id):
@@ -16,9 +17,15 @@ def commit_pending(root, operation_id):
             if proposal is None: return
             row=db._require_run(con,action="memory-commit",run_id=None)
             rd=con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",(row["run_id"],proposal["round_id"])).fetchone()
-            raw=json.loads((root/proposal["proposal_ref"]).read_text(encoding="utf-8"))
             status,error,reference="rejected",None,None
             try:
+                raw=json.loads((root/proposal["proposal_ref"]).read_text(encoding="utf-8"))
+                submitted=(root/rd["submitted_evaluation_ref"]).read_text(encoding="utf-8")
+                if db._sha256(submitted)!=rd["submitted_evaluation_sha256"]:
+                    raise ValueError("evaluation_submission_hash_mismatch")
+                expected=MemoryAction.from_dict(strict_json_object(submitted).get("memory_action"),enabled=bool(row["memory_enabled"]))
+                if raw!=expected.as_dict():
+                    raise ValueError("memory_proposal_identity_mismatch")
                 spec=get_problem(row["problem"])
                 if raw["project"]!=row["problem"] or raw["scene"]!=spec.entrypoint: raise ValueError("memory_scene_identity_mismatch")
                 facts_text=(root/rd["evaluation_facts_ref"]).read_text(encoding="utf-8")

@@ -1,0 +1,162 @@
+meta:
+  title: "3+1 EoH Workflow Architecture"
+  description: "Plan, official EoH, isolated evaluation, Evaluate and optional Memory with bounded repair"
+  source: generated
+  theme: tech-blue
+  layout: horizontal
+  canvas: 1800x1100
+  routing: orthogonal
+
+modules:
+  - id: control
+    label: "Workflow Control"
+  - id: eoh
+    label: "Official EoH + bounded repair"
+  - id: memory
+    label: "Optional Memory"
+
+nodes:
+  - id: cli
+    label: "CLI / Problem Contract\nsuite, budget, deadline"
+    type: terminal
+    module: control
+    position: {x: 120, y: 180}
+  - id: workflow
+    label: "Workflow Runner\nincumbent + global stop"
+    type: process
+    module: control
+    position: {x: 340, y: 180}
+  - id: plan
+    label: "Plan Role\nplan.json"
+    type: service
+    module: control
+    position: {x: 560, y: 180}
+  - id: context
+    label: "Round Context\nfeedback + memory refs"
+    type: document
+    module: control
+    position: {x: 760, y: 180}
+  - id: eohcore
+    label: "Official EoH\nselection / operators / population"
+    type: process
+    module: eoh
+    position: {x: 980, y: 180}
+  - id: bridge
+    label: "LLM Bridge\ngeneration + repair requests"
+    type: service
+    module: eoh
+    position: {x: 1190, y: 180}
+  - id: evaluator
+    label: "Isolated Evaluator\nsyntax, interface, suite score"
+    type: service
+    module: eoh
+    position: {x: 1190, y: 390}
+  - id: repair
+    label: "Bounded Repair Adapter\nmax one repair / candidate"
+    type: process
+    module: eoh
+    position: {x: 980, y: 390}
+  - id: evidence
+    label: "Evidence + Skill Export\ncode hashes, revisions, scores"
+    type: document
+    module: eoh
+    position: {x: 980, y: 600}
+  - id: evaluate
+    label: "Evaluate Role\nalignment + memory_action"
+    type: service
+    module: control
+    position: {x: 760, y: 760}
+  - id: incumbent
+    label: "Incumbent Update\nexplicit seed for next round"
+    type: process
+    module: control
+    position: {x: 540, y: 600}
+  - id: memindex
+    label: "Memory Index\nproject + scene summaries"
+    type: database
+    module: memory
+    position: {x: 340, y: 760}
+  - id: membody
+    label: "Versioned Markdown\ninsight / solution"
+    type: database
+    module: memory
+    position: {x: 120, y: 760}
+  - id: api
+    label: "Model API\nexternal provider"
+    type: cloud
+    position: {x: 1450, y: 180}
+
+edges:
+  - from: cli
+    to: workflow
+    type: primary
+    label: config
+  - from: workflow
+    to: plan
+    type: primary
+  - from: plan
+    to: context
+    type: primary
+  - from: context
+    to: eohcore
+    type: primary
+  - from: eohcore
+    to: bridge
+    type: primary
+    label: generate
+  - from: bridge
+    to: api
+    type: primary
+    label: HTTP
+  - from: bridge
+    to: evaluator
+    type: data
+    label: code
+  - from: evaluator
+    to: repair
+    type: data
+    label: failure diagnostic
+  - from: repair
+    to: bridge
+    type: optional
+    label: bounded repair
+  - from: repair
+    to: evaluator
+    type: data
+    label: reevaluate B
+  - from: evaluator
+    to: evidence
+    type: data
+    label: trusted facts
+  - from: evidence
+    to: incumbent
+    type: primary
+    label: compare
+  - from: incumbent
+    to: workflow
+    type: data
+    label: next-round seed
+  - from: evidence
+    to: evaluate
+    type: primary
+    label: facts
+  - from: plan
+    to: memindex
+    type: optional
+    label: search
+  - from: memindex
+    to: membody
+    type: data
+    label: read version
+  - from: membody
+    to: plan
+    type: data
+    label: selected body
+  - from: evaluate
+    to: membody
+    type: optional
+    label: write insight / solution
+  - from: workflow
+    to: evaluate
+    type: dependency
+    label: budget / deadline
