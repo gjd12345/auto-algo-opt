@@ -12,6 +12,10 @@ import urllib.request
 def main() -> int:
     try:
         spec = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+        if isinstance(spec.get("parent_pid"), int):
+            import threading
+            from agent_skill_loop.eval_worker import _watch_parent
+            threading.Thread(target=_watch_parent,args=(spec["parent_pid"],),daemon=True).start()
         url = spec["url"]
         headers = spec["headers"]
         body = base64.b64decode(spec["body_b64"])

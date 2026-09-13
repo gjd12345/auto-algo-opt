@@ -48,9 +48,11 @@ class FrozenProblem(BaseProblem):
         deadline: float | None = None,
         origin: str = "unknown",
         round_context: str | None = None,
+        session: dict | None = None,
     ) -> None:
         super().__init__(timeout=timeout, n_processes=n_processes)
         self.spec = spec
+        self.session = session
         self.suite = suite or spec.build_suite(seed, split=split, count=count, size=size)
         if self.suite.get("problem") != spec.problem_id:
             raise ValueError("suite_problem_mismatch")
@@ -180,7 +182,13 @@ class FrozenProblem(BaseProblem):
             payload["origin"] = context.get("origin") or ("generated" if exchange.get("purpose") == "eoh_generation" else "explicit_parent")
             payload["source_request_index"] = exchange.get("request_index") if payload["origin"] == "generated" else None
             payload["prompt_sha256"] = exchange.get("prompt_sha256")
+        if self.session and not payload.get("candidate_id"):
+            payload["candidate_id"] = (f"candidate_{payload['source_request_index']}" if payload.get("source_request_index") else payload["origin"])
+            payload["revision"] = "original"
         if result is None:
+            if self.session:
+                from agent_skill_loop.session_ledger import solver_event
+                solver_event(self.session, payload)
             from agent_skill_loop.skill_store import _atomic_write_text
             payload["state"] = "started"
             _atomic_write_text(Path(self.evaluation_log).parent / "evaluation_starts" / f"{evaluation_id}.json",
@@ -192,6 +200,11 @@ class FrozenProblem(BaseProblem):
             with self._log_lock:
                 with path.open("a", encoding="utf-8") as handle:
                     handle.write(json.dumps(payload, ensure_ascii=False, allow_nan=False) + "\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+            if self.session:
+                from agent_skill_loop.session_ledger import solver_event
+                solver_event(self.session, payload)
         except OSError:
             # Missing evidence must not yield a usable scalar fitness.
             raise

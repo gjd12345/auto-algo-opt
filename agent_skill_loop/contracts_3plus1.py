@@ -169,6 +169,8 @@ class PlanDocument:
         if not isinstance(memory, list) or any(not isinstance(item, str) or not item.strip() for item in memory):
             raise ValueError("memory_basis_must_be_string_list")
         memory_basis = tuple(item.strip() for item in memory)
+        if len(memory_basis) > 2 or len(set(memory_basis)) != len(memory_basis):
+            raise ValueError("memory_basis_limit")
         if available_memory_refs is not None and not set(memory_basis).issubset(available_memory_refs):
             raise ValueError("memory_reference_not_found")
         skill_ref = raw.get("reference_skill_ref")

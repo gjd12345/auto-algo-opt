@@ -34,7 +34,7 @@ py -3.11 -m agent_skill_loop workflow --problem cvrp_construct --model deepseek-
 
 历史研究材料保留为追溯证据，不作为当前执行指引。
 
-Phase 1 已提供不触发外部效果的 SQLite session control plane：
+Session Phase 1–4 已提供由 Coding Agent 提交 Plan/Evaluate 的 SQLite 控制面。操作说明与实测边界见 [Session Phase 1–4 验收记录](reports/session_phase234_acceptance_20260913.md)：
 
 ```powershell
 py -3.11 -m agent_skill_loop session init --output outputs/session-001 --operation-id init-001 --eoh-model deepseek-flash
@@ -43,3 +43,11 @@ py -3.11 -m agent_skill_loop session stop --run outputs/session-001 --operation-
 ```
 
 `session init` 只冻结问题、套件、评测器、EoH 和预算身份，不读取 API key、不调用模型或 solver；`state` 是纯读取，`stop` 使用全局 `state_version` 和 `operation_id` 保证幂等。
+
+后续依次使用 `session memory search/read`、`session submit-plan --file`、`session execute`、`session collect`、`session read-evaluation`、`session submit-evaluation --file`、`session finish-round --decision continue|complete`。每次 mutation 使用最近 `state` 返回的版本；后台任务也会推进版本。重复 operation ID 会返回原始 receipt。
+
+`execute` 创建后台 Supervisor 后立即返回；`collect` 在任务运行时返回 `collected=false`，终止后核对账本和资产。Plan、Evaluate 和 Memory 判断由当前 Coding Agent 完成，Session 的 provider 请求仅允许 `eoh_probe/eoh_generation/eoh_repair`。
+
+DeepSeek 可在 init 显式传 `--eoh-thinking disabled`，该参数进入 frozen config 和幂等 hash；默认 `provider-default` 保持 provider 自身行为。遇到长思考输出截断时，应停止旧 session，再创建显式配置的新 session，不能改写已冻结配置。
+
+Phase 1 旧 `algorithm-optimization-session/v1` 数据库保留为历史记录；其执行参数未完整持久化，当前不猜测缺失值进行升级。请创建新的 `v1.1` Session。Skill 打包与旧入口迁移属于后续 Phase 5。

@@ -1,16 +1,13 @@
-"""Phase 1 session control plane.
-
-This module deliberately stops at the control-plane boundary.  It creates a
-recoverable SQLite run/round record and exposes read-only state plus a safe
-stop transition.  It does not import or call a provider, EoH, or solver.
-"""
+"""SQLite Session control plane and crash-recoverable audit projection."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import os
+import shutil
 import sqlite3
+import tempfile
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -26,11 +23,12 @@ from agent_skill_loop.contracts import (
     PROBLEM_CVRP,
 )
 from agent_skill_loop.evaluator import evaluator_source_hash
-from agent_skill_loop.journal import AuditJournal
+from agent_skill_loop.journal import digest, verify_audit_journal
+from agent_skill_loop.contracts import AUDIT_JOURNAL_SCHEMA
 from agent_skill_loop.problems.base import get_problem
 
 
-SCHEMA_VERSION = "algorithm-optimization-session/v1"
+SCHEMA_VERSION = "algorithm-optimization-session/v1.1"
 CONFIG_SCHEMA = "algorithm-optimization-session-config/v1"
 RUNTIME_VERSION = "0.1.0"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
@@ -174,14 +172,18 @@ def _connect(database: Path) -> sqlite3.Connection:
 
 
 def _create_schema(connection: sqlite3.Connection) -> None:
-    connection.executescript(
+    # Do not use executescript here.  sqlite3.executescript implicitly commits
+    # before executing its script, which would make init's seed rows non-atomic
+    # with schema creation.  Each statement stays inside the caller's
+    # BEGIN IMMEDIATE transaction.
+    statements = [
         """
-        CREATE TABLE schema_meta (
+        CREATE TABLE IF NOT EXISTS schema_meta (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
-        );
-
-        CREATE TABLE runs (
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS runs (
             run_id TEXT PRIMARY KEY,
             output_root TEXT NOT NULL UNIQUE,
             state TEXT NOT NULL CHECK (state IN ('RUNNING','STOPPING','COMPLETED','STOPPED','FAILED')),
@@ -220,9 +222,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             config_ref TEXT NOT NULL,
             config_sha256 TEXT NOT NULL,
             init_operation_id TEXT NOT NULL UNIQUE
-        );
-
-        CREATE TABLE rounds (
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS rounds (
             run_id TEXT NOT NULL,
             round_id INTEGER NOT NULL CHECK (round_id >= 1),
             state TEXT NOT NULL CHECK (state IN (
@@ -257,16 +259,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             finished_at_utc TEXT,
             PRIMARY KEY (run_id, round_id),
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
-        );
-
-        CREATE UNIQUE INDEX uq_one_active_round_per_run
-        ON rounds(run_id)
-        WHERE state IN (
-            'WAITING_FOR_PLAN','READY_TO_EXECUTE','EXECUTING',
-            'WAITING_FOR_EVALUATION','READY_TO_FINISH'
-        );
-
-        CREATE TABLE operations (
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS operations (
             operation_id TEXT PRIMARY KEY,
             run_id TEXT NOT NULL,
             round_id INTEGER,
@@ -281,12 +276,139 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             finished_at_utc TEXT,
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE,
             FOREIGN KEY (run_id, round_id) REFERENCES rounds(run_id, round_id)
-        );
-
-        INSERT INTO schema_meta(key, value)
-        VALUES ('schema_version', 'algorithm-optimization-session/v1');
+        )""",
         """
-    )
+        CREATE TABLE IF NOT EXISTS tasks (
+            task_id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            state TEXT NOT NULL CHECK (state IN ('CREATED','STARTING','RUNNING','STOP_REQUESTED','EXITED','COLLECTED')),
+            external_effect_started INTEGER NOT NULL DEFAULT 0 CHECK (external_effect_started IN (0,1)),
+            terminal_reason TEXT,
+            terminal_ref TEXT,
+            terminal_sha256 TEXT,
+            process_id INTEGER,
+            heartbeat_at_utc TEXT,
+            engine_elapsed_seconds REAL NOT NULL DEFAULT 0,
+            hard_deadline_utc TEXT,
+            created_at_utc TEXT NOT NULL,
+            started_at_utc TEXT,
+            finished_at_utc TEXT,
+            FOREIGN KEY (run_id, round_id) REFERENCES rounds(run_id, round_id)
+        )""",
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_live_task
+        ON tasks(run_id, round_id)
+        WHERE state IN ('CREATED','STARTING','RUNNING','STOP_REQUESTED')""",
+        """CREATE UNIQUE INDEX IF NOT EXISTS uq_effectful_task
+        ON tasks(run_id, round_id) WHERE external_effect_started=1""",
+        """
+        CREATE TABLE IF NOT EXISTS requests (
+            request_id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            round_id INTEGER,
+            task_id TEXT,
+            sequence INTEGER NOT NULL,
+            purpose TEXT NOT NULL CHECK (purpose IN ('eoh_probe','eoh_generation','eoh_repair')),
+            model TEXT,
+            state TEXT NOT NULL CHECK (state IN ('reserved','sent','complete','failed','unknown')),
+            status INTEGER,
+            input_tokens INTEGER,
+            output_tokens INTEGER,
+            elapsed_seconds REAL,
+            error_code TEXT,
+            finish_reason TEXT,
+            created_at_utc TEXT NOT NULL,
+            finished_at_utc TEXT,
+            UNIQUE(run_id, sequence),
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS solver_calls (
+            solver_call_id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            task_id TEXT,
+            candidate_id TEXT,
+            revision TEXT,
+            evaluation_id TEXT NOT NULL UNIQUE,
+            suite_hash TEXT NOT NULL,
+            evaluator_hash TEXT NOT NULL,
+            code_sha256 TEXT NOT NULL,
+            state TEXT NOT NULL CHECK (state IN ('reserved','started','complete','failed','interrupted','unknown')),
+            objective REAL,
+            valid INTEGER,
+            error_code TEXT,
+            started_at_utc TEXT,
+            finished_at_utc TEXT,
+            UNIQUE(run_id, evaluation_id),
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS memory_reads (
+            read_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            reference TEXT NOT NULL,
+            body_sha256 TEXT NOT NULL,
+            offset_chars INTEGER NOT NULL,
+            returned_chars INTEGER NOT NULL,
+            total_chars INTEGER NOT NULL,
+            read_at_utc TEXT NOT NULL,
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS memory_writes (
+            write_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            operation_id TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            proposal_ref TEXT,
+            status TEXT NOT NULL CHECK (status IN ('proposed','accepted','rejected','published','failed')),
+            error_code TEXT,
+            reference TEXT,
+            created_at_utc TEXT NOT NULL,
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS audit_events (
+            event_id TEXT PRIMARY KEY,
+            run_id TEXT NOT NULL,
+            sequence INTEGER NOT NULL,
+            state_version INTEGER NOT NULL,
+            kind TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('pending','flushed')),
+            created_at_utc TEXT NOT NULL,
+            UNIQUE(run_id, sequence),
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_one_active_round_per_run
+        ON rounds(run_id)
+        WHERE state IN ('WAITING_FOR_PLAN','READY_TO_EXECUTE','EXECUTING',
+                        'WAITING_FOR_EVALUATION','READY_TO_FINISH')""",
+        """
+        INSERT OR IGNORE INTO schema_meta(key, value)
+        VALUES ('schema_version', ?)""",
+    ]
+    for statement in statements[:-1]:
+        connection.execute(statement)
+    # A database created by the Phase 1 commit may already exist.  Add the
+    # frozen execution fields without rewriting existing rows.
+    existing_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(runs)")}
+    for name, definition in {
+        "pop_size": "INTEGER",
+        "n_pop": "INTEGER",
+        "max_sample_nums": "INTEGER",
+        "solver_timeout": "REAL",
+        "request_timeout": "REAL",
+    }.items():
+        if name not in existing_columns:
+            connection.execute(f"ALTER TABLE runs ADD COLUMN {name} {definition}")
+    connection.execute(statements[-1], (SCHEMA_VERSION,))
+    connection.execute("UPDATE schema_meta SET value=? WHERE key='schema_version'", (SCHEMA_VERSION,))
 
 
 def _row(connection: sqlite3.Connection, query: str, parameters: tuple[Any, ...]) -> sqlite3.Row | None:
@@ -316,7 +438,7 @@ def _require_run(
 def _require_schema(connection: sqlite3.Connection, *, action: str) -> None:
     row = _row(connection, "SELECT value FROM schema_meta WHERE key='schema_version'", ())
     if row is None or row["value"] != SCHEMA_VERSION:
-        raise SessionError("SCHEMA_MISMATCH", "unsupported session schema", action=action)
+        raise SessionError("SCHEMA_MISMATCH", "create a new session; legacy config lacks frozen execution parameters", action=action)
 
 
 def _round(connection: sqlite3.Connection, run: sqlite3.Row) -> sqlite3.Row:
@@ -412,6 +534,11 @@ def _envelope(
     operation_id: str | None = None,
     result: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    actions = _allowed_actions(run["state"], current_round["state"])
+    if current_round["state"] == "READY_TO_EXECUTE" and _live_task_exists(connection, run["run_id"], current_round["round_id"]):
+        actions = ["state", "collect", "stop"]
+    if not current_round["evaluation_facts_ref"]:
+        actions = [x for x in actions if x != "read_evaluation"]
     return {
         "ok": True,
         "action": action,
@@ -420,7 +547,7 @@ def _envelope(
         "run_state": run["state"],
         "state": current_round["state"],
         "state_version": run["state_version"],
-        "allowed_actions": _allowed_actions(run["state"], current_round["state"]),
+        "allowed_actions": actions,
         "operation_id": operation_id,
         "result": dict(result or {}),
     }
@@ -434,24 +561,62 @@ def _write_initial_files(output: Path, config: Mapping[str, Any], suite: Mapping
     return _sha256(config_text), _sha256(suite_text)
 
 
-def _append_audit(
-    output: Path,
-    *,
-    run_id: str,
-    state_version: int,
-    events: list[tuple[str, dict[str, Any]]],
-    create: bool,
-    action: str,
-) -> None:
+def _queue_audit(connection, run_id, state_version, events):
+    sequence = connection.execute("SELECT COALESCE(MAX(sequence),0) FROM audit_events WHERE run_id=?", (run_id,)).fetchone()[0]
+    for kind, payload in events:
+        sequence += 1
+        connection.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?,'pending',?)",
+                           (uuid.uuid4().hex, run_id, sequence, state_version, kind, _json(payload), _utc_now()))
+
+
+def flush_audit(output: Path) -> bool:
+    """Repairable hash-chained projection, serialized by the SQLite write lock.
+
+    Publishing the whole deterministic projection atomically also recovers a
+    crash between the file replacement and the outbox acknowledgement.
+    """
+    connection = _connect(output / "session.sqlite3")
     try:
-        audit = AuditJournal(output / "journal", run_id=run_id, create=create)
-        for kind, payload in events:
-            audit.append(kind, payload, state_version=state_version)
-    except (OSError, ValueError, TypeError, KeyError) as exc:
-        raise SessionError(
-            "STORAGE_FAILED", f"audit journal error: {type(exc).__name__}",
-            action=action, retryable=True, run_id=run_id, state_version=state_version,
-        ) from exc
+        with _transaction(connection):
+            rows = connection.execute("SELECT * FROM audit_events ORDER BY sequence").fetchall()
+            previous = "0" * 64
+            lines = []
+            for row in rows:
+                record = dict(schema_version=AUDIT_JOURNAL_SCHEMA, sequence=row["sequence"],
+                              event_id=row["event_id"], kind=row["kind"], actor="session_runtime",
+                              run_id=row["run_id"], state_version=row["state_version"],
+                              previous_hash=previous, payload=json.loads(row["payload_json"]))
+                record["content_hash"] = digest(record)
+                previous = record["content_hash"]
+                lines.append(_json(record))
+            _atomic_write(output / "journal/events.jsonl", "\n".join(lines) + "\n")
+            connection.execute("UPDATE audit_events SET status='flushed'")
+        return True
+    except (OSError, ValueError, sqlite3.Error):
+        return False
+    finally:
+        connection.close()
+
+
+def _verify_files(output: Path, run, *, action: str):
+    try:
+        config_bytes = (output / "config_frozen.json").read_bytes()
+        config = json.loads(config_bytes)
+        if _sha256(config_bytes) != run["config_sha256"]:
+            raise ValueError("config_hash_mismatch")
+        suite = json.loads((output / "dev_suite.json").read_text(encoding="utf-8"))
+        spec = get_problem(run["problem"])
+        spec.validate_suite(suite)
+        for key in ("run_id", "problem", "suite_hash", "evaluator_hash"):
+            if config[key] != run[key]:
+                raise ValueError(f"{key}_mismatch")
+        if suite["content_hash"] != run["suite_hash"] or suite["problem"] != run["problem"]:
+            raise ValueError("suite_identity_mismatch")
+        if evaluator_source_hash() != run["evaluator_hash"] or _sha256(spec.baseline_code) != run["baseline_code_sha256"]:
+            raise ValueError("execution_identity_changed")
+        return config, suite
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise SessionError("EVIDENCE_INTEGRITY_FAILED", str(exc), action=action) from exc
 
 
 def _init_input(
@@ -479,6 +644,7 @@ def _init_input(
     max_sample_nums: int | None,
     solver_timeout: float,
     request_timeout: float,
+    eoh_thinking: str = "provider-default",
 ) -> dict[str, Any]:
     return {
         "output": str(output),
@@ -504,6 +670,7 @@ def _init_input(
         "max_sample_nums": max_sample_nums,
         "solver_timeout": solver_timeout,
         "request_timeout": request_timeout,
+        "eoh_thinking": eoh_thinking,
     }
 
 
@@ -591,8 +758,11 @@ def initialize_session(
     max_sample_nums: int | None = None,
     solver_timeout: float = DEFAULT_SOLVER_TIMEOUT,
     request_timeout: float = 180.0,
+    eoh_thinking: str = "provider-default",
 ) -> dict[str, Any]:
     action = "init"
+    if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
+        raise SessionError("INVALID_ARGUMENT", "invalid eoh thinking mode", action=action)
     output = Path(output).resolve()
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise SessionError("INVALID_ARGUMENT", "--operation-id must be non-empty", action=action)
@@ -626,6 +796,7 @@ def initialize_session(
         raise SessionError("INVALID_ARGUMENT", f"invalid problem suite: {exc}", action=action) from exc
 
     input_payload = _init_input(
+        eoh_thinking=eoh_thinking,
         output=output,
         problem=problem,
         operation_id=operation_id,
@@ -666,14 +837,10 @@ def initialize_session(
                 raise SessionError("OPERATION_ID_CONFLICT", "operation_id was used with different init input", action=action, retryable=False)
             if existing["receipt_json"] is None:
                 raise SessionError("SQLITE_ERROR", "init operation has no receipt", action=action, retryable=True)
+            flush_audit(output)
             return json.loads(existing["receipt_json"])
         finally:
             connection.close()
-
-    try:
-        output.mkdir(parents=True, exist_ok=False)
-    except OSError as exc:
-        raise SessionError("STORAGE_FAILED", str(exc), action=action, retryable=True) from exc
 
     run_id = f"run_{uuid.uuid4().hex}"
     created_at = _utc_now()
@@ -712,7 +879,15 @@ def initialize_session(
             "model": eoh_model,
             "endpoint": eoh_endpoint,
             "api_key_env": eoh_api_key_env,
+            "request_timeout": request_timeout,
+            "thinking": eoh_thinking,
+            "search": {
+                "pop_size": pop_size,
+                "n_pop": n_pop,
+                "max_sample_nums": max_sample_nums,
+            },
         },
+        "evaluator": {"solver_timeout": solver_timeout},
         "repair": {
             "mode": repair_mode,
             "policy_version": REPAIR_POLICY_VERSION if repair_mode == "bounded" else None,
@@ -734,7 +909,13 @@ def initialize_session(
         },
         "init": {"provider_requests": 0, "solver_calls": 0},
     }
-    config_sha256, _ = _write_initial_files(output, config, suite)
+    try:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.init-", dir=str(output.parent)))
+        config_sha256, _ = _write_initial_files(staging, config, suite)
+    except OSError as exc:
+        raise SessionError("STORAGE_FAILED", str(exc), action=action, retryable=True) from exc
+    database = staging / "session.sqlite3"
     connection = _connect(database)
     try:
         with _transaction(connection):
@@ -752,8 +933,9 @@ def initialize_session(
                     eoh_round_max_requests, max_solver_calls, repair_max_requests,
                     engine_wall_seconds, round_wall_seconds, solution_threshold,
                     solution_policy_id, created_at_utc, config_ref, config_sha256,
-                    init_operation_id
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    init_operation_id, pop_size, n_pop, max_sample_nums,
+                    solver_timeout, request_timeout
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id, str(output), "RUNNING", 1, 1,
@@ -767,6 +949,7 @@ def initialize_session(
                     eoh_max_requests, eoh_round_max_requests, max_solver_calls, repair_max_requests,
                     engine_wall_seconds, round_wall_seconds, solution_threshold, None,
                     created_at, "config_frozen.json", config_sha256, operation_id,
+                    pop_size, n_pop, max_sample_nums, solver_timeout, request_timeout,
                 ),
             )
             connection.execute(
@@ -803,32 +986,16 @@ def initialize_session(
                     "SUCCEEDED", _json(receipt), created_at, created_at,
                 ),
             )
-        _append_audit(
-            output,
-            run_id=run_id,
-            state_version=1,
-            create=True,
-            action=action,
-            events=[
-                ("run_started", {
-                    "problem": problem,
-                    "suite_hash": suite_hash,
-                    "evaluator_hash": evaluator_hash,
-                    "optimization_skill_id": OPTIMIZATION_SKILL_ID,
-                    "optimization_skill_version": OPTIMIZATION_SKILL_VERSION,
-                    "eoh_commit": EOH_COMMIT,
-                    "eoh_model": eoh_model,
-                    "eoh_endpoint": eoh_endpoint,
-                    "eoh_api_key_env": eoh_api_key_env,
-                }),
-                ("operation_receipt", {
-                    "operation_id": operation_id,
-                    "action": action,
-                    "result_state_version": 1,
-                    "input_sha256": input_hash,
-                }),
-            ],
-        )
+            _queue_audit(connection, run_id, 1, [
+                ("run_started", {"problem": problem, "suite_hash": suite_hash, "evaluator_hash": evaluator_hash}),
+                ("operation_receipt", {"operation_id": operation_id, "action": action, "input_sha256": input_hash}),
+            ])
+        flush_audit(staging)
+        try:
+            connection.close()
+            os.rename(staging, output)
+        except OSError as exc:
+            raise SessionError("STORAGE_FAILED", str(exc), action=action, retryable=True) from exc
         return receipt
     except SessionError:
         raise
@@ -836,6 +1003,8 @@ def initialize_session(
         raise SessionError("SQLITE_ERROR", str(exc), action=action, retryable=True) from exc
     finally:
         connection.close()
+        if staging.exists() and not output.exists():
+            shutil.rmtree(staging, ignore_errors=True)
 
 
 def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, Any]:
@@ -847,6 +1016,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
     try:
         _require_schema(connection, action=action)
         current_run = _require_run(connection, action=action, run_id=expected_run_id)
+        _verify_files(Path(run).resolve(), current_run, action=action)
         current_round = _round(connection, current_run)
         live_task = None
         table_names = {str(r[0]) for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -858,6 +1028,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             )
             live_task = dict(task) if task is not None else None
         result = {
+            "integrity": {"config": "ok", "suite": "ok", "audit": "pending" if connection.execute("SELECT 1 FROM audit_events WHERE status='pending' LIMIT 1").fetchone() else "ok"},
             "policy_identity": _policy_identity(current_run),
             "budgets": _budget_view(connection, current_run),
             "incumbent": {
@@ -873,11 +1044,20 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
                 "store": current_run["memory_store"],
             },
         }
+        if result["integrity"]["audit"] == "ok":
+            try:
+                audit = verify_audit_journal(Path(run).resolve() / "journal/events.jsonl", expected_run_id=current_run["run_id"])
+                count = connection.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0]
+                if audit["events"] != count:
+                    result["integrity"]["audit"] = "out_of_sync"
+            except (OSError, ValueError):
+                result["integrity"]["audit"] = "invalid"
         response = _envelope(connection, current_run, current_round, action=action, result=result)
         # Keep the high-value state fields at the envelope level as required
         # by the CLI contract.  ``result`` remains populated for callers that
         # treat every action uniformly.
         response.update({
+            "integrity": result["integrity"],
             "policy_identity": result["policy_identity"],
             "budgets": result["budgets"],
             "incumbent": result["incumbent"],
@@ -929,53 +1109,59 @@ def stop_session(
     input_hash: str | None = None
     try:
         _require_schema(connection, action=action)
-        current_run = _require_run(connection, action=action, run_id=expected_run_id)
-        input_hash = _sha256(_json({"action": action, "run_id": current_run["run_id"], "reason": reason.strip()}))
-        existing = _row(connection, "SELECT * FROM operations WHERE operation_id=?", (operation_id,))
-        if existing is not None:
-            if existing["input_sha256"] != input_hash:
-                raise SessionError(
-                    "OPERATION_ID_CONFLICT",
-                    "operation_id was used with different stop input",
-                    action=action,
-                    run_id=str(current_run["run_id"]),
-                    round_id=int(current_run["active_round_id"]),
-                    state_version=int(current_run["state_version"]),
-                )
-            if existing["receipt_json"] is None:
-                raise SessionError("SQLITE_ERROR", "stop operation has no receipt", action=action, retryable=True)
-            return json.loads(existing["receipt_json"])
-
-        current_round = _round(connection, current_run)
-        current_version = int(current_run["state_version"])
-        if current_run["state"] == "STOPPING":
-            raise SessionError(
-                "RUN_STOPPING", "run is already stopping", action=action,
-                run_id=str(current_run["run_id"]), round_id=int(current_round["round_id"]), state_version=current_version,
-            )
-        if current_run["state"] in {"COMPLETED", "STOPPED", "FAILED"}:
-            raise SessionError(
-                "RUN_TERMINAL", "run is already terminal", action=action,
-                run_id=str(current_run["run_id"]), round_id=int(current_round["round_id"]), state_version=current_version,
-            )
-        if current_version != expected_state_version:
-            raise SessionError(
-                "STATE_VERSION_CONFLICT",
-                f"expected state_version {expected_state_version}, current is {current_version}",
-                action=action,
-                retryable=True,
-                run_id=str(current_run["run_id"]),
-                round_id=int(current_round["round_id"]),
-                state_version=current_version,
-            )
-        now = _utc_now()
-        new_version = current_version + 1
-        live_task = _live_task_exists(connection, str(current_run["run_id"]), int(current_round["round_id"]))
+        flush_audit(Path(run).resolve())
+        # The lock is acquired before the idempotency/version decision.  Two
+        # concurrent stop calls therefore cannot both observe the same token.
         with _transaction(connection):
+            current_run = _require_run(connection, action=action, run_id=expected_run_id)
+            input_hash = _sha256(_json({"action": action, "run_id": current_run["run_id"], "reason": reason.strip()}))
+            existing = _row(connection, "SELECT * FROM operations WHERE operation_id=?", (operation_id,))
+            if existing is not None:
+                if existing["input_sha256"] != input_hash:
+                    raise SessionError(
+                        "OPERATION_ID_CONFLICT",
+                        "operation_id was used with different stop input",
+                        action=action,
+                        run_id=str(current_run["run_id"]),
+                        round_id=int(current_run["active_round_id"]),
+                        state_version=int(current_run["state_version"]),
+                    )
+                if existing["receipt_json"] is None:
+                    raise SessionError("SQLITE_ERROR", "stop operation has no receipt", action=action, retryable=True)
+                return json.loads(existing["receipt_json"])
+
+            current_round = _round(connection, current_run)
+            current_version = int(current_run["state_version"])
+            # Check the token before terminal-state policy.  A stale caller
+            # must receive STATE_VERSION_CONFLICT even if another caller has
+            # already stopped the run.
+            if current_version != expected_state_version:
+                raise SessionError(
+                    "STATE_VERSION_CONFLICT",
+                    f"expected state_version {expected_state_version}, current is {current_version}",
+                    action=action,
+                    retryable=True,
+                    run_id=str(current_run["run_id"]),
+                    round_id=int(current_round["round_id"]),
+                    state_version=current_version,
+                )
+            if current_run["state"] == "STOPPING":
+                raise SessionError(
+                    "RUN_STOPPING", "run is already stopping", action=action,
+                    run_id=str(current_run["run_id"]), round_id=int(current_round["round_id"]), state_version=current_version,
+                )
+            if current_run["state"] in {"COMPLETED", "STOPPED", "FAILED"}:
+                raise SessionError(
+                    "RUN_TERMINAL", "run is already terminal", action=action,
+                    run_id=str(current_run["run_id"]), round_id=int(current_round["round_id"]), state_version=current_version,
+                )
+            now = _utc_now()
+            new_version = current_version + 1
+            live_task = connection.execute("SELECT 1 FROM tasks WHERE run_id=? AND round_id=? AND state!='COLLECTED' LIMIT 1", (current_run["run_id"],current_round["round_id"])).fetchone() is not None
             if live_task:
                 connection.execute(
-                    "UPDATE runs SET state='STOPPING', state_version=? WHERE run_id=?",
-                    (new_version, current_run["run_id"]),
+                    "UPDATE runs SET state='STOPPING', state_version=? WHERE run_id=? AND state_version=?",
+                    (new_version, current_run["run_id"], expected_state_version),
                 )
                 connection.execute(
                     "UPDATE tasks SET state='STOP_REQUESTED' WHERE run_id=? AND round_id=? AND state IN ('CREATED','STARTING','RUNNING')",
@@ -987,8 +1173,8 @@ def stop_session(
                 )
             else:
                 connection.execute(
-                    "UPDATE runs SET state='STOPPED', state_version=?, finished_at_utc=? WHERE run_id=?",
-                    (new_version, now, current_run["run_id"]),
+                    "UPDATE runs SET state='STOPPED', state_version=?, finished_at_utc=? WHERE run_id=? AND state_version=?",
+                    (new_version, now, current_run["run_id"], expected_state_version),
                 )
                 connection.execute(
                     "UPDATE rounds SET state='STOPPED', updated_state_version=?, stop_reason=?, finished_at_utc=? WHERE run_id=? AND round_id=?",
@@ -1017,31 +1203,12 @@ def stop_session(
                     expected_state_version, new_version, "SUCCEEDED", _json(receipt), now, now,
                 ),
             )
-        audit_events = [
-            ("state_transition", {
-                "from_run_state": current_run["state"],
-                "to_run_state": "STOPPING" if live_task else "STOPPED",
-                "from_round_state": current_round["state"],
-                "to_round_state": current_round["state"] if live_task else "STOPPED",
-                "reason": reason.strip(),
-            }),
-            ("operation_receipt", {
-                "operation_id": operation_id,
-                "action": action,
-                "result_state_version": new_version,
-                "input_sha256": input_hash,
-            }),
-        ]
-        if not live_task:
-            audit_events.append(("run_finished", {"state": "STOPPED", "stop_reason": reason.strip()}))
-        _append_audit(
-            Path(run).resolve(),
-            run_id=str(current_run["run_id"]),
-            state_version=new_version,
-            events=audit_events,
-            create=False,
-            action=action,
-        )
+            events = [("state_transition", {"state": updated_run["state"]}),
+                      ("operation_receipt", {"operation_id": operation_id, "action": action, "input_sha256": input_hash})]
+            if not live_task:
+                events.append(("run_finished", {"state": "STOPPED", "stop_reason": reason.strip()}))
+            _queue_audit(connection, current_run["run_id"], new_version, events)
+        flush_audit(Path(run).resolve())
         return receipt
     except SessionError:
         raise

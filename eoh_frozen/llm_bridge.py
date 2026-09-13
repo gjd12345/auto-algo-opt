@@ -62,6 +62,8 @@ class OpenAIPathBridge:
         self.problem = problem
         self.gateway_token = gateway_token
         self.eoh_reserve = 0
+        self.eoh_only = False
+        self.thinking = "provider-default"
         self.repair_limit: int | None = None
         self.repair_used = 0
         self.last_completion: dict[str, Any] = {}
@@ -162,6 +164,8 @@ class OpenAIPathBridge:
             return self._forward_serial(prompt, purpose=purpose)
 
     def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
+        if self.eoh_only and purpose is not None and purpose not in {"eoh_probe", "eoh_generation", "eoh_repair"}:
+            raise ValueError("gateway_purpose_denied")
         self.last_request_index = None
         # Official EoH's local client retries a failed HTTP response. Once a
         # request has an authentication failure or an unknown result, retries
@@ -195,6 +199,8 @@ class OpenAIPathBridge:
         if self._opencode:
             payload["thinking"] = {"type": "disabled"}
             payload["reasoning"] = {"effort": "none"}
+        if self.thinking != "provider-default":
+            payload["thinking"] = {"type": self.thinking}
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -207,9 +213,9 @@ class OpenAIPathBridge:
         if self.budget is not None:
             slot = self.budget.reserve(purpose=purpose, problem=self.problem, model=self.model)
             if slot is None:
-                self.last_error = "request_budget_exhausted"
+                self.last_error = getattr(self.budget, "denial_reason", None) or "request_budget_exhausted"
                 self.terminal = True
-                raise BudgetExhausted("request_budget_exhausted")
+                raise BudgetExhausted(self.last_error)
             self.last_request_index = slot.index
             self._log_event(slot.reserved_event)
         started = time.monotonic()
@@ -219,6 +225,10 @@ class OpenAIPathBridge:
         if remaining is not None:
             request_timeout = min(self.timeout, max(0.05, remaining))
         try:
+            if self.eoh_only and slot is not None and self.request_log is not None:
+                _atomic_write_text(self.request_log.parent / "request_inputs" / f"request_{slot.index}.json", json.dumps(payload, ensure_ascii=False))
+            if slot is not None and hasattr(self.budget, "mark_sent"):
+                self.budget.mark_sent(slot)
             status, raw = http_post_with_deadline(
                 self.target_url, headers, json.dumps(payload).encode("utf-8"), request_timeout
             )
@@ -286,6 +296,7 @@ class OpenAIPathBridge:
         reasoning = message.get("reasoning_content") if isinstance(message, dict) else None
         finish_reason = choices[0].get("finish_reason") if choices and isinstance(choices[0], dict) else None
         response_metadata = {
+            "request_payload": payload if self.eoh_only else None,
             "finish_reason": finish_reason,
             "content_present": isinstance(content, str) and bool(content.strip()),
             "reasoning_content_present": isinstance(reasoning, str) and bool(reasoning.strip()),
@@ -332,6 +343,8 @@ class OpenAIPathBridge:
             "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
             "response_sha256": hashlib.sha256(response.encode()).hexdigest(),
         }
+        if getattr(slot,"request_id",None):
+            record["request_id"] = slot.request_id
         if metadata:
             record.update(metadata)
         self.last_request_index = slot.index

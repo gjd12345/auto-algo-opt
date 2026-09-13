@@ -16,12 +16,17 @@ def main() -> int:
 
     root = Path(sys.argv[1])
     cfg = json.loads((root / "worker_config.json").read_text(encoding="utf-8"))
+    if cfg.get("supervisor_pid"):
+        import threading
+        from agent_skill_loop.eval_worker import _watch_parent
+        threading.Thread(target=_watch_parent,args=(cfg["supervisor_pid"],),daemon=True).start()
     result = {"status": "completed"}
     try:
         suite = json.loads((root / "dev_suite.json").read_text(encoding="utf-8"))
         task = FrozenProblem(suite, spec=get_problem(cfg["problem"]), timeout=cfg["solver_timeout"],
                              deadline=cfg["deadline"], origin="engine",
                              round_context=cfg.get("round_context"),
+                             session=cfg.get("session"),
                              evaluation_log=root / "results/evaluations.jsonl",
                              fail_log=root / "results/eval_failures.jsonl")
         llm = LLMConfig(use_local=True, local_url=cfg["local_url"], timeout=cfg["request_timeout"] + 5)

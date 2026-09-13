@@ -239,6 +239,7 @@ def http_post_with_deadline(
         "body_b64": base64.b64encode(data).decode("ascii"),
         "timeout": float(timeout),
         "max_bytes": int(max_bytes),
+        "parent_pid": os.getpid(),
     }
     package_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()

@@ -74,7 +74,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     config = prepare_output(output, problem_id=args.problem, seed=args.seed, count=args.count, size=args.size)
     spec = get_problem(args.problem)
     suite = json.loads((output / "dev_suite.json").read_text(encoding="utf-8"))
-    budget = RequestBudget(args.max_requests)
+    session = getattr(args, "session", None)
+    if session:
+        from agent_skill_loop.session_ledger import SessionRequestBudget
+        budget = SessionRequestBudget(session["root"], session["task_id"])
+    else:
+        budget = RequestBudget(args.max_requests)
     results = output / "results"
     results.mkdir()
     # ``EoH`` is instantiated directly below (the public ``run`` helper is
@@ -111,7 +116,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     proc = None
     try:
         task = FrozenProblem(suite, spec=spec, timeout=args.solver_timeout, deadline=deadline,
-                             origin="baseline", evaluation_log=results / "evaluations.jsonl")
+                             origin="baseline", evaluation_log=results / "evaluations.jsonl", session=session)
         baseline = task.evaluate_result(spec.baseline_code)
         config["baseline"] = baseline.as_dict()
         summary["baseline"] = baseline.as_dict()
@@ -142,8 +147,12 @@ def cmd_run(args: argparse.Namespace) -> int:
                 bridge = OpenAIPathBridge(_bridge_target(args.endpoint), key, args.model, timeout=args.request_timeout,
                                          budget=budget, request_log=results / "requests.jsonl",
                                          wall_seconds=max(0, deadline - time.monotonic()), problem=args.problem)
+                bridge.eoh_only = bool(session)
+                bridge.thinking = getattr(args, "eoh_thinking", "provider-default")
+                config["thinking"] = bridge.thinking
                 local_url = bridge.start()
                 worker_config = {**config, "deadline": deadline, "local_url": local_url,
+                                  "session": session, "supervisor_pid": os.getpid() if session else None,
                                   "round_context": round_context,
                                   "use_seed": parent is not None, "request_timeout": args.request_timeout,
                                   "max_repairs_per_candidate": args.max_repairs_per_candidate,
@@ -157,6 +166,11 @@ def cmd_run(args: argparse.Namespace) -> int:
                                             start_new_session=os.name != "nt",
                                             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
                     while proc.poll() is None:
+                        if session:
+                            from agent_skill_loop.session_supervisor import stop_requested
+                            if stop_requested(Path(session["root"]), session["task_id"]):
+                                bridge.terminal = True
+                                bridge.last_error = "session_stopped"
                         if time.monotonic() >= deadline or bridge.terminal:
                             reason = bridge.last_error if bridge.terminal else "wall_time_exhausted"
                             bridge.terminal = True
@@ -170,8 +184,8 @@ def cmd_run(args: argparse.Namespace) -> int:
                 if time.monotonic() >= deadline and bridge.last_error is None:
                     bridge.last_error = "wall_time_exhausted"
                 error = bridge.last_error
-                if error in {"request_budget_exhausted", "wall_time_exhausted"}:
-                    summary.update(status="stopped", stop_reason="request_limit" if error == "request_budget_exhausted" else "wall_time_limit")
+                if error in {"request_budget_exhausted", "wall_time_exhausted", "solver_budget_exhausted", "session_stopped"}:
+                    summary.update(status="stopped", stop_reason={"request_budget_exhausted":"request_limit", "wall_time_exhausted":"wall_time_limit", "solver_budget_exhausted":"solver_call_limit", "session_stopped":"user_requested"}[error])
                 elif error:
                     summary.update(status="storage_failed" if error == "evidence_storage_error" else "provider_failed",
                                    stop_reason="provider_error" if error != "evidence_storage_error" else "storage_error",
@@ -185,6 +199,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         summary.update(status="invalid_input" if isinstance(exc, ValueError) else "storage_failed",
                        stop_reason="input_error" if isinstance(exc, ValueError) else "storage_error",
                        error_type=type(exc).__name__, error_detail=str(exc)[:200], loop_completed=False)
+        if session and str(exc) in {"solver_budget_exhausted", "session_stopped"}:
+            summary.update(status="stopped", stop_reason="solver_call_limit" if str(exc)=="solver_budget_exhausted" else "user_requested", loop_completed=True)
     finally:
         if proc is not None and proc.poll() is None:
             kill_process_tree(proc)

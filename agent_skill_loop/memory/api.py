@@ -233,17 +233,24 @@ class MemoryAPI:
             os.close(fd)
             lock.unlink()
 
-    def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = ()) -> dict[str, Any]:
+    def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
         # based_on is a CAS update of the SAME entry; related_refs are provenance
         # for a new or merged full snapshot. Previous versions are never removed.
         with self._writer():
+            if operation_key:
+                for path, existing, version in self._iter():
+                    metadata = path.with_suffix(".json")
+                    if metadata.is_file() and json.loads(metadata.read_text(encoding="utf-8")).get("operation_key") == operation_key:
+                        if existing != entry:
+                            raise ValueError("memory_operation_conflict")
+                        return {"written": True, "reference": f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}", "version": version, "replayed": True}
             for ref in related_refs:
                 self.read_version(ref)
-            result = self._write_locked(entry, based_on=based_on, related_refs=related_refs)
+            result = self._write_locked(entry, based_on=based_on, related_refs=related_refs, operation_key=operation_key)
             result["related_refs"] = list(related_refs)
             return result
 
-    def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = ()) -> dict[str, Any]:
+    def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
         _validate_entry(entry)
         versions = [version for path, existing, version in self._iter()
                     if existing.project == entry.project and existing.type == entry.type and existing.name == entry.name]
@@ -266,7 +273,7 @@ class MemoryAPI:
         path = self.store / entry.project / f"{entry.type}_{entry.name}__v{version:04d}.md"
         if path.exists():
             raise ValueError("memory_version_conflict")
-        _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs),
+        _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs), "operation_key": operation_key,
                      "update_semantics": "full_snapshot", "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest()}))
         _atomic_text(path, _render(entry))
         index_error = None

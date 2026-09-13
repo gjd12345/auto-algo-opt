@@ -146,6 +146,7 @@ def cmd_session_init(args: argparse.Namespace) -> int:
         max_sample_nums=args.max_sample_nums,
         solver_timeout=args.solver_timeout,
         request_timeout=args.request_timeout,
+        eoh_thinking=args.eoh_thinking,
     ))
 
 
@@ -161,6 +162,22 @@ def cmd_session_stop(args: argparse.Namespace) -> int:
         reason=args.reason,
         expected_run_id=args.run_id,
     ))
+
+
+def cmd_session_action(args: argparse.Namespace) -> int:
+    from agent_skill_loop import session_actions
+    values = vars(args).copy()
+    function = getattr(session_actions, values.pop("session_function"))
+    for key in ("command", "session_action", "memory_action", "func"):
+        values.pop(key, None)
+    values["expected_run_id"] = values.pop("run_id", None)
+    try:
+        return _print_session(function(**values))
+    except SessionError:
+        raise
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise SessionError("STORAGE_FAILED" if isinstance(exc, OSError) else "INVALID_ARGUMENT",
+                           str(exc), action=args.session_action) from exc
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -236,6 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
     session_init.add_argument("--operation-id", required=True)
     session_init.add_argument("--problem", default=PROBLEM_CVRP)
     session_init.add_argument("--eoh-model", required=True)
+    session_init.add_argument("--eoh-thinking", choices=["provider-default", "enabled", "disabled"], default="provider-default")
     session_init.add_argument("--eoh-endpoint", default="https://api.deepseek.com/v1/chat/completions")
     session_init.add_argument("--eoh-api-key-env", default="DEEPSEEK_API_KEY")
     session_init.add_argument("--eoh-max-requests", type=int, default=32)
@@ -269,6 +287,40 @@ def build_parser() -> argparse.ArgumentParser:
     session_stop.add_argument("--expected-state-version", type=int, required=True)
     session_stop.add_argument("--reason", default="user_requested")
     session_stop.set_defaults(func=cmd_session_stop)
+
+    for name, function in (("submit-plan", "submit_plan"), ("execute", "execute"), ("collect", "collect"),
+                           ("read-evaluation", "read_evaluation"), ("submit-evaluation", "submit_evaluation"), ("finish-round", "finish_round")):
+        command = session_sub.add_parser(name)
+        command.add_argument("--run", required=True)
+        command.add_argument("--run-id")
+        if name != "read-evaluation":
+            command.add_argument("--operation-id", required=True)
+            command.add_argument("--expected-state-version", type=int, required=True)
+        if name in {"submit-plan", "submit-evaluation"}: command.add_argument("--file", required=True)
+        if name == "finish-round": command.add_argument("--decision", choices=["continue", "complete"], required=True)
+        if name == "read-evaluation":
+            command.add_argument("--round", dest="round_id", type=int)
+            command.add_argument("--candidate")
+            command.add_argument("--include-diff", action="store_true")
+        command.set_defaults(func=cmd_session_action, session_function=function)
+    memory = session_sub.add_parser("memory")
+    memory_sub = memory.add_subparsers(dest="memory_action", required=True)
+    for name in ("search", "read"):
+        command = memory_sub.add_parser(name)
+        command.add_argument("--run", required=True)
+        command.add_argument("--run-id")
+        if name == "search":
+            command.add_argument("--query", default="")
+            command.add_argument("--type", dest="memory_type", choices=["insight", "solution"])
+            command.add_argument("--scene")
+            command.add_argument("--limit", type=int, default=8)
+            command.add_argument("--include-shared", action="store_true")
+            command.add_argument("--cursor")
+        else:
+            command.add_argument("--reference", required=True)
+            command.add_argument("--offset", type=int, default=0)
+            command.add_argument("--limit", type=int, default=4096)
+        command.set_defaults(func=cmd_session_action, session_function="memory_" + name)
     return parser
 
 
