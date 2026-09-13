@@ -14,8 +14,20 @@ py -3.11 -m agent_skill_loop session init `
   --engine-wall-seconds 900 `
   --round-wall-seconds 300 `
   --max-solver-calls 20 `
+  --default-pop-size 4 `
+  --default-n-pop 2 `
+  --default-max-sample-nums 8 `
+  --max-pop-size 8 `
+  --max-n-pop 5 `
+  --max-sample-nums-per-round 16 `
   --memory-store outputs/memory-cvrp
 ```
+
+The six search-policy flags freeze the Session defaults and admissible
+per-round envelope. They do not force every round to use the same values.
+The Agent may leave `search_policy` as `null` or request a partial override in
+the plan; Runtime records the resulting effective policy and passes it to the
+official EoH task.
 
 Then repeat this controlled sequence for each round. The values shown as
 `<...>` must be replaced with the values returned by the immediately
@@ -124,7 +136,8 @@ round 1. Do not invent a filename, round number, or suite hash:
   },
   "memory_basis": [],
   "reference_skill_ref": null,
-  "hypothesis": "A smaller capacity term may avoid over-penalizing useful nearby nodes; this is unproven."
+  "hypothesis": "A smaller capacity term may avoid over-penalizing useful nearby nodes; this is unproven.",
+  "search_policy": {"max_sample_nums": 12}
 }
 ```
 

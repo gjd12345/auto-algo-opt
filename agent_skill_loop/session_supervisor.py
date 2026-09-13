@@ -154,8 +154,17 @@ def execute_task(root, task_id):
         args.eoh_thinking=config["eoh"].get("thinking", "provider-default")
         args.wall_seconds=wall
         args.max_requests=row["eoh_max_requests"] if row["eoh_max_requests"] is not None else sys.maxsize
-        for name in ("pop_size","n_pop","max_sample_nums","solver_timeout","request_timeout","repair_mode"):
-            setattr(args,name,row[name])
+        plan_text=(root/rd["normalized_plan_ref"]).read_text(encoding="utf-8")
+        if db._sha256(plan_text)!=rd["normalized_plan_sha256"]:
+            raise ValueError("plan_identity_mismatch")
+        plan = json.loads(plan_text)
+        policy = db.effective_search_policy(config, plan.get("search_policy"))
+        args.pop_size = policy["pop_size"]
+        args.n_pop = policy["n_pop"]
+        args.max_sample_nums = policy["max_sample_nums"]
+        args.solver_timeout=row["solver_timeout"]
+        args.request_timeout=row["request_timeout"]
+        args.repair_mode=row["repair_mode"]
         args.max_repair_requests_total=row["repair_max_requests"]
         for name in ("seed","count","size"): setattr(args,name,config["suite_generation"][name])
         args.round_context_file=str(root/rd["round_context_ref"])

@@ -1,4 +1,4 @@
-"""Optional local Markdown memory backend for the 3+1 workflow."""
+"""Optional local Markdown memory backend for Algorithm Optimization Sessions."""
 
 from .api import MemoryAPI, MemoryEntry
 

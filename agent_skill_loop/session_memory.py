@@ -6,7 +6,7 @@ from agent_skill_loop import session_runtime as db
 from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
-from agent_skill_loop.contracts_3plus1 import MemoryAction, strict_json_object
+from agent_skill_loop.session_contracts import MemoryAction, strict_json_object
 
 
 def commit_pending(root, operation_id):

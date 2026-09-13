@@ -297,5 +297,4 @@ skill 身份规则沿用阶段 1、2：
 8. 关闭 Memory 后，Plan、Execute、Evaluate 和停止/交付语义仍成立。
 9. localhost fixture 证据通过后，才授权一次真实模型 round；真实 API 失败只能验收失败处理，不能被记录为成功进化。
 
-阶段 1、2 的当前实现和 13 项验收结果见 [stage12_contract.md](stage12_contract.md) 与 [stage12_acceptance_20260911.md](../reports/stage12_acceptance_20260911.md)。
-
+阶段 1、2 的当前实现和 13 项验收结果见 [stage12_acceptance_20260911.md](acceptance/stage12_acceptance_20260911.md)；当时的 `stage12_contract.md` 已被后续 v1.1 [Session protocol](../../docs/protocol.md) 取代。

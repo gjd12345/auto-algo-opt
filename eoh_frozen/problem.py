@@ -18,7 +18,7 @@ from typing import Any
 from eoh import BaseProblem
 
 from agent_skill_loop.contracts import DEFAULT_COUNT, DEFAULT_SEED, DEFAULT_SIZE, DEFAULT_SOLVER_TIMEOUT, DEFAULT_SPLIT, EvaluationResult
-from agent_skill_loop.contracts_3plus1 import MAX_ROUND_CONTEXT_CHARS
+from agent_skill_loop.session_contracts import MAX_ROUND_CONTEXT_CHARS
 from agent_skill_loop.evaluator import SubprocessEvaluator, evaluator_source_hash
 from agent_skill_loop.problems.base import ProblemSpec
 

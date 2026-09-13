@@ -48,3 +48,26 @@ def test_memory_read_uses_stable_entrypoint_scene(tmp_path):
     ))
     result = api.read("cvrp_construct select_next_node", project="cvrp_construct", scene="select_next_node")
     assert result["memories"][0]["reference"].endswith("@v0001")
+
+
+def test_memory_update_and_cross_project_scope_are_versioned(tmp_path):
+    api = MemoryAPI(tmp_path / "memory")
+    base = MemoryEntry(
+        "same", "same problem insight", "insight", "cvrp_construct", "select_next_node",
+        "one\n\n**Why:** first\n\n**How to apply:** use one",
+    )
+    other = MemoryEntry(
+        "other", "other problem insight", "insight", "other_problem", "select_next_node",
+        "other\n\n**Why:** other\n\n**How to apply:** use other",
+    )
+    first = api.write(base)
+    second = api.write(
+        MemoryEntry(**{**base.__dict__, "body": "two\n\n**Why:** second\n\n**How to apply:** use two"}),
+        based_on=first["reference"],
+    )
+    api.write(other)
+    assert first["reference"].endswith("@v0001")
+    assert second["reference"].endswith("@v0002")
+    assert api.read_version(second["reference"])["body"].startswith("two")
+    assert [row["reference"] for row in api.read("insight", project="cvrp_construct", scene="select_next_node")["memories"]] == [second["reference"]]
+    assert not api.read("other", project="cvrp_construct", scene="select_next_node")["memories"]

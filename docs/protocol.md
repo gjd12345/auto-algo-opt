@@ -302,6 +302,35 @@ logs
 candidate evaluator env
 ```
 
+### 6.1 Frozen resource envelope and round search policy
+
+Session Runtime MUST freeze the search-policy defaults and admissible limits,
+but MUST NOT freeze one search configuration for all rounds. The frozen
+configuration contains:
+
+```json
+{
+  "search_policy_defaults": {
+    "pop_size": 4,
+    "n_pop": 2,
+    "max_sample_nums": 8
+  },
+  "search_policy_limits": {
+    "pop_size": [2, 8],
+    "n_pop": [1, 5],
+    "max_sample_nums": [1, 16]
+  }
+}
+```
+
+`Plan.search_policy` is optional. `null` means use the frozen defaults; a
+partial object overrides only the named fields. At `submit-plan`, Runtime MUST
+validate every requested value against the frozen limits and reject an
+out-of-range request with `PLAN_SEARCH_POLICY_OUT_OF_BOUNDS`. The effective
+policy is the only policy passed to EoH and is recorded in the round context
+manifest. Plan cannot change total requests, per-round hard request limits,
+wall-time, solver-call ceilings, evaluator rules, or provider identity.
+
 ---
 
 ## 7. `state`
@@ -422,7 +451,7 @@ v1.1 保持原有有界策略：
 len(memory_basis) <= 2
 ```
 
-该限制 MUST 移入纯 Plan contract，而不是依赖旧 PlanRole。
+该限制 MUST 移入纯 Plan contract，而不是依赖已移除的角色适配器。
 
 ---
 

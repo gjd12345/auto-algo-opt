@@ -13,7 +13,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from agent_skill_loop.client import load_local_env
 from agent_skill_loop.contracts import DEFAULT_SEED, DEFAULT_SIZE, DEFAULT_COUNT, DEFAULT_SPLIT, EOH_COMMIT
-from agent_skill_loop.contracts_3plus1 import MAX_ROUND_CONTEXT_CHARS
+from agent_skill_loop.session_contracts import MAX_ROUND_CONTEXT_CHARS
 from agent_skill_loop.evaluator import evaluator_source_hash, kill_process_tree
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.request_budget import RequestBudget

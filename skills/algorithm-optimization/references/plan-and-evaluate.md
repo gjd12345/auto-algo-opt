@@ -17,13 +17,20 @@ Required fields:
   "feedback_basis": null,
   "memory_basis": [],
   "reference_skill_ref": null,
-  "hypothesis": "The change may reduce avoidable capacity waste; this is unproven."
+  "hypothesis": "The change may reduce avoidable capacity waste; this is unproven.",
+  "search_policy": null
 }
 ```
 
 Allowed operation types are `add`, `remove`, `replace`, and `preserve`. Each operation has only `type`, `target`, and `mechanism` (an optional `mechanism_note` is non-authoritative). Do not include code, objective, validity, budget, provider, evaluator, operator, or stop fields.
 
 For round 2 and later, `feedback_basis` must be copied exactly from the current state's `feedback_ref` contract, including the previous round number, exact evaluation reference, and suite hash. It must point to the immediately previous round. Use `reference_skill_ref` only for the exact incumbent skill reference supplied by the Runtime. A selected Memory reference must be an exact, completely-read reference; submit at most two.
+
+`search_policy` is optional and Runtime-bounded. Use `null` to inherit the
+Session defaults, or provide any subset of `pop_size`, `n_pop`, and
+`max_sample_nums` to request a different round allocation. The Runtime records
+the effective values and rejects a value outside the frozen limits with
+`PLAN_SEARCH_POLICY_OUT_OF_BOUNDS`; this field cannot change hard budgets.
 
 ## `evaluation.json`
 

@@ -35,7 +35,7 @@ Phase 4：Evaluate 使用结构化 observations/evidence_refs、hypotheses/confi
 
 - `test_session_runtime.py`、`test_session_phases.py`：事务故障、并发 CAS、audit pending/replay、配置完整性、Memory 完整读取、pre-effect 重试、STOPPING、live collect 不消耗 operation、Memory 写失败和 solution 门禁。
 - `test_session_integration.py`：localhost HTTP → 独立后台 Supervisor → 官方 EoH，两轮完整主链；第一轮 insight 经第二轮正文读取进入实际 EoH 请求；另外覆盖认证失败、请求超时、请求对账和资产保留。
-- `test_client_deadline.py`、`test_request_budget.py`、`test_3plus1_memory.py`、`test_import_isolation.py`、`test_bounded_repair.py`：受影响既有边界回归。
+- `test_client_deadline.py`、`test_request_budget.py`、`test_memory.py`、`test_import_isolation.py`、`test_bounded_repair.py`：受影响既有边界回归。
 
 最后一个组合测试命令为 32 passed，随后两个纯内核 Memory 失败/门禁用例为 2 passed。未重复跑全仓库测试。Linux 进程生命周期和硬断电恢复未在本机实测；不能把 Windows/localhost 证据写成全平台验收。
 

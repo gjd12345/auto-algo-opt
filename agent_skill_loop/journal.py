@@ -1,4 +1,4 @@
-"""Append-only journals for the legacy workflow and the Session control plane."""
+"""Append-only audit journals for Session execution and evidence."""
 
 from __future__ import annotations
 

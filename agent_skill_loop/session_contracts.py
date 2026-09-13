@@ -1,4 +1,4 @@
-"""Strict contracts for the deterministic 3+1 orchestration layer.
+"""Strict contracts for the Coding Agent Session protocol.
 
 The contracts deliberately contain no code-generation, parent-selection, or
 evaluation authority.  Those responsibilities stay with upstream EoH and the
@@ -8,8 +8,7 @@ deterministic evaluator respectively.
 from __future__ import annotations
 
 import json
-import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 
@@ -18,18 +17,19 @@ MAX_ROUND_CONTEXT_CHARS = 12000
 
 PLAN_KEYS = frozenset({
     "round_id", "direction", "operations", "preserve", "feedback_basis",
-    "memory_basis", "reference_skill_ref", "hypothesis",
+    "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
 })
 PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
 OPERATION_NON_AUTHORITY_METADATA_KEYS = frozenset({"mechanism_note"})
 FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
-EVALUATE_KEYS = frozenset({"plan_alignment", "observations", "causal_claim", "memory_action"})
 MEMORY_ACTION_KEYS = frozenset({
     "kind", "name", "description", "project", "scene", "body", "based_on", "evidence_ref",
 })
 OPERATION_TYPES = frozenset({"add", "remove", "replace", "preserve"})
 MEMORY_ACTION_TYPES = frozenset({"disabled", "none", "insight", "solution"})
+SEARCH_POLICY_KEYS = frozenset({"pop_size", "n_pop", "max_sample_nums"})
+SEARCH_POLICY_MINIMUMS = {"pop_size": 2, "n_pop": 1, "max_sample_nums": 1}
 FORBIDDEN_PLAN_KEYS = frozenset({
     "code", "budget", "model", "operators", "operator", "evaluator",
     "stop", "stop_reason", "objective", "valid", "instance_objectives",
@@ -120,6 +120,7 @@ class PlanDocument:
     memory_basis: tuple[str, ...]
     reference_skill_ref: str | None
     hypothesis: str
+    search_policy: dict[str, int] | None = None
 
     @classmethod
     def from_dict(
@@ -133,6 +134,7 @@ class PlanDocument:
         allowed_targets: set[str] | None = None,
         expected_feedback_round_id: int | None = None,
         available_skill_refs: set[str] | None = None,
+        search_policy_limits: Mapping[str, tuple[int, int]] | None = None,
     ) -> "PlanDocument":
         if not isinstance(raw, Mapping):
             raise ValueError("plan_must_be_object")
@@ -178,6 +180,20 @@ class PlanDocument:
             skill_ref = _text(skill_ref, "reference_skill_ref", max_chars=512)
             if available_skill_refs is not None and skill_ref not in available_skill_refs:
                 raise ValueError("reference_skill_not_found")
+        search = raw.get("search_policy")
+        if search is not None:
+            if not isinstance(search, Mapping):
+                raise ValueError("search_policy_must_be_object")
+            _strict_keys(search, SEARCH_POLICY_KEYS, "search_policy")
+            search = dict(search)
+            for name, value in search.items():
+                value = _integer(value, f"search_policy_{name}")
+                if search_policy_limits is not None:
+                    lower, upper = search_policy_limits[name]
+                    if value < lower or value > upper:
+                        raise ValueError("PLAN_SEARCH_POLICY_OUT_OF_BOUNDS")
+                elif value < SEARCH_POLICY_MINIMUMS[name]:
+                    raise ValueError(f"search_policy_{name}_below_minimum")
         return cls(
             round_id,
             _text(raw.get("direction"), "direction"),
@@ -187,6 +203,7 @@ class PlanDocument:
             memory_basis,
             skill_ref,
             _text(raw.get("hypothesis"), "hypothesis"),
+            search,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -199,6 +216,7 @@ class PlanDocument:
             "memory_basis": list(self.memory_basis),
             "reference_skill_ref": self.reference_skill_ref,
             "hypothesis": self.hypothesis,
+            "search_policy": dict(self.search_policy) if self.search_policy is not None else None,
         }
 
 
@@ -252,91 +270,6 @@ class MemoryAction:
         }.items() if value is not None}
 
 
-@dataclass(frozen=True)
-class EvaluateDocument:
-    plan_alignment: str
-    observations: tuple[str, ...]
-    causal_claim: str
-    memory_action: MemoryAction
-
-    @classmethod
-    def from_dict(cls, raw: Mapping[str, Any], *, memory_enabled: bool) -> "EvaluateDocument":
-        if not isinstance(raw, Mapping):
-            raise ValueError("evaluate_must_be_object")
-        _strict_keys(raw, EVALUATE_KEYS, "evaluate")
-        alignment = _text(raw.get("plan_alignment"), "plan_alignment", max_chars=32)
-        if alignment not in {"aligned", "deviated", "unknown"}:
-            raise ValueError("plan_alignment_not_allowed")
-        observations = raw.get("observations")
-        if not isinstance(observations, list) or len(observations) > 16 or any(not isinstance(x, str) for x in observations):
-            raise ValueError("observations_must_be_string_list")
-        return cls(
-            alignment,
-            tuple(_text(item, "observation", max_chars=1024) for item in observations),
-            _text(raw.get("causal_claim"), "causal_claim", max_chars=512),
-            MemoryAction.from_dict(raw.get("memory_action"), enabled=memory_enabled),
-        )
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "plan_alignment": self.plan_alignment,
-            "observations": list(self.observations),
-            "causal_claim": self.causal_claim,
-            "memory_action": self.memory_action.as_dict(),
-        }
-
-
-ROUND_STATES = frozenset({
-    "created", "planned", "executing", "evaluated", "memory_decided", "round_finished", "stopped", "failed",
-})
-ROUND_TRANSITIONS = {
-    "created": frozenset({"planned", "stopped", "failed"}),
-    "planned": frozenset({"executing", "stopped", "failed"}),
-    "executing": frozenset({"evaluated", "stopped", "failed"}),
-    "evaluated": frozenset({"memory_decided", "round_finished", "stopped", "failed"}),
-    "memory_decided": frozenset({"round_finished", "stopped", "failed"}),
-    "round_finished": frozenset(),
-    "stopped": frozenset(),
-    "failed": frozenset(),
-}
-
-
-@dataclass
-class RoundState:
-    round_id: int
-    problem: str
-    suite_hash: str
-    evaluator_hash: str
-    incumbent_ref: str | None = None
-    previous_round_ref: str | None = None
-    plan_ref: str | None = None
-    memory_refs: tuple[str, ...] = field(default_factory=tuple)
-    remaining_requests: int | None = None
-    deadline: float | None = None
-    status: str = "created"
-    stop_reason: str | None = None
-    feedback_consumed_count: int = 0
-
-    def transition(self, target: str, *, reason: str | None = None) -> None:
-        if target not in ROUND_STATES:
-            raise ValueError("unknown_round_state")
-        if target not in ROUND_TRANSITIONS[self.status]:
-            raise ValueError(f"invalid_round_transition:{self.status}->{target}")
-        self.status = target
-        if reason is not None:
-            self.stop_reason = reason
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "round_id": self.round_id, "problem": self.problem, "suite_hash": self.suite_hash,
-            "evaluator_hash": self.evaluator_hash, "incumbent_ref": self.incumbent_ref,
-            "previous_round_ref": self.previous_round_ref, "plan_ref": self.plan_ref,
-            "memory_refs": list(self.memory_refs), "remaining_requests": self.remaining_requests,
-            "deadline": self.deadline, "status": self.status, "stop_reason": self.stop_reason,
-            "feedback_consumed_count": self.feedback_consumed_count,
-        }
-
-
 def strict_json_object(text: str) -> dict[str, Any]:
     """Parse one JSON object, accepting only a conventional fenced wrapper."""
     candidate = text.strip()
@@ -353,6 +286,7 @@ def compile_round_context(
     plan: PlanDocument,
     *,
     memory_summaries: list[Mapping[str, Any]] | None = None,
+    search_policy: Mapping[str, int] | None = None,
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
 ) -> str:
     """Compile only advisory plan text for the official EoH task prompt."""
@@ -365,6 +299,8 @@ def compile_round_context(
         "preserve": plan.preserve,
         "reference_skill_ref": plan.reference_skill_ref,
         "hypothesis": plan.hypothesis,
+        "search_policy": dict(search_policy if search_policy is not None else plan.search_policy)
+        if (search_policy is not None or plan.search_policy is not None) else None,
         "memory": [
             {key: item[key] for key in ("reference", "description", "age_label", "body", "body_sha256", "version") if key in item}
             for item in unique_memory.values()

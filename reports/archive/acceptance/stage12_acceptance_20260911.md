@@ -87,13 +87,13 @@ Ubuntu/Windows 官方 EoH CI matrix 已配置；本报告不宣称远端 CI 已�
 py -3.11 -m pytest -q -rs --tb=short --junitxml=outputs/stage12_selfcheck_20260911.xml
 ```
 
-结果：154 passed、1 skipped，94.16 秒。[JUnit 记录](../outputs/stage12_selfcheck_20260911.xml)。此前用于定位问题的中间失败不作为最终通过证据。
+结果：154 passed、1 skipped，94.16 秒。[JUnit 记录](../../../outputs/stage12_selfcheck_20260911.xml)。此前用于定位问题的中间失败不作为最终通过证据。
 
-官方链路测试文件：[test_supervised_chain.py](../tests/eoh_frozen/test_supervised_chain.py)。涵盖三个问题、四算子、请求上限、候选中途墙钟、未知请求结果、协议错误、seed-only、无效父本、零墙钟、导出故障。有效代码在新隔离进程重载重评，分数一致。
+官方链路测试文件：[test_supervised_chain.py](../../../tests/eoh_frozen/test_supervised_chain.py)。涵盖三个问题、四算子、请求上限、候选中途墙钟、未知请求结果、协议错误、seed-only、无效父本、零墙钟、导出故障。有效代码在新隔离进程重载重评，分数一致。
 
-另一次可直接检查的离线运行：[summary.json](../outputs/acceptance_stage12_smoke_02/summary.json)：4 次初始化 + 2 次进化，6 个有效候选，7 次 localhost HTTP（含探活）。它是中间版本的链路演示；最终版本以全量 JUnit 与最终真实请求配置记录为准。
+另一次可直接检查的离线运行：[summary.json](../../../outputs/acceptance_stage12_smoke_02/summary.json)：4 次初始化 + 2 次进化，6 个有效候选，7 次 localhost HTTP（含探活）。它是中间版本的链路演示；最终版本以全量 JUnit 与最终真实请求配置记录为准。
 
-安装包验证：正常隔离构建成功，wheel 共 28 项文件，不包含 tests、旧 loop/policy/generator/report 或 legacy 目录。[wheel](../outputs/stage12_wheel/agent_skill_loop-0.1.0-py3-none-any.whl)。本机关闭构建隔离时缺少 bdist_wheel，正常隔离构建补齐构建依赖后成功，未改动全局 Python 环境。
+安装包验证：正常隔离构建成功，wheel 共 28 项文件，不包含 tests、旧 loop/policy/generator/report 或 legacy 目录。[wheel](../../../outputs/stage12_wheel/agent_skill_loop-0.1.0-py3-none-any.whl)。本机关闭构建隔离时缺少 bdist_wheel，正常隔离构建补齐构建依赖后成功，未改动全局 Python 环境。
 
 官方安装核验：14 个 Python 文件全部匹配安装 RECORD，来源 commit 为 472545785c936dcfc863d2bc0d6109cf23c7ce62。
 
@@ -117,7 +117,7 @@ py -3.11 -m agent_skill_loop run --problem cvrp_construct --model deepseek-chat 
 | 保留资产 | baseline，目标值 3.0620577466115493 |
 | 墙钟 | 约 1.141 秒 |
 
-证据：[summary](../outputs/stage12_real_api_20260911_final/summary.json)、[请求账本](../outputs/stage12_real_api_20260911_final/results/requests.jsonl)、[冻结配置](../outputs/stage12_real_api_20260911_final/config_frozen.json)。未在报告、配置或请求日志中写入密钥。
+证据：[summary](../../../outputs/stage12_real_api_20260911_final/summary.json)、[请求账本](../../../outputs/stage12_real_api_20260911_final/results/requests.jsonl)、[冻结配置](../../../outputs/stage12_real_api_20260911_final/config_frozen.json)。未在报告、配置或请求日志中写入密钥。
 
 该运行适配层源码 SHA-256：`3c7a10bffccf2b2ca7cb83aa9e81c90313b6dea5f2514bf4fcbc6a8ed7398601`。
 

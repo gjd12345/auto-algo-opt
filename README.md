@@ -1,7 +1,45 @@
 # auto-algo-opt
-生产搜索使用锁定提交的官方 FeiLiu36/EoH。当前实现与 3+1 修复边界见 [审计验收报告](reports/audit_20260912/acceptance.md)，Session Phase 4.1 和 Phase 5 的验收证据见 [Reliability Closure 报告](reports/session_phase41_acceptance_20260913.md)。
 
-支持 `cvrp_construct`、`tsp_construct`、`tsp_2opt`。官方引擎负责种群、父本选择及 e1/e2/m1/m2；适配层负责隔离评测、预算、进程停止、证据和 skill 发布。
+`auto-algo-opt` 是一个由 Coding Agent 驱动、可恢复、可审计的自动化组合优化启发式进化运行时。Agent 负责认知决策，Session Runtime 负责状态与可信边界，官方 EoH 负责轮内搜索，确定性评测器负责裁决结果。
+
+## v1 版本基线
+
+| 层 | 版本或约束 |
+| --- | --- |
+| Product / package | 1.0.0 |
+| Session Runtime | 1.0.0 |
+| Session protocol / SQLite schema | v1.1 |
+| Algorithm Optimization Skill | v1.1 |
+| Official EoH | pinned commit `472545785c936dcfc863d2bc0d6109cf23c7ce62` |
+| Python | 3.11 |
+
+## 控制权边界
+
+| 组件 | 唯一职责 |
+| --- | --- |
+| Coding Agent | Plan、Evaluate、Memory 决策与停止判断 |
+| Algorithm Optimization Skill | Agent 的操作合同和安全边界 |
+| Session Runtime | SQLite 状态、预算、任务、身份、证据和幂等性 |
+| Official EoH | 种群、父本、算子、生成和有界修复 |
+| Provider | 仅服务 EoH 的模型请求 |
+| Deterministic Evaluator | 候选有效性、目标值和套件证据 |
+| Memory backend | 版本化、可选、仅供参考的本地知识存储 |
+
+运行链如下：
+
+```text
+Coding Agent
+    ↓ Skill contract
+Session Runtime → Task Supervisor → Official EoH → DeepSeek/provider
+    ↑                  ↓                    ↓
+Plan / Evaluate   trusted evidence ← deterministic evaluator
+    ↓
+optional Memory search / read / commit
+```
+
+当前支持的问题：`cvrp_construct`、`tsp_construct`、`tsp_2opt`。
+
+## 快速开始
 
 ```powershell
 py -3.11 -m pip install -e ".[dev,eoh]"
@@ -9,43 +47,59 @@ py -3.11 -m pytest -q
 py -3.11 -m agent_skill_loop smoke --problem cvrp_construct --output outputs/offline_smoke
 ```
 
-smoke 使用 localhost 模型响应，完整执行官方引擎，无外部模型调用。旧 AgentLoop、固定策略和 fixture harness 已从当前测试入口移除，生产中没有旧循环兼容入口。
+`smoke` 使用本地 fixture 响应，但会经过官方 EoH、隔离评测器、证据导出和预算治理，不调用外部模型。
 
-直接运行官方 EoH 的兼容入口（仅用于底层搜索或迁移旧资产；新 3+1 调用应使用下方 Coding Agent Skill）：
+## 使用 Skill 运行一次 Session
+
+先创建没有外部副作用的 Session：
 
 ```powershell
-py -3.11 -m agent_skill_loop run --problem cvrp_construct --eoh-model deepseek-flash --eoh-endpoint https://api.deepseek.com --eoh-api-key-env DEEPSEEK_API_KEY --pop-size 2 --n-pop 1 --max-sample-nums 2 --max-requests 7 --wall-seconds 180 --output outputs/live
+py -3.11 -m agent_skill_loop session init `
+  --output outputs/session-001 `
+  --operation-id init-001 `
+  --problem cvrp_construct `
+  --eoh-model deepseek-flash `
+  --eoh-endpoint https://api.deepseek.com/v1/chat/completions `
+  --eoh-api-key-env DEEPSEEK_API_KEY
 ```
 
-`python -m eoh_frozen run` 与上述 run 共用参数和实现。`max-sample-nums` 仅限制初始化后的进化尝试；冷启动另有 `2 * pop_size` 个初始化尝试。探活、解析/去重重试也消耗真实 HTTP 请求预算，较小预算允许提前停止。
+然后由 Coding Agent 按 Skill 合同循环执行：
+
+1. `session state`，确认身份、预算和当前阶段。
+2. 可选执行 `session memory search/read`，由 Agent 决定是否消费正文。
+3. Agent 生成 Plan，并用 `session submit-plan --file` 提交。
+4. `session execute` 启动一次官方 EoH；用 `session collect` 等待并收集结果。
+5. 用 `session read-evaluation` 读取可信事实，Agent 生成 Evaluate，并用 `session submit-evaluation --file` 提交。
+6. 按合同提交 Memory 决策，完成本轮或继续下一轮。
+
+常用只读/停止操作：
 
 ```powershell
-py -3.11 -m agent_skill_loop prepare --problem tsp_construct --output outputs/prepared
-py -3.11 -m agent_skill_loop evaluate-skill --skill outputs/live/exported_skill --suite outputs/live/dev_suite.json
-```
-
-`--parent-skill PATH` 显式导入父本，当前套件检查通过后经官方 seed 路径使用。历史分数不继承。基线、显式父本、本次生成资产分别记录；`best_generated_path` 仅指向本次已评测的有效生成候选。
-
-旧 `agent_skill_loop workflow` 已弃用：它不会再启动旧的模型驱动 Plan/Evaluate 链，调用只返回 `WORKFLOW_DEPRECATED` 迁移信息。历史研究材料和旧 Workflow 输出保留为追溯证据，不作为当前执行指引。
-
-## Coding Agent Skill / Session
-
-Phase 5 提供可加载的 [`skills/algorithm-optimization`](skills/algorithm-optimization/) Skill。它把 Coding Agent 作为 3+1 外层载体：Agent 负责 Plan、Evaluate、Memory 决策和停止；Session Runtime 负责 SQLite 状态、预算、证据和后台任务；官方 EoH 使用 DeepSeek 完成轮内搜索。入口说明在 [SKILL.md](skills/algorithm-optimization/SKILL.md)，完整协议见 [protocol](docs/protocol.md) 和 [CLI contract](docs/cli-contract.md)。
-
-Session Phase 1–5 已提供由 Coding Agent 提交 Plan/Evaluate 的 SQLite 控制面。操作说明与实测边界见 [Session Phase 4.1 / Phase 5 验收记录](reports/session_phase41_acceptance_20260913.md)：
-
-```powershell
-py -3.11 -m agent_skill_loop session init --output outputs/session-001 --operation-id init-001 --eoh-model deepseek-flash
 py -3.11 -m agent_skill_loop session state --run outputs/session-001
 py -3.11 -m agent_skill_loop session stop --run outputs/session-001 --operation-id stop-001 --expected-state-version 1
 ```
 
-`session init` 只冻结问题、套件、评测器、EoH 和预算身份，不读取 API key、不调用模型或 solver；`state` 是纯读取，`stop` 使用全局 `state_version` 和 `operation_id` 保证幂等。
+`session init` 冻结问题、套件、评测器、EoH 和预算身份；不读取 API key、不调用模型或 solver。每次状态变更都使用 `state_version` 与 `operation_id`，后台任务也必须推进版本。
 
-后续依次使用 `session memory search/read`、`session submit-plan --file`、`session execute`、`session collect`、`session read-evaluation`、`session submit-evaluation --file`、`session finish-round --decision continue|complete`。每次 mutation 使用最近 `state` 返回的版本；后台任务也会推进版本。重复 operation ID 会返回原始 receipt。
+Session 只冻结搜索策略的默认值和边界：Plan 可在每轮通过 `search_policy` 请求 `pop_size`、`n_pop` 或 `max_sample_nums` 的局部调整；Runtime 校验并记录 effective policy，不能突破总请求、墙钟、solver 或评测硬预算。
 
-`execute` 创建后台 Supervisor 后立即返回；`collect` 在任务运行时返回 `collected=false`，终止后核对账本和资产。Plan、Evaluate 和 Memory 判断由当前 Coding Agent 完成，Session 的 provider 请求仅允许 `eoh_probe/eoh_generation/eoh_repair`。
+## 可靠性边界
 
-DeepSeek 可在 init 显式传 `--eoh-thinking disabled`，该参数进入 frozen config 和幂等 hash；默认 `provider-default` 保持 provider 自身行为。遇到长思考输出截断时，应停止旧 session，再创建显式配置的新 session，不能改写已冻结配置。
+- SQLite 是控制状态的唯一来源；外部请求先持久化预留，未知结果不退款、不自动重发。
+- Provider 终止性错误、截止时间、预算耗尽和证据失败都有明确终态；不会伪造评测或模型结果。
+- Runtime 或 Skill identity 不匹配时，只允许读取证据和停止，不能编辑数据库绕过门禁。
+- 模型文本不能决定 objective、valid、预算或 incumbent；这些由 Runtime、EoH 和确定性评测器决定。
+- 导出的 Skill 必须在同一套件上重新评测；无效候选只留在审计证据中，不进入可复用集合。
+- Memory 是横切的可选能力，不是主闭环的一站：Plan 可读，Evaluate/Runtime 可写；默认不把其他问题的记忆混入检索。
 
-Phase 1 旧 `algorithm-optimization-session/v1` 数据库保留为历史记录；其执行参数未完整持久化，当前不猜测缺失值进行升级。请创建新的 `v1.1` Session。已冻结的 Session 若发现 Runtime 或 Skill identity mismatch，只允许查看、读取证据和停止；不要编辑数据库绕过门禁。
+## 文档与证据
+
+- [架构与实现基线](docs/algorithm_optimization_skill_architecture_plan.md)
+- [Session protocol](docs/protocol.md)
+- [CLI contract](docs/cli-contract.md)
+- [SQLite schema](docs/sqlite-schema.md)
+- [Algorithm Optimization Skill](skills/algorithm-optimization/SKILL.md)
+- [v1.0 验收记录](reports/v1.0-acceptance.md)
+- [历史方案与验收归档](reports/archive/README.md)
+
+`docs/3plus1_implementation_plan.md` 仅作为已废止方案的发现标记；历史报告和研究材料不属于运行时依赖，也不自动进入 prompt。

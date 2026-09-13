@@ -2,7 +2,7 @@
 
 **版本：** v1.1
 **日期：** 2026-09-12
-**状态：** 待实施方案
+**状态：** 当前规范与实现基线
 **目标分支：** `agent-skill-loop-0908` 后续重构分支
 
 ---
@@ -1118,4 +1118,3 @@ Skill / Runtime / Algorithm Asset 概念分离
 最终定义：
 
 > **Algorithm Optimization Skill 是一个无自主外层模型调用、可恢复、幂等且可审计的算法优化执行协议。Coding Agent 负责认知与策略决策，Skill Runtime 负责可信状态和执行边界，官方 EoH 负责轮内进化，DeepSeek 负责 EoH 推理，Deterministic Evaluator 负责结果裁决。**
-

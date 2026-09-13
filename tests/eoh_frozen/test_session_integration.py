@@ -15,7 +15,7 @@ def test_detached_session_two_rounds_with_memory_and_exact_ledgers(tmp_path,monk
     root=tmp_path/"run"
     with fixture_provider("cvrp_construct") as (endpoint,prompts):
         db.initialize_session(output=root,operation_id="init",eoh_model="fixture",eoh_endpoint=endpoint,eoh_api_key_env="SESSION_FIXTURE_KEY",
-            pop_size=2,n_pop=1,max_sample_nums=1,eoh_max_requests=20,count=1,size=6,memory_store=str(tmp_path/"memory"))
+            search_policy_defaults={"pop_size":2,"n_pop":1,"max_sample_nums":1},eoh_max_requests=20,count=1,size=6,memory_store=str(tmp_path/"memory"))
         memory_ref=None
         for number in (1,2):
             state=db.read_state(run=root)
@@ -71,7 +71,7 @@ def test_session_terminal_request_is_counted_and_assets_survive(tmp_path,monkeyp
     root=tmp_path/"run"
     with fixture_provider("cvrp_construct",responder=responder) as (endpoint,prompts):
         db.initialize_session(output=root,operation_id="init",eoh_model="fixture",eoh_endpoint=endpoint,eoh_api_key_env="SESSION_FIXTURE_KEY",
-            pop_size=2,n_pop=1,max_sample_nums=1,eoh_max_requests=5,count=1,size=6,request_timeout=.5,round_wall_seconds=5)
+            search_policy_defaults={"pop_size":2,"n_pop":1,"max_sample_nums":1},eoh_max_requests=5,count=1,size=6,request_timeout=.5,round_wall_seconds=5)
         file=tmp_path/"plan.json"
         file.write_text(json.dumps(dict(round_id=1,direction="test",operations=[dict(type="preserve",target="interface",mechanism="preserve")],preserve="interface",hypothesis="unproven",memory_basis=[],feedback_basis=None)))
         planned=actions.submit_plan(run=root,operation_id="plan",expected_state_version=1,file=file)

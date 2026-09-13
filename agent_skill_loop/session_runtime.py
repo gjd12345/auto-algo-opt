@@ -25,17 +25,20 @@ from agent_skill_loop.contracts import (
 from agent_skill_loop.evaluator import evaluator_source_hash
 from agent_skill_loop.journal import digest, verify_audit_journal
 from agent_skill_loop.contracts import AUDIT_JOURNAL_SCHEMA
+from agent_skill_loop.session_contracts import SEARCH_POLICY_MINIMUMS, SEARCH_POLICY_KEYS
 from agent_skill_loop.problems.base import get_problem
 
 
 SCHEMA_VERSION = "algorithm-optimization-session/v1.1"
 CONFIG_SCHEMA = "algorithm-optimization-session-config/v1.1"
-RUNTIME_VERSION = "0.1.0"
+RUNTIME_VERSION = "1.0.0"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
 OPTIMIZATION_SKILL_VERSION = "v1.1"
 MEMORY_POLICY_ID = "markdown-memory"
 MEMORY_POLICY_VERSION = "v1"
 REPAIR_POLICY_VERSION = "bounded_v2"
+SEARCH_POLICY_DEFAULTS = {"pop_size": 4, "n_pop": 2, "max_sample_nums": 8}
+SEARCH_POLICY_LIMITS = {"pop_size": (2, 8), "n_pop": (1, 5), "max_sample_nums": (1, 16)}
 
 RUN_STATES = frozenset({"RUNNING", "STOPPING", "COMPLETED", "STOPPED", "FAILED"})
 ROUND_STATES = frozenset({
@@ -233,7 +236,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             finished_at_utc TEXT,
             config_ref TEXT NOT NULL,
             config_sha256 TEXT NOT NULL,
-            init_operation_id TEXT NOT NULL UNIQUE
+            init_operation_id TEXT NOT NULL UNIQUE,
+            search_policy_defaults_json TEXT,
+            search_policy_limits_json TEXT
         )""",
         """
         CREATE TABLE IF NOT EXISTS rounds (
@@ -413,13 +418,13 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     ]
     for statement in statements[:-1]:
         connection.execute(statement)
-    # A database created by the Phase 1 commit may already exist.  Add the
-    # frozen execution fields without rewriting existing rows.
+    # A database created by an earlier v1.1 commit may already exist. Add new
+    # frozen fields without rewriting existing rows; old sessions remain
+    # readable but cannot silently acquire a new search-policy envelope.
     existing_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(runs)")}
     for name, definition in {
-        "pop_size": "INTEGER",
-        "n_pop": "INTEGER",
-        "max_sample_nums": "INTEGER",
+        "search_policy_defaults_json": "TEXT",
+        "search_policy_limits_json": "TEXT",
         "solver_timeout": "REAL",
         "request_timeout": "REAL",
     }.items():
@@ -512,8 +517,20 @@ def _policy_identity(run: sqlite3.Row) -> dict[str, Any]:
             "engine": "official_eoh",
             "commit": run["eoh_commit"],
             "repair_policy": run["repair_policy_version"] or "off",
+            "search_policy": _run_search_policy(run),
         },
     }
+
+
+def _run_search_policy(run: sqlite3.Row) -> dict[str, Any] | None:
+    if run["search_policy_defaults_json"] is None or run["search_policy_limits_json"] is None:
+        return None
+    try:
+        defaults = json.loads(run["search_policy_defaults_json"])
+        limits = json.loads(run["search_policy_limits_json"])
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return {"defaults": defaults, "limits": limits}
 
 
 def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, Any]:
@@ -643,6 +660,17 @@ def _verify_files(output: Path, run, *, action: str):
             raise ValueError("suite_identity_mismatch")
         if evaluator_source_hash() != run["evaluator_hash"] or _sha256(spec.baseline_code) != run["baseline_code_sha256"]:
             raise ValueError("execution_identity_changed")
+        if not read_only:
+            defaults, limits = _normalize_search_policy_config(
+                action=action,
+                defaults=config.get("eoh", {}).get("search_policy_defaults"),
+                limits=config.get("eoh", {}).get("search_policy_limits"),
+            )
+            if _run_search_policy(run) != {
+                "defaults": defaults,
+                "limits": {key: list(value) for key, value in limits.items()},
+            }:
+                raise ValueError("search_policy_identity_mismatch")
         return config, suite
     except (OSError, ValueError, KeyError, TypeError) as exc:
         raise SessionError("EVIDENCE_INTEGRITY_FAILED", str(exc), action=action) from exc
@@ -668,9 +696,8 @@ def _init_input(
     seed: int,
     size: int,
     count: int,
-    pop_size: int,
-    n_pop: int,
-    max_sample_nums: int | None,
+    search_policy_defaults: Mapping[str, int],
+    search_policy_limits: Mapping[str, tuple[int, int]],
     solver_timeout: float,
     request_timeout: float,
     eoh_thinking: str = "provider-default",
@@ -694,13 +721,83 @@ def _init_input(
         "seed": seed,
         "size": size,
         "count": count,
-        "pop_size": pop_size,
-        "n_pop": n_pop,
-        "max_sample_nums": max_sample_nums,
+        "search_policy_defaults": dict(search_policy_defaults),
+        "search_policy_limits": {key: list(value) for key, value in search_policy_limits.items()},
         "solver_timeout": solver_timeout,
         "request_timeout": request_timeout,
         "eoh_thinking": eoh_thinking,
     }
+
+
+def _normalize_search_policy_config(
+    *,
+    action: str,
+    defaults: Mapping[str, Any] | None,
+    limits: Mapping[str, Any] | None,
+) -> tuple[dict[str, int], dict[str, tuple[int, int]]]:
+    """Validate the frozen search envelope independently of resource budgets."""
+    raw_defaults = dict(SEARCH_POLICY_DEFAULTS if defaults is None else defaults)
+    raw_limits = dict(SEARCH_POLICY_LIMITS if limits is None else limits)
+    if set(raw_defaults) != set(SEARCH_POLICY_KEYS) or set(raw_limits) != set(SEARCH_POLICY_KEYS):
+        raise SessionError("INVALID_ARGUMENT", "search policy must contain pop_size, n_pop and max_sample_nums", action=action)
+    normalized_limits: dict[str, tuple[int, int]] = {}
+    for name in SEARCH_POLICY_KEYS:
+        value = raw_limits[name]
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            raise SessionError("INVALID_ARGUMENT", f"search policy limit for {name} must be [min, max]", action=action)
+        lower, upper = value
+        if any(isinstance(item, bool) or not isinstance(item, int) for item in (lower, upper)):
+            raise SessionError("INVALID_ARGUMENT", f"search policy limit for {name} must be integer-valued", action=action)
+        minimum = SEARCH_POLICY_MINIMUMS[name]
+        if lower < minimum or upper < lower:
+            raise SessionError("INVALID_ARGUMENT", f"search policy limit for {name} is invalid", action=action)
+        normalized_limits[name] = (lower, upper)
+    normalized_defaults: dict[str, int] = {}
+    for name in SEARCH_POLICY_KEYS:
+        value = raw_defaults[name]
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise SessionError("INVALID_ARGUMENT", f"search policy default for {name} must be an integer", action=action)
+        lower, upper = normalized_limits[name]
+        if value < lower or value > upper:
+            raise SessionError("INVALID_ARGUMENT", f"search policy default for {name} is outside its limits", action=action)
+        normalized_defaults[name] = value
+    return normalized_defaults, normalized_limits
+
+
+def search_policy_limits(config: Mapping[str, Any]) -> dict[str, tuple[int, int]]:
+    eoh = config.get("eoh")
+    if not isinstance(eoh, Mapping):
+        raise ValueError("search_policy_config_missing")
+    _defaults, limits = _normalize_search_policy_config(
+        action="search-policy",
+        defaults=eoh.get("search_policy_defaults"),
+        limits=eoh.get("search_policy_limits"),
+    )
+    return limits
+
+
+def effective_search_policy(config: Mapping[str, Any], requested: Mapping[str, Any] | None) -> dict[str, int]:
+    eoh = config.get("eoh")
+    if not isinstance(eoh, Mapping):
+        raise ValueError("search_policy_config_missing")
+    defaults, limits = _normalize_search_policy_config(
+        action="search-policy",
+        defaults=eoh.get("search_policy_defaults"),
+        limits=eoh.get("search_policy_limits"),
+    )
+    if requested is None:
+        return defaults
+    if not isinstance(requested, Mapping) or not set(requested).issubset(SEARCH_POLICY_KEYS):
+        raise ValueError("PLAN_SEARCH_POLICY_OUT_OF_BOUNDS")
+    result = dict(defaults)
+    for name, value in requested.items():
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("PLAN_SEARCH_POLICY_OUT_OF_BOUNDS")
+        lower, upper = limits[name]
+        if value < lower or value > upper:
+            raise ValueError("PLAN_SEARCH_POLICY_OUT_OF_BOUNDS")
+        result[name] = value
+    return result
 
 
 def _validate_init_values(
@@ -717,9 +814,8 @@ def _validate_init_values(
     max_solver_calls: int | None,
     repair_max_requests: int | None,
     solution_threshold: float | None,
-    pop_size: int,
-    n_pop: int,
-    max_sample_nums: int | None,
+    search_policy_defaults: Mapping[str, Any] | None,
+    search_policy_limits: Mapping[str, Any] | None,
     solver_timeout: float,
     request_timeout: float,
 ) -> None:
@@ -736,7 +832,6 @@ def _validate_init_values(
         "eoh_round_max_requests": eoh_round_max_requests,
         "max_solver_calls": max_solver_calls,
         "repair_max_requests": repair_max_requests,
-        "max_sample_nums": max_sample_nums,
     }
     for name, value in integer_values.items():
         if value is not None and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
@@ -756,10 +851,11 @@ def _validate_init_values(
                 valid = False
             if not valid or (name == "solver_timeout" and float(value) <= 1) or (name == "request_timeout" and float(value) <= 0):
                 raise SessionError("INVALID_ARGUMENT", f"{name} is invalid", action=action)
-    if isinstance(pop_size, bool) or not isinstance(pop_size, int) or pop_size < 2:
-        raise SessionError("INVALID_ARGUMENT", "pop_size must be >= 2", action=action)
-    if isinstance(n_pop, bool) or not isinstance(n_pop, int) or n_pop < 0:
-        raise SessionError("INVALID_ARGUMENT", "n_pop must be non-negative", action=action)
+    _normalize_search_policy_config(
+        action=action,
+        defaults=search_policy_defaults,
+        limits=search_policy_limits,
+    )
 
 
 def initialize_session(
@@ -782,9 +878,8 @@ def initialize_session(
     seed: int = DEFAULT_SEED,
     size: int = DEFAULT_SIZE,
     count: int = DEFAULT_COUNT,
-    pop_size: int = 4,
-    n_pop: int = 5,
-    max_sample_nums: int | None = None,
+    search_policy_defaults: Mapping[str, int] | None = None,
+    search_policy_limits: Mapping[str, Any] | None = None,
     solver_timeout: float = DEFAULT_SOLVER_TIMEOUT,
     request_timeout: float = 180.0,
     eoh_thinking: str = "provider-default",
@@ -808,9 +903,8 @@ def initialize_session(
         max_solver_calls=max_solver_calls,
         repair_max_requests=repair_max_requests,
         solution_threshold=solution_threshold,
-        pop_size=pop_size,
-        n_pop=n_pop,
-        max_sample_nums=max_sample_nums,
+        search_policy_defaults=search_policy_defaults,
+        search_policy_limits=search_policy_limits,
         solver_timeout=solver_timeout,
         request_timeout=request_timeout,
     )
@@ -823,6 +917,12 @@ def initialize_session(
         spec.validate_suite(suite)
     except (TypeError, ValueError) as exc:
         raise SessionError("INVALID_ARGUMENT", f"invalid problem suite: {exc}", action=action) from exc
+
+    normalized_search_defaults, normalized_search_limits = _normalize_search_policy_config(
+        action=action,
+        defaults=search_policy_defaults,
+        limits=search_policy_limits,
+    )
 
     input_payload = _init_input(
         eoh_thinking=eoh_thinking,
@@ -844,9 +944,8 @@ def initialize_session(
         seed=seed,
         size=size,
         count=count,
-        pop_size=pop_size,
-        n_pop=n_pop,
-        max_sample_nums=max_sample_nums,
+        search_policy_defaults=normalized_search_defaults,
+        search_policy_limits=normalized_search_limits,
         solver_timeout=solver_timeout,
         request_timeout=request_timeout,
     )
@@ -910,11 +1009,8 @@ def initialize_session(
             "api_key_env": eoh_api_key_env,
             "request_timeout": request_timeout,
             "thinking": eoh_thinking,
-            "search": {
-                "pop_size": pop_size,
-                "n_pop": n_pop,
-                "max_sample_nums": max_sample_nums,
-            },
+            "search_policy_defaults": normalized_search_defaults,
+            "search_policy_limits": {key: list(value) for key, value in normalized_search_limits.items()},
         },
         "evaluator": {"solver_timeout": solver_timeout},
         "repair": {
@@ -962,9 +1058,9 @@ def initialize_session(
                     eoh_round_max_requests, max_solver_calls, repair_max_requests,
                     engine_wall_seconds, round_wall_seconds, solution_threshold,
                     solution_policy_id, created_at_utc, config_ref, config_sha256,
-                    init_operation_id, pop_size, n_pop, max_sample_nums,
+                    init_operation_id, search_policy_defaults_json, search_policy_limits_json,
                     solver_timeout, request_timeout
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id, str(output), "RUNNING", 1, 1,
@@ -978,7 +1074,8 @@ def initialize_session(
                     eoh_max_requests, eoh_round_max_requests, max_solver_calls, repair_max_requests,
                     engine_wall_seconds, round_wall_seconds, solution_threshold, None,
                     created_at, "config_frozen.json", config_sha256, operation_id,
-                    pop_size, n_pop, max_sample_nums, solver_timeout, request_timeout,
+                    _json(normalized_search_defaults), _json({key: list(value) for key, value in normalized_search_limits.items()}),
+                    solver_timeout, request_timeout,
                 ),
             )
             connection.execute(
@@ -1069,6 +1166,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
                 "audit": "pending" if connection.execute("SELECT 1 FROM audit_events WHERE status='pending' LIMIT 1").fetchone() else "ok",
             },
             "policy_identity": _policy_identity(current_run),
+            "search_policy": _run_search_policy(current_run),
             "budgets": _budget_view(connection, current_run),
             "incumbent": {
                 "ref": current_round["incumbent_after_ref"],
@@ -1100,6 +1198,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
         response.update({
             "integrity": result["integrity"],
             "policy_identity": result["policy_identity"],
+            "search_policy": result["search_policy"],
             "budgets": result["budgets"],
             "incumbent": result["incumbent"],
             "feedback_ref": result["feedback_ref"],

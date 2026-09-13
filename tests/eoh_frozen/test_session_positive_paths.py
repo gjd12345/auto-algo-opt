@@ -46,7 +46,7 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
     with fixture_provider("cvrp_construct",responder=responder) as (endpoint,prompts):
         db.initialize_session(output=root,operation_id="init",eoh_model="fixture",eoh_endpoint=endpoint,
             eoh_api_key_env="SESSION_POSITIVE_KEY",eoh_max_requests=16,eoh_round_max_requests=16,
-            pop_size=2,n_pop=1,max_sample_nums=1,seed=20260908,count=3,size=20,round_wall_seconds=60,
+                search_policy_defaults={"pop_size":2,"n_pop":1,"max_sample_nums":1},seed=20260908,count=3,size=20,round_wall_seconds=60,
             repair_mode=repair_mode,repair_max_requests=4 if repair_mode=="bounded" else 0,
             memory_store=str(tmp_path/"memory"),solution_threshold=.01)
         file=tmp_path/"plan.json"

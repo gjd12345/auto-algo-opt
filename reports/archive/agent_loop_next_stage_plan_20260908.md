@@ -1,6 +1,6 @@
 # 历史归档：原 AgentLoop 实施记录（已废止）
 
-当前执行状态以仓库根目录的 [审计验收报告](../audit_20260912/acceptance.md) 为准。下文的实施状态与待办均只属于历史时间点。
+当前执行状态以 [审计验收报告](acceptance/audit_20260912/acceptance.md) 为准。下文的实施状态与待办均只属于历史时间点。
 
 日期：2026-09-08。方案基线：`agent-skill-loop-0908@925db47`。
 
@@ -16,7 +16,7 @@
 
 第二阶段在 M3 验收后开始：复用同一内核，接入 Plan → Execute → Evaluate + 轻量可插拔 Memory。外层确定性 workflow 继续控制预算、状态迁移、接受与停止；Plan 负责有界修改计划，Execute 生成/修改算法，Evaluate 仍由可信程序执行并提供真实结果。不是再建一套并列的循环、评测器或资产系统，也不让模型修改评测标准和预算。
 
-第一阶段只保持必要职责分离，不为了未来 3+1 预建空代理、记忆服务或 RAG。当前已有的 solution/insight 提取材料保留在 `reports/memory_seed_review_20260908/` 待审，不注入 prompt，不自动成为父 skill。
+第一阶段只保持必要职责分离，不为了未来 3+1 预建空代理、记忆服务或 RAG。当前已有的 solution/insight 提取材料保留在 `research/memory_seed_review_20260908/` 待审，不注入 prompt，不自动成为父 skill。
 
 第二阶段再落实记忆存取、消费与回流：solution 使用相对明确自身 baseline 的改善门槛，不要求 SOTA；insight 保存有来源、适用条件和明确修改方向的经验/假设。具体阈值届时配置，历史方案进入当前评测作用域前须重评。RAG 是更晚的可选扩展，不是轻量记忆的前置依赖。
 
@@ -194,7 +194,7 @@ main 与 Refactor0830 是来源快照，不是两个要重新挂载的运行时�
 - 93 个 manifest 不是 93 项可运行能力，不迁成新的配置平台。
 - JSSP/MaxCut 等仅有合同的部分，不按现成 evaluator 计入复用范围。
 
-详细历史索引见 `reports/research_convergence_20260908/03_route_catalog.md`。
+详细历史索引见 `research/research_convergence_20260908/03_route_catalog.md`。
 
 ## 9. 最小验收与预算纪律
 

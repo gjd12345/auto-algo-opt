@@ -75,7 +75,7 @@ CREATE TABLE schema_meta (
 
 ```sql
 INSERT INTO schema_meta(key, value)
-VALUES ('schema_version', 'algorithm-optimization-session/v1');
+VALUES ('schema_version', 'algorithm-optimization-session/v1.1');
 ```
 
 ---
@@ -116,6 +116,10 @@ CREATE TABLE runs (
     eoh_model TEXT NOT NULL,
     eoh_endpoint TEXT NOT NULL,
     eoh_api_key_env TEXT NOT NULL,
+
+    -- Frozen envelope; the effective per-round values live in each plan/context.
+    search_policy_defaults_json TEXT,
+    search_policy_limits_json TEXT,
 
     repair_mode TEXT NOT NULL CHECK (repair_mode IN ('off','bounded')),
     repair_policy_version TEXT,

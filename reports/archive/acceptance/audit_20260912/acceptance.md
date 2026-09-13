@@ -27,13 +27,13 @@
 - Python 3.11：新包及修改模块可 import；未升级 Python/CI。
 - 官方安装校验：固定 commit `472545785c936dcfc863d2bc0d6109cf23c7ce62`，14 个 Python 文件校验通过；未修改 site-packages。
 - 全量内核及官方接线回归首遍：183 passed、1 skipped、2 failed（170.87 秒）。两项失败同源于 Evaluate 预留为 0 时提前拦截请求，导致拒绝数与停止原因错误；随后已修复。
-- 修复后受影响边界重跑：**32 passed（49.80 秒）**，覆盖上述两项失败、请求账本、截止/认证、solution、Memory、修复 off/bounded、两轮真实官方子进程联调。见 [定向 JUnit](../../outputs/audit_20260912_closure.xml)。
-- 最后上下文转义及相关合同检查：**12 passed（0.87 秒）**。见 [末轮 JUnit](../../outputs/audit_20260912_context_final.xml)。上述两批有重叠，不相加成“44 项独立测试”。最后未重复整套全量回归。
+- 修复后受影响边界重跑：**32 passed（49.80 秒）**，覆盖上述两项失败、请求账本、截止/认证、solution、Memory、修复 off/bounded、两轮真实官方子进程联调。见 [定向 JUnit](../../../../outputs/audit_20260912_closure.xml)。
+- 最后上下文转义及相关合同检查：**12 passed（0.87 秒）**。见 [末轮 JUnit](../../../../outputs/audit_20260912_context_final.xml)。上述两批有重叠，不相加成“44 项独立测试”。最后未重复整套全量回归。
 - 当前适配层 source hash：`cee79e0b10862913914dbd36b664ef60c39de02a99f1e97c9be590a5888b1ac9`。源文件若继续改动应重新计算；不把这个 hash 当成 Git commit。
 - 本次 repository hygiene 后分层回归：无 EoH 的 kernel **104 passed、1 skipped**；安装固定 EoH 的适配测试 **35 passed**。kernel 不再导入旧 fixture 或启动官方引擎；依赖 EoH 的审计/边界测试集中在 `tests/eoh_frozen`。
 - 清理范围：移除未使用的 `RoleClient`、`Transport` 协议、`FrozenCVRPConstruct` 兼容别名、旧 smoke 配置、重复审计包装脚本，以及旧 `AgentLoop`/固定策略 fixture 测试调用方。问题合同、隔离评测、请求网关、资产、Memory、3+1 和官方 EoH 适配测试仍保留。
 
-本地销项检查由 pytest 直接执行，不再维护重复的包装脚本；不会调用外部付费 API。核心纯合同回归见 [test_audit_20260912_closure.py](../../tests/kernel/test_audit_20260912_closure.py)，依赖固定 EoH 的检查见 [test_audit_engine.py](../../tests/eoh_frozen/test_audit_engine.py)。
+本地销项检查由 pytest 直接执行，不再维护重复的包装脚本；不会调用外部付费 API。核心纯合同回归已迁移到当前 Session/Memory 测试；依赖固定 EoH 的检查见 [test_audit_engine.py](../../../../tests/eoh_frozen/test_audit_engine.py)。
 
 ### 保留的边界与运维注意
 
@@ -62,7 +62,7 @@ py -3.11 -m pytest tests/kernel tests/eoh_frozen -q --junitxml=outputs/audit_202
 py -3.11 -m pytest tests/kernel/test_audit_20260912_closure.py tests/eoh_frozen/test_audit_engine.py -q --tb=short
 ```
 
-[最终 JUnit](../../outputs/audit_20260912_final.xml)。纯合同和 EoH 适配器分开执行，避免 kernel job 因缺少可选 EoH 依赖而丢掉纯合同覆盖。
+[最终 JUnit](../../../../outputs/audit_20260912_final.xml)。纯合同和 EoH 适配器分开执行，避免 kernel job 因缺少可选 EoH 依赖而丢掉纯合同覆盖。
 
 ## 2. 已落实的部分
 
@@ -83,14 +83,14 @@ py -3.11 -m pytest tests/kernel/test_audit_20260912_closure.py tests/eoh_frozen/
 
 | 编号 | 级别 | 发现、证据与影响 | 建议验收条件 |
 |---|---|---|---|
-| A01 | P1 | [repair.py](../../eoh_frozen/repair.py) 的修复有效判断默认 `valid=True`。探针令重评返回分数、诊断记录缺失，仍输出 `succeeded` 且 evaluation=null。正常运行不一定发生，但异常分支是 fail-open。 | 必须存在与本次候选、revision、代码 hash、evaluation ID 对应的可信有效记录；缺证据不得成功或参与选择。 |
-| A02 | P1 | [export.py](../../eoh_frozen/export.py) 遇缺失终态修复事件即抛 `repair_identity_missing`。探针中一个异常修复条目阻断 baseline 引用发布。并非已有文件被删除，而是整体导出被中断。 | 隔离不完整条目并记录错误；其他可信候选、baseline 和 incumbent 仍可导出。覆盖请求/重评/事件落盘之间取消。 |
-| A03 | P1 | [workflow.py](../../agent_skill_loop/workflow.py) 调用 `_write_memory_action(..., execute_summary)`，资格检查却需要 enriched facts 中的 evaluations。相同 fixture 使用完整 facts 为真、实际 summary 形状为假。真实主链路中的 solution 发布被错误拒绝。 | 从 workflow 入口测试达到门槛的 solution 可发布；不合格、不匹配、无门槛仍拒绝。不能只单测资格函数。 |
-| A04 | P1 | [roles/plan.py](../../agent_skill_loop/roles/plan.py) 为 fixture 保留的提前返回路径也在生产生效。选择阶段直接返回 Plan 时，允许引用未读正文的记忆。探针读取次数为 0，引用仍被接受。后续 workflow 读取正文不等于 Plan 已消费。 | 移除生产旁路；最终 Plan 只能引用本会话真实读取的版本，并保存正文/注入内容 hash。 |
-| A05 | P1 | [memory/api.py](../../agent_skill_loop/memory/api.py) `read_version` 计算切片却返回原正文；max_chars=1 实际返回 57 字符，truncated=true。`read_index` 也带正文。 | 真正限制返回长度；索引不含正文；截断不静默丢失适用边界，分页/截断必须可见。 |
-| A06 | P1 | [llm_bridge.py](../../eoh_frozen/llm_bridge.py) 记录 finish_reason，但仍可将 `finish_reason=length` 的 reasoning_content 回退为生成文本。探针证实被转发。记录元数据不等于执行完整输出策略。 | 明确截断/空 content 的处理策略；不得把未完成的 reasoning 当作合格代码输出。任何重试计入预算。 |
-| A07 | P1 | [repair.py](../../eoh_frozen/repair.py) 错误类别允许范围较宽；forbidden_rebinding、forbidden_attribute/read_text、未知 candidate_exception 均可触发修复。短黑名单不能表达封闭可修复子类。 | 固定错误分类合同，安全禁止项/未知错误默认不修复；只放行明确可修复子类。现有隔离评测仍会检查代码，本项不意味着权限绕过。 |
-| A08 | P1 | [problem.py](../../eoh_frozen/problem.py) 诊断按代码 hash 查询最近记录；候选 ID 在原始评测后分配。导出还存在较宽的修复事件回退匹配。静态审查：重复代码/中断时，身份不如逐次 evaluation ID 严格。 | 生成前分配 candidate ID；每个 revision 对应独立评测 ID；禁止只凭相同代码寻找当前评测证据。 |
+| A01 | P1 | 历史 `eoh_frozen/repair.py` 的修复有效判断默认 `valid=True`。探针令重评返回分数、诊断记录缺失，仍输出 `succeeded` 且 evaluation=null。正常运行不一定发生，但异常分支是 fail-open。 | 必须存在与本次候选、revision、代码 hash、evaluation ID 对应的可信有效记录；缺证据不得成功或参与选择。 |
+| A02 | P1 | 历史 `eoh_frozen/export.py` 遇缺失终态修复事件即抛 `repair_identity_missing`。探针中一个异常修复条目阻断 baseline 引用发布。并非已有文件被删除，而是整体导出被中断。 | 隔离不完整条目并记录错误；其他可信候选、baseline 和 incumbent 仍可导出。覆盖请求/重评/事件落盘之间取消。 |
+| A03 | P1 | 历史 `agent_skill_loop/workflow.py` 调用 `_write_memory_action(..., execute_summary)`，资格检查却需要 enriched facts 中的 evaluations。相同 fixture 使用完整 facts 为真、实际 summary 形状为假。真实主链路中的 solution 发布被错误拒绝。 | 从当前 Session 的受控提交路径验证达到门槛的 solution 可发布；不合格、不匹配、无门槛仍拒绝。不能只单测资格函数。 |
+| A04 | P1 | 历史 `agent_skill_loop/roles/plan.py` 为 fixture 保留的提前返回路径也在生产生效。选择阶段直接返回 Plan 时，允许引用未读正文的记忆。探针读取次数为 0，引用仍被接受。后续 workflow 读取正文不等于 Plan 已消费。 | 移除生产旁路；最终 Plan 只能引用本会话真实读取的版本，并保存正文/注入内容 hash。 |
+| A05 | P1 | 历史 `agent_skill_loop/memory/api.py` 的 `read_version` 计算切片却返回原正文；max_chars=1 实际返回 57 字符，truncated=true。`read_index` 也带正文。 | 真正限制返回长度；索引不含正文；截断不静默丢失适用边界，分页/截断必须可见。 |
+| A06 | P1 | 历史 `eoh_frozen/llm_bridge.py` 记录 finish_reason，但仍可将 `finish_reason=length` 的 reasoning_content 回退为生成文本。探针证实被转发。记录元数据不等于执行完整输出策略。 | 明确截断/空 content 的处理策略；不得把未完成的 reasoning 当作合格代码输出。任何重试计入预算。 |
+| A07 | P1 | 历史 `eoh_frozen/repair.py` 错误类别允许范围较宽；forbidden_rebinding、forbidden_attribute/read_text、未知 candidate_exception 均可触发修复。短黑名单不能表达封闭可修复子类。 | 固定错误分类合同，安全禁止项/未知错误默认不修复；只放行明确可修复子类。现有隔离评测仍会检查代码，本项不意味着权限绕过。 |
+| A08 | P1 | 历史 `eoh_frozen/problem.py` 诊断按代码 hash 查询最近记录；候选 ID 在原始评测后分配。导出还存在较宽的修复事件回退匹配。静态审查：重复代码/中断时，身份不如逐次 evaluation ID 严格。 | 生成前分配 candidate ID；每个 revision 对应独立评测 ID；禁止只凭相同代码寻找当前评测证据。 |
 | A09 | P2 | workflow 使用根预算，EoH CLI 另建子预算后由根 `consume_external` 事后对账，并非所有实际 HTTP 统一预留/编号。串行剩余额度约束有效，但不能宣称统一请求网关合同完成。 | 实现受控请求入口，或明确批准分层额度租约合同；保留 child/global ID 映射、失败状态和中断请求记录。 |
 | A10 | P2 | solution 门槛仍有默认 0.05，零/负 baseline 采用适配器自定规则；不等于“未配置不发布，特殊指标由问题合同定义”。 | 冻结比较对象/方向/门槛/身份；无显式资格配置只允许 skill/insight。 |
 | A11 | P2 | Evaluate 的可信 facts 未完整带入候选修复 revision、原始 hash、修复引用和代码差异。代码有身份，但 Evaluate 未必获得判断偏离原因的材料。 | 传入有界差异及完整证据引用；不足时 alignment=unknown，不推断独立因果贡献。 |

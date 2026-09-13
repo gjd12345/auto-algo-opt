@@ -5,23 +5,6 @@ import json
 from agent_skill_loop.problems.cvrp import BASELINE_CODE, build_suite as cvrp_build_suite
 from agent_skill_loop.problems.tsp_2opt import build_suite as tsp2_build_suite
 from agent_skill_loop.skill_store import make_skill, save_skill
-from agent_skill_loop.workflow import WorkflowRunner
-
-
-def test_workflow_binds_registered_problem_and_suite_identity(tmp_path):
-    runner = WorkflowRunner(
-        tmp_path / "workflow",
-        problem="tsp_2opt",
-        model="fixture",
-        max_rounds=1,
-        max_requests=0,
-        plan_request=lambda **_kwargs: "{}",
-    )
-    assert runner.spec.problem_id == "tsp_2opt"
-    assert runner.suite["problem"] == runner.spec.problem_id
-    assert runner.suite["content_hash"] == runner.spec.suite_hash(
-        runner.suite["problem"], "dev_train", runner.suite["instances"]
-    )
 
 
 def _write_skill(tmp_path, *, problem: str, entrypoint: str, code: str) -> "object":

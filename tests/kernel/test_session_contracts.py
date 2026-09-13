@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from agent_skill_loop.contracts_3plus1 import (
-    EvaluateDocument,
+from agent_skill_loop.session_contracts import (
     PlanDocument,
     compile_round_context,
 )
@@ -56,19 +55,6 @@ def test_plan_ignores_known_operation_metadata_without_expanding_authority():
     payload["operations"][0]["budget"] = 1
     with pytest.raises(ValueError, match="unknown_fields"):
         PlanDocument.from_dict(payload, expected_round_id=1, suite_hash="suite-1")
-
-
-def test_evaluate_memory_contract_obeys_enabled_flag():
-    raw = {
-        "plan_alignment": "aligned",
-        "observations": ["候选在实例 0 改善"],
-        "causal_claim": "unproven",
-        "memory_action": {"kind": "disabled"},
-    }
-    assert EvaluateDocument.from_dict(raw, memory_enabled=False).memory_action.kind == "disabled"
-    raw["memory_action"] = {"kind": "none"}
-    with pytest.raises(ValueError, match="requires_enabled"):
-        EvaluateDocument.from_dict(raw, memory_enabled=False)
 
 
 def test_plan_context_is_bounded():

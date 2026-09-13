@@ -12,11 +12,12 @@ def init(root, **kw):
     return db.initialize_session(output=root,operation_id="init",eoh_model="fixture",size=6,count=1,**kw)
 
 
-def plan(root, memory_refs=()):
+def plan(root, memory_refs=(), search_policy=None):
     state=db.read_state(run=root)
     return dict(round_id=state["round_id"],direction="test ranking",operations=[dict(type="replace",target="ranking",mechanism="distance")],
                 preserve="interface",hypothesis="unproven",memory_basis=list(memory_refs),reference_skill_ref=None,
-                feedback_basis=dict(round_id=state["round_id"]-1,evaluation_ref=state["feedback_ref"],suite_hash=json.loads((root/"dev_suite.json").read_text())["content_hash"]) if state["feedback_ref"] else None)
+                feedback_basis=dict(round_id=state["round_id"]-1,evaluation_ref=state["feedback_ref"],suite_hash=json.loads((root/"dev_suite.json").read_text())["content_hash"]) if state["feedback_ref"] else None,
+                search_policy=search_policy)
 
 
 def test_atomic_init_and_concurrent_stop(tmp_path,monkeypatch):
@@ -77,12 +78,39 @@ def test_audit_flush_failure_replays_without_losing_mutation(tmp_path,monkeypatc
 
 def test_config_freeze_detects_corruption(tmp_path):
     root=tmp_path/"run"
-    init(root,pop_size=8,n_pop=3,request_timeout=75)
+    init(root,search_policy_defaults={"pop_size":8,"n_pop":3,"max_sample_nums":8},request_timeout=75)
     config=json.loads((root/"config_frozen.json").read_text())
-    assert config["eoh"]["search"]["pop_size"]==8
+    assert config["eoh"]["search_policy_defaults"]["pop_size"]==8
+    assert config["eoh"]["search_policy_limits"]["pop_size"]==[2,8]
     assert config["eoh"]["request_timeout"]==75
     (root/"config_frozen.json").write_text("{}")
     with pytest.raises(db.SessionError,match="config_hash_mismatch"): db.read_state(run=root)
+
+
+def test_plan_search_policy_is_runtime_bounded_and_defaults_are_effective(tmp_path):
+    root=tmp_path/"run"
+    init(root)
+    selected=plan(root, search_policy={"pop_size":6,"n_pop":3,"max_sample_nums":12})
+    file=tmp_path/"selected.json"
+    file.write_text(json.dumps(selected))
+    result=actions.submit_plan(run=root,operation_id="plan-selected",expected_state_version=1,file=file)
+    assert result["result"]["search_policy"]=={"pop_size":6,"n_pop":3,"max_sample_nums":12}
+    manifest=json.loads((root/"rounds/round_0001/context_manifest.json").read_text())
+    assert manifest["search_policy_effective"]=={"pop_size":6,"n_pop":3,"max_sample_nums":12}
+
+    bounded=tmp_path/"bounded"
+    init(bounded)
+    invalid=plan(bounded, search_policy={"pop_size":9})
+    invalid_file=tmp_path/"invalid.json"
+    invalid_file.write_text(json.dumps(invalid))
+    with pytest.raises(db.SessionError,match="PLAN_SEARCH_POLICY_OUT_OF_BOUNDS"):
+        actions.submit_plan(run=bounded,operation_id="plan-invalid",expected_state_version=1,file=invalid_file)
+
+    too_small=plan(bounded, search_policy={"pop_size":1})
+    too_small_file=tmp_path/"too-small.json"
+    too_small_file.write_text(json.dumps(too_small))
+    with pytest.raises(db.SessionError,match="PLAN_SEARCH_POLICY_OUT_OF_BOUNDS"):
+        actions.submit_plan(run=bounded,operation_id="plan-too-small",expected_state_version=1,file=too_small_file)
 
 
 def test_state_is_one_snapshot_during_background_transition(tmp_path, monkeypatch):

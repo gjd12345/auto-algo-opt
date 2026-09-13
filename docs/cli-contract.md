@@ -155,9 +155,12 @@ python -m agent_skill_loop session init \
 --seed
 --size
 --count
---pop-size
---n-pop
---max-sample-nums
+--default-pop-size
+--default-n-pop
+--default-max-sample-nums
+--max-pop-size
+--max-n-pop
+--max-sample-nums-per-round
 --solver-timeout
 --request-timeout
 --eoh-thinking provider-default|enabled|disabled
@@ -166,6 +169,8 @@ python -m agent_skill_loop session init \
 `--eoh-thinking` 默认 `provider-default`；显式值写入 `config_frozen.json` 的 `eoh.thinking` 并进入 init 输入 hash。仅 EoH 的 provider 请求使用此配置，Plan/Evaluate 仍由 Coding Agent 提交。
 
 `init` 不读取 API key value；只冻结 env var name。
+
+搜索策略的三个 `default` 参数写入冻结配置的 `eoh.search_policy_defaults`；三个 `max` 参数与固定下界 `[2,1,1]` 共同写入 `eoh.search_policy_limits`。它们是每轮 Plan 的资源边界，不是整个 Session 的固定算子参数。
 
 成功状态：
 

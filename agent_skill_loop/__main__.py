@@ -98,7 +98,7 @@ def cmd_import_skill(args: argparse.Namespace) -> int:
 def cmd_workflow(args: argparse.Namespace) -> int:
     # Keep the parser for one transition release so old invocations fail with
     # an actionable, machine-readable response.  In particular, do not load
-    # the environment or instantiate the legacy model-driven WorkflowRunner.
+    # the environment or instantiate the removed legacy outer workflow.
     print(json.dumps({
         "ok": False,
         "error": {
@@ -134,9 +134,16 @@ def cmd_session_init(args: argparse.Namespace) -> int:
         seed=args.seed,
         size=args.size,
         count=args.count,
-        pop_size=args.pop_size,
-        n_pop=args.n_pop,
-        max_sample_nums=args.max_sample_nums,
+        search_policy_defaults={
+            "pop_size": args.default_pop_size,
+            "n_pop": args.default_n_pop,
+            "max_sample_nums": args.default_max_sample_nums,
+        },
+        search_policy_limits={
+            "pop_size": [2, args.max_pop_size],
+            "n_pop": [1, args.max_n_pop],
+            "max_sample_nums": [1, args.max_sample_nums_per_round],
+        },
         solver_timeout=args.solver_timeout,
         request_timeout=args.request_timeout,
         eoh_thinking=args.eoh_thinking,
@@ -214,7 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
     imp.set_defaults(func=cmd_import_skill)
 
-    workflow = sub.add_parser("workflow", help="Run bounded Plan → official EoH → Evaluate rounds")
+    workflow = sub.add_parser("workflow", help="Deprecated legacy workflow command (use session + Skill)")
     workflow.add_argument("--problem", default=PROBLEM_CVRP)
     workflow.add_argument("--model", default="deepseek-flash")
     workflow.add_argument("--output", required=True)
@@ -261,9 +268,12 @@ def build_parser() -> argparse.ArgumentParser:
     session_init.add_argument("--seed", type=int, default=DEFAULT_SEED)
     session_init.add_argument("--size", type=int, default=DEFAULT_SIZE)
     session_init.add_argument("--count", type=int, default=DEFAULT_COUNT)
-    session_init.add_argument("--pop-size", type=int, default=4)
-    session_init.add_argument("--n-pop", type=int, default=5)
-    session_init.add_argument("--max-sample-nums", type=int, default=None)
+    session_init.add_argument("--default-pop-size", type=int, default=4)
+    session_init.add_argument("--default-n-pop", type=int, default=2)
+    session_init.add_argument("--default-max-sample-nums", type=int, default=8)
+    session_init.add_argument("--max-pop-size", type=int, default=8)
+    session_init.add_argument("--max-n-pop", type=int, default=5)
+    session_init.add_argument("--max-sample-nums-per-round", type=int, default=16)
     session_init.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
     session_init.add_argument("--request-timeout", type=float, default=180.0)
     session_init.set_defaults(func=cmd_session_init)

@@ -20,7 +20,7 @@ insight 不需要先证明性能改善，但必须有具体修改方向，正文
 
 历史侧：读取 main 的 605 条 run 索引和对应 605 条精英代码记录，核对计数、中位数、>5% 数量及代码身份；细读三问题最优代码、BP 解释/重放材料；补读 Refactor0830 的 Q3、组件实验、跨问题迁移和 RQ1b 续跑结论。
 
-文献侧：首轮有界检索，覆盖 8 项直接相关工作；ReEvo、HiFo-Prompt、RefineEvo 重点读取方法相关内容，其余用于架构/摘要级定位。不是“所有相关文献已读完”，也没有复现论文实验。此前更广的路线盘点见 `reports/research_convergence_20260908/01_retrieval_report.md` 和 `03_route_catalog.md`；本报告聚焦记忆，不重新开启旧研究路线。
+文献侧：首轮有界检索，覆盖 8 项直接相关工作；ReEvo、HiFo-Prompt、RefineEvo 重点读取方法相关内容，其余用于架构/摘要级定位。不是“所有相关文献已读完”，也没有复现论文实验。此前更广的路线盘点见 `../research_convergence_20260908/01_retrieval_report.md` 和 `../research_convergence_20260908/03_route_catalog.md`；本报告聚焦记忆，不重新开启旧研究路线。
 
 冻结来源：
 

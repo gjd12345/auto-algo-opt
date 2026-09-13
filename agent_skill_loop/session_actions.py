@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from agent_skill_loop import session_runtime as db
-from agent_skill_loop.contracts_3plus1 import PlanDocument, MemoryAction, compile_round_context, strict_json_object
+from agent_skill_loop.session_contracts import PlanDocument, MemoryAction, compile_round_context, strict_json_object
 from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
@@ -154,6 +154,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
     action = "submit-plan"
     text = Path(file).read_text(encoding="utf-8")
     with opened(run, action, expected_run_id) as (root, con):
+        config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
         with db._transaction(con):
             row, rd, ih, result = begin(con, action, operation_id, expected_state_version, {"document_sha256": db._sha256(text)})
             if result is None:
@@ -165,7 +166,8 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     plan = PlanDocument.from_dict(strict_json_object(text), expected_round_id=rd["round_id"], suite_hash=row["suite_hash"],
                         available_feedback_refs={rd["feedback_ref"]} if rd["feedback_ref"] else set(),
                         expected_feedback_round_id=rd["previous_round_id"], available_memory_refs=set(reads),
-                        available_skill_refs={rd["incumbent_before_ref"]} if rd["incumbent_before_ref"] else set())
+                        available_skill_refs={rd["incumbent_before_ref"]} if rd["incumbent_before_ref"] else set(),
+                        search_policy_limits=db.search_policy_limits(config))
                 except ValueError as exc:
                     code = str(exc).split(":")[0].upper()
                     if code == "MEMORY_REFERENCE_NOT_FOUND": code = "MEMORY_REFERENCE_NOT_COMPLETELY_READ"
@@ -180,18 +182,21 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?", (row["run_id"], rd["previous_round_id"])).fetchone()
                     if db._sha256(local(root, rd["feedback_ref"]).read_bytes()) != previous["evaluation_facts_sha256"]:
                         fail("EVALUATION_IDENTITY_MISMATCH", action)
-                context = compile_round_context(plan, memory_summaries=bodies)
+                effective_policy = db.effective_search_policy(config, plan.search_policy)
+                context = compile_round_context(plan, memory_summaries=bodies, search_policy=effective_policy)
                 payload = json.loads(context.split("\n", 1)[1])
                 manifest = {"plan_sha256": db._sha256(db._json(plan.as_dict())+"\n"), "context_sha256": db._sha256(context),
                             "adopted_refs": list(plan.memory_basis), "injected": [{"reference": x["reference"], "body_sha256": x["body_sha256"], "injected_sha256": db._sha256(x["body"])} for x in payload["memory"]],
-                            "omitted_refs": payload.get("omitted_memory_refs", []), "advisory_truncated": payload.get("advisory_truncated", False), "advisory_omitted": payload.get("advisory_omitted", False)}
+                            "omitted_refs": payload.get("omitted_memory_refs", []), "advisory_truncated": payload.get("advisory_truncated", False), "advisory_omitted": payload.get("advisory_omitted", False),
+                            "search_policy_requested": plan.search_policy, "search_policy_effective": effective_policy}
                 raw_hash = save(root, f"{prefix}/plan.submitted.json", text)
                 ph = save(root, f"{prefix}/plan.json", plan.as_dict())
                 ch = save(root, f"{prefix}/round_context.txt", context)
                 save(root, f"{prefix}/context_manifest.json", manifest)
                 con.execute("UPDATE rounds SET state='READY_TO_EXECUTE',submitted_plan_ref=?,submitted_plan_sha256=?,normalized_plan_ref=?,normalized_plan_sha256=?,round_context_ref=?,round_context_sha256=?,context_manifest_ref=? WHERE run_id=? AND round_id=?",
                     (f"{prefix}/plan.submitted.json", raw_hash, f"{prefix}/plan.json", ph, f"{prefix}/round_context.txt", ch, f"{prefix}/context_manifest.json", row["run_id"], rd["round_id"]))
-                result = receipt(con, row, rd, action, operation_id, ih, {"plan_ref": f"{prefix}/plan.json", "context_manifest": manifest})
+                result = receipt(con, row, rd, action, operation_id, ih, {"plan_ref": f"{prefix}/plan.json", "context_manifest": manifest,
+                                                                         "search_policy": effective_policy})
         db.flush_audit(root)
         return result
 
