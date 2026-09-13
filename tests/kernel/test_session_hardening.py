@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sqlite3
 import sys
 import time
 
@@ -85,6 +86,31 @@ def test_runtime_mismatch_allows_state_stop_but_denies_mutations(tmp_path,monkey
         with pytest.raises(db.SessionError) as failure:
             action(run=root,operation_id="test",expected_state_version=1,**extra)
         assert failure.value.code=="RUNTIME_IDENTITY_MISMATCH"
+    assert db.stop_session(run=root,operation_id="stop",expected_state_version=1)["run_state"]=="STOPPED"
+
+
+def test_pre_search_policy_v11_session_is_readable_but_immutable(tmp_path):
+    root=tmp_path/"legacy-run"
+    db.initialize_session(output=root,operation_id="init",eoh_model="fixture",size=6,count=1)
+    config=json.loads((root/"config_frozen.json").read_text())
+    config["eoh"].pop("search_policy_defaults",None)
+    config["eoh"].pop("search_policy_limits",None)
+    config_text=json.dumps(config,ensure_ascii=False,indent=2)+"\n"
+    (root/"config_frozen.json").write_bytes(config_text.encode("utf-8"))
+    with sqlite3.connect(root/"session.sqlite3") as con:
+        con.execute("ALTER TABLE runs DROP COLUMN search_policy_defaults_json")
+        con.execute("ALTER TABLE runs DROP COLUMN search_policy_limits_json")
+        con.execute("UPDATE runs SET config_sha256=?, runtime_source_sha256=?",(db._sha256(config_text),"legacy-runtime"))
+    state=db.read_state(run=root)
+    assert state["integrity"]["runtime_identity"]=="mismatch"
+    assert state["search_policy"] is None
+    assert "stop" in state["allowed_actions"]
+    assert "submit_plan" not in state["allowed_actions"]
+    plan_file=tmp_path/"legacy-plan.json"
+    plan_file.write_text("{}",encoding="utf-8")
+    with pytest.raises(db.SessionError) as failure:
+        actions.submit_plan(run=root,operation_id="plan",expected_state_version=1,file=plan_file)
+    assert failure.value.code=="RUNTIME_IDENTITY_MISMATCH"
     assert db.stop_session(run=root,operation_id="stop",expected_state_version=1)["run_state"]=="STOPPED"
 
 

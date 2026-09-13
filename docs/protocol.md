@@ -502,11 +502,17 @@ deadline
 model
 operator selection
 parent selection
-population
+population contents
+EoH population-management semantics
 evaluator
 incumbent acceptance
 stop state
 ```
+
+`search_policy.pop_size` is the sole population-level scalar that a Plan may
+request. It remains advisory input to the Runtime, is checked against the
+frozen limits, and does not give the Plan control over population contents,
+parent selection, operators, or EoH population-management semantics.
 
 ### 10.3 Feedback
 

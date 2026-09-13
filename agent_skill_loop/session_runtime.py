@@ -523,6 +523,11 @@ def _policy_identity(run: sqlite3.Row) -> dict[str, Any]:
 
 
 def _run_search_policy(run: sqlite3.Row) -> dict[str, Any] | None:
+    # A v1.1 Session created before search-policy ownership was introduced has
+    # no new columns.  It remains readable as an immutable historical Session;
+    # mutation identity gates reject it before this value is needed.
+    if not all(name in run.keys() for name in ("search_policy_defaults_json", "search_policy_limits_json")):
+        return None
     if run["search_policy_defaults_json"] is None or run["search_policy_limits_json"] is None:
         return None
     try:

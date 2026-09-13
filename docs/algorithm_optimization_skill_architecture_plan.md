@@ -389,10 +389,16 @@ budget
 deadline
 operator
 parent selection
-population
+population contents
+EoH population-management semantics
 stop state
 incumbent acceptance
 ```
+
+`search_policy.pop_size` is the only population-level scalar that a Plan may
+request. It is Runtime-bounded and does not grant control over population
+contents, parent selection, operators, or EoH population-management
+semantics.
 
 ## 4.6 `session execute`
 
