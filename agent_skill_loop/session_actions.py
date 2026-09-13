@@ -11,7 +11,13 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from agent_skill_loop import session_runtime as db
-from agent_skill_loop.session_contracts import PlanDocument, MemoryAction, compile_round_context, strict_json_object
+from agent_skill_loop.session_contracts import (
+    PlanDocument,
+    MemoryAction,
+    build_feedback_summary,
+    compile_round_context,
+    strict_json_object,
+)
 from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
@@ -160,7 +166,8 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
             if result is None:
                 require_state(row, rd, action, "WAITING_FOR_PLAN")
                 prefix = f"rounds/round_{rd['round_id']:04d}"
-                save(root, f"{prefix}/submissions/{db._sha256(text)}.json", text)
+                raw_hash = db._sha256(text)
+                save(root, f"{prefix}/submissions/{raw_hash}.json", text)
                 reads = complete_reads(con, row["run_id"], rd["round_id"])
                 try:
                     plan = PlanDocument.from_dict(strict_json_object(text), expected_round_id=rd["round_id"], suite_hash=row["suite_hash"],
@@ -178,18 +185,53 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     if body["body_sha256"] != reads[ref] or body["truncated"]:
                         fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
                     bodies.append(body)
+                feedback_summary = None
+                feedback_summary_ref = None
+                feedback_summary_sha256 = None
                 if rd["feedback_ref"]:
                     previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?", (row["run_id"], rd["previous_round_id"])).fetchone()
-                    if db._sha256(local(root, rd["feedback_ref"]).read_bytes()) != previous["evaluation_facts_sha256"]:
+                    feedback_path = local(root, rd["feedback_ref"])
+                    feedback_text = feedback_path.read_text(encoding="utf-8")
+                    if previous is None or db._sha256(feedback_text) != previous["evaluation_facts_sha256"]:
                         fail("EVALUATION_IDENTITY_MISMATCH", action)
+                    try:
+                        facts = json.loads(feedback_text)
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        fail("EVIDENCE_INTEGRITY_FAILED", action, str(exc))
+                    if not isinstance(facts, dict):
+                        fail("EVIDENCE_INTEGRITY_FAILED", action, "evaluation_facts_must_be_object")
+                    feedback_summary = build_feedback_summary(
+                        facts,
+                        evaluation_ref=rd["feedback_ref"],
+                        evaluation_sha256=previous["evaluation_facts_sha256"],
+                        previous_round_id=rd["previous_round_id"],
+                    )
+                    feedback_summary_ref = f"{prefix}/feedback_summary.json"
+                    feedback_summary_sha256 = save(root, feedback_summary_ref, feedback_summary)
                 effective_policy = db.effective_search_policy(config, plan.search_policy)
-                context = compile_round_context(plan, memory_summaries=bodies, search_policy=effective_policy)
+                context = compile_round_context(
+                    plan,
+                    memory_summaries=bodies,
+                    feedback_summary=feedback_summary,
+                    search_policy=effective_policy,
+                )
                 payload = json.loads(context.split("\n", 1)[1])
                 manifest = {"plan_sha256": db._sha256(db._json(plan.as_dict())+"\n"), "context_sha256": db._sha256(context),
                             "adopted_refs": list(plan.memory_basis), "injected": [{"reference": x["reference"], "body_sha256": x["body_sha256"], "injected_sha256": db._sha256(x["body"])} for x in payload["memory"]],
                             "omitted_refs": payload.get("omitted_memory_refs", []), "advisory_truncated": payload.get("advisory_truncated", False), "advisory_omitted": payload.get("advisory_omitted", False),
-                            "search_policy_requested": plan.search_policy, "search_policy_effective": effective_policy}
-                raw_hash = save(root, f"{prefix}/plan.submitted.json", text)
+                            "search_policy_requested": plan.search_policy, "search_policy_effective": effective_policy,
+                            "feedback_summary": {
+                                "ref": feedback_summary_ref,
+                                "sha256": feedback_summary_sha256,
+                                "source": feedback_summary.get("source") if feedback_summary else None,
+                            } if feedback_summary is not None else None,
+                            "agent_explanation": {
+                                "ref": f"{prefix}/plan.submitted.json",
+                                "sha256": raw_hash,
+                                "present": plan.reasoning_summary is not None,
+                                "content_sha256": db._sha256(plan.reasoning_summary) if plan.reasoning_summary is not None else None,
+                            }}
+                save(root, f"{prefix}/plan.submitted.json", text)
                 ph = save(root, f"{prefix}/plan.json", plan.as_dict())
                 ch = save(root, f"{prefix}/round_context.txt", context)
                 save(root, f"{prefix}/context_manifest.json", manifest)
@@ -359,7 +401,7 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                 if decision=="continue":
                     budget=db._budget_view(con,row)
                     elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
-                    terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN')",(row["run_id"],)).fetchone()
+                    terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED')",(row["run_id"],)).fetchone()
                     if terminal or row["eoh_round_max_requests"]==0 or row["round_wall_seconds"]==0 or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0 or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"]): fail("CANNOT_CONTINUE_BUDGET",action)
                 now=db._utc_now()
                 con.execute("UPDATE rounds SET state='ROUND_COMPLETED',decision=?,finished_at_utc=? WHERE run_id=? AND round_id=?",(decision,now,row["run_id"],rd["round_id"]))

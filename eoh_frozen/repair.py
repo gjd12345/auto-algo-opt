@@ -251,6 +251,7 @@ class RepairingEOH(EOH):
             })
             return offspring
 
+        capability_contract = self.problem.spec.capability_contract()
         prompt = build_repair_prompt(
             task_description=self.problem.task_description,
             template_program=self.problem.template_program,
@@ -265,13 +266,7 @@ class RepairingEOH(EOH):
             original_code=original_code,
             original_code_sha256=original_hash,
             diagnostic=diagnostic,
-            allowed_capabilities={
-                "imports": sorted(self.problem.spec.allowed_import_roots),
-                "numpy_math_roots": sorted(self.problem.spec.np_math_roots),
-                "numpy_attributes": sorted(self.problem.spec.numpy_attributes),
-                "math_attributes": sorted(self.problem.spec.math_attributes),
-                "safe_builtins": sorted(self.problem.spec.safe_builtins),
-            },
+            allowed_capabilities=capability_contract,
         )
         event_base = {
             "candidate_id": candidate_id,

@@ -47,6 +47,24 @@ candidate_id → revision → code_sha256 → evaluation_id
 
 An exported skill is usable only when its problem, entrypoint, suite, evaluator, code, and evaluation evidence match. The incumbent is updated from collected deterministic facts before the Agent submits Evaluate; Evaluate or Memory errors cannot roll back that update.
 
+For rounds after the first, `round_context.txt` includes a bounded Runtime
+`feedback_summary` derived from the immediately previous `evaluation_facts`.
+It contains incumbent and best-generated identities/objectives/delta,
+per-instance objectives, generated valid/invalid counts, major errors,
+evidence references, and suite/evaluator hashes. It contains no candidate
+source code and makes no algorithm-family recommendation. The Plan's optional
+`reasoning_summary` is stored separately as host-Agent metadata and is not
+treated as Runtime evidence.
+
+The ordinary generation prompt and bounded repair prompt both receive the
+machine-derived capability contract on `ProblemSpec`; the evaluator remains
+the final authority.
+
 ## Memory
 
 `memory search` deliberately omits bodies. `memory read` records the reference, body hash, and character range. A reference may enter `plan.memory_basis` only after the complete body has been read with no gaps. Memory writes are advisory and CAS/versioned; a failed write leaves the accepted evaluation and algorithm asset intact.
+
+`evaluation_facts.json` also reports `solver_costs` by baseline, explicit
+parent, generated, generated repair, and revision. Parent re-evaluation is
+not automatically reused until a cache keyed by code, suite, evaluator, and
+constraint identity is available.

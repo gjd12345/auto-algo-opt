@@ -1,25 +1,28 @@
 # Two-round Session example
 
-The following is a shape example. Replace every operation ID and state version with the values returned by the current run.
+Run in WSL2 Bash with the same Linux Python 3.11 virtual environment used to install the Runtime (see the repository README). This is a shape example: choose a fresh operation ID for each new mutation and reuse it on uncertain retries. Replace state-version placeholders with the latest `session state` value. The `<...>` placeholders are not runnable Bash syntax.
 
-```powershell
-py -3.11 -m agent_skill_loop session init `
-  --output outputs/session-cvrp `
-  --operation-id init-cvrp-001 `
-  --problem cvrp_construct `
-  --eoh-model deepseek-flash `
-  --eoh-endpoint https://api.deepseek.com/v1/chat/completions `
-  --eoh-api-key-env DEEPSEEK_API_KEY `
-  --eoh-max-requests 16 `
-  --engine-wall-seconds 900 `
-  --round-wall-seconds 300 `
-  --max-solver-calls 20 `
-  --default-pop-size 4 `
-  --default-n-pop 2 `
-  --default-max-sample-nums 8 `
-  --max-pop-size 8 `
-  --max-n-pop 5 `
-  --max-sample-nums-per-round 16 `
+Use a provider model authorized for your account. Provide its key through the named process environment variable; never put the value in a plan, command-line argument or report. This example permits up to two Agent-controlled rounds; there is no automatic `--rounds` loop. After round 2 choose `complete`. Budgets can end execution earlier.
+
+```bash
+python -m agent_skill_loop session init \
+  --output outputs/session-cvrp \
+  --operation-id init-cvrp-001 \
+  --problem cvrp_construct \
+  --eoh-model "$EOH_MODEL" \
+  --eoh-endpoint https://api.deepseek.com/v1/chat/completions \
+  --eoh-api-key-env DEEPSEEK_API_KEY \
+  --eoh-max-requests 16 \
+  --eoh-round-max-requests 8 \
+  --engine-wall-seconds 900 \
+  --round-wall-seconds 300 \
+  --max-solver-calls 20 \
+  --default-pop-size 4 \
+  --default-n-pop 2 \
+  --default-max-sample-nums 8 \
+  --max-pop-size 8 \
+  --max-n-pop 5 \
+  --max-sample-nums-per-round 16 \
   --memory-store outputs/memory-cvrp
 ```
 
@@ -66,25 +69,25 @@ Round 1 example (`plan-r1.json`):
 
 Submit it with the current state version:
 
-```powershell
-py -3.11 -m agent_skill_loop session submit-plan `
-  --run outputs/session-cvrp `
-  --operation-id plan-r1-001 `
-  --expected-state-version <state_version_from_state> `
+```bash
+python -m agent_skill_loop session submit-plan \
+  --run outputs/session-cvrp \
+  --operation-id plan-r1-001 \
+  --expected-state-version <state_version_from_state> \
   --file plan-r1.json
 
-py -3.11 -m agent_skill_loop session execute `
-  --run outputs/session-cvrp `
-  --operation-id execute-r1-001 `
+python -m agent_skill_loop session execute \
+  --run outputs/session-cvrp \
+  --operation-id execute-r1-001 \
   --expected-state-version <updated_state_version>
 
 # Poll state until the task is terminal, then collect with a fresh version.
-py -3.11 -m agent_skill_loop session collect `
-  --run outputs/session-cvrp `
-  --operation-id collect-r1-001 `
+python -m agent_skill_loop session collect \
+  --run outputs/session-cvrp \
+  --operation-id collect-r1-001 \
   --expected-state-version <current_state_version>
 
-py -3.11 -m agent_skill_loop session read-evaluation `
+python -m agent_skill_loop session read-evaluation \
   --run outputs/session-cvrp
 ```
 
@@ -104,21 +107,21 @@ observation references an exact returned evidence reference. New clients use
 }
 ```
 
-```powershell
-py -3.11 -m agent_skill_loop session submit-evaluation `
-  --run outputs/session-cvrp `
-  --operation-id eval-r1-001 `
-  --expected-state-version <current_state_version> `
+```bash
+python -m agent_skill_loop session submit-evaluation \
+  --run outputs/session-cvrp \
+  --operation-id eval-r1-001 \
+  --expected-state-version <current_state_version> \
   --file evaluation.json
 
-py -3.11 -m agent_skill_loop session finish-round `
-  --run outputs/session-cvrp `
-  --operation-id finish-r1-001 `
-  --expected-state-version <current_state_version> `
+python -m agent_skill_loop session finish-round \
+  --run outputs/session-cvrp \
+  --operation-id finish-r1-001 \
+  --expected-state-version <current_state_version> \
   --decision continue
 ```
 
-Round 2 must copy the exact `feedback_ref` contract returned by state after
+Round 2 must copy the exact `feedback_basis` object returned by state after
 round 1. Do not invent a filename, round number, or suite hash:
 
 ```json
@@ -131,8 +134,8 @@ round 1. Do not invent a filename, round number, or suite hash:
   "preserve": "Problem interface, capacity constraints, evaluator and deterministic suite",
   "feedback_basis": {
     "round_id": 1,
-    "evaluation_ref": "<exact feedback_ref.evaluation_ref from state>",
-    "suite_hash": "<exact feedback_ref.suite_hash from state>"
+    "evaluation_ref": "<exact feedback_basis.evaluation_ref from state>",
+    "suite_hash": "<exact feedback_basis.suite_hash from state>"
   },
   "memory_basis": [],
   "reference_skill_ref": null,

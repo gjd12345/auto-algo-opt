@@ -27,6 +27,8 @@ jobs:
         run: python tools/validate_skill.py skills/algorithm-optimization
       - name: Run kernel tests
         run: python -m pytest tests/kernel -q
+      - name: Verify wheel outside checkout
+        run: python tools/verify_release_install.py
 
   eoh:
     strategy:

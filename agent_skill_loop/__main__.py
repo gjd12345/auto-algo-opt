@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 from pathlib import Path
 
 from agent_skill_loop.contracts import (
@@ -175,6 +176,8 @@ def cmd_session_action(args: argparse.Namespace) -> int:
         return _print_session(function(**values))
     except SessionError:
         raise
+    except sqlite3.Error as exc:
+        raise SessionError("SQLITE_ERROR", str(exc), action=args.session_action, retryable=True) from exc
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise SessionError("STORAGE_FAILED" if isinstance(exc, OSError) else "INVALID_ARGUMENT",
                            str(exc), action=args.session_action) from exc

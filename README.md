@@ -20,7 +20,7 @@
 | Coding Agent | Plan、Evaluate、Memory 决策与停止判断 |
 | Algorithm Optimization Skill | Agent 的操作合同和安全边界 |
 | Session Runtime | SQLite 状态、预算、任务、身份、证据和幂等性 |
-| Official EoH | 种群、父本、算子、生成和有界修复 |
+| Official EoH | 种群、父本、算子与生成；有界修复是可选适配层，不是上游原生行为 |
 | Provider | 仅服务 EoH 的模型请求 |
 | Deterministic Evaluator | 候选有效性、目标值和套件证据 |
 | Memory backend | 版本化、可选、仅供参考的本地知识存储 |
@@ -40,6 +40,22 @@ optional Memory search / read / commit
 当前支持的问题：`cvrp_construct`、`tsp_construct`、`tsp_2opt`。
 
 ## 快速开始
+
+推荐在 WSL2 Bash 中使用 Linux Python 3.11 和独立虚拟环境；不要调用 Windows 的 `py.exe` 来运行 Linux Session。将下列命令放在仓库根目录执行：
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev,eoh]"
+python tools/validate_skill.py skills/algorithm-optimization
+python -m agent_skill_loop smoke --problem cvrp_construct --output outputs/offline_smoke
+```
+
+让当前 Coding Agent 加载 `skills/algorithm-optimization/SKILL.md`，并明确仓库绝对路径及 `.venv/bin/python` 路径。后续所有 Session 命令使用同一解释器；Bash 两轮流程见 [Skill 示例](skills/algorithm-optimization/references/examples/two-round-run.md)。模型名称由账户支持情况和用户配置决定，不将文档示例名称视为可用性保证。密钥只经指定环境变量注入。
+
+Wheel 也包含同一份 Skill 资源，可通过 `python -c "import algorithm_optimization_skill; print(algorithm_optimization_skill.__file__)"` 找到安装位置。源码目录与 wheel 对同一份指令计算相同 hash，不使用占位身份。运行中不要升级 Runtime 或修改 Skill；升级后旧 Session 只读/停止，不隐式迁移。
+
+Windows PowerShell 仍支持：
 
 ```powershell
 py -3.11 -m pip install -e ".[dev,eoh]"
@@ -68,7 +84,7 @@ py -3.11 -m agent_skill_loop session init `
 1. `session state`，确认身份、预算和当前阶段。
 2. 可选执行 `session memory search/read`，由 Agent 决定是否消费正文。
 3. Agent 生成 Plan，并用 `session submit-plan --file` 提交。
-4. `session execute` 启动一次官方 EoH；用 `session collect` 等待并收集结果。
+4. `session execute` 启动一次官方 EoH；轮询 `session state`，任务终态后调用非阻塞的 `session collect` 收集结果。
 5. 用 `session read-evaluation` 读取可信事实，Agent 生成 Evaluate，并用 `session submit-evaluation --file` 提交。
 6. 按合同提交 Memory 决策，完成本轮或继续下一轮。
 

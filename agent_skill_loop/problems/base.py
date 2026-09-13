@@ -14,6 +14,7 @@ forcing a particular import order on callers.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
@@ -61,6 +62,35 @@ class ProblemSpec:
     @property
     def allowed_attributes(self) -> frozenset[str]:
         return self.numpy_attributes | self.math_attributes
+
+    def capability_contract(self) -> dict[str, Any]:
+        """Return the single source of truth for generated-code capabilities.
+
+        The evaluator consumes these same fields.  Keeping the contract on the
+        immutable ProblemSpec prevents the normal generator and bounded repair
+        adapter from drifting into different allowlists.
+        """
+        return {
+            "problem": self.problem_id,
+            "entrypoint": self.entrypoint,
+            "interface_version": self.interface_version,
+            "interface_template": self.template_program,
+            "allowed_import_roots": sorted(self.allowed_import_roots),
+            "allowed_numpy_math_roots": sorted(self.np_math_roots),
+            "allowed_numpy_attributes": sorted(self.numpy_attributes),
+            "allowed_math_attributes": sorted(self.math_attributes),
+            "safe_builtins": sorted(self.safe_builtins),
+            "forbidden_names": sorted(self.forbidden_names),
+            "input_contract": "Inputs are read-only; mutating evaluator inputs is forbidden.",
+            "side_effect_contract": "Filesystem, network, subprocess, reflection, and dynamic code execution are forbidden.",
+        }
+
+    def capability_contract_text(self) -> str:
+        """Render the machine-derived contract for the model prompt."""
+        return (
+            "EVALUATOR CAPABILITY CONTRACT (machine-derived; mandatory):\n"
+            + json.dumps(self.capability_contract(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        )
 
 
 PROBLEM_REGISTRY: dict[str, ProblemSpec] = {}

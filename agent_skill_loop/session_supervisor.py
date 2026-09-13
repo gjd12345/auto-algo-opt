@@ -21,6 +21,118 @@ def task_output(root,con,task):
     return prefix/"eoh_run" if first==task["task_id"] else prefix/"attempts"/task["task_id"]/"eoh_run"
 
 
+def _startup_preflight_path(root: Path, task) -> Path:
+    return root / f"rounds/round_{task['round_id']:04d}/tasks/{task['task_id']}/startup_preflight.json"
+
+
+def run_startup_preflight(root: Path, task) -> dict:
+    """Check the EoH/evaluator child-process boundary before paid work.
+
+    This deliberately performs no provider request and no solver evaluation.
+    Its result is durable so a launch failure is distinguishable from an EoH,
+    provider, evaluator, or evidence failure during collection.
+    """
+    path = _startup_preflight_path(root, task)
+    result = {
+        "schema_version": "algorithm-optimization-startup-preflight/v1",
+        "task_id": task["task_id"],
+        "status": "passed",
+        "checks": {"child_process": "pending", "eoh_import": "pending", "evaluator_import": "pending"},
+        "provider_requests": 0,
+        "solver_calls": 0,
+    }
+    try:
+        probe = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import eoh; import agent_skill_loop.evaluator; print('startup_preflight_ok')",
+            ],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=os.name != "nt",
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        try:
+            stdout, stderr = probe.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            probe.kill()
+            stdout, stderr = probe.communicate(timeout=5)
+            result.update(status="failed", error_code="startup_probe_timeout")
+        else:
+            if probe.returncode != 0 or b"startup_preflight_ok" not in stdout:
+                detail = (stderr or stdout).decode("utf-8", errors="replace").strip()
+                result.update(status="failed", error_code="startup_subprocess_failed", error_detail=detail[:240])
+            else:
+                result["checks"] = {"child_process": "ok", "eoh_import": "ok", "evaluator_import": "ok"}
+    except OSError as exc:
+        result.update(status="failed", error_code="startup_process_unavailable", error_detail=str(exc)[:240])
+    try:
+        db._atomic_write(path, db._json(result) + "\n")
+    except OSError as exc:
+        # Preserve the distinction even when the diagnostic itself cannot be
+        # written; the caller will close the task as an evidence failure.
+        result.update(status="failed", error_code="evidence_storage_error", error_detail=str(exc)[:240])
+        try:
+            db._atomic_write(path, db._json(result) + "\n")
+        except OSError:
+            pass
+    return result
+
+
+def _elapsed_seconds(started: str | None, finished: str | None) -> float | None:
+    if not started or not finished:
+        return None
+    try:
+        return max(0.0, (datetime.fromisoformat(finished.replace("Z", "+00:00")) - datetime.fromisoformat(started.replace("Z", "+00:00"))).total_seconds())
+    except (TypeError, ValueError):
+        return None
+
+
+def solver_cost_summary(con, task_id: str, rows: list[dict]) -> dict:
+    """Summarize logical solver calls without hiding re-evaluation overhead."""
+    by_evaluation = {item.get("evaluation_id"): item for item in rows}
+    calls = con.execute("SELECT * FROM solver_calls WHERE task_id=? ORDER BY started_at_utc", (task_id,)).fetchall()
+    def empty() -> dict:
+        return {"calls": 0, "completed": 0, "valid": 0, "invalid": 0, "interrupted": 0, "elapsed_seconds": 0.0}
+    by_origin: dict[str, dict] = {}
+    by_revision: dict[str, dict] = {}
+    for call in calls:
+        item = by_evaluation.get(call["evaluation_id"])
+        origin = item.get("origin") if item else None
+        if not origin:
+            candidate_id = str(call["candidate_id"] or "")
+            origin = "generated" if candidate_id.startswith("candidate_") else candidate_id or "unknown"
+        revision = str(call["revision"] or "original")
+        for collection, key in ((by_origin, origin), (by_revision, revision)):
+            bucket = collection.setdefault(key, empty())
+            bucket["calls"] += 1
+            if call["state"] == "complete":
+                bucket["completed"] += 1
+            elif call["state"] in {"interrupted", "unknown"}:
+                bucket["interrupted"] += 1
+            if item is not None and item.get("evaluation", {}).get("valid") is True:
+                bucket["valid"] += 1
+            elif item is not None and item.get("evaluation", {}).get("valid") is False:
+                bucket["invalid"] += 1
+            elapsed = _elapsed_seconds(call["started_at_utc"], call["finished_at_utc"])
+            if elapsed is not None:
+                bucket["elapsed_seconds"] += elapsed
+    for collection in (by_origin, by_revision):
+        for bucket in collection.values():
+            bucket["elapsed_seconds"] = round(bucket["elapsed_seconds"], 6)
+    return {
+        "total_calls": len(calls),
+        "by_origin": by_origin,
+        "by_revision": by_revision,
+        "reuse": {
+            "applied": False,
+            "policy": "disabled_until_code_suite_evaluator_identity_cache_is_implemented",
+        },
+    }
+
+
 def stop_requested(root, task_id):
     # A locked DB must not block the independent deadline monitor for seconds.
     con=sqlite3.connect(root/"session.sqlite3",timeout=.05)
@@ -54,20 +166,32 @@ def mark_terminal(root, task_id, reason, elapsed, extra=None):
 
 
 def run_task(root, task_id):
+    from agent_skill_loop.file_lock import exclusive_file_lock
+    root=Path(root).resolve()
+    try:
+        with exclusive_file_lock(root/"locks"/(db._sha256(task_id)+".supervisor.lock"), busy="task_owner_busy"):
+            _run_task(root, task_id)
+    except ValueError as exc:
+        if str(exc)!="task_owner_busy": raise
+
+
+def _run_task(root, task_id):
     root=Path(root).resolve()
     started=time.monotonic()
     reason="FAILED"
     runner=None
     tree=None
+    owns_task=False
     con=db._connect(root/"session.sqlite3")
     try:
         with db._transaction(con):
             row=db._require_run(con,action="supervisor",run_id=None)
-            config,suite=db._verify_files(root,row,action="supervisor")
             task=con.execute("SELECT * FROM tasks WHERE task_id=?",(task_id,)).fetchone()
             if task is None or task["state"]!="STARTING" or row["state"]!="RUNNING":
                 reason="CANCELLED"
                 return
+            owns_task=True
+            config,suite=db._verify_files(root,row,action="supervisor")
             rd=con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",(row["run_id"],task["round_id"])).fetchone()
             for ref_key,hash_key in (("normalized_plan_ref","normalized_plan_sha256"),("round_context_ref","round_context_sha256")):
                 if db._sha256((root/rd[ref_key]).read_bytes())!=rd[hash_key]: raise ValueError("plan_context_hash_mismatch")
@@ -105,6 +229,8 @@ def run_task(root, task_id):
         summary=json.loads((output/"summary.json").read_text(encoding="utf-8"))
         if stop_requested(root,task_id): reason="CANCELLED"
         elif summary["status"]=="provider_failed": reason="PROVIDER_TERMINAL"
+        elif summary["status"]=="startup_failed": reason="STARTUP_FAILED"
+        elif summary["status"] in {"storage_failed", "export_failed"}: reason="EVIDENCE_STORAGE_FAILED"
         elif summary["stop_reason"]=="wall_time_limit": reason="DEADLINE_EXCEEDED"
         else: reason="SUCCEEDED" if summary.get("loop_completed") else "FAILED"
     except BaseException as exc:
@@ -118,7 +244,8 @@ def run_task(root, task_id):
                 runner.wait(timeout=5)
         if tree is not None: tree.close()
         con.close()
-        mark_terminal(root,task_id,reason or "FAILED",time.monotonic()-started)
+        if owns_task:
+            mark_terminal(root,task_id,reason or "FAILED",time.monotonic()-started)
 
 
 def monitor_runner(runner, deadline, stopped, *, tree):
@@ -170,7 +297,37 @@ def execute_task(root, task_id):
         args.round_context_file=str(root/rd["round_context_ref"])
         args.parent_skill=str(root/rd["incumbent_before_ref"]) if rd["incumbent_before_ref"] else None
         args.session={"root":str(root),"task_id":task_id}
+        preflight = run_startup_preflight(root, task)
+        output = task_output(root, con, task)
+        if preflight["status"] != "passed":
+            output.mkdir(parents=True, exist_ok=True)
+            summary = {
+                "problem": row["problem"],
+                "status": "startup_failed" if preflight.get("error_code") != "evidence_storage_error" else "storage_failed",
+                "stop_reason": "startup_error" if preflight.get("error_code") != "evidence_storage_error" else "storage_error",
+                "loop_completed": False,
+                "startup_preflight": preflight,
+                "http_requests": 0,
+                "solver_calls": 0,
+            }
+            db._atomic_write(output / "summary.json", db._json(summary) + "\n")
+            return
         cmd_run(args)
+        summary_path = output / "summary.json"
+        if summary_path.is_file():
+            try:
+                summary = json.loads(summary_path.read_text(encoding="utf-8"))
+                preflight_path = _startup_preflight_path(root, task)
+                summary["startup_preflight"] = {
+                    "ref": preflight_path.relative_to(root).as_posix(),
+                    "sha256": db._sha256(preflight_path.read_bytes()),
+                    "status": "passed",
+                }
+                db._atomic_write(summary_path, db._json(summary) + "\n")
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                # cmd_run already records its own failure; do not replace it
+                # with an untrusted post-processing error.
+                pass
     finally:
         con.close()
 
@@ -178,23 +335,32 @@ def execute_task(root, task_id):
 def collect_facts(root, con, run, rd, task):
     from eoh_frozen.export import read_evidence, export_run_evidence, finalize_evaluations
     output=task_output(root,con,task)
+    preflight_path = _startup_preflight_path(root, task)
+    preflight = None
+    if preflight_path.is_file():
+        try:
+            preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, json.JSONDecodeError):
+            raise ValueError("startup_preflight_invalid")
     config,suite=db._verify_files(root,run,action="collect")
     terminal_text=(root/task["terminal_ref"]).read_text(encoding="utf-8")
     if db._sha256(terminal_text)!=task["terminal_sha256"]: raise ValueError("task_terminal_hash_mismatch")
     terminal=json.loads(terminal_text)
     if terminal["task_id"]!=task["task_id"] or terminal["reason"]!=task["terminal_reason"]: raise ValueError("task_terminal_identity_mismatch")
     rows=read_evidence(output,suite) if output.is_dir() else []
-    if output.is_dir():
-        finalize_evaluations(output,suite,stop_reason=task["terminal_reason"])
-        exported=export_run_evidence(output,suite)
-    else: exported={}
     for item in rows:
         ledger=con.execute("SELECT * FROM solver_calls WHERE task_id=? AND evaluation_id=?",(task["task_id"],item["evaluation_id"])).fetchone()
         if ledger is None or ledger["code_sha256"]!=item["code_sha256"] or ledger["suite_hash"]!=run["suite_hash"] or ledger["evaluator_hash"]!=run["evaluator_hash"]:
             raise ValueError("solver_evidence_identity_mismatch")
+        if ledger["candidate_id"] != (item.get("candidate_id") or item["origin"]) or ledger["revision"] != (item.get("revision") or "original"):
+            raise ValueError("solver_evidence_revision_mismatch")
         result=item["evaluation"]
         con.execute("UPDATE solver_calls SET state=?,objective=?,valid=?,error_code=? WHERE evaluation_id=?",
                     ("complete" if result["valid"] else "failed",result["objective"],int(result["valid"]),result["error_code"],item["evaluation_id"]))
+    if output.is_dir():
+        finalize_evaluations(output,suite,stop_reason=task["terminal_reason"])
+        exported=export_run_evidence(output,suite)
+    else: exported={}
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
     if baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()
@@ -224,7 +390,10 @@ def collect_facts(root, con, run, rd, task):
             "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
             "incumbent_before":before,"incumbent_after":after,"candidates":candidates,"exports":exported,
             "best_generated_ref":f"{prefix}/{exported['best_generated_path']}" if exported.get("best_generated_path") else None,
-            "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":db._budget_view(con,run),"terminal_reason":task["terminal_reason"]}
+            "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":db._budget_view(con,run),
+            "solver_costs": solver_cost_summary(con, task["task_id"], candidates),
+            "startup_preflight": preflight,
+            "terminal_reason":task["terminal_reason"]}
 
 
 if __name__=="__main__": run_task(Path(sys.argv[1]),sys.argv[2])

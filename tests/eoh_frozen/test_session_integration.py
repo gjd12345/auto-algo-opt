@@ -7,7 +7,17 @@ pytest.importorskip("eoh")
 
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop import session_actions as actions
+from agent_skill_loop.session_supervisor import run_startup_preflight
 from eoh_frozen.smoke import fixture_provider
+
+
+def test_startup_preflight_is_local_and_durable(tmp_path):
+    task = {"task_id": "task_preflight", "round_id": 1}
+    result = run_startup_preflight(tmp_path, task)
+    assert result["status"] == "passed"
+    assert result["provider_requests"] == 0
+    assert result["solver_calls"] == 0
+    assert (tmp_path / "rounds/round_0001/tasks/task_preflight/startup_preflight.json").is_file()
 
 
 def test_detached_session_two_rounds_with_memory_and_exact_ledgers(tmp_path,monkeypatch):
@@ -25,10 +35,18 @@ def test_detached_session_two_rounds_with_memory_and_exact_ledgers(tmp_path,monk
                 actions.memory_read(run=root,reference=memory_ref)
                 memory=[memory_ref]
             doc=dict(round_id=number,direction="test distance ranking",operations=[dict(type="replace",target="ranking",mechanism="distance")],preserve="interface",hypothesis="unproven",memory_basis=memory,
-                feedback_basis=dict(round_id=number-1,evaluation_ref=state["feedback_ref"],suite_hash=json.loads((root/"dev_suite.json").read_text())["content_hash"]) if number>1 else None)
+                feedback_basis=state["feedback_basis"])
             file=tmp_path/"plan.json"
             file.write_text(json.dumps(doc))
             planned=actions.submit_plan(run=root,operation_id=f"plan-{number}",expected_state_version=state["state_version"],file=file)
+            if number==2:
+                context = (root/"rounds/round_0002/round_context.txt").read_text()
+                assert '"feedback_summary"' in context
+                assert '"evaluation_ref":"rounds/round_0001/evaluation_facts.json"' in context
+                summary = json.loads((root/"rounds/round_0002/feedback_summary.json").read_text())
+                manifest = json.loads((root/"rounds/round_0002/context_manifest.json").read_text())
+                assert summary["source"]["evaluation_facts_sha256"]
+                assert manifest["feedback_summary"]["sha256"]
             executed=actions.execute(run=root,operation_id=f"execute-{number}",expected_state_version=planned["state_version"])
             assert actions.execute(run=root,operation_id=f"execute-{number}",expected_state_version=0)==executed
             until=time.monotonic()+60
@@ -42,6 +60,10 @@ def test_detached_session_two_rounds_with_memory_and_exact_ledgers(tmp_path,monk
             facts=actions.read_evaluation(run=root)["result"]
             assert facts["incumbent_after"] is not None
             assert any(x["origin"]=="generated" for x in facts["candidates"])
+            from agent_skill_loop.skill_store import load_skill
+            generated_asset = load_skill(root / facts["best_generated_ref"])
+            assert generated_asset.integration_mode == "official_only"
+            assert generated_asset.repair_policy_version is None
             if number==2:
                 assert "fixture memory body" in (root/"rounds/round_0002/round_context.txt").read_text()
                 exchanges=list((root/"rounds/round_0002/eoh_run/results/exchanges").glob("*.json"))

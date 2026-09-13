@@ -8,7 +8,7 @@
 python -m agent_skill_loop session <action>
 ```
 
-所有 Session 命令 MUST：
+所有已成功解析参数的 Session 命令遵循以下输出合同（`--help` 与 argparse 参数语法错误除外）：
 
 - stdout 只输出一个 JSON object；
 - 人读日志写 stderr 或日志文件；
@@ -63,7 +63,7 @@ python -m agent_skill_loop session <action>
 | 0 | 成功，或只读动作正常返回 |
 | 2 | 状态/并发/幂等冲突 |
 | 3 | 输入合同或身份校验失败 |
-| 4 | 资源/terminal policy 拒绝 |
+| 4 | v1.0 未使用；不要依赖此预留值 |
 | 5 | Task/动作当前未 ready；可通过 state 后重试 |
 | 10 | Runtime/storage/internal failure |
 
@@ -200,7 +200,8 @@ python -m agent_skill_loop session state \
 policy identity
 budgets
 incumbent
-feedback ref
+feedback_ref (path string or null)
+feedback_basis ({round_id,evaluation_ref,suite_hash} or null)
 task state
 allowed_actions
 ```
@@ -301,6 +302,7 @@ plan.submitted.json
 plan.json
 round_context.txt
 context_manifest.json
+feedback_summary.json (round 2 and later)
 ```
 
 ### Contract errors
@@ -318,6 +320,7 @@ MEMORY_BASIS_LIMIT
 REFERENCE_SKILL_NOT_FOUND
 PLAN_CONTEXT_TOO_LARGE
 PLAN_SEARCH_POLICY_OUT_OF_BOUNDS
+TASK_NOT_TERMINAL
 ```
 
 ---
@@ -593,88 +596,22 @@ Runtime MUST 返回 allowed_actions，Coding Agent 不需要自行猜状态机�
 
 ---
 
-# 16. Stable Error Codes
+# 16. Error codes and degradation
 
-## Concurrency / idempotency
+常见顶层 `error.code`：
 
-```text
-OPERATION_ID_CONFLICT
-STATE_VERSION_CONFLICT
-RUN_ID_MISMATCH
-```
+- 并发：`OPERATION_ID_CONFLICT`、`STATE_VERSION_CONFLICT`、`RUN_ID_MISMATCH`。
+- 状态：`ACTION_NOT_ALLOWED`、`LIVE_TASK_EXISTS`、`EFFECTFUL_TASK_ALREADY_EXISTS`、`TASK_NOT_TERMINAL`、`RUN_TERMINAL`、`RUN_STOPPING`。
+- 预算：`EOH_REQUEST_BUDGET_EXHAUSTED`、`EOH_ROUND_REQUEST_BUDGET_EXHAUSTED`、`SOLVER_BUDGET_EXHAUSTED`、`ENGINE_WALL_EXHAUSTED`、`ROUND_WALL_EXHAUSTED`、`CANNOT_CONTINUE_BUDGET`；任务内耗尽记录在终态和 evaluation facts 中。
+- 身份：`RUNTIME_IDENTITY_MISMATCH`、`SKILL_IDENTITY_MISMATCH`、`SKILL_RESOURCES_MISSING`、`EVALUATION_IDENTITY_MISMATCH`、`EVIDENCE_INTEGRITY_FAILED`。
+- 启动与证据：`STARTUP_FAILED`、`EVIDENCE_STORAGE_FAILED`（写入 evaluation facts 时仍通过可恢复的 Session 错误合同返回）。
+- Plan：合同 ValueError 标签去掉冒号后的解释并转大写；例如 `PLAN_UNKNOWN_FIELDS`、`PLAN_FORBIDDEN_FIELD`、`ROUND_ID_MISMATCH`、`FEEDBACK_REFERENCE_REQUIRED`、`FEEDBACK_REFERENCE_NOT_FOUND`、`PLAN_SEARCH_POLICY_OUT_OF_BOUNDS`。未完整消费 Memory 特别映射为 `MEMORY_REFERENCE_NOT_COMPLETELY_READ`。重复 JSON key 和非有限数也拒绝。
+- Evaluate：`EVALUATE_INVALID`、`OBSERVATION_EVIDENCE_REQUIRED`、`EVIDENCE_REFERENCE_NOT_FOUND`、`MEMORY_ACTION_INVALID`。
+- 存储：`SQLITE_ERROR`、`STORAGE_FAILED`、`SCHEMA_MISMATCH`；其他参数/证据解析错误可能返回 `INVALID_ARGUMENT`，具体原因在 message 中。
 
-## State
+Memory 文件失败不是上述顶层 Session 失败：search/read 可以 `ok=true`、`result.degraded=true`；写入状态在 `result.memory.status/error_code`，如 `failed / memory_version_conflict`。没有 `MEMORY_INDEX_DEGRADED` 这样的稳定顶层错误。commit pending 时用原 operation_id 重放 submit-evaluation，不能重复执行 EoH。
 
-```text
-ACTION_NOT_ALLOWED
-LIVE_TASK_EXISTS
-EFFECTFUL_TASK_ALREADY_EXISTS
-TASK_NOT_TERMINAL
-RUN_TERMINAL
-RUN_STOPPING
-RUNTIME_IDENTITY_MISMATCH
-SKILL_IDENTITY_MISMATCH
-```
-
-## Budget
-
-```text
-EOH_REQUEST_BUDGET_EXHAUSTED
-EOH_ROUND_REQUEST_BUDGET_EXHAUSTED
-REPAIR_REQUEST_BUDGET_EXHAUSTED
-SOLVER_BUDGET_EXHAUSTED
-ENGINE_WALL_EXHAUSTED
-ROUND_WALL_EXHAUSTED
-PROVIDER_TERMINAL
-```
-
-## Plan
-
-```text
-PLAN_INVALID
-PLAN_UNKNOWN_FIELDS
-PLAN_FORBIDDEN_FIELD
-ROUND_ID_MISMATCH
-FEEDBACK_REFERENCE_REQUIRED
-FEEDBACK_REFERENCE_NOT_FOUND
-MEMORY_REFERENCE_NOT_COMPLETELY_READ
-MEMORY_REFERENCE_HASH_MISMATCH
-MEMORY_BASIS_LIMIT
-REFERENCE_SKILL_NOT_FOUND
-PLAN_CONTEXT_TOO_LARGE
-PLAN_SEARCH_POLICY_OUT_OF_BOUNDS
-```
-
-## Evaluate
-
-```text
-EVALUATE_INVALID
-EVIDENCE_REFERENCE_NOT_FOUND
-OBSERVATION_EVIDENCE_REQUIRED
-MEMORY_ACTION_INVALID
-```
-
-## Memory
-
-```text
-MEMORY_REFERENCE_INVALID
-MEMORY_PAGE_INVALID
-MEMORY_VERSION_CONFLICT
-MEMORY_WRITER_BUSY
-MEMORY_STORAGE_FAILED
-MEMORY_INDEX_DEGRADED
-```
-
-## Evidence
-
-```text
-EVIDENCE_INTEGRITY_FAILED
-EVALUATION_IDENTITY_MISMATCH
-REPAIR_IDENTITY_MISSING
-EXPORT_IDENTITY_CONFLICT
-EVIDENCE_CORRUPT
-TASK_TERMINAL_EVIDENCE_MISSING
-```
+`allowed_actions` 是状态提示，不是预算或引用校验的豁免。每次 mutation 后读取最新 state；后台任务也可能推进版本。
 
 ---
 

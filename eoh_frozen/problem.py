@@ -83,9 +83,14 @@ class FrozenProblem(BaseProblem):
 
     @property
     def task_description(self) -> str:
-        if self.round_context is None:
-            return self.spec.task_description
-        return self.spec.task_description + "\n\n" + self.round_context
+        # Generation and bounded repair receive the same allowlist from the
+        # immutable ProblemSpec.  The round context remains a separate,
+        # advisory input and may refine the search without changing safety or
+        # evaluation authority.
+        description = self.spec.task_description + "\n\n" + self.spec.capability_contract_text()
+        if self.round_context is not None:
+            description += "\n\n" + self.round_context
+        return description
 
     def evaluate(self, code_string: str) -> float | None:
         result = self.evaluate_result(code_string)

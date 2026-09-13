@@ -335,6 +335,8 @@ wall-time, solver-call ceilings, evaluator rules, or provider identity.
 
 ## 7. `state`
 
+v1.0 发布复检补充：`feedback_ref` 是路径字符串（或 null），新增 `feedback_basis` 返回可直接提交的 `{round_id,evaluation_ref,suite_hash}`（首轮 null）。它是确定性派生输入，不是 Agent 自行拼接的引用。CLI 具体返回字段及错误编码以 [CLI 合同](cli-contract.md) 为准，实际数据库字段以 [DDL 快照](sqlite-schema.md) 为准。
+
 `state` MUST 是纯读取动作。
 
 必须返回至少：
@@ -552,6 +554,7 @@ preserve
 reference_skill_ref
 bounded hypothesis
 selected Memory bodies
+Runtime feedback_summary (round > 1)
 ```
 
 Round Context MUST 保存：
@@ -564,7 +567,26 @@ memory body_sha256
 injected content hash
 omitted refs
 truncation/omission flags
+feedback_summary reference/hash
+feedback_summary source evaluation reference/hash
+agent explanation reference/hash (kept separate from Runtime facts)
 ```
+
+For rounds after the first, Runtime derives one bounded `feedback_summary`
+from the immediately preceding trusted `evaluation_facts.json` and injects it
+into the EoH task context. It contains only incumbent and best-generated
+candidate identities, objective values/delta, per-instance objectives,
+valid/invalid counts, major error groups, evidence references, and suite /
+evaluator hashes. It contains no candidate source code and no algorithm-family
+recommendation. The Coding Agent's explanation for choosing the next
+mechanism is stored as non-authoritative Plan metadata (`reasoning_summary`)
+and is not substituted for those Runtime facts.
+
+The same `ProblemSpec` capability contract supplies the ordinary EoH
+generation prompt and bounded repair prompt. It covers the entrypoint
+interface, allowed imports and attributes, safe builtins, forbidden names,
+read-only inputs, and forbidden side effects. The evaluator remains the final
+authority; the prompt is not an allowlist bypass.
 
 `compile_round_context()` 的 MAX cap 继续作为硬上限。
 
@@ -647,6 +669,8 @@ CANCELLED
 DEADLINE_EXCEEDED
 PROVIDER_TERMINAL
 UNKNOWN
+STARTUP_FAILED
+EVIDENCE_STORAGE_FAILED
 ```
 
 Task state 与 Round state MUST 分离。

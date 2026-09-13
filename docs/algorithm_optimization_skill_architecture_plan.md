@@ -929,7 +929,7 @@ skills/algorithm-optimization/
 algorithm_assets/
 └── candidate_x/
     ├── code.py
-    ├── algorithm.json
+    ├── skill.json
     ├── ALGORITHM.md
     └── evidence.json
 ```

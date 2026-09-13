@@ -18,7 +18,9 @@ def test_frozen_problem_matches_kernel_baseline():
     suite = build_suite(DEFAULT_SEED, count=3, size=20)
     problem = FrozenProblem(suite, spec=get_problem("cvrp_construct"), timeout=20)
     assert problem.template_program == TEMPLATE_PROGRAM
-    assert problem.task_description == TASK_DESCRIPTION
+    assert problem.task_description.startswith(TASK_DESCRIPTION)
+    assert "EVALUATOR CAPABILITY CONTRACT" in problem.task_description
+    assert "allowed_numpy_attributes" in problem.task_description
     assert problem.suite["content_hash"] == suite["content_hash"]
     assert suite["content_hash"] == "abc17e034e981f79954b779240cb5f4b417020e6c048a2e6d91e19ab95ddf8f0"
     fitness = problem.evaluate(BASELINE_CODE)

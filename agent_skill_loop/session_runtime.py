@@ -119,27 +119,39 @@ def _runtime_source_hash() -> str:
 
 
 def _skill_content_hash() -> str:
-    """Hash the shipped Coding Agent Skill, not only its label.
+    """Hash actual shipped instructions identically in checkout and wheel.
 
-    The content is part of a Session's frozen policy identity.  Keeping the
-    fallback descriptor makes development checkouts without the optional
-    package diagnosable, while a normal v1.1 checkout always hashes the
-    complete skill directory (instructions, references and UI metadata).
+    Missing resources are an installation error, never a descriptor-only
+    substitute for the frozen Skill identity. Interpreter caches are not
+    policy resources and must not change the hash after an import.
     """
     root = Path(__file__).resolve().parents[1]
     skill_root = root / "skills" / "algorithm-optimization"
-    if skill_root.is_dir():
-        digest = hashlib.sha256()
-        for path in sorted(p for p in skill_root.rglob("*") if p.is_file()):
-            digest.update(path.relative_to(root).as_posix().encode("utf-8"))
-            digest.update(path.read_bytes())
-        return digest.hexdigest()
-    descriptor = _json({
-        "id": OPTIMIZATION_SKILL_ID,
-        "version": OPTIMIZATION_SKILL_VERSION,
-        "control_plane": "session-cli-v1",
-    })
-    return _sha256(descriptor)
+    if not skill_root.is_dir():
+        import algorithm_optimization_skill
+        skill_root = Path(algorithm_optimization_skill.__file__).resolve().parent
+    if not (skill_root / "SKILL.md").is_file():
+        raise ValueError("optimization_skill_resources_missing")
+    digest = hashlib.sha256()
+    for path in sorted(p for p in skill_root.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml"}):
+        name = "skills/algorithm-optimization/" + path.relative_to(skill_root).as_posix()
+        digest.update(name.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def _required_skill_content_hash(action: str) -> str:
+    """Map a missing packaged Skill resource to the Session error contract."""
+    try:
+        return _skill_content_hash()
+    except (ImportError, OSError, ValueError) as exc:
+        if isinstance(exc, (ImportError, OSError)) or str(exc) == "optimization_skill_resources_missing":
+            raise SessionError(
+                "SKILL_RESOURCES_MISSING",
+                "Algorithm Optimization Skill resources are missing",
+                action=action,
+            ) from exc
+        raise
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -539,9 +551,7 @@ def _run_search_policy(run: sqlite3.Row) -> dict[str, Any] | None:
 
 
 def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, Any]:
-    # Phase 1 has no request or solver execution tables.  Keeping these fields
-    # explicit makes the zero-effect init/state contract inspectable and leaves
-    # room for Phase 3 ledger migrations without changing the CLI envelope.
+    # Count durable reservations, including unknown/interrupted effects.
     requests_used = 0
     solver_used = 0
     table_names = {str(r[0]) for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -646,7 +656,7 @@ def _verify_files(output: Path, run, *, action: str):
     read_only = action in {"state", "read-evaluation", "memory_search", "memory_read"}
     if not read_only and _runtime_source_hash() != run["runtime_source_sha256"]:
         raise SessionError("RUNTIME_IDENTITY_MISMATCH", "Restore the frozen runtime before mutating this Session", action=action)
-    if not read_only and _skill_content_hash() != run["optimization_skill_sha256"]:
+    if not read_only and _required_skill_content_hash(action) != run["optimization_skill_sha256"]:
         raise SessionError("SKILL_IDENTITY_MISMATCH", "Restore the frozen Algorithm Optimization Skill before mutating this Session", action=action)
     try:
         config_bytes = (output / "config_frozen.json").read_bytes()
@@ -980,7 +990,7 @@ def initialize_session(
     suite_hash = str(suite["content_hash"])
     evaluator_hash = evaluator_source_hash()
     runtime_hash = _runtime_source_hash()
-    skill_hash = _skill_content_hash()
+    skill_hash = _required_skill_content_hash(action)
     memory_path = str(Path(memory_store).resolve()) if memory_store else None
     config: dict[str, Any] = {
         "schema_version": CONFIG_SCHEMA,
@@ -1153,6 +1163,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
         current_run = _require_run(connection, action=action, run_id=expected_run_id)
         _verify_files(Path(run).resolve(), current_run, action=action)
         current_round = _round(connection, current_run)
+        skill_hash = _required_skill_content_hash(action)
         live_task = None
         table_names = {str(r[0]) for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if "tasks" in table_names:
@@ -1167,7 +1178,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
                 "config": "ok",
                 "suite": "ok",
                 "runtime_identity": "ok" if _runtime_source_hash() == current_run["runtime_source_sha256"] else "mismatch",
-                "skill_identity": "ok" if _skill_content_hash() == current_run["optimization_skill_sha256"] else "mismatch",
+                "skill_identity": "ok" if skill_hash == current_run["optimization_skill_sha256"] else "mismatch",
                 "audit": "pending" if connection.execute("SELECT 1 FROM audit_events WHERE status='pending' LIMIT 1").fetchone() else "ok",
             },
             "policy_identity": _policy_identity(current_run),
@@ -1178,6 +1189,11 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
                 "objective": current_round["incumbent_after_objective"],
             } if current_round["incumbent_after_ref"] else None,
             "feedback_ref": current_round["feedback_ref"],
+            "feedback_basis": {
+                "round_id": current_round["round_id"] - 1,
+                "evaluation_ref": current_round["feedback_ref"],
+                "suite_hash": current_run["suite_hash"],
+            } if current_round["feedback_ref"] else None,
             "task": live_task,
             "config_ref": current_run["config_ref"],
             "config_sha256": current_run["config_sha256"],
@@ -1207,6 +1223,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             "budgets": result["budgets"],
             "incumbent": result["incumbent"],
             "feedback_ref": result["feedback_ref"],
+            "feedback_basis": result["feedback_basis"],
             "task": result["task"],
         })
         return response

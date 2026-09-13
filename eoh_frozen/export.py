@@ -124,6 +124,8 @@ def read_evidence(output: Path, suite: dict) -> list[dict]:
             raise ValueError("evaluation_identity_mismatch")
         row["evaluation_line"] = line_number
         result = row["evaluation"]
+        if not isinstance(result, dict) or not isinstance(result.get("valid"), bool):
+            raise ValueError("evaluation_result_mismatch")
         if result["valid"]:
             values = result.get("instance_objectives", [])
             objective = result.get("objective")
@@ -199,6 +201,12 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
     spec = get_problem(suite["problem"])
     rows = read_evidence(output, suite)
     repair_records = _read_repair_records(output)
+    mode = "official_only"
+    for config_path in (output / "config_frozen.json", output / "worker_config.json"):
+        if config_path.is_file():
+            mode = json.loads(config_path.read_text(encoding="utf-8")).get("integration_mode", mode)
+    if mode not in {"official_only", "bounded_repair"}:
+        raise ValueError("integration_mode_invalid")
     official = {sha256_text(item["code"]): item["objective"] for item in checkpoint_individuals(output)}
     generated = []
     saved = []
@@ -247,8 +255,8 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
                            entrypoint=spec.entrypoint, search_policy_id="official_eoh" if is_generated or is_repaired else row["origin"],
                            search_policy_version=EOH_COMMIT if is_generated or is_repaired else "v1", origin=row["origin"],
                            repair_of_attempt_id=source_attempt if is_repaired else None,
-                           integration_mode="bounded_repair" if row.get("candidate_id") else "official",
-                           repair_policy_version="bounded_v2" if row.get("candidate_id") else None,
+                           integration_mode="bounded_repair" if is_repaired else mode,
+                           repair_policy_version="bounded_v2" if is_repaired or mode == "bounded_repair" else None,
                            official_objective=official.get(row["code_sha256"]))
         # The pinned engine discards selected parent IDs. Keep actual request
         # evidence instead of inventing a single parent for multi-parent EoH.

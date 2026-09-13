@@ -72,8 +72,8 @@ def save_skill(directory: Path, skill: SkillVersion, *, evidence: Mapping[str, A
         (tmp / "skill.json").write_text(
             json.dumps(skill.metadata(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
-        (tmp / "SKILL.md").write_text(
-            "# Executable algorithm skill\n\n"
+        (tmp / "ALGORITHM.md").write_text(
+            "# Executable algorithm asset\n\n"
             f"Problem: `{skill.problem}`  \n"
             f"Entrypoint: `{skill.entrypoint}`  \n"
             f"Version: `{skill.version_id}`  \n\n"

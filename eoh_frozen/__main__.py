@@ -147,7 +147,6 @@ def cmd_run(args: argparse.Namespace) -> int:
                 bridge = OpenAIPathBridge(_bridge_target(args.endpoint), key, args.model, timeout=args.request_timeout,
                                          budget=budget, request_log=results / "requests.jsonl",
                                          wall_seconds=max(0, deadline - time.monotonic()), problem=args.problem)
-                bridge.eoh_only = bool(session)
                 bridge.thinking = getattr(args, "eoh_thinking", "provider-default")
                 config["thinking"] = bridge.thinking
                 local_url = bridge.start()

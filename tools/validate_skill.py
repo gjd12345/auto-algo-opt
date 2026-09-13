@@ -75,6 +75,15 @@ def validate_skill(skill_path: str | Path) -> tuple[bool, str]:
             return False, "Skill instructions contain an unfinished TODO placeholder"
     if fence_marker is not None:
         return False, "Unclosed fenced code block"
+    # Validate local Markdown references without fetching any external URL.
+    for document in root.rglob("*.md"):
+        for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", document.read_text(encoding="utf-8")):
+            if "://" in target or target.startswith("#"):
+                continue
+            relative = target.split("#", 1)[0]
+            resolved = (document.parent / relative).resolve()
+            if not resolved.is_relative_to(root.resolve()) or not resolved.exists():
+                return False, f"Invalid local Skill reference: {document.name} -> {target}"
     return True, "Skill is valid!"
 
 

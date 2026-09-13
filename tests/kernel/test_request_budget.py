@@ -71,22 +71,12 @@ def test_events_grow_and_carry_all_fields():
     assert slot.state == "complete"
 
 
-def test_external_reconciliation_preserves_response_metadata():
+def test_completion_preserves_response_metadata():
     budget = RequestBudget(2)
-    budget.consume_external(
-        1,
-        purpose="eoh_generation",
-        problem="cvrp_construct",
-        records=[{
-            "purpose": "eoh_generation",
-            "status": 200,
-            "elapsed_seconds": 1.2,
-            "input_tokens": 10,
-            "output_tokens": 20,
-            "finish_reason": "stop",
-            "selected_content_field": "content",
-        }],
-    )
+    slot = budget.reserve(purpose="eoh_generation", problem="cvrp_construct")
+    budget.finish(slot, "complete", status=200, elapsed_seconds=1.2,
+                  input_tokens=10, output_tokens=20, finish_reason="stop",
+                  selected_content_field="content")
     event = budget.events[-1]
     assert event["finish_reason"] == "stop"
     assert event["selected_content_field"] == "content"

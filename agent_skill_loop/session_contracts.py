@@ -37,6 +37,8 @@ FORBIDDEN_PLAN_KEYS = frozenset({
 
 
 def _strict_keys(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{label}_must_be_object")
     unknown = set(value) - allowed
     if unknown:
         raise ValueError(f"{label}_unknown_fields:{','.join(sorted(unknown))}")
@@ -121,6 +123,10 @@ class PlanDocument:
     reference_skill_ref: str | None
     hypothesis: str
     search_policy: dict[str, int] | None = None
+    # Optional host-Agent explanation.  It is durable plan metadata only; the
+    # Runtime never treats it as execution authority and does not inject it
+    # into the upstream EoH prompt.
+    reasoning_summary: str | None = None
 
     @classmethod
     def from_dict(
@@ -138,14 +144,15 @@ class PlanDocument:
     ) -> "PlanDocument":
         if not isinstance(raw, Mapping):
             raise ValueError("plan_must_be_object")
+        forbidden = FORBIDDEN_PLAN_KEYS & set(raw)
+        if forbidden:
+            raise ValueError(f"plan_forbidden_field:{','.join(sorted(forbidden))}")
         _strict_keys(raw, PLAN_KEYS | PLAN_NON_AUTHORITY_METADATA_KEYS, "plan")
         if "type" in raw and raw["type"] != "json_object":
             raise ValueError("plan_metadata_type_invalid")
+        reasoning_summary = None
         if "reasoning_summary" in raw:
-            _text(raw["reasoning_summary"], "reasoning_summary", max_chars=2048)
-        forbidden = FORBIDDEN_PLAN_KEYS & set(raw)
-        if forbidden:
-            raise ValueError(f"plan_forbidden_fields:{','.join(sorted(forbidden))}")
+            reasoning_summary = _text(raw["reasoning_summary"], "reasoning_summary", max_chars=2048)
         round_id = _integer(raw.get("round_id"), "round_id")
         if round_id != expected_round_id:
             raise ValueError("round_id_mismatch")
@@ -204,10 +211,11 @@ class PlanDocument:
             skill_ref,
             _text(raw.get("hypothesis"), "hypothesis"),
             search,
+            reasoning_summary,
         )
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "round_id": self.round_id,
             "direction": self.direction,
             "operations": [item.as_dict() for item in self.operations],
@@ -218,6 +226,9 @@ class PlanDocument:
             "hypothesis": self.hypothesis,
             "search_policy": dict(self.search_policy) if self.search_policy is not None else None,
         }
+        if self.reasoning_summary is not None:
+            result["reasoning_summary"] = self.reasoning_summary
+        return result
 
 
 @dataclass(frozen=True)
@@ -276,16 +287,155 @@ def strict_json_object(text: str) -> dict[str, Any]:
     if candidate.startswith("```") and candidate.endswith("```"):
         lines = candidate.splitlines()
         candidate = "\n".join(lines[1:-1]).strip()
-    value = json.loads(candidate)
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError(f"duplicate_json_key:{key}")
+            result[key] = value
+        return result
+
+    def invalid_constant(value):
+        raise ValueError(f"nonfinite_json_number:{value}")
+
+    value = json.loads(candidate, object_pairs_hook=pairs, parse_constant=invalid_constant)
     if not isinstance(value, dict):
-        raise ValueError("role_response_must_be_object")
+        raise ValueError("document_must_be_object")
     return value
+
+
+def _objective(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    value = float(value)
+    return value if value == value and value not in {float("inf"), float("-inf")} else None
+
+
+def _row_value(row: Mapping[str, Any], key: str) -> Any:
+    value = row.get(key)
+    nested = row.get("evaluation")
+    if value is None and isinstance(nested, Mapping):
+        value = nested.get(key)
+    return value
+
+
+def _compact_candidate(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep only identity and scalar evidence; never put candidate code in feedback."""
+    result: dict[str, Any] = {}
+    for key in ("candidate_id", "revision", "origin", "evaluation_id", "code_sha256"):
+        if row.get(key) is not None:
+            result[key] = row[key]
+    objective = _objective(_row_value(row, "objective"))
+    if objective is not None:
+        result["objective"] = objective
+    values = _row_value(row, "instance_objectives")
+    if isinstance(values, list) and all(_objective(value) is not None for value in values):
+        result["instance_objectives"] = [float(value) for value in values]
+    if _row_value(row, "valid") is not None:
+        result["valid"] = _row_value(row, "valid") is True
+    return result
+
+
+def build_feedback_summary(
+    facts: Mapping[str, Any],
+    *,
+    evaluation_ref: str,
+    evaluation_sha256: str,
+    previous_round_id: int,
+) -> dict[str, Any]:
+    """Derive one bounded, evidence-only summary for the next EoH round.
+
+    This deliberately does not generate advice or select an algorithm family.
+    The host Coding Agent owns that interpretation; the Runtime contributes
+    only trusted identities, scores, per-instance values, and error counts.
+    """
+    raw_candidates = facts.get("candidates")
+    candidates = [item for item in raw_candidates if isinstance(item, Mapping)] if isinstance(raw_candidates, list) else []
+    generated = [item for item in candidates if item.get("origin") in {"generated", "generated_repair"}]
+    valid_generated = [item for item in generated if _row_value(item, "valid") is True and _objective(_row_value(item, "objective")) is not None]
+    invalid_generated = [item for item in generated if _row_value(item, "valid") is not True]
+    best_generated = min(valid_generated, key=lambda item: _objective(_row_value(item, "objective"))) if valid_generated else None
+
+    baseline = facts.get("baseline") if isinstance(facts.get("baseline"), Mapping) else {}
+    after = facts.get("incumbent_after") if isinstance(facts.get("incumbent_after"), Mapping) else {}
+    incumbent_row = None
+    after_hash = after.get("code_sha256")
+    if after_hash:
+        incumbent_row = next((item for item in candidates if item.get("code_sha256") == after_hash), None)
+    if incumbent_row is None and after.get("objective") is not None:
+        incumbent_row = next((item for item in candidates if _objective(_row_value(item, "objective")) == _objective(after.get("objective")) and _row_value(item, "valid") is True), None)
+
+    incumbent: dict[str, Any] | None = None
+    if after:
+        incumbent = {key: after[key] for key in ("ref", "code_sha256", "objective", "origin", "evaluation_id") if after.get(key) is not None}
+        if incumbent_row is not None:
+            compact = _compact_candidate(incumbent_row)
+            for key in ("code_sha256", "objective", "origin", "evaluation_id", "instance_objectives"):
+                if key in compact and key not in incumbent:
+                    incumbent[key] = compact[key]
+    elif _row_value(baseline, "valid") is True and _objective(_row_value(baseline, "objective")) is not None:
+        incumbent = {
+            "origin": "baseline",
+            "code_sha256": facts.get("baseline_code_sha256"),
+            "objective": float(_row_value(baseline, "objective")),
+            "instance_objectives": [float(value) for value in (_row_value(baseline, "instance_objectives") or [])],
+        }
+
+    compact_best = _compact_candidate(best_generated) if best_generated is not None else None
+    incumbent_objective = _objective(incumbent.get("objective")) if incumbent else None
+    best_objective = _objective(compact_best.get("objective")) if compact_best else None
+    objective_delta = best_objective - incumbent_objective if best_objective is not None and incumbent_objective is not None else None
+    improvement = incumbent_objective - best_objective if objective_delta is not None else None
+
+    error_groups: dict[str, dict[str, Any]] = {}
+    for item in invalid_generated:
+        code = str(_row_value(item, "error_code") or "unknown_error")[:80]
+        group = error_groups.setdefault(code, {"error_code": code, "count": 0, "evidence_refs": [], "details": []})
+        group["count"] += 1
+        evidence = item.get("evaluation_id")
+        if evidence:
+            group["evidence_refs"].append(f"evaluation:{evidence}")
+        detail = _row_value(item, "error_detail")
+        if detail and str(detail) not in group["details"] and len(group["details"]) < 3:
+            group["details"].append(str(detail)[:160])
+    major_errors = sorted(error_groups.values(), key=lambda item: (-item["count"], item["error_code"]))[:8]
+
+    evidence_refs = facts.get("evidence_refs")
+    evidence_refs = [str(item) for item in evidence_refs if isinstance(item, str)][:32] if isinstance(evidence_refs, list) else []
+    source = {
+        "round_id": previous_round_id,
+        "evaluation_ref": evaluation_ref,
+        "evaluation_facts_sha256": evaluation_sha256,
+        "suite_hash": facts.get("suite_hash"),
+        "evaluator_hash": facts.get("evaluator_hash"),
+    }
+    summary = {
+        "source": source,
+        "incumbent": incumbent,
+        "best_generated_candidate": compact_best,
+        "objective_delta": objective_delta,
+        "improvement_vs_incumbent": improvement,
+        "per_instance": {
+            "baseline": list(_row_value(baseline, "instance_objectives") or []),
+            "incumbent": list((incumbent or {}).get("instance_objectives") or []),
+            "best_generated": list((compact_best or {}).get("instance_objectives") or []),
+        },
+        "generated_candidate_counts": {
+            "total": len(generated),
+            "valid": len(valid_generated),
+            "invalid": len(invalid_generated),
+        },
+        "major_errors": major_errors,
+        "evidence_refs": evidence_refs,
+    }
+    return summary
 
 
 def compile_round_context(
     plan: PlanDocument,
     *,
     memory_summaries: list[Mapping[str, Any]] | None = None,
+    feedback_summary: Mapping[str, Any] | None = None,
     search_policy: Mapping[str, int] | None = None,
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
 ) -> str:
@@ -299,6 +449,7 @@ def compile_round_context(
         "preserve": plan.preserve,
         "reference_skill_ref": plan.reference_skill_ref,
         "hypothesis": plan.hypothesis,
+        "feedback_summary": dict(feedback_summary) if isinstance(feedback_summary, Mapping) else None,
         "search_policy": dict(search_policy if search_policy is not None else plan.search_policy)
         if (search_policy is not None or plan.search_policy is not None) else None,
         "memory": [

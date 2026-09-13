@@ -15,7 +15,7 @@ import re
 import tempfile
 import hashlib
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -128,6 +128,8 @@ class MemoryAPI:
 
     def _iter(self) -> Iterable[tuple[Path, MemoryEntry, int]]:
         for path in sorted(self.store.glob("*/*.md")):
+            if not path.resolve().is_relative_to(self.store):
+                continue
             if path.name == "MEMORY.md":
                 continue
             match = _FILE.fullmatch(path.name)
@@ -230,6 +232,9 @@ class MemoryAPI:
             yield
 
     def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
+        # The parser exposes a stripped body; publish and idempotency must use
+        # that same representation, including for crash-replayed submissions.
+        entry = replace(entry, body=entry.body.strip())
         # based_on is a CAS update of the SAME entry; related_refs are provenance
         # for a new or merged full snapshot. Previous versions are never removed.
         with self._writer():
@@ -267,6 +272,8 @@ class MemoryAPI:
                 raise ValueError("memory_based_on_not_found")
             version = latest + 1
         path = self.store / entry.project / f"{entry.type}_{entry.name}__v{version:04d}.md"
+        if not path.resolve().is_relative_to(self.store) or not path.with_suffix(".json").resolve().is_relative_to(self.store):
+            raise ValueError("memory_reference_outside_store")
         if path.exists():
             raise ValueError("memory_version_conflict")
         _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs), "operation_key": operation_key,

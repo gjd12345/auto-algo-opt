@@ -18,19 +18,32 @@ Required fields:
   "memory_basis": [],
   "reference_skill_ref": null,
   "hypothesis": "The change may reduce avoidable capacity waste; this is unproven.",
-  "search_policy": null
+  "search_policy": null,
+  "reasoning_summary": "The host Agent selected this bounded experiment because ..."
 }
 ```
 
+`reasoning_summary` is optional, non-authoritative metadata for the host
+Agent's explanation. It is saved with the submitted Plan but is not a source
+of Runtime facts and is not injected into the official EoH context.
+
 Allowed operation types are `add`, `remove`, `replace`, and `preserve`. Each operation has only `type`, `target`, and `mechanism` (an optional `mechanism_note` is non-authoritative). Do not include code, objective, validity, budget, provider, evaluator, operator, or stop fields.
 
-For round 2 and later, `feedback_basis` must be copied exactly from the current state's `feedback_ref` contract, including the previous round number, exact evaluation reference, and suite hash. It must point to the immediately previous round. Use `reference_skill_ref` only for the exact incumbent skill reference supplied by the Runtime. A selected Memory reference must be an exact, completely-read reference; submit at most two.
+For round 2 and later, copy `state.feedback_basis` exactly, including the previous round number, exact evaluation reference, and suite hash. `state.feedback_ref` is the legacy path-only field, not an object. The basis must point to the immediately previous round. Use `reference_skill_ref` only for the exact incumbent skill reference supplied by the Runtime. A selected Memory reference must be an exact, completely-read reference; submit at most two.
 
 `search_policy` is optional and Runtime-bounded. Use `null` to inherit the
 Session defaults, or provide any subset of `pop_size`, `n_pop`, and
 `max_sample_nums` to request a different round allocation. The Runtime records
 the effective values and rejects a value outside the frozen limits with
 `PLAN_SEARCH_POLICY_OUT_OF_BOUNDS`; this field cannot change hard budgets.
+
+For round 2 and later, the EoH context also contains a Runtime-generated
+`feedback_summary`. It is a bounded fact record from the previous round with
+the incumbent and best generated identities/objectives/delta, per-instance
+objectives, generated valid/invalid counts, major errors, evidence references,
+and suite/evaluator hashes. It never contains candidate source code or a
+Runtime-selected search recommendation. The Agent must use these facts when
+explaining the next Plan, but remains responsible for the search decision.
 
 ## `evaluation.json`
 
@@ -72,4 +85,4 @@ When Memory is enabled, choose exactly one of:
 - an `insight` with `name`, `description`, `project`, `scene`, `body`, and optional evidence/basis references;
 - a `solution` with the same content plus exact `based_on` and `evidence_ref`, only when the verified generated skill passes the frozen solution threshold.
 
-When Memory is disabled, use `{"kind":"disabled"}`. Never set a Memory action to publish a baseline, an invalid candidate, or a candidate whose code/evaluation identity does not match the supplied facts.
+When Memory is disabled, use `{"kind":"disabled"}`. A baseline or invalid candidate cannot become a solution. An invalid candidate may support a specific failure insight with its real evidence reference; do not turn one failure into an unconditional ban or fabricate code/evaluation identity.

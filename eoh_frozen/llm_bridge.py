@@ -46,7 +46,6 @@ class OpenAIPathBridge:
         request_log: Path | None = None,
         wall_seconds: float | None = None,
         problem: str = PROBLEM_CVRP,
-        gateway_token: str | None = None,
     ) -> None:
         self.target_url = target_url
         self.api_key = api_key
@@ -60,9 +59,6 @@ class OpenAIPathBridge:
             self.request_log.parent.mkdir(parents=True, exist_ok=True)
         self.wall_deadline = time.monotonic() + float(wall_seconds) if wall_seconds is not None else None
         self.problem = problem
-        self.gateway_token = gateway_token
-        self.eoh_reserve = 0
-        self.eoh_only = False
         self.thinking = "provider-default"
         self.repair_limit: int | None = None
         self.repair_used = 0
@@ -89,19 +85,12 @@ class OpenAIPathBridge:
             def do_POST(self) -> None:  # noqa: N802
                 length = int(self.headers.get("Content-Length") or 0)
                 raw = self.rfile.read(length) if length else b"{}"
-                openai_request = False
                 try:
-                    if bridge.gateway_token and self.headers.get("Authorization") != f"Bearer {bridge.gateway_token}":
-                        raise ValueError("gateway_unauthorized")
                     payload = json.loads(raw.decode("utf-8"))
-                    openai_request = "messages" in payload
-                    prompt = str(payload["messages"][-1]["content"]) if openai_request else str(payload.get("prompt") or "")
-                    purpose = self.headers.get("X-Request-Purpose") if openai_request else str(payload.get("purpose") or "") or None
-                    if bridge.gateway_token and purpose not in {"eoh_generation", "eoh_probe", "eoh_repair"}:
-                        raise ValueError("gateway_purpose_denied")
+                    prompt = str(payload.get("prompt") or "")
+                    purpose = str(payload.get("purpose") or "") or None
                     text = bridge._forward(prompt, purpose=purpose)
-                    response = dict(bridge.last_completion) if openai_request else {"content": [text], "request_index": bridge.last_request_index}
-                    response["gateway_request_index"] = bridge.last_request_index
+                    response = {"content": [text], "request_index": bridge.last_request_index}
                     body = json.dumps(response).encode("utf-8")
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
@@ -114,13 +103,8 @@ class OpenAIPathBridge:
                     code = bridge.last_error if bridge.terminal else getattr(exc, "error_code", str(exc))
                     response = {"error": type(exc).__name__, "error_code": code,
                                 "gateway_request_index": bridge.last_request_index}
-                    if bridge.gateway_token and openai_request:
-                        # Return a transport envelope so the child can retain
-                        # the global failure ID, even for HTTP/auth errors.
-                        response["gateway_error"] = {"code": code, "status": getattr(exc, "status", None),
-                                                     "terminal": bridge.terminal}
                     err = json.dumps(response).encode("utf-8")
-                    self.send_response(200 if "gateway_error" in response else 500)
+                    self.send_response(500)
                     self.send_header("Content-Type", "application/json")
                     self.send_header("Content-Length", str(len(err)))
                     self.end_headers()
@@ -164,9 +148,12 @@ class OpenAIPathBridge:
             return self._forward_serial(prompt, purpose=purpose)
 
     def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
-        if self.eoh_only and purpose is not None and purpose not in {"eoh_probe", "eoh_generation", "eoh_repair"}:
-            raise ValueError("gateway_purpose_denied")
+        # Clear provenance before *any* validation or terminal check.  An
+        # invalid local purpose must never expose the index of the previous
+        # provider request in its diagnostic response.
         self.last_request_index = None
+        if purpose is not None and purpose not in {"eoh_probe", "eoh_generation", "eoh_repair"}:
+            raise ValueError("gateway_purpose_denied")
         # Official EoH's local client retries a failed HTTP response. Once a
         # request has an authentication failure or an unknown result, retries
         # must not create another paid outbound attempt. Returning a bridge
@@ -179,10 +166,8 @@ class OpenAIPathBridge:
             self.last_error = "wall_time_exhausted"
             self.terminal = True
             raise BudgetExhausted("wall_time_exhausted")
-        if purpose not in {"eoh_repair", "eoh_generation", "eoh_probe", "plan", "evaluate"}:
+        if purpose is None:
             purpose = "eoh_probe" if prompt.strip() == "1+1=?" else "eoh_generation"
-        if purpose.startswith("eoh_") and self.eoh_reserve > 0 and self.budget and self.budget.remaining is not None and self.budget.remaining <= self.eoh_reserve:
-            raise BudgetExhausted("request_limit_evaluate_reserved")
         if purpose == "eoh_repair" and self.repair_limit is not None and self.repair_used >= self.repair_limit:
             raise BudgetExhausted("repair_request_limit")
         payload: dict[str, Any] = {
@@ -191,7 +176,7 @@ class OpenAIPathBridge:
             "temperature": 0.2 if purpose == "eoh_repair" else 1.0,
             "max_tokens": 8192 if purpose == "eoh_repair" else 16384,
         }
-        if purpose in {"eoh_repair", "plan", "evaluate"}:
+        if purpose == "eoh_repair":
             # Repair has a machine-checked envelope.  Asking the provider for
             # JSON output prevents a long reasoning preamble from consuming the
             # whole completion and leaving no executable repair document.
@@ -225,7 +210,7 @@ class OpenAIPathBridge:
         if remaining is not None:
             request_timeout = min(self.timeout, max(0.05, remaining))
         try:
-            if self.eoh_only and slot is not None and self.request_log is not None:
+            if slot is not None and self.request_log is not None:
                 _atomic_write_text(self.request_log.parent / "request_inputs" / f"request_{slot.index}.json", json.dumps(payload, ensure_ascii=False))
             if slot is not None and hasattr(self.budget, "mark_sent"):
                 self.budget.mark_sent(slot)
@@ -235,12 +220,6 @@ class OpenAIPathBridge:
             parsed = json.loads(raw.decode("utf-8"))
             if not isinstance(parsed, dict):
                 raise ValueError("invalid_completion_object")
-            if "gateway_error" in parsed:
-                error = parsed["gateway_error"]
-                self._save_exchange(slot, prompt, "", metadata={"raw_response": parsed,
-                    "gateway_request_index": parsed.get("gateway_request_index"),
-                    "selected_content_field": None})
-                raise ProviderFailure(error["code"], error.get("status"), retryable=not error.get("terminal", True))
             choices = parsed.get("choices") or []
             if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict) or not isinstance(choices[0].get("message"), dict):
                 raise ValueError("invalid_completion_choices")
@@ -296,7 +275,7 @@ class OpenAIPathBridge:
         reasoning = message.get("reasoning_content") if isinstance(message, dict) else None
         finish_reason = choices[0].get("finish_reason") if choices and isinstance(choices[0], dict) else None
         response_metadata = {
-            "request_payload": payload if self.eoh_only else None,
+            "request_payload": payload,
             "finish_reason": finish_reason,
             "content_present": isinstance(content, str) and bool(content.strip()),
             "reasoning_content_present": isinstance(reasoning, str) and bool(reasoning.strip()),
