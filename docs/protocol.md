@@ -3,9 +3,20 @@
 **版本：** v1.1  
 **日期：** 2026-09-12  
 **状态：** Normative implementation specification  
-**上位文档：** `algorithm_optimization_skill_v1.1.md`
+**上位文档：** `algorithm_optimization_skill_architecture_plan.md`
 
 > 本文定义 Coding Agent 与 Algorithm Optimization Skill Runtime 之间的规范协议。本文中的 MUST / MUST NOT / SHOULD / MAY 为实现约束。
+
+Phase 4.1（2026-09-13）及 Phase 5（2026-09-13）补充合同：
+
+- 新建 Session 的 config schema 为 `algorithm-optimization-session-config/v1.1`。恢复不自动改写旧 Session 的冻结身份；旧代码需要由对应版本处理。
+- `state` 报告 `integrity.runtime_identity=ok|mismatch`；运行时代码 hash 不匹配时，所有 mutation（含 execute、collect、Memory 正文消费）返回 `RUNTIME_IDENTITY_MISMATCH`。查看 state/已有评测/Memory 摘要与 stop 仍可使用；原有配置、套件和证据校验继续生效。
+- Supervisor 启动独立 Execution Runner，先登记 `task_processes` 并绑定进程所有权，再通过管道放行。Runner 包含 `cmd_run()` 的初始化、执行和收尾；Supervisor 按同一绝对期限和 stop 信号监控它。Windows Job 持有整个执行树，关闭 owner 即终止子孙；POSIX 使用独立进程组及已有 parent watchdog。终止清理可能有少量调度延迟，不在到期后启动新的模型或 solver。
+- Memory writer 使用持久文件上的非阻塞 OS 锁。锁文件存在不等于有活跃 owner；崩溃由内核释放锁，不以文件年龄抢锁、不 unlink 锁文件。旧 PID 锁仅在确认该 PID 已退出时接管；混用旧版和新版 Memory writer 不受支持。
+- Memory 提交由短 SQLite 接受事务、事务外 Markdown 发布、短 SQLite 结果事务组成。operation_key 保持跨崩溃幂等；同一提案另由 OS 锁串行化。accepted/pending 时 finish-round 提示重放原提交。并发 stop 可以完成，已开始的 Memory 发布随后记录结果，不覆盖 stop 状态。
+- Coding Agent Skill 的可加载包固定在 `skills/algorithm-optimization/`，其完整文件集合参与新 Session 的 `optimization_skill.content_sha256`。旧 `workflow` CLI 仅返回 `WORKFLOW_DEPRECATED`，不得再启动主动 Plan/Evaluate 链；官方 EoH `run` 的新文档参数使用 `--eoh-model`、`--eoh-endpoint`、`--eoh-api-key-env`，旧参数仅作过渡别名。
+
+新客户端应提交 `plan_alignment=misaligned` 表示偏离计划；历史 `deviated` 拼写仍兼容。
 
 ---
 

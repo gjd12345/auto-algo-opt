@@ -5,6 +5,20 @@
 **数据库：** Python stdlib `sqlite3`  
 **建议文件：** `<run_root>/session.sqlite3`
 
+Phase 4.1 增量：新 Session 使用 config schema `algorithm-optimization-session-config/v1.1`，SQLite schema 标识仍为 `algorithm-optimization-session/v1.1`。新增以下内部执行进程登记表（现有 `tasks.process_id` 继续表示 Supervisor）：
+
+```sql
+CREATE TABLE task_processes (
+    task_id TEXT PRIMARY KEY REFERENCES tasks(task_id),
+    process_id INTEGER NOT NULL,
+    started_at_utc TEXT NOT NULL
+);
+```
+
+这张表在 init 创建；Supervisor 放行 Runner 前提交 PID/时间身份。恢复须确认 Supervisor 与已登记 Runner 均已退出，才能对账为终态。旧 Session 的恢复 mutation 受 runtime hash 门禁约束，不自动迁移表或改写冻结 hash。
+
+`memory_writes.status='accepted'` 是可恢复的发布中状态；接受和最终结果各自推进 state_version，并记录审计。Markdown 写入、索引重建及 Memory 文件锁等待不持有 Session SQLite 写事务；并发 stop 之后提交 Memory 结果时使用最新 state_version。
+
 ---
 
 ## 1. 目标

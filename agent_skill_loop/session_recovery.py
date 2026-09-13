@@ -57,6 +57,9 @@ def recover_dead_task(root, con, task):
         return None
     if process_alive(task["process_id"],task["started_at_utc"]):
         return None
+    runner=con.execute("SELECT * FROM task_processes WHERE task_id=?",(task["task_id"],)).fetchone()
+    if runner and process_alive(runner["process_id"],runner["started_at_utc"]):
+        return None  # Do not claim terminal until its parent watchdog has fired.
     observed=task["heartbeat_at_utc"]
     if observed is None:
         con.execute("UPDATE tasks SET heartbeat_at_utc=? WHERE task_id=?",(db._utc_now(),task["task_id"]))

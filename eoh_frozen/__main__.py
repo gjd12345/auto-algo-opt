@@ -236,10 +236,11 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 def add_run_arguments(run: argparse.ArgumentParser) -> None:
     run.add_argument("--problem", default="cvrp_construct")
-    run.add_argument("--model", required=True)
+    run.add_argument("--eoh-model", "--model", dest="model", required=True,
+                     help="Model used by the official EoH engine (legacy --model alias accepted)")
     run.add_argument("--output", required=True)
-    run.add_argument("--endpoint", default="https://api.deepseek.com/v1/chat/completions")
-    run.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
+    run.add_argument("--eoh-endpoint", "--endpoint", dest="endpoint", default="https://api.deepseek.com/v1/chat/completions")
+    run.add_argument("--eoh-api-key-env", "--api-key-env", dest="api_key_env", default="DEEPSEEK_API_KEY")
     run.add_argument("--request-timeout", type=float, default=180.0)
     run.add_argument("--solver-timeout", type=float, default=20.0)
     run.add_argument("--seed", type=int, default=DEFAULT_SEED)

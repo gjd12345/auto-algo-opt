@@ -225,17 +225,9 @@ class MemoryAPI:
 
     @contextmanager
     def _writer(self):
-        lock = self.store / ".writer.lock"
-        try:
-            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            raise ValueError("memory_writer_busy") from None
-        try:
-            os.write(fd, str(os.getpid()).encode("ascii"))
+        from agent_skill_loop.file_lock import exclusive_file_lock
+        with exclusive_file_lock(self.store / ".writer.lock", busy="memory_writer_busy", legacy_pid=True):
             yield
-        finally:
-            os.close(fd)
-            lock.unlink()
 
     def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
         # based_on is a CAS update of the SAME entry; related_refs are provenance

@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import sys
 import time
+import subprocess
+import sqlite3
 
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop.skill_store import load_skill
@@ -20,10 +22,13 @@ def task_output(root,con,task):
 
 
 def stop_requested(root, task_id):
-    con=db._connect(root/"session.sqlite3")
+    # A locked DB must not block the independent deadline monitor for seconds.
+    con=sqlite3.connect(root/"session.sqlite3",timeout=.05)
     try:
         row=con.execute("SELECT state FROM tasks WHERE task_id=?",(task_id,)).fetchone()
-        return row is None or row["state"]!="RUNNING"
+        return row is None or row[0]!="RUNNING"
+    except sqlite3.OperationalError:
+        return False
     finally: con.close()
 
 
@@ -49,10 +54,11 @@ def mark_terminal(root, task_id, reason, elapsed, extra=None):
 
 
 def run_task(root, task_id):
-    from eoh_frozen.__main__ import add_run_arguments, cmd_run
     root=Path(root).resolve()
     started=time.monotonic()
     reason="FAILED"
+    runner=None
+    tree=None
     con=db._connect(root/"session.sqlite3")
     try:
         with db._transaction(con):
@@ -68,12 +74,76 @@ def run_task(root, task_id):
             elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
             walls=[x for x in (row["round_wall_seconds"],None if row["engine_wall_seconds"] is None else row["engine_wall_seconds"]-elapsed) if x is not None]
             wall=max(0,min(walls)) if walls else 86400*365
+            deadline=time.monotonic()+wall
             version=row["state_version"]+1
             con.execute("UPDATE tasks SET state='RUNNING',process_id=?,started_at_utc=?,hard_deadline_utc=? WHERE task_id=?",
                 (os.getpid(),db._utc_now(),(datetime.now(timezone.utc)+timedelta(seconds=wall)).isoformat(),task_id))
             con.execute("UPDATE rounds SET updated_state_version=? WHERE run_id=? AND round_id=?",(version,row["run_id"],rd["round_id"]))
             con.execute("UPDATE runs SET state_version=? WHERE run_id=?",(version,row["run_id"]))
             db._queue_audit(con,row["run_id"],version,[("state_transition",{"task_id":task_id,"task_state":"RUNNING"})])
+        # This process owns the deadline, independently of cmd_run and its
+        # initialization/finalization. The runner waits for a durable launch
+        # receipt before starting EoH work.
+        runner=subprocess.Popen([sys.executable,"-m","agent_skill_loop.session_runner",str(root),task_id,str(os.getpid())],
+            stdin=subprocess.PIPE, start_new_session=os.name!="nt",
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name=="nt" else 0)
+        from agent_skill_loop.process_tree import ExecutionTree
+        tree=ExecutionTree(runner)
+        with db._transaction(con):
+            con.execute("INSERT INTO task_processes(task_id,process_id,started_at_utc) VALUES (?,?,?)",(task_id,runner.pid,db._utc_now()))
+            current=db._require_run(con,action="runner-started",run_id=None)
+            current_task=con.execute("SELECT * FROM tasks WHERE task_id=?",(task_id,)).fetchone()
+            from agent_skill_loop.session_ledger import mark_effect
+            if current_task["state"]=="RUNNING" and current["state"]=="RUNNING":
+                mark_effect(con,current,current_task)
+        runner.stdin.write(b"go\n")
+        runner.stdin.close()
+        reason=monitor_runner(runner,deadline,lambda: stop_requested(root,task_id),tree=tree)
+        if reason is not None:
+            return
+        output=task_output(root,con,task)
+        summary=json.loads((output/"summary.json").read_text(encoding="utf-8"))
+        if stop_requested(root,task_id): reason="CANCELLED"
+        elif summary["status"]=="provider_failed": reason="PROVIDER_TERMINAL"
+        elif summary["stop_reason"]=="wall_time_limit": reason="DEADLINE_EXCEEDED"
+        else: reason="SUCCEEDED" if summary.get("loop_completed") else "FAILED"
+    except BaseException as exc:
+        reason=reason or "FAILED"
+        print(f"Session supervisor failed: {type(exc).__name__}",file=sys.stderr)
+    finally:
+        if runner is not None and runner.poll() is None:
+            if tree is not None: tree.terminate()
+            else:
+                runner.kill()
+                runner.wait(timeout=5)
+        if tree is not None: tree.close()
+        con.close()
+        mark_terminal(root,task_id,reason or "FAILED",time.monotonic()-started)
+
+
+def monitor_runner(runner, deadline, stopped, *, tree):
+    """Enforce stop/deadline even if the execution adapter is deadlocked."""
+    while runner.poll() is None:
+        reason="DEADLINE_EXCEEDED" if time.monotonic()>=deadline else "CANCELLED" if stopped() else None
+        if reason:
+            tree.terminate()
+            if runner.poll() is None:
+                raise RuntimeError("execution_runner_termination_failed")
+            return reason
+        time.sleep(.05)
+    return None if runner.returncode==0 else "FAILED"
+
+
+def execute_task(root, task_id):
+    from eoh_frozen.__main__ import add_run_arguments, cmd_run
+    con=db._connect(root/"session.sqlite3")
+    try:
+        row=db._require_run(con,action="execution-runner",run_id=None)
+        config,suite=db._verify_files(root,row,action="execution-runner")
+        task=con.execute("SELECT * FROM tasks WHERE task_id=?",(task_id,)).fetchone()
+        if task["state"]!="RUNNING" or row["state"]!="RUNNING": return
+        rd=con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",(row["run_id"],task["round_id"])).fetchone()
+        wall=max(0,(datetime.fromisoformat(task["hard_deadline_utc"])-datetime.now(timezone.utc)).total_seconds())
         parser=argparse.ArgumentParser()
         add_run_arguments(parser)
         output=task_output(root,con,task)
@@ -92,17 +162,8 @@ def run_task(root, task_id):
         args.parent_skill=str(root/rd["incumbent_before_ref"]) if rd["incumbent_before_ref"] else None
         args.session={"root":str(root),"task_id":task_id}
         cmd_run(args)
-        summary=json.loads((output/"summary.json").read_text(encoding="utf-8"))
-        if stop_requested(root,task_id): reason="CANCELLED"
-        elif summary["status"]=="provider_failed": reason="PROVIDER_TERMINAL"
-        elif summary["stop_reason"]=="wall_time_limit": reason="DEADLINE_EXCEEDED"
-        else: reason="SUCCEEDED" if summary.get("loop_completed") else "FAILED"
-    except BaseException as exc:
-        # No request is replayed following an ambiguous worker failure.
-        print(f"Session supervisor failed: {type(exc).__name__}",file=sys.stderr)
     finally:
         con.close()
-        mark_terminal(root,task_id,reason,time.monotonic()-started)
 
 
 def collect_facts(root, con, run, rd, task):
@@ -144,10 +205,12 @@ def collect_facts(root, con, run, rd, task):
         if skill.mean_objective!=before["objective"] or skill.suite_hash!=run["suite_hash"] or skill.evaluator_hash!=run["evaluator_hash"]: raise ValueError("incumbent_identity_mismatch")
     for choice in choices:
         if after is None or choice["objective"]<after["objective"]: after=choice
+    def request_ref(ref):
+        return f"{prefix}/{ref}" if ref and ref.startswith("results/") else ref
     candidates=[{"candidate_id":x.get("candidate_id") or x["origin"],"revision":x.get("revision") or "original", "origin":x["origin"],
                  "code_sha256":x["code_sha256"],"evaluation_id":x["evaluation_id"],"code":x["code"],**x["evaluation"],
-                 "generation_request_ref":x.get("generation_request_ref") or (f"{prefix}/results/exchanges/request_{x['source_request_index']}.json" if x.get("source_request_index") else None),
-                 "repair_request_ref":x.get("repair_request_ref")} for x in rows]
+                 "generation_request_ref":request_ref(x.get("generation_request_ref")) or (f"{prefix}/results/exchanges/request_{x['source_request_index']}.json" if x.get("source_request_index") else None),
+                 "repair_request_ref":request_ref(x.get("repair_request_ref"))} for x in rows]
     return {"round_id":rd["round_id"],"problem":run["problem"],"suite_hash":run["suite_hash"],"evaluator_hash":run["evaluator_hash"],
             "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
             "incumbent_before":before,"incumbent_after":after,"candidates":candidates,"exports":exported,

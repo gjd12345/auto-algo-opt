@@ -1,6 +1,6 @@
 # Session Phase 1 修复与 Phase 2–4 实施验收
 
-日期：2026-09-13。基础提交：`4770c6c`，分支：`agent-skill-loop-0908`。本次代码尚未提交或 push。
+日期：2026-09-13。基础提交：`4770c6c`，分支：`agent-skill-loop-0908`。本报告所述实现已由 `ec696ad` 提交并推送；后续 Phase 1–4 增量验收见 `69effae`。
 
 结论：Phase 1 的初始化事务、CAS 和执行配置缺口已修复；Phase 2–4 的主链已实现并在 Windows / Python 3.11 上验证。Coding Agent 提交 Plan、Evaluate 和 Memory proposal，Session 负责合同、状态和证据，官方 EoH 负责实际搜索。Phase 5 的 Skill 包装和迁移未实施。
 
@@ -94,4 +94,4 @@ Phase 4：Evaluate 使用结构化 observations/evidence_refs、hypotheses/confi
 - Memory proposal：`rounds/round_0001/memory_proposal.json`；Markdown 位于独立 `outputs/session_phase234_live_final_memory_20260912/`。
 - 控制面与请求/solver 对账：`session.sqlite3`；hash-chain projection：`journal/events.jsonl`。
 
-API key 未写入这些产物或源码。四份原始设计文档和用户提供的 drawio 资产原本未跟踪，本次未做 git add；`docs/stage12_contract.md` 原有删除也未处理。交付前仍需单独决定提交范围。
+API key 未写入这些产物或源码。报告生成时未跟踪的四份设计文档、drawio 资产及 `docs/stage12_contract.md` 删除，未随 `69effae` 提交；它们仍由工作区保留，未纳入本报告对应的代码提交范围。

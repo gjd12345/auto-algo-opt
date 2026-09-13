@@ -1,6 +1,6 @@
 # Phase 1–4 实施复核与验收
 
-日期：2026-09-13。基线提交：`ec696ad`；本次增量修复在工作区，未提交、未 push。
+日期：2026-09-13。基线提交：`ec696ad`；本报告对应增量修复已由 `69effae` 提交并推送。
 依据：`docs/algorithm_optimization_skill_architecture_plan.md` v1.1 的 Phase 1–4。
 
 ## 结论与范围
@@ -73,4 +73,4 @@ Linux 生命周期、机器断电级恢复未在本机实测；CI 有 Linux/Wind
 
 ## 交付边界
 
-保留用户已有未跟踪设计文档、drawio 资产和 `docs/stage12_contract.md` 删除状态，未替用户暂存或提交。未实施 Phase 5。正式的两轮真实验收与跨平台验收仍为待验，不把功能实现和完整验收混为一谈。
+本报告生成后，用户要求 push；本报告对应的 Phase 1–4 修复已由 `69effae` 提交推送。四份设计文档、drawio 资产及 `docs/stage12_contract.md` 删除当时仍保留在工作区，未作为该提交的范围。未实施 Phase 5。本报告当时的两轮真实验收与跨平台验收为待验；后续 Phase 4.1 状态见独立报告。

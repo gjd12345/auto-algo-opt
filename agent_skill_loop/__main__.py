@@ -1,4 +1,4 @@
-"""CLI: prepare / smoke / run / evaluate-skill / import-skill. No research-protocol flags."""
+"""CLI for the Algorithm Optimization Skill and its Session runtime."""
 
 from __future__ import annotations
 
@@ -96,24 +96,17 @@ def cmd_import_skill(args: argparse.Namespace) -> int:
 
 
 def cmd_workflow(args: argparse.Namespace) -> int:
-    from agent_skill_loop.client import load_local_env
-    from agent_skill_loop.memory import MemoryAPI
-    from agent_skill_loop.workflow import WorkflowRunner
-    load_local_env()
-    memory = MemoryAPI(Path(args.memory_store)) if args.memory_store else None
-    result = WorkflowRunner(
-        Path(args.output), problem=args.problem, model=args.model, endpoint=args.endpoint,
-        api_key_env=args.api_key_env, max_rounds=args.rounds, max_requests=args.max_requests,
-        wall_seconds=args.wall_seconds, seed=args.seed, size=args.size, count=args.count,
-        pop_size=args.pop_size, n_pop=args.n_pop, max_sample_nums=args.max_sample_nums,
-        solver_timeout=args.solver_timeout, request_timeout=args.request_timeout, memory=memory,
-        solution_min_relative_improvement=args.solution_min_relative_improvement,
-        repair_mode=args.repair_mode,
-        max_repairs_per_candidate=args.max_repairs_per_candidate,
-        max_repair_requests_total=args.max_repair_requests_total,
-    ).run()
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result["status"] == "completed" else 2
+    # Keep the parser for one transition release so old invocations fail with
+    # an actionable, machine-readable response.  In particular, do not load
+    # the environment or instantiate the legacy model-driven WorkflowRunner.
+    print(json.dumps({
+        "ok": False,
+        "error": {
+            "code": "WORKFLOW_DEPRECATED",
+            "message": "Use session init and the algorithm-optimization Coding Agent Skill.",
+        },
+    }, ensure_ascii=False, indent=2))
+    return 2
 
 
 def _print_session(payload: dict) -> int:

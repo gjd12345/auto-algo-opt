@@ -29,7 +29,7 @@ from agent_skill_loop.problems.base import get_problem
 
 
 SCHEMA_VERSION = "algorithm-optimization-session/v1.1"
-CONFIG_SCHEMA = "algorithm-optimization-session-config/v1"
+CONFIG_SCHEMA = "algorithm-optimization-session-config/v1.1"
 RUNTIME_VERSION = "0.1.0"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
 OPTIMIZATION_SKILL_VERSION = "v1.1"
@@ -116,9 +116,21 @@ def _runtime_source_hash() -> str:
 
 
 def _skill_content_hash() -> str:
-    # The actual Coding Agent skill package is introduced in Phase 5.  Phase 1
-    # still freezes an explicit identity descriptor rather than pretending a
-    # mutable documentation file is executable skill content.
+    """Hash the shipped Coding Agent Skill, not only its label.
+
+    The content is part of a Session's frozen policy identity.  Keeping the
+    fallback descriptor makes development checkouts without the optional
+    package diagnosable, while a normal v1.1 checkout always hashes the
+    complete skill directory (instructions, references and UI metadata).
+    """
+    root = Path(__file__).resolve().parents[1]
+    skill_root = root / "skills" / "algorithm-optimization"
+    if skill_root.is_dir():
+        digest = hashlib.sha256()
+        for path in sorted(p for p in skill_root.rglob("*") if p.is_file()):
+            digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+            digest.update(path.read_bytes())
+        return digest.hexdigest()
     descriptor = _json({
         "id": OPTIMIZATION_SKILL_ID,
         "version": OPTIMIZATION_SKILL_VERSION,
@@ -343,6 +355,12 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             finished_at_utc TEXT,
             UNIQUE(run_id, evaluation_id),
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS task_processes (
+            task_id TEXT PRIMARY KEY REFERENCES tasks(task_id),
+            process_id INTEGER NOT NULL,
+            started_at_utc TEXT NOT NULL
         )""",
         """
         CREATE TABLE IF NOT EXISTS memory_reads (
@@ -603,11 +621,18 @@ def flush_audit(output: Path) -> bool:
 
 
 def _verify_files(output: Path, run, *, action: str):
+    read_only = action in {"state", "read-evaluation", "memory_search", "memory_read"}
+    if not read_only and _runtime_source_hash() != run["runtime_source_sha256"]:
+        raise SessionError("RUNTIME_IDENTITY_MISMATCH", "Restore the frozen runtime before mutating this Session", action=action)
+    if not read_only and _skill_content_hash() != run["optimization_skill_sha256"]:
+        raise SessionError("SKILL_IDENTITY_MISMATCH", "Restore the frozen Algorithm Optimization Skill before mutating this Session", action=action)
     try:
         config_bytes = (output / "config_frozen.json").read_bytes()
         config = json.loads(config_bytes)
         if _sha256(config_bytes) != run["config_sha256"]:
             raise ValueError("config_hash_mismatch")
+        if config.get("schema_version") != CONFIG_SCHEMA and not read_only:
+            raise ValueError("config_schema_mismatch")
         suite = json.loads((output / "dev_suite.json").read_text(encoding="utf-8"))
         spec = get_problem(run["problem"])
         spec.validate_suite(suite)
@@ -1036,7 +1061,13 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             )
             live_task = dict(task) if task is not None else None
         result = {
-            "integrity": {"config": "ok", "suite": "ok", "audit": "pending" if connection.execute("SELECT 1 FROM audit_events WHERE status='pending' LIMIT 1").fetchone() else "ok"},
+            "integrity": {
+                "config": "ok",
+                "suite": "ok",
+                "runtime_identity": "ok" if _runtime_source_hash() == current_run["runtime_source_sha256"] else "mismatch",
+                "skill_identity": "ok" if _skill_content_hash() == current_run["optimization_skill_sha256"] else "mismatch",
+                "audit": "pending" if connection.execute("SELECT 1 FROM audit_events WHERE status='pending' LIMIT 1").fetchone() else "ok",
+            },
             "policy_identity": _policy_identity(current_run),
             "budgets": _budget_view(connection, current_run),
             "incumbent": {
@@ -1061,6 +1092,8 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             except (OSError, ValueError):
                 result["integrity"]["audit"] = "invalid"
         response = _envelope(connection, current_run, current_round, action=action, result=result)
+        if result["integrity"]["runtime_identity"] == "mismatch" or result["integrity"]["skill_identity"] == "mismatch":
+            response["allowed_actions"] = [x for x in response["allowed_actions"] if x in {"state", "stop", "read_evaluation", "memory_search"}]
         # Keep the high-value state fields at the envelope level as required
         # by the CLI contract.  ``result`` remains populated for callers that
         # treat every action uniformly.
