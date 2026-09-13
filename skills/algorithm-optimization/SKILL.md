@@ -50,5 +50,5 @@ Read the focused contracts before producing documents:
 - [plan and evaluate](references/plan-and-evaluate.md) for the exact JSON fields and evidence discipline.
 - [two-round example](references/examples/two-round-run.md) for a compact command sequence.
 - For offline benchmark audit/calibration and benchmark Session options, use
-  the repository [CLI contract](../../docs/cli-contract.md) and
-  [benchmark protocol](../../docs/protocol.md#30-benchmark-compatibility-and-controlled-experiments).
+  the focused [benchmark contract](references/benchmark.md). All Skill
+  references needed at runtime are contained under this Skill directory.

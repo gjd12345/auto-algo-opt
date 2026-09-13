@@ -8,6 +8,7 @@ import pytest
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop.__main__ import main
 from eoh_frozen.__main__ import build_parser
+from tools.validate_skill import validate_skill
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[2] / "skills" / "algorithm-optimization"
@@ -18,10 +19,13 @@ def test_algorithm_optimization_skill_package_is_complete_and_hashed():
     assert (SKILL_ROOT / "agents" / "openai.yaml").is_file()
     assert (SKILL_ROOT / "references" / "protocol.md").is_file()
     assert (SKILL_ROOT / "references" / "plan-and-evaluate.md").is_file()
+    assert (SKILL_ROOT / "references" / "benchmark.md").is_file()
     assert (SKILL_ROOT / "references" / "examples" / "two-round-run.md").is_file()
     text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
     assert "name: algorithm-optimization" in text
     assert "session submit-plan" in text
+    valid, message = validate_skill(SKILL_ROOT)
+    assert valid, message
     assert db._skill_content_hash() == db._skill_content_hash()
 
 

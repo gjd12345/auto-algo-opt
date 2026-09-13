@@ -42,6 +42,7 @@ prefix = Path(sys.prefix).resolve()
 assert Path(agent_skill_loop.__file__).resolve().is_relative_to(prefix)
 skill = Path(algorithm_optimization_skill.__file__).resolve().parent
 assert skill.is_relative_to(prefix)
+assert (skill / 'references/benchmark.md').is_file()
 assert (skill / 'references/examples/two-round-run.md').is_file()
 assert db._skill_content_hash() == sys.argv[1]
 db.initialize_session(output=Path('run'), operation_id='init', eoh_model='offline-check', size=6, count=1)

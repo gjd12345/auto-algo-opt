@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -362,6 +363,22 @@ def test_benchmark_session_freezes_problem_metric_and_population_identity(tmp_pa
     assert len(benchmark["metric_spec_hash"]) == 64
     assert benchmark["inheritance_mode"] == "population_seeds"
     assert state["result"]["budgets"]["total_evaluation_attempts"] == 0
+
+
+def test_registered_benchmark_json_assets_keep_registry_byte_hashes():
+    registry = json.loads(Path("benchmarks/eohs_v1/registry.json").read_text(encoding="utf-8"))
+    item = registry["benchmarks"][0]
+    paths = item["manifest_paths"]
+    expected = item["manifests"]
+    for asset, path_key, hash_key in (
+        ("dev_train", "dev_train", "train_hash"),
+        ("heldout", "heldout", "test_hash"),
+        ("reference", "reference", "reference_hash"),
+    ):
+        path = Path("benchmarks/eohs_v1") / paths[path_key]
+        raw = path.read_bytes()
+        assert b"\r\n" not in raw, asset
+        assert hashlib.sha256(raw).hexdigest() == expected[hash_key], asset
 
 
 def test_explicit_seed_session_freezes_and_exposes_seed_identity(tmp_path):
