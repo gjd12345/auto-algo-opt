@@ -123,10 +123,14 @@ python -m agent_skill_loop benchmark evaluate-set \
 `calibrate-obp` runs the independent zero-provider gold comparison; and
 `benchmark evaluate` performs one isolated candidate evaluation.
 `evaluate-set` evaluates every member, keeps invalid-member evidence, and
-aggregates the per-instance minimum gap only when every instance has at least
-one valid member. The default profile is `eohs_v1/obp_mini`, whose assets are
-explicitly regenerated and protocol-compatible, not an exact claim about the
-full upstream corpus.
+retains partial per-instance successes even when a member is invalid for the
+full suite. Its aggregate is reconstructed from the minimum valid member gap
+for each instance; the set is complete only when every instance has at least
+one valid member. The output also separates member/process attempts from the
+actual per-instance evaluator attempts and includes the per-instance member
+matrix. The default profile is `eohs_v1/obp_mini`, whose assets are explicitly
+regenerated and protocol-compatible, not an exact claim about the full
+upstream corpus.
 
 The population and manifest utilities are also offline:
 
@@ -155,7 +159,10 @@ directory.
 
 `freeze-selection` persists a locked `FrozenSelection`; `final_population_set`
 must be sourced from a `PopulationSnapshot` and must not relabel an archive as
-the official final population. After locking, evaluate the set on heldout data:
+the official final population. After locking, evaluate the set on the
+registered heldout split. The command rejects a training suite relabeled as
+heldout and verifies its benchmark, problem, data, reference, and metric
+identities:
 
 ```bash
 python -m agent_skill_loop benchmark evaluate-selection \

@@ -101,6 +101,11 @@ def _prepare_population_seeds(root, con, run, rd, config):
     mode = run["inheritance_mode"] if "inheritance_mode" in run.keys() else "incumbent_only"
     if mode not in {"population_seeds", "explicit_seeds"}:
         return None
+    # ``population_seeds`` has no previous official population on the first
+    # round.  That round is the intentional cold start; only later rounds are
+    # required to prove a population snapshot and may not silently restart.
+    if mode == "population_seeds" and rd["previous_round_id"] is None:
+        return None
     if mode == "explicit_seeds" and rd["previous_round_id"] is None:
         try:
             plan_payload = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8"))
@@ -668,7 +673,6 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                     terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED')",(row["run_id"],)).fetchone()
                     if (terminal or row["eoh_round_max_requests"]==0 or row["round_wall_seconds"]==0
                             or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0
-                            or budget.get("round_solver_calls_remaining") == 0
                             or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"])):
                         fail("CANNOT_CONTINUE_BUDGET",action)
                 now=db._utc_now()

@@ -1248,8 +1248,18 @@ final_population_set
 ```
 
 Training archive and test results are separate. Test evaluation is allowed
-only after the selection is locked and MUST NOT update the archive, Memory or
-incumbent.
+only after the selection is locked, MUST use the registered `heldout` suite
+for the same benchmark/problem, and MUST NOT update the archive, Memory or
+incumbent. A caller-provided suite container is not trusted merely because it
+declares a registered manifest hash: the loader MUST verify its normalized
+instance content, order, identifiers, and references against the registered
+asset. Reports MUST repeat this heldout identity check.
+
+For a candidate set, suite validity and per-instance evidence are separate.
+An invalid or incomplete member MAY still contribute a successfully evaluated
+instance to the set matrix. The aggregate MUST be reconstructed from that
+matrix (minimum valid gap per instance); duplicated aggregate or per-instance
+representations MUST agree cell-by-cell, including failed/untested cells.
 
 ### 30.4 Budget reporting and pilot groups
 

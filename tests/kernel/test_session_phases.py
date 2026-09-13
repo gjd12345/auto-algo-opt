@@ -113,6 +113,46 @@ def test_plan_search_policy_is_runtime_bounded_and_defaults_are_effective(tmp_pa
         actions.submit_plan(run=bounded,operation_id="plan-too-small",expected_state_version=1,file=too_small_file)
 
 
+def test_finish_round_uses_the_next_round_budget_not_current_round_remaining(tmp_path):
+    root = tmp_path / "round-budget"
+    init(root, max_rounds=2, round_budget=1, max_solver_calls=100)
+    con = db._connect(root / "session.sqlite3")
+    try:
+        run = db._require_run(con, action="test", run_id=None)
+        con.execute(
+            "UPDATE rounds SET state='READY_TO_FINISH', memory_commit_status='none' WHERE run_id=? AND round_id=1",
+            (run["run_id"],),
+        )
+        con.execute(
+            """INSERT INTO solver_calls(
+                solver_call_id, run_id, round_id, candidate_id, revision, origin,
+                evaluation_id, suite_hash, evaluator_hash, code_sha256, state,
+                objective, valid, started_at_utc
+            ) VALUES (?, ?, 1, 'baseline', 'original', 'baseline', ?, ?, ?, ?,
+                      'complete', 1.0, 1, ?)""",
+            (
+                "solver-current-round",
+                run["run_id"],
+                "evaluation-current-round",
+                run["suite_hash"],
+                run["evaluator_hash"],
+                run["baseline_code_sha256"],
+                db._utc_now(),
+            ),
+        )
+    finally:
+        con.close()
+    result = actions.finish_round(
+        run=root,
+        operation_id="finish-and-continue",
+        expected_state_version=1,
+        decision="continue",
+    )
+    assert result["run_state"] == "RUNNING"
+    assert result["round_id"] == 2
+    assert result["state"] == "WAITING_FOR_PLAN"
+
+
 def test_state_is_one_snapshot_during_background_transition(tmp_path, monkeypatch):
     root=tmp_path/"run"
     init(root)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Mapping
 
+from .catalog import benchmark_for_spec_hash, load_profile_suite
 from .contracts import ExperimentManifest, FrozenSelection, sha256_json
 
 
@@ -53,20 +54,33 @@ def _validate_test_facts(test_result: Mapping[str, Any], selection: FrozenSelect
         raise ValueError("test_instance_matrix_invalid")
     if not isinstance(instance_ids, list) or len(instance_ids) != len(per_instance):
         raise ValueError("test_instance_matrix_invalid")
+    if test_result.get("instance_count") != len(instance_ids):
+        raise ValueError("test_instance_count_mismatch")
+    member_values: list[list[float | None]] = []
     for index, member in enumerate(member_results):
         if not isinstance(member, Mapping):
             raise ValueError("test_member_result_invalid")
         selected = selection.members[index]
         if member.get("code_sha256") != selected.get("code_sha256"):
             raise ValueError("test_member_identity_mismatch")
-        if member.get("valid") is not True:
-            continue
         values = member.get("instance_objectives")
-        if not isinstance(values, list) or len(values) != len(per_instance):
+        if member.get("valid") is True:
+            if not isinstance(values, list) or len(values) != len(per_instance):
+                raise ValueError("test_member_scores_invalid")
+        elif values in (None, []):
+            values = [None] * len(per_instance)
+        elif not isinstance(values, list) or len(values) != len(per_instance):
             raise ValueError("test_member_scores_invalid")
-        if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)) for value in values):
-            raise ValueError("test_member_scores_invalid")
-    for item in per_instance:
+        normalized_values: list[float | None] = []
+        for value in values:
+            if value is None:
+                normalized_values.append(None)
+            elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise ValueError("test_member_scores_invalid")
+            else:
+                normalized_values.append(float(value))
+        member_values.append(normalized_values)
+    for instance_index, item in enumerate(per_instance):
         if not isinstance(item, Mapping) or not isinstance(item.get("member_gaps"), list) or len(item["member_gaps"]) != len(selection.members):
             raise ValueError("test_instance_matrix_invalid")
         values = item["member_gaps"]
@@ -74,6 +88,15 @@ def _validate_test_facts(test_result: Mapping[str, Any], selection: FrozenSelect
         if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)) for value in raw_valid_values):
             raise ValueError("test_instance_matrix_invalid")
         valid_values = [float(value) for value in raw_valid_values]
+        if item.get("instance_id") != instance_ids[instance_index]:
+            raise ValueError("test_instance_identity_mismatch")
+        expected_values = [member_values[member_index][instance_index] for member_index in range(len(member_values))]
+        for actual_value, expected_value in zip(values, expected_values):
+            if actual_value is None or expected_value is None:
+                if actual_value is not None or expected_value is not None:
+                    raise ValueError("test_member_matrix_mismatch")
+            elif not math.isclose(float(actual_value), float(expected_value), rel_tol=0.0, abs_tol=1e-12):
+                raise ValueError("test_member_matrix_mismatch")
         expected_best = min(valid_values) if valid_values else None
         actual_best = item.get("best_gap")
         if actual_best is not None and (
@@ -143,6 +166,29 @@ def build_report(*, manifest: ExperimentManifest, selection: FrozenSelection,
             raise ValueError("test_metric_spec_mismatch")
         if test_result.get("selection_kind") is not None and test_result.get("selection_kind") != selection.selection_kind:
             raise ValueError("test_selection_kind_mismatch")
+        try:
+            benchmark, _metric, _item = benchmark_for_spec_hash(manifest.benchmark_spec_hash)
+            expected_heldout = load_profile_suite(benchmark.benchmark_id, benchmark.profile, split="heldout")
+        except ValueError as exc:
+            raise ValueError("test_benchmark_not_registered") from exc
+        expected_test_identity = {
+            "test_benchmark_id": benchmark.benchmark_id,
+            "test_profile": benchmark.profile,
+            "test_split": "heldout",
+            "test_benchmark_spec_hash": benchmark.content_hash,
+            "test_suite_hash": expected_heldout["content_hash"],
+            "test_data_manifest_hash": benchmark.test_manifest_hash,
+            "test_reference_manifest_hash": benchmark.reference_manifest_hash,
+            "problem_spec_hash": expected_heldout["problem_spec_hash"],
+        }
+        for name, expected in expected_test_identity.items():
+            actual_name = name if name != "problem_spec_hash" else "test_problem_spec_hash"
+            if test_result.get(actual_name) != expected:
+                raise ValueError(f"{actual_name}_mismatch")
+        if test_result.get("instance_ids") != [item["instance_id"] for item in expected_heldout["instances"]]:
+            raise ValueError("test_instance_identity_mismatch")
+        if test_result.get("test_data_manifest_hash") != benchmark.test_manifest_hash:
+            raise ValueError("test_data_manifest_hash_mismatch")
         _validate_test_facts(test_result, selection)
         test_isolation = {
             "selection_locked_before_test": True,

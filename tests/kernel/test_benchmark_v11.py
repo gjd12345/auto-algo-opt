@@ -17,6 +17,7 @@ from agent_skill_loop.benchmark import (
     calibrate_differential,
     calibrate_upstream,
     evaluate_candidate_set,
+    evaluate_selection,
     evaluation_identity,
     freeze_selection,
     load_profile_suite,
@@ -223,6 +224,20 @@ def test_production_calibration_exposes_heuristic_set_and_rejects_unregistered_s
         load_suite(raw_path)
 
 
+def test_registered_suite_container_rejects_relabelled_instance_content(tmp_path):
+    from agent_skill_loop.benchmark.harness import load_suite
+
+    source = Path("benchmarks/eohs_v1/manifests/obp_mini_train.json")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    _benchmark, _metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    payload["data_manifest_hash"] = _benchmark.train_manifest_hash
+    payload["instances"][0]["reference_objective"] = 999
+    path = tmp_path / "forged-suite.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="data_manifest_content_mismatch"):
+        load_suite(path)
+
+
 def test_candidate_set_keeps_member_matrix_and_uses_per_instance_minimum():
     suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
     _benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
@@ -240,6 +255,28 @@ def test_candidate_set_keeps_member_matrix_and_uses_per_instance_minimum():
     assert result["aggregate_fitness"] == pytest.approx(
         sum(item["best_gap"] for item in result["per_instance"]) / len(result["per_instance"])
     )
+
+
+def test_candidate_set_retains_partial_member_successes_per_instance():
+    suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
+    _benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    candidate_a = """def priority(item, bins):
+    if item == 70:
+        return 1 / (item - 70)
+    return -bins
+"""
+    candidate_b = """def priority(item, bins):
+    if item == 51:
+        return 1 / (item - 51)
+    return -bins
+"""
+    result = evaluate_candidate_set({"a": candidate_a, "b": candidate_b}, suite, metric_spec=metric)
+    assert result["complete_instance_coverage"] is True
+    assert result["aggregate_fitness"] == pytest.approx(0.0)
+    assert result["per_instance"][0]["member_gaps"] == [0.0, None]
+    assert result["per_instance"][1]["member_gaps"] == [None, 0.0]
+    assert all(item["valid"] is False for item in result["member_results"])
+    assert result["instance_evaluation_attempts"] == 8
 
 
 def test_experiment_manifest_hash_is_stable_and_changes_with_guidance():
@@ -353,3 +390,116 @@ def test_explicit_seed_session_freezes_and_exposes_seed_identity(tmp_path):
     assert state["integrity"]["runtime_identity"] == "ok"
     from agent_skill_loop.benchmark.harness import load_suite
     assert load_suite(root / "dev_suite.json")["data_manifest_hash"] == payload["data_manifest_hash"]
+
+
+def test_population_seed_session_first_round_is_an_intentional_cold_start(tmp_path, monkeypatch):
+    from agent_skill_loop import session_actions as actions
+
+    root = tmp_path / "population-seeds"
+    initialize_session(
+        output=root,
+        operation_id="init-population",
+        eoh_model="fixture",
+        benchmark_id="eohs_v1",
+        benchmark_profile_name="obp_mini",
+        inheritance_mode="population_seeds",
+        max_rounds=2,
+        round_budget=5,
+        max_solver_calls=100,
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps({
+        "round_id": 1,
+        "direction": "preserve the baseline interface",
+        "operations": [{"type": "preserve", "target": "interface", "mechanism": "preserve"}],
+        "preserve": "benchmark evaluator and interface",
+        "feedback_basis": None,
+        "memory_basis": [],
+        "reference_skill_ref": None,
+        "hypothesis": "unproven",
+    }), encoding="utf-8")
+    actions.submit_plan(run=root, operation_id="plan-population", expected_state_version=1, file=plan_path)
+    monkeypatch.setattr(actions.subprocess, "Popen", lambda *args, **kwargs: None)
+    receipt = actions.execute(run=root, operation_id="execute-population", expected_state_version=2)
+    assert receipt["result"]["seed_selection"] is None
+    assert receipt["result"]["inheritance"] == "population_seeds"
+
+
+def test_report_rejects_matrix_that_disagrees_with_member_facts(tmp_path):
+    from agent_skill_loop.benchmark.harness import load_profile_suite
+    from agent_skill_loop.benchmark.report import build_report
+
+    benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    evaluator_hash = evaluator_source_hash()
+    problem_hash = get_problem("obp_online").content_hash
+    code = "def priority(item, bins):\n    return -bins\n"
+    archive = build_archive([{
+        "code": code,
+        "code_sha256": sha256_text(code),
+        "problem_spec_hash": problem_hash,
+        "data_manifest_hash": benchmark.train_manifest_hash,
+        "evaluator_hash": evaluator_hash,
+        "metric_spec_hash": metric.content_hash,
+        "origin": "generated",
+        "candidate_id": "candidate-report",
+        "evaluation_id": "evaluation-report",
+        "evaluation": {"valid": True, "objective": 0.0},
+    }], problem_spec_hash=problem_hash, data_manifest_hash=benchmark.train_manifest_hash,
+        evaluator_hash=evaluator_hash, metric_spec_hash=metric.content_hash)
+    selection = freeze_selection("incumbent_top1", archive, metric_spec_hash=metric.content_hash)
+    test_suite = load_profile_suite("eohs_v1", "obp_mini", split="heldout")
+    test_result = evaluate_selection(selection, test_suite, metric_spec=metric)
+    manifest = ExperimentManifest(
+        benchmark_spec_hash=benchmark.content_hash,
+        metric_spec_hash=metric.content_hash,
+        eoh_commit="eoh",
+        runtime_hash="c" * 64,
+        skill_hash="d" * 64,
+        model="fixture",
+        endpoint_identity="offline",
+        inheritance_mode="incumbent_only",
+        feedback_mode="off",
+        agent_guidance=False,
+        repair_mode="off",
+        memory_enabled=False,
+        evaluation_budget=10,
+        population_size=1,
+        rounds=1,
+        round_budget=10,
+        search_seed=1,
+    )
+    metrics = {
+        "best_training_fitness": 0.0,
+        "metric_spec_hash": metric.content_hash,
+        "experiment_manifest_sha256": manifest.content_hash,
+        "selection_sha256": selection.content_hash,
+    }
+    budget = {
+        "total_evaluation_attempts": 1,
+        "novel_candidate_evaluations": 1,
+        "seed_reevaluation_attempts": 0,
+        "baseline_attempts": 0,
+        "repair_attempts": 0,
+        "experiment_manifest_sha256": manifest.content_hash,
+        "selection_sha256": selection.content_hash,
+    }
+    assert build_report(manifest=manifest, selection=selection, metrics=metrics, budget=budget, test_result=test_result)
+    forged = json.loads(json.dumps(test_result))
+    forged["per_instance"][0]["member_gaps"][0] = 123.0
+    with pytest.raises(ValueError, match="test_member_matrix_mismatch"):
+        build_report(manifest=manifest, selection=selection, metrics=metrics, budget=budget, test_result=forged)
+
+
+def test_selection_requires_registered_heldout_suite():
+    from agent_skill_loop.benchmark.harness import evaluate_selection
+
+    benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    code = "def priority(item, bins):\n    return -bins\n"
+    selection = FrozenSelection(
+        selection_kind="incumbent_top1",
+        members=({"code": code, "code_sha256": sha256_text(code)},),
+        training_metric_spec_hash=metric.content_hash,
+    )
+    train_suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
+    with pytest.raises(ValueError, match="test_requires_heldout_suite"):
+        evaluate_selection(selection, train_suite, metric_spec=metric)

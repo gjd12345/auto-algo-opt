@@ -55,6 +55,23 @@ def benchmark_profile(benchmark_id: str = "eohs_v1", profile: str = "obp_mini") 
     return benchmark, metric, item
 
 
+def benchmark_for_spec_hash(benchmark_spec_hash: str) -> tuple[BenchmarkSpec, MetricSpec, dict[str, Any]]:
+    """Resolve a registered benchmark identity without trusting a report label."""
+    if not isinstance(benchmark_spec_hash, str) or len(benchmark_spec_hash) != 64:
+        raise ValueError("benchmark_spec_hash_invalid")
+    for item in load_benchmark_registry()["benchmarks"]:
+        if not isinstance(item, dict):
+            continue
+        benchmark_id = item.get("benchmark_id")
+        profile = item.get("profile")
+        if not isinstance(benchmark_id, str) or not isinstance(profile, str):
+            continue
+        benchmark, metric, normalized = benchmark_profile(benchmark_id, profile)
+        if benchmark.content_hash == benchmark_spec_hash:
+            return benchmark, metric, normalized
+    raise ValueError("benchmark_spec_hash_not_registered")
+
+
 def load_profile_suite(benchmark_id: str = "eohs_v1", profile: str = "obp_mini", *, split: str = "dev_train") -> dict[str, Any]:
     """Load a frozen benchmark manifest and attach its deterministic suite hash."""
     benchmark, metric, item = benchmark_profile(benchmark_id, profile)
@@ -92,6 +109,7 @@ def load_profile_suite(benchmark_id: str = "eohs_v1", profile: str = "obp_mini",
     result_split = "dev_train" if split in {"train", "dev_train"} else "heldout" if split == "test" else split
     result = {"benchmark_id": benchmark.benchmark_id, "profile": benchmark.profile,
               "problem": benchmark.problem_id, "split": result_split, "instances": instances,
+              "benchmark_spec_hash": benchmark.content_hash,
               "metric_spec_hash": benchmark.metric_spec_hash,
               "data_manifest_hash": benchmark.train_manifest_hash if result_split == "dev_train" else benchmark.test_manifest_hash,
               "reference_manifest_hash": benchmark.reference_manifest_hash}

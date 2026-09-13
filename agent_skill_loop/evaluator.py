@@ -676,6 +676,106 @@ def _evaluate_problem(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, A
     return spec.evaluate_instances(fn, instances)
 
 
+def _candidate_exception_detail(exc: BaseException) -> str | None:
+    """Return a bounded candidate-frame detail for partial evaluation facts."""
+    lineno = None
+    frame = exc.__traceback__
+    while frame is not None:
+        if frame.tb_frame.f_code.co_filename == "<candidate>":
+            lineno = frame.tb_lineno
+            break
+        frame = frame.tb_next
+    detail = type(exc).__name__ + (f":line_{lineno}" if lineno else "")
+    return sanitize_error_detail(detail)
+
+
+def _classify_candidate_exception(exc: BaseException) -> tuple[str, str | None]:
+    if isinstance(exc, EvalError):
+        return exc.error_code, exc.detail
+    if isinstance(exc, ValueError):
+        error_code = str(exc) if str(exc) in _KNOWN_ERRORS else "candidate_error"
+        return error_code, None
+    return "candidate_exception", _candidate_exception_detail(exc)
+
+
+def _slice_instance_metrics(metrics: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Make one-instance metrics explicit without leaking a full suite row."""
+    if not isinstance(metrics, Mapping):
+        return {}
+    result: dict[str, Any] = {}
+    for key, value in metrics.items():
+        if isinstance(value, (list, tuple)) and len(value) == 1:
+            result[str(key)] = value[0]
+        else:
+            result[str(key)] = value
+    return result
+
+
+def _evaluate_partial_instances(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Evaluate every instance and retain successes when another instance fails.
+
+    This diagnostic/set path deliberately keeps the same candidate function in
+    one worker process, but invokes the existing problem evaluator one instance
+    at a time.  The ordinary full-suite path remains fail-fast.  Every record
+    states whether the instance was actually attempted, so a partial result is
+    never mistaken for a silently completed suite evaluation.
+    """
+    records: list[dict[str, Any]] = []
+    for index, instance in enumerate(instances):
+        started = time.monotonic()
+        base = {
+            "instance_index": index,
+            "instance_id": instance.get("instance_id"),
+            "attempted": True,
+        }
+        try:
+            with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
+                values, metrics = _evaluate_problem(spec, fn, [instance])
+            if not isinstance(values, list) or len(values) != 1:
+                raise ValueError("invalid_return")
+            objective = float(values[0])
+            if not math.isfinite(objective):
+                raise ValueError("nonfinite_objective")
+            records.append({
+                **base,
+                "valid": True,
+                "objective": objective,
+                "error_code": None,
+                "error_detail": None,
+                "elapsed_seconds": time.monotonic() - started,
+                "metrics": _slice_instance_metrics(metrics),
+            })
+        except Exception as exc:
+            error_code, error_detail = _classify_candidate_exception(exc)
+            records.append({
+                **base,
+                "valid": False,
+                "objective": None,
+                "error_code": error_code,
+                "error_detail": error_detail,
+                "elapsed_seconds": time.monotonic() - started,
+                "metrics": {},
+            })
+    return records
+
+
+def _merge_partial_metrics(records: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Reassemble per-instance metrics for an all-valid partial pass."""
+    keys = {
+        str(key)
+        for record in records
+        for key in (record.get("metrics") or {})
+    }
+    merged: dict[str, Any] = {"partial_instance_results": records}
+    for key in sorted(keys):
+        values = [(record.get("metrics") or {}).get(key) for record in records]
+        if key == "fitness_definition" and values:
+            merged[key] = values[0]
+        else:
+            merged[key] = values
+    return merged
+
+
 def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
     started = time.monotonic()
     problem = request.get("problem")
@@ -696,6 +796,34 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         fn = globals_dict.get(spec.entrypoint)
         if not callable(fn):
             raise ValueError("missing_entrypoint")
+        if request.get("collect_partial") is True:
+            partial_records = _evaluate_partial_instances(spec, fn, instances)
+            if all(record.get("valid") is True for record in partial_records):
+                per_instance = [float(record["objective"]) for record in partial_records]
+                metrics = _merge_partial_metrics(partial_records)
+                return {
+                    "valid": True,
+                    "objective": float(sum(per_instance) / len(per_instance)),
+                    "instance_objectives": per_instance,
+                    "suite_hash": expected,
+                    "error_code": None,
+                    "error_detail": None,
+                    "elapsed_seconds": time.monotonic() - started,
+                    "metrics": metrics,
+                }
+            return {
+                "valid": False,
+                "objective": None,
+                "instance_objectives": [],
+                "suite_hash": expected,
+                "error_code": "partial_instance_failure",
+                "error_detail": None,
+                "elapsed_seconds": time.monotonic() - started,
+                "metrics": {
+                    "partial_evaluation": True,
+                    "partial_instance_results": partial_records,
+                },
+            }
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
             per_instance, metrics = _evaluate_problem(spec, fn, instances)
         objective = float(sum(per_instance) / len(per_instance))
@@ -733,21 +861,13 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
             "elapsed_seconds": time.monotonic() - started,
         }
     except Exception as exc:
-        lineno = None
-        frame = exc.__traceback__
-        while frame is not None:
-            if frame.tb_frame.f_code.co_filename == "<candidate>":
-                lineno = frame.tb_lineno
-                break
-            frame = frame.tb_next
-        detail = type(exc).__name__ + (f":line_{lineno}" if lineno else "")
         return {
             "valid": False,
             "objective": None,
             "instance_objectives": [],
             "suite_hash": suite_hash_value,
             "error_code": "candidate_exception",
-            "error_detail": sanitize_error_detail(detail),
+            "error_detail": _candidate_exception_detail(exc),
             "elapsed_seconds": time.monotonic() - started,
         }
 
@@ -773,7 +893,7 @@ class SubprocessEvaluator:
             raise ValueError("invalid_timeout")
         self.timeout = float(timeout)
 
-    def evaluate(self, code: str, suite: Mapping[str, Any]) -> EvaluationResult:
+    def evaluate(self, code: str, suite: Mapping[str, Any], *, collect_partial: bool = False) -> EvaluationResult:
         started = time.monotonic()
         try:
             problem_id = suite.get("problem") if isinstance(suite, Mapping) else None
@@ -784,7 +904,8 @@ class SubprocessEvaluator:
         except (ValueError, TypeError) as exc:
             error = str(exc) if str(exc) in {"unsupported_problem", "invalid_suite", "suite_hash_mismatch", "invalid_code"} else "invalid_request"
             return EvaluationResult(False, None, (), None, error, time.monotonic() - started)
-        request = {"problem": spec.problem_id, "code": code, "suite": dict(suite), "parent_pid": os.getpid()}
+        request = {"problem": spec.problem_id, "code": code, "suite": dict(suite), "parent_pid": os.getpid(),
+                   "collect_partial": bool(collect_partial)}
         package_root = Path(__file__).resolve().parents[1]
         safe_env = {key: os.environ[key] for key in ("PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL") if key in os.environ}
         safe_env["PYTHONPATH"] = str(package_root)
