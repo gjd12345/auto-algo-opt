@@ -1263,6 +1263,16 @@ baseline_attempts
 repair_attempts
 ```
 
+`round_budget` is an enforced per-round solver-attempt cap, not a reporting
+field. The same durable solver ledger counts baseline evaluation, parent or
+seed re-evaluation, generated candidates, and repair re-evaluation by
+`run_id` and `round_id`. Before launching a child process Runtime MUST
+preflight the known baseline/parent/seed cost; the solver entry point and the
+shared request gateway MUST reject attempts beyond the cap. If the known
+initial cost does not fit, the round terminates without a cold-start
+substitute. A benchmark manifest also freezes the EoH search-policy defaults
+and limits; a Plan may only use that declared envelope.
+
 The controlled pilot uses one Runtime adapter for all groups:
 
 ```text

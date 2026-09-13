@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import random
 import sys
 from pathlib import Path
 
@@ -9,7 +10,8 @@ from agent_skill_loop.skill_store import _atomic_write_text
 
 
 def main() -> int:
-    from eoh import EoH, LLMConfig
+    from eoh import LLMConfig
+    from eoh.eoh.eoh import EOH
     from eoh.config import EoHConfig
     from agent_skill_loop.problems.base import get_problem
     from eoh_frozen.problem import FrozenProblem
@@ -41,9 +43,9 @@ def main() -> int:
             seed_path=str(cfg.get("seed_path") or root / "seeds/parent_skill.json"), output_dir=str(root),
         )
         repair_engine = cfg.get("repair_mode") == "bounded"
+        engine_config = EoHConfig(**{key: value for key, value in engine_kwargs.items() if key != "problem"})
         if repair_engine:
             from eoh_frozen.repair import LocalRepairRequester, RepairingEOH
-            engine_config = EoHConfig(**{key: value for key, value in engine_kwargs.items() if key != "problem"})
             engine = RepairingEOH(
                 engine_config,
                 task,
@@ -54,13 +56,38 @@ def main() -> int:
                 max_repair_requests_total=cfg.get("max_repair_requests_total"),
             )
         else:
-            engine = EoH(**engine_kwargs)
+            # ``EoH.run()`` constructs the internal EOH object and resets the
+            # module-level RNG to a literal upstream seed immediately before
+            # search.  Construct that same pinned engine directly so the
+            # Session's recorded search seed actually controls operator and
+            # parent-selection randomness in both modes.
+            engine = EOH(engine_config, task)
+        # The pinned upstream constructor resets Python's global RNG to a
+        # literal seed.  Apply the frozen Session/search seed immediately
+        # after construction so operator choice and other engine randomness
+        # are part of the recorded experiment identity.
+        search_seed = cfg.get("search_seed")
+        if search_seed is not None:
+            random.seed(int(search_seed))
+            try:
+                import numpy as np
+                np.random.seed(int(search_seed) % (2 ** 32))
+            except (ImportError, ValueError):
+                pass
         engine.run()
         if repair_engine:
             _atomic_write_text(root / "results/repair_summary.json", json.dumps(engine.repair_summary(), ensure_ascii=False))
     except Exception as exc:
-        result = {"status": "engine_failed", "error_type": type(exc).__name__,
-                  "error_code": "no_valid_initial_population" if str(exc).startswith("Initial population is empty.") else "engine_exception"}
+        message = str(exc)
+        if message == "round_budget_exhausted":
+            result = {"status": "budget_exhausted", "stop_reason": "round_budget_limit",
+                      "error_type": type(exc).__name__, "error_code": message}
+        elif message == "solver_budget_exhausted":
+            result = {"status": "budget_exhausted", "stop_reason": "solver_call_limit",
+                      "error_type": type(exc).__name__, "error_code": message}
+        else:
+            result = {"status": "engine_failed", "error_type": type(exc).__name__,
+                      "error_code": "no_valid_initial_population" if message.startswith("Initial population is empty.") else "engine_exception"}
         if 'engine' in locals() and hasattr(engine, "repair_summary"):
             try:
                 _atomic_write_text(root / "results/repair_summary.json", json.dumps(engine.repair_summary(), ensure_ascii=False))

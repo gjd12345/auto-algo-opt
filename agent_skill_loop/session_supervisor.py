@@ -56,6 +56,18 @@ def _write_population_snapshot(root: Path, output: Path, run, rd, rows: list[dic
             and isinstance(row.get("evaluation"), dict)
             and row["evaluation"].get("valid") is True
         ]
+        official_objective = item.get("objective")
+        if isinstance(official_objective, (int, float)) and not isinstance(official_objective, bool):
+            matching = [
+                row for row in matching
+                if isinstance(row["evaluation"].get("objective"), (int, float))
+                and not isinstance(row["evaluation"].get("objective"), bool)
+                # The pinned EoH checkpoint normalizes fitness to five
+                # decimal places.  Use that rounding bound only to associate
+                # checkpoint membership with trusted evaluator evidence; the
+                # snapshot score itself always comes from the evaluator row.
+                and abs(float(row["evaluation"]["objective"]) - float(official_objective)) <= 5e-6 + 1e-12
+            ]
         evaluation = matching[-1] if matching else None
         members.append({
             "generation": generation(source),
@@ -68,6 +80,11 @@ def _write_population_snapshot(root: Path, output: Path, run, rd, rows: list[dic
             # seed fitness must come from the trusted evaluator ledger, never
             # from a checkpoint field that the upstream engine may have
             # produced before normalization.
+            # A checkpoint score is only accepted when the same code and
+            # objective exist in trusted evaluator evidence.  Otherwise keep
+            # the official member in the faithful snapshot but mark it
+            # unevaluable; SeedSelection will filter it without inventing a
+            # score from the checkpoint.
             "objective": evaluation["evaluation"].get("objective") if evaluation else None,
             "evaluation_id": evaluation.get("evaluation_id") if evaluation else None,
             "revision": evaluation.get("revision", "original") if evaluation else "original",
@@ -272,6 +289,21 @@ def _run_task(root, task_id):
             rd=con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",(row["run_id"],task["round_id"])).fetchone()
             for ref_key,hash_key in (("normalized_plan_ref","normalized_plan_sha256"),("round_context_ref","round_context_sha256")):
                 if db._sha256((root/rd[ref_key]).read_bytes())!=rd[hash_key]: raise ValueError("plan_context_hash_mismatch")
+            if rd["seed_selection_ref"]:
+                seed_selection_path = (root / rd["seed_selection_ref"]).resolve()
+                if not seed_selection_path.is_relative_to(root):
+                    raise ValueError("seed_selection_reference_invalid")
+                seed_selection_text = seed_selection_path.read_text(encoding="utf-8")
+                if db._sha256(seed_selection_text) != rd["seed_selection_sha256"]:
+                    raise ValueError("seed_selection_hash_mismatch")
+                seed_selection = json.loads(seed_selection_text)
+                if not isinstance(seed_selection, dict) or not isinstance(seed_selection.get("selected_members"), list):
+                    raise ValueError("seed_selection_invalid")
+                for field in ("problem_spec_hash", "suite_hash", "data_manifest_hash", "evaluator_hash", "metric_spec_hash"):
+                    if field in seed_selection and seed_selection[field] != row[field]:
+                        raise ValueError("seed_selection_identity_mismatch")
+                if seed_selection.get("metric_spec_hash") != row["metric_spec_hash"]:
+                    raise ValueError("seed_selection_metric_identity_mismatch")
             elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
             walls=[x for x in (row["round_wall_seconds"],None if row["engine_wall_seconds"] is None else row["engine_wall_seconds"]-elapsed) if x is not None]
             wall=max(0,min(walls)) if walls else 86400*365
@@ -309,6 +341,9 @@ def _run_task(root, task_id):
         elif summary["status"]=="startup_failed": reason="STARTUP_FAILED"
         elif summary["status"] in {"storage_failed", "export_failed"}: reason="EVIDENCE_STORAGE_FAILED"
         elif summary["stop_reason"]=="wall_time_limit": reason="DEADLINE_EXCEEDED"
+        elif summary["stop_reason"]=="round_budget_limit": reason="ROUND_BUDGET_EXHAUSTED"
+        elif summary["stop_reason"]=="solver_call_limit": reason="SOLVER_BUDGET_EXHAUSTED"
+        elif summary["stop_reason"]=="request_limit": reason="REQUEST_BUDGET_EXHAUSTED"
         else: reason="SUCCEEDED" if summary.get("loop_completed") else "FAILED"
     except BaseException as exc:
         reason=reason or "FAILED"
@@ -371,11 +406,17 @@ def execute_task(root, task_id):
         args.repair_mode=row["repair_mode"]
         args.max_repair_requests_total=row["repair_max_requests"]
         for name in ("seed","count","size"): setattr(args,name,config["suite_generation"][name])
+        base_search_seed = int(config.get("search_seed", config["suite_generation"]["seed"]))
+        args.search_seed = base_search_seed + int(rd["round_id"]) - 1
         args.round_context_file=str(root/rd["round_context_ref"])
         args.suite_file = str(root / "dev_suite.json")
         inheritance_mode = row["inheritance_mode"] if "inheritance_mode" in row.keys() else "incumbent_only"
-        args.parent_skill = str(root/rd["incumbent_before_ref"]) if rd["incumbent_before_ref"] and inheritance_mode != "population_seeds" else None
-        args.seed_codes = str(root/rd["seed_selection_ref"]) if rd["seed_selection_ref"] and inheritance_mode == "population_seeds" else None
+        args.parent_skill = (
+            str(root / rd["incumbent_before_ref"])
+            if rd["incumbent_before_ref"] and inheritance_mode not in {"population_seeds", "explicit_seeds"}
+            else None
+        )
+        args.seed_codes = str(root/rd["seed_selection_ref"]) if rd["seed_selection_ref"] and inheritance_mode in {"population_seeds", "explicit_seeds"} else None
         args.metric_spec_hash = row["metric_spec_hash"] if "metric_spec_hash" in row.keys() else None
         args.data_manifest_hash = row["data_manifest_hash"] if "data_manifest_hash" in row.keys() else None
         args.problem_spec_hash = row["problem_spec_hash"] if "problem_spec_hash" in row.keys() else None

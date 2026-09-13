@@ -48,14 +48,30 @@ class SessionRequestBudget(RequestBudget):
                 row = db._require_run(con, action="request", run_id=None)
                 task = con.execute("SELECT * FROM tasks WHERE task_id=?",(self.task_id,)).fetchone()
                 used = con.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
-                round_used = con.execute("SELECT COUNT(*) FROM requests WHERE round_id=?",(task["round_id"],)).fetchone()[0]
-                repair_used = con.execute("SELECT COUNT(*) FROM requests WHERE purpose='eoh_repair'").fetchone()[0]
-                solver_used = con.execute("SELECT COUNT(*) FROM solver_calls").fetchone()[0]
+                round_used = con.execute(
+                    "SELECT COUNT(*) FROM requests WHERE run_id=? AND round_id=?",
+                    (row["run_id"], task["round_id"]),
+                ).fetchone()[0]
+                repair_used = con.execute(
+                    "SELECT COUNT(*) FROM requests WHERE run_id=? AND purpose='eoh_repair'",
+                    (row["run_id"],),
+                ).fetchone()[0]
+                solver_used = con.execute("SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (row["run_id"],)).fetchone()[0]
+                round_solver_used = con.execute(
+                    "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?",
+                    (row["run_id"], task["round_id"]),
+                ).fetchone()[0]
                 exceeded = (row["eoh_max_requests"] is not None and used>=row["eoh_max_requests"]) or (row["eoh_round_max_requests"] is not None and round_used>=row["eoh_round_max_requests"])
                 exceeded |= purpose=="eoh_repair" and (row["repair_mode"]!="bounded" or row["repair_max_requests"] is not None and repair_used>=row["repair_max_requests"])
                 solver_exceeded = row["max_solver_calls"] is not None and solver_used>=row["max_solver_calls"]
-                if exceeded or solver_exceeded or row["state"]!="RUNNING" or task["state"]!="RUNNING":
-                    self.denial_reason = "session_stopped" if row["state"]!="RUNNING" or task["state"]!="RUNNING" else "solver_budget_exhausted" if solver_exceeded else "request_budget_exhausted"
+                round_solver_exceeded = row["round_budget"] is not None and round_solver_used >= row["round_budget"]
+                if exceeded or solver_exceeded or round_solver_exceeded or row["state"]!="RUNNING" or task["state"]!="RUNNING":
+                    self.denial_reason = (
+                        "session_stopped" if row["state"]!="RUNNING" or task["state"]!="RUNNING"
+                        else "round_budget_exhausted" if round_solver_exceeded
+                        else "solver_budget_exhausted" if solver_exceeded
+                        else "request_budget_exhausted"
+                    )
                     self._rejected+=1
                     return None
                 request_id=uuid.uuid4().hex
@@ -98,9 +114,14 @@ def solver_event(session, payload):
             task=con.execute("SELECT * FROM tasks WHERE task_id=?",(task_id,)).fetchone()
             result=payload["evaluation"]
             if result is None:
-                used=con.execute("SELECT COUNT(*) FROM solver_calls").fetchone()[0]
+                used=con.execute("SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (row["run_id"],)).fetchone()[0]
+                round_used=con.execute(
+                    "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?",
+                    (row["run_id"], task["round_id"]),
+                ).fetchone()[0]
                 if row["state"]!="RUNNING" or task["state"]!="RUNNING": raise ValueError("session_stopped")
                 if row["max_solver_calls"] is not None and used>=row["max_solver_calls"]: raise ValueError("solver_budget_exhausted")
+                if row["round_budget"] is not None and round_used>=row["round_budget"]: raise ValueError("round_budget_exhausted")
                 if payload["suite_hash"]!=row["suite_hash"] or payload["evaluator_hash"]!=row["evaluator_hash"]: raise ValueError("evaluation_identity_mismatch")
                 if row["metric_spec_hash"] is not None and payload.get("metric_spec_hash") != row["metric_spec_hash"]:
                     raise ValueError("metric_spec_identity_mismatch")

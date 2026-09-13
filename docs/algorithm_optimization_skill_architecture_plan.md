@@ -2,7 +2,7 @@
 
 **版本：** v1.1
 **日期：** 2026-09-12
-**状态：** 当前规范与实现基线
+**状态：** v1.1a benchmark 合同与实现基线（mini fixture；正式 pilot 尚未签收）
 **目标分支：** `agent-skill-loop-0908` 后续重构分支
 
 ---
@@ -1232,3 +1232,22 @@ python -m agent_skill_loop benchmark evaluate --code candidate.py
 python -m agent_skill_loop benchmark pilot-config --config experiment_manifest.json --output pilot.json
 python -m agent_skill_loop session init --benchmark eohs_v1 --benchmark-profile obp_mini ...
 ```
+
+## 25.6 当前验收状态（2026-09-13）
+
+本次合同修复后，当前可签收的是 **benchmark mini fixture 基础接线**，
+不是完整 v1.1a 的正式实验完成：
+
+| 范围 | 当前状态 |
+| --- | --- |
+| M1/B0 | `obp_mini` 注册、hash、reference_kind 和 provenance 字段可审计；仍只有 regenerated fixture，尚未包含完整上游训练资产和两个可执行 profile。 |
+| M2/B1 | First Fit、Best Fit 已通过独立上游期望与生产 `SubprocessEvaluator` 的逐实例差分校准；公开 heuristic 集合和完整资产仍未交付。 |
+| M3/B3 | MetricSpec、五元评测 identity、Session 冻结与离线复评已接线；正式多任务兼容尚未完成。 |
+| M4 | `population_seeds`、`explicit_seeds`、round solver budget 和 search seed 已有合同与执行路径，仍需正式 pilot 证据。 |
+| M5/B4 | Archive、三种 FrozenSelection、锁定后集合评测和双预算报告接口已具备；还没有正式实验产物。 |
+| M6/B5–B6 | 只能生成 A/B/C/D manifest，并可由同一 Runtime adapter 执行；四组真实受控 pilot 尚未验收。 |
+| M7–M8 | 后续范围，TSP/CVRP 完整资产、三任务重复实验和发布报告均未宣称完成。 |
+
+因此在获得真实 pilot 证据前，报告和 README 必须使用
+`mini fixture / protocol-compatible / pilot-configured` 等准确措辞，不得
+写成 `exact reproduction`、`M1–M6 completed` 或正式性能结论。

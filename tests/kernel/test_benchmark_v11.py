@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +16,7 @@ from agent_skill_loop.benchmark import (
     build_pilot_manifests,
     calibrate_differential,
     calibrate_upstream,
+    evaluate_candidate_set,
     evaluation_identity,
     freeze_selection,
     load_profile_suite,
@@ -107,6 +109,7 @@ def test_archive_and_frozen_selection_do_not_mix_metric_identities():
         "evaluator_hash": "c" * 64,
         "metric_spec_hash": "d" * 64,
         "origin": "generated",
+        "candidate_id": "candidate-1",
         "evaluation_id": "eval-1",
         "evaluation": {"valid": True, "objective": 2.0},
     }
@@ -120,10 +123,23 @@ def test_archive_and_frozen_selection_do_not_mix_metric_identities():
     )
     assert len(archive) == 1
     assert archive[0].objective == 1.0
-    for kind in ("incumbent_top1", "archive_topk", "final_population_set"):
+    snapshot = PopulationSnapshot.from_members(
+        [_member(code, "generated", 1.0, 0)],
+        generation=1,
+        metric_spec_hash="d" * 64,
+    )
+    for kind in ("incumbent_top1", "archive_topk"):
         selection = freeze_selection(kind, archive, metric_spec_hash="d" * 64, k=1 if kind == "archive_topk" else None)
         assert selection.selection_kind == kind
         assert selection.training_metric_spec_hash == "d" * 64
+    selection = freeze_selection(
+        "final_population_set",
+        archive,
+        metric_spec_hash="d" * 64,
+        population_snapshot=snapshot,
+    )
+    assert selection.selection_kind == "final_population_set"
+    assert selection.members[0]["code_sha256"] == sha256_text(code)
 
 
 def test_frozen_selection_round_trips_with_report_identity():
@@ -137,32 +153,47 @@ def test_frozen_selection_round_trips_with_report_identity():
     restored = FrozenSelection.from_dict(payload)
     assert restored.content_hash == selection.content_hash
     from agent_skill_loop.benchmark import build_report
+    manifest = ExperimentManifest(
+        benchmark_spec_hash="c" * 64,
+        metric_spec_hash="b" * 64,
+        eoh_commit="eoh",
+        runtime_hash="d" * 64,
+        skill_hash="e" * 64,
+        model="fixture",
+        endpoint_identity="offline",
+        inheritance_mode="incumbent_only",
+        feedback_mode="off",
+        agent_guidance=False,
+        repair_mode="off",
+        memory_enabled=False,
+        evaluation_budget=10,
+        population_size=2,
+        rounds=1,
+        round_budget=10,
+        search_seed=1,
+    )
     report = build_report(
-        manifest=ExperimentManifest(
-            benchmark_spec_hash="c" * 64,
-            metric_spec_hash="b" * 64,
-            eoh_commit="eoh",
-            runtime_hash="d" * 64,
-            skill_hash="e" * 64,
-            model="fixture",
-            endpoint_identity="offline",
-            inheritance_mode="incumbent_only",
-            feedback_mode="off",
-            agent_guidance=False,
-            repair_mode="off",
-            memory_enabled=False,
-            evaluation_budget=10,
-            population_size=2,
-            rounds=1,
-            round_budget=10,
-            search_seed=1,
-        ),
+        manifest=manifest,
         selection=restored,
-        metrics={"best_training_fitness": 0.1},
-        budget={"total_evaluation_attempts": 10},
+        metrics={
+            "best_training_fitness": 0.1,
+            "experiment_manifest_sha256": manifest.content_hash,
+            "selection_sha256": restored.content_hash,
+            "metric_spec_hash": "b" * 64,
+        },
+        budget={
+            "total_evaluation_attempts": 10,
+            "novel_candidate_evaluations": 0,
+            "seed_reevaluation_attempts": 0,
+            "baseline_attempts": 0,
+            "repair_attempts": 0,
+            "experiment_manifest_sha256": manifest.content_hash,
+            "selection_sha256": restored.content_hash,
+        },
     )
     assert report["selection_kind"] == "incumbent_top1"
-    assert report["test_isolation"]["test_updates_training"] is False
+    assert report["test_isolation"]["test_updates_training"] is None
+    assert report["test_isolation"]["status"] == "training_only"
 
 
 def test_obp_gold_is_independent_and_zero_provider():
@@ -173,6 +204,42 @@ def test_obp_gold_is_independent_and_zero_provider():
     assert checked["passed"]
     assert get_problem("obp_online").content_hash == suite["problem_spec_hash"]
     assert gold["heuristics"]["best_fit"]
+
+
+def test_production_calibration_exposes_heuristic_set_and_rejects_unregistered_suite(tmp_path):
+    suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
+    from agent_skill_loop.benchmark.harness import calibrate_production, load_suite
+
+    production = calibrate_production(suite)
+    assert production["heuristic_set"]["member_ids"] == ["first_fit", "best_fit"]
+    assert len(production["heuristic_set"]["per_instance"]) == len(suite["instances"])
+    assert production["heuristic_set"]["aggregate_fitness"] is not None
+
+    raw_path = tmp_path / "train.json"
+    raw_path.write_bytes(Path("benchmarks/eohs_v1/manifests/obp_mini_train.json").read_bytes())
+    assert load_suite(raw_path)["data_manifest_hash"]
+    with pytest.raises(ValueError, match="data_manifest_hash_not_registered"):
+        raw_path.write_text(raw_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+        load_suite(raw_path)
+
+
+def test_candidate_set_keeps_member_matrix_and_uses_per_instance_minimum():
+    suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
+    _benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    result = evaluate_candidate_set(
+        {
+            "first_fit": "def priority(item, bins):\n    return -np.arange(len(bins), dtype=float)\n",
+            "best_fit": "def priority(item, bins):\n    return -bins\n",
+        },
+        suite,
+        metric_spec=metric,
+    )
+    assert result["complete_instance_coverage"] is True
+    assert len(result["member_results"]) == 2
+    assert len(result["per_instance"]) == len(suite["instances"])
+    assert result["aggregate_fitness"] == pytest.approx(
+        sum(item["best_gap"] for item in result["per_instance"]) / len(result["per_instance"])
+    )
 
 
 def test_experiment_manifest_hash_is_stable_and_changes_with_guidance():
@@ -258,3 +325,31 @@ def test_benchmark_session_freezes_problem_metric_and_population_identity(tmp_pa
     assert len(benchmark["metric_spec_hash"]) == 64
     assert benchmark["inheritance_mode"] == "population_seeds"
     assert state["result"]["budgets"]["total_evaluation_attempts"] == 0
+
+
+def test_explicit_seed_session_freezes_and_exposes_seed_identity(tmp_path):
+    code = "def priority(item, bins):\n    return -bins\n"
+    root = tmp_path / "explicit-seeds"
+    receipt = initialize_session(
+        output=root,
+        operation_id="init-explicit",
+        eoh_model="fixture",
+        benchmark_id="eohs_v1",
+        benchmark_profile_name="obp_mini",
+        inheritance_mode="explicit_seeds",
+        explicit_seed_set=[
+            {"algorithm": f"seed-{index}", "code": code + f"\n# {index}"}
+            for index in range(4)
+        ],
+        max_solver_calls=100,
+    )
+    state = read_state(run=root)
+    assert receipt["run_state"] == "RUNNING"
+    assert state["result"]["benchmark"]["inheritance_mode"] == "explicit_seeds"
+    seed_ref = root / "seeds/explicit_seeds.json"
+    assert seed_ref.is_file()
+    payload = json.loads(seed_ref.read_text(encoding="utf-8"))
+    assert payload["metric_spec_hash"] == state["result"]["benchmark"]["metric_spec_hash"]
+    assert state["integrity"]["runtime_identity"] == "ok"
+    from agent_skill_loop.benchmark.harness import load_suite
+    assert load_suite(root / "dev_suite.json")["data_manifest_hash"] == payload["data_manifest_hash"]

@@ -8,7 +8,7 @@ from typing import Any
 
 from .catalog import benchmark_profile, load_benchmark_registry
 from .contracts import ExperimentManifest, FrozenSelection, PopulationSnapshot, sha256_json
-from .harness import calibrate_differential, calibrate_upstream, evaluate_candidate, load_suite
+from .harness import calibrate_differential, calibrate_upstream, evaluate_candidate, evaluate_candidate_set, evaluate_selection, load_suite
 from .pilot import build_pilot_manifests
 from .report import build_report
 
@@ -67,6 +67,24 @@ def cmd_evaluate(args: Any) -> int:
     return 0 if result.get("valid") else 1
 
 
+def cmd_evaluate_set(args: Any) -> int:
+    suite = load_suite(Path(args.suite) if args.suite else None, benchmark_id=args.benchmark_id, profile=args.profile, split=args.split)
+    candidates = json.loads(Path(args.candidates).read_text(encoding="utf-8"))
+    _benchmark, metric, _item = benchmark_profile(args.benchmark_id, args.profile)
+    result = evaluate_candidate_set(candidates, suite, timeout=args.timeout, metric_spec=metric)
+    _write(Path(args.output) if args.output else None, result)
+    return 0 if result.get("complete_instance_coverage") else 1
+
+
+def cmd_evaluate_selection(args: Any) -> int:
+    suite = load_suite(Path(args.suite) if args.suite else None, benchmark_id=args.benchmark_id, profile=args.profile, split=args.split)
+    _benchmark, metric, _item = benchmark_profile(args.benchmark_id, args.profile)
+    selection = FrozenSelection.from_dict(json.loads(Path(args.selection).read_text(encoding="utf-8")))
+    result = evaluate_selection(selection, suite, timeout=args.timeout, metric_spec=metric)
+    _write(Path(args.output) if args.output else None, result)
+    return 0
+
+
 def cmd_snapshot(args: Any) -> int:
     members = json.loads(Path(args.population).read_text(encoding="utf-8"))
     if isinstance(members, dict):
@@ -75,6 +93,35 @@ def cmd_snapshot(args: Any) -> int:
                                                problem_spec_hash=args.problem_spec_hash, data_manifest_hash=args.data_manifest_hash,
                                                evaluator_hash=args.evaluator_hash)
     _write(Path(args.output) if args.output else None, {**snapshot.as_dict(), "content_hash": snapshot.content_hash})
+    return 0
+
+
+def cmd_freeze_selection(args: Any) -> int:
+    entries: list[dict[str, Any]] = []
+    if args.archive:
+        payload = json.loads(Path(args.archive).read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            payload = payload.get("entries", payload.get("archive", []))
+        if not isinstance(payload, list):
+            raise ValueError("archive_invalid")
+        entries = [dict(item) for item in payload if isinstance(item, dict)]
+    if args.kind != "final_population_set" and not args.archive:
+        raise ValueError("selection_archive_required")
+    snapshot = None
+    if args.population_snapshot:
+        snapshot = PopulationSnapshot.from_dict(
+            json.loads(Path(args.population_snapshot).read_text(encoding="utf-8"))
+        )
+    from .archive import freeze_selection
+    selection = freeze_selection(
+        args.kind,
+        entries,
+        metric_spec_hash=args.metric_spec_hash,
+        source_ref=args.source_ref,
+        k=args.k,
+        population_snapshot=snapshot,
+    )
+    _write(Path(args.output) if args.output else None, {**selection.as_dict(), "content_hash": selection.content_hash})
     return 0
 
 
@@ -107,6 +154,9 @@ def cmd_report(args: Any) -> int:
     selection = FrozenSelection.from_dict(json.loads(Path(args.selection).read_text(encoding="utf-8")))
     metrics = json.loads(Path(args.metrics).read_text(encoding="utf-8"))
     budget = json.loads(Path(args.budget).read_text(encoding="utf-8"))
+    test_result = None
+    if args.test_result:
+        test_result = json.loads(Path(args.test_result).read_text(encoding="utf-8"))
     if not isinstance(metrics, dict) or not isinstance(budget, dict):
         raise ValueError("benchmark_report_payload_invalid")
     result = build_report(
@@ -115,6 +165,7 @@ def cmd_report(args: Any) -> int:
         metrics=metrics,
         budget=budget,
         source=args.source,
+        test_result=test_result,
     )
     _write(Path(args.output) if args.output else None, result)
     return 0

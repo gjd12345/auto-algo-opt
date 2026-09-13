@@ -12,7 +12,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping, Sequence
 
 from agent_skill_loop.contracts import (
     DEFAULT_COUNT,
@@ -31,7 +31,7 @@ from agent_skill_loop.problems.base import get_problem
 
 SCHEMA_VERSION = "algorithm-optimization-session/v1.1"
 CONFIG_SCHEMA = "algorithm-optimization-session-config/v1.1"
-RUNTIME_VERSION = "1.0.0"
+RUNTIME_VERSION = "1.1.0"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
 OPTIMIZATION_SKILL_VERSION = "v1.1"
 MEMORY_POLICY_ID = "markdown-memory"
@@ -101,6 +101,71 @@ def _json(value: object) -> str:
 def _sha256(value: str | bytes) -> str:
     data = value.encode("utf-8") if isinstance(value, str) else value
     return hashlib.sha256(data).hexdigest()
+
+
+def _normalize_explicit_seed_set(
+    payload: Any,
+    *,
+    problem_spec_hash: str,
+    suite_hash: str,
+    evaluator_hash: str,
+    data_manifest_hash: str | None,
+    metric_spec_hash: str | None,
+) -> dict[str, Any]:
+    """Normalize a user seed set without trusting supplied fitness facts.
+
+    Explicit seeds are code inputs, not evaluated candidates.  Scores,
+    evaluation IDs, and lineage supplied by a caller are intentionally
+    discarded; the Session task performs the complete re-evaluation.
+    """
+    if isinstance(payload, Mapping):
+        members = payload.get("selected_members", payload.get("members"))
+        for name, expected in (
+            ("problem_spec_hash", problem_spec_hash),
+            ("suite_hash", suite_hash),
+            ("evaluator_hash", evaluator_hash),
+            ("data_manifest_hash", data_manifest_hash),
+            ("metric_spec_hash", metric_spec_hash),
+        ):
+            if name in payload and payload.get(name) != expected:
+                raise ValueError(f"explicit_seed_{name}_mismatch")
+    else:
+        members = payload
+    if not isinstance(members, Sequence) or isinstance(members, (str, bytes)) or not members:
+        raise ValueError("explicit_seed_set_must_be_nonempty_list")
+    normalized: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for index, item in enumerate(members):
+        if not isinstance(item, Mapping) or not isinstance(item.get("code"), str) or not item["code"].strip():
+            raise ValueError(f"explicit_seed_{index}_code_required")
+        code = item["code"]
+        code_hash = _sha256(code)
+        if item.get("code_sha256") is not None and item.get("code_sha256") != code_hash:
+            raise ValueError(f"explicit_seed_{index}_code_hash_mismatch")
+        algorithm = str(item.get("algorithm") or f"Explicit seed {index + 1}")
+        algorithm_hash = _sha256(algorithm)
+        if item.get("algorithm_text_sha256") is not None and item.get("algorithm_text_sha256") != algorithm_hash:
+            raise ValueError(f"explicit_seed_{index}_algorithm_hash_mismatch")
+        if code_hash in seen:
+            continue
+        seen.add(code_hash)
+        normalized.append({
+            "algorithm": algorithm,
+            "algorithm_text_sha256": algorithm_hash,
+            "code": code,
+            "code_sha256": code_hash,
+        })
+    if not normalized:
+        raise ValueError("explicit_seed_set_has_no_unique_code")
+    return {
+        "schema_version": "algorithm-optimization-explicit-seed-set/v1",
+        "problem_spec_hash": problem_spec_hash,
+        "suite_hash": suite_hash,
+        "data_manifest_hash": data_manifest_hash,
+        "evaluator_hash": evaluator_hash,
+        "metric_spec_hash": metric_spec_hash,
+        "members": normalized,
+    }
 
 
 def _utc_now() -> str:
@@ -624,6 +689,13 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
         requests_used = int(connection.execute("SELECT COUNT(*) FROM requests WHERE run_id=?", (run["run_id"],)).fetchone()[0])
     if "solver_calls" in table_names:
         solver_used = int(connection.execute("SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (run["run_id"],)).fetchone()[0])
+    active_round_id = run["active_round_id"]
+    round_solver_used = 0
+    if "solver_calls" in table_names and active_round_id is not None:
+        round_solver_used = int(connection.execute(
+            "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?",
+            (run["run_id"], active_round_id),
+        ).fetchone()[0])
     dual = {
         "total_evaluation_attempts": solver_used,
         "novel_candidate_evaluations": 0,
@@ -663,6 +735,12 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
         "max_solver_calls": max_solver_calls,
         "solver_calls_used": solver_used,
         "solver_calls_remaining": None if max_solver_calls is None else max(0, int(max_solver_calls) - solver_used),
+        "round_budget": run["round_budget"] if "round_budget" in run.keys() else None,
+        "round_solver_calls_used": round_solver_used,
+        "round_solver_calls_remaining": (
+            None if "round_budget" not in run.keys() or run["round_budget"] is None
+            else max(0, int(run["round_budget"]) - round_solver_used)
+        ),
         "engine_wall_seconds": run["engine_wall_seconds"],
         "round_wall_seconds": run["round_wall_seconds"],
         "repair_max_requests": run["repair_max_requests"],
@@ -781,6 +859,23 @@ def _verify_files(output: Path, run, *, action: str):
             manifest_config = config.get("experiment_manifest")
             if not isinstance(manifest_config, Mapping) or manifest_config.get("sha256") != run["experiment_manifest_sha256"]:
                 raise ValueError("experiment_manifest_identity_mismatch")
+        if run["inheritance_mode"] == "explicit_seeds":
+            seed_config = (config.get("inheritance") or {}).get("explicit_seed_set")
+            if not isinstance(seed_config, Mapping) or not isinstance(seed_config.get("ref"), str) or not isinstance(seed_config.get("sha256"), str):
+                raise ValueError("explicit_seed_set_config_missing")
+            seed_path = (output / seed_config["ref"]).resolve()
+            if not seed_path.is_relative_to(output.resolve()):
+                raise ValueError("explicit_seed_set_identity_mismatch")
+            if not seed_path.is_file() or _sha256(seed_path.read_bytes()) != seed_config["sha256"]:
+                raise ValueError("explicit_seed_set_identity_mismatch")
+            seed_payload = json.loads(seed_path.read_text(encoding="utf-8"))
+            if (not isinstance(seed_payload, Mapping)
+                    or seed_payload.get("problem_spec_hash") != run["problem_spec_hash"]
+                    or seed_payload.get("suite_hash") != run["suite_hash"]
+                    or seed_payload.get("data_manifest_hash") != run["data_manifest_hash"]
+                    or seed_payload.get("evaluator_hash") != run["evaluator_hash"]
+                    or seed_payload.get("metric_spec_hash") != run["metric_spec_hash"]):
+                raise ValueError("explicit_seed_set_identity_mismatch")
         if suite["content_hash"] != run["suite_hash"] or suite["problem"] != run["problem"]:
             raise ValueError("suite_identity_mismatch")
         if evaluator_source_hash() != run["evaluator_hash"] or _sha256(spec.baseline_code) != run["baseline_code_sha256"]:
@@ -839,6 +934,7 @@ def _init_input(
     problem_spec_hash: str | None = None,
     max_rounds: int | None = None,
     round_budget: int | None = None,
+    explicit_seed_set_sha256: str | None = None,
 ) -> dict[str, Any]:
     return {
         "output": str(output),
@@ -846,6 +942,7 @@ def _init_input(
         "problem_spec_hash": problem_spec_hash,
         "max_rounds": max_rounds,
         "round_budget": round_budget,
+        "explicit_seed_set_sha256": explicit_seed_set_sha256,
         "operation_id": operation_id,
         "eoh_model": eoh_model,
         "eoh_endpoint": eoh_endpoint,
@@ -1108,6 +1205,7 @@ def initialize_session(
     experiment_manifest: Mapping[str, Any] | None = None,
     max_rounds: int | None = None,
     round_budget: int | None = None,
+    explicit_seed_set: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     action = "init"
     if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
@@ -1126,6 +1224,12 @@ def initialize_session(
         agent_guidance = bool(manifest_hints.get("agent_guidance", True))
     if inheritance_mode not in {"incumbent_only", "population_seeds", "explicit_seeds"}:
         raise SessionError("INVALID_ARGUMENT", "invalid inheritance mode", action=action)
+    if inheritance_mode == "explicit_seeds" and explicit_seed_set is None:
+        raise SessionError("INVALID_ARGUMENT", "explicit_seeds requires an explicit seed set", action=action)
+    if inheritance_mode != "explicit_seeds" and explicit_seed_set is not None:
+        raise SessionError("INVALID_ARGUMENT", "explicit seed set requires explicit_seeds mode", action=action)
+    if benchmark_id is not None and (count != DEFAULT_COUNT or size != DEFAULT_SIZE):
+        raise SessionError("INVALID_ARGUMENT", "benchmark sessions use the frozen suite; count and size are not configurable", action=action)
     if feedback_mode not in {"off", "runtime_facts"}:
         raise SessionError("INVALID_ARGUMENT", "invalid feedback mode", action=action)
     if not isinstance(agent_guidance, bool):
@@ -1215,8 +1319,55 @@ def initialize_session(
         defaults=search_policy_defaults,
         limits=search_policy_limits,
     )
-    if round_budget is None:
-        round_budget = normalized_search_defaults["max_sample_nums"]
+    if benchmark_id is not None and experiment_manifest is not None:
+        manifest_extra = manifest_hints.get("extra")
+        manifest_search_defaults = manifest_extra.get("search_policy_defaults") if isinstance(manifest_extra, Mapping) else None
+        manifest_search_limits = manifest_extra.get("search_policy_limits") if isinstance(manifest_extra, Mapping) else None
+        expected_defaults = manifest_search_defaults if isinstance(manifest_search_defaults, Mapping) else {
+            "pop_size": manifest_hints.get("population_size"),
+            "n_pop": SEARCH_POLICY_DEFAULTS["n_pop"],
+            "max_sample_nums": SEARCH_POLICY_DEFAULTS["max_sample_nums"],
+        }
+        population_value = expected_defaults.get("pop_size") if isinstance(expected_defaults, Mapping) else None
+        if isinstance(population_value, bool) or not isinstance(population_value, int):
+            raise SessionError("INVALID_ARGUMENT", "experiment manifest population_size is invalid", action=action)
+        expected_limits = manifest_search_limits if isinstance(manifest_search_limits, Mapping) else {
+            "pop_size": [2, max(SEARCH_POLICY_LIMITS["pop_size"][1], population_value)],
+            "n_pop": list(SEARCH_POLICY_LIMITS["n_pop"]),
+            "max_sample_nums": list(SEARCH_POLICY_LIMITS["max_sample_nums"]),
+        }
+        expected_defaults_normalized, expected_limits_normalized = _normalize_search_policy_config(
+            action=action,
+            defaults=expected_defaults,
+            limits=expected_limits,
+        )
+        if normalized_search_defaults != expected_defaults_normalized or normalized_search_limits != expected_limits_normalized:
+            raise SessionError("INVALID_ARGUMENT", "benchmark_search_policy_manifest_mismatch", action=action)
+    if round_budget is None and benchmark_id is not None:
+        # Benchmark runs need a finite, manifest-visible per-round cap. Keep
+        # ordinary Sessions backward-compatible: their round count and
+        # search budget remain controlled by the existing EoH policy unless a
+        # caller explicitly supplies round_budget.
+        round_budget = normalized_search_defaults["max_sample_nums"] + 1
+
+    explicit_seed_payload = None
+    explicit_seed_set_sha256 = None
+    if explicit_seed_set is not None:
+        try:
+            explicit_seed_payload = _normalize_explicit_seed_set(
+                explicit_seed_set,
+                problem_spec_hash=problem_spec_hash,
+                suite_hash=str(suite["content_hash"]),
+                evaluator_hash=evaluator_source_hash(),
+                data_manifest_hash=data_manifest_hash,
+                metric_spec_hash=metric_spec_hash,
+            )
+        except (TypeError, ValueError) as exc:
+            raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
+        if len(explicit_seed_payload["members"]) < normalized_search_defaults["pop_size"]:
+            raise SessionError("INVALID_ARGUMENT", "explicit seed set is smaller than target population", action=action)
+        explicit_seed_text = _json(explicit_seed_payload) + "\n"
+        explicit_seed_set_sha256 = _sha256(explicit_seed_text)
 
     input_payload = _init_input(
         eoh_thinking=eoh_thinking,
@@ -1255,6 +1406,7 @@ def initialize_session(
         problem_spec_hash=problem_spec_hash,
         max_rounds=max_rounds,
         round_budget=round_budget,
+        explicit_seed_set_sha256=explicit_seed_set_sha256,
     )
     input_hash = _sha256(_json(input_payload))
 
@@ -1353,6 +1505,10 @@ def initialize_session(
         "inheritance": {
             "mode": inheritance_mode,
             "population_snapshot_contract": "official_final_population_order_preserved",
+            "explicit_seed_set": {
+                "ref": "seeds/explicit_seeds.json",
+                "sha256": explicit_seed_set_sha256,
+            } if explicit_seed_payload is not None else None,
         },
         "experiment": {"max_rounds": max_rounds, "round_budget": round_budget},
         "feedback": {"mode": feedback_mode, "source": "runtime_facts" if feedback_mode == "runtime_facts" else None},
@@ -1404,12 +1560,16 @@ def initialize_session(
             "count": count,
             "size": size,
         },
+        "search_seed": seed,
+        "search_seed_derivation": "base_plus_round_id_minus_one",
         "init": {"provider_requests": 0, "solver_calls": 0},
     }
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
         staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.init-", dir=str(output.parent)))
         config_sha256, _ = _write_initial_files(staging, config, suite)
+        if explicit_seed_payload is not None:
+            _atomic_write(staging / "seeds/explicit_seeds.json", explicit_seed_text)
     except OSError as exc:
         raise SessionError("STORAGE_FAILED", str(exc), action=action, retryable=True) from exc
     database = staging / "session.sqlite3"

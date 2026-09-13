@@ -3,7 +3,7 @@
 
 3+1 的 Coding Agent 载体位于仓库根目录的 [`skills/algorithm-optimization`](../skills/algorithm-optimization/)；Session CLI 是它的确定性执行面。`workflow` 命令只保留迁移提示，不再运行旧的主动 Plan/Evaluate 链。
 
-当前操作及边界以 [v1.0 验收记录](../reports/v1.0-acceptance.md) 与代码合同为准。旧 AgentLoop、policy、generator、report 和相关循环数据结构不属于当前运行时；生产不提供旧循环兼容入口。prepare 生成官方搜索身份的套件配置，smoke 使用真正的官方 EoH 和 localhost 模型 fixture，需要安装 [eoh] extra。
+当前操作及边界以 v1.1 benchmark 合同、代码合同和 [v1.0 验收记录](../reports/v1.0-acceptance.md) 为准。旧 AgentLoop、policy、generator、report 和相关循环数据结构不属于当前运行时；生产不提供旧循环兼容入口。prepare 生成官方搜索身份的套件配置，smoke 使用真正的官方 EoH 和 localhost 模型 fixture，需要安装 [eoh] extra。
 
 ```powershell
 py -3.11 -m agent_skill_loop import-skill --problem cvrp_construct --file PATH_TO_CODE --license "SOURCE_LICENSE" --output outputs/imported

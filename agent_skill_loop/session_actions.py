@@ -98,8 +98,61 @@ def save(root, ref, value):
 
 def _prepare_population_seeds(root, con, run, rd, config):
     """Derive and freeze next-round EoH seeds from the previous final population."""
-    if (run["inheritance_mode"] if "inheritance_mode" in run.keys() else "incumbent_only") != "population_seeds" or rd["previous_round_id"] is None:
+    mode = run["inheritance_mode"] if "inheritance_mode" in run.keys() else "incumbent_only"
+    if mode not in {"population_seeds", "explicit_seeds"}:
         return None
+    if mode == "explicit_seeds" and rd["previous_round_id"] is None:
+        try:
+            plan_payload = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8"))
+            policy = db.effective_search_policy(config, plan_payload.get("search_policy"))
+            seed_config = (config.get("inheritance") or {}).get("explicit_seed_set")
+            if not isinstance(seed_config, dict) or not isinstance(seed_config.get("ref"), str):
+                raise db.SessionError("EXPLICIT_SEED_SET_MISSING", "explicit seed set is not frozen in config", action="execute")
+            seed_path = local(root, seed_config["ref"])
+            seed_text = seed_path.read_text(encoding="utf-8")
+            if db._sha256(seed_text) != seed_config.get("sha256"):
+                raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "explicit seed set hash mismatch", action="execute")
+            seed_payload = json.loads(seed_text)
+            members = seed_payload.get("members") if isinstance(seed_payload, dict) else None
+            if not isinstance(members, list):
+                raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "explicit seed set members are invalid", action="execute")
+        except db.SessionError:
+            raise
+        except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "explicit seed set is invalid", action="execute") from exc
+        selected = list(members[:policy["pop_size"]])
+        terminated = len(selected) < policy["pop_size"]
+        selection_payload = {
+            "schema_version": "algorithm-optimization-explicit-seed-selection/v1",
+            "source_seed_set_sha256": seed_config["sha256"],
+            "target_population_size": policy["pop_size"],
+            "candidates_considered": len(members),
+            "valid_members": len(members),
+            "selected_members": selected,
+            "problem_spec_hash": run["problem_spec_hash"],
+            "suite_hash": run["suite_hash"],
+            "data_manifest_hash": run["data_manifest_hash"],
+            "evaluator_hash": run["evaluator_hash"],
+            "metric_spec_hash": run["metric_spec_hash"],
+            "terminated": terminated,
+            "termination_reason": "insufficient_explicit_seeds" if terminated else None,
+        }
+        selection_payload["content_hash"] = db._sha256(db._json(selection_payload))
+        prefix = f"rounds/round_{rd['round_id']:04d}"
+        selection_ref = f"{prefix}/seed_selection.json"
+        selection_sha = save(root, selection_ref, selection_payload)
+        con.execute("UPDATE rounds SET seed_selection_ref=?,seed_selection_sha256=? WHERE run_id=? AND round_id=?",
+                    (selection_ref, selection_sha, run["run_id"], rd["round_id"]))
+        if terminated:
+            now = db._utc_now()
+            con.execute("UPDATE rounds SET state='FAILED',stop_reason=? WHERE run_id=? AND round_id=?",
+                        (selection_payload["termination_reason"], run["run_id"], rd["round_id"]))
+            con.execute("UPDATE runs SET state='FAILED',finished_at_utc=? WHERE run_id=?", (now, run["run_id"]))
+            return {"ref": selection_ref, "sha256": selection_sha, "content_hash": selection_payload["content_hash"],
+                    "selected_members": selected, "target_population_size": policy["pop_size"],
+                    "terminated": True, "termination_reason": selection_payload["termination_reason"]}
+        return {"ref": selection_ref, "sha256": selection_sha, "content_hash": selection_payload["content_hash"],
+                "selected_members": selected, "target_population_size": policy["pop_size"]}
     previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?", (run["run_id"], rd["previous_round_id"])).fetchone()
     if previous is None or not previous["population_snapshot_ref"]:
         raise db.SessionError("POPULATION_SNAPSHOT_MISSING", "population_seeds requires a verified previous final-population snapshot", action="execute")
@@ -109,6 +162,13 @@ def _prepare_population_seeds(root, con, run, rd, config):
         raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "population snapshot hash mismatch", action="execute")
     from agent_skill_loop.benchmark import PopulationSnapshot, SeedSelection
     snapshot = PopulationSnapshot.from_dict(json.loads(snapshot_text))
+    if run["metric_spec_hash"] is not None and snapshot.metric_spec_hash != run["metric_spec_hash"]:
+        raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "population snapshot metric identity mismatch", action="execute")
+    for field in ("problem_spec_hash", "data_manifest_hash", "evaluator_hash"):
+        expected = run[field] if field in run.keys() else None
+        actual = getattr(snapshot, field)
+        if expected is not None and actual != expected:
+            raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", f"population snapshot {field} mismatch", action="execute")
     try:
         plan_payload = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8"))
     except (OSError, TypeError, json.JSONDecodeError) as exc:
@@ -116,7 +176,14 @@ def _prepare_population_seeds(root, con, run, rd, config):
     policy = db.effective_search_policy(config, plan_payload.get("search_policy"))
     selection = SeedSelection.from_snapshot(snapshot, policy["pop_size"])
     prefix = f"rounds/round_{rd['round_id']:04d}"
-    selection_payload = {**selection.as_dict(), "content_hash": selection.content_hash}
+    selection_payload = {
+        **selection.as_dict(),
+        "problem_spec_hash": run["problem_spec_hash"],
+        "suite_hash": run["suite_hash"],
+        "data_manifest_hash": run["data_manifest_hash"],
+        "evaluator_hash": run["evaluator_hash"],
+        "content_hash": selection.content_hash,
+    }
     selection_ref = f"{prefix}/seed_selection.json"
     selection_sha = save(root, selection_ref, selection_payload)
     con.execute("UPDATE rounds SET seed_selection_ref=?,seed_selection_sha256=? WHERE run_id=? AND round_id=?",
@@ -142,6 +209,33 @@ def complete_reads(con, run_id, round_id):
         if row["offset_chars"] <= end:
             groups[key] = max(end, row["offset_chars"] + row["returned_chars"])
     return {ref: sha for (ref, sha, total), end in groups.items() if end >= total}
+
+
+def _terminate_before_execute(con, root, run, rd, operation_id, input_hash, reason, detail):
+    """Close a round before any child process or external effect is started."""
+    ref = f"rounds/round_{rd['round_id']:04d}/preflight_budget.json"
+    payload = {
+        "schema_version": "algorithm-optimization-budget-preflight/v1",
+        "round_id": rd["round_id"],
+        "reason": reason,
+        "detail": detail,
+    }
+    try:
+        evidence_sha = save(root, ref, payload)
+    except OSError:
+        ref, evidence_sha = None, None
+    now = db._utc_now()
+    con.execute("UPDATE rounds SET state='FAILED',stop_reason=? WHERE run_id=? AND round_id=?", (reason, run["run_id"], rd["round_id"]))
+    con.execute("UPDATE runs SET state='FAILED',finished_at_utc=? WHERE run_id=?", (now, run["run_id"]))
+    return receipt(con, run, rd, "execute", operation_id, input_hash, {
+        "task_id": None,
+        "task_state": None,
+        "external_effect_started": False,
+        "terminated": True,
+        "termination_reason": reason,
+        "preflight_ref": ref,
+        "preflight_sha256": evidence_sha,
+    })
 
 
 def memory_search(*, run, query="", memory_type=None, scene=None, limit=8, include_shared=False, cursor=None, expected_run_id=None):
@@ -208,9 +302,12 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 save(root, f"{prefix}/submissions/{raw_hash}.json", text)
                 reads = complete_reads(con, row["run_id"], rd["round_id"])
                 try:
+                    feedback_enabled = row["feedback_mode"] != "off" if "feedback_mode" in row.keys() else True
+                    guidance_enabled = bool(row["agent_guidance"]) if "agent_guidance" in row.keys() else True
                     plan = PlanDocument.from_dict(strict_json_object(text), expected_round_id=rd["round_id"], suite_hash=row["suite_hash"],
-                        available_feedback_refs={rd["feedback_ref"]} if rd["feedback_ref"] else set(),
-                        expected_feedback_round_id=rd["previous_round_id"], available_memory_refs=set(reads),
+                        available_feedback_refs={rd["feedback_ref"]} if feedback_enabled and rd["feedback_ref"] else set(),
+                        expected_feedback_round_id=rd["previous_round_id"] if feedback_enabled else None,
+                        available_memory_refs=set(reads),
                         available_skill_refs={rd["incumbent_before_ref"]} if rd["incumbent_before_ref"] else set(),
                         search_policy_limits=db.search_policy_limits(config))
                 except ValueError as exc:
@@ -226,7 +323,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 feedback_summary = None
                 feedback_summary_ref = None
                 feedback_summary_sha256 = None
-                if rd["feedback_ref"]:
+                if feedback_enabled and rd["feedback_ref"]:
                     previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?", (row["run_id"], rd["previous_round_id"])).fetchone()
                     feedback_path = local(root, rd["feedback_ref"])
                     feedback_text = feedback_path.read_text(encoding="utf-8")
@@ -247,17 +344,23 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     feedback_summary_ref = f"{prefix}/feedback_summary.json"
                     feedback_summary_sha256 = save(root, feedback_summary_ref, feedback_summary)
                 effective_policy = db.effective_search_policy(config, plan.search_policy)
+                if row["benchmark_id"] and plan.search_policy is not None:
+                    fail("BENCHMARK_SEARCH_POLICY_FIXED", action)
                 context = compile_round_context(
                     plan,
                     memory_summaries=bodies,
                     feedback_summary=feedback_summary,
                     search_policy=effective_policy,
+                    feedback_mode=row["feedback_mode"] if "feedback_mode" in row.keys() else "runtime_facts",
+                    agent_guidance=guidance_enabled,
                 )
                 payload = json.loads(context.split("\n", 1)[1])
                 manifest = {"plan_sha256": db._sha256(db._json(plan.as_dict())+"\n"), "context_sha256": db._sha256(context),
                             "adopted_refs": list(plan.memory_basis), "injected": [{"reference": x["reference"], "body_sha256": x["body_sha256"], "injected_sha256": db._sha256(x["body"])} for x in payload["memory"]],
                             "omitted_refs": payload.get("omitted_memory_refs", []), "advisory_truncated": payload.get("advisory_truncated", False), "advisory_omitted": payload.get("advisory_omitted", False),
                             "search_policy_requested": plan.search_policy, "search_policy_effective": effective_policy,
+                            "feedback_mode": row["feedback_mode"] if "feedback_mode" in row.keys() else "runtime_facts",
+                            "agent_guidance": guidance_enabled,
                             "feedback_summary": {
                                 "ref": feedback_summary_ref,
                                 "sha256": feedback_summary_sha256,
@@ -385,6 +488,33 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                             "error_sha256": error_sha,
                         },
                     })
+                if result is None and not (seed_selection and seed_selection.get("terminated")):
+                    # Baseline and inherited seeds are deterministic solver
+                    # attempts too. Reserve their known cost before starting
+                    # the child; the solver gateway enforces the same limit
+                    # for every later candidate and repair re-evaluation.
+                    known_attempts = 1  # baseline
+                    if seed_selection and not seed_selection.get("terminated"):
+                        known_attempts += len(seed_selection.get("selected_members") or [])
+                    elif inheritance_mode == "incumbent_only" and rd["incumbent_before_ref"]:
+                        known_attempts += 1  # parent re-evaluation
+                    round_used = con.execute(
+                        "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?",
+                        (row["run_id"], rd["round_id"]),
+                    ).fetchone()[0]
+                    global_used = budget["solver_calls_used"]
+                    if row["round_budget"] is not None and round_used + known_attempts > row["round_budget"]:
+                        result = _terminate_before_execute(
+                            con, root, row, rd, operation_id, ih,
+                            "ROUND_BUDGET_INSUFFICIENT",
+                            {"used": round_used, "required_before_launch": known_attempts, "limit": row["round_budget"]},
+                        )
+                    elif row["max_solver_calls"] is not None and global_used + known_attempts > row["max_solver_calls"]:
+                        result = _terminate_before_execute(
+                            con, root, row, rd, operation_id, ih,
+                            "SOLVER_BUDGET_INSUFFICIENT",
+                            {"used": global_used, "required_before_launch": known_attempts, "limit": row["max_solver_calls"]},
+                        )
                 if result is not None:
                     pass
                 elif seed_selection and seed_selection.get("terminated"):
@@ -536,7 +666,11 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                     budget=db._budget_view(con,row)
                     elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
                     terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED')",(row["run_id"],)).fetchone()
-                    if terminal or row["eoh_round_max_requests"]==0 or row["round_wall_seconds"]==0 or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0 or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"]): fail("CANNOT_CONTINUE_BUDGET",action)
+                    if (terminal or row["eoh_round_max_requests"]==0 or row["round_wall_seconds"]==0
+                            or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0
+                            or budget.get("round_solver_calls_remaining") == 0
+                            or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"])):
+                        fail("CANNOT_CONTINUE_BUDGET",action)
                 now=db._utc_now()
                 con.execute("UPDATE rounds SET state='ROUND_COMPLETED',decision=?,finished_at_utc=? WHERE run_id=? AND round_id=?",(decision,now,row["run_id"],rd["round_id"]))
                 if decision=="continue":

@@ -2,12 +2,12 @@
 
 `auto-algo-opt` 是一个由 Coding Agent 驱动、可恢复、可审计的自动化组合优化启发式进化运行时。Agent 负责认知决策，Session Runtime 负责状态与可信边界，官方 EoH 负责轮内搜索，确定性评测器负责裁决结果。
 
-## v1 版本基线
+## v1.1 版本基线
 
 | 层 | 版本或约束 |
 | --- | --- |
-| Product / package | 1.0.0 |
-| Session Runtime | 1.0.0 |
+| Product / package | 1.1.0 |
+| Session Runtime | 1.1.0 |
 | Session protocol / SQLite schema | v1.1 |
 | Algorithm Optimization Skill | v1.1 |
 | Official EoH | pinned commit `472545785c936dcfc863d2bc0d6109cf23c7ce62` |
@@ -42,7 +42,7 @@ benchmark profile 另外提供 `eohs_v1/obp_mini`（问题接口
 `obp_online`）。后者是用于离线校准和 Session 接线的 regenerated、
 protocol-compatible fixture，不宣称等同于上游完整 OBP 资产。
 
-## v1.1 Benchmark 基线
+## v1.1 Benchmark 基线（mini fixture 接线）
 
 Benchmark 入口不调用 provider，可先完成资产审计、OBP gold 校准和候选复评：
 
@@ -58,6 +58,21 @@ py -3.11 -m agent_skill_loop benchmark pilot-config `
 `pilot-config` 只生成固定的 A/B/C/D 实验 manifest，不调用 Provider；四组
 必须使用独立的 Session、Memory/archive 和输出目录运行。C/D 除
 `agent_guidance` 外保持相同因素。
+
+选择对象必须先锁定，再允许 heldout 集合评测：
+
+```powershell
+py -3.11 -m agent_skill_loop benchmark freeze-selection `
+  --kind final_population_set --population-snapshot population_snapshot.json `
+  --metric-spec-hash METRIC_SHA --output frozen_selection.json
+py -3.11 -m agent_skill_loop benchmark evaluate-selection `
+  --selection frozen_selection.json --split heldout --output test_result.json
+```
+
+当前仓库已验证的是 `eohs_v1/obp_mini` regenerated、
+protocol-compatible fixture；完整上游 OBP、TSP/CVRP 资产和四组正式 pilot
+尚未宣称完成。详见
+[benchmark 实施基线与当前验收状态](docs/algorithm_optimization_skill_architecture_plan.md#256-当前验收状态2026-09-13)。
 
 锁定选择结果后，可用 `benchmark report` 将 manifest、selection、指标和双
 预算事实合成为可复核的 JSON 报告；该命令不触发测试或模型请求。

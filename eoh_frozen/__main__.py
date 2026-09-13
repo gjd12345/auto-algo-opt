@@ -133,6 +133,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                    "wall_seconds": args.wall_seconds, "solver_timeout": args.solver_timeout,
                    "initialization_samples": 0 if (args.parent_skill or seed_members) else 2 * args.pop_size,
                    "evolution_samples": args.max_sample_nums if args.max_sample_nums is not None else args.pop_size * args.n_pop,
+                   "search_seed": getattr(args, "search_seed", None) if getattr(args, "search_seed", None) is not None else args.seed,
                    "probe_requests": 1, "num_samplers": 1, "num_evaluators": 1})
     config["metric_spec_hash"] = getattr(args, "metric_spec_hash", None)
     config["data_manifest_hash"] = getattr(args, "data_manifest_hash", None)
@@ -222,8 +223,14 @@ def cmd_run(args: argparse.Namespace) -> int:
                 if time.monotonic() >= deadline and bridge.last_error is None:
                     bridge.last_error = "wall_time_exhausted"
                 error = bridge.last_error
-                if error in {"request_budget_exhausted", "wall_time_exhausted", "solver_budget_exhausted", "session_stopped"}:
-                    summary.update(status="stopped", stop_reason={"request_budget_exhausted":"request_limit", "wall_time_exhausted":"wall_time_limit", "solver_budget_exhausted":"solver_call_limit", "session_stopped":"user_requested"}[error])
+                if error in {"request_budget_exhausted", "wall_time_exhausted", "solver_budget_exhausted", "round_budget_exhausted", "session_stopped"}:
+                    summary.update(status="stopped", stop_reason={
+                        "request_budget_exhausted": "request_limit",
+                        "wall_time_exhausted": "wall_time_limit",
+                        "solver_budget_exhausted": "solver_call_limit",
+                        "round_budget_exhausted": "round_budget_limit",
+                        "session_stopped": "user_requested",
+                    }[error])
                 elif error:
                     summary.update(status="storage_failed" if error == "evidence_storage_error" else "provider_failed",
                                    stop_reason="provider_error" if error != "evidence_storage_error" else "storage_error",
@@ -231,14 +238,24 @@ def cmd_run(args: argparse.Namespace) -> int:
                 else:
                     result_path = output / "worker_result.json"
                     result = json.loads(result_path.read_text()) if result_path.is_file() else {"status": "engine_failed", "error_type": "WorkerExited"}
-                    if result["status"] != "completed":
+                    if result["status"] == "budget_exhausted":
+                        summary.update(status="stopped", stop_reason=result.get("stop_reason", "budget_limit"),
+                                       engine_error=result.get("error_type"), engine_error_code=result.get("error_code"),
+                                       loop_completed=True)
+                    elif result["status"] != "completed":
                         summary.update(status="engine_failed", stop_reason="engine_error", engine_error=result.get("error_type"), engine_error_code=result.get("error_code"), loop_completed=False)
     except (ValueError, OSError, KeyError, TypeError) as exc:
         summary.update(status="invalid_input" if isinstance(exc, ValueError) else "storage_failed",
                        stop_reason="input_error" if isinstance(exc, ValueError) else "storage_error",
                        error_type=type(exc).__name__, error_detail=str(exc)[:200], loop_completed=False)
-        if session and str(exc) in {"solver_budget_exhausted", "session_stopped"}:
-            summary.update(status="stopped", stop_reason="solver_call_limit" if str(exc)=="solver_budget_exhausted" else "user_requested", loop_completed=True)
+        if session and str(exc) in {"solver_budget_exhausted", "round_budget_exhausted", "session_stopped"}:
+            summary.update(
+                status="stopped",
+                stop_reason=("solver_call_limit" if str(exc) == "solver_budget_exhausted"
+                             else "round_budget_limit" if str(exc) == "round_budget_exhausted"
+                             else "user_requested"),
+                loop_completed=True,
+            )
     finally:
         if proc is not None and proc.poll() is None:
             kill_process_tree(proc)
@@ -282,6 +299,8 @@ def add_run_arguments(run: argparse.ArgumentParser) -> None:
     run.add_argument("--request-timeout", type=float, default=180.0)
     run.add_argument("--solver-timeout", type=float, default=20.0)
     run.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    run.add_argument("--search-seed", type=int, default=None,
+                     help="Seed for official EoH operator/search randomness; defaults to --seed")
     run.add_argument("--size", type=int, default=DEFAULT_SIZE)
     run.add_argument("--count", type=int, default=DEFAULT_COUNT)
     run.add_argument("--pop-size", type=int, default=4)

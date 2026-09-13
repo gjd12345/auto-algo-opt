@@ -437,19 +437,46 @@ def compile_round_context(
     memory_summaries: list[Mapping[str, Any]] | None = None,
     feedback_summary: Mapping[str, Any] | None = None,
     search_policy: Mapping[str, int] | None = None,
+    feedback_mode: str = "runtime_facts",
+    agent_guidance: bool = True,
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
 ) -> str:
     """Compile only advisory plan text for the official EoH task prompt."""
+    if feedback_mode not in {"off", "runtime_facts"}:
+        raise ValueError("invalid_feedback_mode")
+    if not isinstance(agent_guidance, bool):
+        raise ValueError("agent_guidance_must_be_bool")
     unique_memory = {item.get("reference"): item for item in (memory_summaries or [])
                      if item.get("reference") in set(plan.memory_basis) and item.get("body") and not item.get("truncated")}
+    if agent_guidance:
+        guidance = {
+            "direction": plan.direction,
+            "operations": [item.as_dict() for item in plan.operations],
+            "preserve": plan.preserve,
+            "reference_skill_ref": plan.reference_skill_ref,
+            "hypothesis": plan.hypothesis,
+            "guidance_mode": "agent",
+        }
+    else:
+        # Controlled benchmark groups A/B/C must not accidentally receive a
+        # host-Agent strategy under a neutral manifest.  The fixed text is
+        # deliberately descriptive, not an algorithm-family recommendation.
+        guidance = {
+            "direction": "Neutral benchmark control; use the frozen task contract.",
+            "operations": [{
+                "type": "preserve",
+                "target": "search",
+                "mechanism": "Use the frozen benchmark search configuration without host guidance",
+            }],
+            "preserve": "Frozen problem interface, evaluator, and benchmark search policy.",
+            "reference_skill_ref": None,
+            "hypothesis": "No host-Agent hypothesis is supplied in this control group.",
+            "guidance_mode": "neutral",
+        }
     payload = {
         "round": plan.round_id,
-        "direction": plan.direction,
-        "operations": [item.as_dict() for item in plan.operations],
-        "preserve": plan.preserve,
-        "reference_skill_ref": plan.reference_skill_ref,
-        "hypothesis": plan.hypothesis,
-        "feedback_summary": dict(feedback_summary) if isinstance(feedback_summary, Mapping) else None,
+        **guidance,
+        "feedback_summary": dict(feedback_summary) if feedback_mode == "runtime_facts" and isinstance(feedback_summary, Mapping) else None,
         "search_policy": dict(search_policy if search_policy is not None else plan.search_policy)
         if (search_policy is not None or plan.search_policy is not None) else None,
         "memory": [

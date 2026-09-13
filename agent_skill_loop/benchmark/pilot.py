@@ -50,6 +50,18 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
     common_extra.update({
         "pilot_schema": PILOT_SCHEMA,
         "pilot_id": "obp_v1.1_controlled",
+        # Search parameters are not Agent factors.  Keep them in the hashed
+        # manifest so each pilot Session can reject an accidental CLI override.
+        "search_policy_defaults": {
+            "pop_size": source.population_size,
+            "n_pop": 2,
+            "max_sample_nums": 8,
+        },
+        "search_policy_limits": {
+            "pop_size": [2, max(8, source.population_size)],
+            "n_pop": [1, 5],
+            "max_sample_nums": [1, 16],
+        },
     })
 
     def make(*, inheritance_mode: str, feedback_mode: str, agent_guidance: bool,
