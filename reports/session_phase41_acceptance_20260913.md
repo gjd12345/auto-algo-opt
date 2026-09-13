@@ -1,6 +1,8 @@
-# Phase 4.1 Reliability Closure 复检与修复验收 + Phase 5 Skill Packaging
+# Phase 4.1 Reliability Closure 复检与修复验收 + Phase 5 Skill Packaging（最终复检）
 
 日期：2026-09-13。复检基线：`69effae`（`agent-skill-loop-0908`）。本报告覆盖该基线上的 Phase 4.1 工作区修复及 Phase 5 实现，并随本次提交推送；提交号以分支 Git history 为准。
+
+最终复检：此前 Skill packaging conformance 的条件项已闭合。`SKILL.md` frontmatter 已通过标准 YAML/Skill validator；`plan_alignment` 已统一为 `aligned|partial|misaligned|unknown`，并明确 `deviated` 只允许历史兼容输入；两轮示例已补齐跨轮 `feedback_ref`、`state_version` 和 Evaluate 提交流程。
 
 结论：Phase 4.1 七项整改复检通过，Phase 5 的 Coding Agent Skill 包装和旧 workflow 入口迁移已实现。Windows 全仓回归、Phase 4.1 定向测试和 Phase 5 包装测试通过；新增 Session 正向测试运行安装的官方 EoH 和实际确定性 evaluator，模型响应由 localhost fixture 提供。本次没有追加真实 DeepSeek 请求，也不改变前次真实 API 401 的验收结论。
 
@@ -21,9 +23,10 @@
 | 项目 | 实现与证据 |
 |---|---|
 | Coding Agent Skill 包 | 新增 `skills/algorithm-optimization/SKILL.md`、`agents/openai.yaml`、`references/protocol.md`、`references/plan-and-evaluate.md` 和两轮示例。Skill 明确 Agent 负责 Plan/Evaluate/Memory/停止，Runtime 负责状态和可信边界，DeepSeek 仅进入官方 EoH。 |
-| Skill identity | `session init` 现在对完整 Skill 文件集合计算 `optimization_skill.content_sha256`；新 Session mutation 会拒绝 `SKILL_IDENTITY_MISMATCH`，state 仍可诊断，避免指导协议静默变化。当前 Skill hash：`076871f136d064c597357afcae6616423b02fe8fa8aff7e6c33a07b6863ea950`。 |
+| Skill identity | `session init` 现在对完整 Skill 文件集合计算 `optimization_skill.content_sha256`；新 Session mutation 会拒绝 `SKILL_IDENTITY_MISMATCH`，state 仍可诊断，避免指导协议静默变化。当前 Skill hash：`bb8ee5495a03c55034009f484c4fe3c2c73b66e927399776405e33c1b6965a7e`。 |
 | 旧入口迁移 | `agent_skill_loop workflow` 保留过渡解析器但只返回 `WORKFLOW_DEPRECATED`、exit 2，不加载环境、不调用旧 WorkflowRunner；官方 EoH `run` 文档参数收敛到 `--eoh-model` / `--eoh-endpoint` / `--eoh-api-key-env`，旧参数仅兼容。 |
 | 证据 | `tests/kernel/test_phase5_packaging.py` 验证 Skill 文件、冻结 hash、workflow 无副作用迁移错误和新旧参数；手工检查 frontmatter 与 Skill 引用路径通过。 |
+| 最终 packaging conformance | `tools/validate_skill.py` 运行标准 YAML/Skill schema 检查；CI 的 kernel job 在测试前执行该步骤，`PyYAML` 仅加入 `dev` 依赖，不进入生产 Runtime。 |
 
 正向修复测试还检查出一处引用接线问题：repair 证据保留的是 EoH 子目录相对路径。`collect_facts` 现将其转换为 Session 根目录相对路径；测试逐一验证 generation/repair exchange 文件存在。
 
@@ -48,6 +51,7 @@ Runtime hash 门禁意味着：代码升级后，旧 Session 的 state 可以查
 | Windows / Python 3.11.9 | 全仓 `pytest -q`（含 Phase 5） | 174 passed、1 skipped，196.27 秒 | 本次命令未写 JUnit XML |
 | Windows / Python 3.11.9 | Hardening + repair/solution 正向测试 | 30 passed、1 skipped，46.28 秒；为全仓子集，不额外累加 | 本次命令未写 JUnit XML |
 | Windows / Python 3.11.9 | Phase 5 Skill packaging/migration | 5 passed，0.27 秒 | 本次命令未写 JUnit XML |
+| Windows / Python 3.11.9 | Skill validator + packaging contract | 标准 validator 通过；6 passed，0.23 秒 | `tools/validate_skill.py`；`tests/kernel/test_phase5_packaging.py` |
 | WSL Ubuntu / Python 3.11.15，尚未安装 EoH | Session Hardening、Phases、Runtime、import isolation | 26 passed，20.98 秒 | `outputs/session_phase41_linux_kernel.xml` |
 | WSL Ubuntu / Python 3.11.15，安装冻结官方 EoH | Session 两轮、失败路径、repair/solution 正向测试 | 5 passed，44.39 秒 | `outputs/session_phase41_linux_integration.xml` |
 
@@ -72,4 +76,4 @@ bef05187e8b103fa184e6acf1dfc53de5ec1b72fe8e2f8d1dea53898c10829dc
 
 ## 交付状态
 
-Phase 4.1 与 Phase 5 修改已通过上述本地验收并随本次提交推送。未追加真实 DeepSeek 费用请求；历史旧 workflow 模块仍作为只读/测试兼容代码保留，但生产 CLI 不再执行它。本次未修改设计文档和 drawio 资产；`docs/stage12_contract.md` 的历史删除状态也不属于本次提交。
+Phase 4.1 与 Phase 5 修改已通过上述本地验收并随本次提交推送。最终 Skill packaging conformance 已闭合。未追加真实 DeepSeek 费用请求；历史旧 workflow 模块仍作为只读/测试兼容代码保留，但生产 CLI 不再执行它。本次未修改设计文档和 drawio 资产；`docs/stage12_contract.md` 的历史删除状态也不属于本次提交。

@@ -863,7 +863,7 @@ v1.1 采用结构化 facts/hypotheses 分离：
 
 ```json
 {
-  "plan_alignment": "aligned|partial|deviated|unknown",
+  "plan_alignment": "aligned|partial|misaligned|unknown",
   "observations": [
     {
       "claim": "candidate_7 changed ranking and improved objective",
@@ -889,6 +889,8 @@ v1.1 采用结构化 facts/hypotheses 分离：
   }
 }
 ```
+
+新客户端 MUST 使用 `misaligned` 表示与计划实质偏离；`deviated` 仅作为历史 Session 客户端的兼容输入，新的 Skill 文档和提交不得输出该拼写。
 
 ### 21.1 Evaluate 无权修改
 

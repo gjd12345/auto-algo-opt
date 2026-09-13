@@ -50,7 +50,14 @@ Use the deterministic facts from `read-evaluation`; do not recalculate or claim 
 }
 ```
 
-`plan_alignment` is `aligned`, `deviated`, or `unknown`. Every observation needs at least one exact evidence reference from the returned facts; hypotheses use `low`, `medium`, or `high` confidence. `next_search_advice` is optional and advisory.
+`plan_alignment` MUST be one of `aligned`, `partial`, `misaligned`, or `unknown`:
+
+- `aligned`: the observed implementation follows the submitted direction;
+- `partial`: only some of the direction was implemented or supported by evidence;
+- `misaligned`: the observed implementation materially differs from the direction;
+- `unknown`: the available evidence is insufficient to determine alignment.
+
+`deviated` is accepted only for historical Session-client compatibility. New Skill submissions MUST use `misaligned` instead. Every observation needs at least one exact evidence reference from the returned facts; hypotheses use `low`, `medium`, or `high` confidence. `next_search_advice` is optional and advisory.
 
 When Memory is enabled, choose exactly one of:
 

@@ -25,6 +25,13 @@ def test_algorithm_optimization_skill_package_is_complete_and_hashed():
     assert db._skill_content_hash() == db._skill_content_hash()
 
 
+def test_skill_evaluation_alignment_docs_match_current_contract():
+    text = (SKILL_ROOT / "references" / "plan-and-evaluate.md").read_text(encoding="utf-8")
+    assert "aligned`, `partial`, `misaligned`, or `unknown" in text
+    assert "`deviated` is accepted only for historical Session-client compatibility" in text
+    assert "New Skill submissions MUST use `misaligned` instead" in text
+
+
 def test_session_freezes_skill_content_identity(tmp_path, monkeypatch):
     root = tmp_path / "run"
     db.initialize_session(output=root, operation_id="init", eoh_model="fixture", size=6, count=1)

@@ -1,6 +1,6 @@
 ---
 name: algorithm-optimization
-description: Drive a recoverable algorithm-evolution session: plan a bounded change, run the official EoH engine, inspect deterministic evaluations, record memory, and decide whether to continue.
+description: "Drive a recoverable algorithm-evolution session: plan a bounded change, run the official EoH engine, inspect deterministic evaluations, record memory, and decide whether to continue."
 ---
 
 # Algorithm Optimization
@@ -22,7 +22,7 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 3. Write a strict `plan.json` and submit it with `session submit-plan`.
 4. Call `session execute` once. Poll `session state` until the task is terminal, then call `session collect`.
 5. Call `session read-evaluation` and reason only from its deterministic facts. The incumbent has already been selected by the Runtime before this step.
-6. Write `evaluation.json`. Choose `memory_action.kind` as `none`, `insight`, or `solution` only when Memory is enabled; otherwise use `disabled`. Submit it once and inspect the returned Memory status.
+6. Write `evaluation.json`. Use `plan_alignment=aligned`, `partial`, `misaligned`, or `unknown`; new submissions MUST NOT emit the historical `deviated` spelling. Choose `memory_action.kind` as `none`, `insight`, or `solution` only when Memory is enabled; otherwise use `disabled`. Submit it once and inspect the returned Memory status.
 7. Call `session finish-round --decision continue` only when the state and budget permit another round. Otherwise call it with `complete`, or use `session stop` for an explicit stop.
 
 After every mutation, refresh state rather than guessing the next version. Reuse the same `operation_id` when retrying an uncertain command; never invent a new ID to repeat an effectful `execute` task.
