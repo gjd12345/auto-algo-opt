@@ -126,6 +126,10 @@ def _load_materialized(directory: Path) -> SkillVersion:
         search_policy_fixture_only=bool((meta.get("search_policy") or {}).get("fixture_only", False)),
         integration_mode=(meta.get("search_policy") or {}).get("integration_mode"),
         repair_policy_version=(meta.get("search_policy") or {}).get("repair_policy_version"),
+        metric_spec_hash=meta.get("metric_spec_hash"),
+        problem_spec_hash=meta.get("problem_spec_hash"),
+        data_manifest_hash=meta.get("data_manifest_hash"),
+        reference_manifest_hash=meta.get("reference_manifest_hash"),
     )
 
 
@@ -139,6 +143,9 @@ def _validate_ref_identity(payload: Mapping[str, Any], skill: SkillVersion) -> N
         "suite_hash": skill.suite_hash,
         "evaluator_hash": skill.evaluator_hash,
     }
+    for key in ("metric_spec_hash", "problem_spec_hash", "data_manifest_hash", "reference_manifest_hash"):
+        if getattr(skill, key) is not None:
+            checks[key] = getattr(skill, key)
     for key, actual in checks.items():
         # Original v1 pointers did not duplicate problem/interface. The target
         # supplies both; all fields present in a v1 ref are still checked.
@@ -205,6 +212,9 @@ def publish_export_ref(run_dir: Path, skill_dir: Path) -> Path:
         "suite_hash": skill.suite_hash,
         "evaluator_hash": skill.evaluator_hash,
     }
+    for key in ("metric_spec_hash", "problem_spec_hash", "data_manifest_hash", "reference_manifest_hash"):
+        if getattr(skill, key) is not None:
+            payload[key] = getattr(skill, key)
     export_dir = run_dir / "exported_skill"
     if (export_dir / "skill.json").is_file():
         raise ValueError("export_materialized_exists")
@@ -233,6 +243,10 @@ def make_skill(
     search_policy_fixture_only: bool = False,
     integration_mode: str | None = None,
     repair_policy_version: str | None = None,
+    metric_spec_hash: str | None = None,
+    problem_spec_hash: str | None = None,
+    data_manifest_hash: str | None = None,
+    reference_manifest_hash: str | None = None,
 ) -> SkillVersion:
     return SkillVersion(
         version_id=version_id,
@@ -256,4 +270,8 @@ def make_skill(
         search_policy_fixture_only=search_policy_fixture_only,
         integration_mode=integration_mode,
         repair_policy_version=repair_policy_version,
+        metric_spec_hash=metric_spec_hash,
+        problem_spec_hash=problem_spec_hash,
+        data_manifest_hash=data_manifest_hash,
+        reference_manifest_hash=reference_manifest_hash,
     )

@@ -102,9 +102,11 @@ def solver_event(session, payload):
                 if row["state"]!="RUNNING" or task["state"]!="RUNNING": raise ValueError("session_stopped")
                 if row["max_solver_calls"] is not None and used>=row["max_solver_calls"]: raise ValueError("solver_budget_exhausted")
                 if payload["suite_hash"]!=row["suite_hash"] or payload["evaluator_hash"]!=row["evaluator_hash"]: raise ValueError("evaluation_identity_mismatch")
+                if row["metric_spec_hash"] is not None and payload.get("metric_spec_hash") != row["metric_spec_hash"]:
+                    raise ValueError("metric_spec_identity_mismatch")
                 mark_effect(con,row,task)
-                con.execute("INSERT INTO solver_calls(solver_call_id,run_id,round_id,task_id,candidate_id,revision,evaluation_id,suite_hash,evaluator_hash,code_sha256,state,started_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,'started',?)",
-                    (uuid.uuid4().hex,row["run_id"],task["round_id"],task_id,payload.get("candidate_id") or payload.get("origin"),payload.get("revision") or "original",payload["evaluation_id"],payload["suite_hash"],payload["evaluator_hash"],payload["code_sha256"],db._utc_now()))
+                con.execute("INSERT INTO solver_calls(solver_call_id,run_id,round_id,task_id,candidate_id,revision,origin,evaluation_id,suite_hash,evaluator_hash,metric_spec_hash,code_sha256,state,started_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'started',?)",
+                    (uuid.uuid4().hex,row["run_id"],task["round_id"],task_id,payload.get("candidate_id") or payload.get("origin"),payload.get("revision") or "original",payload.get("origin"),payload["evaluation_id"],payload["suite_hash"],payload["evaluator_hash"],payload.get("metric_spec_hash"),payload["code_sha256"],db._utc_now()))
             else:
                 cursor=con.execute("UPDATE solver_calls SET state=?,objective=?,valid=?,error_code=?,finished_at_utc=? WHERE evaluation_id=? AND code_sha256=? AND task_id=?",
                     ("complete" if result["valid"] else "failed",result["objective"],int(result["valid"]),result["error_code"],db._utc_now(),payload["evaluation_id"],payload["code_sha256"],task_id))

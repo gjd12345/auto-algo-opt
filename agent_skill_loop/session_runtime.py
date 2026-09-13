@@ -217,6 +217,19 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             state_version INTEGER NOT NULL CHECK (state_version >= 1),
             active_round_id INTEGER,
             problem TEXT NOT NULL,
+            problem_spec_hash TEXT,
+            benchmark_id TEXT,
+            benchmark_profile TEXT,
+            benchmark_spec_hash TEXT,
+            data_manifest_hash TEXT,
+            reference_manifest_hash TEXT,
+            metric_spec_hash TEXT,
+            inheritance_mode TEXT NOT NULL DEFAULT 'incumbent_only',
+            feedback_mode TEXT NOT NULL DEFAULT 'runtime_facts',
+            agent_guidance INTEGER NOT NULL DEFAULT 1 CHECK (agent_guidance IN (0,1)),
+            experiment_manifest_sha256 TEXT,
+            max_rounds INTEGER CHECK (max_rounds IS NULL OR max_rounds >= 1),
+            round_budget INTEGER CHECK (round_budget IS NULL OR round_budget >= 1),
             suite_hash TEXT NOT NULL,
             evaluator_hash TEXT NOT NULL,
             objective_direction TEXT NOT NULL,
@@ -275,6 +288,10 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             round_context_ref TEXT,
             round_context_sha256 TEXT,
             context_manifest_ref TEXT,
+            population_snapshot_ref TEXT,
+            population_snapshot_sha256 TEXT,
+            seed_selection_ref TEXT,
+            seed_selection_sha256 TEXT,
             evaluation_facts_ref TEXT,
             evaluation_facts_sha256 TEXT,
             submitted_evaluation_ref TEXT,
@@ -360,9 +377,11 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             task_id TEXT,
             candidate_id TEXT,
             revision TEXT,
+            origin TEXT,
             evaluation_id TEXT NOT NULL UNIQUE,
             suite_hash TEXT NOT NULL,
             evaluator_hash TEXT NOT NULL,
+            metric_spec_hash TEXT,
             code_sha256 TEXT NOT NULL,
             state TEXT NOT NULL CHECK (state IN ('reserved','started','complete','failed','interrupted','unknown')),
             objective REAL,
@@ -433,14 +452,46 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     # A database created by an earlier v1.1 commit may already exist. Add new
     # frozen fields without rewriting existing rows; old sessions remain
     # readable but cannot silently acquire a new search-policy envelope.
-    existing_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(runs)")}
+    table_columns = {
+        "runs": {str(row[1]) for row in connection.execute("PRAGMA table_info(runs)")},
+        "rounds": {str(row[1]) for row in connection.execute("PRAGMA table_info(rounds)")},
+        "solver_calls": {str(row[1]) for row in connection.execute("PRAGMA table_info(solver_calls)")},
+    }
+    for name, definition in {
+        "problem_spec_hash": "TEXT",
+        "benchmark_id": "TEXT",
+        "benchmark_profile": "TEXT",
+        "benchmark_spec_hash": "TEXT",
+        "data_manifest_hash": "TEXT",
+        "reference_manifest_hash": "TEXT",
+        "metric_spec_hash": "TEXT",
+        "inheritance_mode": "TEXT NOT NULL DEFAULT 'incumbent_only'",
+        "feedback_mode": "TEXT NOT NULL DEFAULT 'runtime_facts'",
+        "agent_guidance": "INTEGER NOT NULL DEFAULT 1",
+        "experiment_manifest_sha256": "TEXT",
+        "max_rounds": "INTEGER",
+        "round_budget": "INTEGER",
+    }.items():
+        if name not in table_columns["runs"]:
+            connection.execute(f"ALTER TABLE runs ADD COLUMN {name} {definition}")
+    for name, definition in {
+        "population_snapshot_ref": "TEXT",
+        "population_snapshot_sha256": "TEXT",
+        "seed_selection_ref": "TEXT",
+        "seed_selection_sha256": "TEXT",
+    }.items():
+        if name not in table_columns["rounds"]:
+            connection.execute(f"ALTER TABLE rounds ADD COLUMN {name} {definition}")
+    for name, definition in {"metric_spec_hash": "TEXT", "origin": "TEXT"}.items():
+        if name not in table_columns["solver_calls"]:
+            connection.execute(f"ALTER TABLE solver_calls ADD COLUMN {name} {definition}")
     for name, definition in {
         "search_policy_defaults_json": "TEXT",
         "search_policy_limits_json": "TEXT",
         "solver_timeout": "REAL",
         "request_timeout": "REAL",
     }.items():
-        if name not in existing_columns:
+        if name not in table_columns["runs"]:
             connection.execute(f"ALTER TABLE runs ADD COLUMN {name} {definition}")
     connection.execute(statements[-1], (SCHEMA_VERSION,))
     connection.execute("UPDATE schema_meta SET value=? WHERE key='schema_version'", (SCHEMA_VERSION,))
@@ -511,7 +562,7 @@ def _allowed_actions(run_state: str, round_state: str) -> list[str]:
 
 
 def _policy_identity(run: sqlite3.Row) -> dict[str, Any]:
-    return {
+    result = {
         "optimization_skill": {
             "id": run["optimization_skill_id"],
             "version": run["optimization_skill_version"],
@@ -532,6 +583,20 @@ def _policy_identity(run: sqlite3.Row) -> dict[str, Any]:
             "search_policy": _run_search_policy(run),
         },
     }
+    result["benchmark"] = {
+        "id": run["benchmark_id"] if "benchmark_id" in run.keys() else None,
+        "profile": run["benchmark_profile"] if "benchmark_profile" in run.keys() else None,
+        "problem_spec_hash": run["problem_spec_hash"] if "problem_spec_hash" in run.keys() else None,
+        "benchmark_spec_hash": run["benchmark_spec_hash"] if "benchmark_spec_hash" in run.keys() else None,
+        "data_manifest_hash": run["data_manifest_hash"] if "data_manifest_hash" in run.keys() else None,
+        "reference_manifest_hash": run["reference_manifest_hash"] if "reference_manifest_hash" in run.keys() else None,
+        "metric_spec_hash": run["metric_spec_hash"] if "metric_spec_hash" in run.keys() else None,
+        "inheritance_mode": run["inheritance_mode"] if "inheritance_mode" in run.keys() else "incumbent_only",
+        "feedback_mode": run["feedback_mode"] if "feedback_mode" in run.keys() else "runtime_facts",
+        "agent_guidance": bool(run["agent_guidance"]) if "agent_guidance" in run.keys() else True,
+        "experiment_manifest_sha256": run["experiment_manifest_sha256"] if "experiment_manifest_sha256" in run.keys() else None,
+    }
+    return result
 
 
 def _run_search_policy(run: sqlite3.Row) -> dict[str, Any] | None:
@@ -559,6 +624,35 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
         requests_used = int(connection.execute("SELECT COUNT(*) FROM requests WHERE run_id=?", (run["run_id"],)).fetchone()[0])
     if "solver_calls" in table_names:
         solver_used = int(connection.execute("SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (run["run_id"],)).fetchone()[0])
+    dual = {
+        "total_evaluation_attempts": solver_used,
+        "novel_candidate_evaluations": 0,
+        "seed_reevaluation_attempts": 0,
+        "baseline_attempts": 0,
+        "repair_attempts": 0,
+    }
+    if "solver_calls" in table_names:
+        rows = connection.execute(
+            "SELECT candidate_id, revision, code_sha256, origin "
+            "FROM solver_calls WHERE run_id=?",
+            (run["run_id"],),
+        ).fetchall()
+        novel_hashes: set[str] = set()
+        for item in rows:
+            candidate_id = str(item["candidate_id"] or "")
+            revision = str(item["revision"] or "")
+            code_hash = str(item["code_sha256"] or "")
+            origin = str(item["origin"] or "")
+            if candidate_id == "baseline":
+                dual["baseline_attempts"] += 1
+            elif candidate_id == "explicit_parent" or candidate_id.startswith("seed_"):
+                dual["seed_reevaluation_attempts"] += 1
+            elif origin == "generated" and revision != "repair_1":
+                if code_hash and code_hash not in novel_hashes:
+                    novel_hashes.add(code_hash)
+                    dual["novel_candidate_evaluations"] += 1
+            if revision == "repair_1":
+                dual["repair_attempts"] += 1
     max_requests = run["eoh_max_requests"]
     max_solver_calls = run["max_solver_calls"]
     return {
@@ -572,6 +666,7 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
         "engine_wall_seconds": run["engine_wall_seconds"],
         "round_wall_seconds": run["round_wall_seconds"],
         "repair_max_requests": run["repair_max_requests"],
+        **dual,
     }
 
 
@@ -668,9 +763,24 @@ def _verify_files(output: Path, run, *, action: str):
         suite = json.loads((output / "dev_suite.json").read_text(encoding="utf-8"))
         spec = get_problem(run["problem"])
         spec.validate_suite(suite)
-        for key in ("run_id", "problem", "suite_hash", "evaluator_hash"):
+        for key in ("run_id", "problem", "problem_spec_hash", "suite_hash", "evaluator_hash"):
+            if key not in config:
+                if key == "problem_spec_hash" and run[key] is None:
+                    continue
+                raise ValueError(f"{key}_missing")
             if config[key] != run[key]:
                 raise ValueError(f"{key}_mismatch")
+        if "benchmark_id" in run.keys() and run["benchmark_id"]:
+            benchmark_config = config.get("benchmark")
+            if not isinstance(benchmark_config, Mapping) or benchmark_config.get("id") != run["benchmark_id"] or benchmark_config.get("profile") != run["benchmark_profile"]:
+                raise ValueError("benchmark_identity_mismatch")
+            for name in ("problem_spec_hash", "benchmark_spec_hash", "data_manifest_hash", "reference_manifest_hash", "metric_spec_hash"):
+                if benchmark_config.get(name) != run[name]:
+                    raise ValueError(f"{name}_mismatch")
+        if "experiment_manifest_sha256" in run.keys() and run["experiment_manifest_sha256"]:
+            manifest_config = config.get("experiment_manifest")
+            if not isinstance(manifest_config, Mapping) or manifest_config.get("sha256") != run["experiment_manifest_sha256"]:
+                raise ValueError("experiment_manifest_identity_mismatch")
         if suite["content_hash"] != run["suite_hash"] or suite["problem"] != run["problem"]:
             raise ValueError("suite_identity_mismatch")
         if evaluator_source_hash() != run["evaluator_hash"] or _sha256(spec.baseline_code) != run["baseline_code_sha256"]:
@@ -716,10 +826,26 @@ def _init_input(
     solver_timeout: float,
     request_timeout: float,
     eoh_thinking: str = "provider-default",
+    benchmark_id: str | None = None,
+    benchmark_profile_name: str | None = None,
+    benchmark_spec_hash: str | None = None,
+    data_manifest_hash: str | None = None,
+    reference_manifest_hash: str | None = None,
+    metric_spec_hash: str | None = None,
+    inheritance_mode: str = "incumbent_only",
+    feedback_mode: str = "runtime_facts",
+    agent_guidance: bool = True,
+    experiment_manifest_sha256: str | None = None,
+    problem_spec_hash: str | None = None,
+    max_rounds: int | None = None,
+    round_budget: int | None = None,
 ) -> dict[str, Any]:
     return {
         "output": str(output),
         "problem": problem,
+        "problem_spec_hash": problem_spec_hash,
+        "max_rounds": max_rounds,
+        "round_budget": round_budget,
         "operation_id": operation_id,
         "eoh_model": eoh_model,
         "eoh_endpoint": eoh_endpoint,
@@ -741,7 +867,83 @@ def _init_input(
         "solver_timeout": solver_timeout,
         "request_timeout": request_timeout,
         "eoh_thinking": eoh_thinking,
+        "benchmark_id": benchmark_id,
+        "benchmark_profile": benchmark_profile_name,
+        "benchmark_spec_hash": benchmark_spec_hash,
+        "data_manifest_hash": data_manifest_hash,
+        "reference_manifest_hash": reference_manifest_hash,
+        "metric_spec_hash": metric_spec_hash,
+        "inheritance_mode": inheritance_mode,
+        "feedback_mode": feedback_mode,
+        "agent_guidance": bool(agent_guidance),
+        "experiment_manifest_sha256": experiment_manifest_sha256,
     }
+
+
+def _validate_experiment_manifest(
+    payload: Mapping[str, Any],
+    *,
+    benchmark: Any,
+    benchmark_spec_hash: str | None,
+    metric_spec_hash: str | None,
+    runtime_hash: str,
+    skill_hash: str,
+    eoh_model: str,
+    eoh_endpoint: str,
+    inheritance_mode: str,
+    feedback_mode: str,
+    agent_guidance: bool,
+    repair_mode: str,
+    memory_enabled: bool,
+    evaluation_budget: int,
+    population_size: int,
+    max_rounds: int,
+    round_budget: int,
+    search_seed: int,
+) -> tuple[dict[str, Any], str]:
+    """Validate and canonicalize a user-supplied benchmark manifest.
+
+    A manifest is an experiment identity, not an annotation.  Accepting a
+    caller-provided hash without checking the frozen runtime values would let
+    results from different evaluators or policies be mixed under one label.
+    """
+    if benchmark is None:
+        raise SessionError("INVALID_ARGUMENT", "experiment manifest requires a benchmark", action="init")
+    from agent_skill_loop.benchmark import ExperimentManifest
+
+    values = dict(payload)
+    declared_hash = values.pop("experiment_manifest_sha256", None)
+    values.pop("schema_version", None)
+    values.pop("manifest_version", None)
+    try:
+        manifest = ExperimentManifest(**values)
+    except (TypeError, ValueError) as exc:
+        raise SessionError("INVALID_ARGUMENT", f"invalid experiment manifest: {exc}", action="init") from exc
+    if declared_hash is not None and declared_hash != manifest.content_hash:
+        raise SessionError("INVALID_ARGUMENT", "experiment_manifest_hash_mismatch", action="init")
+    expected = {
+        "benchmark_spec_hash": benchmark_spec_hash,
+        "metric_spec_hash": metric_spec_hash,
+        "eoh_commit": EOH_COMMIT,
+        "runtime_hash": runtime_hash,
+        "skill_hash": skill_hash,
+        "model": eoh_model,
+        "endpoint_identity": eoh_endpoint,
+        "inheritance_mode": inheritance_mode,
+        "feedback_mode": feedback_mode,
+        "agent_guidance": agent_guidance,
+        "repair_mode": repair_mode,
+        "memory_enabled": memory_enabled,
+        "evaluation_budget": evaluation_budget,
+        "population_size": population_size,
+        "rounds": max_rounds,
+        "round_budget": round_budget,
+        "search_seed": search_seed,
+    }
+    for name, actual in expected.items():
+        if getattr(manifest, name) != actual:
+            raise SessionError("INVALID_ARGUMENT", f"experiment_manifest_{name}_mismatch", action="init")
+    return manifest.as_dict(), manifest.content_hash
 
 
 def _normalize_search_policy_config(
@@ -886,7 +1088,7 @@ def initialize_session(
     engine_wall_seconds: float | None = 420.0,
     round_wall_seconds: float | None = None,
     max_solver_calls: int | None = None,
-    repair_mode: str = "off",
+    repair_mode: str | None = None,
     repair_max_requests: int | None = None,
     memory_store: str | None = None,
     solution_threshold: float | None = None,
@@ -898,6 +1100,14 @@ def initialize_session(
     solver_timeout: float = DEFAULT_SOLVER_TIMEOUT,
     request_timeout: float = 180.0,
     eoh_thinking: str = "provider-default",
+    benchmark_id: str | None = None,
+    benchmark_profile_name: str = "obp_mini",
+    inheritance_mode: str | None = None,
+    feedback_mode: str | None = None,
+    agent_guidance: bool | None = None,
+    experiment_manifest: Mapping[str, Any] | None = None,
+    max_rounds: int | None = None,
+    round_budget: int | None = None,
 ) -> dict[str, Any]:
     action = "init"
     if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
@@ -905,6 +1115,49 @@ def initialize_session(
     output = Path(output).resolve()
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise SessionError("INVALID_ARGUMENT", "--operation-id must be non-empty", action=action)
+    manifest_hints = dict(experiment_manifest) if isinstance(experiment_manifest, Mapping) else {}
+    if repair_mode is None:
+        repair_mode = str(manifest_hints.get("repair_mode") or "off")
+    if inheritance_mode is None:
+        inheritance_mode = str(manifest_hints.get("inheritance_mode") or "incumbent_only")
+    if feedback_mode is None:
+        feedback_mode = str(manifest_hints.get("feedback_mode") or "runtime_facts")
+    if agent_guidance is None:
+        agent_guidance = bool(manifest_hints.get("agent_guidance", True))
+    if inheritance_mode not in {"incumbent_only", "population_seeds", "explicit_seeds"}:
+        raise SessionError("INVALID_ARGUMENT", "invalid inheritance mode", action=action)
+    if feedback_mode not in {"off", "runtime_facts"}:
+        raise SessionError("INVALID_ARGUMENT", "invalid feedback mode", action=action)
+    if not isinstance(agent_guidance, bool):
+        raise SessionError("INVALID_ARGUMENT", "agent_guidance must be boolean", action=action)
+    if max_rounds is None:
+        if manifest_hints.get("rounds") is not None:
+            max_rounds = manifest_hints["rounds"]
+        elif benchmark_id is not None:
+            # Benchmark manifests and reports need a finite round identity;
+            # ordinary Sessions retain the historical agent-controlled limit.
+            max_rounds = 1
+    if round_budget is None and manifest_hints.get("round_budget") is not None:
+        round_budget = manifest_hints.get("round_budget")
+    if max_solver_calls is None and manifest_hints.get("evaluation_budget") is not None:
+        max_solver_calls = manifest_hints.get("evaluation_budget")
+    if experiment_manifest is not None and search_policy_defaults is None:
+        search_policy_defaults = {
+            "pop_size": manifest_hints.get("population_size", SEARCH_POLICY_DEFAULTS["pop_size"]),
+            "n_pop": SEARCH_POLICY_DEFAULTS["n_pop"],
+            "max_sample_nums": SEARCH_POLICY_DEFAULTS["max_sample_nums"],
+        }
+    if experiment_manifest is not None and search_policy_limits is None:
+        search_policy_limits = {
+            key: list(value) for key, value in SEARCH_POLICY_LIMITS.items()
+        }
+        search_policy_limits["pop_size"][1] = max(
+            search_policy_limits["pop_size"][1], int(search_policy_defaults["pop_size"])
+        )
+    if max_rounds is not None and (isinstance(max_rounds, bool) or not isinstance(max_rounds, int) or max_rounds < 1):
+        raise SessionError("INVALID_ARGUMENT", "max_rounds must be a positive integer", action=action)
+    if round_budget is not None and (isinstance(round_budget, bool) or not isinstance(round_budget, int) or round_budget < 1):
+        raise SessionError("INVALID_ARGUMENT", "round_budget must be a positive integer", action=action)
     _validate_init_values(
         action=action,
         eoh_model=eoh_model,
@@ -923,21 +1176,47 @@ def initialize_session(
         solver_timeout=solver_timeout,
         request_timeout=request_timeout,
     )
+    benchmark = None
+    metric = None
+    problem_spec_hash = None
+    benchmark_spec_hash = data_manifest_hash = reference_manifest_hash = metric_spec_hash = None
+    if benchmark_id:
+        try:
+            from agent_skill_loop.benchmark import benchmark_profile, load_profile_suite
+            benchmark, metric, _benchmark_item = benchmark_profile(benchmark_id, benchmark_profile_name)
+            if problem == PROBLEM_CVRP:
+                problem = benchmark.problem_id
+            if problem != benchmark.problem_id:
+                raise ValueError("benchmark_problem_mismatch")
+            suite = dict(load_profile_suite(benchmark_id, benchmark_profile_name, split="dev_train"))
+            benchmark_spec_hash = benchmark.content_hash
+            data_manifest_hash = benchmark.train_manifest_hash
+            reference_manifest_hash = benchmark.reference_manifest_hash
+            metric_spec_hash = metric.content_hash
+        except (OSError, TypeError, ValueError, KeyError) as exc:
+            raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
+    else:
+        try:
+            spec = get_problem(problem)
+        except ValueError as exc:
+            raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
     try:
-        spec = get_problem(problem)
-    except ValueError as exc:
-        raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
-    try:
-        suite = dict(spec.build_suite(seed, split="dev_train", count=count, size=size))
+        if benchmark is None:
+            suite = dict(spec.build_suite(seed, split="dev_train", count=count, size=size))
+        else:
+            spec = get_problem(problem)
         spec.validate_suite(suite)
     except (TypeError, ValueError) as exc:
         raise SessionError("INVALID_ARGUMENT", f"invalid problem suite: {exc}", action=action) from exc
+    problem_spec_hash = spec.content_hash
 
     normalized_search_defaults, normalized_search_limits = _normalize_search_policy_config(
         action=action,
         defaults=search_policy_defaults,
         limits=search_policy_limits,
     )
+    if round_budget is None:
+        round_budget = normalized_search_defaults["max_sample_nums"]
 
     input_payload = _init_input(
         eoh_thinking=eoh_thinking,
@@ -963,6 +1242,19 @@ def initialize_session(
         search_policy_limits=normalized_search_limits,
         solver_timeout=solver_timeout,
         request_timeout=request_timeout,
+        benchmark_id=benchmark_id,
+        benchmark_profile_name=benchmark_profile_name if benchmark else None,
+        benchmark_spec_hash=benchmark_spec_hash,
+        data_manifest_hash=data_manifest_hash,
+        reference_manifest_hash=reference_manifest_hash,
+        metric_spec_hash=metric_spec_hash,
+        inheritance_mode=inheritance_mode,
+        feedback_mode=feedback_mode,
+        agent_guidance=agent_guidance,
+        experiment_manifest_sha256=(experiment_manifest or {}).get("experiment_manifest_sha256") if isinstance(experiment_manifest, Mapping) else None,
+        problem_spec_hash=problem_spec_hash,
+        max_rounds=max_rounds,
+        round_budget=round_budget,
     )
     input_hash = _sha256(_json(input_payload))
 
@@ -992,15 +1284,80 @@ def initialize_session(
     runtime_hash = _runtime_source_hash()
     skill_hash = _required_skill_content_hash(action)
     memory_path = str(Path(memory_store).resolve()) if memory_store else None
+    manifest_payload = None
+    manifest_hash = None
+    if isinstance(experiment_manifest, Mapping):
+        manifest_payload, manifest_hash = _validate_experiment_manifest(
+            experiment_manifest,
+            benchmark=benchmark,
+            benchmark_spec_hash=benchmark_spec_hash,
+            metric_spec_hash=metric_spec_hash,
+            runtime_hash=runtime_hash,
+            skill_hash=skill_hash,
+            eoh_model=eoh_model,
+            eoh_endpoint=eoh_endpoint,
+            inheritance_mode=inheritance_mode,
+            feedback_mode=feedback_mode,
+            agent_guidance=agent_guidance,
+            repair_mode=repair_mode,
+            memory_enabled=memory_path is not None,
+            evaluation_budget=max_solver_calls or 0,
+            population_size=normalized_search_defaults["pop_size"],
+            max_rounds=max_rounds,
+            round_budget=round_budget,
+            search_seed=seed,
+        )
+    elif benchmark is not None:
+        from agent_skill_loop.benchmark import ExperimentManifest
+        generated_manifest = ExperimentManifest(
+            benchmark_spec_hash=benchmark_spec_hash,
+            metric_spec_hash=metric_spec_hash,
+            eoh_commit=EOH_COMMIT,
+            runtime_hash=runtime_hash,
+            skill_hash=skill_hash,
+            model=eoh_model,
+            endpoint_identity=eoh_endpoint,
+            inheritance_mode=inheritance_mode,
+            feedback_mode=feedback_mode,
+            agent_guidance=agent_guidance,
+            repair_mode=repair_mode,
+            memory_enabled=memory_path is not None,
+            evaluation_budget=max_solver_calls or 0,
+            population_size=normalized_search_defaults["pop_size"],
+            rounds=max_rounds,
+            round_budget=round_budget,
+            search_seed=seed,
+        )
+        manifest_payload = generated_manifest.as_dict()
+        manifest_hash = generated_manifest.content_hash
     config: dict[str, Any] = {
         "schema_version": CONFIG_SCHEMA,
         "run_id": run_id,
         "problem": problem,
+        "problem_spec_hash": problem_spec_hash,
         "entrypoint": spec.entrypoint,
         "interface_version": spec.interface_version,
         "suite_hash": suite_hash,
         "evaluator_hash": evaluator_hash,
         "objective_direction": spec.objective_direction,
+        "benchmark": {
+            "id": benchmark_id,
+            "profile": benchmark_profile_name if benchmark is not None else None,
+            "problem_spec_hash": problem_spec_hash,
+            "benchmark_spec_hash": benchmark_spec_hash,
+            "data_manifest_hash": data_manifest_hash,
+            "reference_manifest_hash": reference_manifest_hash,
+            "metric_spec_hash": metric_spec_hash,
+            "reference_kind": metric.reference_kind if metric is not None else None,
+        } if benchmark is not None else None,
+        "inheritance": {
+            "mode": inheritance_mode,
+            "population_snapshot_contract": "official_final_population_order_preserved",
+        },
+        "experiment": {"max_rounds": max_rounds, "round_budget": round_budget},
+        "feedback": {"mode": feedback_mode, "source": "runtime_facts" if feedback_mode == "runtime_facts" else None},
+        "agent_guidance": bool(agent_guidance),
+        "experiment_manifest": {"sha256": manifest_hash, "document": manifest_payload} if manifest_payload is not None else None,
         "baseline": {
             "code_sha256": _sha256(spec.baseline_code),
             "description": spec.baseline_description,
@@ -1064,7 +1421,11 @@ def initialize_session(
                 """
                 INSERT INTO runs(
                     run_id, output_root, state, state_version, active_round_id,
-                    problem, suite_hash, evaluator_hash, objective_direction,
+                    problem, problem_spec_hash, benchmark_id, benchmark_profile, benchmark_spec_hash,
+                    data_manifest_hash, reference_manifest_hash, metric_spec_hash,
+                    inheritance_mode, feedback_mode, agent_guidance, experiment_manifest_sha256,
+                    max_rounds, round_budget,
+                    suite_hash, evaluator_hash, objective_direction,
                     baseline_code_sha256, optimization_skill_id, optimization_skill_version,
                     optimization_skill_sha256, runtime_version, runtime_source_sha256,
                     memory_enabled, memory_store, memory_policy_id, memory_policy_version,
@@ -1075,11 +1436,22 @@ def initialize_session(
                     solution_policy_id, created_at_utc, config_ref, config_sha256,
                     init_operation_id, search_policy_defaults_json, search_policy_limits_json,
                     solver_timeout, request_timeout
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ) VALUES (
+                    ?,?,?,?,?,?,?,?,?,?,
+                    ?,?,?,?,?,?,?,?,?,?,
+                    ?,?,?,?,?,?,?,?,?,?,
+                    ?,?,?,?,?,?,?,?,?,?,
+                    ?,?,?,?,?,?,?,?,?,?,
+                    ?,?,?,?
+                )
                 """,
                 (
                     run_id, str(output), "RUNNING", 1, 1,
-                    problem, suite_hash, evaluator_hash, spec.objective_direction,
+                     problem, problem_spec_hash, benchmark_id, benchmark_profile_name if benchmark is not None else None, benchmark_spec_hash,
+                     data_manifest_hash, reference_manifest_hash, metric_spec_hash,
+                     inheritance_mode, feedback_mode, 1 if agent_guidance else 0, manifest_hash,
+                     max_rounds, round_budget,
+                    suite_hash, evaluator_hash, spec.objective_direction,
                     _sha256(spec.baseline_code), OPTIMIZATION_SKILL_ID, OPTIMIZATION_SKILL_VERSION,
                     skill_hash, RUNTIME_VERSION, runtime_hash,
                     1 if memory_path else 0, memory_path,
@@ -1194,6 +1566,29 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
                 "evaluation_ref": current_round["feedback_ref"],
                 "suite_hash": current_run["suite_hash"],
             } if current_round["feedback_ref"] else None,
+            "benchmark": {
+                "id": current_run["benchmark_id"],
+                "profile": current_run["benchmark_profile"],
+                "problem_spec_hash": current_run["problem_spec_hash"],
+                "benchmark_spec_hash": current_run["benchmark_spec_hash"],
+                "data_manifest_hash": current_run["data_manifest_hash"],
+                "reference_manifest_hash": current_run["reference_manifest_hash"],
+                "metric_spec_hash": current_run["metric_spec_hash"],
+                "inheritance_mode": current_run["inheritance_mode"],
+                "feedback_mode": current_run["feedback_mode"],
+                "agent_guidance": bool(current_run["agent_guidance"]),
+                "experiment_manifest_sha256": current_run["experiment_manifest_sha256"],
+            } if "benchmark_id" in current_run.keys() and current_run["benchmark_id"] else None,
+            "experiment": {
+                "max_rounds": current_run["max_rounds"] if "max_rounds" in current_run.keys() else None,
+                "round_budget": current_run["round_budget"] if "round_budget" in current_run.keys() else None,
+            },
+            "population_snapshot": {
+                "ref": current_round["population_snapshot_ref"],
+                "sha256": current_round["population_snapshot_sha256"],
+                "seed_selection_ref": current_round["seed_selection_ref"],
+                "seed_selection_sha256": current_round["seed_selection_sha256"],
+            } if "population_snapshot_ref" in current_round.keys() and current_round["population_snapshot_ref"] else None,
             "task": live_task,
             "config_ref": current_run["config_ref"],
             "config_sha256": current_run["config_sha256"],

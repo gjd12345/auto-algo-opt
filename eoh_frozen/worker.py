@@ -27,6 +27,10 @@ def main() -> int:
                              deadline=cfg["deadline"], origin="engine",
                              round_context=cfg.get("round_context"),
                              session=cfg.get("session"),
+                             metric_spec_hash=cfg.get("metric_spec_hash"),
+                             data_manifest_hash=cfg.get("data_manifest_hash"),
+                             problem_spec_hash=cfg.get("problem_spec_hash"),
+                             seed_evaluations=cfg.get("population_seed_count", 0),
                              evaluation_log=root / "results/evaluations.jsonl",
                              fail_log=root / "results/eval_failures.jsonl")
         llm = LLMConfig(use_local=True, local_url=cfg["local_url"], timeout=cfg["request_timeout"] + 5)
@@ -34,7 +38,7 @@ def main() -> int:
             llm=llm, problem=task, pop_size=cfg["pop_size"], n_pop=cfg["n_pop"],
             operators=cfg["operators"], max_sample_nums=cfg["max_sample_nums"],
             num_samplers=1, num_evaluators=1, use_seed=cfg["use_seed"],
-            seed_path=str(root / "seeds/parent_skill.json"), output_dir=str(root),
+            seed_path=str(cfg.get("seed_path") or root / "seeds/parent_skill.json"), output_dir=str(root),
         )
         repair_engine = cfg.get("repair_mode") == "bounded"
         if repair_engine:

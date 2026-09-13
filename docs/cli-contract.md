@@ -103,6 +103,54 @@ RUN_ID_MISMATCH
 
 ---
 
+## 3.1 Benchmark mode (offline)
+
+Benchmark commands are read-only with respect to providers and use the same
+single-JSON stdout convention. They do not create a Session or send an LLM
+request:
+
+```bash
+python -m agent_skill_loop benchmark audit
+python -m agent_skill_loop benchmark calibrate-obp \
+  --gold benchmarks/eohs_v1/expected/obp_upstream_gold.json
+python -m agent_skill_loop benchmark evaluate \
+  --code candidate.py --split dev_train
+```
+
+`benchmark audit` verifies the registry's tracked asset hashes;
+`calibrate-obp` runs the independent zero-provider gold comparison; and
+`benchmark evaluate` performs one isolated candidate evaluation. The default
+profile is `eohs_v1/obp_mini`, whose assets are explicitly regenerated and
+protocol-compatible, not an exact claim about the full upstream corpus.
+
+The population and manifest utilities are also offline:
+
+```bash
+python -m agent_skill_loop benchmark snapshot \
+  --population population.json --generation 4 \
+  --metric-spec-hash SHA256 --output population_snapshot.json
+python -m agent_skill_loop benchmark manifest \
+  --config experiment_manifest.json --output manifest.json
+python -m agent_skill_loop benchmark pilot-config \
+  --config experiment_manifest.json --output pilot.json
+python -m agent_skill_loop benchmark report \
+  --manifest manifest.json --selection frozen_selection.json \
+  --metrics metrics.json --budget budget.json --output report.json
+```
+
+`pilot-config` is a zero-provider operation. It expands one validated base
+`ExperimentManifest` into the fixed A/B/C/D controlled pilot. All groups keep
+the same model, endpoint, benchmark/runtime/Skill identity, search seed,
+population and total evaluator budget. C and D differ only in
+`agent_guidance`; each group must still be run in its own Session and output
+directory.
+
+`report` 只接受已经锁定的 `FrozenSelection` 和离线事实；它不会执行测试、
+修改 archive、Memory 或 incumbent。`--source` 必须明确标注结果来自
+`published_reported`、`artifact_reevaluated` 或 `search_rerun`。
+
+---
+
 # 4. `session init`
 
 示例：
@@ -164,6 +212,14 @@ python -m agent_skill_loop session init \
 --solver-timeout
 --request-timeout
 --eoh-thinking provider-default|enabled|disabled
+--benchmark eohs_v1
+--benchmark-profile obp_mini
+--inheritance-mode incumbent_only|population_seeds|explicit_seeds
+--feedback-mode off|runtime_facts
+--no-agent-guidance
+--experiment-manifest MANIFEST.json
+--rounds
+--round-budget
 ```
 
 `--eoh-thinking` 默认 `provider-default`；显式值写入 `config_frozen.json` 的 `eoh.thinking` 并进入 init 输入 hash。仅 EoH 的 provider 请求使用此配置，Plan/Evaluate 仍由 Coding Agent 提交。
@@ -171,6 +227,20 @@ python -m agent_skill_loop session init \
 `init` 不读取 API key value；只冻结 env var name。
 
 搜索策略的三个 `default` 参数写入冻结配置的 `eoh.search_policy_defaults`；三个 `max` 参数与固定下界 `[2,1,1]` 共同写入 `eoh.search_policy_limits`。它们是每轮 Plan 的资源边界，不是整个 Session 的固定算子参数。
+
+指定 `--benchmark` 后，Session 冻结 benchmark、problem、data、reference 和
+metric identity；默认加载 `eohs_v1/obp_mini` 的 `dev_train` split，并把问题
+绑定为 `obp_online`。`--inheritance-mode population_seeds` 会在下一轮从
+上一轮官方最终种群生成确定性的 `SeedSelection`；缺少足够有效 seed 时显式
+终止，不回退到冷启动。
+
+`--experiment-manifest` 必须是由 `benchmark manifest` 生成的同一运行合同。
+Runtime 会重新计算 hash，并校验 model、endpoint、预算、继承、反馈、repair、
+Memory、Skill 和 evaluator identity；只提供一个未经校验的 hash 不会被接受。
+
+`--rounds` 冻结 Session 的最大轮数；省略时，普通 Session 仍由 Agent 在
+`finish-round` 显式决定是否继续，benchmark Session 默认使用一轮。`--round-budget`
+是 manifest 中的每轮分配视图，不会替代 `--max-solver-calls` 的全局硬上限。
 
 成功状态：
 
@@ -716,5 +786,35 @@ DeepSeek purposes ⊆ {eoh_probe,eoh_generation}
 second round feedback_ref points to round 1
 operation replay adds no request/solver
 Task survives Coding Agent exit
-incumbent updated before Evaluate
+  incumbent updated before Evaluate
 ```
+
+---
+
+# 21. Benchmark Session result fields
+
+For a benchmark Session, `session state`, `session collect` and
+`read-evaluation` expose the frozen benchmark identity and the following
+separate evaluator views:
+
+```text
+benchmark.id / profile
+benchmark.problem_spec_hash
+benchmark.benchmark_spec_hash
+benchmark.data_manifest_hash
+benchmark.reference_manifest_hash
+benchmark.metric_spec_hash
+benchmark.inheritance_mode
+benchmark.experiment_manifest_sha256
+
+budgets.total_evaluation_attempts
+budgets.novel_candidate_evaluations
+budgets.seed_reevaluation_attempts
+budgets.baseline_attempts
+budgets.repair_attempts
+```
+
+`total_evaluation_attempts` is the hard evaluator ledger count. The other
+figures are analytical views over the same ledger; they never create a second
+budget pool. Seed re-evaluation is charged to the same solver budget, and a
+test evaluation cannot change these training selections.

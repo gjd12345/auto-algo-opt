@@ -96,6 +96,44 @@ def save(root, ref, value):
     return db._sha256(text)
 
 
+def _prepare_population_seeds(root, con, run, rd, config):
+    """Derive and freeze next-round EoH seeds from the previous final population."""
+    if (run["inheritance_mode"] if "inheritance_mode" in run.keys() else "incumbent_only") != "population_seeds" or rd["previous_round_id"] is None:
+        return None
+    previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?", (run["run_id"], rd["previous_round_id"])).fetchone()
+    if previous is None or not previous["population_snapshot_ref"]:
+        raise db.SessionError("POPULATION_SNAPSHOT_MISSING", "population_seeds requires a verified previous final-population snapshot", action="execute")
+    snapshot_path = local(root, previous["population_snapshot_ref"])
+    snapshot_text = snapshot_path.read_text(encoding="utf-8")
+    if db._sha256(snapshot_text) != previous["population_snapshot_sha256"]:
+        raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "population snapshot hash mismatch", action="execute")
+    from agent_skill_loop.benchmark import PopulationSnapshot, SeedSelection
+    snapshot = PopulationSnapshot.from_dict(json.loads(snapshot_text))
+    try:
+        plan_payload = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8"))
+    except (OSError, TypeError, json.JSONDecodeError) as exc:
+        raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "normalized plan is unavailable for seed selection", action="execute") from exc
+    policy = db.effective_search_policy(config, plan_payload.get("search_policy"))
+    selection = SeedSelection.from_snapshot(snapshot, policy["pop_size"])
+    prefix = f"rounds/round_{rd['round_id']:04d}"
+    selection_payload = {**selection.as_dict(), "content_hash": selection.content_hash}
+    selection_ref = f"{prefix}/seed_selection.json"
+    selection_sha = save(root, selection_ref, selection_payload)
+    con.execute("UPDATE rounds SET seed_selection_ref=?,seed_selection_sha256=? WHERE run_id=? AND round_id=?",
+                (selection_ref, selection_sha, run["run_id"], rd["round_id"]))
+    if selection.terminated:
+        # This is an explicit terminal condition, not a silent cold-start.
+        now = db._utc_now()
+        con.execute("UPDATE rounds SET state='FAILED',stop_reason=? WHERE run_id=? AND round_id=?",
+                    (selection.termination_reason, run["run_id"], rd["round_id"]))
+        con.execute("UPDATE runs SET state='FAILED',finished_at_utc=? WHERE run_id=?", (now, run["run_id"]))
+        return {"ref": selection_ref, "sha256": selection_sha, "content_hash": selection.content_hash,
+                "selected_members": list(selection.selected_members), "target_population_size": selection.target_population_size,
+                "terminated": True, "termination_reason": selection.termination_reason}
+    return {"ref": selection_ref, "sha256": selection_sha, "content_hash": selection.content_hash,
+            "selected_members": list(selection.selected_members), "target_population_size": selection.target_population_size}
+
+
 def complete_reads(con, run_id, round_id):
     groups = {}
     for row in con.execute("SELECT * FROM memory_reads WHERE run_id=? AND round_id=? ORDER BY offset_chars", (run_id, round_id)):
@@ -246,10 +284,13 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
 def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
     action = "execute"
     with opened(run, action, expected_run_id) as (root, con):
+        config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
+        inheritance_mode = "incumbent_only"
         launch = False
         with db._transaction(con):
             row, rd, ih, result = begin(con, action, operation_id, expected_state_version, {})
             if result is None:
+                inheritance_mode = row["inheritance_mode"] if "inheritance_mode" in row.keys() else "incumbent_only"
                 require_state(row, rd, action, "READY_TO_EXECUTE")
                 if db._live_task_exists(con, row["run_id"], rd["round_id"]): fail("LIVE_TASK_EXISTS", action)
                 if con.execute("SELECT 1 FROM tasks WHERE run_id=? AND round_id=? AND external_effect_started=1", (row["run_id"], rd["round_id"])).fetchone():
@@ -263,11 +304,101 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                 if row["round_wall_seconds"] == 0: fail("ROUND_WALL_EXHAUSTED", action)
                 for ref_key, hash_key in (("normalized_plan_ref", "normalized_plan_sha256"), ("round_context_ref", "round_context_sha256")):
                     if db._sha256(local(root, rd[ref_key]).read_bytes()) != rd[hash_key]: fail("EVIDENCE_INTEGRITY_FAILED", action)
-                task_id = "task_" + uuid.uuid4().hex
-                con.execute("INSERT INTO tasks(task_id,run_id,round_id,state,created_at_utc) VALUES (?,?,?,'STARTING',?)", (task_id,row["run_id"],rd["round_id"],db._utc_now()))
-                con.execute("UPDATE rounds SET task_id=? WHERE run_id=? AND round_id=?", (task_id,row["run_id"],rd["round_id"]))
-                result = receipt(con,row,rd,action,operation_id,ih,{"task_id": task_id,"task_state":"STARTING","external_effect_started":False})
-                launch = True
+                try:
+                    seed_selection = _prepare_population_seeds(root, con, row, rd, config)
+                except db.SessionError as exc:
+                    # A population-seeded round must never fall through to a
+                    # cold start when its source evidence is absent or has
+                    # changed.  Close the run as an explicit terminal
+                    # evidence failure while preserving a small diagnostic.
+                    terminal_reason = exc.code
+                    error_payload = {
+                        "schema_version": "algorithm-optimization-seed-selection-error/v1",
+                        "round_id": rd["round_id"],
+                        "terminated": True,
+                        "termination_reason": terminal_reason,
+                        "message": exc.message[:240],
+                    }
+                    error_ref = f"rounds/round_{rd['round_id']:04d}/seed_selection_error.json"
+                    try:
+                        error_sha = save(root, error_ref, error_payload)
+                    except OSError:
+                        error_ref = None
+                        error_sha = None
+                    now = db._utc_now()
+                    con.execute(
+                        "UPDATE rounds SET state='FAILED',stop_reason=? WHERE run_id=? AND round_id=?",
+                        (terminal_reason, row["run_id"], rd["round_id"]),
+                    )
+                    con.execute(
+                        "UPDATE runs SET state='FAILED',finished_at_utc=? WHERE run_id=?",
+                        (now, row["run_id"]),
+                    )
+                    result = receipt(con, row, rd, action, operation_id, ih, {
+                        "task_id": None,
+                        "task_state": None,
+                        "external_effect_started": False,
+                        "inheritance": inheritance_mode,
+                        "seed_selection": {
+                            "terminated": True,
+                            "termination_reason": terminal_reason,
+                            "error_ref": error_ref,
+                            "error_sha256": error_sha,
+                        },
+                    })
+                except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    # Malformed or unreadable snapshot evidence is also
+                    # terminal, but keep the error class out of the control
+                    # protocol so callers get a stable Session code.
+                    terminal_reason = "EVIDENCE_INTEGRITY_FAILED"
+                    error_payload = {
+                        "schema_version": "algorithm-optimization-seed-selection-error/v1",
+                        "round_id": rd["round_id"],
+                        "terminated": True,
+                        "termination_reason": terminal_reason,
+                        "message": str(exc)[:240],
+                    }
+                    error_ref = f"rounds/round_{rd['round_id']:04d}/seed_selection_error.json"
+                    try:
+                        error_sha = save(root, error_ref, error_payload)
+                    except OSError:
+                        error_ref = None
+                        error_sha = None
+                    now = db._utc_now()
+                    con.execute(
+                        "UPDATE rounds SET state='FAILED',stop_reason=? WHERE run_id=? AND round_id=?",
+                        (terminal_reason, row["run_id"], rd["round_id"]),
+                    )
+                    con.execute(
+                        "UPDATE runs SET state='FAILED',finished_at_utc=? WHERE run_id=?",
+                        (now, row["run_id"]),
+                    )
+                    result = receipt(con, row, rd, action, operation_id, ih, {
+                        "task_id": None,
+                        "task_state": None,
+                        "external_effect_started": False,
+                        "inheritance": inheritance_mode,
+                        "seed_selection": {
+                            "terminated": True,
+                            "termination_reason": terminal_reason,
+                            "error_ref": error_ref,
+                            "error_sha256": error_sha,
+                        },
+                    })
+                if result is not None:
+                    pass
+                elif seed_selection and seed_selection.get("terminated"):
+                    result = receipt(con, row, rd, action, operation_id, ih, {
+                        "task_id": None, "task_state": None, "external_effect_started": False,
+                        "inheritance": inheritance_mode, "seed_selection": seed_selection,
+                    })
+                else:
+                    task_id = "task_" + uuid.uuid4().hex
+                    con.execute("INSERT INTO tasks(task_id,run_id,round_id,state,created_at_utc) VALUES (?,?,?,'STARTING',?)", (task_id,row["run_id"],rd["round_id"],db._utc_now()))
+                    con.execute("UPDATE rounds SET task_id=? WHERE run_id=? AND round_id=?", (task_id,row["run_id"],rd["round_id"]))
+                    result = receipt(con,row,rd,action,operation_id,ih,{"task_id": task_id,"task_state":"STARTING","external_effect_started":False,
+                                                                         "inheritance": inheritance_mode, "seed_selection": seed_selection})
+                    launch = True
         if launch:
             try:
                 log_path = root / f"rounds/round_{rd['round_id']:04d}/tasks/{task_id}/supervisor.log"
@@ -399,6 +530,9 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                     fail("MEMORY_COMMIT_PENDING",action,"Replay submit-evaluation with its original operation_id before finishing")
                 if decision not in {"continue","complete"}: fail("INVALID_ARGUMENT",action)
                 if decision=="continue":
+                    max_rounds = row["max_rounds"] if "max_rounds" in row.keys() else None
+                    if max_rounds is not None and rd["round_id"] >= max_rounds:
+                        fail("ROUND_LIMIT_REACHED", action)
                     budget=db._budget_view(con,row)
                     elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
                     terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED')",(row["run_id"],)).fetchone()

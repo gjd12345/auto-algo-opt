@@ -16,13 +16,14 @@ dev = ["pytest", "PyYAML>=6.0"]
 eoh = ["eoh @ git+https://github.com/FeiLiu36/EoH.git@472545785c936dcfc863d2bc0d6109cf23c7ce62#subdirectory=eoh"]
 
 [tool.setuptools]
-packages = ["agent_skill_loop", "agent_skill_loop.memory", "agent_skill_loop.problems", "eoh_frozen", "algorithm_optimization_skill"]
+packages = ["agent_skill_loop", "agent_skill_loop.memory", "agent_skill_loop.problems", "agent_skill_loop.benchmark", "eoh_frozen", "algorithm_optimization_skill", "benchmarks", "benchmarks.eohs_v1", "benchmarks.eohs_v1.manifests", "benchmarks.eohs_v1.expected"]
 
 [tool.setuptools.package-dir]
 algorithm_optimization_skill = "skills/algorithm-optimization"
 
 [tool.setuptools.package-data]
 algorithm_optimization_skill = ["SKILL.md", "agents/*.yaml", "references/*.md", "references/examples/*.md"]
+benchmarks = ["eohs_v1/*.json", "eohs_v1/*.md", "eohs_v1/manifests/*.json", "eohs_v1/expected/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/kernel", "tests/eoh_frozen"]

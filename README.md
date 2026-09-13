@@ -37,7 +37,48 @@ Plan / Evaluate   trusted evidence ← deterministic evaluator
 optional Memory search / read / commit
 ```
 
-当前支持的问题：`cvrp_construct`、`tsp_construct`、`tsp_2opt`。
+当前通用问题接口：`cvrp_construct`、`tsp_construct`、`tsp_2opt`；v1.1
+benchmark profile 另外提供 `eohs_v1/obp_mini`（问题接口
+`obp_online`）。后者是用于离线校准和 Session 接线的 regenerated、
+protocol-compatible fixture，不宣称等同于上游完整 OBP 资产。
+
+## v1.1 Benchmark 基线
+
+Benchmark 入口不调用 provider，可先完成资产审计、OBP gold 校准和候选复评：
+
+```powershell
+py -3.11 -m agent_skill_loop benchmark audit
+py -3.11 -m agent_skill_loop benchmark calibrate-obp `
+  --gold benchmarks/eohs_v1/expected/obp_upstream_gold.json
+py -3.11 -m agent_skill_loop benchmark evaluate --code candidate.py
+py -3.11 -m agent_skill_loop benchmark pilot-config `
+  --config experiment_manifest.json --output pilot.json
+```
+
+`pilot-config` 只生成固定的 A/B/C/D 实验 manifest，不调用 Provider；四组
+必须使用独立的 Session、Memory/archive 和输出目录运行。C/D 除
+`agent_guidance` 外保持相同因素。
+
+锁定选择结果后，可用 `benchmark report` 将 manifest、selection、指标和双
+预算事实合成为可复核的 JSON 报告；该命令不触发测试或模型请求。
+
+需要进入可恢复 Session 时，冻结 benchmark 与多精英继承模式：
+
+```powershell
+py -3.11 -m agent_skill_loop session init `
+  --output outputs/obp-session `
+  --operation-id init-obp `
+  --benchmark eohs_v1 `
+  --benchmark-profile obp_mini `
+  --inheritance-mode population_seeds `
+  --eoh-model deepseek-flash `
+  --eoh-api-key-env DEEPSEEK_API_KEY
+```
+
+每个 benchmark evaluation 同时绑定 candidate、problem、data、evaluator 和
+metric hash。跨轮先保存官方最终种群的有序 `PopulationSnapshot`，再由
+`SeedSelection` 稳定去重、排序、截取并完整重评；不足时显式终止，不静默冷启动。
+结果还会区分总评测次数、新候选、seed 重评、baseline 和 repair 成本。
 
 ## 快速开始
 

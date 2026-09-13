@@ -1183,3 +1183,96 @@ I13 manifest 可从 SQLite + evidence 重建
 I14 Coding Agent 显式决定 continue/complete
 I15 evaluator / evidence identity 不可由被评测 Agent 修改
 ```
+
+---
+
+## 30. Benchmark compatibility and controlled experiments
+
+Benchmark mode is an opt-in Session profile. `session init --benchmark` MUST
+freeze the benchmark, problem, data, reference and metric identities before an
+EoH task starts. The current first profile is `eohs_v1/obp_mini`; its registry
+status is `regenerated_protocol_compatible`, not `original_verified` for the
+full upstream corpus.
+
+### 30.1 Canonical evaluation identity
+
+Every benchmark evaluation MUST be attributable to all of:
+
+```text
+candidate_code_sha256
+problem_spec_hash
+data_manifest_hash
+evaluator_hash
+metric_spec_hash
+```
+
+The benchmark `MetricSpec` is the sole training fitness definition. OBP uses
+the mean per-instance relative gap; raw bins used and reference objectives are
+stored as facts and MUST NOT replace the gap for ranking or incumbent
+acceptance. `reference_kind` MUST identify one of `known_optimum`,
+`best_known`, `solver_reference`, `analytical_reference`, or
+`upstream_compatibility_reference`.
+
+### 30.2 Population inheritance
+
+`PopulationSnapshot` MUST preserve the official final population's generation,
+member index, algorithm text/hash, code/hash, objective, evaluation id,
+revision and origin in original order. It MUST NOT sort, deduplicate or
+truncate. `SeedSelection` is a separate deterministic derivation:
+
+```text
+valid filter → code hash deduplication → stable fitness sort
+→ target population truncation → complete re-evaluation
+```
+
+The first official member owns a duplicate code. Insufficient valid seeds are
+a terminal condition and MUST NOT silently trigger a cold-start population.
+`incumbent_only`, `population_seeds` and `explicit_seeds` are distinct modes;
+seed re-evaluation is charged to the shared evaluator budget.
+
+### 30.3 Experiment manifest and selection lock
+
+Formal benchmark runs MUST create and hash an `ExperimentManifest` containing
+the benchmark/metric hashes, pinned EoH commit, Runtime/Skill hashes, model and
+endpoint identity, inheritance and feedback modes, Agent guidance, repair and
+Memory flags, evaluation budget, population size, rounds, round budget and
+search seed. All output and reports MUST cite
+`experiment_manifest_sha256`.
+
+`FrozenSelection.selection_kind` is one of:
+
+```text
+incumbent_top1
+archive_topk
+final_population_set
+```
+
+Training archive and test results are separate. Test evaluation is allowed
+only after the selection is locked and MUST NOT update the archive, Memory or
+incumbent.
+
+### 30.4 Budget reporting and pilot groups
+
+Each run MUST expose both the hard total and the derived views:
+
+```text
+total_evaluation_attempts
+novel_candidate_evaluations
+seed_reevaluation_attempts
+baseline_attempts
+repair_attempts
+```
+
+The controlled pilot uses one Runtime adapter for all groups:
+
+```text
+A: one full Session, neutral Plan, initial population
+B: fixed multi-round Session, incumbent_only, factual feedback, neutral Plan
+C: fixed multi-round Session, population_seeds, factual feedback, neutral Plan
+D: same as C, with adaptive Agent guidance
+```
+
+A/B are interpreted only as continuous EoH versus a sessionized baseline; C/D
+are the Agent-guidance comparison. Runtime supplies bounded facts, the Agent
+explains and decides, and EoH performs the search. Memory and repair are off in
+the initial pilot unless a manifest explicitly says otherwise.

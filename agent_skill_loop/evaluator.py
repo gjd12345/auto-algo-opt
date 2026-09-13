@@ -58,6 +58,19 @@ from agent_skill_loop.problems.tsp_2opt import (
     build_suite as tsp2_build_suite,
     suite_hash as tsp2_suite_hash,
 )
+from agent_skill_loop.problems.obp import (
+    BASELINE_CODE as OBP_BASELINE_CODE,
+    BASELINE_DESCRIPTION as OBP_BASELINE_DESCRIPTION,
+    ENTRYPOINT as OBP_ENTRYPOINT,
+    PROBLEM_NAME as OBP_PROBLEM_NAME,
+    SPLIT_OFFSETS as OBP_SPLIT_OFFSETS,
+    TASK_DESCRIPTION as OBP_TASK_DESCRIPTION,
+    TEMPLATE_PROGRAM as OBP_TEMPLATE_PROGRAM,
+    build_suite as obp_build_suite,
+    evaluate_instances as _evaluate_obp_instances,
+    validate_instances as _validate_obp_instances,
+    suite_hash as obp_suite_hash,
+)
 
 _SAFE_BUILTINS = {
     "abs": abs, "all": all, "any": any, "bool": bool, "dict": dict,
@@ -139,6 +152,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "cvrp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
+    parts.append(parent.joinpath("problems", "obp.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
 
@@ -432,6 +446,21 @@ def _validate_tsp2_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, An
 def _validate_suite(spec: ProblemSpec, suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
     """Validate a suite against a resolved problem spec (problem-driven)."""
     return spec.validate_suite(suite)
+
+
+def _validate_obp_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], str]:
+    split = suite.get("split") if isinstance(suite, Mapping) else None
+    if not isinstance(suite, Mapping) or suite.get("problem") != OBP_PROBLEM_NAME or not isinstance(split, str) or split not in OBP_SPLIT_OFFSETS:
+        raise ValueError("invalid_suite")
+    instances = suite.get("instances")
+    given_hash = suite.get("content_hash")
+    if not isinstance(given_hash, str):
+        raise ValueError("invalid_suite")
+    _validate_obp_instances(instances)
+    expected = obp_suite_hash(OBP_PROBLEM_NAME, split, instances)
+    if given_hash != expected:
+        raise ValueError("suite_hash_mismatch")
+    return instances, expected
 
 
 def _distance_matrix(points: list[list[float]]):
@@ -908,3 +937,32 @@ TSP2_SPEC = ProblemSpec(
 )
 
 register_problem(TSP2_SPEC)
+
+
+# --- OBP benchmark spec -----------------------------------------------------
+# The profile is deliberately named ``obp_online`` rather than pretending to
+# be an exact copy of every EoH-S data asset.  The registry records whether a
+# dataset is original or regenerated protocol-compatible.
+OBP_SPEC = ProblemSpec(
+    problem_id=OBP_PROBLEM_NAME,
+    entrypoint=OBP_ENTRYPOINT,
+    interface_version="v1",
+    task_description=OBP_TASK_DESCRIPTION,
+    template_program=OBP_TEMPLATE_PROGRAM,
+    baseline_code=OBP_BASELINE_CODE,
+    objective_direction="minimize",
+    split_offsets=OBP_SPLIT_OFFSETS,
+    build_suite=obp_build_suite,
+    suite_hash=obp_suite_hash,
+    validate_suite=_validate_obp_suite,
+    evaluate_instances=_evaluate_obp_instances,
+    safe_builtins=_SAFE_BUILTINS,
+    forbidden_names=frozenset(_FORBIDDEN_NAMES),
+    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    math_attributes=frozenset(_MATH_ATTRIBUTES),
+    np_math_roots=frozenset(_NP_MATH_ROOTS),
+    allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+    baseline_description=OBP_BASELINE_DESCRIPTION,
+)
+
+register_problem(OBP_SPEC)

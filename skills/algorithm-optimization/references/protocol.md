@@ -60,6 +60,25 @@ The ordinary generation prompt and bounded repair prompt both receive the
 machine-derived capability contract on `ProblemSpec`; the evaluator remains
 the final authority.
 
+For benchmark Sessions, the Runtime additionally freezes:
+
+```text
+problem_spec_hash
+benchmark_spec_hash
+data_manifest_hash
+reference_manifest_hash
+metric_spec_hash
+inheritance_mode
+experiment_manifest_sha256
+```
+
+The benchmark fitness is the canonical `MetricSpec` fitness. A
+`PopulationSnapshot` preserves the official final-population order and
+duplicates; `SeedSelection` separately filters valid members, deduplicates by
+code hash, stably sorts by fitness, truncates to the target size, and requires
+complete re-evaluation. Insufficient seeds are terminal and never silently
+become a cold start.
+
 ## Memory
 
 `memory search` deliberately omits bodies. `memory read` records the reference, body hash, and character range. A reference may enter `plan.memory_basis` only after the complete body has been read with no gaps. Memory writes are advisory and CAS/versioned; a failed write leaves the accepted evaluation and algorithm asset intact.
@@ -68,3 +87,13 @@ the final authority.
 parent, generated, generated repair, and revision. Parent re-evaluation is
 not automatically reused until a cache keyed by code, suite, evaluator, and
 constraint identity is available.
+
+The same facts expose the benchmark dual view:
+
+```text
+total_evaluation_attempts
+novel_candidate_evaluations
+seed_reevaluation_attempts
+baseline_attempts
+repair_attempts
+```

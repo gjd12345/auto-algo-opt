@@ -49,10 +49,19 @@ class FrozenProblem(BaseProblem):
         origin: str = "unknown",
         round_context: str | None = None,
         session: dict | None = None,
+        metric_spec_hash: str | None = None,
+        data_manifest_hash: str | None = None,
+        problem_spec_hash: str | None = None,
+        seed_evaluations: int = 0,
     ) -> None:
         super().__init__(timeout=timeout, n_processes=n_processes)
         self.spec = spec
         self.session = session
+        self.metric_spec_hash = metric_spec_hash
+        self.data_manifest_hash = data_manifest_hash
+        self.problem_spec_hash = problem_spec_hash
+        self._seed_evaluations_remaining = max(0, int(seed_evaluations))
+        self._seed_contexts: dict[str, dict[str, Any]] = {}
         self.suite = suite or spec.build_suite(seed, split=split, count=count, size=size)
         if self.suite.get("problem") != spec.problem_id:
             raise ValueError("suite_problem_mismatch")
@@ -157,6 +166,7 @@ class FrozenProblem(BaseProblem):
                     and row.get("code_sha256") == code_hash
                     and row.get("suite_hash") == self.suite["content_hash"]
                     and row.get("evaluator_hash") == evaluator_source_hash()
+                    and (self.metric_spec_hash is None or row.get("metric_spec_hash") == self.metric_spec_hash)
                     and row.get("evaluation") is not None):
                 return {**row, "evaluation_line": line_number}
         return None
@@ -174,9 +184,20 @@ class FrozenProblem(BaseProblem):
             "pid": os.getpid(),
             "suite_hash": self.suite.get("content_hash"),
             "evaluation_id": evaluation_id,
+            "metric_spec_hash": self.metric_spec_hash,
+            "data_manifest_hash": self.data_manifest_hash,
+            "problem_spec_hash": self.problem_spec_hash,
             "evaluation": result.as_dict() if result is not None else None,
         }
-        context = dict(self.evaluation_context or {})
+        context = dict(self.evaluation_context or self._seed_contexts.get(evaluation_id) or {})
+        if result is None and not context and self._seed_evaluations_remaining > 0:
+            context = {
+                "origin": "population_seed",
+                "candidate_id": f"seed_{evaluation_id[:12]}",
+                "revision": "original",
+            }
+            self._seed_evaluations_remaining -= 1
+            self._seed_contexts[evaluation_id] = dict(context)
         if context:
             payload.update(context)
         if context.get("origin") == "generated" or (not context and self.origin == "engine"):
@@ -210,6 +231,7 @@ class FrozenProblem(BaseProblem):
             if self.session:
                 from agent_skill_loop.session_ledger import solver_event
                 solver_event(self.session, payload)
+            self._seed_contexts.pop(evaluation_id, None)
         except OSError:
             # Missing evidence must not yield a usable scalar fitness.
             raise

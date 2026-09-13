@@ -74,6 +74,12 @@ class SkillVersion:
     legacy_unverified: bool = False
     integration_mode: str | None = None
     repair_policy_version: str | None = None
+    # Benchmark-only identity extensions. Historical development skills leave
+    # these fields null and remain readable without being relabelled.
+    metric_spec_hash: str | None = None
+    problem_spec_hash: str | None = None
+    data_manifest_hash: str | None = None
+    reference_manifest_hash: str | None = None
 
     def metadata(self) -> dict[str, Any]:
         search_policy: dict[str, Any] = {
@@ -104,6 +110,14 @@ class SkillVersion:
             "description": self.description,
             "search_policy": search_policy,
         }
+        for key, value in {
+            "metric_spec_hash": self.metric_spec_hash,
+            "problem_spec_hash": self.problem_spec_hash,
+            "data_manifest_hash": self.data_manifest_hash,
+            "reference_manifest_hash": self.reference_manifest_hash,
+        }.items():
+            if value is not None:
+                payload[key] = value
         if self.origin is not None:
             payload["origin"] = self.origin
         if self.official_objective is not None:

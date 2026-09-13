@@ -1,6 +1,6 @@
 # Session SQLite schema — v1.1
 
-此文件是 v1.0 Runtime 实际 DDL 的快照，不是待实现的数据模型。
+此文件是 v1.1 Runtime 实际 DDL 的快照，不是待实现的数据模型。
 来源：`agent_skill_loop.session_runtime._create_schema()`。
 一份 `session.sqlite3` 只承载一个 Run；不要手改数据库恢复执行权限。
 
@@ -125,6 +125,10 @@ CREATE TABLE rounds (
             round_context_ref TEXT,
             round_context_sha256 TEXT,
             context_manifest_ref TEXT,
+            population_snapshot_ref TEXT,
+            population_snapshot_sha256 TEXT,
+            seed_selection_ref TEXT,
+            seed_selection_sha256 TEXT,
             evaluation_facts_ref TEXT,
             evaluation_facts_sha256 TEXT,
             submitted_evaluation_ref TEXT,
@@ -147,6 +151,19 @@ CREATE TABLE runs (
             state_version INTEGER NOT NULL CHECK (state_version >= 1),
             active_round_id INTEGER,
             problem TEXT NOT NULL,
+            problem_spec_hash TEXT,
+            benchmark_id TEXT,
+            benchmark_profile TEXT,
+            benchmark_spec_hash TEXT,
+            data_manifest_hash TEXT,
+            reference_manifest_hash TEXT,
+            metric_spec_hash TEXT,
+            inheritance_mode TEXT NOT NULL DEFAULT 'incumbent_only',
+            feedback_mode TEXT NOT NULL DEFAULT 'runtime_facts',
+            agent_guidance INTEGER NOT NULL DEFAULT 1 CHECK (agent_guidance IN (0,1)),
+            experiment_manifest_sha256 TEXT,
+            max_rounds INTEGER CHECK (max_rounds IS NULL OR max_rounds >= 1),
+            round_budget INTEGER CHECK (round_budget IS NULL OR round_budget >= 1),
             suite_hash TEXT NOT NULL,
             evaluator_hash TEXT NOT NULL,
             objective_direction TEXT NOT NULL,
@@ -195,9 +212,11 @@ CREATE TABLE solver_calls (
             task_id TEXT,
             candidate_id TEXT,
             revision TEXT,
+            origin TEXT,
             evaluation_id TEXT NOT NULL UNIQUE,
             suite_hash TEXT NOT NULL,
             evaluator_hash TEXT NOT NULL,
+            metric_spec_hash TEXT,
             code_sha256 TEXT NOT NULL,
             state TEXT NOT NULL CHECK (state IN ('reserved','started','complete','failed','interrupted','unknown')),
             objective REAL,

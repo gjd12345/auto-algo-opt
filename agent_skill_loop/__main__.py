@@ -110,12 +110,71 @@ def cmd_workflow(args: argparse.Namespace) -> int:
     return 2
 
 
+def cmd_benchmark(args: argparse.Namespace) -> int:
+    """Run only offline benchmark operations; never creates provider traffic."""
+    from agent_skill_loop.benchmark import cli as benchmark_cli
+    handlers = {
+        "audit": benchmark_cli.cmd_audit,
+        "calibrate-obp": benchmark_cli.cmd_calibrate,
+        "evaluate": benchmark_cli.cmd_evaluate,
+        "snapshot": benchmark_cli.cmd_snapshot,
+        "manifest": benchmark_cli.cmd_manifest,
+        "pilot-config": benchmark_cli.cmd_pilot_config,
+        "report": benchmark_cli.cmd_report,
+    }
+    return int(handlers[args.benchmark_action](args))
+
+
 def _print_session(payload: dict) -> int:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 
 def cmd_session_init(args: argparse.Namespace) -> int:
+    experiment_manifest = None
+    if args.experiment_manifest:
+        experiment_manifest = json.loads(Path(args.experiment_manifest).read_text(encoding="utf-8"))
+        if not isinstance(experiment_manifest, dict):
+            raise SystemExit("experiment manifest must be a JSON object")
+    manifest_population = experiment_manifest.get("population_size") if experiment_manifest else None
+    manifest_round_budget = experiment_manifest.get("round_budget") if experiment_manifest else None
+    inheritance_mode = (
+        args.inheritance_mode
+        if args.inheritance_mode is not None
+        else experiment_manifest.get("inheritance_mode", "incumbent_only")
+        if experiment_manifest
+        else "incumbent_only"
+    )
+    feedback_mode = (
+        args.feedback_mode
+        if args.feedback_mode is not None
+        else experiment_manifest.get("feedback_mode", "runtime_facts")
+        if experiment_manifest
+        else "runtime_facts"
+    )
+    agent_guidance = (
+        args.agent_guidance
+        if args.agent_guidance is not None
+        else bool(experiment_manifest.get("agent_guidance", True))
+        if experiment_manifest
+        else True
+    )
+    if experiment_manifest and all(value is None for value in (args.default_pop_size, args.default_n_pop, args.default_max_sample_nums)):
+        default_search = {
+            "pop_size": manifest_population,
+            "n_pop": 2,
+            "max_sample_nums": 8,
+        }
+    elif any(value is not None for value in (args.default_pop_size, args.default_n_pop, args.default_max_sample_nums)):
+        default_search = {
+            "pop_size": args.default_pop_size if args.default_pop_size is not None else 4,
+            "n_pop": args.default_n_pop if args.default_n_pop is not None else 2,
+            "max_sample_nums": args.default_max_sample_nums if args.default_max_sample_nums is not None else 8,
+        }
+    else:
+        default_search = None
+    max_pop_size = max(args.max_pop_size, int(manifest_population)) if manifest_population is not None else args.max_pop_size
+    effective_round_budget = args.round_budget if args.round_budget is not None else manifest_round_budget
     return _print_session(initialize_session(
         output=Path(args.output),
         operation_id=args.operation_id,
@@ -135,19 +194,23 @@ def cmd_session_init(args: argparse.Namespace) -> int:
         seed=args.seed,
         size=args.size,
         count=args.count,
-        search_policy_defaults={
-            "pop_size": args.default_pop_size,
-            "n_pop": args.default_n_pop,
-            "max_sample_nums": args.default_max_sample_nums,
-        },
+        search_policy_defaults=default_search,
         search_policy_limits={
-            "pop_size": [2, args.max_pop_size],
+            "pop_size": [2, max_pop_size],
             "n_pop": [1, args.max_n_pop],
             "max_sample_nums": [1, args.max_sample_nums_per_round],
         },
         solver_timeout=args.solver_timeout,
         request_timeout=args.request_timeout,
         eoh_thinking=args.eoh_thinking,
+        benchmark_id=args.benchmark_id,
+        benchmark_profile_name=args.benchmark_profile,
+        inheritance_mode=inheritance_mode,
+        feedback_mode=feedback_mode,
+        agent_guidance=agent_guidance,
+        experiment_manifest=experiment_manifest,
+        max_rounds=args.max_rounds,
+        round_budget=effective_round_budget,
     ))
 
 
@@ -210,6 +273,67 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--suite", required=True)
     evaluate.set_defaults(func=cmd_evaluate_skill)
 
+    benchmark = sub.add_parser("benchmark", help="Offline benchmark contracts, calibration, and reports")
+    benchmark_sub = benchmark.add_subparsers(dest="benchmark_action", required=True)
+    audit = benchmark_sub.add_parser("audit", help="Verify tracked benchmark assets and provenance hashes")
+    audit.add_argument("--registry")
+    audit.add_argument("--output")
+    audit.set_defaults(func=cmd_benchmark)
+
+    calibrate = benchmark_sub.add_parser("calibrate-obp", help="Run the independent zero-provider OBP calibration")
+    calibrate.add_argument("--suite")
+    calibrate.add_argument("--gold")
+    calibrate.add_argument("--output")
+    calibrate.add_argument("--benchmark-id", default="eohs_v1")
+    calibrate.add_argument("--profile", default="obp_mini")
+    calibrate.add_argument("--split", default="dev_train")
+    calibrate.set_defaults(func=cmd_benchmark)
+
+    bench_eval = benchmark_sub.add_parser("evaluate", help="Isolated offline evaluation of one benchmark candidate")
+    bench_eval.add_argument("--suite")
+    bench_eval.add_argument("--code", required=True)
+    bench_eval.add_argument("--timeout", type=float, default=20.0)
+    bench_eval.add_argument("--output")
+    bench_eval.add_argument("--benchmark-id", default="eohs_v1")
+    bench_eval.add_argument("--profile", default="obp_mini")
+    bench_eval.add_argument("--split", default="dev_train")
+    bench_eval.set_defaults(func=cmd_benchmark)
+
+    snapshot = benchmark_sub.add_parser("snapshot", help="Serialize an ordered official final-population snapshot")
+    snapshot.add_argument("--population", required=True)
+    snapshot.add_argument("--generation", type=int, required=True)
+    snapshot.add_argument("--metric-spec-hash", required=True)
+    snapshot.add_argument("--problem-spec-hash")
+    snapshot.add_argument("--data-manifest-hash")
+    snapshot.add_argument("--evaluator-hash")
+    snapshot.add_argument("--output")
+    snapshot.set_defaults(func=cmd_benchmark)
+
+    manifest = benchmark_sub.add_parser("manifest", help="Hash an ExperimentManifest JSON config")
+    manifest.add_argument("--config", required=True)
+    manifest.add_argument("--output")
+    manifest.set_defaults(func=cmd_benchmark)
+
+    pilot_config = benchmark_sub.add_parser(
+        "pilot-config",
+        help="Expand one frozen manifest into the zero-provider A/B/C/D pilot configs",
+    )
+    pilot_config.add_argument("--config", required=True, help="Base ExperimentManifest JSON")
+    pilot_config.add_argument("--output")
+    pilot_config.set_defaults(func=cmd_benchmark)
+
+    report = benchmark_sub.add_parser(
+        "report",
+        help="Build a deterministic report from a locked selection and offline facts",
+    )
+    report.add_argument("--manifest", required=True)
+    report.add_argument("--selection", required=True)
+    report.add_argument("--metrics", required=True)
+    report.add_argument("--budget", required=True)
+    report.add_argument("--source", choices=["published_reported", "artifact_reevaluated", "search_rerun"], default="artifact_reevaluated")
+    report.add_argument("--output")
+    report.set_defaults(func=cmd_benchmark)
+
     imp = sub.add_parser("import-skill")
     imp.add_argument("--problem", default=PROBLEM_CVRP)
     imp.add_argument("--output", required=True)
@@ -255,6 +379,12 @@ def build_parser() -> argparse.ArgumentParser:
     session_init.add_argument("--output", required=True)
     session_init.add_argument("--operation-id", required=True)
     session_init.add_argument("--problem", default=PROBLEM_CVRP)
+    session_init.add_argument("--benchmark", dest="benchmark_id", help="Benchmark registry id, e.g. eohs_v1")
+    session_init.add_argument("--benchmark-profile", default="obp_mini")
+    session_init.add_argument("--inheritance-mode", choices=["incumbent_only", "population_seeds", "explicit_seeds"], default=None)
+    session_init.add_argument("--feedback-mode", choices=["off", "runtime_facts"], default=None)
+    session_init.add_argument("--no-agent-guidance", dest="agent_guidance", action="store_false", default=None)
+    session_init.add_argument("--experiment-manifest")
     session_init.add_argument("--eoh-model", required=True)
     session_init.add_argument("--eoh-thinking", choices=["provider-default", "enabled", "disabled"], default="provider-default")
     session_init.add_argument("--eoh-endpoint", default="https://api.deepseek.com/v1/chat/completions")
@@ -271,14 +401,16 @@ def build_parser() -> argparse.ArgumentParser:
     session_init.add_argument("--seed", type=int, default=DEFAULT_SEED)
     session_init.add_argument("--size", type=int, default=DEFAULT_SIZE)
     session_init.add_argument("--count", type=int, default=DEFAULT_COUNT)
-    session_init.add_argument("--default-pop-size", type=int, default=4)
-    session_init.add_argument("--default-n-pop", type=int, default=2)
-    session_init.add_argument("--default-max-sample-nums", type=int, default=8)
+    session_init.add_argument("--default-pop-size", type=int, default=None)
+    session_init.add_argument("--default-n-pop", type=int, default=None)
+    session_init.add_argument("--default-max-sample-nums", type=int, default=None)
     session_init.add_argument("--max-pop-size", type=int, default=8)
     session_init.add_argument("--max-n-pop", type=int, default=5)
     session_init.add_argument("--max-sample-nums-per-round", type=int, default=16)
     session_init.add_argument("--solver-timeout", type=float, default=DEFAULT_SOLVER_TIMEOUT)
     session_init.add_argument("--request-timeout", type=float, default=180.0)
+    session_init.add_argument("--rounds", dest="max_rounds", type=int, default=None)
+    session_init.add_argument("--round-budget", type=int, default=None)
     session_init.set_defaults(func=cmd_session_init)
 
     session_state = session_sub.add_parser("state", help="Read session state without external effects")
@@ -333,13 +465,20 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        if args.command == "session":
+        if args.command in {"session", "benchmark"}:
             return int(args.func(args))
         problem_id = getattr(args, "problem", PROBLEM_CVRP)
         # Resolve from the spec registry so the CLI and the loop agree on identity.
         get_problem(problem_id)
         return int(args.func(args))
-    except ValueError:
+    except ValueError as exc:
+        if args.command == "benchmark":
+            print(json.dumps({
+                "ok": False,
+                "action": getattr(args, "benchmark_action", "benchmark"),
+                "error": {"code": str(exc) or "INVALID_ARGUMENT", "message": str(exc)},
+            }, ensure_ascii=False, indent=2))
+            return 3
         problem_id = getattr(args, "problem", PROBLEM_CVRP)
         raise SystemExit(f"unknown problem: {problem_id}") from None
     except SessionError as exc:

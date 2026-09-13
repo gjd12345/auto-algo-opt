@@ -14,6 +14,7 @@ forcing a particular import order on callers.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
@@ -51,6 +52,23 @@ class ProblemSpec:
 
     # Human-readable baseline provenance, not a search-policy instruction.
     baseline_description: str = ""
+
+    @property
+    def content_hash(self) -> str:
+        """Stable identity for the problem/interface contract itself."""
+        payload = {
+            "problem_id": self.problem_id,
+            "entrypoint": self.entrypoint,
+            "interface_version": self.interface_version,
+            "task_description": self.task_description,
+            "template_program": self.template_program,
+            "baseline_code": self.baseline_code,
+            "objective_direction": self.objective_direction,
+            "split_offsets": dict(self.split_offsets),
+            "capability_contract": self.capability_contract(),
+        }
+        text = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     def solution_improvement(self, baseline: float, objective: float) -> float | None:
         """Positive cost objectives only; other metrics require a new contract."""

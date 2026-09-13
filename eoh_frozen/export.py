@@ -99,6 +99,9 @@ def export_best_skill(output_dir: Path, suite: dict[str, Any], *, timeout: float
         search_policy_version=EOH_COMMIT,
         official_objective=individual.get("objective"),
         origin="checkpoint_reevaluated",
+        metric_spec_hash=suite.get("metric_spec_hash"),
+        data_manifest_hash=suite.get("data_manifest_hash"),
+        reference_manifest_hash=suite.get("reference_manifest_hash"),
     )
     skill_dir = output_dir / "skills" / "eoh_best"
     save_skill(skill_dir, skill)
@@ -122,6 +125,10 @@ def read_evidence(output: Path, suite: dict) -> list[dict]:
             raise ValueError("evaluation_log_corrupt")
         if row.get("suite_hash") != suite["content_hash"] or row.get("problem") != suite["problem"] or row.get("evaluator_hash") != evaluator_source_hash() or sha256_text(row.get("code", "")) != row.get("code_sha256"):
             raise ValueError("evaluation_identity_mismatch")
+        for identity_field in ("problem_spec_hash", "data_manifest_hash", "metric_spec_hash"):
+            expected_identity = suite.get(identity_field)
+            if expected_identity is not None and row.get(identity_field) != expected_identity:
+                raise ValueError("evaluation_identity_mismatch")
         row["evaluation_line"] = line_number
         result = row["evaluation"]
         if not isinstance(result, dict) or not isinstance(result.get("valid"), bool):
@@ -257,7 +264,10 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
                            repair_of_attempt_id=source_attempt if is_repaired else None,
                            integration_mode="bounded_repair" if is_repaired else mode,
                            repair_policy_version="bounded_v2" if is_repaired or mode == "bounded_repair" else None,
-                           official_objective=official.get(row["code_sha256"]))
+                           official_objective=official.get(row["code_sha256"]),
+                           metric_spec_hash=row.get("metric_spec_hash") or suite.get("metric_spec_hash"),
+                           data_manifest_hash=row.get("data_manifest_hash") or suite.get("data_manifest_hash"),
+                           reference_manifest_hash=suite.get("reference_manifest_hash"))
         # The pinned engine discards selected parent IDs. Keep actual request
         # evidence instead of inventing a single parent for multi-parent EoH.
         evidence = {"evaluation_log": "results/evaluations.jsonl", "evaluation_line": row["evaluation_line"],

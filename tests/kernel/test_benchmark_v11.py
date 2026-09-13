@@ -1,0 +1,260 @@
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from agent_skill_loop.benchmark import (
+    ExperimentManifest,
+    FrozenSelection,
+    MetricSpec,
+    PopulationSnapshot,
+    SeedSelection,
+    benchmark_profile,
+    build_archive,
+    build_pilot_manifests,
+    calibrate_differential,
+    calibrate_upstream,
+    evaluation_identity,
+    freeze_selection,
+    load_profile_suite,
+    sha256_text,
+)
+from agent_skill_loop.evaluator import evaluator_source_hash
+from agent_skill_loop.problems.base import get_problem
+from agent_skill_loop.session_runtime import initialize_session, read_state
+
+
+def _member(code: str, algorithm: str, objective: float, index: int) -> dict:
+    return {
+        "generation": 3,
+        "member_index": index,
+        "algorithm": algorithm,
+        "algorithm_text_sha256": sha256_text(algorithm),
+        "code": code,
+        "code_sha256": sha256_text(code),
+        "objective": objective,
+        "evaluation_id": f"evaluation-{index}",
+        "revision": "original",
+        "origin": "official_eoh",
+    }
+
+
+def test_population_snapshot_is_faithful_and_seed_selection_is_derived():
+    metric_hash = "a" * 64
+    code_a = "def priority(item, bins):\n    return -bins\n"
+    code_b = "def priority(item, bins):\n    return bins\n"
+    snapshot = PopulationSnapshot.from_members(
+        [
+            _member(code_a, "first description", 4.0, 0),
+            _member(code_a, "duplicate description", 1.0, 1),
+            _member(code_b, "second description", 2.0, 2),
+        ],
+        generation=3,
+        metric_spec_hash=metric_hash,
+    )
+    assert [item["algorithm"] for item in snapshot.members] == [
+        "first description", "duplicate description", "second description"
+    ]
+    assert [item["member_index"] for item in snapshot.members] == [0, 1, 2]
+
+    selected = SeedSelection.from_snapshot(snapshot, 2)
+    assert [item["code_sha256"] for item in selected.selected_members] == [
+        sha256_text(code_b), sha256_text(code_a)
+    ]
+    assert selected.selected_members[1]["algorithm"] == "first description"
+    assert not selected.terminated
+    insufficient = SeedSelection.from_snapshot(snapshot, 3)
+    assert insufficient.terminated
+    assert insufficient.termination_reason == "insufficient_valid_seeds"
+
+    with pytest.raises(ValueError, match="population_code_hash_mismatch"):
+        PopulationSnapshot.from_members(
+            [{**_member(code_a, "bad", 1.0, 0), "code_sha256": "b" * 64}],
+            generation=1,
+            metric_spec_hash=metric_hash,
+        )
+
+
+def test_evaluation_identity_and_metric_hash_are_part_of_reuse_identity():
+    fields = {
+        "candidate_code_sha256": "a" * 64,
+        "problem_spec_hash": "b" * 64,
+        "data_manifest_hash": "c" * 64,
+        "evaluator_hash": "d" * 64,
+        "metric_spec_hash": "e" * 64,
+    }
+    first = evaluation_identity(**fields)
+    second = evaluation_identity(**{**fields, "metric_spec_hash": "f" * 64})
+    assert first != second
+
+    metric = MetricSpec(
+        metric_id="relative_gap",
+        version="v1",
+        reference_manifest_hash="1" * 64,
+    )
+    assert metric.score(11.0, 10.0) > metric.score(10.0, 10.0)
+    assert metric.aggregate([0.0, 0.2]) == pytest.approx(0.1)
+
+
+def test_archive_and_frozen_selection_do_not_mix_metric_identities():
+    code = "def priority(item, bins):\n    return -bins\n"
+    row = {
+        "code": code,
+        "code_sha256": sha256_text(code),
+        "problem_spec_hash": "a" * 64,
+        "data_manifest_hash": "b" * 64,
+        "evaluator_hash": "c" * 64,
+        "metric_spec_hash": "d" * 64,
+        "origin": "generated",
+        "evaluation_id": "eval-1",
+        "evaluation": {"valid": True, "objective": 2.0},
+    }
+    archive = build_archive(
+        [row, {**row, "evaluation_id": "eval-2", "evaluation": {"valid": True, "objective": 1.0}},
+         {**row, "metric_spec_hash": "e" * 64, "evaluation": {"valid": True, "objective": 0.1}}],
+        problem_spec_hash="a" * 64,
+        data_manifest_hash="b" * 64,
+        evaluator_hash="c" * 64,
+        metric_spec_hash="d" * 64,
+    )
+    assert len(archive) == 1
+    assert archive[0].objective == 1.0
+    for kind in ("incumbent_top1", "archive_topk", "final_population_set"):
+        selection = freeze_selection(kind, archive, metric_spec_hash="d" * 64, k=1 if kind == "archive_topk" else None)
+        assert selection.selection_kind == kind
+        assert selection.training_metric_spec_hash == "d" * 64
+
+
+def test_frozen_selection_round_trips_with_report_identity():
+    selection = FrozenSelection(
+        selection_kind="incumbent_top1",
+        members=({"code_sha256": "a" * 64, "objective": 0.1},),
+        training_metric_spec_hash="b" * 64,
+        source_ref="rounds/round_0001/evaluation_facts.json",
+    )
+    payload = {**selection.as_dict(), "content_hash": selection.content_hash}
+    restored = FrozenSelection.from_dict(payload)
+    assert restored.content_hash == selection.content_hash
+    from agent_skill_loop.benchmark import build_report
+    report = build_report(
+        manifest=ExperimentManifest(
+            benchmark_spec_hash="c" * 64,
+            metric_spec_hash="b" * 64,
+            eoh_commit="eoh",
+            runtime_hash="d" * 64,
+            skill_hash="e" * 64,
+            model="fixture",
+            endpoint_identity="offline",
+            inheritance_mode="incumbent_only",
+            feedback_mode="off",
+            agent_guidance=False,
+            repair_mode="off",
+            memory_enabled=False,
+            evaluation_budget=10,
+            population_size=2,
+            rounds=1,
+            round_budget=10,
+            search_seed=1,
+        ),
+        selection=restored,
+        metrics={"best_training_fitness": 0.1},
+        budget={"total_evaluation_attempts": 10},
+    )
+    assert report["selection_kind"] == "incumbent_top1"
+    assert report["test_isolation"]["test_updates_training"] is False
+
+
+def test_obp_gold_is_independent_and_zero_provider():
+    suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
+    _benchmark, _metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    gold = calibrate_upstream(suite)
+    checked = calibrate_differential(suite, json.loads(json.dumps(gold)))
+    assert checked["passed"]
+    assert get_problem("obp_online").content_hash == suite["problem_spec_hash"]
+    assert gold["heuristics"]["best_fit"]
+
+
+def test_experiment_manifest_hash_is_stable_and_changes_with_guidance():
+    kwargs = {
+        "benchmark_spec_hash": "a" * 64,
+        "metric_spec_hash": "b" * 64,
+        "eoh_commit": "eoh-commit",
+        "runtime_hash": "c" * 64,
+        "skill_hash": "d" * 64,
+        "model": "fixture",
+        "endpoint_identity": "offline",
+        "inheritance_mode": "population_seeds",
+        "feedback_mode": "runtime_facts",
+        "agent_guidance": True,
+        "repair_mode": "off",
+        "memory_enabled": False,
+        "evaluation_budget": 100,
+        "population_size": 4,
+        "rounds": 4,
+        "round_budget": 25,
+        "search_seed": 1234,
+    }
+    manifest = ExperimentManifest(**kwargs)
+    assert manifest.content_hash == ExperimentManifest(**kwargs).content_hash
+    assert manifest.content_hash != ExperimentManifest(**{**kwargs, "agent_guidance": False}).content_hash
+
+
+def test_controlled_pilot_keeps_c_and_d_identical_except_guidance():
+    base = {
+        "benchmark_spec_hash": "a" * 64,
+        "metric_spec_hash": "b" * 64,
+        "eoh_commit": "eoh-commit",
+        "runtime_hash": "c" * 64,
+        "skill_hash": "d" * 64,
+        "model": "fixture",
+        "endpoint_identity": "offline",
+        "inheritance_mode": "population_seeds",
+        "feedback_mode": "runtime_facts",
+        "agent_guidance": True,
+        "repair_mode": "off",
+        "memory_enabled": False,
+        "evaluation_budget": 100,
+        "population_size": 4,
+        "rounds": 4,
+        "round_budget": 25,
+        "search_seed": 1234,
+    }
+    pilot = build_pilot_manifests(base)
+    assert set(pilot["groups"]) == {"A", "B", "C", "D"}
+    c = pilot["groups"]["C"]["manifest"]
+    d = pilot["groups"]["D"]["manifest"]
+    assert c["agent_guidance"] is False
+    assert d["agent_guidance"] is True
+    differing_identity = {"agent_guidance", "experiment_manifest_sha256"}
+    assert {key: value for key, value in c.items() if key not in differing_identity} == {
+        key: value for key, value in d.items() if key not in differing_identity
+    }
+    assert pilot["groups"]["A"]["manifest"]["rounds"] == 1
+    assert pilot["groups"]["A"]["manifest"]["round_budget"] == 100
+    assert all(
+        group["manifest"]["evaluation_budget"] == 100
+        for group in pilot["groups"].values()
+    )
+
+
+def test_benchmark_session_freezes_problem_metric_and_population_identity(tmp_path):
+    root = tmp_path / "benchmark-session"
+    receipt = initialize_session(
+        output=root,
+        operation_id="init-benchmark",
+        eoh_model="fixture",
+        benchmark_id="eohs_v1",
+        benchmark_profile_name="obp_mini",
+        inheritance_mode="population_seeds",
+        max_solver_calls=100,
+    )
+    state = read_state(run=root)
+    assert receipt["run_state"] == "RUNNING"
+    benchmark = state["result"]["benchmark"]
+    assert benchmark["id"] == "eohs_v1"
+    assert benchmark["profile"] == "obp_mini"
+    assert len(benchmark["problem_spec_hash"]) == 64
+    assert len(benchmark["metric_spec_hash"]) == 64
+    assert benchmark["inheritance_mode"] == "population_seeds"
+    assert state["result"]["budgets"]["total_evaluation_attempts"] == 0

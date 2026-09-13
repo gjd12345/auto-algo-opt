@@ -1,0 +1,1 @@
+"""Frozen expected calibration artifacts."""

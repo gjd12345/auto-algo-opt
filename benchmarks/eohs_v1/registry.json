@@ -1,0 +1,45 @@
+{
+  "schema_version": "algorithm-optimization-benchmark-registry/v1",
+  "benchmarks": [
+    {
+      "benchmark_id": "eohs_v1",
+      "profile": "obp_mini",
+      "problem_id": "obp_online",
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "8310b056ab0d4ea83d194f1d9e8c7873c0a3b892",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "upstream_code",
+      "paper_protocol_profile": "paper_protocol",
+      "manifest_paths": {
+        "dev_train": "manifests/obp_mini_train.json",
+        "train": "manifests/obp_mini_train.json",
+        "heldout": "manifests/obp_mini_test.json",
+        "test": "manifests/obp_mini_test.json",
+        "reference": "manifests/obp_mini_references.json"
+      },
+      "manifests": {
+        "train_hash": "45498b6fa62d7f950e02589dba27d0c53abd76e2b49fbdeb1dc9e59628a8d2ad",
+        "test_hash": "f48d3f50454e2b7b0dfcb32d8fffa727cae2abae1cfc44fd99bb5c36808b818c",
+        "reference_hash": "abc3ccc1292449341e95c8e6a5775a62b47a596ee26c5fdf28a39f711ff5cdf3"
+      },
+      "metric_spec_hash": "5d43691fbe5c2a2fc8a392938c32e8b1ea07b3f8b777db517d6af82e50b08955",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "upstream_compatibility_reference",
+        "reference_manifest_hash": "abc3ccc1292449341e95c8e6a5775a62b47a596ee26c5fdf28a39f711ff5cdf3",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective"
+        }
+      },
+      "deviations": [
+        "obp_mini is a regenerated four-instance fixture, not the upstream 128-instance training asset",
+        "the complete TSP and CVRP EoH-S assets are not bundled in v1.1a",
+        "reference values use the upstream-compatible rounded lower-bound convention and are not known optima"
+      ]
+    }
+  ]
+}

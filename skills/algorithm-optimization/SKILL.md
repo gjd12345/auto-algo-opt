@@ -25,6 +25,12 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
   `ProblemSpec` capability contract. Respect its interface, allowed imports
   and attributes, safe builtins, read-only inputs, and side-effect boundary;
   do not rely on Memory to discover evaluator restrictions.
+- For a benchmark Session, use the frozen benchmark identity and canonical
+  `MetricSpec`; raw objectives and reference objectives are facts, not
+  alternate ranking signals. With `inheritance_mode=population_seeds`, let the
+  Runtime derive the next round from the verified official final-population
+  snapshot. Do not manually sort or inject a cold-start fallback when seed
+  selection is insufficient.
 
 ## Session loop
 
@@ -43,3 +49,6 @@ Read the focused contracts before producing documents:
 - [protocol](references/protocol.md) for authority, states, identity, and failure rules.
 - [plan and evaluate](references/plan-and-evaluate.md) for the exact JSON fields and evidence discipline.
 - [two-round example](references/examples/two-round-run.md) for a compact command sequence.
+- For offline benchmark audit/calibration and benchmark Session options, use
+  the repository [CLI contract](../../docs/cli-contract.md) and
+  [benchmark protocol](../../docs/protocol.md#30-benchmark-compatibility-and-controlled-experiments).

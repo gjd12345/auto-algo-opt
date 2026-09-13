@@ -15,6 +15,83 @@ from agent_skill_loop import session_runtime as db
 from agent_skill_loop.skill_store import load_skill
 
 
+def _write_population_snapshot(root: Path, output: Path, run, rd, rows: list[dict]) -> dict | None:
+    """Persist the exact final official population for benchmark sessions.
+
+    The checkpoint is an evidence-derived view: it keeps the file order and
+    duplicate members exactly as returned by EoH. Selection and re-evaluation
+    happen later, in the next round, through ``SeedSelection``.
+    """
+    metric_hash = run["metric_spec_hash"] if "metric_spec_hash" in run.keys() else None
+    if not metric_hash:
+        return None
+    from agent_skill_loop.benchmark import PopulationSnapshot, sha256_text
+
+    population_root = output / "results" / "pops"
+    files = sorted(population_root.glob("population_generation_*.json"))
+    if not files:
+        return None
+
+    def generation(path: Path) -> int:
+        try:
+            return int(path.stem.rsplit("_", 1)[-1])
+        except ValueError:
+            return -1
+
+    source = max(files, key=lambda path: (generation(path), path.name))
+    try:
+        raw = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(raw, list):
+        return None
+    members = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict) or not isinstance(item.get("code"), str) or not item["code"].strip():
+            continue
+        code_hash = sha256_text(item["code"])
+        matching = [
+            row for row in rows
+            if row.get("code_sha256") == code_hash
+            and isinstance(row.get("evaluation"), dict)
+            and row["evaluation"].get("valid") is True
+        ]
+        evaluation = matching[-1] if matching else None
+        members.append({
+            "generation": generation(source),
+            "member_index": index,
+            "algorithm": str(item.get("algorithm") or ""),
+            "algorithm_text_sha256": sha256_text(str(item.get("algorithm") or "")),
+            "code": item["code"],
+            "code_sha256": code_hash,
+            # Population files are provenance for membership/order only.  A
+            # seed fitness must come from the trusted evaluator ledger, never
+            # from a checkpoint field that the upstream engine may have
+            # produced before normalization.
+            "objective": evaluation["evaluation"].get("objective") if evaluation else None,
+            "evaluation_id": evaluation.get("evaluation_id") if evaluation else None,
+            "revision": evaluation.get("revision", "original") if evaluation else "original",
+            "origin": "official_eoh",
+            "metric_spec_hash": metric_hash,
+        })
+    if not members:
+        return None
+    snapshot = PopulationSnapshot.from_members(
+        members,
+        generation=generation(source),
+        metric_spec_hash=metric_hash,
+        problem_spec_hash=run["problem_spec_hash"] if "problem_spec_hash" in run.keys() else None,
+        data_manifest_hash=run["data_manifest_hash"] if "data_manifest_hash" in run.keys() else None,
+        evaluator_hash=run["evaluator_hash"],
+    )
+    ref = f"rounds/round_{rd['round_id']:04d}/population_snapshot.json"
+    payload = {**snapshot.as_dict(), "content_hash": snapshot.content_hash,
+               "source_ref": str(source.relative_to(root).as_posix())}
+    db._atomic_write(root / ref, db._json(payload) + "\n")
+    return {"ref": ref, "sha256": db._sha256((root / ref).read_bytes()), "content_hash": snapshot.content_hash,
+            "generation": snapshot.generation, "member_count": len(snapshot.members)}
+
+
 def task_output(root,con,task):
     first=con.execute("SELECT task_id FROM tasks WHERE run_id=? AND round_id=? ORDER BY rowid LIMIT 1",(task["run_id"],task["round_id"])).fetchone()[0]
     prefix=root/f"rounds/round_{task['round_id']:04d}"
@@ -295,7 +372,13 @@ def execute_task(root, task_id):
         args.max_repair_requests_total=row["repair_max_requests"]
         for name in ("seed","count","size"): setattr(args,name,config["suite_generation"][name])
         args.round_context_file=str(root/rd["round_context_ref"])
-        args.parent_skill=str(root/rd["incumbent_before_ref"]) if rd["incumbent_before_ref"] else None
+        args.suite_file = str(root / "dev_suite.json")
+        inheritance_mode = row["inheritance_mode"] if "inheritance_mode" in row.keys() else "incumbent_only"
+        args.parent_skill = str(root/rd["incumbent_before_ref"]) if rd["incumbent_before_ref"] and inheritance_mode != "population_seeds" else None
+        args.seed_codes = str(root/rd["seed_selection_ref"]) if rd["seed_selection_ref"] and inheritance_mode == "population_seeds" else None
+        args.metric_spec_hash = row["metric_spec_hash"] if "metric_spec_hash" in row.keys() else None
+        args.data_manifest_hash = row["data_manifest_hash"] if "data_manifest_hash" in row.keys() else None
+        args.problem_spec_hash = row["problem_spec_hash"] if "problem_spec_hash" in row.keys() else None
         args.session={"root":str(root),"task_id":task_id}
         preflight = run_startup_preflight(root, task)
         output = task_output(root, con, task)
@@ -343,6 +426,7 @@ def collect_facts(root, con, run, rd, task):
         except (OSError, TypeError, json.JSONDecodeError):
             raise ValueError("startup_preflight_invalid")
     config,suite=db._verify_files(root,run,action="collect")
+    metric_run_hash = run["metric_spec_hash"] if "metric_spec_hash" in run.keys() else None
     terminal_text=(root/task["terminal_ref"]).read_text(encoding="utf-8")
     if db._sha256(terminal_text)!=task["terminal_sha256"]: raise ValueError("task_terminal_hash_mismatch")
     terminal=json.loads(terminal_text)
@@ -350,7 +434,7 @@ def collect_facts(root, con, run, rd, task):
     rows=read_evidence(output,suite) if output.is_dir() else []
     for item in rows:
         ledger=con.execute("SELECT * FROM solver_calls WHERE task_id=? AND evaluation_id=?",(task["task_id"],item["evaluation_id"])).fetchone()
-        if ledger is None or ledger["code_sha256"]!=item["code_sha256"] or ledger["suite_hash"]!=run["suite_hash"] or ledger["evaluator_hash"]!=run["evaluator_hash"]:
+        if ledger is None or ledger["code_sha256"]!=item["code_sha256"] or ledger["suite_hash"]!=run["suite_hash"] or ledger["evaluator_hash"]!=run["evaluator_hash"] or (metric_run_hash is not None and ledger["metric_spec_hash"] != metric_run_hash):
             raise ValueError("solver_evidence_identity_mismatch")
         if ledger["candidate_id"] != (item.get("candidate_id") or item["origin"]) or ledger["revision"] != (item.get("revision") or "original"):
             raise ValueError("solver_evidence_revision_mismatch")
@@ -361,6 +445,10 @@ def collect_facts(root, con, run, rd, task):
         finalize_evaluations(output,suite,stop_reason=task["terminal_reason"])
         exported=export_run_evidence(output,suite)
     else: exported={}
+    population_snapshot = _write_population_snapshot(root, output, run, rd, rows)
+    if population_snapshot:
+        con.execute("UPDATE rounds SET population_snapshot_ref=?,population_snapshot_sha256=? WHERE run_id=? AND round_id=?",
+                    (population_snapshot["ref"], population_snapshot["sha256"], run["run_id"], rd["round_id"]))
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
     if baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()
@@ -387,11 +475,15 @@ def collect_facts(root, con, run, rd, task):
                  "generation_request_ref":request_ref(x.get("generation_request_ref")) or (f"{prefix}/results/exchanges/request_{x['source_request_index']}.json" if x.get("source_request_index") else None),
                  "repair_request_ref":request_ref(x.get("repair_request_ref"))} for x in rows]
     return {"round_id":rd["round_id"],"problem":run["problem"],"suite_hash":run["suite_hash"],"evaluator_hash":run["evaluator_hash"],
+            "benchmark": {"benchmark_id": run["benchmark_id"], "profile": run["benchmark_profile"], "problem_spec_hash": run["problem_spec_hash"], "benchmark_spec_hash": run["benchmark_spec_hash"],
+                          "data_manifest_hash": run["data_manifest_hash"], "reference_manifest_hash": run["reference_manifest_hash"], "metric_spec_hash": metric_run_hash} if "benchmark_id" in run.keys() and run["benchmark_id"] else None,
             "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
             "incumbent_before":before,"incumbent_after":after,"candidates":candidates,"exports":exported,
             "best_generated_ref":f"{prefix}/{exported['best_generated_path']}" if exported.get("best_generated_path") else None,
             "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":db._budget_view(con,run),
             "solver_costs": solver_cost_summary(con, task["task_id"], candidates),
+            "population_snapshot": population_snapshot,
+            "dual_budget": {key: db._budget_view(con, run).get(key) for key in ("total_evaluation_attempts", "novel_candidate_evaluations", "seed_reevaluation_attempts", "baseline_attempts", "repair_attempts")},
             "startup_preflight": preflight,
             "terminal_reason":task["terminal_reason"]}
 

@@ -1124,3 +1124,111 @@ Skill / Runtime / Algorithm Asset 概念分离
 最终定义：
 
 > **Algorithm Optimization Skill 是一个无自主外层模型调用、可恢复、幂等且可审计的算法优化执行协议。Coding Agent 负责认知与策略决策，Skill Runtime 负责可信状态和执行边界，官方 EoH 负责轮内进化，DeepSeek 负责 EoH 推理，Deterministic Evaluator 负责结果裁决。**
+
+---
+
+# 25. v1.1 Benchmark Compatibility 与受控实验基线
+
+本节是当前 v1.1 的 benchmark 实施基线；早期只支持开发套件与单
+incumbent 的描述不再作为 benchmark 实验合同。OBP 是 v1.1a 的第一
+个校准任务，TSP/CVRP 兼容层和正式实验属于 v1.1b。缺失上游原始资产
+时只能标记 `protocol-compatible`，不得写成 exact reproduction。
+
+## 25.1 不可混用的身份
+
+一个评测的 identity 必须同时包含：
+
+```text
+candidate_code_sha256
+problem_spec_hash
+data_manifest_hash
+evaluator_hash
+metric_spec_hash
+```
+
+`MetricSpec` 是冻结的 canonical fitness 定义。OBP 使用逐实例 relative
+gap；raw objective（bins used）和 reference objective 是独立事实，不能
+用 raw objective 替代排序指标。`reference_kind` 只能是
+`known_optimum`、`best_known`、`solver_reference`、
+`analytical_reference` 或 `upstream_compatibility_reference`；OBP 上游
+公式使用后者，TSP/CVRP 的 LKH 结果使用 `solver_reference`。
+
+## 25.2 PopulationSnapshot 与 SeedSelection
+
+`PopulationSnapshot` 只忠实保存官方 EoH 最终种群，字段为：
+
+```text
+generation, member_index, algorithm, algorithm_text_sha256,
+code, code_sha256, objective, evaluation_id, revision, origin
+```
+
+它不排序、不去重、不截断。`SeedSelection` 是独立的确定性派生：
+
+```text
+valid filter → code_sha256 去重 → stable fitness sort
+→ target population 截取 → complete re-evaluation
+```
+
+同一代码有多个描述时保留最早官方成员。种群不足时显式终止，不能补
+冷启动候选。v1.1 支持 `incumbent_only`、`population_seeds`、
+`explicit_seeds`；暂不恢复随机数状态、算子进度或在途任务。继承 seed
+不是新的 algorithm discovery，重评仍消耗统一 evaluator budget。
+
+## 25.3 ExperimentManifest 与选择对象
+
+正式运行前生成并 hash `ExperimentManifest`，至少冻结：
+
+```text
+benchmark_spec_hash, metric_spec_hash, eoh_commit, runtime_hash,
+skill_hash, model, endpoint_identity, inheritance_mode, feedback_mode,
+agent_guidance, repair_mode, memory_enabled, evaluation_budget,
+population_size, rounds, round_budget, search_seed
+```
+
+所有日志、结果与报告引用 `experiment_manifest_sha256`。报告必须区分：
+
+```text
+incumbent_top1 / archive_topk / final_population_set
+Our Top1 / Our archive Top10 / Our final population
+EoH history Top10 / EoH-S final population
+```
+
+测试结果在 selection lock 后才能进入 test；test 不得更新训练 archive、
+Memory 或 incumbent。
+
+## 25.4 M1–M8 / B0–B6 顺序
+
+| 阶段 | 交付与退出条件 |
+| --- | --- |
+| M1/B0 | 注册 benchmark、上游 commit、数据/reference/许可证和偏差；资产记录 upstream/local hash、transformation、status；分开 `upstream_code` 与 `paper_protocol`；pickle 仅隔离导入。 |
+| M2/B1 | 独立 OBP Harness 对齐 bin 初始化、priority、argmax tie-break、计数；逐实例保存 bins/raw/reference/gap；First Fit、Best Fit、公开 heuristic 对照并冻结 `obp_upstream_gold.json`；zero provider request。 |
+| M3/B3 | Session 初始化冻结 benchmark/data/reference/metric hashes；EoH、incumbent、feedback、archive、report 共用 canonical gap；旧 cvrp/tsp 语义不变；wheel 安装后可离线复评。 |
+| M4 | 从官方最终种群写 Snapshot，经 SeedSelection 和完整重评后作为下一轮多精英 seed；缺 seed 显式终止。 |
+| M5/B4 | 分离 algorithm/evaluation/selection identity；实现 archive TopK、三种 FrozenSelection 和双预算账本。每轮同时记录 `total_evaluation_attempts`、`novel_candidate_evaluations`、`seed_reevaluation_attempts`、`baseline_attempts`、`repair_attempts`。 |
+| M6/B5–B6 | 固定四组 pilot：A 一次完整 Session+neutral；B 多轮+incumbent only+事实反馈；C 多轮+population seeds+事实反馈+neutral；D 与 C 完全相同但 adaptive Agent Plan。A/B 只解释为 continuous EoH vs sessionized baseline；C/D 才是 Agent guidance 对照。 |
+| M7/B2 | 对齐 TSP 排序/补齐/精度/闭环，CVRP depot/容量/返仓/合法性和 LKH reference；资产缺失只标 protocol-compatible。 |
+| M8 | 每方法/任务三次独立运行，独立 Session/Memory/archive/manifest/output；报告训练/测试和三种 selection，并生成兼容矩阵与复现命令。 |
+
+A 也必须经过统一 `Benchmark Session adapter → neutral Plan → one EoH task →
+full budget`；裸上游 EoH 只用于 B0/B1 差分校准。主比较以 equal total
+evaluation attempts 为准，同时报告 quality vs total evaluator calls 和
+quality vs novel generated candidates。Memory 与 repair 在 pilot 默认关闭，
+不把性能提升作为工程验收条件。
+
+## 25.5 当前实现边界
+
+仓库已提供 `agent_skill_loop.benchmark`、`obp_online`、`eohs_v1/obp_mini`
+离线 fixture、独立校准、Snapshot/Manifest 合同，以及只生成配置的固定
+A/B/C/D pilot 展开器。`obp_mini` 是用于接线和差分测试的 regenerated
+fixture，不是上游 128 实例训练集；完整 OBP、TSP、CVRP 原始资产的导入与
+正式三任务实验仍必须在 M7/M8 依据 provenance 记录完成。pilot 展开器不
+启动 Provider；四组必须由调用方分别创建 Session、运行并导出结果。运行
+命令示例：
+
+```text
+python -m agent_skill_loop benchmark audit
+python -m agent_skill_loop benchmark calibrate-obp --gold benchmarks/eohs_v1/expected/obp_upstream_gold.json
+python -m agent_skill_loop benchmark evaluate --code candidate.py
+python -m agent_skill_loop benchmark pilot-config --config experiment_manifest.json --output pilot.json
+python -m agent_skill_loop session init --benchmark eohs_v1 --benchmark-profile obp_mini ...
+```
