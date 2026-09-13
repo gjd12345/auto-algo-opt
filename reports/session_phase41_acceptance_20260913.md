@@ -72,4 +72,4 @@ bef05187e8b103fa184e6acf1dfc53de5ec1b72fe8e2f8d1dea53898c10829dc
 
 ## 交付状态
 
-Phase 4.1 与 Phase 5 修改已通过上述本地验收并随本次提交推送。未追加真实 DeepSeek 费用请求；历史旧 workflow 模块仍作为只读/测试兼容代码保留，但生产 CLI 不再执行它。当前用户未跟踪的设计文档、drawio 资产和 `docs/stage12_contract.md` 删除状态不纳入本次提交。
+Phase 4.1 与 Phase 5 修改已通过上述本地验收并随本次提交推送。未追加真实 DeepSeek 费用请求；历史旧 workflow 模块仍作为只读/测试兼容代码保留，但生产 CLI 不再执行它。本次未修改设计文档和 drawio 资产；`docs/stage12_contract.md` 的历史删除状态也不属于本次提交。
