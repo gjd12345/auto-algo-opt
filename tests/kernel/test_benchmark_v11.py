@@ -280,6 +280,83 @@ def test_candidate_set_retains_partial_member_successes_per_instance():
     assert result["instance_evaluation_attempts"] == 8
 
 
+def test_locked_selection_uses_the_same_partial_instance_matrix(monkeypatch):
+    """Selection evaluation must not erase a member's partial successes."""
+    from agent_skill_loop.benchmark import harness
+
+    suite = load_profile_suite("eohs_v1", "obp_mini", split="heldout")
+    _benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_mini")
+    code_a = "def priority(item, bins):\n    return -bins\n"
+    code_b = "def priority(item, bins):\n    return bins\n"
+    selection = FrozenSelection(
+        selection_kind="archive_topk",
+        members=(
+            {"candidate_id": "a", "code": code_a, "code_sha256": sha256_text(code_a)},
+            {"candidate_id": "b", "code": code_b, "code_sha256": sha256_text(code_b)},
+        ),
+        training_metric_spec_hash=metric.content_hash,
+    )
+
+    def fake_evaluate(code, _suite, **_kwargs):
+        rows = []
+        for index, _instance in enumerate(suite["instances"]):
+            valid = (code == code_a and index % 2 == 0) or (code == code_b and index % 2 == 1)
+            rows.append({
+                "instance_index": index,
+                "attempted": True,
+                "valid": valid,
+                "objective": 0.0 if valid else None,
+                "error_code": None if valid else "candidate_exception",
+                "error_detail": None if valid else "fixture failure",
+                "metrics": {},
+            })
+        return {
+            "valid": False,
+            "objective": None,
+            "metrics": {"partial_instance_results": rows},
+            "evaluation_identity": "fixture",
+        }
+
+    monkeypatch.setattr(harness, "evaluate_candidate", fake_evaluate)
+    result = evaluate_selection(selection, suite, metric_spec=metric)
+    assert result["complete_instance_coverage"] is True
+    assert result["aggregate_fitness"] == pytest.approx(0.0)
+    assert result["test_instance_evaluation_attempts"] == 2 * len(suite["instances"])
+    assert result["per_instance"][0]["member_gaps"][0] == 0.0
+    assert result["per_instance"][0]["member_gaps"][1] is None
+    assert result["per_instance"][1]["member_gaps"][0] is None
+    assert result["per_instance"][1]["member_gaps"][1] == 0.0
+
+
+def test_archive_preserves_discovery_and_later_score_references():
+    code = "def priority(item, bins):\n    return -bins\n"
+    identity = {
+        "problem_spec_hash": "a" * 64,
+        "data_manifest_hash": "b" * 64,
+        "evaluator_hash": "c" * 64,
+        "metric_spec_hash": "d" * 64,
+        "origin": "generated",
+        "candidate_id": "candidate-1",
+        "code": code,
+        "code_sha256": sha256_text(code),
+    }
+    archive = build_archive(
+        [
+            {**identity, "evaluation_id": "eval-first", "discovery_ref": "rounds/1#candidate/0",
+             "score_evaluation_ref": "evaluation:eval-first", "evaluation": {"valid": True, "objective": 2.0}},
+            {**identity, "evaluation_id": "eval-later", "discovery_ref": "rounds/2#candidate/0",
+             "score_evaluation_ref": "evaluation:eval-later", "evaluation": {"valid": True, "objective": 1.0}},
+        ],
+        problem_spec_hash="a" * 64,
+        data_manifest_hash="b" * 64,
+        evaluator_hash="c" * 64,
+        metric_spec_hash="d" * 64,
+    )
+    assert archive[0].discovery_ref == "rounds/1#candidate/0"
+    assert archive[0].score_evaluation_ref == "evaluation:eval-later"
+    assert "source_ref" not in archive[0].as_dict()
+
+
 def test_experiment_manifest_hash_is_stable_and_changes_with_guidance():
     kwargs = {
         "benchmark_spec_hash": "a" * 64,
@@ -341,6 +418,9 @@ def test_controlled_pilot_keeps_c_and_d_identical_except_guidance():
         group["manifest"]["evaluation_budget"] == 100
         for group in pilot["groups"].values()
     )
+    for group in pilot["groups"].values():
+        policy = group["manifest"]["extra"]["search_policy_defaults"]
+        assert policy["max_sample_nums"] == 100
 
 
 def test_benchmark_session_freezes_problem_metric_and_population_identity(tmp_path):
@@ -363,6 +443,86 @@ def test_benchmark_session_freezes_problem_metric_and_population_identity(tmp_pa
     assert len(benchmark["metric_spec_hash"]) == 64
     assert benchmark["inheritance_mode"] == "population_seeds"
     assert state["result"]["budgets"]["total_evaluation_attempts"] == 0
+
+
+def test_pilot_manifest_search_policy_is_loaded_without_cli_overrides(tmp_path):
+    source = tmp_path / "source"
+    initialize_session(output=source, operation_id="init", eoh_model="fixture",
+                       benchmark_id="eohs_v1", max_rounds=2, round_budget=20, max_solver_calls=40)
+    config = json.loads((source / "config_frozen.json").read_text(encoding="utf-8"))
+    manifest = build_pilot_manifests(config["experiment_manifest"]["document"])["groups"]["C"]["manifest"]
+    target = tmp_path / "pilot"
+    initialize_session(output=target, operation_id="init", eoh_model="fixture",
+                       benchmark_id="eohs_v1", experiment_manifest=manifest)
+    frozen = json.loads((target / "config_frozen.json").read_text(encoding="utf-8"))
+    assert frozen["eoh"]["search_policy_defaults"] == manifest["extra"]["search_policy_defaults"]
+    assert frozen["eoh"]["search_policy_limits"] == manifest["extra"]["search_policy_limits"]
+
+
+def test_archive_command_projects_hash_verified_session_facts(tmp_path):
+    from agent_skill_loop.benchmark.archive import build_archive_from_session
+    from agent_skill_loop.session_runtime import _connect, _sha256
+
+    root = tmp_path / "archive-session"
+    initialize_session(
+        output=root,
+        operation_id="init-archive",
+        eoh_model="fixture",
+        benchmark_id="eohs_v1",
+        benchmark_profile_name="obp_mini",
+        max_solver_calls=100,
+    )
+    state = read_state(run=root)
+    benchmark = state["result"]["benchmark"]
+    code = "def priority(item, bins):\n    return -bins\n"
+    suite = json.loads((root / "dev_suite.json").read_text(encoding="utf-8"))
+    candidate = {
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "origin": "generated",
+        "code": code,
+        "code_sha256": sha256_text(code),
+        "evaluation_id": "evaluation-archive",
+        "valid": True,
+        "objective": 0.0,
+    }
+    # The evaluator identity is a run-frozen field, not a runtime label from
+    # the report.  Read it directly from SQLite for the synthetic evidence.
+    con = _connect(root / "session.sqlite3")
+    try:
+        run = con.execute("SELECT * FROM runs LIMIT 1").fetchone()
+        facts = {
+            "round_id": 1,
+            "problem": run["problem"],
+            "suite_hash": run["suite_hash"],
+            "evaluator_hash": run["evaluator_hash"],
+            "benchmark": {
+                "benchmark_id": run["benchmark_id"],
+                "profile": run["benchmark_profile"],
+                "problem_spec_hash": run["problem_spec_hash"],
+                "benchmark_spec_hash": run["benchmark_spec_hash"],
+                "data_manifest_hash": run["data_manifest_hash"],
+                "reference_manifest_hash": run["reference_manifest_hash"],
+                "metric_spec_hash": run["metric_spec_hash"],
+            },
+            "candidates": [candidate],
+        }
+        facts_text = json.dumps(facts, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+        facts_ref = root / "rounds/round_0001/evaluation_facts.json"
+        facts_ref.parent.mkdir(parents=True, exist_ok=True)
+        facts_ref.write_text(facts_text, encoding="utf-8")
+        con.execute(
+            "UPDATE rounds SET evaluation_facts_ref=?,evaluation_facts_sha256=? WHERE round_id=1",
+            ("rounds/round_0001/evaluation_facts.json", _sha256(facts_text)),
+        )
+    finally:
+        con.close()
+    archive = build_archive_from_session(root)
+    assert archive["entry_count"] == 1
+    entry = archive["entries"][0]
+    assert entry["discovery_ref"] == "rounds/round_0001/evaluation_facts.json#candidates/0"
+    assert entry["score_evaluation_ref"] == "evaluation:evaluation-archive"
+    assert archive["source_facts"][0]["candidate_count"] == 1
 
 
 def test_registered_benchmark_json_assets_keep_registry_byte_hashes():

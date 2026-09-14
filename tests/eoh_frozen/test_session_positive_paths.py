@@ -8,7 +8,7 @@ import pytest
 pytest.importorskip("eoh")
 
 from agent_skill_loop import session_runtime as db, session_actions as actions
-from agent_skill_loop.memory.api import MemoryAPI
+from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
 from agent_skill_loop.skill_store import load_skill
 from eoh_frozen.smoke import fixture_provider
 
@@ -43,6 +43,12 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
         return 200,"{capacity ranking}\n```python\n"+code+"\n```"
 
     root=tmp_path/"run"
+    memory_api=MemoryAPI(tmp_path/"memory")
+    previous=memory_api.write(MemoryEntry(
+        name="capacity-fixture", description="earlier bounded capacity solution",
+        type="solution", project="cvrp_construct", scene="select_next_node",
+        body="## Execution\nEarlier fixture.\n**Why:** Earlier evidence.\n**How to apply:** Reevaluate.\n**Reusable Experience:** Keep the interface fixed.",
+    ))
     with fixture_provider("cvrp_construct",responder=responder) as (endpoint,prompts):
         db.initialize_session(output=root,operation_id="init",eoh_model="fixture",eoh_endpoint=endpoint,
             eoh_api_key_env="SESSION_POSITIVE_KEY",eoh_max_requests=16,eoh_round_max_requests=16,
@@ -80,11 +86,13 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
         evidence=f"evaluation:{candidate['evaluation_id']}"
         file.write_text(json.dumps(dict(plan_alignment="aligned",observations=[dict(claim="Improves this frozen development suite by over 1 percent.",evidence_refs=[evidence])],
             hypotheses=[],next_search_advice={},memory_action=dict(kind="solution",name="capacity-fixture",description="capacity fit on frozen fixture suite",
-            project="cvrp_construct",scene="select_next_node",based_on=facts["best_generated_ref"],evidence_ref=evidence,
+            project="cvrp_construct",scene="select_next_node",source_skill_ref=facts["best_generated_ref"],memory_based_on=previous["reference"],evidence_ref=evidence,
             body=f"## Execution\nAsset: {facts['best_generated_ref']}\n**Why:** {evidence}; fixed development suite only.\n**How to apply:** Reevaluate on new data.\n**Reusable Experience:** Capacity fit scaling; no generalization claim."))))
         result=actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=collected["state_version"],file=file)
         assert result["result"]["memory"]["status"]=="published"
-        assert MemoryAPI(tmp_path/"memory").read_version(result["result"]["memory"]["reference"])["type"]=="solution"
+        published=MemoryAPI(tmp_path/"memory").read_version(result["result"]["memory"]["reference"])
+        assert published["type"]=="solution" and published["version"]==2
+        assert published["provenance"]["source_skill_ref"]==facts["best_generated_ref"]
         assert actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=0,file=file)==result
         assert actions.finish_round(run=root,operation_id="finish",expected_state_version=result["state_version"],decision="complete")["run_state"]=="COMPLETED"
         with sqlite3.connect(root/"session.sqlite3") as con:

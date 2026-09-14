@@ -1034,6 +1034,20 @@ related_refs
 
 而不能伪装成同 entry CAS。
 
+Evaluate 的 Memory proposal 必须区分三种引用：
+
+```text
+source_skill_ref = solution 对应的可信生成 Skill
+memory_based_on  = 同名 Memory entry 的 exact latest version（CAS）
+evidence_ref     = 本轮确定性评测证据
+```
+
+旧 solution 提交中的 `based_on` 作为 `source_skill_ref` 的读取兼容别名；旧
+insight 提交中的该字段作为 `memory_based_on` 的兼容别名。新提交不得再使用。
+发布 sidecar 必须保存上述来源以及 evaluation facts、代码、suite 和 evaluator
+身份。读取带 sidecar 的版本必须验证正文及完整内容 hash；旧的无 sidecar
+资产只保留读取兼容，不获得同等完整性声明。
+
 ---
 
 ## 24. Finish Round
@@ -1230,6 +1244,13 @@ a terminal condition and MUST NOT silently trigger a cold-start population.
 `incumbent_only`, `population_seeds` and `explicit_seeds` are distinct modes;
 seed re-evaluation is charged to the shared evaluator budget.
 
+Seed provenance is bound by exact code hash at the parent EoH boundary. A
+child evaluator must not infer `population_seed` from a mutable counter,
+because spawned children receive independent copies of that counter. The
+binding is cleared after official seed initialization; generated offspring
+receive an explicit `candidate_id`, `revision`, and `evaluation_id` before
+their isolated evaluation.
+
 ### 30.3 Experiment manifest and selection lock
 
 Formal benchmark runs MUST create and hash an `ExperimentManifest` containing
@@ -1296,3 +1317,14 @@ A/B are interpreted only as continuous EoH versus a sessionized baseline; C/D
 are the Agent-guidance comparison. Runtime supplies bounded facts, the Agent
 explains and decides, and EoH performs the search. Memory and repair are off in
 the initial pilot unless a manifest explicitly says otherwise.
+
+The controlled-pilot manifest MUST derive one common upstream
+`max_sample_nums` cap from the larger of its total evaluation budget and its
+per-round budget. It MUST NOT use the mini-fixture default of `8`; the shared
+Session solver budget remains the hard stop for each group.
+
+The read-only command `benchmark archive --run RUN_DIR` projects the
+hash-verified completed Session facts into the training archive. It is the
+supported producer for `freeze-selection`; archive entries retain separate
+`discovery_ref` and `score_evaluation_ref` fields when later re-evaluation
+changes the best score.

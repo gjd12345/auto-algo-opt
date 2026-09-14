@@ -243,6 +243,10 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
         if not row["evaluation"]["valid"]:
             continue
         version = (row.get("candidate_id") or f"candidate_{source_attempt}") if is_generated or is_repaired else row["origin"]
+        if row["origin"] == "population_seed":
+            version = row.get("candidate_id")
+            if not isinstance(version, str) or not re.fullmatch(r"seed_[1-9][0-9]*", version):
+                raise ValueError("population_seed_identity_invalid")
         folder = output / "skills" / version
         if folder.exists():
             existing = load_skill(folder)

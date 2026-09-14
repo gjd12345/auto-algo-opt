@@ -317,10 +317,16 @@ expected_state_version
 --repair-mode
 --repair-max-requests
 --memory-store
+--no-memory
 --solution-threshold
 ```
 
 密钥值不得持久化。
+
+普通 Session 默认启用轻量 Markdown Memory；未指定目录时优先使用
+`ALGORITHM_OPTIMIZATION_MEMORY_STORE`，否则使用
+`~/.codex/algorithm-optimization/memory`。受控 benchmark 默认关闭并由
+ExperimentManifest 冻结。`--no-memory` 用于普通 Session 的显式无记忆运行。
 
 ## 4.2 `session state`
 
@@ -359,6 +365,10 @@ complete_memory_consumption = true
 ```
 
 Plan 的 `memory_basis` 必须是当前轮完整读取 refs 的子集。
+
+Memory 后端通过冻结的 `memory_policy_id` 解析，Session 不直接依赖 Markdown
+实现类。当前仅注册 `markdown-memory`；后续 RAG 后端必须实现同一摘要检索、
+版本读取和 CAS 发布合同，不能改变 Plan/Evaluate 权限边界。
 
 ## 4.5 `session submit-plan --file`
 
@@ -490,6 +500,11 @@ Eligibility Validation
       ↓
 MemoryCommit
 ```
+
+`source_skill_ref`、`memory_based_on` 和 `evidence_ref` 分别表示 solution
+算法来源、同条 Memory 的版本更新基线和确定性评测证据，不得复用一个字段承担
+两种身份。发布 sidecar 固化这些来源及评测 identity，并对正文和完整条目做 hash
+校验。
 
 分别记录：
 
@@ -1215,6 +1230,12 @@ evaluation attempts 为准，同时报告 quality vs total evaluator calls 和
 quality vs novel generated candidates。Memory 与 repair 在 pilot 默认关闭，
 不把性能提升作为工程验收条件。
 
+当前 archive 入口为只读的
+`python -m agent_skill_loop benchmark archive --run RUN_DIR`。它从 SQLite
+登记且哈希校验的各轮 `evaluation_facts.json` 生成训练 archive；同一代码
+的首次发现引用与取得当前最好分数的重评引用分别记录为
+`discovery_ref` 和 `score_evaluation_ref`，不得用手写候选列表替代。
+
 ## 25.5 当前实现边界
 
 仓库已提供 `agent_skill_loop.benchmark`、`obp_online`、`eohs_v1/obp_mini`
@@ -1234,6 +1255,10 @@ python -m agent_skill_loop session init --benchmark eohs_v1 --benchmark-profile 
 ```
 
 ## 25.6 当前验收状态（2026-09-13）
+
+2026-09-14 更新：已开始闭环验收，当前 obp_mini 所有合法训练成绩相同，
+官方按 fitness 去重后仅剩一个种群成员，第二轮多 seed 被门禁终止。
+详见 [闭环验收记录](v11a_closure_acceptance_20260914.md)。正式 pilot 保持未验收。
 
 本次合同修复后，当前可签收的是 **benchmark mini fixture 基础接线**，
 不是完整 v1.1a 的正式实验完成：

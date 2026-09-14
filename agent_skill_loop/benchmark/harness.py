@@ -355,6 +355,101 @@ def _require_registered_heldout_suite(suite: Mapping[str, Any], metric: MetricSp
     return benchmark, expected
 
 
+def _ordered_partial_rows(result: Mapping[str, Any], instance_count: int) -> list[Mapping[str, Any]] | None:
+    """Return evaluator partial facts only when they cover the full order."""
+    metrics = result.get("metrics") if isinstance(result.get("metrics"), Mapping) else None
+    rows = metrics.get("partial_instance_results") if metrics else None
+    if not isinstance(rows, list) or len(rows) != instance_count:
+        return None
+    ordered: list[Mapping[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, Mapping) or row.get("instance_index") != index or row.get("attempted") is not True:
+            return None
+        ordered.append(row)
+    return ordered
+
+
+def _member_evaluation(
+    item: Mapping[str, Any],
+    index: int,
+    instance_ids: list[str],
+    suite: Mapping[str, Any],
+    metric: MetricSpec,
+    *,
+    timeout: float,
+    missing_code_error: str = "selection_member_code_missing",
+    hash_error: str = "selection_member_code_hash_mismatch",
+    require_code_hash: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], int]:
+    """Evaluate one member and expose the same partial matrix to every caller.
+
+    A member can be invalid for the whole suite while still producing valid
+    results for some instances.  The member's overall validity remains false,
+    but those per-instance facts must be retained for set aggregation and for
+    locked test selection.
+    """
+    if not isinstance(item, Mapping) or not isinstance(item.get("code"), str) or not item["code"].strip():
+        raise ValueError(missing_code_error)
+    code = item["code"]
+    code_hash = sha256_text(code)
+    if require_code_hash and item.get("code_sha256") != code_hash:
+        raise ValueError(hash_error)
+    if not require_code_hash and item.get("code_sha256") is not None and item.get("code_sha256") != code_hash:
+        raise ValueError(hash_error)
+    result = evaluate_candidate(code, suite, timeout=timeout, metric_spec=metric, collect_partial=True)
+    partial_rows = _ordered_partial_rows(result, len(instance_ids))
+    if partial_rows is not None:
+        values = [
+            float(row["objective"])
+            if row.get("valid") is True
+            and isinstance(row.get("objective"), (int, float))
+            and not isinstance(row.get("objective"), bool)
+            and math.isfinite(float(row["objective"]))
+            else None
+            for row in partial_rows
+        ]
+        raw_values = [
+            (row.get("metrics") or {}).get("raw_objectives") if row.get("valid") is True else None
+            for row in partial_rows
+        ]
+        reference_values = [
+            (row.get("metrics") or {}).get("reference_objectives") if row.get("valid") is True else None
+            for row in partial_rows
+        ]
+        instance_errors = [
+            {"error_code": row.get("error_code"), "error_detail": row.get("error_detail")}
+            if row.get("valid") is not True else None
+            for row in partial_rows
+        ]
+        attempts = sum(row.get("attempted") is True for row in partial_rows)
+    else:
+        values = list(result.get("instance_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
+        if len(values) != len(instance_ids):
+            values = [None] * len(instance_ids)
+        raw_values = list(result.get("raw_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
+        reference_values = list(result.get("reference_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
+        instance_errors = [None] * len(instance_ids)
+        attempts = len(instance_ids) if result.get("valid") is True else 0
+        partial_rows = None
+    member = {
+        "member_index": index,
+        "candidate_id": str(item.get("candidate_id") or f"candidate_{index + 1}"),
+        "code_sha256": code_hash,
+        "valid": result.get("valid") is True,
+        "objective": result.get("objective"),
+        "instance_objectives": values,
+        "raw_objectives": raw_values,
+        "reference_objectives": reference_values,
+        "bins_used": list(result.get("bins_used") or []),
+        "instance_results": [dict(row) for row in partial_rows] if partial_rows is not None else None,
+        "instance_errors": instance_errors,
+        "error_code": result.get("error_code"),
+        "error_detail": result.get("error_detail"),
+        "evaluation_identity": result.get("evaluation_identity"),
+    }
+    return member, result, attempts
+
+
 def evaluate_selection(
     selection: FrozenSelection,
     suite: Mapping[str, Any],
@@ -378,28 +473,15 @@ def evaluate_selection(
     instance_ids = [str(item["instance_id"]) for item in suite.get("instances", [])]
     member_results: list[dict[str, Any]] = []
     matrix = [[] for _ in instance_ids]
+    instance_evaluation_attempts = 0
     for index, member in enumerate(members):
-        if not isinstance(member, Mapping) or not isinstance(member.get("code"), str) or not member["code"].strip():
-            raise ValueError("selection_member_code_missing")
-        code_hash = sha256_text(member["code"])
-        if member.get("code_sha256") != code_hash:
-            raise ValueError("selection_member_code_hash_mismatch")
-        result = evaluate_candidate(member["code"], suite, timeout=timeout, metric_spec=metric)
-        item = {
-            "member_index": index,
-            "code_sha256": code_hash,
-            "valid": result.get("valid") is True,
-            "objective": result.get("objective"),
-            "instance_objectives": list(result.get("instance_objectives") or []),
-            "raw_objectives": list(result.get("raw_objectives") or []),
-            "reference_objectives": list(result.get("reference_objectives") or []),
-            "bins_used": list(result.get("bins_used") or []),
-            "error_code": result.get("error_code"),
-            "error_detail": result.get("error_detail"),
-            "evaluation_identity": result.get("evaluation_identity"),
-        }
+        item, _result, attempts = _member_evaluation(
+            member, index, instance_ids, suite, metric, timeout=timeout,
+            require_code_hash=True,
+        )
         member_results.append(item)
-        values = item["instance_objectives"] if item["valid"] else []
+        instance_evaluation_attempts += attempts
+        values = item["instance_objectives"]
         for instance_index in range(len(instance_ids)):
             matrix[instance_index].append(values[instance_index] if instance_index < len(values) else None)
     per_instance = []
@@ -436,6 +518,7 @@ def evaluate_selection(
         "instance_count": len(instance_ids),
         "complete_instance_coverage": complete,
         "test_evaluation_attempts": len(member_results),
+        "test_instance_evaluation_attempts": instance_evaluation_attempts,
         "test_updates_training": False,
     }
 
@@ -469,67 +552,15 @@ def evaluate_candidate_set(
     matrix = [[] for _ in instance_ids]
     instance_evaluation_attempts = 0
     for index, item in enumerate(items):
-        if not isinstance(item, Mapping) or not isinstance(item.get("code"), str) or not item["code"].strip():
-            raise ValueError("candidate_set_code_missing")
-        result = evaluate_candidate(item["code"], suite, timeout=timeout, metric_spec=metric, collect_partial=True)
-        partial_rows = None
-        result_metrics = result.get("metrics") if isinstance(result.get("metrics"), Mapping) else None
-        candidate_rows = result_metrics.get("partial_instance_results") if result_metrics else None
-        if isinstance(candidate_rows, list) and len(candidate_rows) == len(instance_ids):
-            ordered_rows: list[Mapping[str, Any]] = []
-            for row_index, row in enumerate(candidate_rows):
-                if not isinstance(row, Mapping) or row.get("instance_index") != row_index or row.get("attempted") is not True:
-                    ordered_rows = []
-                    break
-                ordered_rows.append(row)
-            if ordered_rows:
-                partial_rows = ordered_rows
-        if partial_rows is not None:
-            values = [
-                float(row["objective"]) if row.get("valid") is True and isinstance(row.get("objective"), (int, float)) and not isinstance(row.get("objective"), bool) and math.isfinite(float(row["objective"])) else None
-                for row in partial_rows
-            ]
-            raw_values = [
-                (row.get("metrics") or {}).get("raw_objectives")
-                if row.get("valid") is True else None
-                for row in partial_rows
-            ]
-            reference_values = [
-                (row.get("metrics") or {}).get("reference_objectives")
-                if row.get("valid") is True else None
-                for row in partial_rows
-            ]
-            instance_errors = [
-                {"error_code": row.get("error_code"), "error_detail": row.get("error_detail")}
-                if row.get("valid") is not True else None
-                for row in partial_rows
-            ]
-            instance_evaluation_attempts += sum(row.get("attempted") is True for row in partial_rows)
-        else:
-            values = list(result.get("instance_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
-            if len(values) != len(instance_ids):
-                values = [None] * len(instance_ids)
-            raw_values = list(result.get("raw_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
-            reference_values = list(result.get("reference_objectives") or []) if result.get("valid") is True else [None] * len(instance_ids)
-            instance_errors = [None] * len(instance_ids)
-        member = {
-            "member_index": index,
-            "candidate_id": str(item.get("candidate_id") or f"candidate_{index + 1}"),
-            "code_sha256": sha256_text(item["code"]),
-            "valid": result.get("valid") is True,
-            "objective": result.get("objective"),
-            "instance_objectives": values,
-            "raw_objectives": raw_values,
-            "reference_objectives": reference_values,
-            "instance_results": [dict(row) for row in partial_rows] if partial_rows is not None else None,
-            "instance_errors": instance_errors,
-            "error_code": result.get("error_code"),
-            "error_detail": result.get("error_detail"),
-            "evaluation_identity": result.get("evaluation_identity"),
-        }
+        member, _result, attempts = _member_evaluation(
+            item, index, instance_ids, suite, metric, timeout=timeout,
+            missing_code_error="candidate_set_code_missing",
+            hash_error="candidate_set_code_hash_mismatch",
+        )
+        instance_evaluation_attempts += attempts
         member_results.append(member)
         for instance_index in range(len(instance_ids)):
-            matrix[instance_index].append(values[instance_index])
+            matrix[instance_index].append(member["instance_objectives"][instance_index])
     per_instance = []
     for instance_id, values in zip(instance_ids, matrix):
         valid_values = [float(value) for value in values if value is not None and math.isfinite(float(value))]

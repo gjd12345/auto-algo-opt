@@ -47,6 +47,13 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("pilot_requires_at_least_two_rounds_for_b_c_d")
 
     common_extra = dict(source.extra)
+    # ``max_sample_nums`` is the upstream engine's local evolution cap.  A
+    # fixed value such as 8 can terminate a nominally 100/2000-call pilot
+    # before its shared evaluator budget is reachable.  Derive one common
+    # cap from the frozen budgets instead: A uses the total budget, while
+    # B/C/D are stopped by their smaller per-round solver budget.  The
+    # Session ledger remains the hard authority for actual calls.
+    pilot_max_sample_nums = max(source.evaluation_budget, source.round_budget)
     common_extra.update({
         "pilot_schema": PILOT_SCHEMA,
         "pilot_id": "obp_v1.1_controlled",
@@ -55,12 +62,12 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
         "search_policy_defaults": {
             "pop_size": source.population_size,
             "n_pop": 2,
-            "max_sample_nums": 8,
+            "max_sample_nums": pilot_max_sample_nums,
         },
         "search_policy_limits": {
-            "pop_size": [2, max(8, source.population_size)],
-            "n_pop": [1, 5],
-            "max_sample_nums": [1, 16],
+            "pop_size": [source.population_size, source.population_size],
+            "n_pop": [2, 2],
+            "max_sample_nums": [pilot_max_sample_nums, pilot_max_sample_nums],
         },
     })
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import random
 import sys
 from pathlib import Path
@@ -11,10 +12,10 @@ from agent_skill_loop.skill_store import _atomic_write_text
 
 def main() -> int:
     from eoh import LLMConfig
-    from eoh.eoh.eoh import EOH
     from eoh.config import EoHConfig
     from agent_skill_loop.problems.base import get_problem
     from eoh_frozen.problem import FrozenProblem
+    from eoh_frozen.provenance import ProvenanceEOH
 
     root = Path(sys.argv[1])
     cfg = json.loads((root / "worker_config.json").read_text(encoding="utf-8"))
@@ -25,6 +26,36 @@ def main() -> int:
     result = {"status": "completed"}
     try:
         suite = json.loads((root / "dev_suite.json").read_text(encoding="utf-8"))
+        seed_bindings = None
+        seed_path = Path(str(cfg.get("seed_path") or root / "seeds/parent_skill.json"))
+        if int(cfg.get("population_seed_count", 0) or 0) > 0:
+            try:
+                seed_payload = json.loads(seed_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise ValueError("population_seed_file_invalid") from exc
+            if not isinstance(seed_payload, list):
+                raise ValueError("population_seed_file_invalid")
+            seed_bindings = {}
+            for index, item in enumerate(seed_payload):
+                if not isinstance(item, dict) or not isinstance(item.get("code"), str) or not item["code"].strip():
+                    raise ValueError("population_seed_file_invalid")
+                code = item["code"]
+                code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
+                if item.get("code_sha256") is not None and item["code_sha256"] != code_hash:
+                    raise ValueError("population_seed_code_hash_mismatch")
+                if code_hash in seed_bindings:
+                    raise ValueError("population_seed_duplicate_code")
+                seed_bindings[code_hash] = {
+                    "origin": "population_seed",
+                    "candidate_id": f"seed_{index + 1}",
+                    "revision": "original",
+                    "seed_index": index,
+                    "source_candidate_id": item.get("candidate_id"),
+                    "source_evaluation_id": item.get("evaluation_id"),
+                    "source_ref": item.get("source_ref"),
+                }
+            if len(seed_bindings) != int(cfg.get("population_seed_count", 0) or 0):
+                raise ValueError("population_seed_count_mismatch")
         task = FrozenProblem(suite, spec=get_problem(cfg["problem"]), timeout=cfg["solver_timeout"],
                              deadline=cfg["deadline"], origin="engine",
                              round_context=cfg.get("round_context"),
@@ -32,7 +63,7 @@ def main() -> int:
                              metric_spec_hash=cfg.get("metric_spec_hash"),
                              data_manifest_hash=cfg.get("data_manifest_hash"),
                              problem_spec_hash=cfg.get("problem_spec_hash"),
-                             seed_evaluations=cfg.get("population_seed_count", 0),
+                             seed_bindings=seed_bindings,
                              evaluation_log=root / "results/evaluations.jsonl",
                              fail_log=root / "results/eval_failures.jsonl")
         llm = LLMConfig(use_local=True, local_url=cfg["local_url"], timeout=cfg["request_timeout"] + 5)
@@ -61,7 +92,7 @@ def main() -> int:
             # search.  Construct that same pinned engine directly so the
             # Session's recorded search seed actually controls operator and
             # parent-selection randomness in both modes.
-            engine = EOH(engine_config, task)
+            engine = ProvenanceEOH(engine_config, task)
         # The pinned upstream constructor resets Python's global RNG to a
         # literal seed.  Apply the frozen Session/search seed immediately
         # after construction so operator choice and other engine randomness

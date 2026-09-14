@@ -16,9 +16,10 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from eoh.eoh.eoh import EOH, _normalize_fitness
+from eoh.eoh.eoh import _normalize_fitness
 
 from agent_skill_loop.client import ProviderFailure, http_post_with_deadline
+from eoh_frozen.provenance import SeedAwareEOH
 
 
 REPAIRABLE_ERRORS = frozenset({
@@ -157,7 +158,7 @@ class LocalRepairRequester:
         return content[0]
 
 
-class RepairingEOH(EOH):
+class RepairingEOH(SeedAwareEOH):
     """Pinned EOH with a single, deterministic repair opportunity per offspring."""
 
     def __init__(

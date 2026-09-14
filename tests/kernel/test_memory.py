@@ -36,6 +36,17 @@ def test_memory_rejects_sensitive_values_and_bad_solution_shape(tmp_path):
         api.write(MemoryEntry(**{**_insight("solution").__dict__, "type": "solution"}))
 
 
+def test_memory_persists_provenance_and_detects_published_version_tampering(tmp_path):
+    api = MemoryAPI(tmp_path / "memory")
+    written = api.write(_insight("integrity"), provenance={"evidence_ref": "evaluation:fixture"})
+    loaded = api.read_version(written["reference"])
+    assert loaded["provenance"] == {"evidence_ref": "evaluation:fixture"}
+    path = tmp_path / "memory" / "cvrp_construct" / "insight_integrity__v0001.md"
+    path.write_text(path.read_text(encoding="utf-8").replace("fixture 评测", "changed 评测"), encoding="utf-8")
+    with pytest.raises(ValueError, match="hash_mismatch"):
+        api.read_version(written["reference"])
+
+
 def test_memory_read_uses_stable_entrypoint_scene(tmp_path):
     api = MemoryAPI(tmp_path / "memory_store")
     api.write(MemoryEntry(

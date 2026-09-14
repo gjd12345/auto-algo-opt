@@ -31,6 +31,7 @@ def _init(path):
 
 def test_init_freezes_identity_without_external_effects(tmp_path, monkeypatch):
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sentinel-secret-value")
+    monkeypatch.setenv("ALGORITHM_OPTIMIZATION_MEMORY_STORE", str(tmp_path / "shared-memory"))
     run = tmp_path / "session"
     result = _init(run)
 
@@ -59,6 +60,16 @@ def test_init_freezes_identity_without_external_effects(tmp_path, monkeypatch):
     assert state["state_version"] == 1
     assert state["budgets"]["eoh_requests_used"] == 0
     assert state["result"]["budgets"]["eoh_requests_used"] == 0
+    assert state["memory"]["enabled"] is True
+    assert state["memory"]["store"] == str((tmp_path / "shared-memory").resolve())
+
+
+def test_memory_can_be_explicitly_disabled(tmp_path):
+    run = tmp_path / "session"
+    initialize_session(output=run, operation_id="init", eoh_model="fixture",
+                       size=4, count=1, memory_enabled=False)
+    state = read_state(run=run)
+    assert state["memory"] == {"enabled": False, "store": None}
 
 
 def test_stop_is_idempotent_and_checks_state_version(tmp_path):

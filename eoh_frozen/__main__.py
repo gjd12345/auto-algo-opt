@@ -118,7 +118,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         if not isinstance(seed_members, list) or not seed_members or any(not isinstance(item, dict) or not isinstance(item.get("code"), str) or not item["code"].strip() for item in seed_members):
             raise SystemExit("seed selection contains no executable members")
         seed_path = output / "seeds" / "population_seeds.json"
-        _json(seed_path, [{"algorithm": str(item.get("algorithm") or "Population seed"), "code": item["code"]} for item in seed_members])
+        _json(seed_path, [{
+            "algorithm": str(item.get("algorithm") or "Population seed"),
+            "algorithm_text_sha256": item.get("algorithm_text_sha256"),
+            "code": item["code"],
+            "code_sha256": item.get("code_sha256") or hashlib.sha256(item["code"].encode("utf-8")).hexdigest(),
+            "candidate_id": item.get("candidate_id"),
+            "evaluation_id": item.get("evaluation_id"),
+            "revision": item.get("revision", "original"),
+            "source_ref": item.get("source_ref"),
+        } for item in seed_members])
     config.update({"search": "official_eoh", "integration_mode": "bounded_repair" if args.repair_mode == "bounded" else "official_only",
                    "repair_mode": args.repair_mode,
                    "repair_policy_version": "bounded_v2" if args.repair_mode == "bounded" else None,

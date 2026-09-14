@@ -21,7 +21,7 @@ from .contracts import (
     sha256_text,
 )
 from .catalog import benchmark_profile, load_benchmark_registry, load_profile_suite
-from .archive import ArchiveEntry, build_archive, freeze_selection
+from .archive import ArchiveEntry, build_archive, build_archive_from_session, freeze_selection
 from .report import build_report
 from .harness import calibrate_differential, calibrate_production, calibrate_upstream, evaluate_candidate, evaluate_candidate_set, evaluate_selection
 from .pilot import PILOT_GROUPS, build_pilot_manifests
@@ -38,6 +38,7 @@ __all__ = [
     "PopulationSnapshot",
     "SeedSelection",
     "build_archive",
+    "build_archive_from_session",
     "build_report",
     "benchmark_profile",
     "evaluation_identity",

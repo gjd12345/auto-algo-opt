@@ -35,10 +35,18 @@ RUNTIME_VERSION = "1.1.0"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
 OPTIMIZATION_SKILL_VERSION = "v1.1"
 MEMORY_POLICY_ID = "markdown-memory"
-MEMORY_POLICY_VERSION = "v1"
+MEMORY_POLICY_VERSION = "v2"
+DEFAULT_MEMORY_STORE_ENV = "ALGORITHM_OPTIMIZATION_MEMORY_STORE"
 REPAIR_POLICY_VERSION = "bounded_v2"
 SEARCH_POLICY_DEFAULTS = {"pop_size": 4, "n_pop": 2, "max_sample_nums": 8}
 SEARCH_POLICY_LIMITS = {"pop_size": (2, 8), "n_pop": (1, 5), "max_sample_nums": (1, 16)}
+
+
+def default_memory_store() -> Path:
+    configured = os.environ.get(DEFAULT_MEMORY_STORE_ENV)
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return (Path.home() / ".codex" / "algorithm-optimization" / "memory").resolve()
 
 RUN_STATES = frozenset({"RUNNING", "STOPPING", "COMPLETED", "STOPPED", "FAILED"})
 ROUND_STATES = frozenset({
@@ -1188,6 +1196,7 @@ def initialize_session(
     repair_mode: str | None = None,
     repair_max_requests: int | None = None,
     memory_store: str | None = None,
+    memory_enabled: bool | None = None,
     solution_threshold: float | None = None,
     seed: int = DEFAULT_SEED,
     size: int = DEFAULT_SIZE,
@@ -1222,6 +1231,23 @@ def initialize_session(
         feedback_mode = str(manifest_hints.get("feedback_mode") or "runtime_facts")
     if agent_guidance is None:
         agent_guidance = bool(manifest_hints.get("agent_guidance", True))
+    if memory_enabled is None:
+        if "memory_enabled" in manifest_hints:
+            memory_enabled = bool(manifest_hints["memory_enabled"])
+        elif memory_store is not None:
+            memory_enabled = True
+        else:
+            # Ordinary optimization Sessions share lightweight Memory by
+            # default. Controlled benchmark Sessions remain isolated/off
+            # unless their ExperimentManifest explicitly enables it.
+            memory_enabled = benchmark_id is None
+    if not isinstance(memory_enabled, bool):
+        raise SessionError("INVALID_ARGUMENT", "memory_enabled must be boolean", action=action)
+    if not memory_enabled and memory_store is not None:
+        raise SessionError("INVALID_ARGUMENT", "memory_store conflicts with disabled memory", action=action)
+    memory_store = str(Path(memory_store).expanduser().resolve()) if memory_store else (
+        str(default_memory_store()) if memory_enabled else None
+    )
     if inheritance_mode not in {"incumbent_only", "population_seeds", "explicit_seeds"}:
         raise SessionError("INVALID_ARGUMENT", "invalid inheritance mode", action=action)
     if inheritance_mode == "explicit_seeds" and explicit_seed_set is None:
@@ -1246,18 +1272,18 @@ def initialize_session(
     if max_solver_calls is None and manifest_hints.get("evaluation_budget") is not None:
         max_solver_calls = manifest_hints.get("evaluation_budget")
     if experiment_manifest is not None and search_policy_defaults is None:
-        search_policy_defaults = {
+        search_policy_defaults = (manifest_hints.get("extra") or {}).get("search_policy_defaults") or {
             "pop_size": manifest_hints.get("population_size", SEARCH_POLICY_DEFAULTS["pop_size"]),
             "n_pop": SEARCH_POLICY_DEFAULTS["n_pop"],
             "max_sample_nums": SEARCH_POLICY_DEFAULTS["max_sample_nums"],
         }
     if experiment_manifest is not None and search_policy_limits is None:
-        search_policy_limits = {
-            key: list(value) for key, value in SEARCH_POLICY_LIMITS.items()
-        }
-        search_policy_limits["pop_size"][1] = max(
-            search_policy_limits["pop_size"][1], int(search_policy_defaults["pop_size"])
-        )
+        search_policy_limits = (manifest_hints.get("extra") or {}).get("search_policy_limits")
+        if search_policy_limits is None:
+            search_policy_limits = {key: list(value) for key, value in SEARCH_POLICY_LIMITS.items()}
+            search_policy_limits["pop_size"][1] = max(
+                search_policy_limits["pop_size"][1], int(search_policy_defaults["pop_size"])
+            )
     if max_rounds is not None and (isinstance(max_rounds, bool) or not isinstance(max_rounds, int) or max_rounds < 1):
         raise SessionError("INVALID_ARGUMENT", "max_rounds must be a positive integer", action=action)
     if round_budget is not None and (isinstance(round_budget, bool) or not isinstance(round_budget, int) or round_budget < 1):
@@ -1435,7 +1461,7 @@ def initialize_session(
     evaluator_hash = evaluator_source_hash()
     runtime_hash = _runtime_source_hash()
     skill_hash = _required_skill_content_hash(action)
-    memory_path = str(Path(memory_store).resolve()) if memory_store else None
+    memory_path = memory_store
     manifest_payload = None
     manifest_hash = None
     if isinstance(experiment_manifest, Mapping):
@@ -1780,6 +1806,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             "feedback_ref": result["feedback_ref"],
             "feedback_basis": result["feedback_basis"],
             "task": result["task"],
+            "memory": result["memory"],
         })
         return response
     except sqlite3.Error as exc:

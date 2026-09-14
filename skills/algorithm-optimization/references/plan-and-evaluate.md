@@ -83,6 +83,6 @@ When Memory is enabled, choose exactly one of:
 
 - `{"kind":"none"}`;
 - an `insight` with `name`, `description`, `project`, `scene`, `body`, and optional evidence/basis references;
-- a `solution` with the same content plus exact `based_on` and `evidence_ref`, only when the verified generated skill passes the frozen solution threshold.
+- a `solution` with `## Execution`, `**Why:**`, `**How to apply:**`, and `**Reusable Experience:**`, plus exact `source_skill_ref` and `evidence_ref`, only when the verified generated skill passes the frozen solution threshold. Use `memory_based_on` only to update the exact latest version of the same Memory entry; it is independent of the source Skill.
 
 When Memory is disabled, use `{"kind":"disabled"}`. A baseline or invalid candidate cannot become a solution. An invalid candidate may support a specific failure insight with its real evidence reference; do not turn one failure into an unconditional ban or fabricate code/evaluation identity.

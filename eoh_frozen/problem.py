@@ -13,7 +13,7 @@ import time
 import os
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from eoh import BaseProblem
 
@@ -52,6 +52,10 @@ class FrozenProblem(BaseProblem):
         metric_spec_hash: str | None = None,
         data_manifest_hash: str | None = None,
         problem_spec_hash: str | None = None,
+        seed_bindings: Mapping[str, Mapping[str, Any]] | None = None,
+        # Kept as a source-compatible no-op for older callers.  A count alone
+        # cannot identify a spawned child evaluation and must never be used to
+        # infer provenance; callers must provide exact code-hash bindings.
         seed_evaluations: int = 0,
     ) -> None:
         super().__init__(timeout=timeout, n_processes=n_processes)
@@ -60,8 +64,22 @@ class FrozenProblem(BaseProblem):
         self.metric_spec_hash = metric_spec_hash
         self.data_manifest_hash = data_manifest_hash
         self.problem_spec_hash = problem_spec_hash
-        self._seed_evaluations_remaining = max(0, int(seed_evaluations))
-        self._seed_contexts: dict[str, dict[str, Any]] = {}
+        self._seed_bindings_by_code: dict[str, dict[str, Any]] = {}
+        if seed_bindings is not None:
+            if not isinstance(seed_bindings, Mapping):
+                raise ValueError("seed_bindings_invalid")
+            for code_hash, context in seed_bindings.items():
+                if (not isinstance(code_hash, str) or len(code_hash) != 64
+                        or any(char not in "0123456789abcdef" for char in code_hash)
+                        or not isinstance(context, Mapping)):
+                    raise ValueError("seed_bindings_invalid")
+                normalized = dict(context)
+                if (normalized.get("origin") != "population_seed"
+                        or not isinstance(normalized.get("candidate_id"), str)
+                        or not normalized["candidate_id"]
+                        or normalized.get("revision") != "original"):
+                    raise ValueError("seed_binding_context_invalid")
+                self._seed_bindings_by_code[code_hash] = normalized
         self.suite = suite or spec.build_suite(seed, split=split, count=count, size=size)
         if self.suite.get("problem") != spec.problem_id:
             raise ValueError("suite_problem_mismatch")
@@ -134,6 +152,17 @@ class FrozenProblem(BaseProblem):
         """Attach explicit candidate-revision provenance to the next evaluation."""
         self.evaluation_context = dict(context) if context is not None else None
 
+    def clear_seed_bindings(self) -> None:
+        """Stop treating matching code as a seed after official init ends."""
+        self._seed_bindings_by_code.clear()
+
+    def _context_for_code(self, code: str) -> dict[str, Any]:
+        explicit = dict(self.evaluation_context or {})
+        if explicit:
+            return explicit
+        code_hash = hashlib.sha256(str(code).encode("utf-8")).hexdigest()
+        return dict(self._seed_bindings_by_code.get(code_hash) or {})
+
     def latest_evaluation_for_code(self, code: str) -> dict[str, Any] | None:
         """Return the latest durable evaluation row for an exact code hash."""
         if not self.evaluation_log:
@@ -189,15 +218,7 @@ class FrozenProblem(BaseProblem):
             "problem_spec_hash": self.problem_spec_hash,
             "evaluation": result.as_dict() if result is not None else None,
         }
-        context = dict(self.evaluation_context or self._seed_contexts.get(evaluation_id) or {})
-        if result is None and not context and self._seed_evaluations_remaining > 0:
-            context = {
-                "origin": "population_seed",
-                "candidate_id": f"seed_{evaluation_id[:12]}",
-                "revision": "original",
-            }
-            self._seed_evaluations_remaining -= 1
-            self._seed_contexts[evaluation_id] = dict(context)
+        context = self._context_for_code(code)
         if context:
             payload.update(context)
         if context.get("origin") == "generated" or (not context and self.origin == "engine"):
@@ -231,7 +252,6 @@ class FrozenProblem(BaseProblem):
             if self.session:
                 from agent_skill_loop.session_ledger import solver_event
                 solver_event(self.session, payload)
-            self._seed_contexts.pop(evaluation_id, None)
         except OSError:
             # Missing evidence must not yield a usable scalar fitness.
             raise

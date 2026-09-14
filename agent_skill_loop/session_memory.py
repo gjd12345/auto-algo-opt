@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 from agent_skill_loop import session_runtime as db
-from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
+from agent_skill_loop.memory import MemoryEntry, open_memory_backend
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 from agent_skill_loop.session_contracts import MemoryAction, strict_json_object
@@ -45,11 +45,19 @@ def _commit_pending(root, operation_id):
             facts_text=(root/rd["evaluation_facts_ref"]).read_text(encoding="utf-8")
             if db._sha256(facts_text)!=rd["evaluation_facts_sha256"]: raise ValueError("facts_hash_mismatch")
             facts=json.loads(facts_text)
-            based_on=raw.get("based_on")
+            source_skill_ref=raw.get("source_skill_ref")
+            memory_based_on=raw.get("memory_based_on")
+            provenance={
+                "evaluation_facts_ref": rd["evaluation_facts_ref"],
+                "evaluation_facts_sha256": rd["evaluation_facts_sha256"],
+                "round_id": str(rd["round_id"]),
+            }
+            if raw.get("evidence_ref"):
+                provenance["evidence_ref"]=raw["evidence_ref"]
             if raw["kind"]=="solution":
                 if row["solution_threshold"] is None: raise ValueError("solution_threshold_required")
                 ref=facts.get("best_generated_ref")
-                if not ref or based_on!=ref: raise ValueError("solution_candidate_reference_mismatch")
+                if not ref or source_skill_ref!=ref: raise ValueError("solution_candidate_reference_mismatch")
                 if raw.get("evidence_ref") not in facts["evidence_refs"]: raise ValueError("solution_evidence_reference_mismatch")
                 skill=load_skill(root/ref)
                 matches=[x for x in facts["candidates"] if f"evaluation:{x['evaluation_id']}"==raw["evidence_ref"] and x["code_sha256"]==skill.code_sha256 and x["objective"]==skill.mean_objective and x["valid"] and x["origin"] in {"generated","generated_repair"}]
@@ -57,14 +65,22 @@ def _commit_pending(root, operation_id):
                 baseline=facts.get("baseline") or {}
                 improvement=spec.solution_improvement(baseline.get("objective",0),skill.mean_objective)
                 if improvement is None or improvement<=0 or improvement<row["solution_threshold"]: raise ValueError("solution_threshold_not_met")
-                based_on=None  # skill provenance is not a Markdown same-entry CAS
+                provenance.update({
+                    "source_skill_ref": source_skill_ref,
+                    "source_evaluation_id": matches[0]["evaluation_id"],
+                    "candidate_code_sha256": skill.code_sha256,
+                    "suite_hash": skill.suite_hash,
+                    "evaluator_hash": skill.evaluator_hash,
+                })
             elif raw.get("evidence_ref") and raw["evidence_ref"] not in facts["evidence_refs"]:
                 raise ValueError("memory_evidence_reference_mismatch")
             with db._transaction(con):
                 _record_status(con,proposal,operation_id,"accepted",None,None)
             status="failed"
             entry=MemoryEntry(name=raw["name"],description=raw["description"],type=raw["kind"],project=raw["project"],scene=raw["scene"],body=raw["body"])
-            written=MemoryAPI(Path(row["memory_store"])).write(entry,based_on=based_on,operation_key=f"{row['run_id']}:{operation_id}")
+            backend=open_memory_backend(Path(row["memory_store"]),policy_id=row["memory_policy_id"])
+            written=backend.write(entry,based_on=memory_based_on,provenance=provenance,
+                                  operation_key=f"{row['run_id']}:{operation_id}")
             reference=written["reference"]
             status="published"
         except (ValueError,OSError,KeyError,TypeError) as exc:

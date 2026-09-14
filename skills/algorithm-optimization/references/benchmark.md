@@ -20,6 +20,7 @@ python -m agent_skill_loop benchmark evaluate-set --candidates <candidates.json>
 python -m agent_skill_loop benchmark snapshot --population <population.json> --generation <n> --metric-spec-hash <sha256> --output <snapshot.json>
 python -m agent_skill_loop benchmark freeze-selection --kind <selection_kind> --population-snapshot <snapshot.json> --metric-spec-hash <sha256> --output <selection.json>
 python -m agent_skill_loop benchmark evaluate-selection --selection <selection.json> --split heldout --output <test_result.json>
+python -m agent_skill_loop benchmark archive --run <session-directory> --output <archive.json>
 ```
 
 `audit` verifies registered asset byte hashes. `calibrate-obp` compares the
@@ -91,6 +92,13 @@ identities, and cannot update archive, Memory, or incumbent. Reports must
 recheck the same identities and reconstruct the per-instance member matrix
 from the member evidence; contradictory cells or aggregates are rejected.
 
+`benchmark archive` is a read-only projection of hash-verified completed
+Session `evaluation_facts.json` files. It is the supported way to create an
+archive for `freeze-selection`; it does not accept a hand-written candidate
+list. Each entry keeps `discovery_ref` separate from
+`score_evaluation_ref`, because a later re-evaluation may improve an
+algorithm's score without changing where it was discovered.
+
 ### Budget and controlled pilot
 
 Each run reports both total and derived evaluator attempts:
@@ -115,3 +123,6 @@ D: same as C, with adaptive Agent guidance
 A/B are interpreted only as continuous EoH versus a sessionized baseline. C/D
 compare Agent guidance with the same inheritance, feedback, and budget. Memory
 and repair are off unless the experiment manifest explicitly enables them.
+The pilot manifest derives the common upstream `max_sample_nums` cap from the
+larger frozen total/per-round evaluator budget; the mini-fixture value `8`
+must not silently truncate a full-budget pilot.

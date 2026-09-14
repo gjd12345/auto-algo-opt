@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$")
@@ -62,8 +62,28 @@ def _validate_entry(entry: MemoryEntry) -> None:
     if entry.type == "insight":
         if "**Why:**" not in entry.body or "**How to apply:**" not in entry.body:
             raise ValueError("insight_body_sections_missing")
-    if entry.type == "solution" and "**Reusable Experience:**" not in entry.body:
-        raise ValueError("solution_reusable_experience_missing")
+    if entry.type == "solution":
+        if "**Reusable Experience:**" not in entry.body:
+            raise ValueError("solution_reusable_experience_missing")
+        if not any(heading in entry.body for heading in ("## Execution", "## 执行流程")):
+            raise ValueError("solution_execution_section_missing")
+        if "**Why:**" not in entry.body or "**How to apply:**" not in entry.body:
+            raise ValueError("solution_body_sections_missing")
+
+
+def _validate_provenance(provenance: Mapping[str, Any] | None) -> dict[str, str]:
+    if provenance is None:
+        return {}
+    if not isinstance(provenance, Mapping):
+        raise ValueError("memory_provenance_invalid")
+    result: dict[str, str] = {}
+    for key, value in provenance.items():
+        if not isinstance(key, str) or not key or len(key) > 80:
+            raise ValueError("memory_provenance_invalid")
+        if not isinstance(value, str) or not value or len(value) > 1024:
+            raise ValueError("memory_provenance_invalid")
+        result[key] = value
+    return dict(sorted(result.items()))
 
 
 def _yaml_value(value: str) -> str:
@@ -136,9 +156,34 @@ class MemoryAPI:
             if match is None:
                 continue
             try:
-                yield path, _parse(path), int(match.group("version") or "1")
-            except (OSError, UnicodeDecodeError, ValueError):
+                entry = _parse(path)
+                self._verify_metadata(path, entry)
+                yield path, entry, int(match.group("version") or "1")
+            except ValueError as exc:
+                if str(exc) in {"memory_body_hash_mismatch", "memory_content_hash_mismatch"}:
+                    raise
                 continue
+            except (OSError, UnicodeDecodeError):
+                continue
+
+    @staticmethod
+    def _verify_metadata(path: Path, entry: MemoryEntry) -> dict[str, Any]:
+        metadata_path = path.with_suffix(".json")
+        if not metadata_path.is_file():
+            # Read-compatible support for legacy/manual v1 assets. New API
+            # writes always include an integrity sidecar.
+            return {}
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        if not isinstance(metadata, dict):
+            raise ValueError("memory_metadata_invalid")
+        body_hash = hashlib.sha256(entry.body.encode("utf-8")).hexdigest()
+        if metadata.get("body_sha256") != body_hash:
+            raise ValueError("memory_body_hash_mismatch")
+        content_hash = metadata.get("content_sha256")
+        if content_hash is not None and content_hash != hashlib.sha256(_render(entry).encode("utf-8")).hexdigest():
+            raise ValueError("memory_content_hash_mismatch")
+        _validate_provenance(metadata.get("provenance"))
+        return metadata
 
     @staticmethod
     def _record(path: Path, entry: MemoryEntry, *, version: int, cross_project: bool) -> dict[str, Any]:
@@ -217,9 +262,15 @@ class MemoryAPI:
         entry = _parse(path)
         if f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}" != reference:
             raise ValueError("memory_reference_identity_mismatch")
+        metadata = self._verify_metadata(path, entry)
+        age_days = max(0, int((datetime.now(timezone.utc).timestamp() - path.stat().st_mtime) // 86400))
         body = entry.body[offset:offset + max_chars]
         return {**entry.as_dict(), "body": body, "path": path.as_posix(), "reference": reference,
                 "version": version, "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest(),
+                "based_on": metadata.get("based_on"),
+                "related_refs": list(metadata.get("related_refs") or []),
+                "provenance": dict(metadata.get("provenance") or {}),
+                "age_days": age_days, "age_label": f"{age_days} days ago",
                 "returned_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 "offset": offset, "total_chars": len(entry.body),
                 "next_offset": offset + len(body) if offset + len(body) < len(entry.body) else None,
@@ -231,27 +282,34 @@ class MemoryAPI:
         with exclusive_file_lock(self.store / ".writer.lock", busy="memory_writer_busy", legacy_pid=True):
             yield
 
-    def write(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
+    def write(self, entry: MemoryEntry, *, based_on: str | None = None,
+              related_refs: tuple[str, ...] = (), provenance: Mapping[str, Any] | None = None,
+              operation_key: str | None = None) -> dict[str, Any]:
         # The parser exposes a stripped body; publish and idempotency must use
         # that same representation, including for crash-replayed submissions.
         entry = replace(entry, body=entry.body.strip())
+        provenance = _validate_provenance(provenance)
         # based_on is a CAS update of the SAME entry; related_refs are provenance
         # for a new or merged full snapshot. Previous versions are never removed.
         with self._writer():
             if operation_key:
                 for path, existing, version in self._iter():
                     metadata = path.with_suffix(".json")
-                    if metadata.is_file() and json.loads(metadata.read_text(encoding="utf-8")).get("operation_key") == operation_key:
-                        if existing != entry:
+                    stored = json.loads(metadata.read_text(encoding="utf-8")) if metadata.is_file() else {}
+                    if stored.get("operation_key") == operation_key:
+                        if existing != entry or dict(stored.get("provenance") or {}) != provenance:
                             raise ValueError("memory_operation_conflict")
                         return {"written": True, "reference": f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}", "version": version, "replayed": True}
             for ref in related_refs:
                 self.read_version(ref)
-            result = self._write_locked(entry, based_on=based_on, related_refs=related_refs, operation_key=operation_key)
+            result = self._write_locked(entry, based_on=based_on, related_refs=related_refs,
+                                        provenance=provenance, operation_key=operation_key)
             result["related_refs"] = list(related_refs)
             return result
 
-    def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None, related_refs: tuple[str, ...] = (), operation_key: str | None = None) -> dict[str, Any]:
+    def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None,
+                      related_refs: tuple[str, ...] = (), provenance: Mapping[str, str] | None = None,
+                      operation_key: str | None = None) -> dict[str, Any]:
         _validate_entry(entry)
         versions = [version for path, existing, version in self._iter()
                     if existing.project == entry.project and existing.type == entry.type and existing.name == entry.name]
@@ -276,9 +334,12 @@ class MemoryAPI:
             raise ValueError("memory_reference_outside_store")
         if path.exists():
             raise ValueError("memory_version_conflict")
-        _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs), "operation_key": operation_key,
-                     "update_semantics": "full_snapshot", "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest()}))
-        _atomic_text(path, _render(entry))
+        rendered = _render(entry)
+        _atomic_text(path.with_suffix(".json"), json.dumps({"based_on": based_on, "related_refs": list(related_refs),
+                     "provenance": dict(provenance or {}), "operation_key": operation_key,
+                     "update_semantics": "full_snapshot", "body_sha256": hashlib.sha256(entry.body.encode("utf-8")).hexdigest(),
+                     "content_sha256": hashlib.sha256(rendered.encode("utf-8")).hexdigest()}))
+        _atomic_text(path, rendered)
         index_error = None
         try:
             self.reindex()

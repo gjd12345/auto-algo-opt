@@ -119,6 +119,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         "evaluate": benchmark_cli.cmd_evaluate,
         "evaluate-set": benchmark_cli.cmd_evaluate_set,
         "evaluate-selection": benchmark_cli.cmd_evaluate_selection,
+        "archive": benchmark_cli.cmd_archive,
         "snapshot": benchmark_cli.cmd_snapshot,
         "freeze-selection": benchmark_cli.cmd_freeze_selection,
         "manifest": benchmark_cli.cmd_manifest,
@@ -212,6 +213,7 @@ def cmd_session_init(args: argparse.Namespace) -> int:
         repair_mode=args.repair_mode,
         repair_max_requests=args.repair_max_requests,
         memory_store=args.memory_store,
+        memory_enabled=args.memory_enabled,
         solution_threshold=args.solution_min_relative_improvement,
         seed=args.seed,
         size=args.size if args.size is not None else DEFAULT_SIZE,
@@ -338,6 +340,15 @@ def build_parser() -> argparse.ArgumentParser:
     bench_selection_eval.add_argument("--split", default="heldout")
     bench_selection_eval.set_defaults(func=cmd_benchmark)
 
+    archive = benchmark_sub.add_parser(
+        "archive",
+        help="Build a validated training archive from completed Session evidence",
+    )
+    archive.add_argument("--run", required=True)
+    archive.add_argument("--run-id")
+    archive.add_argument("--output")
+    archive.set_defaults(func=cmd_benchmark)
+
     snapshot = benchmark_sub.add_parser("snapshot", help="Serialize an ordered official final-population snapshot")
     snapshot.add_argument("--population", required=True)
     snapshot.add_argument("--generation", type=int, required=True)
@@ -447,7 +458,11 @@ def build_parser() -> argparse.ArgumentParser:
     session_init.add_argument("--max-solver-calls", type=int, default=None)
     session_init.add_argument("--repair-mode", choices=["off", "bounded"], default="off")
     session_init.add_argument("--repair-max-requests", type=int, default=None)
-    session_init.add_argument("--memory-store")
+    memory_group = session_init.add_mutually_exclusive_group()
+    memory_group.add_argument("--memory-store", help="Enable Memory with this store (ordinary Sessions use the user default when omitted)")
+    memory_group.add_argument("--no-memory", dest="memory_enabled", action="store_false",
+                              help="Disable Memory for this Session")
+    session_init.set_defaults(memory_enabled=None)
     session_init.add_argument("--solution-min-relative-improvement", type=float, default=None)
     session_init.add_argument("--seed", type=int, default=DEFAULT_SEED)
     session_init.add_argument("--size", type=int, default=None)
@@ -504,6 +519,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--scene")
             command.add_argument("--limit", type=int, default=8)
             command.add_argument("--include-shared", action="store_true")
+            command.add_argument("--include-cross-project", action="store_true")
             command.add_argument("--cursor")
         else:
             command.add_argument("--reference", required=True)

@@ -82,6 +82,15 @@ def cmd_evaluate_selection(args: Any) -> int:
     selection = FrozenSelection.from_dict(json.loads(Path(args.selection).read_text(encoding="utf-8")))
     result = evaluate_selection(selection, suite, timeout=args.timeout, metric_spec=metric)
     _write(Path(args.output) if args.output else None, result)
+    return 0 if result.get("complete_instance_coverage") else 1
+
+
+def cmd_archive(args: Any) -> int:
+    """Project trusted completed Session facts into a deterministic archive."""
+    from .archive import build_archive_from_session
+
+    result = build_archive_from_session(Path(args.run), run_id=args.run_id)
+    _write(Path(args.output) if args.output else None, result)
     return 0
 
 

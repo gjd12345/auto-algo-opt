@@ -24,7 +24,9 @@ OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
 OPERATION_NON_AUTHORITY_METADATA_KEYS = frozenset({"mechanism_note"})
 FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
 MEMORY_ACTION_KEYS = frozenset({
-    "kind", "name", "description", "project", "scene", "body", "based_on", "evidence_ref",
+    "kind", "name", "description", "project", "scene", "body",
+    "source_skill_ref", "memory_based_on", "evidence_ref",
+    "based_on",  # read-compatible alias for historical solution submissions
 })
 OPERATION_TYPES = frozenset({"add", "remove", "replace", "preserve"})
 MEMORY_ACTION_TYPES = frozenset({"disabled", "none", "insight", "solution"})
@@ -239,7 +241,8 @@ class MemoryAction:
     project: str | None = None
     scene: str | None = None
     body: str | None = None
-    based_on: str | None = None
+    source_skill_ref: str | None = None
+    memory_based_on: str | None = None
     evidence_ref: str | None = None
 
     @classmethod
@@ -256,12 +259,29 @@ class MemoryAction:
             raise ValueError("memory_action_disabled_mismatch")
         if kind in {"none", "disabled"}:
             return cls(kind)
-        based_on = raw.get("based_on")
+        source_skill_ref = raw.get("source_skill_ref")
+        memory_based_on = raw.get("memory_based_on")
+        legacy_based_on = raw.get("based_on")
+        if legacy_based_on is not None:
+            if kind == "solution":
+                if source_skill_ref is not None:
+                    raise ValueError("memory_source_skill_ref_ambiguous")
+                source_skill_ref = legacy_based_on
+            else:
+                if memory_based_on is not None:
+                    raise ValueError("memory_based_on_ambiguous")
+                memory_based_on = legacy_based_on
         evidence_ref = raw.get("evidence_ref")
-        if based_on is not None:
-            based_on = _text(based_on, "memory_based_on", max_chars=512)
+        if source_skill_ref is not None:
+            source_skill_ref = _text(source_skill_ref, "memory_source_skill_ref", max_chars=512)
+        if memory_based_on is not None:
+            memory_based_on = _text(memory_based_on, "memory_based_on", max_chars=512)
         if evidence_ref is not None:
             evidence_ref = _text(evidence_ref, "memory_evidence_ref", max_chars=512)
+        if kind == "solution" and (source_skill_ref is None or evidence_ref is None):
+            raise ValueError("solution_source_and_evidence_required")
+        if kind == "insight" and source_skill_ref is not None:
+            raise ValueError("insight_source_skill_ref_not_allowed")
         return cls(
             kind,
             _text(raw.get("name"), "memory_name", max_chars=80),
@@ -269,7 +289,8 @@ class MemoryAction:
             _text(raw.get("project"), "memory_project", max_chars=64),
             _text(raw.get("scene"), "memory_scene", max_chars=128),
             _text(raw.get("body"), "memory_body", max_chars=8000),
-            based_on,
+            source_skill_ref,
+            memory_based_on,
             evidence_ref,
         )
 
@@ -277,7 +298,9 @@ class MemoryAction:
         return {key: value for key, value in {
             "kind": self.kind, "name": self.name, "description": self.description,
             "project": self.project, "scene": self.scene, "body": self.body,
-            "based_on": self.based_on, "evidence_ref": self.evidence_ref,
+            "source_skill_ref": self.source_skill_ref,
+            "memory_based_on": self.memory_based_on,
+            "evidence_ref": self.evidence_ref,
         }.items() if value is not None}
 
 

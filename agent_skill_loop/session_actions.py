@@ -18,7 +18,7 @@ from agent_skill_loop.session_contracts import (
     compile_round_context,
     strict_json_object,
 )
-from agent_skill_loop.memory.api import MemoryAPI, MemoryEntry
+from agent_skill_loop.memory import open_memory_backend
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 
@@ -243,7 +243,26 @@ def _terminate_before_execute(con, root, run, rd, operation_id, input_hash, reas
     })
 
 
-def memory_search(*, run, query="", memory_type=None, scene=None, limit=8, include_shared=False, cursor=None, expected_run_id=None):
+def _known_solver_attempts(*, inheritance_mode: str, incumbent_before_ref: str | None,
+                           seed_selection: dict | None) -> int:
+    """Count deterministic solver work required before EoH can search.
+
+    ``incumbent_only`` has two parent-related evaluations in addition to the
+    baseline: the parent is checked by the outer runner and then evaluated
+    once more by official EoH's ``use_seed`` initialisation.  This count is a
+    launch preflight only; all actual calls still go through the ledger.
+    """
+    attempts = 1  # baseline
+    if seed_selection is not None and not seed_selection.get("terminated"):
+        return attempts + len(seed_selection.get("selected_members") or [])
+    if inheritance_mode == "incumbent_only" and incumbent_before_ref:
+        return attempts + 2  # parent check + official EoH seed evaluation
+    return attempts
+
+
+def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
+                  include_shared=False, include_cross_project=False, cursor=None,
+                  expected_run_id=None):
     action = "memory_search"
     with opened(run, action, expected_run_id) as (root, con):
         row = db._require_run(con, action=action, run_id=None)
@@ -256,11 +275,14 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8, inclu
         memories, error = [], None
         if row["memory_enabled"]:
             try:
-                records = MemoryAPI(Path(row["memory_store"])).read(query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
+                records = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
                                                                  memory_type=memory_type, limit=min(limit+1,100),
-                                                                 offset=offset, include_shared=include_shared)["memories"]
-                records = [x for x in records if x["project"] == row["problem"] or include_shared and x["project"] == "_shared"]
-                memories = [{k: x[k] for k in ("reference", "name", "description", "type", "project", "scene", "version", "body_sha256")} for x in records]
+                                                                 offset=offset, include_shared=include_shared,
+                                                                 include_cross_project=include_cross_project)["memories"]
+                records = [x for x in records if x["project"] == row["problem"]
+                           or include_shared and x["project"] == "_shared"
+                           or include_cross_project and x["project"] not in {row["problem"], "_shared"}]
+                memories = [{k: x[k] for k in ("reference", "name", "description", "type", "project", "scene", "version", "body_sha256", "age_days", "age_label", "cross_project")} for x in records]
             except (OSError, ValueError) as exc:
                 error = type(exc).__name__
         # A full maximum-size page may require one final empty-page read.
@@ -281,7 +303,7 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None):
             if not row["memory_enabled"]:
                 fail("MEMORY_REFERENCE_INVALID", action)
             try:
-                page = MemoryAPI(Path(row["memory_store"])).read_version(reference, max_chars=limit, offset=offset)
+                page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(reference, max_chars=limit, offset=offset)
             except (ValueError, OSError) as exc:
                 return db._envelope(con, row, rd, action=action, result={"degraded": True, "error": str(exc), "complete_memory_consumption": False})
             page.pop("path", None)
@@ -321,7 +343,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     fail(code, action, str(exc))
                 bodies = []
                 for ref in plan.memory_basis:
-                    body = MemoryAPI(Path(row["memory_store"])).read_version(ref)
+                    body = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(ref)
                     if body["body_sha256"] != reads[ref] or body["truncated"]:
                         fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
                     bodies.append(body)
@@ -498,11 +520,11 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                     # attempts too. Reserve their known cost before starting
                     # the child; the solver gateway enforces the same limit
                     # for every later candidate and repair re-evaluation.
-                    known_attempts = 1  # baseline
-                    if seed_selection and not seed_selection.get("terminated"):
-                        known_attempts += len(seed_selection.get("selected_members") or [])
-                    elif inheritance_mode == "incumbent_only" and rd["incumbent_before_ref"]:
-                        known_attempts += 1  # parent re-evaluation
+                    known_attempts = _known_solver_attempts(
+                        inheritance_mode=inheritance_mode,
+                        incumbent_before_ref=rd["incumbent_before_ref"],
+                        seed_selection=seed_selection,
+                    )
                     round_used = con.execute(
                         "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?",
                         (row["run_id"], rd["round_id"]),

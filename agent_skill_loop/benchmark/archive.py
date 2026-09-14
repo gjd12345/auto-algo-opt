@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import math
+from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .contracts import FrozenSelection, sha256_text
+from .contracts import FrozenSelection, sha256_json, sha256_text
 
 
 def _is_sha256(value: str) -> bool:
@@ -30,7 +32,11 @@ class ArchiveEntry:
     revision: str = "original"
     algorithm: str = ""
     algorithm_text_sha256: str = ""
-    source_ref: str | None = None
+    # Discovery and scoring are deliberately separate.  A later re-evaluation
+    # may improve the score without becoming the place that discovered the
+    # algorithm.
+    discovery_ref: str | None = None
+    score_evaluation_ref: str | None = None
     first_evaluation_order: int = 0
 
     def as_dict(self) -> dict[str, Any]:
@@ -48,9 +54,15 @@ class ArchiveEntry:
             "revision": self.revision,
             "algorithm": self.algorithm,
             "algorithm_text_sha256": self.algorithm_text_sha256,
-            "source_ref": self.source_ref,
+            "discovery_ref": self.discovery_ref,
+            "score_evaluation_ref": self.score_evaluation_ref,
             "first_evaluation_order": self.first_evaluation_order,
         }
+
+    @property
+    def source_ref(self) -> str | None:
+        """Read-compatible alias for pre-v1.1 archive consumers."""
+        return self.discovery_ref
 
 
 def build_archive(rows: Iterable[Mapping[str, Any]], *, problem_spec_hash: str, data_manifest_hash: str,
@@ -84,14 +96,25 @@ def build_archive(rows: Iterable[Mapping[str, Any]], *, problem_spec_hash: str, 
         expected_identity = (problem_spec_hash, data_manifest_hash, evaluator_hash, metric_spec_hash)
         if any(not isinstance(value, str) or value != expected for value, expected in zip(identity_values, expected_identity)):
             continue
-        source_ref = row.get("source_ref") or row.get("evaluation_ref") or f"evaluation:{row['evaluation_id']}"
+        discovery_ref = (
+            row.get("discovery_ref")
+            or row.get("source_ref")  # legacy input compatibility only
+            or row.get("evaluation_ref")
+            or f"evaluation:{row['evaluation_id']}"
+        )
+        score_evaluation_ref = (
+            row.get("score_evaluation_ref")
+            or row.get("evaluation_ref")
+            or f"evaluation:{row['evaluation_id']}"
+        )
         entry = ArchiveEntry(code=code, code_sha256=code_hash, objective=float(objective), evaluation_id=row["evaluation_id"],
                              problem_spec_hash=problem_spec_hash, data_manifest_hash=data_manifest_hash,
                              evaluator_hash=evaluator_hash, metric_spec_hash=metric_spec_hash,
                              origin=origin, candidate_id=row["candidate_id"], revision=revision,
                              algorithm=str(row.get("algorithm") or ""),
                              algorithm_text_sha256=str(row.get("algorithm_text_sha256") or ""),
-                             source_ref=str(source_ref), first_evaluation_order=order)
+                             discovery_ref=str(discovery_ref), score_evaluation_ref=str(score_evaluation_ref),
+                             first_evaluation_order=order)
         key = code_hash + ":" + ":".join(expected_identity)
         current = found.get(key)
         if current is None or entry.objective < current.objective:
@@ -107,11 +130,129 @@ def build_archive(rows: Iterable[Mapping[str, Any]], *, problem_spec_hash: str, 
                     "algorithm": current.algorithm,
                     "algorithm_text_sha256": current.algorithm_text_sha256,
                     "origin": current.origin,
-                    "source_ref": current.source_ref,
+                    "discovery_ref": current.discovery_ref,
                     "first_evaluation_order": current.first_evaluation_order,
                 }
             )
     return sorted(found.values(), key=lambda item: (item.objective, item.first_evaluation_order))
+
+
+def build_archive_from_session(run_path: str | Path, *, run_id: str | None = None) -> dict[str, Any]:
+    """Build a training archive from hash-verified Session evidence.
+
+    This is intentionally a read-only projection.  It never evaluates code,
+    reads Memory, contacts a provider, or accepts a hand-written candidate
+    list.  The only inputs are completed ``evaluation_facts.json`` files whose
+    references and hashes are stored in the Session SQLite state.
+    """
+    from agent_skill_loop import session_runtime as db
+
+    root = Path(run_path).resolve()
+    database = root / "session.sqlite3"
+    if not database.is_file():
+        raise ValueError("session_run_not_found")
+    con = db._connect(database)
+    try:
+        db._require_schema(con, action="benchmark-archive")
+        run = db._require_run(con, action="benchmark-archive", run_id=run_id)
+        if not run["benchmark_id"]:
+            raise ValueError("archive_requires_benchmark_session")
+        # ``state`` is the read-only identity check.  It validates the frozen
+        # config and suite without requiring the current checkout's Runtime or
+        # Skill hash to match the historical Session.
+        _config, suite = db._verify_files(root, run, action="state")
+        round_rows = con.execute(
+            "SELECT * FROM rounds WHERE run_id=? AND evaluation_facts_ref IS NOT NULL ORDER BY round_id",
+            (run["run_id"],),
+        ).fetchall()
+        if not round_rows:
+            raise ValueError("archive_evidence_missing")
+
+        candidates: list[dict[str, Any]] = []
+        source_facts: list[dict[str, Any]] = []
+        expected_benchmark = {
+            "benchmark_id": run["benchmark_id"],
+            "profile": run["benchmark_profile"],
+            "problem_spec_hash": run["problem_spec_hash"],
+            "benchmark_spec_hash": run["benchmark_spec_hash"],
+            "data_manifest_hash": run["data_manifest_hash"],
+            "reference_manifest_hash": run["reference_manifest_hash"],
+            "metric_spec_hash": run["metric_spec_hash"],
+        }
+        for round_row in round_rows:
+            ref = round_row["evaluation_facts_ref"]
+            if not isinstance(ref, str) or not ref:
+                raise ValueError("archive_evidence_reference_invalid")
+            facts_path = (root / ref).resolve()
+            if not facts_path.is_relative_to(root) or not facts_path.is_file():
+                raise ValueError("archive_evidence_reference_invalid")
+            facts_text = facts_path.read_text(encoding="utf-8")
+            if db._sha256(facts_text) != round_row["evaluation_facts_sha256"]:
+                raise ValueError("archive_evidence_hash_mismatch")
+            try:
+                facts = json.loads(facts_text)
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ValueError("archive_evidence_invalid") from exc
+            if not isinstance(facts, Mapping) or facts.get("round_id") != round_row["round_id"]:
+                raise ValueError("archive_evidence_identity_mismatch")
+            if any(facts.get(name) != run[name] for name in ("problem", "suite_hash", "evaluator_hash")):
+                raise ValueError("archive_evidence_identity_mismatch")
+            benchmark_facts = facts.get("benchmark")
+            if not isinstance(benchmark_facts, Mapping) or any(
+                benchmark_facts.get(name) != value for name, value in expected_benchmark.items()
+            ):
+                raise ValueError("archive_evidence_benchmark_identity_mismatch")
+            fact_candidates = facts.get("candidates")
+            if not isinstance(fact_candidates, list):
+                raise ValueError("archive_evidence_candidates_invalid")
+            source_facts.append({
+                "round_id": round_row["round_id"],
+                "ref": ref,
+                "sha256": round_row["evaluation_facts_sha256"],
+                "candidate_count": len(fact_candidates),
+            })
+            for index, candidate in enumerate(fact_candidates):
+                if not isinstance(candidate, Mapping):
+                    raise ValueError("archive_candidate_invalid")
+                row = dict(candidate)
+                # Collected facts carry the common evaluation identity at
+                # document level. Bind it after verifying the document hash;
+                # reject conflicting per-candidate declarations.
+                for name in ("problem_spec_hash", "data_manifest_hash", "evaluator_hash", "metric_spec_hash"):
+                    if name in row and row[name] != run[name]:
+                        raise ValueError("archive_candidate_identity_mismatch")
+                    row[name] = run[name]
+                candidate_ref = f"{ref}#candidates/{index}"
+                row["discovery_ref"] = row.get("discovery_ref") or candidate_ref
+                row["score_evaluation_ref"] = row.get("score_evaluation_ref") or (
+                    f"evaluation:{row.get('evaluation_id')}"
+                    if row.get("evaluation_id") else None
+                )
+                candidates.append(row)
+
+        entries = build_archive(
+            candidates,
+            problem_spec_hash=str(run["problem_spec_hash"]),
+            data_manifest_hash=str(run["data_manifest_hash"]),
+            evaluator_hash=str(run["evaluator_hash"]),
+            metric_spec_hash=str(run["metric_spec_hash"]),
+        )
+        payload: dict[str, Any] = {
+            "schema_version": "algorithm-optimization-archive/v1",
+            "run_id": run["run_id"],
+            "problem": run["problem"],
+            "suite_hash": suite["content_hash"],
+            "evaluator_hash": run["evaluator_hash"],
+            "benchmark": expected_benchmark,
+            "source_facts": source_facts,
+            "entries": [entry.as_dict() for entry in entries],
+            "entry_count": len(entries),
+            "status": "complete",
+        }
+        payload["archive_sha256"] = sha256_json(payload)
+        return payload
+    finally:
+        con.close()
 
 
 def freeze_selection(kind: str, entries: Iterable[ArchiveEntry] = (), *, metric_spec_hash: str,
@@ -174,7 +315,8 @@ def _validate_archive_entries(entries: list[ArchiveEntry | Mapping[str, Any]], m
                     revision=str(item["revision"]),
                     algorithm=str(item.get("algorithm") or ""),
                     algorithm_text_sha256=str(item.get("algorithm_text_sha256") or ""),
-                    source_ref=str(item.get("source_ref")) if item.get("source_ref") is not None else None,
+                    discovery_ref=str(item.get("discovery_ref") or item.get("source_ref")) if (item.get("discovery_ref") is not None or item.get("source_ref") is not None) else None,
+                    score_evaluation_ref=str(item.get("score_evaluation_ref") or f"evaluation:{item['evaluation_id']}"),
                     first_evaluation_order=int(item.get("first_evaluation_order", 0)),
                 )
             except (TypeError, ValueError, OverflowError) as exc:
@@ -190,6 +332,8 @@ def _validate_archive_entries(entries: list[ArchiveEntry | Mapping[str, Any]], m
             or not _is_sha256(entry.metric_spec_hash)
             or not entry.evaluation_id
             or not entry.candidate_id
+            or not entry.discovery_ref
+            or not entry.score_evaluation_ref
             or entry.origin not in {"generated", "generated_repair"}
             or (entry.origin == "generated" and entry.revision != "original")
             or (entry.origin == "generated_repair" and entry.revision != "repair_1")

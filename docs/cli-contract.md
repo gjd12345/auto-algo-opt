@@ -117,11 +117,16 @@ python -m agent_skill_loop benchmark evaluate \
   --code candidate.py --split dev_train
 python -m agent_skill_loop benchmark evaluate-set \
   --candidates candidates.json --split dev_train
+python -m agent_skill_loop benchmark archive \
+  --run outputs/session-001 --output archive.json
 ```
 
 `benchmark audit` verifies the registry's tracked asset hashes;
 `calibrate-obp` runs the independent zero-provider gold comparison; and
 `benchmark evaluate` performs one isolated candidate evaluation.
+`benchmark archive` is a read-only projection of completed, hash-verified
+Session `evaluation_facts.json` files and is the supported input producer for
+`freeze-selection`; it does not accept a hand-written candidate list.
 `evaluate-set` evaluates every member, keeps invalid-member evidence, and
 retains partial per-instance successes even when a member is invalid for the
 full suite. Its aggregate is reconstructed from the minimum valid member gap
@@ -131,6 +136,10 @@ actual per-instance evaluator attempts and includes the per-instance member
 matrix. The default profile is `eohs_v1/obp_mini`, whose assets are explicitly
 regenerated and protocol-compatible, not an exact claim about the full
 upstream corpus.
+
+Archive entries expose `discovery_ref` and `score_evaluation_ref` separately:
+a later re-evaluation may improve an algorithm's score without changing the
+evidence location where that algorithm was first discovered.
 
 The population and manifest utilities are also offline:
 
@@ -211,6 +220,8 @@ python -m agent_skill_loop session init \
 --eoh-endpoint https://api.deepseek.com/v1/chat/completions
 --eoh-api-key-env DEEPSEEK_API_KEY
 --repair-mode off
+Memory enabled for ordinary Sessions
+--memory-store ~/.codex/algorithm-optimization/memory
 ```
 
 ### Optional
@@ -222,7 +233,8 @@ python -m agent_skill_loop session init \
 --round-wall-seconds
 --max-solver-calls
 --repair-max-requests
---memory-store
+--memory-store PATH
+--no-memory
 --solution-min-relative-improvement
 --seed
 --size
@@ -246,6 +258,15 @@ python -m agent_skill_loop session init \
 --rounds
 --round-budget
 ```
+
+普通 Session 未提供 `--memory-store` 时使用用户级默认目录；环境变量
+`ALGORITHM_OPTIMIZATION_MEMORY_STORE` 可覆盖该目录。`--no-memory` 是显式关闭方式。
+受控 benchmark Session 默认关闭 Memory，并以 `ExperimentManifest.memory_enabled`
+冻结实验设置；不得因普通 Session 默认值而开启。
+
+`session memory search` 默认只检索当前问题；`--include-shared` 和
+`--include-cross-project` 必须由 Agent 显式选择。搜索结果包含年龄但不含正文，
+跨项目命中不会自动进入 Plan。
 
 `--eoh-thinking` 默认 `provider-default`；显式值写入 `config_frozen.json` 的 `eoh.thinking` 并进入 init 输入 hash。仅 EoH 的 provider 请求使用此配置，Plan/Evaluate 仍由 Coding Agent 提交。
 

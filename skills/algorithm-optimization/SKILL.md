@@ -13,7 +13,8 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 - Do not edit the evaluator, suite, budget, frozen runtime, or optimization policy from a submitted document.
 - Do not treat a candidate as valid from model text. Use `collect` and `read-evaluation`; only verified evidence determines validity, objective, incumbent, and exported skills.
 - Do not use the deprecated `agent_skill_loop workflow` command. It returns a migration error and must not start the legacy model-driven loop.
-- Memory is optional advisory context. Search returns summaries only; read the complete selected body before putting its reference in `plan.memory_basis`. A Memory failure is not a reason to discard verified algorithm facts.
+- Memory is advisory context and is enabled by default for ordinary Sessions. Search returns summaries only; read the complete selected body before putting its reference in `plan.memory_basis`. A Memory failure is not a reason to discard verified algorithm facts. Use `--no-memory` for an explicit no-Memory run; controlled benchmark manifests remain off unless they explicitly enable it.
+- Search the current problem first. Expand with `--include-shared` or `--include-cross-project` only when the Agent explicitly decides that transfer is useful; every adopted entry must still be fully read and hash-verified.
 - On rounds after the first, the Runtime adds a bounded `feedback_summary` to
   the EoH context. Treat it as trusted facts from the immediately previous
   evaluation: identities, scores, per-instance values, validity counts,
