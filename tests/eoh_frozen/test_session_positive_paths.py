@@ -83,6 +83,9 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
                 assert (root/item["repair_request_ref"]).is_file()
                 assert (root/item["generation_request_ref"]).is_file()
         file=tmp_path/"evaluation.json"
+        # An unrelated malformed sidecar must not strand Memory at accepted
+        # or prevent finish-round after Evaluate has been persisted.
+        (tmp_path/"memory"/"cvrp_construct"/"insight_corrupt__v0001.json").write_text("[]", encoding="utf-8")
         evidence=f"evaluation:{candidate['evaluation_id']}"
         file.write_text(json.dumps(dict(plan_alignment="aligned",observations=[dict(claim="Improves this frozen development suite by over 1 percent.",evidence_refs=[evidence])],
             hypotheses=[],next_search_advice={},memory_action=dict(kind="solution",name="capacity-fixture",description="capacity fit on frozen fixture suite",
@@ -93,6 +96,8 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
         published=MemoryAPI(tmp_path/"memory").read_version(result["result"]["memory"]["reference"])
         assert published["type"]=="solution" and published["version"]==2
         assert published["provenance"]["source_skill_ref"]==facts["best_generated_ref"]
+        assert published["provenance"]["source_run_id"]==result["run_id"]
+        assert published["provenance"]["source_session_root"]==str(root.resolve())
         assert actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=0,file=file)==result
         assert actions.finish_round(run=root,operation_id="finish",expected_state_version=result["state_version"],decision="complete")["run_state"]=="COMPLETED"
         with sqlite3.connect(root/"session.sqlite3") as con:

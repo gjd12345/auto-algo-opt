@@ -989,6 +989,10 @@ proposal
  → commit
 ```
 
+Evaluate 文档和其中可解析的 Memory proposal 先被接受。`solution` 缺少可信
+来源、证据或改善资格时，Memory commit 记录为 `rejected`，不得把已经有效的
+Evaluate、incumbent 或算法资产一起拒绝。
+
 状态至少记录：
 
 ```text
@@ -1045,8 +1049,17 @@ evidence_ref     = 本轮确定性评测证据
 旧 solution 提交中的 `based_on` 作为 `source_skill_ref` 的读取兼容别名；旧
 insight 提交中的该字段作为 `memory_based_on` 的兼容别名。新提交不得再使用。
 发布 sidecar 必须保存上述来源以及 evaluation facts、代码、suite 和 evaluator
-身份。读取带 sidecar 的版本必须验证正文及完整内容 hash；旧的无 sidecar
-资产只保留读取兼容，不获得同等完整性声明。
+身份，并包含来源 `run_id` 与 Session 根位置。v2 sidecar 必须具有匹配的 schema、
+整数 format_version=2、正文及完整内容 hash；缺字段或字段类型错误必须拒绝。
+历史 sidecar 验证其正文及已有的完整内容 hash，缺少后者时标为 `legacy_body_verified`。
+当前版本化文件缺少 sidecar 时必须拒绝；只有历史无版本
+文件可按 `legacy_unverified` 读取，且不获得同等完整性声明。历史正文格式允许
+读取，新发布仍执行当前 insight/solution 模板校验。
+
+检索遇到损坏条目时必须隔离该条目，并返回有界 diagnostics；不得因为其他项目
+或其他条目损坏而清空当前问题的有效结果，也不得阻止无关条目的写入和索引重建。
+检索与索引先按文件身份确定最高版本，再校验内容。最高版本损坏或仅剩 sidecar 时，
+隔离该条记忆，不自动回退旧版本；历史版本仍可通过精确引用读取。
 
 ---
 

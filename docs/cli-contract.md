@@ -266,7 +266,8 @@ Memory enabled for ordinary Sessions
 
 `session memory search` 默认只检索当前问题；`--include-shared` 和
 `--include-cross-project` 必须由 Agent 显式选择。搜索结果包含年龄但不含正文，
-跨项目命中不会自动进入 Plan。
+跨项目命中不会自动进入 Plan。单条损坏记录通过 `result.diagnostics` 报告并被
+隔离；此时 `result.degraded=true`，其余有效摘要仍然返回。
 
 `--eoh-thinking` 默认 `provider-default`；显式值写入 `config_frozen.json` 的 `eoh.thinking` 并进入 init 输入 hash。仅 EoH 的 provider 请求使用此配置，Plan/Evaluate 仍由 Coding Agent 提交。
 

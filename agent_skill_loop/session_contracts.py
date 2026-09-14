@@ -278,8 +278,6 @@ class MemoryAction:
             memory_based_on = _text(memory_based_on, "memory_based_on", max_chars=512)
         if evidence_ref is not None:
             evidence_ref = _text(evidence_ref, "memory_evidence_ref", max_chars=512)
-        if kind == "solution" and (source_skill_ref is None or evidence_ref is None):
-            raise ValueError("solution_source_and_evidence_required")
         if kind == "insight" and source_skill_ref is not None:
             raise ValueError("insight_source_skill_ref_not_allowed")
         return cls(

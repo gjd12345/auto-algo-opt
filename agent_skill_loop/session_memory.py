@@ -51,10 +51,14 @@ def _commit_pending(root, operation_id):
                 "evaluation_facts_ref": rd["evaluation_facts_ref"],
                 "evaluation_facts_sha256": rd["evaluation_facts_sha256"],
                 "round_id": str(rd["round_id"]),
+                "source_run_id": row["run_id"],
+                "source_session_root": str(root.resolve()),
             }
             if raw.get("evidence_ref"):
                 provenance["evidence_ref"]=raw["evidence_ref"]
             if raw["kind"]=="solution":
+                if not source_skill_ref or not raw.get("evidence_ref"):
+                    raise ValueError("solution_source_and_evidence_required")
                 if row["solution_threshold"] is None: raise ValueError("solution_threshold_required")
                 ref=facts.get("best_generated_ref")
                 if not ref or source_skill_ref!=ref: raise ValueError("solution_candidate_reference_mismatch")

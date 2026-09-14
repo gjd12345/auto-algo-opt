@@ -182,7 +182,9 @@ def test_memory_pagination_reaches_records_after_first_hundred(tmp_path):
     for index in range(103):
         entry=MemoryEntry(f"item-{index:03d}","ranking","insight","cvrp_construct","select_next_node",
                           "**Why:** fixture\n**How to apply:** test only")
-        (project/f"insight_{entry.name}__v0001.md").write_text(_render(entry),encoding="utf-8")
+        # Unversioned names exercise the explicitly supported legacy path;
+        # current versioned publications always require integrity sidecars.
+        (project/f"insight_{entry.name}.md").write_text(_render(entry),encoding="utf-8")
     init(root,memory_store=str(store))
     first=actions.memory_search(run=root,limit=100)["result"]
     second=actions.memory_search(run=root,limit=100,cursor=first["next_cursor"])["result"]

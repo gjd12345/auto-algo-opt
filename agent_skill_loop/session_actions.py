@@ -272,13 +272,15 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         offset = int(cursor or 0)
         if offset < 0:
             fail("INVALID_ARGUMENT", action)
-        memories, error = [], None
+        memories, error, diagnostics = [], None, []
         if row["memory_enabled"]:
             try:
-                records = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
-                                                                 memory_type=memory_type, limit=min(limit+1,100),
-                                                                 offset=offset, include_shared=include_shared,
-                                                                 include_cross_project=include_cross_project)["memories"]
+                backend_result = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(
+                    query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
+                    memory_type=memory_type, limit=min(limit+1,100), offset=offset,
+                    include_shared=include_shared, include_cross_project=include_cross_project)
+                records = backend_result["memories"]
+                diagnostics = list(backend_result.get("diagnostics") or [])
                 records = [x for x in records if x["project"] == row["problem"]
                            or include_shared and x["project"] == "_shared"
                            or include_cross_project and x["project"] not in {row["problem"], "_shared"}]
@@ -289,7 +291,8 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         # Never claim that the backend's first 100 records are the whole store.
         has_more = len(memories)>limit or len(memories)==limit==100
         result = {"memories": memories[:limit], "next_cursor": str(offset+limit) if has_more else None,
-                  "enabled": bool(row["memory_enabled"]), "degraded": error is not None, "error": error}
+                  "enabled": bool(row["memory_enabled"]), "degraded": error is not None or bool(diagnostics),
+                  "error": error, "diagnostics": diagnostics}
         return db._envelope(con, row, rd, action=action, result=result)
 
 
