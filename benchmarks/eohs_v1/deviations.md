@@ -6,6 +6,11 @@ offline wiring and differential tests. It is not the EoH-S 128-instance
 training set and it is not an exact reproduction of the paper's reported
 test sets.
 
+The `obp_evolution_mini` profile is a separate deterministic six-instance
+profile for cross-round population-seed tests. It keeps the same online
+protocol but uses fixed known-optimum references and deliberately
+distinguishable legal priority policies. It is also not an upstream asset.
+
 - `upstream_code` and `paper_protocol` are separate profiles.
 - The OBP reference uses the upstream-compatible rounded lower-bound formula;
   it is recorded as `upstream_compatibility_reference`, not as a known optimum.

@@ -40,6 +40,46 @@
         "the complete TSP and CVRP EoH-S assets are not bundled in v1.1a",
         "reference values use the upstream-compatible rounded lower-bound convention and are not known optima"
       ]
+    },
+    {
+      "benchmark_id": "eohs_v1",
+      "profile": "obp_evolution_mini",
+      "problem_id": "obp_online",
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "8310b056ab0d4ea83d194f1d9e8c7873c0a3b892",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "upstream_code",
+      "paper_protocol_profile": "paper_protocol",
+      "manifest_paths": {
+        "dev_train": "manifests/obp_evolution_mini_train.json",
+        "train": "manifests/obp_evolution_mini_train.json",
+        "heldout": "manifests/obp_evolution_mini_test.json",
+        "test": "manifests/obp_evolution_mini_test.json",
+        "reference": "manifests/obp_evolution_mini_references.json"
+      },
+      "manifests": {
+        "train_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "test_hash": "f5c4f5729ad115286aa1dad2f622a06877f715b99004dac634b316bdfde45ffb",
+        "reference_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406"
+      },
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "known_optimum",
+        "reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective"
+        }
+      },
+      "deviations": [
+        "obp_evolution_mini is a curated six-instance profile, not the upstream 128-instance training or reported test asset",
+        "instances are regenerated protocol-compatible data with deterministic known-optimum references",
+        "the complete TSP and CVRP EoH-S assets are not bundled in v1.1a"
+      ]
     }
   ]
 }

@@ -124,6 +124,10 @@ def _best_fit(_item: float, bins: list[float]) -> int:
 
 def calibrate_upstream(suite: Mapping[str, Any]) -> dict[str, Any]:
     rows: dict[str, list[dict[str, Any]]] = {"first_fit": [], "best_fit": []}
+    reference_kinds = {str(instance.get("reference_kind")) for instance in suite["instances"]}
+    if len(reference_kinds) != 1:
+        raise ValueError("mixed_reference_kinds")
+    reference_kind = next(iter(reference_kinds))
     for instance in suite["instances"]:
         items = [float(item) for item in instance["items"]]
         capacity = float(instance["capacity"])
@@ -142,7 +146,7 @@ def calibrate_upstream(suite: Mapping[str, Any]) -> dict[str, Any]:
         "profile": suite.get("profile"),
         "problem": suite.get("problem"),
         "suite_hash": suite.get("content_hash"),
-        "reference_kind": "upstream_compatibility_reference",
+        "reference_kind": reference_kind,
         "heuristics": rows,
     }
 

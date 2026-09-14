@@ -208,6 +208,21 @@ def test_obp_gold_is_independent_and_zero_provider():
     assert gold["heuristics"]["best_fit"]
 
 
+def test_obp_evolution_mini_is_frozen_and_non_degenerate():
+    suite = load_profile_suite("eohs_v1", "obp_evolution_mini", split="dev_train")
+    _benchmark, metric, _item = benchmark_profile("eohs_v1", "obp_evolution_mini")
+    assert metric.reference_kind == "known_optimum"
+    gold = calibrate_upstream(suite)
+    checked = calibrate_differential(
+        suite,
+        json.loads(Path("benchmarks/eohs_v1/expected/obp_evolution_mini_upstream_gold.json").read_text(encoding="utf-8")),
+    )
+    assert checked["passed"]
+    first = gold["heuristics"]["first_fit"]
+    best = gold["heuristics"]["best_fit"]
+    assert any(left["bins_used"] != right["bins_used"] for left, right in zip(first, best))
+
+
 def test_production_calibration_exposes_heuristic_set_and_rejects_unregistered_suite(tmp_path):
     suite = load_profile_suite("eohs_v1", "obp_mini", split="dev_train")
     from agent_skill_loop.benchmark.harness import calibrate_production, load_suite
