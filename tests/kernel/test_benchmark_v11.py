@@ -418,6 +418,12 @@ def test_controlled_pilot_keeps_c_and_d_identical_except_guidance():
         "search_seed": 1234,
     }
     pilot = build_pilot_manifests(base)
+    assert pilot["shared_factors"]["knowledge_mode"] == "off"
+    assert all(row["manifest"]["extra"]["knowledge_mode"] == "off" for row in pilot["groups"].values())
+    with pytest.raises(ValueError, match="pilot_requires_knowledge_off"):
+        build_pilot_manifests({**base, "extra": {"knowledge_mode": "frozen_context"}})
+    with pytest.raises(ValueError, match="pilot_requires_knowledge_off"):
+        build_pilot_manifests({**base, "extra": {"knowledge_context_sha256": "a" * 64}})
     assert set(pilot["groups"]) == {"A", "B", "C", "D"}
     c = pilot["groups"]["C"]["manifest"]
     d = pilot["groups"]["D"]["manifest"]

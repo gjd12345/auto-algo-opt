@@ -7,6 +7,20 @@ on:
     branches: [main, agent-skill-loop-0908]
 
 jobs:
+  knowledge:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest tests/knowledge -q
+      - run: python -m knowledge_tools validate-release --release knowledge_store/releases/20260914-main-d6433549-kb-v0
+
   kernel:
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +65,16 @@ jobs:
         env:
           EOH_REQUIRED: "1"
         run: python -m pytest tests/eoh_frozen -q
+      - name: Two-round population seed and heldout closure (localhost fixture)
+        run: python tools/verify_benchmark_closure.py --output outputs/ci-benchmark-closure
+      - name: Export compact Session evidence
+        run: python tools/export_benchmark_evidence.py --run outputs/ci-benchmark-closure/session --report-dir outputs/ci-benchmark-closure --output outputs/ci-benchmark-evidence
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-closure-${{ matrix.os }}
+          path: |
+            outputs/ci-benchmark-evidence/
+            outputs/ci-benchmark-closure/*.json
 
   windows-kernel:
     runs-on: windows-latest

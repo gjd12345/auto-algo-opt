@@ -6,7 +6,7 @@
 
 ~~~powershell
 $store = (Resolve-Path .\knowledge_store).Path
-$release = python -c "from pathlib import Path; print(Path(r'$store') / 'current').resolve()"
+$release = python -c "from pathlib import Path; from knowledge_tools.core import resolve_release; print(resolve_release(Path(r'$store')))"
 $manifest = Get-Content (Join-Path $release "manifest.json") -Raw | ConvertFrom-Json
 $releaseId = Split-Path $release -Leaf
 if ($manifest.release_id -ne $releaseId) {

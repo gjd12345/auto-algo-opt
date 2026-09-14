@@ -1,0 +1,65 @@
+{
+  "schema_version": "algorithm-optimization-archive/v1",
+  "run_id": "run_3c682f82ae054f30bfcca2ea5bff4f0a",
+  "problem": "obp_online",
+  "suite_hash": "52de3a0385cfad008d67e8392dcddfe38efaeeef03a266ecb85511c249fcd99c",
+  "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+  "benchmark": {
+    "benchmark_id": "eohs_v1",
+    "profile": "obp_evolution_mini",
+    "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+    "reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e"
+  },
+  "source_facts": [
+    {
+      "round_id": 1,
+      "ref": "rounds/round_0001/evaluation_facts.json",
+      "sha256": "c75c043aae094159519e688d14b53ce1c500d4237059e21bd2be80da20dc092a",
+      "candidate_count": 5
+    }
+  ],
+  "entries": [
+    {
+      "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    return -bins",
+      "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+      "objective": 0.0,
+      "evaluation_id": "628d9f39afa6488588ffb420caf07a6e",
+      "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+      "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+      "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "origin": "generated",
+      "candidate_id": "candidate_1",
+      "revision": "original",
+      "algorithm": "",
+      "algorithm_text_sha256": "",
+      "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/1",
+      "score_evaluation_ref": "evaluation:628d9f39afa6488588ffb420caf07a6e",
+      "first_evaluation_order": 1
+    },
+    {
+      "code": "import numpy as np\n\ndef priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    return -bins",
+      "code_sha256": "903a523380bb44366976105121cef0864a8f7aeaa2fccbc3fdea4e7a350cd45f",
+      "objective": 0.0,
+      "evaluation_id": "75fc8aef50484b29a1c35298a531f185",
+      "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+      "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+      "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "origin": "generated",
+      "candidate_id": "candidate_3",
+      "revision": "original",
+      "algorithm": "",
+      "algorithm_text_sha256": "",
+      "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/3",
+      "score_evaluation_ref": "evaluation:75fc8aef50484b29a1c35298a531f185",
+      "first_evaluation_order": 3
+    }
+  ],
+  "entry_count": 2,
+  "status": "complete",
+  "archive_sha256": "63f8ec772a7cd02cc1484388ad99851d3fe47bd5c9b6a782a391c7d7168079fc"
+}

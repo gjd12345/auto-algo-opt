@@ -14,6 +14,7 @@ from knowledge_tools.core import (
     build_release,
     parse_run_container,
     read_entry,
+    resolve_release,
     sha256_file,
     validate_release,
     validate_workspace,
@@ -126,6 +127,8 @@ def test_atomic_pointer_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert "releases/rel1" in pointer.read_text(encoding="utf-8")
     assert not (store / "current").exists()
     assert not os.path.lexists(store / "current")
+    assert resolve_release(store) == release_dir.resolve()
+    assert resolve_release(store / "current") == release_dir.resolve()
 
 
 def test_yaml_typeerror_is_corrupt_not_crash() -> None:

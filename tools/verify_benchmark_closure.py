@@ -50,10 +50,19 @@ def main(output):
     previous = os.environ.get(key)
     os.environ[key] = "localhost-fixture"
     try:
-        with fixture_provider("obp_online") as (endpoint, prompts):
+        def responder(prompt, index):
+            if prompt == "1+1=?":
+                return 200, "2"
+            # Alternate First Fit and Best Fit on the non-degenerate suite.
+            # Scores still come exclusively from the production evaluator.
+            expression = "np.zeros_like(bins)" if index % 2 else "-bins"
+            code = f"def priority(item, bins):\n    fixture_revision = {index}\n    return {expression}\n"
+            return 200, "{Deterministic fixture heuristic}\n```python\n" + code + "```"
+
+        with fixture_provider("obp_online", responder=responder) as (endpoint, prompts):
             db.initialize_session(
                 output=root, operation_id="init", eoh_model="fixture", eoh_endpoint=endpoint,
-                eoh_api_key_env=key, benchmark_id="eohs_v1", benchmark_profile_name="obp_mini",
+                eoh_api_key_env=key, benchmark_id="eohs_v1", benchmark_profile_name="obp_evolution_mini",
                 inheritance_mode="population_seeds", agent_guidance=False,
                 max_rounds=2, max_solver_calls=20, round_budget=10,
                 search_policy_defaults={"pop_size": 2, "n_pop": 2, "max_sample_nums": 20},
@@ -109,8 +118,14 @@ def main(output):
         if "benchmark_spec_hash" not in manifest_data:
             raise ValueError("manifest_document_missing")
         manifest = ExperimentManifest(**{k: v for k, v in manifest_data.items() if k not in {"schema_version", "sha256", "experiment_manifest_sha256"}})
-        _benchmark, metric, _ = benchmark_profile("eohs_v1", "obp_mini")
-        snapshot_path = root / "rounds/round_0001/population_snapshot.json"
+        assert len(rounds) == 2 and rounds[-1].get("run_state") != "FAILED", "two_round_search_required"
+        assert rounds[1]["dual_budget"]["seed_reevaluation_attempts"] >= 2
+        first_snapshot = PopulationSnapshot.from_dict(json.loads(
+            (root / "rounds/round_0001/population_snapshot.json").read_text(encoding="utf-8")))
+        assert len({member["objective"] for member in first_snapshot.members}) >= 2
+        assert any(row["origin"] == "generated" for row in rounds[1]["candidates"])
+        _benchmark, metric, _ = benchmark_profile("eohs_v1", "obp_evolution_mini")
+        snapshot_path = root / "rounds/round_0002/population_snapshot.json"
         snapshot = PopulationSnapshot.from_dict(json.loads(snapshot_path.read_text(encoding="utf-8")))
         reports = []
         for kind in ("incumbent_top1", "archive_topk", "final_population_set"):
@@ -118,7 +133,7 @@ def main(output):
                 k=10 if kind == "archive_topk" else None, population_snapshot=snapshot,
                 source_ref="archive.json" if kind != "final_population_set" else str(snapshot_path.relative_to(output)))
             if kind == "incumbent_top1":
-                incumbent = rounds[0]["incumbent_after"]
+                incumbent = rounds[-1]["incumbent_after"]
                 skill = load_skill(root / incumbent["ref"])
                 selected = FrozenSelection(selection_kind=kind,
                     members=({"code": skill.code, "code_sha256": skill.code_sha256,
@@ -127,7 +142,7 @@ def main(output):
             selection_path = output / f"{kind}.selection.json"
             save(selection_path, {**selected.as_dict(), "content_hash": selected.content_hash})
             selected = FrozenSelection.from_dict(json.loads(selection_path.read_text(encoding="utf-8")))
-            test = evaluate_selection(selected, load_profile_suite("eohs_v1", "obp_mini", split="heldout"))
+            test = evaluate_selection(selected, load_profile_suite("eohs_v1", "obp_evolution_mini", split="heldout"))
             identity = dict(experiment_manifest_sha256=manifest.content_hash, selection_sha256=selected.content_hash)
             budget = {**db.read_state(run=root)["result"]["budgets"], **identity}
             metrics = {**identity, "metric_spec_hash": metric.content_hash,
@@ -154,7 +169,7 @@ def main(output):
             external_provider_requests=0, localhost_fixture_requests=local_requests,
             rounds=rounds, reports=reports, reload_verified=True,
             reachable_bins=[dict(instance_id=x["instance_id"], bins=reachable_bins(x))
-                            for x in load_profile_suite("eohs_v1", "obp_mini")["instances"]]))
+                            for x in load_profile_suite("eohs_v1", "obp_evolution_mini")["instances"]]))
         hashes = {str(p.relative_to(output)): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in output.rglob("*") if p.is_file() and not p.name.endswith(("-wal", "-shm"))}
         save(output / "sha256_manifest.json", hashes)

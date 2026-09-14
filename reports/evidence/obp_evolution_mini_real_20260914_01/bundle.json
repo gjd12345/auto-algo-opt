@@ -1,0 +1,39 @@
+{
+  "schema_version": "compact-session-evidence/v1",
+  "run_id": "run_3c682f82ae054f30bfcca2ea5bff4f0a",
+  "run_state": "FAILED",
+  "state_version": 11,
+  "experiment_manifest_sha256": "86b3ca1a406bedf7051dcfde24da0f72f50146b78dbcc3bfb898ad9258415ecd",
+  "source_config_sha256": "4511c6fa277407d39e524910898edf0ce621ac06f03c146a1d433c7336aa826e",
+  "source_text_hashes": {
+    "rounds/round_0001/evaluation_facts.json": "c75c043aae094159519e688d14b53ce1c500d4237059e21bd2be80da20dc092a",
+    "rounds/round_0001/population_snapshot.json": "fe198fb7b330e8d445d68bcc649c2c1a9d5035191983cf586f7eb5fa827cc147",
+    "rounds/round_0001/plan.json": "a8f99c7410b8dd8309f178fb9afebc833c19688347f5ac1316f43f13ec8d7d45",
+    "rounds/round_0001/evaluation.submitted.json": "852b27e2b879dbb202ae3f2bc4b33a567a535660a325cf2244daa5cbf2f3b883",
+    "rounds/round_0001/round_context.txt": "47d9913a31b51db85f3e72d08743edad17b87ab5052b3c6c91b83637b8223121",
+    "rounds/round_0002/seed_selection.json": "4b8648d5912b009422a40fd6644170a7f3f122492c6609b2274f3f53eac2bae2",
+    "rounds/round_0002/plan.json": "2ea4820ad9e5b6d51cfda713f4683f72cc72894d784fa442fc3594ae9f52d345",
+    "rounds/round_0002/round_context.txt": "232ab0448fbf2fcfbe941d00725eb1dd7e9f9989c0bdbaf8dd44cdc4ec93368e"
+  },
+  "scope": "training facts, population, seed selection, plans and budget; not a resumable Session",
+  "omitted": [
+    "provider raw exchanges",
+    "credentials",
+    "SQLite",
+    "heldout results not supplied"
+  ],
+  "rounds": [
+    {
+      "round_id": 1,
+      "state": "ROUND_COMPLETED",
+      "stop_reason": null,
+      "decision": "continue"
+    },
+    {
+      "round_id": 2,
+      "state": "FAILED",
+      "stop_reason": "insufficient_valid_seeds",
+      "decision": null
+    }
+  ]
+}

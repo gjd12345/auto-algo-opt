@@ -47,6 +47,11 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("pilot_requires_at_least_two_rounds_for_b_c_d")
 
     common_extra = dict(source.extra)
+    if common_extra.get("knowledge_mode", "off") != "off" or any(
+        key.startswith("knowledge_") and key != "knowledge_mode" for key in common_extra
+    ):
+        raise ValueError("pilot_requires_knowledge_off")
+    common_extra["knowledge_mode"] = "off"
     # ``max_sample_nums`` is the upstream engine's local evolution cap.  A
     # fixed value such as 8 can terminate a nominally 100/2000-call pilot
     # before its shared evaluator budget is reachable.  Derive one common
@@ -168,6 +173,7 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
             "search_seed": source.search_seed,
             "repair_mode": "off",
             "memory_enabled": False,
+            "knowledge_mode": "off",
             "budget_comparison": "equal_total_evaluation_attempts",
         },
         "groups": groups,

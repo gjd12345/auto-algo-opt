@@ -34,7 +34,7 @@ Round 1 reached the official EoH search and real provider responses:
 | --- | --- |
 | provider requests charged | 8 (7 completed, 1 killed at round deadline) |
 | probe | HTTP 200, 1.06 s |
-| generation responses | 7 completed: 5 complete-content responses and 2 `generation_truncated` |
+| generation responses | 6 completed: 4 complete-content responses and 2 `generation_truncated`; probe is counted separately |
 | solver attempts | 5: baseline + 4 generated candidates |
 | valid generated candidates | 4 |
 | distinct generated code hashes | 2 |
@@ -59,10 +59,14 @@ target_population_size = 2
 ```
 
 This proves the no-cold-start safety gate and feedback handoff. It does not yet
-prove a successful two-round multi-seed hot start. The full evidence bundle is
-under [`outputs/obp_evolution_mini_real_20260914_01`](../outputs/obp_evolution_mini_real_20260914_01/),
-including request exchanges, evaluation facts, population snapshot, seed
-selection, and context manifest hashes.
+prove a successful two-round multi-seed hot start. The full local Session is
+under `outputs/obp_evolution_mini_real_20260914_01` (gitignored).
+The [compact evidence bundle](evidence/obp_evolution_mini_real_20260914_01/bundle.json)
+contains hash-checked training facts, population, seed selection, plans, context,
+archive and request/solver receipts. Raw provider exchanges are omitted.
+Verify it with `python tools/export_benchmark_evidence.py --verify
+reports/evidence/obp_evolution_mini_real_20260914_01`.
+No heldout evaluation or final selection was performed for this stopped probe.
 
 ## Offline checks
 

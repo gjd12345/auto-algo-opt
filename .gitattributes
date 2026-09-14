@@ -17,3 +17,8 @@ eoh_rag_workspace/experiments/assets/cvrp_router_reevo_inspired_memory_v1.txt te
 
 # Frozen benchmark manifests are hashed as LF bytes on every platform.
 benchmarks/eohs_v1/**/*.json text eol=lf
+
+# Immutable KB releases retain their hashed bytes; exported JSON evidence is
+# normalized as LF text so its checked-in representation is stable everywhere.
+knowledge_store/releases/** -text
+reports/evidence/** text eol=lf

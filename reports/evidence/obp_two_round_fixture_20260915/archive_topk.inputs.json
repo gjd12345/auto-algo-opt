@@ -1,0 +1,968 @@
+{
+  "manifest": {
+    "schema_version": "algorithm-optimization-experiment-manifest/v1",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "runtime_hash": "495f457f4c08e76ccbd2667bfb7b4264a9f8eabda9f351bfef64e5f5a140d6c7",
+    "skill_hash": "06ed229843d0037f231c2918aa75a0e56ae99dc0f2ef753d3615022a0098b6a1",
+    "model": "fixture",
+    "endpoint_identity": "http://127.0.0.1:51737/v1/chat/completions",
+    "inheritance_mode": "population_seeds",
+    "feedback_mode": "runtime_facts",
+    "agent_guidance": false,
+    "repair_mode": "off",
+    "memory_enabled": false,
+    "evaluation_budget": 20,
+    "population_size": 2,
+    "rounds": 2,
+    "round_budget": 10,
+    "search_seed": 20260908,
+    "extra": {}
+  },
+  "selection": {
+    "schema_version": "algorithm-optimization-frozen-selection/v1",
+    "selection_kind": "archive_topk",
+    "members": [
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 2\n    return -bins",
+        "code_sha256": "7eb385f28afd80880730a5250bad447e0de700928d0c32e74b9799af379dd6f9",
+        "objective": 0.0,
+        "evaluation_id": "4d659578bccd4b33b10e1f45ea8edf0e",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/1",
+        "score_evaluation_ref": "evaluation:4d659578bccd4b33b10e1f45ea8edf0e",
+        "first_evaluation_order": 1
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 4\n    return -bins",
+        "code_sha256": "8dfae39b55615c1d1653900838b8ab551eaf5313cd59cd6d31adce3935bae4a7",
+        "objective": 0.0,
+        "evaluation_id": "d525f47281c645e79b52f201ae41e65a",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/3",
+        "score_evaluation_ref": "evaluation:d525f47281c645e79b52f201ae41e65a",
+        "first_evaluation_order": 3
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 6\n    return -bins",
+        "code_sha256": "28923b37d191f996321e2cd0ec70b6b794d7ccdcd8b8f21620a6c2c9c546212e",
+        "objective": 0.0,
+        "evaluation_id": "b3f6057533c7473aad2765f8b88260ca",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/5",
+        "score_evaluation_ref": "evaluation:b3f6057533c7473aad2765f8b88260ca",
+        "first_evaluation_order": 5
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 8\n    return -bins",
+        "code_sha256": "16e2908bdd57c89efbdbda5ea1fad8533adc7be562b408531a1f0bd7dc76b216",
+        "objective": 0.0,
+        "evaluation_id": "98c521e8450c499e9b6011070f079796",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_7",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/7",
+        "score_evaluation_ref": "evaluation:98c521e8450c499e9b6011070f079796",
+        "first_evaluation_order": 7
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 10\n    return -bins",
+        "code_sha256": "1131142620ea632710f73cec25dbde100ef0f9cf17e6dd7307328d7fbff77521",
+        "objective": 0.0,
+        "evaluation_id": "8596d4c14459495e84f3e537d4272920",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_9",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/9",
+        "score_evaluation_ref": "evaluation:8596d4c14459495e84f3e537d4272920",
+        "first_evaluation_order": 9
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 12\n    return -bins",
+        "code_sha256": "3e361d676776d51f9a16cca31bb383c9eebfd1d03c63dda7e1ff5ebd6e788bfa",
+        "objective": 0.0,
+        "evaluation_id": "62cfa5f9d1524a568f1f0e2ff3d90168",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0002/evaluation_facts.json#candidates/3",
+        "score_evaluation_ref": "evaluation:62cfa5f9d1524a568f1f0e2ff3d90168",
+        "first_evaluation_order": 13
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 14\n    return -bins",
+        "code_sha256": "d50f8c5307965d25a635764fe263316d7ce598bd5bd837b62864fdbd06dbf453",
+        "objective": 0.0,
+        "evaluation_id": "f09e6babe5fe422cb5a477b139b855a3",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0002/evaluation_facts.json#candidates/5",
+        "score_evaluation_ref": "evaluation:f09e6babe5fe422cb5a477b139b855a3",
+        "first_evaluation_order": 15
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 16\n    return -bins",
+        "code_sha256": "12eb9f28065de8292fc3aa4a693bf28389f3eeb778a864459e8e90d183fad628",
+        "objective": 0.0,
+        "evaluation_id": "cc98a40a3ac4446eac6c0a1497e30acc",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0002/evaluation_facts.json#candidates/7",
+        "score_evaluation_ref": "evaluation:cc98a40a3ac4446eac6c0a1497e30acc",
+        "first_evaluation_order": 17
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 18\n    return -bins",
+        "code_sha256": "9364b259e638077319d1c7d0edda80dd0fb80a206681e79e6f70a20306f8cdde",
+        "objective": 0.0,
+        "evaluation_id": "5e7b96db141042e5b3175c65f65ae7c0",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_7",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0002/evaluation_facts.json#candidates/9",
+        "score_evaluation_ref": "evaluation:5e7b96db141042e5b3175c65f65ae7c0",
+        "first_evaluation_order": 19
+      },
+      {
+        "code": "def priority(item, bins):\n    fixture_revision = 3\n    return np.zeros_like(bins)",
+        "code_sha256": "e80658584a0f8cfd36c11d48d798f8181b7d023d369476598f4e10fe9cbae4b1",
+        "objective": 0.14821428571428572,
+        "evaluation_id": "f86c0eb7453343b4bed4e3d1cbe5ba38",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/2",
+        "score_evaluation_ref": "evaluation:f86c0eb7453343b4bed4e3d1cbe5ba38",
+        "first_evaluation_order": 2
+      }
+    ],
+    "training_metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "source_ref": "archive.json",
+    "k_requested": 10,
+    "locked": true,
+    "test_evaluated": false,
+    "content_hash": "f92e9bf75ca9f49f149f7d1d8cfd3f4108f416cc5000e9acf46a0defd0756793"
+  },
+  "metrics": {
+    "experiment_manifest_sha256": "0ce07ac47fdcc8d3a9d597b17683736ba965c26a4d283d4399b19083eb3df437",
+    "selection_sha256": "f92e9bf75ca9f49f149f7d1d8cfd3f4108f416cc5000e9acf46a0defd0756793",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "best_training_fitness": 0.0
+  },
+  "budget": {
+    "eoh_max_requests": 40,
+    "eoh_requests_used": 18,
+    "eoh_requests_remaining": 22,
+    "eoh_round_max_requests": null,
+    "max_solver_calls": 20,
+    "solver_calls_used": 20,
+    "solver_calls_remaining": 0,
+    "round_budget": 10,
+    "round_solver_calls_used": 10,
+    "round_solver_calls_remaining": 0,
+    "engine_wall_seconds": 120.0,
+    "round_wall_seconds": 60.0,
+    "repair_max_requests": null,
+    "total_evaluation_attempts": 20,
+    "novel_candidate_evaluations": 16,
+    "seed_reevaluation_attempts": 2,
+    "baseline_attempts": 2,
+    "repair_attempts": 0,
+    "experiment_manifest_sha256": "0ce07ac47fdcc8d3a9d597b17683736ba965c26a4d283d4399b19083eb3df437",
+    "selection_sha256": "f92e9bf75ca9f49f149f7d1d8cfd3f4108f416cc5000e9acf46a0defd0756793"
+  },
+  "test_result": {
+    "schema_version": "algorithm-optimization-benchmark-selection-evaluation/v1",
+    "selection_kind": "archive_topk",
+    "selection_sha256": "f92e9bf75ca9f49f149f7d1d8cfd3f4108f416cc5000e9acf46a0defd0756793",
+    "selection_locked_before_test": true,
+    "test_benchmark_id": "eohs_v1",
+    "test_profile": "obp_evolution_mini",
+    "test_split": "heldout",
+    "test_benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "test_suite_hash": "9ff2d6ea43b54e94927b45a2bff0c139eec9cd4070b1ba5f3a4fe3525145bb7a",
+    "test_data_manifest_hash": "f5c4f5729ad115286aa1dad2f622a06877f715b99004dac634b316bdfde45ffb",
+    "test_reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "instance_ids": [
+      "obp-evolution-mini-test-0",
+      "obp-evolution-mini-test-1"
+    ],
+    "test_problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "member_results": [
+      {
+        "member_index": 0,
+        "candidate_id": "candidate_1",
+        "code_sha256": "7eb385f28afd80880730a5250bad447e0de700928d0c32e74b9799af379dd6f9",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "2bbc79557b409db35c9722169888013bfda316dbaff5c9cc08ed3c7c657eec12"
+      },
+      {
+        "member_index": 1,
+        "candidate_id": "candidate_3",
+        "code_sha256": "8dfae39b55615c1d1653900838b8ab551eaf5313cd59cd6d31adce3935bae4a7",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "8a665a488d02baee183494320fbda5b746b3a1ddec154b7887a826c9ee464bb0"
+      },
+      {
+        "member_index": 2,
+        "candidate_id": "candidate_5",
+        "code_sha256": "28923b37d191f996321e2cd0ec70b6b794d7ccdcd8b8f21620a6c2c9c546212e",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "7627edcd844d59c420dbe5ac5467eb13708f449c406de9ad8e5d303194b0bf44"
+      },
+      {
+        "member_index": 3,
+        "candidate_id": "candidate_7",
+        "code_sha256": "16e2908bdd57c89efbdbda5ea1fad8533adc7be562b408531a1f0bd7dc76b216",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "f993f3e972efe7c8238ae8177d43518c8a1382c2caf3a287fb19fb42c2ed9cd3"
+      },
+      {
+        "member_index": 4,
+        "candidate_id": "candidate_9",
+        "code_sha256": "1131142620ea632710f73cec25dbde100ef0f9cf17e6dd7307328d7fbff77521",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "7fed4e7d49120c7ade8ddb5622cd108d3a7d37ac728422b625b68047873c37e2"
+      },
+      {
+        "member_index": 5,
+        "candidate_id": "candidate_1",
+        "code_sha256": "3e361d676776d51f9a16cca31bb383c9eebfd1d03c63dda7e1ff5ebd6e788bfa",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "89592245ed253b1d65e95fd70c5909afced25d363c0cf03192d9fe6f8a7c9c24"
+      },
+      {
+        "member_index": 6,
+        "candidate_id": "candidate_3",
+        "code_sha256": "d50f8c5307965d25a635764fe263316d7ce598bd5bd837b62864fdbd06dbf453",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "2eaee63f73c0ebf96c83a062e0228491d300b7d20e0b395f474531b1d1e03c0b"
+      },
+      {
+        "member_index": 7,
+        "candidate_id": "candidate_5",
+        "code_sha256": "12eb9f28065de8292fc3aa4a693bf28389f3eeb778a864459e8e90d183fad628",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "de9effd108786c6d30e8a894ff9dfde4c70eafe4e60a07556677f6588fa37294"
+      },
+      {
+        "member_index": 8,
+        "candidate_id": "candidate_7",
+        "code_sha256": "9364b259e638077319d1c7d0edda80dd0fb80a206681e79e6f70a20306f8cdde",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "bf43139e220b139f2b502cfbf382af802ef30b9ed2cc0ba6bab9fb6efe81078f"
+      },
+      {
+        "member_index": 9,
+        "candidate_id": "candidate_2",
+        "code_sha256": "e80658584a0f8cfd36c11d48d798f8181b7d023d369476598f4e10fe9cbae4b1",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "ed77884867afa9c8e18e1e146f5d07922cea6fe23c3fa6043887a659169f3413"
+      }
+    ],
+    "per_instance": [
+      {
+        "instance_id": "obp-evolution-mini-test-0",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      },
+      {
+        "instance_id": "obp-evolution-mini-test-1",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      }
+    ],
+    "aggregate_fitness": 0.0,
+    "valid_member_count": 10,
+    "instance_count": 2,
+    "complete_instance_coverage": true,
+    "test_evaluation_attempts": 10,
+    "test_instance_evaluation_attempts": 20,
+    "test_updates_training": false
+  }
+}
