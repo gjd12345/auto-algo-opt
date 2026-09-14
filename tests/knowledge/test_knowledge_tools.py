@@ -75,6 +75,14 @@ def test_code_evidence_ref_counts_as_located_code() -> None:
     assert flags["code"] is True
 
 
+def test_plan_startup_pins_resolved_release_directory() -> None:
+    text = Path("knowledge_workspace/plan_startup.md").read_text(encoding="utf-8")
+    assert "Path.resolve()" in text
+    assert "manifest.release_id" in text
+    assert "does not match directory" in text
+    assert "(Resolve-Path $pointer).Path" not in text
+
+
 def test_dashboard_tokenize_matches_backend_2opt() -> None:
     terms = tokenize_query("TSP 2-opt")
     assert "2opt" in terms

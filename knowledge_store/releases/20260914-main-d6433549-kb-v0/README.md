@@ -4,6 +4,6 @@
 
 Markdown 是知识正文来源，entries/*.json 是简短元数据 sidecar。正文必须包含定义/步骤、适用条件/限制、来源结论、代码/评测关联、未确认项/冲突证据五个部分。索引、关系表和看板由 python -m knowledge_tools build 派生，不手工编辑发布目录。
 
-当前发布是 `knowledge_store/releases/20260914-main-d6433549-kb-lit8`：方法优先看板，正文可在右侧阅读。对照 `kb-lit7`；文献填充前用 `kb-fix5`。
+基线发布为 `knowledge_store/releases/20260914-main-d6433549-kb-v0`。打开 `dashboard.html` 给人阅读。
 
 方法、实现和证据分卡；`run-index:inventory` 不算评测证据。全文深读只统计 `read_depth=full_text_local`。`knowledge_context.json`、验收笔记与 `literature_queue/` 留在工作区，不进入发布包。二级子问题目录在 `catalogs/`，EoH 适配签名在 `eoh_adapters/`，联网检索协议在 `literature_harvest_scheme.md`。

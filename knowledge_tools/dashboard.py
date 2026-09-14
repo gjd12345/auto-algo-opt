@@ -288,7 +288,7 @@ button{border:0;background:none}a{color:var(--accent);text-underline-offset:3px}
 .card .why{font-size:13px;color:#546276;margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.chip{display:inline-block;font-size:11px;line-height:1.5;padding:3px 7px;border-radius:5px;background:#eef1f6;color:#536379}.chip.bad{background:#fff0e6;color:var(--warn)}
 .reader{background:white}.rh{padding:28px 36px 20px;border-bottom:1px solid var(--line)}.rh h1{margin:8px 0;font-size:26px;font-weight:650;line-height:1.4;letter-spacing:-.02em;overflow-wrap:anywhere}.meta{font-size:12px;color:var(--muted)}
-.rh-actions{display:flex;gap:16px;align-items:center;font-size:12px}.reader-close{margin-left:auto;color:var(--muted)}.rb{max-width:960px;margin:auto;padding:8px 36px 48px}
+.rh-actions{display:flex;gap:16px;align-items:center;font-size:12px}.reader-close{margin-left:auto;color:var(--muted)}.reader-fab{display:none}.rb{max-width:960px;margin:auto;padding:8px 36px 48px}
 .rb h2{font-size:18px;margin:30px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);color:#21324d}.rb h3{font-size:16px;margin-top:24px}
 .rb p{margin:10px 0;overflow-wrap:anywhere}.rb li{margin:6px 0;overflow-wrap:anywhere}.rb ul,.rb ol{padding-left:24px}
 .rb pre{padding:18px;background:#f4f6fa;border:1px solid var(--line);border-radius:8px;overflow:auto;font:13px/1.7 var(--mono);tab-size:4;white-space:pre}
@@ -304,7 +304,7 @@ button{border:0;background:none}a{color:var(--accent);text-underline-offset:3px}
 .mobile-family{display:none}
 @media(min-width:1600px){.app{grid-template-columns:248px 400px minmax(0,1fr)}.rb{font-size:16px}}
 @media(max-width:1180px){.app{grid-template-columns:310px minmax(0,1fr)}.tree{display:none}.mobile-family{display:flex}.rh{padding:24px}.rb{padding:8px 24px 40px}.toolbar{gap:10px}.filter label{display:none}.topbar{gap:22px}}
-@media(max-width:760px){.topbar{height:auto;min-height:100px;padding:14px 16px;gap:12px;flex-wrap:wrap}.brand{font-size:17px}.views{order:3;width:100%;height:35px;gap:24px}.view{font-size:13px}.ver{font-size:11px}.toolbar{height:auto;flex-wrap:wrap;padding:12px 16px;gap:8px}.search{flex-basis:100%;max-width:none}.filter{flex:1}.filter select{width:100%;max-width:none;font-size:13px}.app{height:auto;display:block;min-height:0}.list{overflow:visible;border:0}.reader{display:none}.reader.open{display:block;position:fixed;inset:0;z-index:20;overflow:auto}.rh{padding:16px 20px}.rh h1{font-size:23px}.rh-actions{position:sticky;top:0;background:white}.reader-close{padding:7px;border:1px solid var(--line);border-radius:6px}.rb{padding:0 20px 32px}.page{height:auto;padding:24px 16px}.matrix th,.matrix td{padding:10px;font-size:12px}.rh-actions a{font-size:12px}}
+@media(max-width:760px){.topbar{height:auto;min-height:100px;padding:14px 16px;gap:12px;flex-wrap:wrap}.brand{font-size:17px}.views{order:3;width:100%;height:35px;gap:24px}.view{font-size:13px}.ver{font-size:11px}.toolbar{height:auto;flex-wrap:wrap;padding:12px 16px;gap:8px}.search{flex-basis:100%;max-width:none}.filter{flex:1}.filter select{width:100%;max-width:none;font-size:13px}.app{height:auto;display:block;min-height:0}.list{overflow:visible;border:0}.reader{display:none}.reader.open{display:block;position:fixed;inset:0;z-index:20;overflow:auto}.rh{position:sticky;top:0;z-index:3;padding:12px 20px 10px;background:white;box-shadow:0 1px 0 var(--line)}.rh h1{font-size:23px}.rh-actions{position:static}.reader-close{padding:7px 10px;border:1px solid var(--line);border-radius:6px}.reader.open .reader-fab{display:block;position:fixed;right:16px;bottom:16px;z-index:21;padding:10px 14px;border-radius:8px;background:var(--accent);color:#fff;border:0;box-shadow:0 4px 16px #255ad544}.rb{padding:0 20px 72px}.page{height:auto;padding:24px 16px}.matrix th,.matrix td{padding:10px;font-size:12px}.rh-actions a{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 """
 
@@ -370,13 +370,32 @@ function renderReader(id){
  const body=(d.body||"").replace(/^# [^\n]+\n?/,"");
  const warning=d.unverified?"<div class='notice'>来源待核对：以下内容保留用于追溯，不能据此确认论文支持该方法。</div>":"";
  const local=/^entries\/[a-z0-9._-]+\.md$/.test(d.path)?d.path:"";
- pane.innerHTML="<div class='rh'><div class='rh-actions'><span class='meta'>"+esc(d.familyLabel)+" / "+esc(d.kindLabel)+"</span><button class='reader-close' data-close>返回列表 ×</button></div><h1 id='readerTitle' tabindex='-1'>"+esc(d.title)+"</h1>"+(d.originalTitle!==d.title?"<p class='meta'>"+esc(d.originalTitle)+"</p>":"")+"<div class='chips'>"+chips(d)+"</div>"+warning+"</div><article class='rb'>"+(md(body)||"<p>暂无正文</p>")+"<h2>查阅原始来源</h2>"+((d.sourceRefs||[]).map(sourceHTML).join("")||"<p class='note'>该条目没有登记外部来源。</p>")+rel+"<details class='technical'><summary>文件、引用与命令行读取</summary>"+(local?"<p><a href='"+esc(local)+"' target='_blank' rel='noopener'>打开 Markdown 原文 ↗</a></p>":"")+"<p>固定版本："+esc(RELEASE)+"</p><pre>"+esc("python -m knowledge_tools read --release knowledge_store/releases/"+RELEASE+" --id "+d.id)+"</pre><p>"+esc((d.codePaths||[]).join("\n"))+"</p><p>"+esc((d.evidenceRefs||[]).join("\n"))+"</p></details></article>";
+ pane.innerHTML="<div class='rh'><div class='rh-actions'><span class='meta'>"+esc(d.familyLabel)+" / "+esc(d.kindLabel)+"</span><button class='reader-close' data-close>返回列表 ×</button></div><h1 id='readerTitle' tabindex='-1'>"+esc(d.title)+"</h1>"+(d.originalTitle!==d.title?"<p class='meta'>"+esc(d.originalTitle)+"</p>":"")+"<div class='chips'>"+chips(d)+"</div>"+warning+"</div><article class='rb'>"+(md(body)||"<p>暂无正文</p>")+"<h2>查阅原始来源</h2>"+((d.sourceRefs||[]).map(sourceHTML).join("")||"<p class='note'>该条目没有登记外部来源。</p>")+rel+"<details class='technical'><summary>文件、引用与命令行读取</summary>"+(local?"<p><a href='"+esc(local)+"' target='_blank' rel='noopener'>打开 Markdown 原文 ↗</a></p>":"")+"<p>固定版本："+esc(RELEASE)+"</p><pre>"+esc("python -m knowledge_tools read --release knowledge_store/releases/"+RELEASE+" --id "+d.id)+"</pre><p>"+esc((d.codePaths||[]).join("\n"))+"</p><p>"+esc((d.evidenceRefs||[]).join("\n"))+"</p></details></article><button class='reader-fab' data-close>返回列表</button>";
+}
+function fillProblemFilter(){
+ const sel=byId("problemFilter");if(!sel)return;
+ const probs=Object.values(DATA).filter(d=>d.kind==="problem"&&(family==="all"||d.family===family))
+  .sort((a,b)=>a.title.localeCompare(b.title));
+ const label=p=>p.title.replace(" (literature secondary)","");
+ sel.innerHTML="<option value='all'>全部问题形式</option>"+probs.map(p=>"<option value='"+esc(p.id)+"'>"+esc(label(p))+"</option>").join("");
+ sel.value=probs.some(p=>p.id===problem)?problem:"all";
+ if(sel.value==="all")problem="all";
+}
+function syncReaderToFilter(){
+ const rows=filtered();
+ if(!openId){if(window.innerWidth>760&&rows[0]){openId=rows[0].id;renderReader(openId);}else renderReader("");return;}
+ if(rows.some(d=>d.id===openId)){renderReader(openId);return;}
+ const next=rows[0];
+ if(next){openId=next.id;renderReader(openId);if(location.hash)location.hash="#detail-"+openId;}
+ else{openId=null;renderReader("");if(location.hash)location.hash="";}
 }
 function apply(){
+ fillProblemFilter();
  byId("kindFilter").value=kind;byId("familyFilter").value=family;byId("clearSearch").hidden=!query;
  document.querySelectorAll("[data-family]").forEach(b=>{const active=b.dataset.family===family&&problem==="all";b.classList.toggle("active",active);b.setAttribute("aria-pressed",active);});
  document.querySelectorAll("[data-problem]").forEach(b=>b.classList.toggle("active",b.dataset.problem===problem));
  renderList();
+ syncReaderToFilter();
 }
 function setView(v){
  view=v;document.querySelectorAll(".view").forEach(b=>{b.classList.toggle("active",b.dataset.view===v);b.setAttribute("aria-pressed",b.dataset.view===v);});
@@ -385,9 +404,12 @@ function setView(v){
  if(v==="sources")byId("sourceView").innerHTML="<h1>文献来源</h1><p class='note'>"+Object.keys(SOURCES).length+" 条登记来源 · 书目、阅读深度和链接</p>"+Object.keys(SOURCES).map(sourceHTML).join("");
 }
 function openEntry(id,focus=true){
- if(!DATA[id])return;setView("methods");openId=id;renderList();renderReader(id);
+ if(!DATA[id])return;
+ const d=DATA[id];
+ family=d.family;kind="all";problem="all";
+ setView("methods");openId=id;apply();renderReader(id);
  if(location.hash!=="#detail-"+id)location.hash="#detail-"+id;
- byId("reader").scrollTop=0;if(focus)byId("readerTitle").focus({preventScroll:true});
+ byId("reader").scrollTop=0;if(focus){const t=byId("readerTitle");if(t)t.focus({preventScroll:true});}
 }
 function closeReader(){openId=null;renderReader("");renderList();if(location.hash)location.hash="";}
 document.body.addEventListener("click",e=>{
@@ -401,6 +423,11 @@ document.body.addEventListener("click",e=>{
 });
 byId("kindFilter").addEventListener("change",e=>{kind=e.target.value;apply();});
 byId("familyFilter").addEventListener("change",e=>{family=e.target.value;problem="all";apply();});
+byId("problemFilter").addEventListener("change",e=>{
+ problem=e.target.value;
+ if(problem!=="all"&&DATA[problem])family=DATA[problem].family;
+ apply();
+});
 byId("q").addEventListener("input",e=>{query=e.target.value;apply();});
 byId("clearSearch").addEventListener("click",()=>{query="";byId("q").value="";apply();byId("q").focus();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeReader();});
@@ -435,11 +462,13 @@ def dashboard_html(release_id, index, taxonomy, sources, pending, diff, inventor
     options = '<option value="all">全部问题</option>'+''.join('<option value="'+_esc(fid)+'">'+_esc(family_map[fid])+'</option>' for fid in families)
     kinds = '<option value="method">方法</option><option value="all">全部类型</option>'+''.join('<option value="'+k+'">'+v+'</option>' for k,v in KIND_LABELS.items() if k != "method")
     header = '<header class="topbar"><div class="brand">优化知识库<small>OPTIMIZATION LIBRARY</small></div><nav class="views" aria-label="主导航">'+''.join('<button class="view'+(' active' if v=='methods' else '')+'" data-view="'+v+'">'+label+'</button>' for v,label in [('methods','浏览'),('sources','文献'),('coverage','覆盖'),('changes','版本变更')])+'</nav><details class="ver"><summary>版本信息</summary><p>'+_esc(release_id)+'<br>main '+_esc((index or {}).get('source_main_sha',''))+'</p></details></header>'
-    toolbar = '<div class="toolbar" id="toolbar"><div class="search"><input id="q" type="search" placeholder="搜索算法、问题或正文，例如 2-opt、装箱" aria-label="搜索知识"><button id="clearSearch" aria-label="清空搜索" hidden>×</button></div><div class="filter mobile-family"><label for="familyFilter">问题</label><select id="familyFilter" aria-label="问题族">'+options+'</select></div><div class="filter"><label for="kindFilter">查看</label><select id="kindFilter" aria-label="条目类型">'+kinds+'</select></div></div>'
+    toolbar = '<div class="toolbar" id="toolbar"><div class="search"><input id="q" type="search" placeholder="搜索算法、问题或正文，例如 2-opt、装箱" aria-label="搜索知识"><button id="clearSearch" aria-label="清空搜索" hidden>×</button></div><div class="filter mobile-family"><label for="familyFilter">问题</label><select id="familyFilter" aria-label="问题族">'+options+'</select></div><div class="filter mobile-family"><label for="problemFilter">问题形式</label><select id="problemFilter" aria-label="问题形式"><option value="all">全部问题形式</option></select></div><div class="filter"><label for="kindFilter">查看</label><select id="kindFilter" aria-label="条目类型">'+kinds+'</select></div></div>'
     main = '<main class="app" id="methodsView"><nav class="tree" aria-label="问题分类">'+''.join(tree)+'</nav><section class="list" aria-label="知识列表"><div class="list-head"><h2 id="listTitle">浏览知识</h2><span id="listDesc" aria-live="polite"></span></div><div id="cards"></div></section><aside class="reader" id="reader" aria-label="知识正文"></aside></main>'
     rows = ''.join('<tr><th>'+_esc(family_map[fid])+'</th>'+''.join('<td><div class="mcell"><b>'+str(sum(p['kind']==k for p in grouped[fid]))+'</b></div></td>' for k in ('problem','method','implementation'))+'</tr>' for fid in families)
     coverage = '<section class="page" id="coverageView" hidden><h1>知识覆盖</h1><p class="note">统计登记条目数量，不代表算法效果或证据已验证。</p><table class="matrix"><thead><tr><th>问题族</th><th>问题形式</th><th>方法</th><th>实现</th></tr></thead><tbody>'+rows+'</tbody></table></section>'
-    changes = '<section class="page" id="changeView" hidden><h1>版本变更</h1><p class="note">'+_esc((diff or {}).get("previous_release_id") or "首个版本")+' → '+_esc(release_id)+'</p>'
+    prev = (diff or {}).get("previous_release_id")
+    baseline = _esc(release_id) + " 为当前展示基线" if not prev else _esc(prev) + " → " + _esc(release_id)
+    changes = '<section class="page" id="changeView" hidden><h1>版本变更</h1><p class="note">'+baseline+'。对照目录必须实际存在于 knowledge_store/releases/。</p>'
     for key,label in [('added','新增'),('changed','更新'),('removed','移除')]:
         ids = (diff or {}).get(key) or []
         changes += '<h2>'+label+' · '+str(len(ids))+'</h2>'
