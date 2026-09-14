@@ -32,6 +32,7 @@ from agent_skill_loop.client import ProviderFailure, http_post_with_deadline
 from agent_skill_loop.contracts import PROBLEM_CVRP
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget, RequestSlot
 from agent_skill_loop.skill_store import _atomic_write_text
+from eoh_frozen.generation_contract import generation_parameters
 
 
 class OpenAIPathBridge:
@@ -173,19 +174,8 @@ class OpenAIPathBridge:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2 if purpose == "eoh_repair" else 1.0,
-            "max_tokens": 8192 if purpose == "eoh_repair" else 16384,
+            **generation_parameters(self.target_url, self.thinking, repair=purpose == "eoh_repair"),
         }
-        if purpose == "eoh_repair":
-            # Repair has a machine-checked envelope.  Asking the provider for
-            # JSON output prevents a long reasoning preamble from consuming the
-            # whole completion and leaving no executable repair document.
-            payload["response_format"] = {"type": "json_object"}
-        if self._opencode:
-            payload["thinking"] = {"type": "disabled"}
-            payload["reasoning"] = {"effort": "none"}
-        if self.thinking != "provider-default":
-            payload["thinking"] = {"type": self.thinking}
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",

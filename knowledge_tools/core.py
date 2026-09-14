@@ -1211,6 +1211,11 @@ def _copy_public_files(workspace: Path, stage: Path) -> list[dict[str, Any]]:
 
 
 def _release_input(release: Path) -> Path:
+    # Git with core.symlinks=false checks a tracked symlink out as text.
+    # Resolve that representation before Path.resolve() loses pointer context.
+    if release.name == "current" and release.is_file() and not release.is_symlink():
+        target = release.read_text(encoding="utf-8").strip()
+        return (release.parent / target).resolve()
     release = release.resolve() if release.exists() else release.absolute()
     if release.is_file() and release.name in {"manifest.json", "index.json", "dashboard.html"}:
         return release.parent
@@ -1218,7 +1223,7 @@ def _release_input(release: Path) -> Path:
         current = release / "current"
         if current.exists() or os.path.lexists(current):
             try:
-                return current.resolve()
+                return _release_input(current)
             except OSError:
                 pass
         pointer = release / "current.path"

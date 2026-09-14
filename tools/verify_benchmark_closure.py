@@ -19,6 +19,7 @@ from agent_skill_loop.benchmark import (
 )
 from eoh_frozen.smoke import fixture_provider
 from agent_skill_loop.skill_store import load_skill
+from compare_closure_invariants import derive
 
 
 def save(path, value):
@@ -170,6 +171,7 @@ def main(output):
             rounds=rounds, reports=reports, reload_verified=True,
             reachable_bins=[dict(instance_id=x["instance_id"], bins=reachable_bins(x))
                             for x in load_profile_suite("eohs_v1", "obp_evolution_mini")["instances"]]))
+        save(output / "closure_invariants.json", derive(output))
         hashes = {str(p.relative_to(output)): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in output.rglob("*") if p.is_file() and not p.name.endswith(("-wal", "-shm"))}
         save(output / "sha256_manifest.json", hashes)

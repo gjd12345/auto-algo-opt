@@ -78,6 +78,14 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
 
     def make(*, inheritance_mode: str, feedback_mode: str, agent_guidance: bool,
              rounds: int, round_budget: int) -> ExperimentManifest:
+        extra = dict(common_extra)
+        if "resource_contract" in extra:
+            resources = dict(extra["resource_contract"])
+            resources["round_evaluation_budget"] = round_budget
+            if rounds == 1:
+                resources["round_request_budget"] = resources["request_budget"]
+                resources["round_wall_clock_budget"] = resources["wall_clock_budget"]
+            extra["resource_contract"] = resources
         return ExperimentManifest(
             benchmark_spec_hash=source.benchmark_spec_hash,
             metric_spec_hash=source.metric_spec_hash,
@@ -97,7 +105,7 @@ def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
             round_budget=round_budget,
             search_seed=source.search_seed,
             manifest_version=source.manifest_version,
-            extra=common_extra,
+            extra=extra,
         )
 
     # A is the continuous-EoH comparison implemented through the same

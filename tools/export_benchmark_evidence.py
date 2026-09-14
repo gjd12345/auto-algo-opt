@@ -15,6 +15,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from agent_skill_loop.benchmark import build_archive_from_session, build_report, ExperimentManifest, FrozenSelection
+from tools.generation_diagnostics import derive_generation_diagnostics
 
 
 def digest(data):
@@ -72,10 +73,10 @@ def export_bundle(run, output, report_dir=None):
                 # Session text identities use newline-normalized UTF-8.
                 if digest(raw.decode("utf-8").replace("\r\n", "\n").encode()) != expected:
                     raise ValueError("source_hash_mismatch:" + ref)
-                files[ref] = raw
+                files[ref] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
                 source_hashes[ref] = expected
         requests = [dict(row) for row in con.execute(
-            "SELECT sequence,round_id,purpose,state,input_tokens,output_tokens,"
+            "SELECT request_id,sequence,round_id,purpose,state,input_tokens,output_tokens,"
             "elapsed_seconds,error_code,finish_reason FROM requests ORDER BY sequence")]
         solver = [dict(row) for row in con.execute("SELECT * FROM solver_calls ORDER BY rowid")]
         tasks = [dict(row) for row in con.execute(
@@ -83,6 +84,7 @@ def export_bundle(run, output, report_dir=None):
         files["budget_receipt.json"] = encoded({
             "requests": requests, "solver_calls": solver, "tasks": tasks,
             "total_request_reservations": len(requests), "total_evaluation_attempts": len(solver)})
+        files["generation_diagnostics.json"] = encoded(derive_generation_diagnostics(run, requests))
         files["bundle.json"] = encoded({
             "schema_version": "compact-session-evidence/v1", "run_id": state["run_id"],
             "run_state": state["state"], "state_version": state["state_version"],
@@ -105,7 +107,7 @@ def export_bundle(run, output, report_dir=None):
             report = build_report(**inputs)
             if report != json.loads((Path(report_dir) / (kind + ".report.json")).read_text(encoding="utf-8")):
                 raise ValueError("report_rebuild_mismatch")
-            files[name] = raw
+            files[name] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
             files[kind + ".report.json"] = encoded(report)
         bundle = json.loads(files["bundle.json"])
         bundle["omitted"].remove("heldout results not supplied")

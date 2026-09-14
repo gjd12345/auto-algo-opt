@@ -1464,6 +1464,18 @@ def initialize_session(
     memory_path = memory_store
     manifest_payload = None
     manifest_hash = None
+    from eoh_frozen.generation_contract import generation_contract
+    experiment_contracts = {
+        "search_policy_defaults": normalized_search_defaults,
+        "search_policy_limits": {key: list(value) for key, value in normalized_search_limits.items()},
+        "generation_contract": generation_contract(eoh_model, eoh_endpoint, eoh_thinking, request_timeout),
+        "resource_contract": {
+            "request_budget": eoh_max_requests, "round_request_budget": eoh_round_max_requests,
+            "wall_clock_budget": engine_wall_seconds, "round_wall_clock_budget": round_wall_seconds,
+            "evaluation_budget": max_solver_calls, "round_evaluation_budget": round_budget,
+            "solver_timeout_seconds": solver_timeout, "repair_request_budget": repair_max_requests,
+        },
+    }
     if isinstance(experiment_manifest, Mapping):
         manifest_payload, manifest_hash = _validate_experiment_manifest(
             experiment_manifest,
@@ -1506,8 +1518,13 @@ def initialize_session(
             round_budget=round_budget,
             search_seed=seed,
         )
+        generated_manifest = ExperimentManifest(**{**generated_manifest.__dict__, "extra": experiment_contracts})
         manifest_payload = generated_manifest.as_dict()
         manifest_hash = generated_manifest.content_hash
+    if isinstance(experiment_manifest, Mapping):
+        for contract_name, actual_contract in experiment_contracts.items():
+            if manifest_payload["extra"].get(contract_name) != actual_contract:
+                raise SessionError("INVALID_ARGUMENT", f"experiment_manifest_{contract_name}_mismatch", action="init")
     config: dict[str, Any] = {
         "schema_version": CONFIG_SCHEMA,
         "run_id": run_id,

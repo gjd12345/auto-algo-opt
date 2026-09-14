@@ -4,17 +4,21 @@
 
 ## 1. 固定工程验收
 
-推送后等待 Ubuntu/Windows knowledge 和 EoH closure job；核对 artifact 的 SHA256SUMS，确认 Windows current.path fallback、冻结资产和原始种群顺序没有平台偏差。以本次两轮 fixture 为准入样例，不能用 fixture 分数证明优化收益。
+推送后等待 Ubuntu/Windows knowledge、EoH closure 和 closure-parity job。SHA256SUMS 验证每个包内部完整性；跨平台只比较 closure_invariants.json，不比较 ZIP digest。invariants 保留官方种群顺序、seed 顺序和 heldout 逐代码分数。原始 selection hash 含运行局部证据 ID，不要求跨运行相等；另算明确标识的 semantic_selection_sha256。Windows 必须从实际 checkout 验证 store 和 current 两种入口，含 Git 普通文本 symlink 表示。fixture 分数不能证明优化收益。
 
 分别保存主控 Agent 的模型、harness 版本、Skill 全部资源 hash、Runtime hash、EoH commit、套件与 MetricSpec hash。实验期间冻结源码和 Skill，不用实时更新的软链接作为实验版本标识。
 
 ## 2. 真实多精英接线试跑
 
-OBP evolution mini；population=2；两轮；训练评测总额 20、每轮 10（不结转）；请求总额 24；全局墙钟 600 秒、每轮 300 秒。Memory/KB/repair 均 OFF。冻结生成模型、thinking、输出 token 上限、温度、timeout、并发及 EoH 采样额度。
+OBP evolution mini；population=2；两轮；训练评测总额 20、每轮 10（不结转）；请求总额 24、每轮请求上限也为 24（不预分配，仅由全局账本共同约束）；全局墙钟 600 秒、每轮 300 秒。Memory/KB/repair 均 OFF。冻结生成模型、thinking、输出 token 上限、温度、timeout、并发及 EoH 采样额度。
+
+新 Benchmark Session 在 ExperimentManifest.extra 冻结 generation_contract 与 resource_contract，全文纳入 manifest hash。生成合同从 bridge 同源函数获取：普通生成 temperature=1.0、max_output_tokens=16384；修复 temperature=0.2、max_output_tokens=8192；provider 默认项明确记录，concurrency=1、provider_seed=null。外部 Manifest 缺少合同或与实际 Session 参数不符时拒绝启动；历史 Manifest 仍可只读复评。资源合同包含全局/轮请求、墙钟、评测额度、solver timeout 和 repair 子额度。运行前保存完整 Manifest 和代码 commit，此后不更改该 run 的 Runtime/Skill。
 
 先离线检查配置能覆盖初始化、baseline 与两份 seed 成本。真实运行验收必须出现第一轮最终种群两份可信父代码、第二轮两份完整重评及新的真实生成候选、反馈被使用、预算对账和终态导出。若同分去重只留下一个成员，按失败报告；不以换 seed、补冷启动、增加预算或修改去重规则让本次实验“成功”。
 
 重点记录 finish_reason、正文长度、截断比例、generation recovery/repair 计数和 unknown 请求。任何响应参数调整都生成新配置、新运行，保留旧结果。一次失败不阻止导出证据，也不允许对全失败的结果补基线伪装生成成功。
+
+generation_diagnostics.json 由 request_id 关联的账本和原始 exchange 派生正文字符/字节长度、截断、空响应、未知状态及修复请求数，附 source hash。上游尚无可靠 parse/retry lineage，parse_failed/recovered 暂为 null 并标明缺失原因；不得写成 0 或由请求邻接推断成功恢复。此观测缺口必须保留在报告中。
 
 ## 3. 效果数据准入
 
@@ -22,11 +26,13 @@ OBP evolution mini；population=2；两轮；训练评测总额 20、每轮 10�
 
 在看真实搜索输出之前，固定数据生成分布、随机种子、训练/test split、reference 来源。只用训练集离线评估 First Fit、Best Fit、Worst Fit 的分数分布、最优饱和比例、可区分 fitness 数量和运行成本；选择有训练改善空间的配置。test 仅用于最终锁定选择后的评估，不能参与数据筛选或参数调节。发布资产清单、生成工具和 reference 证明/求解器配置。
 
+在生成任何效果 profile 前提交 admission_spec/v1 并冻结 hash，写定 FF/BF/WF、实例数量、distinct-fitness 下限、optimal-saturation 上限、成本上限和 reference 要求。阈值须在查看候选数据前确定；当前尚未注册数值阈值，因此不启动效果数据筛选。保存所有 PASS/FAIL profile，不因模型结果换数据。mini 保持 wiring 定位。
+
 ## 4. A/B/C/D 受控 pilot
 
 | 组 | 轮数 | 继承 | feedback | Agent |
 | --- | --- | --- | --- | --- |
-| A | 1 | 初始种群 | OFF | neutral |
+| A | 1 | 单次连续 Session，无跨轮继承 | OFF | neutral |
 | B | 2 | incumbent_only | ON | neutral |
 | C | 2 | population_seeds | ON | neutral |
 | D | 2 | population_seeds | ON | adaptive |
@@ -38,6 +44,8 @@ B/C 检验继承差异；C/D 保持其他可控设置相同，比较 adaptive gu
 每个 run 独立 Session、archive、输出目录和宿主会话。以训练成绩选择 Top1、archive TopK 和 final population 后锁定，再单独评测 heldout；test 不反馈主控或 Memory。每次 baseline、seed、生成、修复及 heldout 执行成本分项记录。图表分别采用总训练 evaluator calls 和新代码候选数为横轴。
 
 每个报告含有效率、重复率、最优曲线、训练/test gap、seed 成本、请求与 token、墙钟、unknown 用量、停止原因。宿主 Agent 成本无法完整观测时标 unavailable，不记为零。一个 run 仅作 pilot；流程稳定后再运行三个独立配对 seed，不因表现选择性重跑。正式 2000 / 4×500 配置最后执行。
+
+D 的 treatment-validity 必须核对第二轮 normalized Plan.feedback_basis 对应第一轮可信反馈身份，并保留 Plan hash；Runtime 不判断建议是否聪明。三个 replicate 的 ID/seed 在运行前注册，配对表示 dataset/search seed/初始条件/EoH 参数/预算/generation contract/controller 一致，不承诺 API 随机轨迹相同。provider_seed 不可用时明确残余随机性。2000 / 4×500 是正式 scale-up protocol。
 
 ## 5. Codex 与 DeepSeek Harness 比较
 
