@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Restricted 3-opt: four reconnection patterns on neighbor-induced edge triples",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Breaks three edges. Patterns: reverse B and C; swap B and C; C then reverse B; reverse C then B. Candidate second/third edges come from endpoints' neighbor lists. After each accept, reconverges older neighbourhoods.",
+  "attributes": {
+    "interface": "apply_three_opt / best_restricted_three_opt",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "scripts/evaluate_tsp_restricted_three_opt.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_restricted_three_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_restricted_three_opt.py",
+      "sha256": "45dcba832bd9543a5c01b4308773202966397034d08687f90b27b262fb2e2932"
+    }
+  ],
+  "id": "impl-tsp-restricted-3opt",
+  "content_sha256": "564d52bb9fb9f5d96a01ab4000bcd4f279c8cb821b18d6695e6f189a02991ec3"
+}

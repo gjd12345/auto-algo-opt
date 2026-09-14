@@ -1,0 +1,35 @@
+{
+  "type": "problem",
+  "title": "Insertships: evolve InsertShips in a Go dispatcher",
+  "category": "problem",
+  "problem_family": "insertships_routing",
+  "tags": [
+    "insertships",
+    "online",
+    "solomon-json"
+  ],
+  "status": "reviewed",
+  "summary": "EoH replaces func InsertShips in go_solver/main.go and runs Solomon-format batch JSON; objective is mean final cost.",
+  "attributes": {
+    "online_offline": "online",
+    "interface": "InsertShips(dispatch, oris, dess, total_ship) Dispatch",
+    "objective": "mean final cost"
+  },
+  "relations": {
+    "implementations": [
+      "impl-insertships-go-harness"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:Agent_EOH/eoh/src/eoh/examples/user_insertships_go/prob_insertships_go.py"
+  ],
+  "code_refs": [
+    {
+      "path": "Agent_EOH/eoh/src/eoh/examples/user_insertships_go/prob_insertships_go.py",
+      "sha256": "02bc4199aa17998531a4df1239fe82a887c0a7b226d42577537635b24643a9bb"
+    }
+  ],
+  "id": "problem-insertships",
+  "content_sha256": "0d2f95245e6d4913206f3f8eead1ee068de7955bb1a0f4b441cd619f11e135b4"
+}

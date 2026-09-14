@@ -1,0 +1,156 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_variable",
+    "label": "Variable-sized bins",
+    "definition": "Several bin sizes.",
+    "search_query": "variable sized bin packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Any Fit variable bins",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Variable-size FFD",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "variable sized bin packing heuristic",
+  "harvested_at": "2026-09-14T08:00:52Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6987299",
+      "title": "Branch and Price for the Variable-Sized Open-End Bin Packing Problem with Conflicts",
+      "authors": [
+        "Bowen Miao",
+        "Yongxi Cheng",
+        "Jun Wu"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper addresses a new bin packing problem that simultaneously involves variable-sized bins with different costs, an open-end mechanism that allows the last item placed in a bin to exceed its capacity at a penalty, and pairwise conflicts that prohibit incompatible items from being assigned to the same bin. This problem, referred to as the variable-sized open-end bin packing problem with conflicts (VSOEBPPC), generalizes the classical bin packing problem by jointly integrating three of its well-studied extensions, with the objective of minimizing the total cost of the bins used and the total overflow penalty. To solve this problem, we propose an exact branch-and-price algorithm, where the pricing subproblem is a variant of the knapsack problem with conflicts that incorporates a penalized open-end overflow. We solve the pricing subproblem by a two-stage scheme in which a heuristic pricing stage precedes exact pricing. We further incorporate several strategies, including warm starting of the restricted master problem, a depth-dependent branching strategy, and an efficient column-pool management, to improve the computational efficiency. Computational results show that our algorithm can handle the VSOEBPPC effectively. On two well-studied special cases, obtained by deactivating the open-end mechanism or fixing a single bin type, it further yields tighter root-node lower bounds and higher-quality solutions than the state-of-the-art metaheuristics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6987299"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0215016",
+      "title": "Variable Sized Bin Packing",
+      "authors": [
+        "D. K. Friesen",
+        "M. A. Langston"
+      ],
+      "year": 1986,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 173,
+      "abstract": "In the classical bin packing problem one seeks to pack a list of pieces in the minimum space using unit capacity bins. This paper addresses the more general problem in which a fixed collection of bin sizes is allowed. Three efficient approximation algorithms are described and analyzed. They guarantee asymptotic worst-case performance bounds of 2, ${3 / 2}$ and ${4 / 3}$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0215016"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0216012",
+      "title": "An Efficient Approximation Scheme for Variable-Sized Bin Packing",
+      "authors": [
+        "Frank D. Murgolo"
+      ],
+      "year": 1987,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 60,
+      "abstract": "In the classical bin packing problem one is required to pack a given list of items into the smallest possible number of unit-sized bins. Because this problem is NP-complete, researchers have tried to find efficient approximation algorithms that solve this problem in a reasonable amount of time. If we let $A(I)$ be the number of bins used by algorithm A to pack a list of items I, and ${\\textit{OPT}}(I)$ be the minimum number of bins necessary to pack I, one defines the asymptotic performance ratio of A to be ${{A(I)} / {{\\textit{OPT}}(I)}}$, as ${\\textit{OPT}}(I)$ tends to infinity. De la Vega and Lueker presented an approximation scheme, which for any $ \\in &gt; 0$, yields an approximation algorithm with performance ratio $1 + \\varepsilon $. This scheme has time complexity polynomial in n, the number of items, but exponential in ${1 / \\varepsilon }$. Karmarkar and Karp extended this scheme to one that has time complexity polynomial in n and ${1 / \\varepsilon }$. In the variable-sized bin packing problem, one is given a list of items to pack and a set of different bin sizes to be used in packing the items. For an algorithm A, $A(I)$ is the sum of the sizes of the bins used to pack the list I. This sum is the quantity one wishes to minimize. Friesen and Langston presented an approximation algorithm with performance ratio $\\frac{4}{3}$ with time complexity polynomial in the number of items and the number of different bin sizes. In this paper we present an approximation scheme which for any given positive a produces a scheme with performance ratio $1 + \\varepsilon $. This algorithm has time complexity polynomial in the number of items, the number of bins, and ${1 / \\varepsilon }$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0216012"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/060670328",
+      "title": "An APTAS for Generalized Cost Variable-Sized Bin Packing",
+      "authors": [
+        "Leah Epstein",
+        "Asaf Levin"
+      ],
+      "year": 2008,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 30,
+      "abstract": "Bin packing is a well-known problem which has a large number of applications. Classical bin packing is a simple model in which all bins are identical. In the bin packing problem with variable-sized bins, we are given a supply of a variety of sizes. This latter model assumes, however, that the cost of a bin is always defined to be its exact size. In this paper we study the more general problem where an available bin size is associated with a fixed cost, which may be smaller or larger than its size. The costs of different bin sizes are unrelated. This generalized problem has various applications in storage and scheduling. In order to generalize previous work, we design new rounding and allocation methods. Our main result is an asymptotic polynomial time approximation scheme for the generalized problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/060670328"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s0895480100369948",
+      "title": "An Optimal Online Algorithm for Bounded Space Variable-Sized Bin Packing",
+      "authors": [
+        "Steven S. Seiden"
+      ],
+      "year": 2001,
+      "venue": "SIAM Journal on Discrete Mathematics",
+      "cited_by_count": 20,
+      "abstract": "An online algorithm for variable-sized bin packing, based on the Harmonic algorithm of Lee and Lee,[J. ACM, 32 (1985), pp. 562--572], is investigated. This algorithm was proposed by Csirik, [Acta Inform., 26 (1989), pp. 697--709], who proved that for all sets of bin sizes, 1.69103 upper bounds its performance ratio. The upper bound is improved in the sense that we give a method of calculating the performance ratio to any accuracy for any set of bin sizes. Further, it is shown that the algorithm is optimal among those which use bounded space. An interesting feature of the analysis is that, although it is shown that our algorithm achieves a performance ratio arbitrarily close to the optimum value, it is not known precisely what that value is. The case where bins of capacity 1 and $\\alpha \\in (0,1)$ are used is studied in greater detail. It is shown that among algorithms which are allowed to choose $\\alpha$, the optimal performance ratio lies in [1.37530,1.37532].",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s0895480100369948"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s0097539702412908",
+      "title": "New Bounds for Variable-Sized Online Bin Packing",
+      "authors": [
+        "Steven S. Seiden",
+        "Rob van Stee",
+        "Leah Epstein"
+      ],
+      "year": 2003,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 43,
+      "abstract": "In the variable-sized online bin packing problem, one has to assign items to bins one by one. The bins are drawn from some fixed set of sizes, and the goal is to minimize the sum of the sizes of the bins used. We present new algorithms for this problem and show upper bounds for them which improve on the best previous upper bounds. We also show the first general lower bounds for this problem. The case in which bins of two sizes, 1 and $\\alpha \\in (0,1)$, are used is studied in detail. This investigation leads us to the discovery of several interesting fractal-like curves.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s0097539702412908"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s009753979834669x",
+      "title": "Variable-Sized Bin Packing: Tight Absolute Worst-Case Performance Ratios for Four Approximation Algorithms",
+      "authors": [
+        "Chengbin Chu",
+        "Rémy La"
+      ],
+      "year": 2001,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 28,
+      "abstract": "In this paper we consider a one-dimensional bin packing problem where the bins do not have identical sizes, or a variable-sized bin packing problem, to minimize the bin consumption, i.e., the total size of the opened bins. The identical size problem has been extensively studied in the literature both for static and dynamic settings. The worst-case or average-case performance has been analyzed. Our problem setting particularly arises in metal cutting industries. Therefore, it presents a great practical relevance. Four greedy approximation algorithms based on a construction approach called largest object first with least absolute waste (LFLAW), largest object first with least relative waste (LFLRW), least absolute waste (LAW), and least relative waste (LRW) are examined. Their absolute worst-case performances are analyzed. The worst case bounds are 2 for LFLAW and LFLRW, 3 for LAW, and 2+ln 2 for LRW. We also show that these worst-case bounds are tight.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s009753979834669x"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/pr8101246",
+      "title": "Material Requirements Planning Using Variable-Sized Bin-Packing Problem Formulation with Due Date and Grouping Constraints",
+      "authors": [
+        "Dejan Gradišar",
+        "Miha Glavan"
+      ],
+      "year": 2020,
+      "venue": "Processes",
+      "cited_by_count": 5,
+      "abstract": "Correct planning is crucial for efficient production and best quality of products. The planning processes are commonly supported with computer solutions; however manual interactions are commonly needed, as sometimes the problems do not fit the general-purpose planning systems. The manual planning approach is time consuming and prone to errors. Solutions to automatize structured problems are needed. In this paper, we deal with material requirements planning for a specific problem, where a group of work orders for one product must be produced from the same batch of material. The presented problem is motivated by the steel-processing industry, where raw materials defined in a purchase order must be cut in order to satisfy the needs of the planned work order while also minimizing waste (leftover) and tardiness, if applicable. The specific requirements of the problem (i.e., restrictions of which work orders can be produced from a particular group of raw materials) does not fit the regular planning system used by the production company, therefore a case-specific solution was developed that can be generalized also to other similar cases. To solve this problem, we propose using the generalized bin-packing problem formulation which is described as an integer programming problem. An extension of the bin-packing problem formulation was developed based on: (i) variable bin sizes, (ii) consideration of time constraints and (iii) grouping of items/bins. The method presented in the article can be applied for small- to medium-sized problems as first verified by several examples of increasing complexity and later by an industrial case study.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/pr8101246"
+    }
+  ]
+}

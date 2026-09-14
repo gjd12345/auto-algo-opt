@@ -1,0 +1,127 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_unbounded",
+    "label": "Unbounded knapsack",
+    "definition": "Unlimited copies.",
+    "search_query": "unbounded knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Unbounded density greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Greedy by value",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "unbounded knapsack heuristic",
+  "harvested_at": "2026-09-14T07:46:52Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.5.2.266",
+      "title": "Discrete-Variable Extremum Problems",
+      "authors": [
+        "George B. Dantzig"
+      ],
+      "year": 1957,
+      "venue": "Operations Research",
+      "cited_by_count": 648,
+      "abstract": "This paper reviews some recent successes in the use of linear programming methods for the solution of discrete-variable extremum problems. One example of the use of the multistage approach of dynamic programming for this purpose is also discussed.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.5.2.266",
+      "seeded": true,
+      "seed_heuristic": "Unbounded / integer density greedy",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/978-3-540-24777-7_8",
+      "title": "The Unbounded Knapsack Problem",
+      "authors": [
+        "Hans Kellerer",
+        "Ulrich Pferschy",
+        "David Pisinger"
+      ],
+      "year": 2004,
+      "venue": "Knapsack Problems",
+      "cited_by_count": 4,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/978-3-540-24777-7_8"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/math12121878",
+      "title": "An Improved Unbounded-DP Algorithm for the Unbounded Knapsack Problem with Bounded Coefficients",
+      "authors": [
+        "Yang Yang"
+      ],
+      "year": 2024,
+      "venue": "Mathematics",
+      "cited_by_count": 1,
+      "abstract": "Benchmark instances for the unbounded knapsack problem are typically generated according to specific criteria within a given constant range R, and these instances can be referred to as the unbounded knapsack problem with bounded coefficients (UKPB). In order to increase the difficulty of solving these instances, the knapsack capacity C is usually set to a very large value. While current efficient algorithms primarily center on the Fast Fourier Transform (FFT) and (min,+)-convolution method, there is a simpler method worth considering. In this paper, based on the basic Unbounded-DP algorithm, we utilize a recent branch and bound (B&amp;B) result and basic theory of linear Diophantine equation, and propose an improved Unbounded-DP algorithm with time complexity of O(R4) and space complexity of O(R3). Additionally, the algorithm can also solve the All-capacities unbounded knapsack problem within the complexity O(R4+C). In particular, the proof techniques required by the algorithm are primarily covered in the first-year mathematics curriculum, which is convenient for subsequent researchers to grasp.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/math12121878"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/978-3-540-76796-1_10",
+      "title": "The Unbounded Knapsack Problem",
+      "authors": [
+        "T. C. Hu",
+        "Leo Landa",
+        "Man-Tak Shing"
+      ],
+      "year": null,
+      "venue": "Research Trends in Combinatorial Optimization",
+      "cited_by_count": 0,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/978-3-540-76796-1_10"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.1342562",
+      "title": "Subsidies, Knapsack Auctions and Dantzig's Greedy Heuristic",
+      "authors": [
+        "Ludwig Ensthaler",
+        "Thomas Giebe"
+      ],
+      "year": 2009,
+      "venue": "SSRN Electronic Journal",
+      "cited_by_count": 1,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.2139/ssrn.1342562"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:47Z"
+}

@@ -1,0 +1,169 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_minveh",
+    "label": "Minimise number of vehicles",
+    "definition": "Primary objective is fleet size.",
+    "search_query": "minimise vehicles VRP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Parallel cheapest insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Capacity-tight NN",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "minimise vehicles VRP heuristic Capacity-tight NN",
+  "harvested_at": "2026-09-14T08:12:50Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.12.4.568",
+      "title": "Scheduling of Vehicles from a Central Depot to a Number of Delivery Points",
+      "authors": [
+        "G. Clarke",
+        "J. W. Wright"
+      ],
+      "year": 1964,
+      "venue": "Operations Research",
+      "cited_by_count": 2836,
+      "abstract": "The optimum routing of a fleet of trucks of varying capacities from a central depot to a number of delivery points may require a selection from a very large number of possible routes, if the number of delivery points is also large. This paper, after considering certain theoretical aspects of the problem, develops an iterative procedure that enables the rapid selection of an optimum or near-optimum route. It has been programmed for a digital computer but is also suitable for hand computation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.12.4.568",
+      "seeded": true,
+      "seed_heuristic": "Clarke-Wright (fleet size effect)",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.35.2.254",
+      "title": "Algorithms for the Vehicle Routing and Scheduling Problems with Time Window Constraints",
+      "authors": [
+        "Marius M. Solomon"
+      ],
+      "year": 1987,
+      "venue": "Operations Research",
+      "cited_by_count": 3426,
+      "abstract": "This paper considers the design and analysis of algorithms for vehicle routing and scheduling problems with time window constraints. Given the intrinsic difficulty of this problem class, approximation methods seem to offer the most promise for practical size problems. After describing a variety of heuristics, we conduct an extensive computational study of their performance. The problem set includes routing and scheduling environments that differ in terms of the type of data used to generate the problems, the percentage of customers with time windows, their tightness and positioning, and the scheduling horizon. We found that several heuristics performed well in different problem environments; in particular an insertion-type heuristic consistently gave very good results.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.35.2.254",
+      "seeded": true,
+      "seed_heuristic": "Solomon parallel insertion (min vehicles)",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.30996/heuristic.v21i1.10855",
+      "title": "ANALYSIS OF PRODUCTION CAPACITY OF NOBU PINK CERAMIC TYPE USING CAPACITY REQUIREMENT PLANNING METHOD AT PT ARWANA CITRAMULIA TBK PLANT I",
+      "authors": [
+        "Henri Ponda",
+        "Nur Fadilah Fatma",
+        "Anggie Fitri Rahmawaty"
+      ],
+      "year": 2024,
+      "venue": "Heuristic",
+      "cited_by_count": 0,
+      "abstract": "PT. Arwana Citramulia Tbk is a manufacturing company that produces ceramics. The company faces challenges in managing fluctuating demand, making it difficult to effectively plan production capacity. The objective of this research is to determine the ideal production capacity for the Nobu Pink ceramic type. The analysis of the production capacity for Nobu Pink ceramics was conducted at PT. Arwana Citramulia Tbk Plant I using the Capacity Requirement Planning (CRP) method, with capacity calculations performed using the bill of labor (BOL) method. The research results indicate that the production capacity for 25 x 25 cm Nobu Pink ceramics is 633 pieces per hour or 15,192 pieces per day. A comparison of available capacity with required capacity shows a shortage of capacity at the Kiln workstation in each period. A proposed solution for the company is to add 3 hours of overtime work on Saturdays, which would meet the capacity shortage.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.30996/heuristic.v21i1.10855"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1515/comp-2015-0004",
+      "title": "Various heuristic algorithms to minimise the two-page crossing\nnumbers of graphs",
+      "authors": [
+        "Hongmei He",
+        "Ana Sălăgean",
+        "Erkki Mäkinen",
+        "Imrich Vrt’o"
+      ],
+      "year": 2015,
+      "venue": "Open Computer Science",
+      "cited_by_count": 3,
+      "abstract": "Abstract \n        We propose several new heuristics for the twopage\nbook crossing problem, which are based on recent\nalgorithms for the corresponding one-page problem. Especially,\nthe neural network model for edge allocation is\ncombined for the first time with various one-page algorithms.\nWe investigate the performance of the new heuristics\nby testing them on various benchmark test suites. It\nis found out that the new heuristics outperform the previously\nknown heuristics and produce good approximations\nof the planar crossing number for severalwell-known\ngraph families. We conjecture that the optimal two-page\ndrawing of a graph represents the planar drawing of the\ngraph.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1515/comp-2015-0004"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.36224/ijes.130401",
+      "title": "Comparisons of VRP Optimization Algorithmic Methods for the Optimal Routing of Multiple Delivery Vehicles with Time Constraint",
+      "authors": [
+        "Nuttachat Wisittipanit",
+        "Adirek Baisukhan",
+        "Chanin Srisuwannapa"
+      ],
+      "year": 2021,
+      "venue": "International Journal of Engineering Sciences",
+      "cited_by_count": 1,
+      "abstract": "Transportation costs account for a large portion of business expense in any logistics firm; thus, achieving proper solutions that manage those transportation activities well and reduce such expense should be the number one priority for the business. Essentially, such logistics management involves the routing plans for company vehicles that perform delivery/pick up and also the number of vehicles utilized. This study investigated and compared the optimization performances of routing algorithms using simulated geographic data based in Chiang Rai, Thailand, emulating the post office operation which had 1 post office, 4 delivery vehicles and 2 delivery zones (2 vehicles per zone): 65 customer locations for zone A and 74 for zone B. The major objective of this particular routing problem, called Vehicle Routing Problem (VRP), was that the total delivery distance of those 4 delivery vehicles combined should be minimized; moreover, those vehicles mush finish their delivery operation within a time constraint, set at 2\nhours. The optimization algorithms, employed for the routing procedures, were Large Neighborhood Search (LNS), Particle Swarm Optimization (PSO), Differential Evolution (DE) and Ant Colony Optimization (ACO), combined into 3 hybrid algorithms (LNS|PSO, LNS|DE and LNS|ACO). Those hybrid algorithms including pure ones (DE, PSO and ACO) were compared for their optimization performances; and the results showed that LNS|ACO hybrid algorithm was superior than the other two hybrid ones and also far better than pure DE, PSO and ACO algorithms at various parameter variants. Additionally, most algorithms (hybrid and pure ones) finished the delivery routing\nwithin the time constraint of 2 hours except only for the pure algorithms at minimum parameter variant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.36224/ijes.130401"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1757-899x/852/1/012090",
+      "title": "Comparison study between nearest neighbor and farthest insert algorithms for solving VRP model using heuristic method approach",
+      "authors": [
+        "Wilson Kosasih",
+        "Ahmad",
+        "Lithrone Laricha Salomon",
+        "Febricky"
+      ],
+      "year": 2020,
+      "venue": "IOP Conference Series: Materials Science and Engineering",
+      "cited_by_count": 5,
+      "abstract": "Abstract In Indonesia, transportation costs from physical distribution still tend to be high because not all business people can optimize their distribution routes. This paper discusses a comparative study between Nearest Neighbor and Farthest Insert algorithms in solving a Vehicle Routing Problem (VRP) model. Aim of this study is to determine the most optimum distribution route so that the distance or time or transportation costs can be minimized. This research was conducted at a bottled water distribution company. In the end, the comparative study was considered effective as a basis for decision making on the distribution route, where there were indications of distance savings or reduced costs, and increased utilization of the higher vehicle fleet.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1757-899x/852/1/012090"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.25124/ijies.v2i01.27",
+      "title": "Completion Vehicle Routing Problem (VRP) In Determining Route And Determining The Number Of Vehicles In Minimizing Transportation Costs In PT. XYZ With Using Genetic Algorithm",
+      "authors": [
+        "Ahmad Fauzan Abdurrahman"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Innovation in Enterprise System",
+      "cited_by_count": 0,
+      "abstract": "In the transportation process is closely related to the route, the route is the path through which a mode / vehicle to arrive at a destination. The route is related to the number of vehicles and the location where it goes. PT XYZ is a company engaged in fast moving consumer goods (FMCG), with the field makes the flow of goods speed will be high until the goods distribution process becomes fast and often. In the process of distribution is done by using 1 fleet in each customer. Currently in the process of distributing goods, the company still ignores the utility of the vehicles used, so the availability of empty space in capacity is still occurring and this makes the cost of transportation is high. Consolidation of multiple customers becomes possible, keeping in mind the time window, capacity and multiple products. This study designs a route by considering the limits to get the route, the number of vehicles, the utility increase of each vehicle and the optimal distance so that it can minimize transportation costs. The use of a genetic algorithm preceded by the nearest neighbor algorithm is used to solve this problem. Later the route will be formed and get the number of vehicles, the increase in vehicle utility and the optimal distance. This resulted in average vehicle utility improvement of 35,317%, vehicle repairs amounted to 34.05%, and distance of 10.075% so as to reduce transportation costs by 26.56% from initial conditions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.25124/ijies.v2i01.27"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/vehicles7020061",
+      "title": "NeuHH: A Neuromorphic-Inspired Hyper-Heuristic Framework for Solving the Capacitated Single-Allocation p-Hub Location Routing Problem",
+      "authors": [
+        "Kassem Danach",
+        "Hassan Harb",
+        "Semaan Amine",
+        "Mariem Belhor"
+      ],
+      "year": 2025,
+      "venue": "Vehicles",
+      "cited_by_count": 6,
+      "abstract": "This paper introduces a novel neuromorphic-inspired hyper-heuristic framework (NeuHH) for solving the Capacitated Single-Allocation p-Hub Location Routing Problem (CSAp-HLRP), a challenging combinatorial optimization problem that jointly addresses hub location decisions, capacity constraints, and vehicle routing. The proposed framework employs Spiking Neural Networks (SNNs) as the decision-making core, leveraging their temporal dynamics and spike-timing-dependent plasticity (STDP) to guide the real-time selection and adaptation of low-level heuristics. Unlike conventional learning-based hyper-heuristics, NeuHH provides biologically plausible, event-driven learning with improved scalability and interpretability. Experimental results on benchmark instances demonstrate that NeuHH outperforms classical metaheuristics, Lagrangian relaxation methods, and reinforcement learning-based hyper-heuristics. Specifically, NeuHH achieves superior performance in total cost minimization (up to 13.6% reduction), load balance improvement (achieving a load balance factor of as low as 1.04), and heuristic adaptability (reflected by higher heuristic switching frequency). These results highlight the framework’s potential for real-time and energy-efficient logistics optimization in large-scale dynamic networks.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/vehicles7020061"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:13Z"
+}

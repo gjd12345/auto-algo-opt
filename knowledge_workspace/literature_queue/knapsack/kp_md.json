@@ -1,0 +1,196 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_md",
+    "label": "Multidimensional knapsack",
+    "definition": "Several resource constraints.",
+    "search_query": "multidimensional knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Surrogate density greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "MDKP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "multidimensional knapsack heuristic",
+  "harvested_at": "2026-09-14T08:01:06Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.11.1.15",
+      "title": "Neural Networks for Combinatorial Optimization: A Review of More Than a Decade of Research",
+      "authors": [
+        "Kate A. Smith"
+      ],
+      "year": 1999,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 302,
+      "abstract": "It has been over a decade since neural networks were first applied to solve combinatorial optimization problems. During this period, enthusiasm has been erratic as new approaches are developed and (sometimes years later) their limitations are realized. This article briefly summarizes the work that has been done and presents the current standing of neural networks for combinatorial optimization by considering each of the major classes of combinatorial optimization problems. Areas which have not yet been studied are identified for future research.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.11.1.15",
+      "seeded": true,
+      "seed_heuristic": "MDKP heuristic",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.27.6.1101",
+      "title": "New Greedy-Like Heuristics for the Multidimensional 0-1 Knapsack Problem",
+      "authors": [
+        "Richard Loulou",
+        "Eleftherios Michaelides"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "cited_by_count": 82,
+      "abstract": "In this paper, we develop four heuristic methods to obtain approximate solutions to the multidimensional 0-1 knapsack problem. The four methods are tested on a number of problems of various sizes. The solutions are compared to the rigorous optimum as well as to a heuristic method of Toyoda. They are statistically better than the latter, with average relative errors of the order of less than 1%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.27.6.1101",
+      "seeded": true,
+      "seed_heuristic": "Senju-Toyoda surrogate / MDKP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.33899/berj.2024.184192",
+      "title": "Meta-heuristic Optimization Algorithms in Multidimensional Knapsack Problem using bat algorithm: A subject review",
+      "authors": [
+        "Rana Bashar Hussein"
+      ],
+      "year": 2024,
+      "venue": "College of Basic Education Research Journal",
+      "cited_by_count": 0,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.33899/berj.2024.184192"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s10589-026-00811-2",
+      "title": "The quadratic multidimensional knapsack problem: exact, heuristic, and machine learning methods",
+      "authors": [
+        "Richard J. Forrester",
+        "Lucas A. Waddell"
+      ],
+      "year": 2026,
+      "venue": "Computational Optimization and Applications",
+      "cited_by_count": 0,
+      "abstract": "Abstract \n          This paper presents a multi-faceted approach to solving the quadratic multidimensional knapsack problem (QMDKP), an NP-hard nonlinear combinatorial optimization problem that has received limited attention in the literature. We introduce a new testbed of QMDKP instances with induced profit-weight correlations and evaluate four linearization strategies for solving the problem exactly. To address scalability, we propose several heuristic and metaheuristic methods, including a greedy algorithm, a supervised machine learning (ML)-based approach, and a genetic algorithm. Our underlying ML framework employs binary classification to predict item inclusion probabilities, guiding a greedy construction process. Building on this framework, we explore hybrid strategies such as reduce-fill, expand-repair, and a genetic algorithm with ML-driven repair operators. Extensive computational results show that these ML-enhanced hybrid methods improve upon their baseline heuristics and that the genetic algorithm consistently yields near-optimal solutions. This work provides a generalizable template for hybrid optimization and learning-based approaches to challenging combinatorial problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s10589-026-00811-2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.1030.0050",
+      "title": "A Local-Search-Based Heuristic for the Demand-Constrained Multidimensional Knapsack Problem",
+      "authors": [
+        "Paola Cappanera",
+        "Marco Trubian"
+      ],
+      "year": 2005,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 38,
+      "abstract": "We consider an extension of the 0–1 multidimensional knapsack problem in which there are greater-than-or-equal-to inequalities, called demand constraints, in addition to the standard less-than-or-equal-to constraints. Moreover, the objective function coefficients are not constrained in sign. This problem is worth considering because it is embedded in models of practical application, it has an intriguing combinatorial structure, and it appears to be a challenging problem for commercial ILP solvers. Our approach is based on a nested tabu-search algorithm in which neighborhoods with different structures are exploited. First, a tabu-search procedure is carried out in which mainly the infeasible region is explored. Once feasibility has been established, a second tabu-search procedure, which analyzes only feasible solutions, is applied. The algorithm has been tested on a wide set of instances. Computational results are discussed.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.1030.0050"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1162/106365605774666886",
+      "title": "Empirical Analysis of Locality, Heritability and Heuristic Bias in Evolutionary Algorithms: A Case Study for the Multidimensional Knapsack Problem",
+      "authors": [
+        "Günther R. Raidl",
+        "Jens Gottlieb"
+      ],
+      "year": 2005,
+      "venue": "Evolutionary Computation",
+      "cited_by_count": 70,
+      "abstract": "Our main aim is to provide guidelines and practical help for the design of appropriate representations and operators for evolutionary algorithms (EAs). For this purpose, we propose techniques to obtain a better understanding of various effects in the interplay of the representation and the operators. We study six different representations and associated variation operators in the context of a steady-state evolutionary algorithm for the multidimensional knapsack problem. Four of them are indirect decoder-based techniques, and two are direct encodings combined with different initialization, repair, and local improvement strategies. The complex decoders and the local improvement and repair strategies make it practically impossible to completely analyze such EAs in a fully theoretical way. After comparing the general performance of the chosen EA variants for the multidimensional knapsack problem on two benchmark suites, we present a hands-on approach for empirically analyzing important aspects of initialization, mutation, and crossover in an isolated fashion. Static, inexpensive measurements based on randomly created solutions are performed in order to quantify and visualize specific properties with respect to heuristic bias, locality, and heritability. These tests shed light onto the complex behavior of such EAs and point out reasons for good or bad performance. In addition, the proposed measures are also examined during actual EA runs, which gives further insight into dynamic aspects of evolutionary search and verifies the validity of the isolated static measurements. All measurements are described in a general way, allowing for an easy adaption to other representations and problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1162/106365605774666886"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1108/k-09-2013-0201",
+      "title": "A genetic programming hyper-heuristic for the multidimensional knapsack problem",
+      "authors": [
+        "John H Drake",
+        "Matthew Hyde",
+        "Khaled Ibrahim",
+        "Ender Ozcan"
+      ],
+      "year": 2014,
+      "venue": "Kybernetes",
+      "cited_by_count": 40,
+      "abstract": "Purpose – Hyper-heuristics are a class of high-level search techniques which operate on a search space of heuristics rather than directly on a search space of solutions. The purpose of this paper is to investigate the suitability of using genetic programming as a hyper-heuristic methodology to generate constructive heuristics to solve the multidimensional 0-1 knapsack problem  Design/methodology/approach – Early hyper-heuristics focused on selecting and applying a low-level heuristic at each stage of a search. Recent trends in hyper-heuristic research have led to a number of approaches being developed to automatically generate new heuristics from a set of heuristic components. A population of heuristics to rank knapsack items are trained on a subset of test problems and then applied to unseen instances.  Findings – The results over a set of standard benchmarks show that genetic programming can be used to generate constructive heuristics which yield human-competitive results.  Originality/value – In this work the authors show that genetic programming is suitable as a method to generate reusable constructive heuristics for the multidimensional 0-1 knapsack problem. This is classified as a hyper-heuristic approach as it operates on a search space of heuristics rather than a search space of solutions. To our knowledge, this is the first time in the literature a GP hyper-heuristic has been used to solve the multidimensional 0-1 knapsack problem. The results suggest that using GP to evolve ranking mechanisms merits further future research effort.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1108/k-09-2013-0201"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1162/evco_a_00145",
+      "title": "A Case Study of Controlling Crossover in a Selection Hyper-heuristic Framework Using the Multidimensional Knapsack Problem",
+      "authors": [
+        "John H. Drake",
+        "Ender Özcan",
+        "Edmund K. Burke"
+      ],
+      "year": 2016,
+      "venue": "Evolutionary Computation",
+      "cited_by_count": 43,
+      "abstract": "Hyper-heuristics are high-level methodologies for solving complex problems that operate on a search space of heuristics. In a selection hyper-heuristic framework, a heuristic is chosen from an existing set of low-level heuristics and applied to the current solution to produce a new solution at each point in the search. The use of crossover low-level heuristics is possible in an increasing number of general-purpose hyper-heuristic tools such as HyFlex and Hyperion. However, little work has been undertaken to assess how best to utilise it. Since a single-point search hyper-heuristic operates on a single candidate solution, and two candidate solutions are required for crossover, a mechanism is required to control the choice of the other solution. The frameworks we propose maintain a list of potential solutions for use in crossover. We investigate the use of such lists at two conceptual levels. First, crossover is controlled at the hyper-heuristic level where no problem-specific information is required. Second, it is controlled at the problem domain level where problem-specific information is used to produce good-quality solutions to use in crossover. A number of selection hyper-heuristics are compared using these frameworks over three benchmark libraries with varying properties for an NP-hard optimisation problem: the multidimensional 0-1 knapsack problem. It is shown that allowing crossover to be managed at the domain level outperforms managing crossover at the hyper-heuristic level in this problem domain.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1162/evco_a_00145"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/math10040602",
+      "title": "A Memetic Algorithm with a Novel Repair Heuristic for the Multiple-Choice Multidimensional Knapsack Problem",
+      "authors": [
+        "Jaeyoung Yang",
+        "Yong-Hyuk Kim",
+        "Yourim Yoon"
+      ],
+      "year": 2022,
+      "venue": "Mathematics",
+      "cited_by_count": 11,
+      "abstract": "We propose a memetic algorithm for the multiple-choice multidimensional knapsack problem (MMKP). In this study, we focus on finding good solutions for the MMKP instances, for which feasible solutions rarely exist. To find good feasible solutions, we introduce a novel repair heuristic based on the tendency function and a genetic search for the function approximation. Even when the density of feasible solutions over the entire solution space is very low, the proposed repair heuristic could successfully change infeasible solutions into feasible ones. Based on the proposed repair heuristic and effective local search, we designed a memetic algorithm that performs well on problem instances with a low density of feasible solutions. By performing experiments, we could show the superiority of our method compared with previous genetic algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/math10040602"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:51Z"
+}

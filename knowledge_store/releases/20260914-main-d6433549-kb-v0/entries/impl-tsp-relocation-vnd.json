@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Single-node relocation VND with follow-up 2-opt",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Removes one node and reinserts after a neighbor-induced edge if the delta is strictly negative; then runs 2-opt. Repeats until no relocate improves.",
+  "attributes": {
+    "interface": "best_relocation then nearest_two_opt",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "scripts/evaluate_tsp_relocation_vnd.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_relocation_vnd.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_relocation_vnd.py",
+      "sha256": "9a17936cca9c6229d241a75583bc9bc745b8dfea9e2f10228f4c7a9a05c654b7"
+    }
+  ],
+  "id": "impl-tsp-relocation-vnd",
+  "content_sha256": "e53677dc9d6e146f44a4f2c4de1f92d46319f96bda46a4876bcb353613843dd7"
+}

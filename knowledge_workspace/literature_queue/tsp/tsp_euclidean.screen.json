@@ -1,0 +1,37 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_euclidean",
+  "selected": [
+    {
+      "doi": "10.38032/jea.2024.01.004",
+      "heuristic_name": "Improved Nearest Neighbor Algorithm",
+      "why": "Abstract describes a deterministic nearest-neighbor tour construction that repeatedly adds the closest city, matching the target Nearest Neighbor / next_node_score entrypoint.",
+      "steps": [
+        "Start with the shortest edge consisting of two cities",
+        "Repeatedly include the closest city on the route until a complete route is established"
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "next_node_score",
+      "not_the_original": "Not the classical Rosenkrantz–Stearns–Lewis nearest neighbor; a 2024 deterministic NNA variant that initializes from the globally shortest edge. Evaluator still starts at city 0, so the seed-edge step cannot be reproduced in select_next_node."
+    }
+  ],
+  "rejected": [
+    {
+      "doi": "10.1137/s0895480194278246",
+      "reason": "Worst-case length analysis of existing NN tours; no algorithmic contribution or implementable construction steps."
+    },
+    {
+      "doi": "10.55606/jurrimipa.v2i2.1614",
+      "reason": "Comparison/application study using WinQSB, not an original algorithmic paper; Cheapest Insertion builds by inserting into a partial tour (not select_next_node)."
+    },
+    {
+      "doi": "10.1109/ihmsc.2014.88",
+      "reason": "Abstract missing; cannot verify heuristic steps."
+    },
+    {
+      "doi": "10.1109/ccaa.2015.7148514",
+      "reason": "Abstract missing; cannot verify heuristic steps."
+    }
+  ],
+  "cannot_classify": false
+}

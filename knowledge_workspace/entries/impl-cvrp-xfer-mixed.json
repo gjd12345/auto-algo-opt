@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Cross-problem mixed_abstract CVRP elite: weighted nearest+savings+regret+demand",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "From depot: farthest customer. On-route score = -0.3*d(current,u)+0.4*savings+0.2*(d(depot,u)-d(current,u))+0.1*demand/rest. May return depot if serving detour > 1.5 * return and capacity is tight.",
+  "attributes": {
+    "interface": "select_next_node",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_mixed_abstract_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_mixed_abstract_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_mixed_abstract_best.py",
+      "sha256": "e0330100c438879423df611d5e687f7a9656a947c19415f135ad24367cf39a60"
+    }
+  ],
+  "id": "impl-cvrp-xfer-mixed",
+  "content_sha256": "367c787dc53870986a3f2d659b9aa114c3506001ae3644753bc68293659c0476"
+}

@@ -1,0 +1,124 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_compartment",
+    "label": "Compartmentalized knapsack",
+    "definition": "Compartments inside the knapsack.",
+    "search_query": "compartmentalized knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Compartment greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Compartment local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "compartmentalized knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:37Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23956/ijermt.v6i7.181",
+      "title": "Clustering Analysis of Greedy Heuristic Method in Zero_One Knapsack Problem",
+      "authors": [
+        "V. Selvi"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Emerging Research in Management and Technology",
+      "cited_by_count": 0,
+      "abstract": "Knapsack problem is a surely understood class of optimization problems, which tries to expand the profit of items in a knapsack without surpassing its capacity, Knapsack can be solved by several algorithms such like Greedy, dynamic programming, Branch &amp; bound etc. The solution to the zero_one knapsack problem (KP) can be viewed as the result of a sequence of decision. Clustering is the process of resolving that type of applications. Different clustering application for grouping elements with equal priority. In this paper we are introducing greedy heuristic algorithm for solving zero_one knapsack problem. We will exhibit a relative investigation of the Greedy, dynamic programming, B&amp;B and Genetic algorithms regarding of the complexity of time requirements, and the required programming efforts and compare the total value for each of them. Greedy and Genetic algorithms can be used to solve the 0-1 Knapsack problem within a reasonable time complexity. The worst-case time complexity (Big-O) of both algorithms is O(N). Using the greedy method, the algorithm can produce high quality clusters while reduce time the best partioning avoid the memory confinement problem during the process.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23956/ijermt.v6i7.181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1865/4/042009",
+      "title": "An Efficient Heuristic Algorithm for Solving 0-1 Knapsack Problem",
+      "authors": [
+        "Hong Yang",
+        "Xiong Guo"
+      ],
+      "year": 2021,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 1,
+      "abstract": "Abstract \n        The model for 0-1 knapsack problem based on greedy strategy and expectation efficiency has some advantages, e.g., quick convergence and low complexity, but it also inherently exists some limitations to be enhanced and improved, such as the restricted greedy and the overmuch calculation on expectation efficiency. To this end, an efficient algorithm is proposed to optimize the previous model. At first, the greedy degree is maximized, that is, some items are permanently loaded into knapsack in advance as many as possible. Then, the conventional expectation efficiency model is improved greatly, at the same time, the number of calculations with respect to expectation efficiency is decreased by ignoring some unnecessary items. Compared to the previous algorithm, the experimental results reveal that the proposed optimization algorithm has the significant advantages in time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1865/4/042009"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.15802/stp2012/9390",
+      "title": "Substantiation of a heuristic algorithm in the knapsack problem",
+      "authors": [
+        "A. A. Bosov",
+        "A. V. Gorbova",
+        "N. V. Khalipova"
+      ],
+      "year": 2012,
+      "venue": "Science and Transport Progress",
+      "cited_by_count": 0,
+      "abstract": "Introduction: Formed knapsack problem in terms of set functions and is a heuristic algorithm. The goal: to prove that the heuristic algorithm is essential. Some facts from [2]. The equivalence of the limit order to E.Borelyu and convergence in measure. The theorem about the need to set a maximum of function. The situation is quite the algorithm: We present three cases where a heuristic algorithm is sufficient. Counterexample: An Rear take from [1], and given the addition heuristic algorithm, which allows to obtain the solution of the knapsack problem. Vector optimization: With the knapsack problem is tied vector optimization of investment activities. Conclusions: The proposed algorithm for solving the knapsack problem and for additive functions algorithm for Pareto solutions of vector optimization for the two indicators. Appendix: an agenda for the Maple solutions knapsack problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.15802/stp2012/9390"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22531/muglajsci.469475",
+      "title": "COMPARISON OF CLASSIC AND GREEDY HEURISTIC ALGORITHM RESULTS IN INTEGER PROGRAMMING: KNAPSACK PROBLEMS",
+      "authors": [
+        "Burcu DURMUŞ",
+        "Öznur İŞÇİ GÜNERİ",
+        "Aynur İNCEKIRIK"
+      ],
+      "year": 2019,
+      "venue": "Mugla Journal of Science and Technology",
+      "cited_by_count": 4,
+      "abstract": "This study\nis designed to investigate the comparison of Greedy and classic algorithm\nsolution results and the results of solution algorithms for integer linear\nprogramming (ILP) problems. The purpose of the study is to examine the\nheuristic Greedy algorithm that solves the ILP problems and to reveal the differences\nand similarities between the classic and heuristic Greedy algorithms on the\napplication.\n\nFor this purpose, a software (JAVA Program)\nwhich solves Knapsack Problems (KP) with Greedy terminology has been developed\nand problems in different models have been solved with objective function and\nconstraints. The problems are solved by both the conventional classic algorithm\nand the Greedy algorithm and the solution results are compared. In the\nstudy, the results of pure and (0-1) binary backpack problems were found to be\nthe same as those of heuristic algorithms for small problems. In addition, the\ndeveloped program solves single and two-dimensional KP in the literature.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22531/muglajsci.469475"
+    }
+  ]
+}

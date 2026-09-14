@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Official OBP evaluator and Worst-Fit template",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The evolved entrypoint is score(item, bins). The evaluator filters bins with remaining capacity >= item, calls score, and assigns the item to argmax. Fitness is mean relative gap to ceil(sum/capacity) over the instance s",
+  "attributes": {
+    "interface": "score(item, bins) -> ndarray; evaluator argmax among feasible residuals",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/bp_online/prob.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/bp_online/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "5914d4325e9e3a801b5ff63ccd64f572c0265c9146ba2279470e111a556fd049"
+    }
+  ],
+  "id": "impl-obp-official-interface",
+  "content_sha256": "d62ccdb38588b49a30c8c693bfa457fd68128c70279c032b3568b24ab98778cb"
+}

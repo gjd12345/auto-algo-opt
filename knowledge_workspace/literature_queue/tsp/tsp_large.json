@@ -1,0 +1,129 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_large",
+    "label": "Large-scale Euclidean TSP",
+    "definition": "n in thousands; locality matters.",
+    "search_query": "large scale TSP Lin Kernighan heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "move_selector"
+    },
+    "target_heuristics": [
+      {
+        "name": "Lin-Kernighan",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Candidate-list 2-opt",
+        "adapter_kind": "move_selector"
+      }
+    ]
+  },
+  "query": "Lin Kernighan effective heuristic traveling salesman",
+  "harvested_at": "2026-09-14T08:12:25Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.21.2.498",
+      "title": "An Effective Heuristic Algorithm for the Traveling-Salesman Problem",
+      "authors": [
+        "S. Lin",
+        "B. W. Kernighan"
+      ],
+      "year": 1973,
+      "venue": "Operations Research",
+      "cited_by_count": 2854,
+      "abstract": "This paper discusses a highly effective heuristic procedure for generating optimum and near-optimum solutions for the symmetric traveling-salesman problem. The procedure is based on a general approach to heuristics that is believed to have wide applicability in combinatorial optimization problems. The procedure produces optimum solutions for all problems tested, “classical” problems appearing in the literature, as well as randomly generated test problems, up to 110 cities. Run times grow approximately as n\n           2 \n          ; in absolute terms, a typical 100-city problem requires less than 25 seconds for one case (GE635), and about three minutes to obtain the optimum with above 95 per cent confidence.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.21.2.498"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0221030",
+      "title": "The Complexity of the Lin–Kernighan Heuristic for the Traveling Salesman Problem",
+      "authors": [
+        "Christos H. Papadimitriou"
+      ],
+      "year": 1992,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 65,
+      "abstract": "It is shown that finding a local optimum solution with respect to the Lin–Kernighan heuristic for the traveling salesman problem is PLS-complete, and thus as hard as any local search problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0221030"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22456/2175-2745.76452",
+      "title": "A Multi-objective Version of the Lin-Kernighan Heuristic for the Traveling Salesman Problem",
+      "authors": [
+        "Emerson Bezerra De Carvalho",
+        "Elizabeth Ferreira Gouvêa Goldbarg",
+        "Marco Cesar Goldbarg"
+      ],
+      "year": 2018,
+      "venue": "Revista de Informática Teórica e Aplicada",
+      "cited_by_count": 3,
+      "abstract": "The Lin and Kernighan’s algorithm for the single objective Traveling Salesman Problem (TSP) is one of the most efficient heuristics for the symmetric case. Although many algorithms for the TSP were extended to the multi-objective version of the problem (MTSP), the Lin and Kernighan’s algorithm was still not fully explored. Works that applied the Lin and Kernighan’s algorithm for the MTSP were driven to weighted sum versions of the problem. We investigate the LK from a Pareto dominance perspective. The multi-objective LK was implemented within two local search schemes and applied to 2 to 4-objective instances. The results  showed that the proposed algorithmic variants obtained better results than a state-of-the-art algorithm.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22456/2175-2745.76452"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.15.1.82.15157",
+      "title": "Chained Lin-Kernighan for Large Traveling Salesman Problems",
+      "authors": [
+        "David Applegate",
+        "William Cook",
+        "André Rohe"
+      ],
+      "year": 2003,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 283,
+      "abstract": "We discuss several issues that arise in the implementation of Martin, Otto, and Felten's Chained Lin-Kernighan heuristic for large-scale traveling salesman problems. Computational results are presented for TSPLIB instances ranging in size from 11,849 cities up to 85,900 cities; for each of these instances, solutions within 1% of the optimal value can routinely be found in under one CPU minute on a 300 MHz Pentium II workstation, and solutions within 0.5% of optimal can routinely be found in under ten CPU minutes. We also demonstrate the scalability of the heuristic, presenting results for randomly generated Euclidean instances having up to 25,000,000 cities. For the largest of these random instances, a tour within 1% of an estimate of the optimal value was obtained in under one CPU day on a 64-bit IBM RS6000 workstation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.15.1.82.15157"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.46298/arima.8660",
+      "title": "A Hybrid Algorithm Based on Multi-colony Ant Optimization and Lin-Kernighan for solving the Traveling Salesman Problem",
+      "authors": [
+        "Mathurin Soh",
+        "Baudoin Nguimeya Tsofack",
+        "Clémentin Tayou Djamegni"
+      ],
+      "year": 2023,
+      "venue": "Revue Africaine de Recherche en Informatique et Mathématiques Appliquées",
+      "cited_by_count": 1,
+      "abstract": "In this article, a hybrid heuristic algorithm is proposed to solve the Traveling Salesman Problem (TSP). This algorithm combines two main metaheuristics: optimization of multi-colony ant colonies (MACO) and Lin-Kernighan-Helsgaun (LKH). The proposed hybrid approach (MACO-LKH) is a so-called insertion and relay hybridization. It brings two major innovations: The first consists in replacing the static visibility function used in the MACO heuristic by the dynamic visibility function used in LKH. This has the consequence of avoiding long paths and favoring the choice of the shortest paths more quickly. Hence the term insertion hybridization. The second innovation consists in modifying the pheromone update strategy of MACO by that of the dynamic λ-opt mechanisms of LKH in order to optimize the solutions generated and save in execution time, hence the relay hybridization. The significance of the hybridization, is examined and validated on benchmark instances including small, medium, and large instance problems taken from the TSPlib library. The results are compared to four other state-of-the-art metaheuristic approaches. It results in that they are significantly outperformed by the proposed algorithm in terms of the quality of solutions obtained and execution time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.46298/arima.8660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1609/aaai.v35i14.17476",
+      "title": "Combining Reinforcement Learning with Lin-Kernighan-Helsgaun Algorithm for the Traveling Salesman Problem",
+      "authors": [
+        "Jiongzhi Zheng",
+        "Kun He",
+        "Jianrong Zhou",
+        "Yan Jin",
+        "Chu-Min Li"
+      ],
+      "year": 2021,
+      "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+      "cited_by_count": 54,
+      "abstract": "We address the Traveling Salesman Problem (TSP), a famous NP-hard combinatorial optimization problem. And we propose a variable strategy reinforced approach, denoted as VSR-LKH, which combines three reinforcement learning methods (Q-learning, Sarsa and Monte Carlo) with the well-known TSP algorithm, called Lin-Kernighan-Helsgaun (LKH). VSR-LKH replaces the inflexible traversal operation in LKH, and lets the program learn to make choice at each search step by reinforcement learning. Experimental results on 111 TSP benchmarks from the TSPLIB with up to 85,900 cities demonstrate the excellent performance of the proposed method.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1609/aaai.v35i14.17476"
+    }
+  ]
+}

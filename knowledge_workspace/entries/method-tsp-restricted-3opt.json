@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Neighbor-restricted 3-opt with four reconnection patterns",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "3-opt",
+    "local-search"
+  ],
+  "status": "reviewed",
+  "summary": "Reconnect three edges using four non-2-opt patterns; candidate edges come from neighbor lists.",
+  "attributes": {
+    "method_family": "local_search",
+    "online_offline": "offline",
+    "interface": "best_restricted_three_opt",
+    "objective": "tour cost"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "implementations": [
+      "impl-tsp-restricted-3opt"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_restricted_three_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_restricted_three_opt.py",
+      "sha256": "45dcba832bd9543a5c01b4308773202966397034d08687f90b27b262fb2e2932"
+    }
+  ],
+  "id": "method-tsp-restricted-3opt",
+  "content_sha256": "f529bcb9e28a3439c06d6857a62ad83f73cf779564d0a540f620b1620ba6e13d"
+}

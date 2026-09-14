@@ -1,0 +1,127 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "vrpsdp",
+    "label": "Simultaneous pickup and delivery",
+    "definition": "Both at the same stop.",
+    "search_query": "VRP simultaneous pickup delivery heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "SDP NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "SDP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "VRP simultaneous pickup delivery heuristic",
+  "harvested_at": "2026-09-14T08:25:25Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29099/ijair.v2i2.71",
+      "title": "A Modified Meta-Heuristic Approach for Vehicle Routing Problem with Simultaneous Pickup and Delivery",
+      "authors": [
+        "Alfian Faiz",
+        "Subiyanto Subiyanto",
+        "Ulfah Mediaty Arief"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Artificial Intelligence Research",
+      "cited_by_count": 4,
+      "abstract": "The aim of this work is to develop an intelligent optimization software based on enhanced VNS meta-heuristic to tackle Vehicle Routing Problem with Simultaneous Pickup and Delivery (VRPSPD). An optimization system developed based on enhanced Variable Neighborhood Search with Perturbation Mechanism and Adaptive Selection Mechanism as the simple but effective optimization approach presented in this work. The solution method composed by combining Perturbation based Variable Neighborhood Search (PVNS) with Adaptive Selection  Mechanism (ASM) to control perturbation scheme. Instead of stochastic approach, selection of perturbation scheme used in the algorithm employed an empirical selection based on each perturbation scheme success along the search. The ASM help algorithm to get more diversification degree and jumping from local optimum condition using most successful perturbation scheme empirically in the search process. A comparative analysis with a well-known exact approach is presented to test the solution method in a generated VRPSPD benchmark instance in limited computation time. Then a test to VRPSPD scenario provided by a liquefied petroleum gas distribution company is performed. The test result confirms that solution method present superior performance against exact approach solution in giving best solution for larger sized instance and successfully obtain substantial improvements when compared to the basic VNS and original route planning technique used by a distributor company.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29099/ijair.v2i2.71"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su172411308",
+      "title": "Urban Pickup-and-Delivery VRP with Soft Time Windows Under Travel-Time Uncertainty: An Empirical Comparison of Robust and Deterministic Approaches",
+      "authors": [
+        "Daniel Kubek"
+      ],
+      "year": 2025,
+      "venue": "Sustainability",
+      "cited_by_count": 1,
+      "abstract": "Urban freight pickup-and-delivery services operate in road networks where travel times are highly variable due to congestion, incidents, and operational restrictions. Such variability threatens the punctuality of deliveries and complicates the design of reliable service schedules. This paper examines an urban pickup-and-delivery vehicle routing problem with soft time windows under travel-time uncertainty and provides an empirical comparison of robust and deterministic planning approaches on a real road network. The problem is formulated as a time-dependent pickup-and-delivery VRP with soft time windows, where link travel times are represented by a finite set of scenarios calibrated from observed network conditions. The objective function combines four components that are central to urban freight operations: total travel time, total distance, and penalties for earliness and lateness relative to customer time windows. This structure captures the trade-off between routing efficiency and service quality. On this basis, a robust model is constructed that optimises tour plans with respect to scenario-based worst-case or risk-aggregated costs, while a standard deterministic model minimises the same objective using nominal (average) travel times only. An empirical study on a real urban network compares the deterministic and robust solutions with respect to delivery punctuality, tour length, and time-window violations across a range of demand and variability settings. The results show that robust routing systematically reduces the frequency and magnitude of late deliveries at the expense of only moderate increases in planned distance and travel time. Although energy use and emissions are not modelled explicitly, the improved reliability and reduced need for reactive re-routing indicate a potential to support more reliable and resource-efficient urban freight operations in the context of sustainable city logistics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su172411308"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1863/1/012002",
+      "title": "Minimizing the handling time in VRP with pickup-and-delivery and time windows",
+      "authors": [
+        "I S Amalia",
+        "T Bakhtiar",
+        "Jaharuddin"
+      ],
+      "year": 2021,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 1,
+      "abstract": "Abstract \n        Improving services through goods pickups and deliveries to expand the market is currently being carried out by many companies. This effort needs another step of optimization to avoid losses due to additional resources, such as time, which must be held by the company. In the case of simultaneous goods pickups and deliveries using a vehicle with single transport access, the policy of arranging goods in the vehicle can affect the length of time for service. Single transport access causes goods that want to be unloaded obstructed by the other goods, thus requires additional time for handling. In this paper, the problem of a vehicle’s route and handling time in picking and delivering goods with time windows is modeled as the Traveling Salesman Problem. The objective function of this problem is to minimize the total travel time and handling time during the picking and delivering goods. The model is implemented in the case of bicycle pickup and delivery services involving 15 bicycle shops. The capacity of the vehicle is 15 units of bicycle. In this case, a solution consisting the pickup and delivery route and optimal goods order is obtained with an objective function value of 334 minutes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1863/1/012002"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1051/ro/2018024",
+      "title": "A selective adaptive large neighborhood search heuristic for the profitable tour problem with simultaneous pickup and delivery services",
+      "authors": [
+        "Hayet Chentli",
+        "Rachid Ouafi",
+        "Wahiba Ramdane Cherif-Khettaf"
+      ],
+      "year": 2018,
+      "venue": "RAIRO - Operations Research",
+      "cited_by_count": 15,
+      "abstract": "The Vehicle Routing Problem with Simultaneous Pickups and Deliveries (VRPSPD) is a variant of the Vehicle Routing Problem . In this variant, an unlimited fleet of capacitated vehicles is used to satisfy both pickup and delivery demands of each customer simultaneously. In many practical situations, such a fleet is costly. The present study extends the VRPSPD by assuming a fixed number of vehicles when the constraint of visiting all customers is relaxed. More specifically, profits are assigned to the customers with the goal of maximizing the difference between collected profits and routing costs. This variant is named Profitable Tour Problem with Simultaneous Pickup and Delivery services (PTPSPD). We present a mathematical model run with the CPLEX solver. We also present an extension of the Adaptive Large Neighborhood Search heuristic (ALNS) called selective ALNS (sALNS). sALNS uses a new operator selection that executes two phases alternately: the random and the score-dependent phases. An appropriate update of scores is employed. Furthermore, sALNS explores missed regions of the search space by evaluating solutions after the destruction step. Finally, we give tuned insertion and removal operators that handle the constraints of the PTPSPD, as well as a new update of temperature, that helps avoiding local optima, in the Simulated Annealing embedded in sALNS. sALNS is evaluated on 117 new instances with 50–199 customers. A comparison is made between the components of sALNS, the classical ALNS and a recent ALNS heuristic from the literature. sALNS is also evaluated on some VRPSPD instances from the literature. The computational results show that our heuristic provides good quality solutions in reasonable computing time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1051/ro/2018024"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.65286/icic.v20i1.57233",
+      "title": "Hyper-heuristic Ant Colony Optimization for solving the integrated distributed permutation flow shop prob-lem and multiple compartments vehicle routing problem with simultaneous deterministic delivery and fuzzy pickup",
+      "authors": [
+        "Yan Geng"
+      ],
+      "year": 2024,
+      "venue": "Poster Volume Ⅰ  The 2024 Twentieth International  Conference on Intelligent Computing  August 5-8, 2024  Tianjin, China",
+      "cited_by_count": 0,
+      "abstract": "Production and transportation are two essential activities in supply chain management, decision-makers strive to enhance the operational efficiency of these two stages to maximize business interests. In this paper, we consider the integrat-ed distributed permutation flow shop problem (IDFSP) and multiple compartments vehicle routing problem with simultaneous deterministic delivery and fuzzy pickup (IDFSP_MCVRPSDDFP). The IDFSP_MCVRPSDDFP aims to simultaneously minimize cost and carbon emissions caused by both production and transporation. To address the IDFSP_MCVRPSDDFP, we propose a hyper-heuristic ant colony optimization algorithm (HH_ACO). The HH_ACO is com-posed of two main components: a hyper-heuristic algorithm (HHA) and an ant colony optimization algorithm (ACO). To enhance the efficiency of local search, we design six heuristic operations within the low-level heuristics (LLHs). Meanwhile, the ACO is utilized to enhance the performance of the high-level heuristics (HLS) within the HHA. Experimental simulations and data analysis have validated that HH_ACO can effectively solve IDFSP_MCVRPSDDFP.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.65286/icic.v20i1.57233"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-604710/v1",
+      "title": "Two-Echelon Vehicle Routing Problem with Time Windows and Simultaneous Pickup and Delivery",
+      "authors": [
+        "Hang Zhou",
+        "Hu Qin",
+        "Zizhen Zhang",
+        "Jiliu Li"
+      ],
+      "year": 2021,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     In this paper, we propose a tabu search algorithm for the two-echelon vehicle routing problem with time windows and simultaneous pickup and delivery (2E-VRPTWSPD), which is a new variant of the two-echelon vehicle routing problem (2E-VRP) by considering the time windows constraints and simultaneous pickup and delivery. In 2EVRPTWSPD, the pickup and delivery activities are performed simultaneously by the same vehicles through the depot to satellites in the first echelon and satellites to customers in the second echelon, where each customer has a specified time window. To solve this problem, firstly, we formulate the problem with a mathematical model. Then, we implement a variable neighborhood tabu search algorithm with the proposed solution representation of dummy satellites to solve large-scale instances. Dummy satellites time windows are used in our algorithm to speed up the algorithm. Finally, we generate two instance sets based on the existing 2E-VRP and 2E-VRPTW benchmark sets and conduct additional experiments to analyze the performance of our algorithm.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-604710/v1"
+    }
+  ]
+}

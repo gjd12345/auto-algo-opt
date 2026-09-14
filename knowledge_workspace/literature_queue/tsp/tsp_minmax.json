@@ -1,0 +1,147 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_minmax",
+    "label": "Min-max mTSP",
+    "definition": "Minimise the longest salesman tour.",
+    "search_query": "min-max multiple TSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Balanced NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Min-max 2-opt",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "min-max multiple TSP heuristic",
+  "harvested_at": "2026-09-14T08:24:33Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230220304",
+      "title": "Complexity results for well‐covered graphs",
+      "authors": [
+        "Ramesh S. Sankaranarayana",
+        "Lorna K. Stewart"
+      ],
+      "year": 1992,
+      "venue": "Networks",
+      "cited_by_count": 69,
+      "abstract": "Abstract A graph with n vertices is well covered if every maximal independent set is a maximum independent set and very well covered if every maximal independent set has size n /2. In this work, we study these graphs from an algorithmic complexity point of view. We show that well‐covered graph recognition is co‐NP‐complete and that several other problems are NP‐complete for well‐covered graphs. A number of these problems remain NP‐complete on very well covered graphs, while some admit polynomial time solutions for the smaller class. For both families, the isomorphism problem is as hard as general graph isomorphism.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230220304",
+      "seeded": true,
+      "seed_heuristic": "Min-max multiple TSP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/drones7070407",
+      "title": "Development of Heuristic Approaches for Last-Mile Delivery TSP with a Truck and Multiple Drones",
+      "authors": [
+        "Marco Rinaldi",
+        "Stefano Primatesta",
+        "Martin Bugaj",
+        "Ján Rostáš",
+        "Giorgio Guglieri"
+      ],
+      "year": 2023,
+      "venue": "Drones",
+      "cited_by_count": 34,
+      "abstract": "Unmanned Aerial Vehicles (UAVs) are gaining momentum in many civil and military sectors. An example is represented by the logistics sector, where UAVs have been proven to be able to improve the efficiency of the process itself, as their cooperation with trucks can decrease the delivery time and reduce fuel consumption. In this paper, we first state a mathematical formulation of the Travelling Salesman Problem (TSP) applied to logistic routing, where a truck cooperates synchronously with multiple UAVs for parcel delivery. Then, we propose, implement, and compare different sub-optimal routing approaches to the formulated mFSTSP (multiple Flying Sidekick Travelling Salesman Problem) since the inherent combinatorial computational complexity of the problem makes it unattractable for commercial Mixed-Integer Linear Programming (MILP) solvers. A local search algorithm, two hybrid genetic algorithms that permutate feasible and infeasible solutions, and an alternative ad-hoc greedy method are evaluated in terms of the total delivery time of the output schedule. For the sake of the evaluation, the savings in terms of delivery time over the well-documented truck-only TSP solution are investigated for each proposed routing solution, and this is repeated for two different scenarios. Monte Carlo simulations corroborate the results.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/drones7070407"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Many complex discrete manufacturing problems, such as manufacturing sequencing problem or machine scheduling problem etc, can be converted into a general traveling salesman problem (TSP). TSP has been proven to be NP-complete. The genetic algorithm is improved with two heuristic rules for TSP. The first heuristic rule is the four vertices and three lines inequality. It is applied to the local Hamiltonian paths to generate the better solutions. The second heuristic rule is executed to reverse the local Hamiltonian paths, which generates new better solutions. The two heuristic rules coordinate with each other and they are merged into the optimization process of genetic algorithm to improve its performance. The computation results show that the improved genetic algorithm can find the near optimal solutions for most of the TSP instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26906/sunz.2024.2.144",
+      "title": "COMPARATIVE ANALYSIS OF THE APPLICATION OF HEURISTIC ALGORITHMS FOR SOLVING THE TSP PROBLEM",
+      "authors": [
+        "О. Skakalina",
+        "A. Kapiton"
+      ],
+      "year": 2024,
+      "venue": "Системи управління, навігації та зв’язку. Збірник наукових праць",
+      "cited_by_count": 2,
+      "abstract": "The need to solve the traveling salesman problem (TSP) often arises when solving practically significant optimization problems, such as problems in the field of economics, logistics in the widest range of applications, in chains of technical programs. Quite often, the specifics of these problems require obtaining a solution that is as close to the exact value as possible. But the TSP problem is NP-complex, that is, its exact solution can be obtained only in exponential time. Therefore, it is not efficient to solve the TSP problem by the full search algorithm in the presence of a large number of vertices of the graph. However, there are various heuristic algorithms that allow finding a rational solution to this problem with a large number of vertices in a time acceptable for the relevant subject area. In this work, the problem of the traveling salesman is defined as a mathematical programming task of finding the shortest path for the movement of a traveling salesman (traveling salesman), the goal of which is to visit all the objects involved in the task in the shortest time and with minimal costs. Appropriate adaptations of the heuristic algorithms, namely the genetic algorithm and the ant colony algorithm, were developed in the MATLAB environment. A computational experiment was performed on the same input sample, a comparative analysis of the performance of two heuristic algorithms, and the effectiveness of the use of heuristic algorithms for solving NP-complex problems was proven.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26906/sunz.2024.2.144"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7411818",
+      "title": "CAPA: Credit-Aware Parallel Autoregressive Framework for Min-Max Multiple Traveling Salesman Problem",
+      "authors": [
+        "Jiajun Qiu",
+        "Congying Han",
+        "Zhenghai Huang"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The min--max multiple traveling salesman problem is challenging due to its NP-hardness and a tightly coupled objective: the longest route is determined by both individual routing decisions and collective workload balance. Existing learning-based solvers often construct routes sequentially, resulting in weak cross-salesman coordination and decoding latency that grows with the number of assignments. We propose Credit-Aware Parallel Autoregressive Framework (CAPA), a reinforcement learning approach for fast, coordinated min--max multiple traveling salesman problem construction. CAPA combines three components: (1) salesman-specific dynamic contexts for simultaneous action generation under a shared routing state, (2) a credit-aware conflict resolver that converts colliding customer proposals into feasible assignments through retention and remasking, and (3) a structured critic that decomposes the joint value into agent-specific credits and higher-order interaction terms. Experiments across problem scales, fleet sizes, and spatial distributions show that CAPA achieves competitive solution quality against learning-based and classical solvers, with stable extrapolation beyond the training regime. Ablation results further confirm the importance of each optimization terms and each interaction order that contribute to performance.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7411818"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.51976/ijari.211406",
+      "title": "Meta Heuristic Optimization of TSP using Genetic Algorithm",
+      "authors": [
+        "Richa Singh",
+        "Suraiya Parveen",
+        "Aparna ."
+      ],
+      "year": 2014,
+      "venue": "International Journal of Advance Research and Innovation",
+      "cited_by_count": 0,
+      "abstract": "Initiation of this paper demarcates the limits of artificial intelligence, as it calls artificial intelligence a science for its extensibility and genetic algorithm to provide an affable decision to solve a popular routing problem named as Travelling Salesman Problem. This study will help more in moving to a world where a computer will be able to program based on natural selection and evolution.\nThe travelling salesperson (or, salesman) problem (TSP) is an important combinatorial optimization problem. A combinatorial optimization problem helps to find an optimal object from a finite set of objects which does not follows an exhaustive search but the set of feasible solution is discrete.\nTSP aims to find the shortest path that travels through every city in a provided set of cities exactly once and travels back to the initial city using genetic algorithm. TSP is complex as it is a NP-complete problem. This literature proposes a heuristic approach for solving TSP: To find shortest path that travels through every city in a provided set of cities exactly once and travels back to the initial city. Proposed solution will provide a faster solution but not necessarily an optimal solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.51976/ijari.211406"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:16Z"
+}

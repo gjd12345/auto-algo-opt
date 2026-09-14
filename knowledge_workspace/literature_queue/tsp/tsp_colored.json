@@ -1,0 +1,146 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_colored",
+    "label": "Colored TSP",
+    "definition": "Color/class visit constraints.",
+    "search_query": "colored traveling salesman heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Color-feasible NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Colored local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "colored traveling salesman heuristic",
+  "harvested_at": "2026-09-14T08:24:48Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1016/j.ejor.2014.07.019",
+      "title": "Robust equilibria in location games",
+      "authors": [
+        "Berno Buechel",
+        "Nils Roehl"
+      ],
+      "year": 2015,
+      "venue": "European Journal of Operational Research",
+      "cited_by_count": 9,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1016/j.ejor.2014.07.019",
+      "seeded": true,
+      "seed_heuristic": "Colored traveling salesman",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-3603107/v1",
+      "title": "A Cloud Container-Based Distributed Solving Approach to Superscale Colored Traveling Salesman Problems",
+      "authors": [
+        "Zhicheng Lin",
+        "Jun Li",
+        "Yongcui Li"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     The colored traveling salesman problem (CTSP) generalizes the well-known multiple traveling salesman problem (MTSP) by utilizing colors to describe the accessibility of cities to individual salesmen. Many serial algorithms have been developed to solve CTSP instances. This work presents a distributed solving method for CTSP for the first time. First, a cloud container-based distributed solving framework for CTSP is designed and implemented in a pipeline style. A superscale CTSP can be decomposed into many TSPs to solve in parallel to reduce computational complexity dramatically. Second, following the framework, we develop a distributed Delaunay-triangulation-based variable neighborhood search (DDVNS) algorithm. In DDVNS, a two-stage initialization is exploited to generate each TSP solution. Then, Delaunay-triangulation-based variable neighborhood search (DVNS) is applied to search for the local TSP optima within a neighborhood delicately. In addition, the solutions are improved further by reallocating the multicolor cities and repeating the search progress. Finally, the extensive experiments show that DDVNS outperforms the state-of-the-art serial algorithms regarding search efficiency and solution quality. Notably, We can achieve a satisfactory solution in a superscale case of 16 salesmen and 160000 cities within 15 minutes, which breaks the existing solving record of CTSPs.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-3603107/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/kb8w2",
+      "title": "A Heuristic Approach to the Traveling Salesman Problem on a Sphere: A Geodesic Distance Study",
+      "authors": [
+        "Edison Carrasco-Jiménez"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper addresses an instance of the Traveling Salesman Problem (TSP) on a sphere, utilizing a greedy heuristic approach to find an approximate solution. The points on the surface of the sphere represent cities distributed randomly, and the red line shows the shortest approximate path between them. We calculate the total geodesic distance traveled, highlighting the complexity of the problem and the inherent limitations of heuristic methods. Additionally, we explore potential improvements to the algorithm and discuss the implications of these results in the context of combinatorial optimization and computational complexity theory.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/kb8w2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6412853",
+      "title": "A Dual-Population Hybrid Evolutionary Algorithm for Solving the Colored Traveling Salesman Problem",
+      "authors": [
+        "Kanglong Chen",
+        "Xiansong Zhen",
+        "Ning Li",
+        "Qingjin Ji",
+        "Yiwen Zhong",
+        "Yu Lin"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The Colored Traveling Salesman Problem (CTSP) is an NP-hard combinatorial optimization problem where cities are grouped into different colors, and a feasible tour must satisfy predefined color-related constraints. Existing algorithms typically couple global and local searches in a sequential manner, which often creates a dilemma: either premature diversity loss leads to stagnation in local optima, or excessive diversity hinders effective deep intensification. To address this issue, this paper proposes a unified framework named the Dual-Population Hybrid Evolutionary Algorithm (DPHEA). DPHEA integrates a probabilistic branching strategy within a dual-population architecture to dynamically alternate between exploration and exploitation. Specifically, a Simulated Annealing (SA) engine is employed to intensify solutions within the elite population, while a crossover operator facilitates global information exchange between the elite and exploratory populations. In addition, a novel Caching-based Edge Assembly Crossover (C-EAX) operator is introduced to accelerate the resolution of recurring substructures. Extensive experiments on 45 benchmark instances demonstrate the effectiveness of the proposed framework, which yields 12 new best-known solutions and establishes a competitive performance baseline for the CTSP.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6412853"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/a11100143",
+      "title": "An Algorithm for Mapping the Asymmetric Multiple Traveling Salesman Problem onto Colored Petri Nets",
+      "authors": [
+        "Furqan Hussain Essani",
+        "Sajjad Haider"
+      ],
+      "year": 2018,
+      "venue": "Algorithms",
+      "cited_by_count": 7,
+      "abstract": "The Multiple Traveling Salesman Problem is an extension of the famous Traveling Salesman Problem. Finding an optimal solution to the Multiple Traveling Salesman Problem (mTSP) is a difficult task as it belongs to the class of NP-hard problems. The problem becomes more complicated when the cost matrix is not symmetric. In such cases, finding even a feasible solution to the problem becomes a challenging task. In this paper, an algorithm is presented that uses Colored Petri Nets (CPN)—a mathematical modeling language—to represent the Multiple Traveling Salesman Problem. The proposed algorithm maps any given mTSP onto a CPN. The transformed model in CPN guarantees a feasible solution to the mTSP with asymmetric cost matrix. The model is simulated in CPNTools to measure two optimization objectives: the maximum time a salesman takes in a feasible solution and the collective time taken by all salesmen. The transformed model is also formally verified through reachability analysis to ensure that it is correct and is terminating.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/a11100143"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:28Z"
+}

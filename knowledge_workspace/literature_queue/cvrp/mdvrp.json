@@ -1,0 +1,187 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "mdvrp",
+    "label": "Multi-depot VRP",
+    "definition": "Several depots.",
+    "search_query": "multi depot VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Depot assignment + NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "MD savings",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "multi depot VRP heuristic",
+  "harvested_at": "2026-09-14T08:00:34Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.7.2.109",
+      "title": "Minimum Cost Schedules for a Public Transportation Route—I. Theory",
+      "authors": [
+        "V. F. Hurdle"
+      ],
+      "year": 1973,
+      "venue": "Transportation Science",
+      "cited_by_count": 49,
+      "abstract": "A fleet of vehicles carries passengers in one direction on a public transit route, then returns empty to the dispatch point after a round trip travel time T. The arrival rate of passengers is a known, deterministic, continuous, function of time and the objective is to devise a schedule that minimizes the total cost for passenger waiting time and vehicle operation. It is shown that the optimal dispatch rate at any time t is either equal to the arrival rate at t + kT where k is some integer (not necessarily positive) or proportional to the square root of the average of the passenger arrival rates at t − mT, t − (m − 1)T, …, t, …, t + nT where m and n are nonnegative integers (sometimes both zero). Furthermore, the optimal dispatch rate, expressed as a function of time, can be discontinuous only at t q + jT and at t d , where t q is a time when a queue of waiting passengers forms, t d is a time when a queue disappears, and j is an integer.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.7.2.109",
+      "seeded": true,
+      "seed_heuristic": "Tillman multi-depot savings",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5821/dissertation-2117-127490",
+      "title": "The multi-depot VRP with vehicle interchanges",
+      "authors": [
+        "Victoria Rebillas Loredo"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "In real-world logistic operations there are a lot of situations that can be exploited to get better operational strategies. It is important to study these new alternatives, because they can represent significant cost reductions to the companies working with physical distribution. This thesis defines the Multi-Depot Vehicle Routing Problem with Vehicle Interchanges (MDVRPVI). In this problem, both vehicle capacities and duration limits on the routes of the drivers are imposed. To favor a better utilization of the available capacities and working times, it is allowed to combine pairs of routes at predefined interchange locations. The objective of this thesis is to analyze and solve the Multi-Depot Vehicle Routing Problem adding the possibility to interchange vehicles at predefined points. With this strategy, it is possible to reduce the total costs and the number of used routes with respect to the classical approach: The Multi-Depot Vehicle Routing Problem (MDVRP). It should be noted that the MDVRP is more challenging and sophisticated than the single-depot Vehicle Routing Problem (VRP). Besides, most exact algorithms for solving the classical VRP are difficult to adapt in order to solve the MDVRP (Montoya-Torres et al., 2015). From the complexity point of view, the MDVRPVI is NP-Hard, since it is an extension of the classical problem, which is already NP-Hard. We present a tight bound on the costs savings that can be attained allowing interchanges. Three integer programming formulations are proposed based on the classical vehicle-flow formulations of the MDVRP. One of these formulations was solved with a branch-and-bound algorithm, and the other two formulations, with branch-and-cut algorithms. Due to its great symmetry, the first formulation is only able to solve small instances. To increase the dimension of the instances used, we proposed two additional formulations that require one or more families of constraints of exponential size. In order to solve these formulations, we had to design and implement specific branch-and-cut algorithms. For these algorithms we implemented specific separation methods for constraints that had not previously been used in other routing problems. The computational experience performed evidences the routing savings compared with the solutions obtained with the classical approach and allows to compare the efficacy of the three solution methods proposed. \n         En les operacions logístiques del món real es donen situacions que poden ser explotades per obtenir millors estratègies operacionals. És molt important estudiar aquestes noves alternatives, perquè poden representar una reducció significativa de costos per a les companyies que treballen en distribució de mercaderies. En aquesta tesi es defineix el Problema d'Enrutament de Vehicles amb Múltiples Dipòsits i Intercanvi de Vehicles (MDVRPVI). En aquest problema, es consideren tant la capacitat dels vehicles com els límits de duració de les rutes dels conductors. Per tal de millorar la utilització de les capacitats i temps de treball disponibles, es permet combinar parelles de rutes en punts d'intercanvi predefinits. L'objectiu d'aquesta tesi és analitzar i resoldre el problema d'Enrutament de Vehicles amb Múltiples Dipòsits, on es permet l'intercanvi de vehicles. Amb aquesta estratègia, és possible reduir els costos totals i el nombre de les rutes utilitzades respecte l'enfocament clàssic: el problema d'Enrutament de Vehicles amb Múltiples Dipòsits (MDVRP). Cal assenyalar que el MDRVP és més desafiant i sofisticat que el problema d'Enrutament de Vehicles d'un únic dipòsit (VRP). A més, molts algoritmes exactes per resoldre el VRP clàssic son complicats d'adaptar per resoldre el MDVRP (Montoya-Torres et al., 2015). Des del punt de vista de la complexitat, el MDRVPVI és NP-Dur, perquè és una extensió del problema clàssic, que també ho és. Presentem una cota ajustada de l'estalvi en els costos de distribució que es pot obtenir permetent els intercanvis. Es proposen tres formulacions de programació sencera basades en la formulació clàssica “vehicle-flow” del MDVRP. La primera formulació, degut a la seva grandària i la seva simetria, només permet resoldre instàncies molt petites. Per augmentar la dimensió de les instàncies abordables, es proposen dues formulacions addicionals que requereixen una o vàries famílies de restriccions de mida exponencial. Per això, per tal de resoldre el problema amb aquestes formulacions, ha calgut dissenyar i implementar sengles algorismes de tipus branch-and-cut. En aquests algorismes s'han implementat mètodes de separació específics per a les restriccions que no s'havien utilitzat prèviament en altres problemes de rutes. L’experiència computacional realitzada evidencia els estalvis obtinguts comparació amb les solucions corresponents l'enfocament clàssic. També es compara l’eficàcia dels tres mètodes propostes a l'hora de resoldre el problema.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5821/dissertation-2117-127490"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/ijaie.2017010101",
+      "title": "A New Multi-Criteria Solving Procedure for Multi-Depot FSM-VRP with Time Window",
+      "authors": [
+        "Lahcene Guezouli",
+        "Samir Abdelhamid"
+      ],
+      "year": 2017,
+      "venue": "International Journal of Applied Industrial Engineering",
+      "cited_by_count": 2,
+      "abstract": "One of the most important combinatorial optimization problems is the transport problem, which has been associated with many variants such as the HVRP and dynamic problem. The authors propose in this study a decision support system which aims to optimize the classical Capacitated Vehicle Routing Problem by considering the existence of different vehicle types (with distinct capacities and costs) and multiple available depots, that the authors call the Multi-Depot HVRPTW by respecting a set of criteria including: schedules requests from clients, the heterogeneous capacity of vehicles..., and the authors solve this problem by proposing a new scheme based on a genetic algorithm heuristics that they will specify later. Computational experiments with the benchmark test instances confirm that their approach produces acceptable quality solutions compared with previous results in similar problems in terms of generated solutions and processing time. Experimental results prove that the method of genetic algorithm heuristics is effective in solving the MDHVRPTW problem and hence has a great potential.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/ijaie.2017010101"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/eng2.70511",
+      "title": "Crew Rostering in Long‐Distance Freight Railways: A Multi‐Depot\n                    <scp>VRP</scp>\n                    ‐Based Heuristic Approach",
+      "authors": [
+        "Franco Collodetti Mazioli",
+        "Rodrigo de Alvarenga Rosa",
+        "João Henrique Brunow Barbosa",
+        "Hendrigo Venes"
+      ],
+      "year": 2025,
+      "venue": "Engineering Reports",
+      "cited_by_count": 0,
+      "abstract": "ABSTRACT \n          Efficient crew management is a critical challenge in long‐distance freight rail operations, where shift limits, depot logistics, and labor regulations must be jointly considered. This paper addresses the Railway Crew Rostering Problem by proposing a novel mathematical model inspired by the Vehicle Routing Problem with Multiple Depots and Multiple Trips (VRP‐MD‐MT). The model incorporates depot assignment, shift structure, and overtime constraints. A tailored heuristic algorithm is developed and applied to real data from a major Brazilian freight railway. Compared to the company's manual planning, the proposed approach reduced the number of required drivers and significantly decreased overtime in several scenarios. The analysis indicates the potential for meaningful annual cost savings, achieved without reducing the workforce. Beyond cost efficiency, the method offers a standardized planning tool aligned with legal and operational constraints. These results demonstrate the model's practical relevance and computational effectiveness in complex railway environments.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/eng2.70511"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4053265",
+      "title": "Hybrid Heuristic for Multi-Depot Static Bike Rebalancing And Collection Problem",
+      "authors": [
+        "Xue Bai",
+        "Ning Ma",
+        "Kwai-Sang Chin",
+        "Zhili Zhou"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 2,
+      "abstract": "The bike rebalancing problem is one of the major operational challenges in the urban bike-sharing system which involves the redistribution of bikes to prevent stations from being empty or overloaded. This paper investigates a new bike rebalancing problem, which considers the collection of broken bikes in the multi-depot bike sharing system. An integer programming model is formulated to find the optimal vehicle assignment and visiting sequences with the minimum total working time and fixed cost of vehicles. A hybrid heuristic algorithm integrating Variable Neighbourhood Search and Dynamic Programming is proposed to solve the problem. The computational results show that the proposed method can find 26 best solutions out of 36 instances, while the CPLEX obtains 16 best solutions. Impact of broken bikes collection and distribution of depots is examined. Comparison of different practical strategies indicates that the number of vehicles required can be significantly reduced by allowing multiple visits to depots.  Allowing vehicles to return to different depots can help reduce the total working time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4053265"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/ijaec.2018010101",
+      "title": "Efficient Golden-Ball Algorithm Based Clustering to solve the Multi-Depot VRP With Time Windows",
+      "authors": [
+        "Lahcene Guezouli",
+        "Mohamed Bensakhria",
+        "Samir Abdelhamid"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Applied Evolutionary Computation",
+      "cited_by_count": 6,
+      "abstract": "In this article, the authors propose a decision support system which aims to optimize the classical Capacitated Vehicle Routing Problem by considering the existence of multiple available depots and a time window which must not be violated, that they call the Multi-Depot Vehicle Routing Problem with Time Window (MDVRPTW), and with respecting a set of criteria including: schedules requests from clients, the capacity of vehicles. The authors solve this problem by proposing a recently published technique based on soccer concepts, called Golden Ball (GB), with different solution representation from the original one, this technique was designed to solve combinatorial optimization problems, and by embedding a clustering algorithm. Computational results have shown that the approach produces acceptable quality solutions compared to the best previous results in similar problem in terms of generated solutions and processing time. Experimental results prove that the proposed Golden Ball algorithm is efficient and effective to solve the MDVRPTW problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/ijaec.2018010101"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/app16115188",
+      "title": "A Three-Stage Approach for the Multi-Depot VRP with Priority Requests",
+      "authors": [
+        "Yehya Bouchbout",
+        "Brahim Farou",
+        "Bálint Molnár",
+        "Ala-Eddine Benrazek",
+        "Khawla Bouafia",
+        "Hamid Seridi"
+      ],
+      "year": 2026,
+      "venue": "Applied Sciences",
+      "cited_by_count": 0,
+      "abstract": "Field-service operations for utility companies require routing technicians across multiple depots while guaranteeing same-day response to critical infrastructure customers, a constraint that standard multi-depot routing methods cannot structurally enforce. We introduce the MDVRP with Priority Requests (MDVRP-PR), formalised as a lexicographic optimisation problem that guarantees service to priority customers before maximising coverage and minimising route duration. A three-stage pipeline is proposed: hybrid DBSCAN-Hierarchical clustering for topology-aware depot assignment, an Enhanced Max-Min Ant System (MMAS) with priority-driven construction, lexicographic solution selection, and repair, and a Boundary Relocate post-optimisation stage with global cross-depot recovery. The approach is evaluated on a real-world applied case study from Algérie Télécom (Guelma, Algeria), comprising a single four-depot field-service instance scaled to three sizes (55, 90, and 150 customers) and assessed over 2135 controlled runs. On this case study, the proposed clustering method outperforms the MDVRP-adapted Sweep baseline by 22.9 percentage points on the largest instance (n = 150; Friedman p &lt; 0.001). The priority mechanisms sustain 100% feasibility across all configurations, compared to complete collapse without them (0/10 seeds at ≥40% priority), at a route-time overhead below 5%. Relative to the company’s current manual practice, the framework improves customer coverage by 16.1 percentage points within 28 s, confirming its practical utility for daily deployment in this capacity-constrained, priority-sensitive routing context.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/app16115188"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3233/978-1-61499-105-2-49",
+      "title": "A Learning Based Evolutionary Algorithm For Distributed Multi-Depot VRP",
+      "authors": [
+        "Soeanu A.",
+        "Ray S.",
+        "Debbabi M.",
+        "Berger J.",
+        "Boukhtouta A."
+      ],
+      "year": 2012,
+      "venue": "Frontiers in Artificial Intelligence and Applications",
+      "cited_by_count": 3,
+      "abstract": "Solving multi-depot vehicle routing problem (MDVRP) in centralized setting has known scalability issues. This paper presents an innovative multi-agent and multi-round reinforcement learning procedure over adaptive elitist solutions selected from an evolving population pool, to near optimally solve MDVRP in a distributed setting. The paper contribution is threefold: First, it illustrates an effective solution finding procedure for MDVRP with limited information sharing in a realistic setup of agent&amp;rsquo;s control over depot and fleet. Second, it elaborates an agent-centric heuristic algorithm to navigate the solution space toward near-optimality based on elitist selection. In this context, a dynamic weighted probability distribution template generator is used to evolve increasingly better representative fractions of the solution population. Finally, it presents noteworthy results by applying the procedure on known MDVRP problem instances. The results are analyzed to assess solution quality.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3233/978-1-61499-105-2-49"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/math11030510",
+      "title": "Lagrangian Heuristic for Multi-Depot Technician Planning of Product Distribution and Installation with a Lunch Break",
+      "authors": [
+        "Fangzhou Yan",
+        "Huaxin Qiu",
+        "Dongya Han"
+      ],
+      "year": 2023,
+      "venue": "Mathematics",
+      "cited_by_count": 0,
+      "abstract": "In this paper, we consider a technician planning scheme stemming from product distribution and installation in a manufacturing enterprise that considers factors such as soft time windows, skill areas, lunch breaks, and outsourcing options, among others. The goal is to identify the optimal partition of technicians into groups and assignment of customers to technician groups and find the optimal routes for technician groups to minimize the sum of the travel cost, soft time window violation cost, and outsourcing cost. To address this problem, the study develops a tailored Lagrangian heuristic that incorporates several strategies to speed up convergence and produce sharper bounds. Computational comparisons between the developed heuristic and MIP solver are presented. The results reveal that the bounds found by the developed algorithm outperform those found by CPLEX for large instances, and it is capable of identifying high-quality feasible solutions to large-scale problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/math11030510"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:48Z"
+}

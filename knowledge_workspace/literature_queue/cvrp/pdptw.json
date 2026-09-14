@@ -1,0 +1,126 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "pdptw",
+    "label": "PDPTW",
+    "definition": "Pickup-delivery with windows.",
+    "search_query": "pickup delivery time windows heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "PDPTW insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "PDPTW ALNS",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "pickup delivery time windows heuristic",
+  "harvested_at": "2026-09-14T08:25:20Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1050.0135",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Stefan Ropke",
+        "David Pisinger"
+      ],
+      "year": 2006,
+      "venue": "Transportation Science",
+      "cited_by_count": 2281,
+      "abstract": "The pickup and delivery problem with time windows is the problem of serving a number of transportation requests using a limited amount of vehicles. Each request involves moving a number of goods from a pickup location to a delivery location. Our task is to construct routes that visit all locations such that corresponding pickups and deliveries are placed on the same route, and such that a pickup is performed before the corresponding delivery. The routes must also satisfy time window and capacity constraints. \n          This paper presents a heuristic for the problem based on an extension of the large neighborhood search heuristic previously suggested for solving the vehicle routing problem with time windows. The proposed heuristic is composed of a number of competing subheuristics that are used with a frequency corresponding to their historic performance. This general framework is denoted adaptive large neighborhood search. \n          The heuristic is tested on more than 350 benchmark instances with up to 500 requests. It is able to improve the best known solutions from the literature for more than 50% of the problems. \n          The computational experiments indicate that it is advantageous to use several competing subheuristics instead of just one. We believe that the proposed heuristic is very robust and is able to adapt to various instance characteristics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1050.0135"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6819120",
+      "title": "A Temporal-Network Constraint Programming Model for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Timothy Roch",
+        "Primous Pomalegni"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We study the single-vehicle pickup and delivery problem with time windows (PDPTW), in which each pickup must precede its corresponding dropoff and all service starts must lie within prescribed time windows. We present a constraint programming (CP) formulation based on successor variables, a global Circuit constraint, position variables for route order, and conditional difference constraints that activate travel-time separations only on selected arcs. Because the route is closed, we introduce a separate return-time variable rather than propagating timing back into the depot. The central perspective of the paper is that routing decisions induce a temporal constraint graph. As successor variables are fixed, the active timing constraints form an evolving simple temporal network whose edges correspond to selected travel and service separations. This interpretation separates the combinatorial route-selection problem from the temporal feasibility structure revealed by each partial route. It clarifies how route choices tighten feasible servicetime bounds, how temporal propagation can expose infeasible prefixes before a complete tour is specified, and why feasibility is sensitive to time-window slack. Within this framework, we derive necessary infeasibility conditions, including subset-based time-window bounds, and present a baseline mixed-integer linear programming formulation for comparison. We complement the formulation with a controlled empirical study over synthetic PDPTW instances. The experiments enumerate all precedence-respecting routes for instances with three to five pickup-dropoff pairs and examine feasible-route percentages, failure depths, prefix-failure profiles, slack sensitivity, and travel-time structure. The results support the modeling perspective developed in the paper: active timing constraints expose temporal structure during search, and this structure helps explain both early infeasibility detection and the sensitivity of feasibility to time-window slack.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6819120"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6205944",
+      "title": "Exact Pruned Route Enumeration with Set Partitioning for Multi-Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Conor Kikkert",
+        "Michael Forbes"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The multi-pickup and delivery problem with time windows (MPDPTW) arises in on-demand logistics applications where each delivery corresponds to one or more pickups, all of which must be completed before the delivery. Existing exact methods rely on large mixed-integer formulations with many variables and constraints that require extensive branching and cutting strategies. This paper proposes an exact pruned route enumeration framework with set partitioning (PRE-SP) that generates feasible single-vehicle routes a priori and eliminates infeasible or dominated request routes using provably safe pruning rules. The reduced route set is then used in a set-partitioning model that ensures global optimality without dynamic column pricing.Computational results on the 120 classical MPDPTW benchmarks show that PRE-SP solves 116 instances to proven optimality within a 1-hour time limit, and all 120 instances to proven optimality when the time limit is extended to 24 hours for the remaining four cases, outperforming state-of-the-art exact approaches. Additional experiments on 30 larger 200-node instances demonstrate the scalability of the framework. These results indicate that optimality-preserving route enumeration with safe pruning offers a competitive exact alternative to classical multi-route based branch-and-cut formulations of the MPDPTW.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6205944"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.2530001",
+      "title": "Strategies for Handling Temporal Uncertainty in Pickup and Delivery Problems with Time Windows",
+      "authors": [
+        "Faith Jordan Srour",
+        "Niels A.H. Agatz",
+        "Johan Oppen"
+      ],
+      "year": 2014,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "In many real-life routing problems there is more uncertainty with respect to the required timing of the service than with respect to the service locations. We focus on a pickup and delivery problem with time windows in which the pickup and drop-off locations of the service requests are fully known in advance, but the time at which these jobs will require service is only fully revealed during operations. We develop a sample-scenario routing strategy to accommodate a variety of potential time realizations while designing and updating the routes. Our experiments on a breadth of instances show that advance time related information, if used intelligently, can yield benefits. Furthermore, we show that it is beneficial to tailor the consensus function that is used in the sample-scenario approach to the specifics of the problem setting. By doing so, our strategy performs well on instances with both short time windows and limited advance confirmation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.2530001"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-604710/v1",
+      "title": "Two-Echelon Vehicle Routing Problem with Time Windows and Simultaneous Pickup and Delivery",
+      "authors": [
+        "Hang Zhou",
+        "Hu Qin",
+        "Zizhen Zhang",
+        "Jiliu Li"
+      ],
+      "year": 2021,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     In this paper, we propose a tabu search algorithm for the two-echelon vehicle routing problem with time windows and simultaneous pickup and delivery (2E-VRPTWSPD), which is a new variant of the two-echelon vehicle routing problem (2E-VRP) by considering the time windows constraints and simultaneous pickup and delivery. In 2EVRPTWSPD, the pickup and delivery activities are performed simultaneously by the same vehicles through the depot to satellites in the first echelon and satellites to customers in the second echelon, where each customer has a specified time window. To solve this problem, firstly, we formulate the problem with a mathematical model. Then, we implement a variable neighborhood tabu search algorithm with the proposed solution representation of dummy satellites to solve large-scale instances. Dummy satellites time windows are used in our algorithm to speed up the algorithm. Finally, we generate two instance sets based on the existing 2E-VRP and 2E-VRPTW benchmark sets and conduct additional experiments to analyze the performance of our algorithm.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-604710/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31224/6822",
+      "title": "A Temporal-Network Constraint Programming Model for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Timothy Roch"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We study the single-vehicle pickup and delivery problem with time windows (PDPTW), where each pickup must precede its corresponding dropoff and service must begin within prescribed time windows. We present a constraint programming (CP) formulation based on successor variables, a global Circuit constraint, position variables for route order, and conditional difference constraints that activate travel-time separations only on selected arcs. Because the route is closed, we introduce a separate return-time variable instead of propagating timing constraints back into the depot.\nThe central perspective of the paper is that routing decisions induce a temporal constraint graph. As successor variables are fixed, the active timing constraints form an evolving simple temporal network whose edges correspond to selected travel and service separations. This view clarifies how propagation tightens service-time bounds and why some partial assignments become infeasible before a complete tour is specified. Within this framework, we derive necessary infeasibility conditions, including subset-based time-window bounds, and present a baseline mixed-integer linear programming formulation for comparison.\nWe complement the formulation with a controlled empirical study over synthetic PDPTW instances. For instances with three to five pickup--dropoff pairs, we enumerate all precedence-respecting routes and analyze feasible-route percentages, normalized failure depths, prefix-failure profiles, slack sensitivity, and travel-time structure. The results illustrate how active timing constraints expose temporal structure during search and how feasibility depends on route size, travel-time structure, and time-window slack.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31224/6822"
+    }
+  ]
+}

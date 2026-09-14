@@ -1,0 +1,163 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_multitrip",
+    "label": "Multi-trip VRP",
+    "definition": "A vehicle may do several routes.",
+    "search_query": "multi trip VRP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Multi-trip NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Trip packing + routing",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "multi trip VRP heuristic Multi-trip NN",
+  "harvested_at": "2026-09-14T08:12:39Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1016/s0377-2217(02)00809-3",
+      "title": "A new algorithm for the multi-item exponentially discounted optimal selection problem",
+      "authors": [
+        "Israel David",
+        "Ofer Levi"
+      ],
+      "year": 2004,
+      "venue": "European Journal of Operational Research",
+      "cited_by_count": 8,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1016/s0377-2217(02)00809-3",
+      "seeded": true,
+      "seed_heuristic": "Multi-trip routing context",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230140105",
+      "title": "Graphs with the smallest number of minimum cut sets",
+      "authors": [
+        "Derek Smith"
+      ],
+      "year": 1984,
+      "venue": "Networks",
+      "cited_by_count": 15,
+      "abstract": "Abstract The number of vertex cut sets of size k in a graph of connectivity k has been used as a measure of network reliability. Let G be a regular graph with N vertices, valency k , connectivity k , and with the minimum number of vertex cut sets with k vertices. The problem of constructing such a graph G for each pair ( N, k ) is known to be difficult. We show how to construct infinite families of such graphs in various cases. These cases are spread through the range 3/8 ≤ k/N &lt;1. We also deal with cases in which k is small and cases with N ‐ k small.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230140105",
+      "seeded": true,
+      "seed_heuristic": "Multi-trip VRP heuristic",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-2761446/v1",
+      "title": "Multi-Trip Multi-Compartment Vehicle Routing Problem with Backhauls",
+      "authors": [
+        "Sukhpal Ramanand",
+        "KAUSHAL KUMAR"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     The Multi-Trip Multi-Compartment Vehicle Routing Problem with Backhauls (MTMCVRPB) is a complex optimization problem that involves finding the most efficient routes for a heterogeneous fleet of multi-compartment vehicles to transport heterogeneous commodities simultaneously. The problem involves making deliveries and pickups while taking into account capacity constraints on compartments and other specific requirements such as limitation on route length. The MTMCVRPB aims to minimize the total cost of the routes, including the cost of vehicles, fuel and other expenses, while maximizing efficiency of vehicles and fulfilling the demand of customers. In order to solve the MTMCVRPB, this article recommends a mixed integer linear programming (MILP) formulation. The proposed model takes into consideration the demands of both linehaul and backhaul customers, ensuring that on each route linehaul deliveries are made before visiting any backhaul customer. The model was tested on benchmark instances from literature and randomly generated data sets and numerical experiments were performed to demonstrate its effectiveness. The proposed model can be beneficial for the industries such as grocery and food delivery, fuel distribution and garbage collection as these are main applications of this model. We have also provided a saving based heuristic by making certain modifications to find the quick and efficient solution to the proposed model.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-2761446/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/8e405394z034dz4e46zbc83z23bc519f78d4",
+      "title": "Multi-scale characterisation of a microalloyed TRIP-assisted bainitic steel",
+      "authors": [
+        "Zélie Tournoud"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Caractérisation multi-échelle d'un acier bainitique microallié à effet TRIP \n         Les aciers avancés à haute résistance (AHSS) de 3ème génération ont l’avantage de combiner résistance et ductilité. Ces aciers multi-phasés sont appréciés pour les applications dans l’industrie automobile pour leurs propriétés mécaniques, dues notamment à la présence d’austénite métastable permettant une transformation induite par la plasticité (effet TRIP- Transformation Induced Plasticity).L’objectif de ce travail a été d’étudier l’effet du microalliage sur les transformations de phases et la précipitation dans de tels aciers. Trois nuances ont été étudiées : une référence sans microalliage, une avec ajout de niobium et une avec ajout de vanadium. Elles ont été caractérisées au fil de la route métallurgique composée d’un recuit intermédiaire et d’un recuit final caractéristique des aciers bainitiques à effet TRIP.Des méthodes ex-situ et in-situ ont été mises en oeuvre. Les caractérisations in-situ pendant les traitements thermiques incluent une étude des transformations de phases par diffraction de rayons X à haute énergie (HEXRD) et une étude de la précipitation par diffusion de rayons X à petits angles (SAXS), utilisant le rayonnement synchrotron.La morphologie des grains a été observée par microscopie optique et diffraction d'électrons rétrodiffusés (EBSD) au Microscope Electronique à Balayage (MEB). L’imagerie des précipités a été effectuée par Microscopie Electronique en Transmission (MET) en imagerie en champ sombre, leur composition a été précisée par analyse dispersive en énergie (EDS) et leur localisation étudiée grâce à l’outil de nano-diffraction ACOM/ASTAR.L’ensemble de ces expériences a permis de mettre en évidence l’effet du traitement thermique et de la composition chimique sur la quantité d’austénite présente ainsi que sur sa teneur en carbone, qui sont les principaux paramètres contrôlant l’effet TRIP. La présence du microalliage se traduit par des variations de ces paramètres, liés à la fois à la présence de précipités contenant ces éléments et à leur présence en solution solide.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/8e405394z034dz4e46zbc83z23bc519f78d4"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22219/jtiumm.vol20.no2.68-77",
+      "title": "A Cluster-First Route-Second Heuristic Approach to Solve The Multi-Trip Periodic Vehicle Routing Problem",
+      "authors": [
+        "Annisa Kesy Garside",
+        "Nabila Rohmatul Laili"
+      ],
+      "year": 2019,
+      "venue": "Jurnal Teknik Industri",
+      "cited_by_count": 2,
+      "abstract": "This paper discusses periodic vehicle routing problems that allow vehicles to travel on multiple trips in a single day. It is known as the Multi-Trip Periodic Vehicles (MTPVRP) Problem Route. Cluster-first route-second (CFRS) heuristics to solve MTPVRP was proposed in this study. In phase 1, customers were divided into clusters using the formulation of integer programming. Phase 2 determined the route of the cluster and verifies that the total journey time to visit the trips does not exceed the working hours of the vehicle. The implementation of the heuristic CFRS to solve the real problem faced by the LPG distributor shows that the procedure could provide a better routing solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22219/jtiumm.vol20.no2.68-77"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22219/jtiumm.vol20.no2.172-181",
+      "title": "A Cluster-First Route-Second Heuristic Approach to Solve The Multi-Trip Periodic Vehicle Routing Problem",
+      "authors": [
+        "Annisa Kesy Garside",
+        "Nabila Rohmatul Laili"
+      ],
+      "year": 2019,
+      "venue": "Jurnal Teknik Industri",
+      "cited_by_count": 5,
+      "abstract": "This paper discusses periodic vehicle routing problems that allow vehicles to travel on multiple trips in a single day. It is known as the Multi-Trip Periodic Vehicles (MTPVRP) Problem Route. Cluster-first route-second (CFRS) heuristics to solve MTPVRP was proposed in this study. In phase 1, customers were divided into clusters using the formulation of integer programming. Phase 2 determined the route of the cluster and verified that the total journey time to visit the trips does not exceed the working hours of the vehicle. Implementing the heuristic CFRS to solve the real problem faced by the  Liquefied petroleum gas (LPG) distributor shows that the procedure could provide a better routing solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22219/jtiumm.vol20.no2.172-181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/drones10060430",
+      "title": "Energy Consumption Optimization of Multi-Trip UAV Routing Using Surrogate Modeling with Heuristic and Metaheuristic Algorithms",
+      "authors": [
+        "Abdullah Tunç Büyüksan",
+        "Kerem Utku Demir",
+        "Durdu Hakan Utku",
+        "Kamer Özgün"
+      ],
+      "year": 2026,
+      "venue": "Drones",
+      "cited_by_count": 0,
+      "abstract": "Unmanned aerial vehicle (UAV) routing under realistic operational conditions requires simultaneous consideration of distance- and payload-dependent energy consumption, limited battery capacity, and multi-trip mission feasibility—factors that are rarely integrated into a unified, reproducible benchmarking framework. This study proposes an energy-aware, multi-trip UAV routing model for single-warehouse cargo delivery operations, in which total energy consumption is minimized through a second-degree polynomial power function derived from empirical motor thrust–power data of a theoretically designed quadrotor UAV with a maximum payload capacity and a usable battery capacity. Euclidean service locations and loads are generated randomly within a continuous operational domain to reflect spatial uncertainty, and a split-based decoding mechanism enforces battery feasibility constraints throughout the route. Twenty-six heuristic and metaheuristic algorithms sourced from the recent UAV routing literature are implemented within a standardized MATLAB benchmarking environment and evaluated on TSPLIB instances (Berlin52, kroA100), as well as randomly generated instances with different numbers of delivery locations. A refined subset of eight representative algorithms is subjected to comprehensive scalability analysis under both distance- and energy-minimization objectives, separately. The findings provide evidence-based guidelines for algorithm selection across offline planning and real-time UAV routing scenarios, and establish a transparent, reproducible benchmark baseline for energy-constrained single-UAV operations.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/drones10060430"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.32890/jcia2025.4.2.8",
+      "title": "Greedy Heuristic Algorithms for Multi-Objective Tourist Trip Design Problem on Penang Island",
+      "authors": [
+        "Tze Yuan Louis Lim",
+        "Aida Mauziah Benjamin"
+      ],
+      "year": 2025,
+      "venue": "Journal of Computational Innovation and Analytics (JCIA)",
+      "cited_by_count": 0,
+      "abstract": "Tourism is a vital sector in the global economy, significantly contributing to the development of many countries by creating jobs, generating income, and promoting cultural exchange. However, planning a tour itinerary presents a significant challenge due to the necessity of identifying points of interest (POI) and organizing them into a proper itinerary. This study focused on solving the multi-objective TTDP for Penang Island by developing two greedy heuristic techniques: Nearest Neighbour (NN) and Nearest Greedy Insertion (NGI). The study aimed to achieve three objectives: identifying tourists’ preferences and constraints relevant to the TTDP, proposing solutions using NN and NGI techniques, and evaluating the effectiveness of these methods. Adopted a hybrid weighted objective, both algorithms balanced maximizing the number of POIs visited and popularity index while satisfying several constraints such as time windows, popularity index, restaurant selection, POI categories, and budget limitations. The findings showed that the NN technique performed better for a one-day tour, delivering a higher popularity index (212.66) compared to NGI (171.43). However, the NGI technique outperformed in a two-day tour by balancing POI coverage and popularity index of 294.91, while NN had 268.68. For a three-day tour, NN achieved a higher popularity index (359.86) than NGI (337.03), while NGI visited more POIs. Future studies should explore metaheuristic methods, broader geographic applications, incorporate time-dependent variables, and tailored solutions for halal-conscious travellers.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.32890/jcia2025.4.2.8"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:03Z"
+}

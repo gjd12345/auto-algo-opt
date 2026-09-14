@@ -1,0 +1,127 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_gtsp",
+    "label": "Generalized TSP",
+    "definition": "Visit exactly one city per cluster.",
+    "search_query": "generalized traveling salesman GTSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "NN among clusters",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "GI3 local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "generalized traveling salesman GTSP heuristic",
+  "harvested_at": "2026-09-14T08:24:20Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20421",
+      "title": "A multistart heuristic for the equality generalized traveling salesman problem",
+      "authors": [
+        "Valentina Cacchiani",
+        "Albert Einstein Fernandes Muritiba",
+        "Marcos Negreiros",
+        "Paolo Toth"
+      ],
+      "year": 2010,
+      "venue": "Networks",
+      "cited_by_count": 13,
+      "abstract": "Abstract We study the equality generalized traveling salesman problem (E‐GTSP), which is a variant of the well‐known traveling salesman problem. We are given an undirected graph G = ( V,E ), with set of vertices V and set of edges E , each with an associated cost. The set of vertices is partitioned into clusters. E‐GTSP is to find an elementary cycle visiting exactly one vertex for each cluster and minimizing the sum of the costs of the traveled edges. We propose a multistart heuristic, which iteratively starts with a randomly chosen set of vertices and applies a decomposition approach combined with improvement procedures. The decomposition approach considers a first phase to determine the visiting order of the clusters and a second phase to find the corresponding minimum cost cycle. We show the effectiveness of the proposed approach on benchmark instances from the literature. On small instances, the heuristic always identifies the optimal solution rapidly and outperforms all known heuristics; on larger instances, the heuristic always improves, in comparable computing times, the best known solution values obtained by the genetic algorithm recently proposed by Silberholz and Golden. © 2011 Wiley Periodicals, Inc. NETWORKS, 2011",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20421"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.46.3.330",
+      "title": "A Generalized Insertion Heuristic for the Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Michel Gendreau",
+        "Alain Hertz",
+        "Gilbert Laporte",
+        "Mihnea Stan"
+      ],
+      "year": 1998,
+      "venue": "Operations Research",
+      "cited_by_count": 161,
+      "abstract": "This article describes a generalized insertion heuristic for the Traveling Salesman Problem with Time Windows in which the objective is the minimization of travel times. The algorithm gradually builds a route by inserting at each step a vertex in its neighbourhood on the current route, and performing a local reoptimization. This is done while checking the feasibility of the remaining part of the route. Backtracking is sometimes necessary. Once a feasible route has been determined, an attempt is made to improve it by applying a post-optimization phase based on the successive removal and reinsertion of all vertices. Tests performed on 375 instances indicate that the proposed heuristic compares very well with alternative methods and very often produces optimal or near-optimal solutions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.46.3.330"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/kb8w2",
+      "title": "A Heuristic Approach to the Traveling Salesman Problem on a Sphere: A Geodesic Distance Study",
+      "authors": [
+        "Edison Carrasco-Jiménez"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper addresses an instance of the Traveling Salesman Problem (TSP) on a sphere, utilizing a greedy heuristic approach to find an approximate solution. The points on the surface of the sphere represent cities distributed randomly, and the red line shows the shortest approximate path between them. We calculate the total geodesic distance traveled, highlighting the complexity of the problem and the inherent limitations of heuristic methods. Additionally, we explore potential improvements to the algorithm and discuss the implications of these results in the context of combinatorial optimization and computational complexity theory.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/kb8w2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1142/s1793005726500432",
+      "title": "A Novel Heuristic for the Generalized Traveling Salesman Problems with Imprecise Cost Matrices",
+      "authors": [
+        "Prasanta Dutta",
+        "Indadul Khan",
+        "Krishnendu Basuli",
+        "Manas Kumar Maiti"
+      ],
+      "year": 2025,
+      "venue": "New Mathematics and Natural Computation",
+      "cited_by_count": 2,
+      "abstract": "A meta-heuristic approach with multiple perturbation rules is proposed to solve the generalized traveling salesman problems in different environments. The proposed approach consists of two phases. The first phase is devoted for the sequencing of the groups and in the second phase one node is selected from each group to minimize the tour cost. In the first stage a group sequence is generated randomly. After that a [Formula: see text]-bit shuffling approach is used to regenerate the new group sequences. In the second phase, for every group sequence several selection rules are used for selecting the nodes/cities from different groups of a particular group sequence. At a regular interval, [Formula: see text]-opt operation is used to update the paths and the corresponding group sequences are updated according to the group elements. The proposed algorithm is capable of solving the problem in crisp as well as different imprecise environments, like fuzzy environment, rough environment, etc. Proper decision making approaches are outlined for decision-making in fuzzy and rough environments. Simulation approaches in fuzzy and rough environments are also presented to deal with the problem for different types of fuzzy and rough estimations. In the crisp environment, the algorithm has been tested using different sizes benchmark test instances from GTSPLIB having sizes upto 226 nodes with 26 groups. There are no benchmark data sets available for the GTSPs in imprecise environments. Test problems in imprecise environments are generated from different benchmark crisp test problems of the GTSPLIB and are used to test the algorithm in the corresponding imprecise environments. It is observed from the numerical illustration and graphical representation that the proposed approach obtains 100% accurate results in all the runs of the algorithm for different seeds of the random number generator for all the considered benchmark test problems under consideration. Another observation is visualized from the table that the algorithm has found multiple optimal paths for some test instances. It can be concluded from the observations that the proposed algorithm is capable of solving the GTSPs in crisp as well as in imprecise environments for a significantly large size problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1142/s1793005726500432"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_2e",
+    "label": "Two-echelon VRP",
+    "definition": "Satellites between depot and customers.",
+    "search_query": "two echelon VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Satellite assignment + CWS",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "2E-VRP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "two echelon VRP heuristic",
+  "harvested_at": "2026-09-14T08:25:47Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1016/j.ejor.2008.10.023",
+      "title": "Multi-objective integer programming: A general approach for generating all non-dominated solutions",
+      "authors": [
+        "Melih Özlen",
+        "Meral Azizoğlu"
+      ],
+      "year": 2009,
+      "venue": "European Journal of Operational Research",
+      "cited_by_count": 104,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1016/j.ejor.2008.10.023",
+      "seeded": true,
+      "seed_heuristic": "Crainic two-echelon routing",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20428",
+      "title": "Uncertainty feature optimization: An implicit paradigm for problems with noisy data",
+      "authors": [
+        "Niklaus Eggenberg",
+        "Matteo Salani",
+        "Michel Bierlaire"
+      ],
+      "year": 2011,
+      "venue": "Networks",
+      "cited_by_count": 7,
+      "abstract": "Abstract Optimization problems with noisy data solved using stochastic programming or robust optimization approaches require the explicit characterization of an uncertainty set U that models the nature of the noise. Such approaches depend on the modeling of the uncertainty set and suffer from an erroneous estimation of the noise. In this article, we introduce a framework that considers the uncertain data implicitly. We define the concept of Uncertainty Features (UF), which are problem‐specific structural properties of a solution. We show how to formulate an uncertain problem using the Uncertainty Feature Optimization (UFO) framework as a multi‐objective problem. We show that stochastic programming and robust optimization are particular cases of the UFO framework. We present computational results for the Multi‐Dimensional Knapsack Problem (MDKP) and discuss the application of the framework to the airline scheduling problem. © 2011 Wiley Periodicals, Inc. NETWORKS, 2011",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20428",
+      "seeded": true,
+      "seed_heuristic": "Perboli two-echelon VRP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/6efe1282zb27fz4752zbd40z47d5121fb4ff",
+      "title": "Inventory routing problems on two-echelon systems : exact and heuristic methods for the tactical and operational problems",
+      "authors": [
+        "Katyanne Farias de Araújo"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Inventory Routing Problems dans les systèmes à deux échelons : méthodes exactes et heuristiques pour les problèmes tactique et opérationnel \n         Les activités de transport et de gestion des stocks ont un impact important les unes sur les autres. Assurer un niveau de stock idéal peut demander des livraisons fréquentes, ce qui entraîne des coûts logistiques élevés. Pour optimiser les compromis entre les coûts de stock et de transport, des systèmes VMI (Vendor Managed Inventory) ont été développés pour gérer ensemble les opérations de stock et de transport. Pour un ensemble de clients ayant des demandes sur un horizon de temps, le problème de détermination des tournées et des quantités à livrer avec un coût minimum de gestion de stock et de transport est connu sous le nom de Inventory Routing Problem (IRP). Les systèmes à deux échelons ont également été étudiés pour améliorer le flux de véhicules dans les zones urbaines. étant donné que des nouvelles politiques de gestion sont apparues, dans le but de limiter le trafic des gros véhicules et leur vitesse dans les centres urbains, des Centres de Distribution (DC) sont mis en place pour coordonner les flux de marchandises à l'intérieur et à l'extérieur des zones urbaines. Les produits sont donc livrés aux clients par les fournisseurs via les DC.Nous proposons de combiner un système à deux échelons avec le IRP. Nous introduisons un Operational Two-Echelon Inventory Routing Problem (O-2E-IRP), ce qui est une nouvelle extension du IRP à notre connaissance. Dans le O-2E-IRP proposé, les clients doivent être servis par un fournisseur strictement via des DC et les tournées doivent être définis dans les deux échelons sur un horizon de temps donné. Trois politiques de réapprovisionnement et de configurations de routage différentes sont modélisées pour ce problème. Nous développons deux formulations mathématiques, ainsi qu'un algorithme Branch-and-Cut (B&amp;C) combiné à une matheuristique pour résoudre le problème. De plus, nous analysons plusieurs inégalités valides disponibles pour le IRP et nous introduisons de nouvelles inégalités valides inhérentes au IRP à deux échelons. Des expériences de calcul approfondies ont été effectuées sur un ensemble d'instances générées de manière aléatoire. Les résultats obtenus montrent que les performances des méthodes sont liées à la politique de stock et à la configuration de routage.Dans le contexte d'un IRP à deux échelons, deux décisions tactiques importantes doivent être prises en plus des décisions de livraison de routage et de quantité de livraison: à partir de quel DC sera fourni chaque client et en utilisant quels véhicules ? Répondre à ces questions est extrêmement difficile car cela implique de pouvoir minimiser les coûts opérationnels d'un système de livraison VMI à deux échelons à long-terme et avec des demandes incertaines. Pour faire face à cela, nous présentons le Tactical Two-Echelon Inventory Routing Problem (T-2E-IRP) qui optimise les décisions en fonction d'un horizon à long-terme et en tenant compte des demandes stochastiques. Trois politiques de gestion des stocks sont modélisées et appliquées à un ou aux deux échelons. Nous développons une approche de simulation pour résoudre le T-2E-IRP sur un horizon de temps à long-terme. Nous proposons quatre formulations et deux algorithmes B&amp;C pour définir l'affectation des clients et des véhicules aux DC en fonction d'un horizon de temps court. Ensuite, nous évaluons ces décisions d'affectation via un outil de simulation qui résout un sous-problème du T-2E-IRP, qui consiste en les décisions de livraisons du fournisseur aux DC et des DC aux clients, sur un horizon glissant. De nombreuses expériences sont effectuées pour un ensemble d'instances générées aléatoirement. L'impact de plusieurs paramètres utilisés pour déterminer l'affectation des clients et des véhicules aux DC sur le coût total est analysé. Basé sur des expériences, nous définissons la combinaison de paramètres qui fournit généralement les meilleurs résultats sur les instances générées.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/6efe1282zb27fz4752zbd40z47d5121fb4ff"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1060.0160",
+      "title": "An Efficient Heuristic Algorithm for a Two-Echelon Joint Inventory and Routing Problem",
+      "authors": [
+        "Jaeheon Jung",
+        "Kamlesh Mathur"
+      ],
+      "year": 2007,
+      "venue": "Transportation Science",
+      "cited_by_count": 29,
+      "abstract": "With an increasing emphasis on coordination in the supply chain, the inventory and distribution decisions, which in most part had been dealt with independently of each other, need to be considered jointly. This research considers a two-echelon distribution system consisting of one warehouse and N retailers that face external demand at a constant rate. Inventories are kept at retailers as well as at the warehouse. The products are delivered to the retailers by a fleet of vehicles with limited capacity. We develop an efficient heuristic procedure that finds a reorder interval for the warehouse, the replenishment quantities (and associated reorder interval) for each retailer, and the delivery routes so as to minimize the long-run average inventory and transportation costs.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1060.0160"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/math14142500",
+      "title": "Evolutionary Multi-Objective Optimization of a Multi-Echelon Humanitarian VRP for Smart City Logistics Under Uncertainty",
+      "authors": [
+        "Esra Çakır"
+      ],
+      "year": 2026,
+      "venue": "Mathematics",
+      "cited_by_count": 0,
+      "abstract": "Efficient and resilient humanitarian logistics is critical for smart cities facing large-scale disasters, where infrastructure disruptions, uncertain demand, and time-critical deliveries complicate operational planning. This study proposes a multi-echelon vehicle-routing framework that integrates trucks, electric unmanned aerial vehicles (UAVs), and micromobility systems under uncertainty. Demand and travel-time variability are modeled through scenario-based representations, while delivery flexibility is captured through triangular fuzzy time windows defined by earliest-acceptable, preferred, and latest-tolerable delivery times. The problem is formulated as a four-objective optimization model that minimizes total cost, response time, CO2 emissions, and fuzzy lateness. To solve the resulting highly constrained multi-objective problem, NSGA-II and NSGA-III are adapted with problem-specific repair operators, including capacity-splitting, range-feasibility correction, and fuzzy time-shift adjustment mechanisms, and embedded in a simulation-based evaluation framework. The proposed approach is validated using a geo-referenced earthquake scenario in Istanbul, constructed from open-source GIS, traffic, and demographic data. The computational results show that evolutionary methods generate feasible solutions within minutes, whereas exact optimization approaches fail to converge for realistic instances. Compared with NSGA-II, NSGA-III achieves superior performance, including a 9% higher hypervolume and improved robustness under stress-test scenarios. Furthermore, the hybrid truck–UAV–micromobility strategy reduces average cost by up to 30%, delivery time by 43%, and CO2 emissions by 65% relative to a truck-only baseline, while eliminating fuzzy lateness. These findings demonstrate that evolutionary multi-objective optimization provides an effective and scalable decision-support framework for uncertainty-aware and sustainable humanitarian logistics in smart cities.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/math14142500"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.7307/ptt.v38i4.1285",
+      "title": "The Robust Two-Echelon Inventory Routing Problem for Vaccine Supply System – A Heuristic Method",
+      "authors": [
+        "Gang CHEN",
+        "Yunjian JIANG",
+        "Zhongyong CHEN",
+        "Bingshan MA",
+        "Luan SU"
+      ],
+      "year": 2026,
+      "venue": "Promet - Traffic&amp;Transportation",
+      "cited_by_count": 0,
+      "abstract": "Vaccine supply chains confront several challenges in guaranteeing security of vaccines from the phase of production to the injection. Thus, it is crucial to construct a robust vaccine supply system that helps store and deliver vaccines safely and effectively. Inspired by a real-world vaccine supply case, this paper studies a robust two-echelon inventory routing problem that integrates the optimisation of vendor managed inventory (VMI), inventory policy and vehicle routing. A deterministic model is formulated to jointly optimise two-echelon vehicle routes as well as inventory at both distribution warehouse and vaccine demand nodes. Then, a robust modelling approach is introduced and converted into an equivalent linear form. An efficient solution algorithm is proposed, merging simulated annealing (SA) and adaptive large neighbourhood search (ALNS) to address large-scale cases. The computational efficiency of the proposed algorithm is demonstrated through numerical comparisons to the solutions founded by CPLEX and ALNS. The relation between input parameters and optimised results is investigated by a real-world vaccine supply system. The findings from results and sensitivity analyses suggest some interesting managerial implications.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.7307/ptt.v38i4.1285"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3934/jimo.2021225",
+      "title": "An adaptive large neighborhood search heuristic for multi-commodity two-echelon vehicle routing problem with satellite synchronization",
+      "authors": [
+        "Shengyang Jia",
+        "Lei Deng",
+        "Quanwu Zhao",
+        "Yunkai Chen"
+      ],
+      "year": 2023,
+      "venue": "Journal of Industrial and Management Optimization",
+      "cited_by_count": 29,
+      "abstract": "&lt;p style='text-indent:20px;'&gt;In considering route optimization from multiple distribution centers called depots via some intermediate facilities called satellites to final customers with multiple commodities request, we introduce the Multi-Commodity Two-Echelon Vehicle Routing Problem with Satellite Synchronization (MC-2E-VRPSS). The MC-2E-VRPSS involves the transportation from multiple depots to satellites on the first echelon and the deliveries from satellites to final customers on the second echelon. The MC-2E-VRPSS integrates satellite synchronization constraints and time window constraints for satellites on the two-echelon network and aims to determine cost-minimizing routes for the two echelons. The satellite synchronization constraints which trucks from the multiple depots to some satellites need to be coordinated guarantee the efficiency of the second echelon network. In this study, we develop a mixed-integer programming model for the MC-2E-VRPSS. For validating the model formulation, we conduct the computational experiments on a set of small-scale instances using GUROBI and an adaptive large neighborhood search (ALNS) heuristic which we develop for the problem. Furthermore, the computation experiments for evaluating the applicability of the ALNS heuristic compared with large neighborhood search (LNS) on a set of large-scale instances are also conducted, which proved the effectiveness of the ALNS.&lt;/p&gt;&lt;p style='text-indent:20px;'&gt; &lt;/p&gt;&lt;p style='text-indent:20px;'&gt;Addendum: The Acknowledgement “This study was supported by the Humanities and Social Sciences Foundation Program of the Ministry of Education (Project No.19YJA630122), and the \"National Key R&amp;amp;D Program of China\"(Grant No.2020YFB1712900)” is added. We apologize for any inconvenience this may cause.&lt;/p&gt;",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3934/jimo.2021225"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-2142663/v1",
+      "title": "Performance Evaluation of Meta-Heuristic Algorithms for Designing Multi-Objective Multi-Product Multi-Echelon Supply Chain Network",
+      "authors": [
+        "Salih O. Duffuaa"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     In recent years, interest in designing multi-echelon, multi-product supply chains using multi-objective optimization has surged. This growing interest is exemplified by the number of studies published in this field. The resulting models for these cases are complex multi-objective optimization network models of a combinatorial nature. Exact algorithms can at best provide an Pareto optimal solution for medium size problems. In such situations, metaheuristic algorithms become a viable option for solving these kinds of problems. Therefore, the purpose of this paper is to develop three meta-heuristic algorithms to solve large size multi-objective supply chain network design problems. The algorithms are based on tabu search, genetic algorithm, and simulated annealing to find near optimal global solutions. The three algorithms are designed, coded, tested, and their parameters are fine tuned. The exact ε-constraint algorithm embedded in the General Algebraic Modeling System (GAMS) is used to validate the results of the three algorithms. A well-designed study is used to compare the performance of the three algorithms based on several performance measures using sound statistical tests. A typical multi-objective supply chain model is used to compare the algorithms’ performance. The results show that the tabu search algorithm outperformed the other two algorithms in terms of the percent of domination and computation time. On the other hand, the simulated annealing solutions are the best in terms of their diversity.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-2142663/v1"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:11Z"
+}

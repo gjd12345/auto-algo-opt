@@ -1,0 +1,129 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_construct",
+    "label": "Constructive CVRP",
+    "definition": "Build routes customer by customer.",
+    "search_query": "Clarke Wright savings nearest neighbor VRP constructive",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Nearest feasible",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Savings as next-node score",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "Clarke Wright savings algorithm vehicle routing",
+  "harvested_at": "2026-09-14T08:12:56Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/2421/1/012045",
+      "title": "Clarke and Wright Savings Algorithm as Solutions Vehicle Routing Problem with Simultaneous Pickup Delivery (VRPSPD)",
+      "authors": [
+        "Fadlah Tunnisaki",
+        "Sutarman"
+      ],
+      "year": 2023,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 7,
+      "abstract": "Abstract \n        This study aims to establish the mathematical model Vehicle Routing Problem with Simultaneous Pickup and Delivery (VRPSPD) on 3 kg of LPG gas distribution and its solution using the method of Clarke and Wright Savings . Data used include a list of areas of consumers, service delivery company, the amount of consumer demand, vehicle type and vehicle capacity. The data is then processed to be modeled as hereinafter Vehicle Routing Problem with Simultaneous Pickup Delivery (VRPSPD) problems solved by the method of Clarke and Wright Savings[1]. Based on the calculation, the result for the total mileage of the vehicle is 160 km while the total mileage of the vehicle this company is 201km. Thus Clarke and Wright savings algorithm capable of providing mileage savings with a percentage of 20.03%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/2421/1/012045"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.59953/paperasia.v42i3b.1412",
+      "title": "Harmony Search with Clarke and Wright Savings in Solving the Location-Allocation Vehicle Routing Problem",
+      "authors": [
+        "Farahanim Misni",
+        "Nor Izzati Jaini",
+        "Najihah Mohamed"
+      ],
+      "year": 2026,
+      "venue": "PaperASIA",
+      "cited_by_count": 0,
+      "abstract": "In the vehicle routing problem, location-allocation is a major issue that needs to be considered. While searching for the shortest route between facilities, the determination of a strategic location to establish the facilities is also important. This implies that in the location-allocation vehicle routing problem, the main objectives are to identify the number and position of allocated facilities, and at the same time, minimize the distance cost between the opened facilities and customers. Based on this problem, the existing mathematical linear programming was solved using the metaheuristic methods, namely the Harmony Search (HS) Algorithm. The modification of the method has been done in the improvisation part, called Harmony Search-Clarke and Wright (HS–CW), where the CW method was applied while searching for the best solution. The numerical analysis was run using a simulated dataset, and the results were compared with the Harmony Search Algorithm. On average, the HS–CW can reduce about 35.86 total distance cost (4.03%) as compared to the current Harmony Search (HS). The result shows the HS–CW method significantly outperforms and is superior to HS in terms of cost distance, specifically for the location-allocation vehicle routing problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.59953/paperasia.v42i3b.1412"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.55606/jurrimipa.v2i1.723",
+      "title": "Penyelesaian Vehicle Routing Problem Dengan Algoritma Clarke And Wright Savings Di Perumahan Umum Bulog Medan Amplas",
+      "authors": [
+        "Nurul Aina",
+        "James Piter Marbun"
+      ],
+      "year": 2023,
+      "venue": "JURNAL RISET RUMPUN MATEMATIKA DAN ILMU PENGETAHUAN ALAM",
+      "cited_by_count": 0,
+      "abstract": "Distribution routes are generally a problem for every company, including in the public company BULOG Medan Amplas. Distribution to the Medan Amplas BULOG public company, namely having to serve every stall that is far from the warehouse with scattered locations, and limited vehicle capacity. So far, driver considerations in distributing products have only been based on random intuitions of driver and does not consider the efficiency of the route taken. Therefore, this research uses Clarke and Wright Savings algorithm to obtain optimal mileage by taking into account every consumer demand and vehicle capacity. Calculation results using the Clarke and Wright Savings Algorithm obtained the vehicle mileage of 695.08 km with a savings of 11 km or 1.56%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.55606/jurrimipa.v2i1.723"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.54914/jtt.v9i2.876",
+      "title": "Implementasi Metode Clarke and Wright Savings dalam Penyelesaian Vehicle Routing Problem di PT. Adiguna Gasindo",
+      "authors": [
+        "Misbahul Munir",
+        "Muchamad Kurniawan",
+        "Moch. Kalam M",
+        "Indah Setyawati"
+      ],
+      "year": 2023,
+      "venue": "Jurnal Teknologi Terpadu",
+      "cited_by_count": 0,
+      "abstract": "Vehicle routing problem (VRP) merupakan sebuah permasalahan untuk menemukan rute paling optimal dengan tambahan sebuah batasan (constrain). PT. Adiguna Gasindo adalah salah satu agen gas LPG. Data yang digunakan pada penelitian adalah data pengiriman harian ke agen-agen disertai data jumlah muatan per kendaraan. Permasalahan pada penelitian ini adalah ketidakefektifan dalam pengiriman gas LPG ke agen-agen. Tujuan penelitian ini adalah menggunakan metode Saving Matrix untuk menyelesaikan permasalahan VRP. Metode Clarke and Wright Savings atau biasa disebut dengan Saving Matrix akan diimplementasikan untuk menyelesaikan VRP. Pada penelitian ini pendekatan jarak yang digunakan adalah nearest insert dan nearest neighbor. Skenario pengujian yang dilakukan menggunakan tiga jenis kendaraan dengan kapasitas berbeda yaitu kecil (225 kg), sedang (275 kg), dan besar (480 kg). Hasil yang diperoleh akan dibandingkan dengan hasil aktual (rute yang pernah dilakukan) sebagai hasil validasi. Perangkat yang digunakan untuk membangun metode ini menggunakan Bahasa Pemrograman Python dengan IDE Jupiter Notebook. Dari 90 hasil skenario yang berbeda hasil yang diperoleh kendaraan dengan muatan besar adalah kendaraan yang mendapat rute paling optimal baik dari jarak dan biaya. Saving Matrix akan lebih optimal jika dilakukan dengan penambahan teknik nearest insert atau nearest neighbor.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.54914/jtt.v9i2.876"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.24002/ijieem.v1i1.2292",
+      "title": "Proposed Modified Clarke-Wright Saving Algorithm for Capacitated Vehicle Routing Problem",
+      "authors": [
+        "A.K. Pamosoaji",
+        "P.K. Dewa",
+        "J.V. Krisnanta"
+      ],
+      "year": 2019,
+      "venue": "International Journal of Industrial Engineering and Engineering Management",
+      "cited_by_count": 4,
+      "abstract": "A multi-objective distribution routing algorithm by using modified Clarke and Wright Saving algorithm is presented. The problem to solve is to deliver loads to a number of outlets based load requirement. The objective function to minimize is the distance saving and traveling time of the resulted route started from depot to the outlets and return to the original depot. Problem to solve is generating a distribution route in a week considering traffic condition for each day. The original Clarke and Wright saving algorithm is modified such that the resulted routes (from a depot to some outlets) accommodates some constraints such as the maximum allowable traveling time, maximum number of delivery shifts, and maximum number of vehicles. The algorithm is applied to a distributor company with nine outlets, two vehicles, and two delivery shifts. In addition, the traffic condition on the outlet-to-outlet and the depot-to-outlet routes is considered. The simulation of the proposed algorithm shows that the algorithm can generate routes that comply with shift’s maximum delivery time and the vehicles’ capacities.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.24002/ijieem.v1i1.2292"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.35799/dc.7.2.2018.20627",
+      "title": "Application Of Vehicle Routing Problem Using Clarke And Wright Algorithm For Distribution Of White Sugar By “Toko Bersama Trader”",
+      "authors": [
+        "Rondo Morihito",
+        "Chriestie Montolalu",
+        "Benny Pinontoan"
+      ],
+      "year": 2018,
+      "venue": "d'CARTESIAN",
+      "cited_by_count": 0,
+      "abstract": "The problem which is often experienced in the delivery of goods from distributor to the destination is the delivery route which is not sufficient with the capacity of the vehicle. This matter is very important because it can affect the trust of the clients on the shippers in the distributor. This problem can be analyzed using Capacitated Vehicle Routing Problem (CVRP) with Clarke and Wright Algorithm. This research begins with determining the distance between all coordinates with Euclidean Distance, making the distance matrix between places to go. After that, the calculation CVRP using Clarke and Wright Algorithm is exected in this study, a calculate CVRP using Clarke and Wright algorithm can help of the computer. The study was conducted at 15 shop coordinates, the results obtained by 4 routes with total load 3750 kg and distance 29.8510 km. Route of delivery the first route 1100 kg load and distance 11.5963 km, second route 1000 kg load and distance 6.6493 km, third route 1000 kg load and distance 2.7549 km, and the fourth route 650 kg load and distance 8.8505 km.Keywords:  Distributor, Vehicle Routing Problem, Capacitated Vehicle Routing Problem, Clarke and Wright Algorithm",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.35799/dc.7.2.2018.20627"
+    }
+  ]
+}

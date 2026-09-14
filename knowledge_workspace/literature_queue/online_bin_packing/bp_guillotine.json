@@ -1,0 +1,123 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_guillotine",
+    "label": "Guillotine packing",
+    "definition": "Cuts must be guillotine.",
+    "search_query": "guillotine bin packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Guillotine BF",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Recursive guillotine",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "guillotine bin packing heuristic",
+  "harvested_at": "2026-09-14T08:26:37Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/computers15040216",
+      "title": "Adaptive Sequence-Based Heuristic for Two-Dimensional Guillotine Cutting and Packing Problems",
+      "authors": [
+        "Óscar Oliveira",
+        "Dorabela Gamboa"
+      ],
+      "year": 2026,
+      "venue": "Computers",
+      "cited_by_count": 0,
+      "abstract": "This paper proposes adaptive sequence-based heuristics for solving rectangular two-dimensional guillotine Cutting and Packing Problems (CPPs). These problems are essential in various industrial sectors, aiming to maximise resource utilisation by selecting profitable item subsets or minimise waste by using the fewest possible identical large objects. The core methodology is grounded in the principle that if a specific item sequence generates a high-quality solution, incremental adjustments to that sequence can yield even better outcomes. By iteratively refining item ordering through the BubbleSearch method, the heuristics balance search intensification with the diversification of the solution space. Extensive computational experiments were conducted on benchmark datasets, including SET1, ATP, and CLASS, across multiple problem variants such as the Single Stock-Size Cutting Stock Problem (SSSCSP) and the Single Large Object Placement Problem (SLOPP). The results confirm that these heuristics and their extension with path relinking consistently deliver optimal or near-optimal solutions. These heuristics achieve high performance in computational times that are significantly shorter than existing state-of-the-art methods, demonstrating their robustness, flexibility, and suitability for software transferability and real-world industrial adoption.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/computers15040216"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1656/1/012005",
+      "title": "An improved priority heuristic for the fixed guillotine rectangular packing problem",
+      "authors": [
+        "Zhengyang Shang",
+        "Mingming Pan",
+        "Jiabao Pan"
+      ],
+      "year": 2020,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 1,
+      "abstract": "Abstract \n        An improved priority heuristic (IPH) is presented for the guillotine rectangular packing problem with a fixed orientation constraint. This algorithm can continuously divide the remaining space into blocks and recursively layout the entire space by filling each current block. IPH inherits the placement method of PH and adopts an improved space partitioning rule. The partitioning rule comprehensively considers the effects of the newly generated block on subsequent item placement. Thus, the remaining space can be filled as much as possible from a probability perspective. Given the introduction and utilization of different solving parameters, the worst-case time complexity is O(40 n \n          2 ). Computational results on benchmark datasets show that IPH outperforms existing heuristics on average. For large-scale instances, several perfect layouts can be obtained for the first time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1656/1/012005"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6418302",
+      "title": "A Collaborative Heuristic and Enhanced Black-winged Kite Algorithm for Solving 3D Bin Packing Problems in Complex Scenarios",
+      "authors": [
+        "Guirong Dong"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "As solving 3D Bin Packing Problems (3D-BPP) involves the consideration of numerous types of items, different sizes and multiple constraints, the existing packing algorithms hardly meet demands for the balance among efficiency, accuracy and robustness in practical applications, such as warehouse management and intelligent manufacturing. In this study, a global-local collaborative optimization architecture that is inspired by the enhanced black-winged kite algorithm (BKA), has been proposed, called col-EBKA, to establish a stable and mappable continuous-discrete transformation mechanism that enables a deep coupling between global exploration of BKA and local optimization processes of heuristic strategies, thereby achieving a balance between search efficiency and accuracy and demonstrating great robustness in solving 3D-BPP. Moreover, a cooperative constraint combining a hyperplane constraint and a region-exclusive placement constraint (Hyperplane-Region Cooperative Constraint) has been defined to reserve exclusive space for special items such as fragile items, fresh food items, etc., thereby mitigating the risk of item damage. To verify the effectiveness of the proposed col-EBKA architecture in solving complex problems, experimental validations have been conducted on the Bischoff and Ratcliff benchmark dataset and a real-world packing case to demonstrate the performance superiority over exiting methods. Results have shown that col-EBKA has achieved an average space utilization rate of 92.69% on weakly heterogeneous datasets and 88.57% on strongly heterogeneous datasets, thereby exhibiting remarkable robustness. In the real-world packing case involving protected-item constraints, the proposed col-EBKA architecture has also excelled in good space utilization under HRCC, offering significant theoretical basis for e-commerce logistics and transportation using robots.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6418302"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/electronics14101956",
+      "title": "Neural-Driven Constructive Heuristic for 2D Robotic Bin Packing Problem",
+      "authors": [
+        "Mariusz Kaleta",
+        "Tomasz Śliwiński"
+      ],
+      "year": 2025,
+      "venue": "Electronics",
+      "cited_by_count": 4,
+      "abstract": "This study addresses the two-dimensional weakly homogeneous Bin Packing Problem (2D-BPP) in the context of robotic packing, where items must be arranged in a manner feasible for robotic manipulation. Traditional heuristics for this NP-hard problem often lack adaptability across diverse datasets, while metaheuristics typically suffer from slow convergence. To overcome these limitations, we propose a novel neural-driven constructive heuristic. The method employs a population of simple feed-forward neural networks, which are trained using black-box optimization via the Covariance Matrix Adaptation Evolution Strategy (CMA-ES). The resulting neural network dynamically scores candidate placements within the constructive heuristic. Unlike conventional heuristics, the approach adapts to instance-specific characteristics without relying on predefined rules. Evaluated on datasets generated by 2DCPackGen and real-world logistic scenarios, the proposed method consistently outperforms benchmark heuristics such as MaxRects and Skyline, reducing the average number of bins required across various item types and demand ranges. The most significant improvements occur in complex instances, with up to 86% of 2DCPackGen cases yielding superior results. This heuristic offers a flexible and extremely fast, data-driven solution to the algorithm selection problem, demonstrating robustness and potential for broader application in combinatorial optimization while avoiding the scalability issues of reinforcement learning-based methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/electronics14101956"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.58837/chula.the.2018.1588",
+      "title": "Column generation with heuristic for two-dimensional guillotine cutting stock problem with usable leftover",
+      "authors": [
+        "Supphakorn Sumetthapiwat"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The two-dimensional cutting stock problem with usable leftover (2DCSPUL) aims to minimize the waste from cutting in two aspects. The first aspect focuses on the suitable cutting patterns that provide the minimum waste while satisfying a requirement. The second aspect is to utilize the waste in the cutting process by turning the waste with sufficient size into a raw material or an item for the next cutting period. In this dissertation, the common two-stage guillotine cutting pattern which is found in many large industries is considered in this problem. Two definitions of fixed size usable leftover are introduced. A column generation (CG) technique is applied in an attempt to find a solution where the sub-problem deals with two-dimensional knapsack problem (2DKP). Moreover, two heuristic procedures with column generation integrated, namely the simple heuristic and the truncated branch-and-price, are proposed to reduce the complexity of finding a good integer solution. Benchmark and real-world instances are used to test the performance of the algorithms as well as an effect of usable leftover. The computational results illustrate good performance of the algorithms in terms of 1) solution quality represented by the gap from the lower bound and 2) the computational time that are suitable for real industrial applications.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.58837/chula.the.2018.1588"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00500-022-07118-4",
+      "title": "A hierarchical hyper-heuristic for the bin packing problem",
+      "authors": [
+        "Francesca Guerriero",
+        "Francesco Paolo Saccomanno"
+      ],
+      "year": 2022,
+      "venue": "Soft Computing",
+      "cited_by_count": 18,
+      "abstract": "Abstract \n          This paper addresses the two-dimensional irregular bin packing problem, whose main aim is to allocate a given set of irregular pieces to larger rectangular containers (bins), while minimizing the number of bins required to contain all pieces. To solve the problem under study a dynamic hierarchical hyper-heuristic approach is proposed. The main idea of the hyper-heuristics is to search the space of low-level heuristics for solving computationally difficult problems. The proposed approach is “dynamic” since the low-level heuristic to be executed is chosen on the basis of the main characteristics of the instance to be solved. The term “hierarchical” is used to indicate the fact that the main hyper-heuristic can execute either simple heuristics or can run in a “recursive fashion” a hyper-heuristic. The developed solution strategy is evaluated empirically by performing extensive experiments on irregular packing benchmark instances. A comparison with the state-of-the-art approaches is also carried out. The computational results are very encouraging.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00500-022-07118-4"
+    }
+  ]
+}

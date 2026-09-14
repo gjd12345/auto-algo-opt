@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "0-1 knapsack: take items in given order if they fit",
+  "category": "implementation",
+  "problem_family": "knapsack",
+  "tags": [
+    "knapsack",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "SelectItems walks the JSON item array once and takes an item iff weight<=remaining. Objective printed as -value (minimisation wrapper). This is neither value-density greedy nor dynamic programming.",
+  "attributes": {
+    "interface": "SelectItems(items, capacity) []bool",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "eoh_rag_workspace/problems/knapsack/knapsack_solver.go"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/knapsack/knapsack_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/knapsack/knapsack_solver.go",
+      "sha256": "d4bbdd5e3547b3789c35e90d7de1f6e0d2f043fb8b6f2dfb9c3dd82505a5bc25"
+    }
+  ],
+  "id": "impl-knapsack-order-greedy",
+  "content_sha256": "922bf8c590f5821dc35eb25878facf4443a17ccb0a205c0c93c6295ddeef58f5"
+}

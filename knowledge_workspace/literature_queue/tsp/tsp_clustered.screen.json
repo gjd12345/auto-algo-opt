@@ -1,0 +1,21 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_clustered",
+  "selected": [
+    {
+      "doi": "10.1287/opre.6.6.791",
+      "heuristic_name": "Intra-cluster 2-opt",
+      "why": "DOI-seeded canonical paper for tsp_clustered.",
+      "steps": [
+        "Apply Intra-cluster 2-opt as introduced in A Method for Solving Traveling-Salesman Problems (1958).",
+        "Cities grouped; visit clusters as units.",
+        "Abstract-supported identity only; do not copy publisher PDF."
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "move_selector",
+      "not_the_original": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

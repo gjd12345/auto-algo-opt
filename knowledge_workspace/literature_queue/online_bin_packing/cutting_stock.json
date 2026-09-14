@@ -1,0 +1,124 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "cutting_stock",
+    "label": "1D cutting stock",
+    "definition": "Few item types, many copies.",
+    "search_query": "cutting stock heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Pattern generation greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "FFD cutting stock",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "cutting stock heuristic",
+  "harvested_at": "2026-09-14T08:26:11Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.58837/chula.the.2018.1588",
+      "title": "Column generation with heuristic for two-dimensional guillotine cutting stock problem with usable leftover",
+      "authors": [
+        "Supphakorn Sumetthapiwat"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The two-dimensional cutting stock problem with usable leftover (2DCSPUL) aims to minimize the waste from cutting in two aspects. The first aspect focuses on the suitable cutting patterns that provide the minimum waste while satisfying a requirement. The second aspect is to utilize the waste in the cutting process by turning the waste with sufficient size into a raw material or an item for the next cutting period. In this dissertation, the common two-stage guillotine cutting pattern which is found in many large industries is considered in this problem. Two definitions of fixed size usable leftover are introduced. A column generation (CG) technique is applied in an attempt to find a solution where the sub-problem deals with two-dimensional knapsack problem (2DKP). Moreover, two heuristic procedures with column generation integrated, namely the simple heuristic and the truncated branch-and-price, are proposed to reduce the complexity of finding a good integer solution. Benchmark and real-world instances are used to test the performance of the algorithms as well as an effect of usable leftover. The computational results illustrate good performance of the algorithms in terms of 1) solution quality represented by the gap from the lower bound and 2) the computational time that are suitable for real industrial applications.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.58837/chula.the.2018.1588"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/mnsc.23.1.78",
+      "title": "An Improved Heuristic Procedure for a Nonlinear Cutting Stock Problem",
+      "authors": [
+        "I. Coverdale",
+        "F. Wharton"
+      ],
+      "year": 1976,
+      "venue": "Management Science",
+      "cited_by_count": 30,
+      "abstract": "Many industries acquire stocks of material in large standard sizes which are then reduced to required widths or lengths according to demand. Scheduling the cutting operations is a particularly difficult problem when a few cutting patterns must be chosen from a vast number of feasible patterns such that the total cost of the reduction process is minimised. Physical constraints and economic considerations restrict the number and type of pattern which can be used.  Haessler [Haessiler, R. W. An application of heuristic programming to a nonlinear cutting-stock problem occurring in the paper industry. Unpublished doctoral dissertation, The University of Michigan, Ann Arbor, 1968, available through University Microfilms, Ann Arbor, Dissertation No. 69–12, 119; Haessiler, R. W. 1971. A heuristic programming solution to a nonlinear cutting-stock problem. Management Sci. 17 (12, August) 793–802.] has described a typical problem in the paper industry and a heuristic procedure for obtaining satisfactory schedules. An improved procedure is proposed in which the type of pattern generated and accepted into the schedule is constrained to improve the likelihood that the residual scheduling problem has a feasible and economic solution. Results obtained by the proposed procedure are compared with those obtained manually and by Haessler for a set of eleven actual problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/mnsc.23.1.78"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/ma16227133",
+      "title": "A Tree-Based Heuristic for the One-Dimensional Cutting Stock Problem Optimization Using Leftovers",
+      "authors": [
+        "Glaucia Maria Bressan",
+        "Matheus Henrique Pimenta-Zanon",
+        "Fabio Sakuray"
+      ],
+      "year": 2023,
+      "venue": "Materials",
+      "cited_by_count": 3,
+      "abstract": "Cutting problems consist of cutting a set of objects available in stock in order to produce the desired items in specified quantities and sizes. The cutting process can generate leftovers (which can be reused in the case of new demand) or losses (which are discarded). This paper presents a tree-based heuristic method for minimizing the number of cut bars in the one-dimensional cutting process, satisfying the item demand in an unlimited bar quantity of just one type. The results of simulations are compared with the RGRL1 algorithm and with the limiting values for this considered type of problem. The results show that the proposed heuristic reduces processing time and the number of bars needed in the cutting process, while it provides a larger leftover (by grouping losses) for the one-dimensional cutting stock problem. The heuristic contributes to reduction in raw materials or manufacturing costs in industrial processes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/ma16227133"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/mnsc.17.12.b793",
+      "title": "A Heuristic Programming Solution to a Nonlinear Cutting Stock Problem",
+      "authors": [
+        "Robert W. Haessler"
+      ],
+      "year": 1971,
+      "venue": "Management Science",
+      "cited_by_count": 83,
+      "abstract": "A heuristic procedure for scheduling production rolls of paper through a finishing operation to cut them down to finished roll sizes is described. The ratio of service time to interarrival time of production rolls at the initial cutting station is large so that insufficient time is available to set it up unless a minimum number of production rolls are to be processed in the same manner. Otherwise, some portion of each production roll must go through a reprocessing operation to complete the cutting of finished sizes. The objective is to minimize the cost of trim loss and reprocessing.  The procedure generates cutting patterns and usage levels sequentially until all the requirements are satisfied. At each step the search is dependent upon the characteristics of the unsatisfied requirements. A maximum of three solutions is generated for each problem. If none satisfies a predetermined aspiration level, the best of the three is chosen.  The procedure was evaluated by scheduling a specific paper production facility and observing the results for a set of 15 problems. For each problem, the best solution was recorded. The overall results from this set of problems were then compared to previously recorded results on problems solved manually. There was a 16% improvement in solution quality for the heuristic procedure relative to the manual method.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/mnsc.17.12.b793"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.1040.0109",
+      "title": "A New Placement Heuristic for the Orthogonal Stock-Cutting Problem",
+      "authors": [
+        "E. K. Burke",
+        "G. Kendall",
+        "G. Whitwell"
+      ],
+      "year": 2004,
+      "venue": "Operations Research",
+      "cited_by_count": 300,
+      "abstract": "This paper presents a new best-fit heuristic for the two-dimensional rectangular stock-cutting problem and demonstrates its effectiveness by comparing it against other published approaches. A placement algorithm usually takes a list of shapes, sorted by some property such as increasing height or decreasing area, and then applies a placement rule to each of these shapes in turn. The proposed method is not restricted to the first shape encountered but may dynamically search the list for better candidate shapes for placement. We suggest an efficient implementation of our heuristic and show that it compares favourably to other heuristic and metaheuristic approaches from the literature in terms of both solution quality and execution time. We also present data for new problem instances to encourage further research and greater comparison between this and future methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.1040.0109"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.4.3.351",
+      "title": "A Heuristic Algorithm for the Guillotine Constrained Cutting Stock Problem",
+      "authors": [
+        "Parviz Ghandforoush",
+        "John J. Daniels"
+      ],
+      "year": 1992,
+      "venue": "ORSA Journal on Computing",
+      "cited_by_count": 5,
+      "abstract": "This paper presents a heuristic algorithm, programmed in PROLOG (a rule-based programming language) and run on a personal computer with 4.77 MHz CPU, for determining the packing of identical rectangles (boxes) onto a larger rectangle (pallet) such that the amount of waste is minimized. The algorithm has the additional property of producing solutions which satisfy the guillotine cut constraint. The rule-based approach takes advantage of the recursive and backtracking properties to expedite the matching operations. The algorithm is tested using 7500 randomly generated test cases and is compared to other cutting stock algorithms. Test results for one set of problems indicate that the rule-based method generates layout solutions that are within one box of the optimal solution 85% of the time.  INFORMS Journal on Computing, ISSN 1091-9856, was published as ORSA Journal on Computing from 1989 to 1995 under ISSN 0899-1499.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.4.3.351"
+    }
+  ]
+}

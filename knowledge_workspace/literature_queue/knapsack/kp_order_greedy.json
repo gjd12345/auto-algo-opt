@@ -1,0 +1,159 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_order_greedy",
+    "label": "Order-greedy 0-1 (matches main Go solver)",
+    "definition": "Take items in file order if they fit.",
+    "search_query": "greedy knapsack first fit order",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Order-greedy take-if-fits",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "First-fit knapsack",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "greedy knapsack first fit order",
+  "harvested_at": "2026-09-14T08:27:53Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.27.3.431",
+      "title": "The Status of Nonlinear Programming Software",
+      "authors": [
+        "Allan D. Waren",
+        "Leon S. Lasdon"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "cited_by_count": 52,
+      "abstract": "Desirable features of software for solving nonlinear optimization problems are discussed, and several available codes for solving NLPs are described in terms of these features. Codes are classified by algorithm type. Addresses where codes may be obtained are given. The paper concludes with a brief survey of available computational experience with several classes of algorithms and with some of the specific codes considered.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.27.3.431",
+      "seeded": true,
+      "seed_heuristic": "Greedy knapsack variants",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.5.2.266",
+      "title": "Discrete-Variable Extremum Problems",
+      "authors": [
+        "George B. Dantzig"
+      ],
+      "year": 1957,
+      "venue": "Operations Research",
+      "cited_by_count": 648,
+      "abstract": "This paper reviews some recent successes in the use of linear programming methods for the solution of discrete-variable extremum problems. One example of the use of the multistage approach of dynamic programming for this purpose is also discussed.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.5.2.266",
+      "seeded": true,
+      "seed_heuristic": "Take-if-fits / greedy knapsack",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22541/au.170670422.24229067/v1",
+      "title": "SOLVING 0 - 1 KNAPSACK PROBLEM BASED ON HYBRID GREEDY FIREWORKS ALGORITHM",
+      "authors": [
+        "LI Qiuyue"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Aiming at the classical knapsack problem in combinatorial optimization,\nin order to improve the local search ability and global search ability\nof the basic fireworks algorithm, an improved fireworks algorithm is\nproposed by combining the basic fireworks algorithm, greedy optimization\nstrategy and simulated annealing algorithm. In order to ensure the\ndiversity of the initial population, the Tent mapping is proposed to\ninitialize the population ; greedy repair operator and greedy\noptimization operator are introduced to correct the intermediate\nsolution ; at the same time, the simulated annealing mechanism is\nintroduced to make the poor solution have a certain probability to be\naccepted to improve the ability of the algorithm to jump out of the\nlocal optimum. By solving the typical test function, it is found that\nthe improved fireworks algorithm can accurately solve the theoretical\noptimal solution of the Griewank function. Compared with the basic\nfireworks algorithm, simulated annealing algorithm and particle swarm\noptimization algorithm, the improved fireworks algorithm can find the\noptimal value of Sphere function with higher accuracy. By solving six\ngroups of knapsack problems with different dimensions, it is found that\nthe improved fireworks algorithm can hit the optimal solution with 100\n% probability for most test data, and hit the optimal solution with\nmore than 70 % probability for its test data, and the standard\ndeviation of hit times is less than 13. The experimental results show\nthat the improved fireworks algorithm has higher solving accuracy and\nfaster solving speed, and can effectively solve the 0-1 knapsack\nproblem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22541/au.170670422.24229067/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22541/au.172477608.87013147/v1",
+      "title": "Beyond Pseudo-First-Order: A Better Way to Fit Kinetic Data to Determine Ligand-Receptor Binding Parameters in One Single Fit.",
+      "authors": [
+        "Jacques Durr",
+        "Harvey Motulsky"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "Protocols in hormone-receptor kinetics minimize the Hormone’s Bound\nfraction since minimizing ligand depletion (LD) allows assuming that\n(H-B)≅H, hence fitting a simplified pseudo-first-order (PFO) equation to\nobtain both rate constants, kon and koff, total receptor Bmax, and ns,\nthe ligand’s fraction nonspecifically bound (NSB). However, this\nwidespread method still lacks thorough validation. We numerically\nsimulated ligand-receptor association to evaluate various kinetic\nequations for best parameter regressions. This PFO equation mismanages\nNSB and systematically underestimates kon and overestimates koff, flaws\ndisguised under superb goodness-of-fits. We corrected its NSB handling,\nand, using a version more tolerant to LD, reduced its reciprocally\nskewed kinetic parameter fits that magnify its overestimation of\nKd=koff/kon. However, since both remained approximate models, we\nintegrated the second-order differential rate equation to precisely fit\nall parameters. Tiny simulated experimental variabilities, cause\nnormally distributed residuals along its fitted curves but trends in\n+/– residuals for the fitted PFO equations, and erratic koff\nregressions for all, including this otherwise exact equation, when\nminimizing LD while H&gt;10⸱Kd. We explain this overlooked\nregression pitfall by the differential rate equation’s structure. The\nPFO equation mismanages NSB, requires unfavorable LD minimization,\ndisplays lengthy trends in +/– residuals along its fitted curves, and\nsystematically overestimates Kd=koff/kon. Instead, we fit the true\nkinetic equation under frank LD. This paradigm shift in the study of\nligand-receptor kinetics allows precise kon, koff, Bmax, and ns\nregressions with meaningful goodness-of-fits, in one step. Additionally,\nwe propose regression methods for real/non-real-time binding assays\nwhere NSB is either unmeasured or lost.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22541/au.172477608.87013147/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.282-283.570",
+      "title": "Solving 0-1 Knapsack Problems by Greedy Method and Dynamic Programming Method",
+      "authors": [
+        "Lu Liu"
+      ],
+      "year": 2011,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 knapsack problem is typical problem in computer science and its solution is a hot spot in algorithms design and verification. Because it is very hard to solve, it is very important in the research on cryptosystem and number theory. In this paper, the 0-1 knapsack problem and its algorithm is analyzed firstly. And then this paper presents two kinds of expand form, and proposes two efficient algorithms based on dynamic programming and greedy algorithm to solve the proposed problems. Simulation results show it is effective.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.282-283.570"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29007/fx82",
+      "title": "An Iterated Semi-Greedy Algorithm for the 0-1 Quadratic Knapsack Problem",
+      "authors": [
+        "Leticia Leonor Pinto Alva",
+        "Alexander J. Benavides"
+      ],
+      "year": 2018,
+      "venue": "EasyChair Preprints",
+      "cited_by_count": 1,
+      "abstract": "This paper presents a new Iterated Semi-Greedy Algorithm (ISGA) for the 0-1 Quadratic Knapsack Problem.The proposed ISGA is easier to implement, runs faster, and produces comparable results than state-of-the-art methods. Computational evaluation is performed over a benchmark with large instances of 1000 and 2000 objects.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29007/fx82"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23956/ijermt.v6i7.181",
+      "title": "Clustering Analysis of Greedy Heuristic Method in Zero_One Knapsack Problem",
+      "authors": [
+        "V. Selvi"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Emerging Research in Management and Technology",
+      "cited_by_count": 0,
+      "abstract": "Knapsack problem is a surely understood class of optimization problems, which tries to expand the profit of items in a knapsack without surpassing its capacity, Knapsack can be solved by several algorithms such like Greedy, dynamic programming, Branch &amp; bound etc. The solution to the zero_one knapsack problem (KP) can be viewed as the result of a sequence of decision. Clustering is the process of resolving that type of applications. Different clustering application for grouping elements with equal priority. In this paper we are introducing greedy heuristic algorithm for solving zero_one knapsack problem. We will exhibit a relative investigation of the Greedy, dynamic programming, B&amp;B and Genetic algorithms regarding of the complexity of time requirements, and the required programming efforts and compare the total value for each of them. Greedy and Genetic algorithms can be used to solve the 0-1 Knapsack problem within a reasonable time complexity. The worst-case time complexity (Big-O) of both algorithms is O(N). Using the greedy method, the algorithm can produce high quality clusters while reduce time the best partioning avoid the memory confinement problem during the process.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23956/ijermt.v6i7.181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.27.6.1101",
+      "title": "New Greedy-Like Heuristics for the Multidimensional 0-1 Knapsack Problem",
+      "authors": [
+        "Richard Loulou",
+        "Eleftherios Michaelides"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "cited_by_count": 82,
+      "abstract": "In this paper, we develop four heuristic methods to obtain approximate solutions to the multidimensional 0-1 knapsack problem. The four methods are tested on a number of problems of various sizes. The solutions are compared to the rigorous optimum as well as to a heuristic method of Toyoda. They are statistically better than the latter, with average relative errors of the order of less than 1%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.27.6.1101"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:43:13Z"
+}

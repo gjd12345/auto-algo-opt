@@ -1,0 +1,33 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "bp_variable",
+  "selected": [
+    {
+      "doi": "10.1137/0215016",
+      "heuristic_name": "Variable-sized bin packing approximation algorithms",
+      "why": "Original paper giving three efficient approximation algorithms for a fixed collection of bin sizes.",
+      "steps": [
+        "Allow a fixed collection of bin sizes instead of only unit bins",
+        "Apply three efficient approximation algorithms with asymptotic bounds 2, 3/2, and 4/3"
+      ],
+      "eoh_map": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "not_the_original": "Not a 1D online score(item, bins) rule; not named variable-size FFD."
+    },
+    {
+      "doi": "10.1137/s0097539702412908",
+      "heuristic_name": "Variable-sized online bin packing algorithms",
+      "why": "New algorithms for variable-sized online bin packing.",
+      "steps": [
+        "Assign items to bins online one by one",
+        "Draw bins from a fixed set of sizes",
+        "Minimise the sum of sizes of bins used"
+      ],
+      "eoh_map": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "not_the_original": "Online variable-sized packing; registered OBP interface has a single bin size."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

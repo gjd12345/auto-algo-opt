@@ -1,0 +1,147 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "vrppd",
+    "label": "VRP with pickups and deliveries",
+    "definition": "Paired pickup and delivery.",
+    "search_query": "VRP pickup delivery heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Paired insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "PDP VND",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "VRP pickup delivery heuristic",
+  "harvested_at": "2026-09-14T08:25:17Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230190205",
+      "title": "Connected reorientations of mixed multigraphs",
+      "authors": [
+        "Weigeng Shi",
+        "Ronald J. Juels"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "cited_by_count": 1,
+      "abstract": "Abstract We study here the problem of reorienting the directed edges of mixed multigraphs so as to establish or preserve reachability, which may be destroyed by edge removal. We develop a linear time/space algorithm which tests whether reorienting designated directed edges can reestablish reachability, and which constructs such a reorientation whenever possible. We also develop a linear time/space algorithm which, when reachability has been destroyed by the removal of a single edge, optimally restores reachability through the reversal of selected edges. Finally, we show the reliability of a graph allowing reversals to be twice that of a graph for which reversals are not permitted.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230190205",
+      "seeded": true,
+      "seed_heuristic": "VRP with pickups and deliveries",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su172411308",
+      "title": "Urban Pickup-and-Delivery VRP with Soft Time Windows Under Travel-Time Uncertainty: An Empirical Comparison of Robust and Deterministic Approaches",
+      "authors": [
+        "Daniel Kubek"
+      ],
+      "year": 2025,
+      "venue": "Sustainability",
+      "cited_by_count": 1,
+      "abstract": "Urban freight pickup-and-delivery services operate in road networks where travel times are highly variable due to congestion, incidents, and operational restrictions. Such variability threatens the punctuality of deliveries and complicates the design of reliable service schedules. This paper examines an urban pickup-and-delivery vehicle routing problem with soft time windows under travel-time uncertainty and provides an empirical comparison of robust and deterministic planning approaches on a real road network. The problem is formulated as a time-dependent pickup-and-delivery VRP with soft time windows, where link travel times are represented by a finite set of scenarios calibrated from observed network conditions. The objective function combines four components that are central to urban freight operations: total travel time, total distance, and penalties for earliness and lateness relative to customer time windows. This structure captures the trade-off between routing efficiency and service quality. On this basis, a robust model is constructed that optimises tour plans with respect to scenario-based worst-case or risk-aggregated costs, while a standard deterministic model minimises the same objective using nominal (average) travel times only. An empirical study on a real urban network compares the deterministic and robust solutions with respect to delivery punctuality, tour length, and time-window violations across a range of demand and variability settings. The results show that robust routing systematically reduces the frequency and magnitude of late deliveries at the expense of only moderate increases in planned distance and travel time. Although energy use and emissions are not modelled explicitly, the improved reliability and reduced need for reactive re-routing indicate a potential to support more reliable and resource-efficient urban freight operations in the context of sustainable city logistics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su172411308"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1863/1/012002",
+      "title": "Minimizing the handling time in VRP with pickup-and-delivery and time windows",
+      "authors": [
+        "I S Amalia",
+        "T Bakhtiar",
+        "Jaharuddin"
+      ],
+      "year": 2021,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 1,
+      "abstract": "Abstract \n        Improving services through goods pickups and deliveries to expand the market is currently being carried out by many companies. This effort needs another step of optimization to avoid losses due to additional resources, such as time, which must be held by the company. In the case of simultaneous goods pickups and deliveries using a vehicle with single transport access, the policy of arranging goods in the vehicle can affect the length of time for service. Single transport access causes goods that want to be unloaded obstructed by the other goods, thus requires additional time for handling. In this paper, the problem of a vehicle’s route and handling time in picking and delivering goods with time windows is modeled as the Traveling Salesman Problem. The objective function of this problem is to minimize the total travel time and handling time during the picking and delivering goods. The model is implemented in the case of bicycle pickup and delivery services involving 15 bicycle shops. The capacity of the vehicle is 15 units of bicycle. In this case, a solution consisting the pickup and delivery route and optimal goods order is obtained with an objective function value of 334 minutes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1863/1/012002"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.29.1.45",
+      "title": "A Network Flow Based Heuristic for Bulk Pickup and Delivery Routing",
+      "authors": [
+        "Marshall L. Fisher",
+        "Baoxing Tang",
+        "Zhang Zheng"
+      ],
+      "year": 1995,
+      "venue": "Transportation Science",
+      "cited_by_count": 10,
+      "abstract": "We consider a problem in which a fleet of vehicles must be scheduled to pickup and deliver a set of orders in truckload quantities. We describe a new algorithm based on a network flow relaxation which imposes necessary conditions on the flow of empty vehicles from order delivery points to order pickup points. The network flow model provides a lower bound and a nearly feasible solution that can be made feasible with some simple heuristics. Our algorithm is fast and has performed well on a set of more than 430 test problems which include a number of real problems obtained from the Shanghai Truck Transportation Corporation. On real problems and on random problems generated using real pickup and delivery points, the algorithm consistently produces solutions within 1% of optimality.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.29.1.45"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1050.0135",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Stefan Ropke",
+        "David Pisinger"
+      ],
+      "year": 2006,
+      "venue": "Transportation Science",
+      "cited_by_count": 2281,
+      "abstract": "The pickup and delivery problem with time windows is the problem of serving a number of transportation requests using a limited amount of vehicles. Each request involves moving a number of goods from a pickup location to a delivery location. Our task is to construct routes that visit all locations such that corresponding pickups and deliveries are placed on the same route, and such that a pickup is performed before the corresponding delivery. The routes must also satisfy time window and capacity constraints. \n          This paper presents a heuristic for the problem based on an extension of the large neighborhood search heuristic previously suggested for solving the vehicle routing problem with time windows. The proposed heuristic is composed of a number of competing subheuristics that are used with a frequency corresponding to their historic performance. This general framework is denoted adaptive large neighborhood search. \n          The heuristic is tested on more than 350 benchmark instances with up to 500 requests. It is able to improve the best known solutions from the literature for more than 50% of the problems. \n          The computational experiments indicate that it is advantageous to use several competing subheuristics instead of just one. We believe that the proposed heuristic is very robust and is able to adapt to various instance characteristics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1050.0135"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.21917",
+      "title": "A two‐level local search heuristic for pickup and delivery problems in express freight trucking",
+      "authors": [
+        "Luigi De Giovanni",
+        "Nicola Gastaldon",
+        "Filippo Sottovia"
+      ],
+      "year": 2019,
+      "venue": "Networks",
+      "cited_by_count": 10,
+      "abstract": "Abstract We consider a multiattribute vehicle routing problem inspired by a freight transportation company operating a fleet of heterogeneous trucks. The company offers an express service for requests including multiple pickup and multiple delivery positions spread in a regional area, with associated soft or hard time windows often falling in the same working day. Routes are planned on a daily basis and reoptimized on‐the‐fly to fit new requests, taking into account constraints and preferences on capacities, hours of service, route termination points. The objective is to maximize the difference between the revenue from satisfied orders and the operational costs. The problem mixes attributes from both intercity less‐than‐truckload and express couriers operations, and we propose a two‐level local search heuristic. The first level assigns orders to vehicles through a variable neighborhood stochastic tabu search; the second level optimizes the route service sequences. The algorithm, enhanced by neighborhood filtering and parallel exploration, is embedded in a decision support tool currently in use in a small trucking company. Results have been compared to bounds obtained from a mathematical programming model solved by column generation. Experience on the field and test on literature instances attest to the quality of results and the efficiency of the proposed approach.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.21917"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29099/ijair.v2i2.71",
+      "title": "A Modified Meta-Heuristic Approach for Vehicle Routing Problem with Simultaneous Pickup and Delivery",
+      "authors": [
+        "Alfian Faiz",
+        "Subiyanto Subiyanto",
+        "Ulfah Mediaty Arief"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Artificial Intelligence Research",
+      "cited_by_count": 4,
+      "abstract": "The aim of this work is to develop an intelligent optimization software based on enhanced VNS meta-heuristic to tackle Vehicle Routing Problem with Simultaneous Pickup and Delivery (VRPSPD). An optimization system developed based on enhanced Variable Neighborhood Search with Perturbation Mechanism and Adaptive Selection Mechanism as the simple but effective optimization approach presented in this work. The solution method composed by combining Perturbation based Variable Neighborhood Search (PVNS) with Adaptive Selection  Mechanism (ASM) to control perturbation scheme. Instead of stochastic approach, selection of perturbation scheme used in the algorithm employed an empirical selection based on each perturbation scheme success along the search. The ASM help algorithm to get more diversification degree and jumping from local optimum condition using most successful perturbation scheme empirically in the search process. A comparative analysis with a well-known exact approach is presented to test the solution method in a generated VRPSPD benchmark instance in limited computation time. Then a test to VRPSPD scenario provided by a liquefied petroleum gas distribution company is performed. The test result confirms that solution method present superior performance against exact approach solution in giving best solution for larger sized instance and successfully obtain substantial improvements when compared to the basic VNS and original route planning technique used by a distributor company.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29099/ijair.v2i2.71"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:52Z"
+}

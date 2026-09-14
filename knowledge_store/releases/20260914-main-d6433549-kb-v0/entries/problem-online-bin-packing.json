@@ -1,0 +1,57 @@
+{
+  "type": "problem",
+  "title": "Online bin packing as evolved on main",
+  "category": "problem",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "score",
+    "argmax"
+  ],
+  "status": "reviewed",
+  "summary": "Evolved score(item, feasible residuals); evaluator assigns argmax; fitness is mean gap to ceil(sum/C).",
+  "attributes": {
+    "online_offline": "online",
+    "interface": "score(item, bins)",
+    "objective": "mean relative gap",
+    "constraints": [
+      "capacity",
+      "arrival order"
+    ]
+  },
+  "relations": {
+    "methods": [
+      "method-obp-worst-fit-template",
+      "method-obp-first-fit",
+      "method-obp-best-fit",
+      "method-obp-residual-utilization"
+    ],
+    "implementations": [
+      "impl-obp-official-interface",
+      "impl-obp-go-solver",
+      "impl-obp-best-code-residual-util",
+      "impl-obp-q3-piecewise-score",
+      "impl-obp-q3-residual-poly",
+      "impl-obp-q3-pure",
+      "impl-obp-q3-generic",
+      "impl-obp-q3-answer",
+      "impl-obp-xfer-local",
+      "impl-obp-xfer-mixed"
+    ]
+  },
+  "source_refs": [
+    "src-johnson-packing"
+  ],
+  "evidence_refs": [
+    "code:official_eoh/examples/bp_online/prob.py",
+    "code:eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "5914d4325e9e3a801b5ff63ccd64f572c0265c9146ba2279470e111a556fd049"
+    }
+  ],
+  "id": "problem-online-bin-packing",
+  "content_sha256": "572badb1e67b0d6fac1d2b3a4852ce8055a7b7f80862a7ade2e1357013fe0da2"
+}

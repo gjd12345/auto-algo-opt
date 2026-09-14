@@ -1,0 +1,142 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_open",
+    "label": "Open TSP / Hamiltonian path",
+    "definition": "Path visits each city once, no return.",
+    "search_query": "open traveling salesman Hamiltonian path heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Path Nearest Neighbor",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Cheapest Insertion path",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "open TSP Hamiltonian path nearest neighbor heuristic",
+  "harvested_at": "2026-09-14T08:12:10Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0206041",
+      "title": "An Analysis of Several Heuristics for the Traveling Salesman Problem",
+      "authors": [
+        "Daniel J. Rosenkrantz",
+        "Richard E. Stearns",
+        "Philip M. Lewis, II"
+      ],
+      "year": 1977,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 736,
+      "abstract": "Several polynomial time algorithms finding “good,” but not necessarily optimal, tours for the traveling salesman problem are considered. We measure the closeness of a tour by the ratio of the obtained tour length to the minimal tour length. For the nearest neighbor method, we show the ratio is bounded above by a logarithmic function of the number of nodes. We also provide a logarithmic lower bound on the worst case. A class of approximation methods we call insertion methods are studied, and these are also shown to have a logarithmic upper bound. For two specific insertion methods, which we call nearest insertion and cheapest insertion, the ratio is shown to have a constant upper bound of 2, and examples are provided that come arbitrarily close to this upper bound. It is also shown that for any $n\\geqq 8$, there are traveling salesman problems with n nodes having tours which cannot be improved by making $n/4$ edge changes, but for which the ratio is $2(1-1/n)$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0206041",
+      "seeded": true,
+      "seed_heuristic": "Cheapest Insertion (path)",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21070/icecrs.v12i3.1935",
+      "title": "Nearest Neighbor Heuristic Minimizes Logistics Distribution Distance And Travel Time",
+      "authors": [
+        "Naufal Akmal Christiono",
+        "Dewi Komala Sari"
+      ],
+      "year": 2024,
+      "venue": "Proceedings of The ICECRS",
+      "cited_by_count": 0,
+      "abstract": "General Background Supply chain systems require strategic management to distribute production outputs continuously and accurately to consumers. Specific Background PT. Laprint Jaya experiences fluctuating shipping volumes and limited delivery fleets, causing complex Single Depot Capacitated Vehicle Routing Problems during dense daily schedules. Knowledge Gap Traditional routing decisions often fail to overcome fleet limitations and geographical complexities, requiring a practical technology approach to determine the shortest continuous paths. Aims This study analyzes optimal shipping routes regarding physical span and duration using the Nearest Neighbor method. Results Implementing this specific approach successfully cut the delivery span by 25 kilometers and reduced the total duration by 35 minutes compared to the initial manual routing procedures. Novelty This research demonstrates the practical integration of the Nearest Neighbor algorithm with digital maps to solve multi-point manufacturing product distribution problems. Implications Adopting this routing strategy facilitates supply chain management in determining optimal shipping operations, avoiding delays, and maximizing overall operational sustainability.\n\nHighlights:\n\n\n\nThe Single Depot Capacitated Vehicle Routing Problem occurs due to fluctuating shipping volumes and restricted fleet capacities.\n\n\nDigital map integration identifies the shortest continuous paths for complex delivery schedules.\n\n\nOptimized shipping operations successfully cut 25 kilometers and saved 35 minutes from the initial route.\n\n\nKeywords: Vehicle Routing Problem, Supply Chain Management, Delivery Route Optimization, Heuristic Algorithm, Operational Efficiency",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21070/icecrs.v12i3.1935"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2022.09.08.507181",
+      "title": "<tt>DrTransformer</tt>\n                  : Heuristic cotranscriptional RNA folding using the nearest neighbor energy model",
+      "authors": [
+        "Stefan Badelt",
+        "Ronny Lorenz",
+        "Ivo L. Hofacker"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n         \n          Background \n          Folding during transcription can have an important influence on the structure and function of ℝNA molecules, as regions closer to the 5’ end can fold into metastable structures before potentially stronger interactions with the 3’ end become available. Thermodynamic ℝNA folding models are not suitable to analyze this problem, as they can only calculate properties of the equilibrium distribution. Other software packages that simulate the kinetic process of ℝNA folding during transcription exist, but they are mostly applicable for short sequences. \n         \n         \n          Results \n          We present a new algorithm that tracks changes to the ℝNA secondary structure ensemble during transcription. At every transcription step, new representative local minima are identified, a neighborhood relation is defined and transition rates are estimated for kinetic simulations. After every simulation, a part of the ensemble is removed and the remainder is used to search for new potentially relevant structures. The presented algorithm is deterministic (up to numeric instabilities of simulations), fast (in comparison with existing methods), and it is capable of folding ℝNAs much longer than 200 nucleotides. \n         \n         \n          Availability \n          \n          This software is open-source and available at\n           https://github.com/ViennaRNA/drtransformer \n          .",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2022.09.08.507181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/dxe2j",
+      "title": "Table based K Nearest Neighbor for Text Classification",
+      "authors": [
+        "Taeho Jo"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This article proposes the modified KNN (K Nearest Neighbor)algorithm which receives a table as its input data and is applied tothe text categorization. The motivations of this research are thesuccessful results from applying the table based algorithms to thetext categorizations in previous works and the expectation ofsynergy effect between the text categorization and the wordcategorization. In this research, we define the similarity metricbetween two tables representing texts, modify the KNN algorithm byreplacing the exiting similarity metric by the proposed one, andapply it to the text categorization. The proposed KNN is empiricallyvalidated as the better approach in categorizing texts in newsarticles and opinions. In using the table based KNN algorithm, it iseasier to trace results from categorizing texts.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/dxe2j"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/ju8nr",
+      "title": "Text Summarization using Feature Similarity based K Nearest Neighbor",
+      "authors": [
+        "Taeho Jo"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This article proposes the modified KNN (K Nearest Neighbor)algorithm which considers the feature similarity and is applied tothe text summarization. The words which are given as features forencoding words into numerical vectors have their own meanings andsemantic relations with others, and the text summarization is ableto be viewed into a binary classification where each paragraph isclassified into summary or non-summary. In the proposed system, atext which is given as the input is partitioned into a list ofparagraphs, each paragraph is classified by the proposed KNNversion, and the paragraphs which are classified into summary areextracted ad the output. The proposed KNN version is empiricallyvalidated as the better approach in deciding whether each paragraphis essential or not in news articles and opinions. The significanceof this research is to improve the classification performance byutilizing the feature similarities.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/ju8nr"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/v3x47",
+      "title": "Application of Table based K Nearest Neighbor for Index Optimization",
+      "authors": [
+        "Taeho Jo"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This article proposes the modified KNN (K Nearest Neighbor)algorithm which receives a table as its input data and is applied tothe index optimization. The motivations of this research are thesuccessful results from applying the table based algorithms to thetext categorizations in previous works and the index optimization isable to be viewed into a classification task where each word isclassified into expansion, inclusion, and removal. In the proposedsystem, each word in the given text is classified into one of thethree categories by the proposed KNN algorithm, associates words areadded to ones which are classified into expansion, and ones whichare classified into inclusion are kept by themselves without addingany word. The proposed KNN version is empirically validated as thebetter approach in deciding the importance level of words in newsarticles and opinions. In using the table based KNN algorithm, it iseasier to trace results from categorizing words.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/v3x47"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/d38n5",
+      "title": "Table based Version of K Nearest Neighbor used for Text Summarization",
+      "authors": [
+        "Taeho Jo"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This article proposes the modified KNN (K Nearest Neighbor)algorithm which receives a table as its input data and is applied tothe text summarization. The table based algorithms workedsuccessfully in text mining tasks such as text categorization andtext clustering in previous works, and the text summarization isable to be viewed into a binary classification where each paragraphis classified into summary or non-summary. In the proposed system, atext which is given as the input is partitioned into a list ofparagraphs, each paragraph is classified by the proposed KNNversion, and the paragraphs which are classified into summary areextracted ad the output. The proposed KNN version is empiricallyvalidated as the better approach in deciding whether each paragraphis essential or not in news articles and opinions. In using thetable based KNN algorithm, it is easier to trace results fromcategorizing paragraphs.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/d38n5"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:05Z"
+}

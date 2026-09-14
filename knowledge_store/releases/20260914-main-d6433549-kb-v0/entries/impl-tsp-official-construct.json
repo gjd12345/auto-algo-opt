@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Official TSP construct: k-NN list + nearest-neighbor template",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The evaluator starts at city 0, at each step offers at most neighbor_size (min(50,n)) unvisited cities from a nearest-neighbor matrix, and forces the last city. The template returns argmin distance: nearest neighbor on t",
+  "attributes": {
+    "interface": "select_next_node(current, destination, unvisited, distance_matrix) on a truncated neighbor list",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/tsp_construct/prob.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_construct/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_construct/prob.py",
+      "sha256": "85a20115c73176c77aa4c3b2fea3b36f93dfd84a1e60e2161794def52d453f45"
+    }
+  ],
+  "id": "impl-tsp-official-construct",
+  "content_sha256": "991ebedbfc1efd28dafb4eef7c7c83c526191872c8660b8126f2d470e7626e9c"
+}

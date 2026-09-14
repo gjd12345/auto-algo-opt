@@ -1,0 +1,161 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "pvrp",
+    "label": "Periodic VRP",
+    "definition": "Planning over several days.",
+    "search_query": "periodic vehicle routing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Day assignment + CWS",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Periodic local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "periodic vehicle routing heuristic",
+  "harvested_at": "2026-09-14T08:25:28Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230060304",
+      "title": "Generalized networks: Networks embedded on a matroid, part II",
+      "authors": [
+        "J. Bruno",
+        "L. Weinberg"
+      ],
+      "year": 1976,
+      "venue": "Networks",
+      "cited_by_count": 4,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1002/net.3230060304",
+      "seeded": true,
+      "seed_heuristic": "Beltrami periodic routing",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.18.1.1",
+      "title": "Network Design and Transportation Planning: Models and Algorithms",
+      "authors": [
+        "T. L. Magnanti",
+        "R. T. Wong"
+      ],
+      "year": 1984,
+      "venue": "Transportation Science",
+      "cited_by_count": 971,
+      "abstract": "Numerous transportation applications as diverse as capital investment decision-making, vehicle fleet planning, and traffic light signal setting all involve some form of (discrete choice) network design. In this paper, we review some of the uses and limitations of integer programming-based approaches to network design, and describe several discrete and continuous choice models and algorithms. Our objectives are threefold—to provide a unifying view for synthesizing many network design models, to propose a unifying framework for deriving many network design algorithms, and to summarize computational experience in solving design problems. We also show that many of the most celebrated combinatorial problems that arise in transportation planning are specializations and variations of a generic design model. Consequently, the network design concepts described in this paper have great potential application in a wide range of problem settings.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.18.1.1",
+      "seeded": true,
+      "seed_heuristic": "Christofides-Beasley periodic routing",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.26.2.86",
+      "title": "A Heuristic for the Periodic Vehicle Routing Problem",
+      "authors": [
+        "M. Gaudioso",
+        "G. Paletta"
+      ],
+      "year": 1992,
+      "venue": "Transportation Science",
+      "cited_by_count": 97,
+      "abstract": "The paper describes a model for the optimal management of periodic deliveries of a given commodity. The goal is to schedule the deliveries according to feasible combinations of delivery days and to determine the scheduling and routing policies of the vehicles in order to minimize over the planning horizon the maximum number of vehicles simultaneously employed, i.e., the fleet size. Heuristic algorithms are proposed and computational experience is reported.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.26.2.86"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22219/jtiumm.vol20.no2.68-77",
+      "title": "A Cluster-First Route-Second Heuristic Approach to Solve The Multi-Trip Periodic Vehicle Routing Problem",
+      "authors": [
+        "Annisa Kesy Garside",
+        "Nabila Rohmatul Laili"
+      ],
+      "year": 2019,
+      "venue": "Jurnal Teknik Industri",
+      "cited_by_count": 2,
+      "abstract": "This paper discusses periodic vehicle routing problems that allow vehicles to travel on multiple trips in a single day. It is known as the Multi-Trip Periodic Vehicles (MTPVRP) Problem Route. Cluster-first route-second (CFRS) heuristics to solve MTPVRP was proposed in this study. In phase 1, customers were divided into clusters using the formulation of integer programming. Phase 2 determined the route of the cluster and verifies that the total journey time to visit the trips does not exceed the working hours of the vehicle. The implementation of the heuristic CFRS to solve the real problem faced by the LPG distributor shows that the procedure could provide a better routing solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22219/jtiumm.vol20.no2.68-77"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e",
+      "title": "Vehicle routing problems with profits, exact and heuristic approaches",
+      "authors": [
+        "Racha El-Hajj"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Problèmes de tournées de véhicules avec profits, méthodes exactes et approchées \n         Nous nous intéressons dans cette thèse à la résolution du problème de tournées sélectives (Team Orienteering Problem - TOP) et ses variantes. Ce problème est une extension du problème de tournées de véhicules en imposan tcertaines limitations de ressources. Nous proposons un algorithme de résolution exacte basé sur la programmation linéaire en nombres entiers (PLNE) en ajoutant plusieurs inégalités valides capables d’accélérer la résolution. D’autre part, en considérant des périodes de travail strictes pour chaque véhicule durant sa tournée, nous traitons une des variantes du TOP qui est le problème de tournées sélectives multipériodique (multiperiod TOP - mTOP) pour lequel nous développons une métaheuristique basée sur l’optimisation par essaim pour le résoudre. Un découpage optimal est proposé pour extraire la solution optimale de chaque particule en considérant les tournées saturées et pseudo saturées .Finalement, afin de prendre en considération la disponibilité des clients, une fenêtre de temps est associée à chacun d’entre eux, durant laquelle ils doivent être servis. La variante qui en résulte est le problème de tournées sélectives avec fenêtres de temps (TOP with Time Windows - TOPTW). Deux algorithmes exacts sont proposés pour résoudre ce problème. Le premier est basé sur la génération de colonnes et le deuxième sur la PLNE à laquelle nous ajoutons plusieurs coupes spécifiques à ce problème.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22219/jtiumm.vol20.no2.172-181",
+      "title": "A Cluster-First Route-Second Heuristic Approach to Solve The Multi-Trip Periodic Vehicle Routing Problem",
+      "authors": [
+        "Annisa Kesy Garside",
+        "Nabila Rohmatul Laili"
+      ],
+      "year": 2019,
+      "venue": "Jurnal Teknik Industri",
+      "cited_by_count": 5,
+      "abstract": "This paper discusses periodic vehicle routing problems that allow vehicles to travel on multiple trips in a single day. It is known as the Multi-Trip Periodic Vehicles (MTPVRP) Problem Route. Cluster-first route-second (CFRS) heuristics to solve MTPVRP was proposed in this study. In phase 1, customers were divided into clusters using the formulation of integer programming. Phase 2 determined the route of the cluster and verified that the total journey time to visit the trips does not exceed the working hours of the vehicle. Implementing the heuristic CFRS to solve the real problem faced by the  Liquefied petroleum gas (LPG) distributor shows that the procedure could provide a better routing solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22219/jtiumm.vol20.no2.172-181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.18825/iremjournal.1174543",
+      "title": "Solution Of Capacitated Vehicle Routing Problem For A Food Delivery Company With Heuristic Methods",
+      "authors": [
+        "Nurhayat TOK",
+        "Şerife ÖZKAR"
+      ],
+      "year": 2023,
+      "venue": "International Review of Economics and Management",
+      "cited_by_count": 0,
+      "abstract": "A food delivery company operates in Balıkesir performs to the distribution for the products of a certain brand from the central warehouse to the customers located in the central districts of Altıeylül and Karesi by using two vehicles with high capacity. The company visits customers on certain routes to meet their daily demands and is able to meet all demands at the end of the day. In this study, the distribution of the company's products was considered as a Vehicle Routing Problem, and it was aimed to reconstruct the distribution routes of the vehicles with the help of various algorithms and to provide cost savings in terms of the distance traveled. In order to solve the problem, first of all, an appropriate capacity assumption was made for the vehicles by considering the daily demand amounts of the customers. Under this assumption, first new customer groups to be visited in daily periods were created, and then new routes were obtained for the relevant customer groups. In this process, the problem was designed as a Capacity Constrained Vehicle Routing Problem, and the results obtained using Fisher and Jaikumar's Algorithm and Clarke and Wright's Savings Algorithm were evaluated. When the results obtained are compared with the current route status of the company, it has been determined that it is possible to achieve a high rate of improvement by using the routes determined by algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.18825/iremjournal.1174543"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.58837/chula.the.2017.11",
+      "title": "Cuckoo search and enhanced artificial bee colony heuristic methods for vehicle routing problem with backhaul and time window constraints",
+      "authors": [
+        "Tanawat Worawattawechai"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The vehicle routing problem with backhauls and time windows (VRPBTW) aims to find a feasible vehicle route that minimizes the total traveling distance while imposing capacity, backhaul, and time-window constraints. In this dissertation, a mathematical model of VRPBTW is introduced to obtain an optimal solution. The heuristics, namely the nearest urgent candidate (NUC), which applies the urgency priority and candidate techniques, and the nearest neighbor with roulette wheel selection (NNRW) which is a combination of a roulette wheel selection method and the improved nearest neighbor heuristic, are also presented to solve this problem. Moreover, two metaheuristic methods are presented to obtain the optimal or near optimal solutions. The first is a cuckoo search (CS) algorithm, which is applied to this problem for the first time. The second is the enhanced artificial bee colony (EABC) algorithm which uses a forbidden list, the sequential search for onlookers, and the combination of neighborhood search techniques. The computational results indicate that proposed algorithms yield good performance in terms of solution quality, especially EABC. It obtained 33 ties or new best known solutions out of 45 instances comparing with the best known solutions found in the literature. Hence, the proposed algorithms are the effective ways to solve the VRPBTW.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.58837/chula.the.2017.11"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:58Z"
+}

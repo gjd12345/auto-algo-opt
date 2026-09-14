@@ -1,0 +1,164 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_prize",
+    "label": "Prize-collecting TSP",
+    "definition": "Optional cities with prizes and penalties.",
+    "search_query": "prize collecting TSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Prize insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Goemans-Williamson PCTSP",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "prize collecting TSP heuristic",
+  "harvested_at": "2026-09-14T08:24:23Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/bf01585555",
+      "title": "New variants of bundle methods",
+      "authors": [
+        "Claude Lemaréchal",
+        "Arkadii Nemirovskii",
+        "Yurii Nesterov"
+      ],
+      "year": 1995,
+      "venue": "Mathematical Programming",
+      "cited_by_count": 294,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/bf01585555",
+      "seeded": true,
+      "seed_heuristic": "Prize-collecting TSP polyhedra / heuristic context",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230190602",
+      "title": "The prize collecting traveling salesman problem",
+      "authors": [
+        "Egon Balas"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "cited_by_count": 403,
+      "abstract": "Abstract The following is a valid model for an important class of scheduling and routing problems. A salesman who travels between pairs of cities at a cost depending only on the pair, gets a prize in every city that he vitis and pays a penalty to every city that he fails to visit, wishes to minimize his travel costs and net penalties, while visiting enough cities to collect a prescribed amount of prize money. We call this problem the Prize Collecting Traveling Salesman Problem (PCTSP). This paper discusses structural properties of the PCTS polytope, the convex hull of solutions to the PCTSP. In particular, it identifies several families of facet defining inequalities for this polytope. Some of these inequalities are related to facets of the ordinary TS polytope, others to facets of the knapsack polytope. They can be used in algorithms for the PCTSP either as cutting planes or as ingredients of a Lagrangean optimand.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230190602",
+      "seeded": true,
+      "seed_heuristic": "Balas prize-collecting TSP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6804412",
+      "title": "Exact and Heuristic Approaches for the Multi-Vehicle Covering Tour Problem with Prize Collecting",
+      "authors": [
+        "Modoukpè Maryse Eudoxie ASSANVI",
+        "Marcos Roboredo"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper introduces the Multi-Vehicle Covering Tour Problem with Prize Collecting (m-CTPPC), a new extension of the Covering Tour Problem that integrates multiple vehicles and prize-collecting requirements. The problem simultaneously combines routing, coverage, and facility selection decisions, leading to a highly challenging optimization setting.We propose two complementary solution approaches. First, an exact branch-cut-and-price algorithm based on a route-based formulation, where the pricing problem is solved as a resource-constrained shortest path using a bidirectional labeling algorithm with ng-route relaxations and rank-1 cuts. Second, a hybrid matheuristic, denoted Hybrid Build-Ruin (HBR), combining randomized construction, ruin-and-recreate diversification, and an exact set-partitioning post-optimization over a pool of routes.Computational experiments on 378 benchmark instances with up to 229 vertices show that the exact method solves 79.4% of the instances to optimality and provides strong bounds overall. The HBR heuristic delivers high-quality solutions within short computational times (10-30 seconds), achieving average gaps of at most 0.3% and frequently matching best known solutions. The results highlight the strong complementarity between both approaches, yielding an effective framework for solving the m-CTPPC.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6804412"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/090771429",
+      "title": "Improved Approximation Algorithms for Prize-Collecting Steiner Tree and TSP",
+      "authors": [
+        "Aaron Archer",
+        "MohammadHossein Bateni",
+        "MohammadTaghi Hajiaghayi",
+        "Howard Karloff"
+      ],
+      "year": 2011,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 73,
+      "abstract": "We study the prize-collecting Steiner tree (PCST), prize-collecting traveling salesman (PCTSP), and prize-collecting path (PC-Path) problems. Given a graph $(V,E)$ with a cost on each edge and a penalty (a.k.a. prize) on each node, the goal is to find a tree (for PCST), cycle (for PCTSP), or path (for PC-Path) that minimizes the sum of the edge costs in the tree/cycle/path and the penalties of the nodes not spanned by it. In addition to being a useful theoretical tool for helping to solve other optimization problems, PCST has been applied fruitfully by AT&amp;T to the optimization of real-world telecommunications networks. The most recent improvements for the first two problems, a 2-approximation algorithm for each, appeared first in 1992; a 2-approximation for PC-Path appeared in 2003. The natural linear programming relaxation of PCST has an integrality gap of 2, which has been a barrier to further improvements for this problem. We present $(2-\\epsilon)$-approximation algorithms for all three problems, connected by a unified technique for improving prize-collecting algorithms that allows us to circumvent the integrality gap barrier. Specifically, our approximation ratio for prize-collecting Steiner tree is below 1.9672.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/090771429"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/3378571",
+      "title": "A Unified PTAS for Prize Collecting TSP and Steiner Tree Problem in Doubling Metrics",
+      "authors": [
+        "T.-H. Hubert Chan",
+        "Haotian Jiang",
+        "Shaofeng H.-C. Jiang"
+      ],
+      "year": 2020,
+      "venue": "ACM Transactions on Algorithms",
+      "cited_by_count": 6,
+      "abstract": "We present a unified (randomized) polynomial-time approximation scheme (PTAS) for the prize collecting traveling salesman problem (PCTSP) and the prize collecting Steiner tree problem (PCSTP) in doubling metrics. Given a metric space and a penalty function on a subset of points known as terminals, a solution is a subgraph on points in the metric space whose cost is the weight of its edges plus the penalty due to terminals not covered by the subgraph. Under our unified framework, the solution subgraph needs to be Eulerian for PCTSP, while it needs to be a tree for PCSTP. Before our work, even a QPTAS for the problems in doubling metrics is not known. \n      Our unified PTAS is based on the previous dynamic programming frameworks proposed in Talwar (STOC 2004) and Bartal, Gottlieb, Krauthgamer (STOC 2012). However, since it is unknown which part of the optimal cost is due to edge lengths and which part is due to penalties of uncovered terminals, we need to develop new techniques to apply previous divide-and-conquer strategies and sparse instance decompositions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/3378571"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Many complex discrete manufacturing problems, such as manufacturing sequencing problem or machine scheduling problem etc, can be converted into a general traveling salesman problem (TSP). TSP has been proven to be NP-complete. The genetic algorithm is improved with two heuristic rules for TSP. The first heuristic rule is the four vertices and three lines inequality. It is applied to the local Hamiltonian paths to generate the better solutions. The second heuristic rule is executed to reverse the local Hamiltonian paths, which generates new better solutions. The two heuristic rules coordinate with each other and they are merged into the optimization process of genetic algorithm to improve its performance. The computation results show that the improved genetic algorithm can find the near optimal solutions for most of the TSP instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26906/sunz.2024.2.144",
+      "title": "COMPARATIVE ANALYSIS OF THE APPLICATION OF HEURISTIC ALGORITHMS FOR SOLVING THE TSP PROBLEM",
+      "authors": [
+        "О. Skakalina",
+        "A. Kapiton"
+      ],
+      "year": 2024,
+      "venue": "Системи управління, навігації та зв’язку. Збірник наукових праць",
+      "cited_by_count": 2,
+      "abstract": "The need to solve the traveling salesman problem (TSP) often arises when solving practically significant optimization problems, such as problems in the field of economics, logistics in the widest range of applications, in chains of technical programs. Quite often, the specifics of these problems require obtaining a solution that is as close to the exact value as possible. But the TSP problem is NP-complex, that is, its exact solution can be obtained only in exponential time. Therefore, it is not efficient to solve the TSP problem by the full search algorithm in the presence of a large number of vertices of the graph. However, there are various heuristic algorithms that allow finding a rational solution to this problem with a large number of vertices in a time acceptable for the relevant subject area. In this work, the problem of the traveling salesman is defined as a mathematical programming task of finding the shortest path for the movement of a traveling salesman (traveling salesman), the goal of which is to visit all the objects involved in the task in the shortest time and with minimal costs. Appropriate adaptations of the heuristic algorithms, namely the genetic algorithm and the ant colony algorithm, were developed in the MATLAB environment. A computational experiment was performed on the same input sample, a comparative analysis of the performance of two heuristic algorithms, and the effectiveness of the use of heuristic algorithms for solving NP-complex problems was proven.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26906/sunz.2024.2.144"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:12Z"
+}

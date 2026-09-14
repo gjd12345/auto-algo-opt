@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Or-opt-2 two-city segment relocation",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "or-opt",
+    "vnd"
+  ],
+  "status": "reviewed",
+  "summary": "Relocate two consecutive cities as a block using a 6-edge delta, then 2-opt and single-node VND.",
+  "attributes": {
+    "method_family": "local_search",
+    "online_offline": "offline",
+    "interface": "best_or_opt_2",
+    "objective": "tour cost"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "implementations": [
+      "impl-tsp-or-opt-2"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_or_opt_2_vnd.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_or_opt_2_vnd.py",
+      "sha256": "f4bc223eb0c50658477f603de626f15384df25c345a910b8968c8cafd9b1e4f7"
+    }
+  ],
+  "id": "method-tsp-or-opt-2",
+  "content_sha256": "7238627dd9333af606d0a1bf14e017aa2bfa902f59ad9ff2f737719500f157ca"
+}

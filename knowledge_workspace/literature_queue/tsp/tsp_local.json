@@ -1,0 +1,145 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_local",
+    "label": "Local-search TSP",
+    "definition": "Improve a complete tour.",
+    "search_query": "2-opt 3-opt or-opt TSP local search",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "move_selector"
+    },
+    "target_heuristics": [
+      {
+        "name": "2-opt",
+        "adapter_kind": "move_selector"
+      },
+      {
+        "name": "Or-opt",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "Croes 2-opt method solving traveling salesman",
+  "harvested_at": "2026-09-14T08:12:37Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/j.1538-7305.1965.tb04146.x",
+      "title": "Computer Solutions of the Traveling Salesman Problem",
+      "authors": [
+        "Shen Lin"
+      ],
+      "year": 1965,
+      "venue": "Bell System Technical Journal",
+      "cited_by_count": 1408,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1002/j.1538-7305.1965.tb04146.x",
+      "seeded": true,
+      "seed_heuristic": "Lin 3-opt",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.6.6.791",
+      "title": "A Method for Solving Traveling-Salesman Problems",
+      "authors": [
+        "G. A. Croes"
+      ],
+      "year": 1958,
+      "venue": "Operations Research",
+      "cited_by_count": 1207,
+      "abstract": "The traveling-salesman problem is a generalized form of the simple problem to find the smallest closed loop that connects a number of points in a plane. Efforts in the past to find an efficient method for solving it have met with only partial success. The present paper describes a method of solution that has the following properties (a) It is applicable to both symmetric and asymmetric problems with random elements (b) It does not use subjective decisions, so that it can be completely mechanized (c) It is appreciably faster than any other method proposed (d) It can be terminated at any point where the solution obtained so far is deemed sufficiently accurate.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.6.6.791"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-4778453/v1",
+      "title": "Solving Method of Traveling Salesman Problem Based on Performer Graph Self-attention Mechanism",
+      "authors": [
+        "Li Han",
+        "Qianqian Duan"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     The Traveling Salesman Problem (TSP) is a classic combinatorial optimization problem that seeks to find the shortest possible route for a salesman to visit each city exactly once and return to the starting point. This problem serves as a crucial benchmark for assessing the efficiency of optimization algorithms in real-world scenarios. As an NP-hard problem, solving larger instances of TSP within several minutes is challenging for traditional algorithms. This paper presents a deep learning approach combining Graph Self-Attention (GSA) with the Performer's linear complexity attention mechanism. The GSA module, built on Graph Convolutional Networks (GCNs), captures complex node relationships to enhance feature representations and encoding capabilities. The Performer's mechanism in the decoder improves efficiency in solving large-scale TSP instances. Additionally, we introduce a Partial Optimization with Or-opt (POO) method to optimize parts of the solution, avoiding local minima and enhancing accuracy. Experimental results indicate that our method performs comparably to current leading methods. Moreover, comparative experiments validate the significance of the GSA module in enhancing model performance and leveraging graph structural information.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-4778453/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47839/ijc.22.1.2878",
+      "title": "Simulated Annealing – 2 Opt Algorithm for Solving Traveling Salesman Problem",
+      "authors": [
+        "P. H. Gunawan",
+        "Iryanto Iryanto"
+      ],
+      "year": 2023,
+      "venue": "International Journal of Computing",
+      "cited_by_count": 5,
+      "abstract": "The purpose of this article is to elaborate performance of the hybrid model of Simulated Annealing (SA) and 2 Opt algorithm for solving the traveling salesman problem (TSP). The SA algorithm used in this article is based on the outer and inner loop SA algorithm. The hybrid algorithm has promising results in solving small and medium-scale symmetric traveling salesman problem benchmark tests taken from the TSPLIB reference. Results of the optimal solution and standard deviation indicate that the hybrid algorithm shows good performance in terms of reliability and stability in finding the optimal solution from the TSP benchmark case. Values of average error and standard deviation for all simulations in the medium scale are 0.0267 and 644.12, respectively. Moreover, in some cases namely KroB100, Pr107, and Pr144, the hybrid algorithm finds a better solution compared with the best-known solution mentioned in the reference. Further, the hybrid algorithm is 1.207 – 5.692 times faster than the pure outer and inner loop-based SA algorithm. Additionally, the results show that the hybrid algorithm outperforms other hybrid algorithms such as SA – nearest neighbor (NN) and NN – 2 Opt.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47839/ijc.22.1.2878"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.5250329",
+      "title": "Dynamic Algorithm for Solving the Traveling Salesman Problem",
+      "authors": [
+        "Lefliti Mohamed"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper presents a dynamic approach to solving the Traveling Salesman Problem (TSP). The proposed algorithm dynamically adjusts constraints and penalties to efficiently determine the optimal route, minimizing the total travel cost. The method is iterative and adaptive, making it a promising solution for scenarios with changing conditions or additional constraints.&amp;nbsp;",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.5250329"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5772/intechopen.93125",
+      "title": "CUDA Accelerated 2-OPT Local Search for the Traveling Salesman Problem",
+      "authors": [
+        "Donald Davendra",
+        "Magdalena Metlicka",
+        "Magdalena Bialic-Davendra"
+      ],
+      "year": 2020,
+      "venue": "Novel Trends in the Traveling Salesman Problem",
+      "cited_by_count": 2,
+      "abstract": "This research involves the development of a compute unified device architecture (CUDA) accelerated 2-opt local search algorithm for the traveling salesman problem (TSP). As one of the fundamental mathematical approaches to solving the TSP problem, the time complexity has generally reduced its efficiency, especially for large problem instances. Graphic processing unit (GPU) programming, especially CUDA has become more mainstream in high-performance computing (HPC) approaches and has made many intractable problems at least reasonably solvable in acceptable time. This chapter describes two CUDA accelerated 2-opt algorithms developed to solve the asymmetric TSP problem. Three separate hardware configurations were used to test the developed algorithms, and the results validate that the execution time decreased significantly, especially for the large problem instances when deployed on the GPU.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5772/intechopen.93125"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21511/dm.18(1).2020.03",
+      "title": "Computer tools for solving the traveling salesman problem",
+      "authors": [
+        "Juraj Pekár",
+        "Ivan Brezina",
+        "Jaroslav Kultan",
+        "Iryna Ushakova",
+        "Oleksandr Dorokhov"
+      ],
+      "year": 2020,
+      "venue": "Development Management",
+      "cited_by_count": 3,
+      "abstract": "The task of the traveling salesman, which is to find the shortest or least costly circular route, is one of the most common optimization problems that need to be solved in various fields of practice. The article analyzes and demonstrates various methods for solving this problem using a specific example: heuristic (the nearest neighbor method, the most profitable neighbor method), metaheuristic (evolutionary algorithm), methods of mathematical programming. In addition to classic exact methods (which are difficult to use for large-scale tasks based on existing software) and heuristic methods, the article suggests using the innovative features of the commercially available MS Excel software using a meta-heuristic base. To find the optimal solution using exact methods, the Excel (Solver) software package was used, as well as the specialized GAMS software package. Comparison of different approaches to solving the traveling salesman problem using a practical example showed that the use of traditional heuristic approaches (the nearest neighbor method or the most profitable neighbor method) is not difficult from a computational point of view, but does not provide solutions that would be acceptable in modern conditions. The use of MS Excel for solving the problem using the methods of mathematical programming and metaheuristics enabled us to obtain an optimal solution, which led to the conclusion that modern tools are an appropriate addition to solving the traveling salesman problem while maintaining the quality of the solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21511/dm.18(1).2020.03"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:45Z"
+}

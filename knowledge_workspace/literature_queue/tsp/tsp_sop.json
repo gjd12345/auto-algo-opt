@@ -1,0 +1,128 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_sop",
+    "label": "Sequential ordering / precedences",
+    "definition": "Precedence constraints on visit order.",
+    "search_query": "sequential ordering problem heuristic SOP",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Precedence insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Asymmetric SOP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "sequential ordering problem heuristic SOP",
+  "harvested_at": "2026-09-14T08:24:18Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5784/22-1-36",
+      "title": "A sequential insertion heuristic for the initial solution to a constrained vehicle routing problem",
+      "authors": [
+        "JW Joubert",
+        "SJ Claasen"
+      ],
+      "year": 2006,
+      "venue": "ORiON",
+      "cited_by_count": 9,
+      "abstract": "The Vehicle Routing Problem (VRP) is a well-researched problem in the Operations Research literature. It is the view of the authors of this paper that the various VRP variants have been researched in isolation. This paper embodies an attempt to integrate three specific variants of the VRP, namely the VRP with multiple time windows, the VRP with a heterogeneous fleet, and the VRP with double scheduling, into an initial solution algorithm. The proposed initial solution algorithm proves feasible for the integration, while the newly introduced concept of time window compatibility decreases the computational burden when using benchmark data sets from literature as a basis for efficiency testing. The algorithm also improves the quality of the initial solution for a number of problem classes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5784/22-1-36"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4071356",
+      "title": "A Parallel Branch-and-Bound Algorithm with History-Based Domination and its Application to the Sequential Ordering Problem",
+      "authors": [
+        "Taspon Gonggiatgul",
+        "Ghassan Shobaki",
+        "Pinar Muyan-Ozcelik"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "In this paper, we describe the first parallel Branch-and-Bound (B&amp;B) algorithm with a history-based domination technique. Although history-based domination substantially speeds up a B&amp;B search, it makes parallelization much more challenging. Our algorithm is also the first parallel B&amp;B algorithm for the Sequential Ordering Problem. To effectively explore the solution space, we have developed three novel parallelization techniques: thread restart, parallel history domination, and history table memory management. The proposed algorithm was experimentally evaluated using the SOPLIB and TSPLIB benchmarks on multi-core processors. Using 32 threads with a time limit of one hour, the algorithm gives geometric-mean speedups of 45x and 20x on the medium-difficulty instances in SOPLIB and TSPLIB, respectively. On the hard instances, it solves 13 instances that the sequential algorithm does not solve, with geometric-mean speedup lower bounds of 22x on SOPLIB and 36x on TSPLIB. Super-linear speedups up to 285x are seen on 16 instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4071356"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6618026",
+      "title": "Automated Reinforcement Learning with Bayesian Hyperparameter Optimization and Invalid Action Masking for the Sequential Ordering Problem",
+      "authors": [
+        "Kerollan Ramos",
+        "André  Luiz Ottoni",
+        "Thomas  Vargas Barsante Pinto",
+        "Allan  Erlikhman Medeiros Santos"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The Sequential Ordering Problem (SOP) presents a significant challenge in Combinatorial Optimization (CO) due to its strict precedence constraints, rendering exact methods computationally prohibitive for large-scale instances. While Reinforcement Learning (RL) offers a promising alternative, its effectiveness is often hindered by the difficulty of tuning interacting hyperparameters and the inefficiency of learning constraints through trial-and-error. This work proposes Masked AutoRL-SOP, a novel framework that synergizes the SARSA algorithm with a deterministic invalid action masking mechanism and Bayesian Hyperparameter Optimization (HPO) via the Tree-structured Parzen Estimator (TPE). The method removes invalid actions from the action space prior to action selection and jointly optimizes hyperparameters (learning rate, discount factor and exploration rate) to capture non-linear dependencies. Experimental results on 28 benchmark instances from TSPLIB repository demonstrate that the proposed framework matches or outperforms state-of-the-art Automated Reinforcement Learning (AutoRL) baselines in all instances. The method delivers substantial quantitative gains in efficiency, reducing runtime by an average of 81% across all instances and achieving speedups of up to 130 times on large-scale problems. The total experimentation time decreases from approximately one week to under eight hours, while the final model training phase consistently requires less than five seconds per instance. The study also provides empirical evidence that optimal hyperparameter configurations are topology-dependent and non-linear.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6618026"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4178510",
+      "title": "The Ultimatum Heuristic in Sequential Move Noncooperative Games",
+      "authors": [
+        "Dreux Sutcliffe"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The ultimatum heuristic is a decision-making tendency discernible in graphical plots of mixed-motive noncooperative games. As such, it can serve also as a solution approach, backsolving, predicting and explaining outcomes better than the mainstay Nash equilibrium concept whenever data for the game is available. This paper looks at several sequential move games and shows how the ultimatum heuristic is applied flexibly to understand results from each. Ultimatum, investment, dictator, and centipede games are explored.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4178510"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.1775356",
+      "title": "Ordering Sellers in Sequential Auctions",
+      "authors": [
+        "Qiang Gong",
+        "Xu Tan",
+        "Yiqing Xing"
+      ],
+      "year": 2011,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We examine how buyers’ behaviors, sellers’ profits and the social welfare (the total surplus of all sellers and buyers) vary with the order of sellers in sequential auctions where sellers have different reservation values. First, when reserve prices are exogenously set to be sellers’ reservation values, a social planner would order sellers from low to high based on their reservation values, which yields a uniquely efficient order that maximizes the social welfare. However, an auctioneer charged with maximizing the total profit of all sellers would want to reverse the increasing order in certain situations. Second, when reserve prices can be endogenously selected in addition to the order of sellers, the auctioneer would always want to adopt the increasing order for the optimally chosen reserve prices. Sequential auctions with optimally chosen reserve prices and an increasing order are shown optimal among the class of voluntary and incentive-compatible mechanisms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.1775356"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.2171274",
+      "title": "Sequential Unreliable Newsboy Ordering Policies",
+      "authors": [
+        "Divya Tiwari",
+        "Rahul Patil",
+        "Janat Shah"
+      ],
+      "year": 2012,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "In the unreliable newsboy problem, firms sometimes split their orders among multiple suppliers to manage supply risks. In this paper, we discuss how ordering time can be used as a mechanism to mitigate the supply risks of an unreliable newsboy. We consider a situation where a firm has an option of placing a series of sequential orders such that a new order is placed only after the yield from the previous order is known. An optimal order quantity for each ordering stage is derived by assuming a Bernoulli (all or nothing) supply yield distribution. By comparing the expected cost of the sequential ordering-based unreliable newsboy model with the expected cost of the deterministic newsboy, we demonstrate that the adverse effect of supply side risks can be almost completely negated by adopting a sequential ordering policy when the combined purchasing and holding costs for a low cost supplier at an earlier stage are equal to those of a high cost supplier at the next stage. Our computational results suggest that the sequential ordering policy performs better than a simultaneous ordering strategy when customer service level norms become stringent and inventory holding costs decrease.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.2171274"
+    }
+  ]
+}

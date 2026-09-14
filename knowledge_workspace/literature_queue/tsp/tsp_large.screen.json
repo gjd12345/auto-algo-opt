@@ -1,0 +1,32 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_large",
+  "selected": [
+    {
+      "doi": "10.1287/opre.21.2.498",
+      "heuristic_name": "Lin-Kernighan",
+      "why": "Original variable-depth TSP heuristic (Lin and Kernighan 1973).",
+      "steps": [
+        "Apply a variable-depth exchange heuristic for the symmetric TSP",
+        "Produce optimum or near-optimum tours on tested instances"
+      ],
+      "eoh_map": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "not_the_original": "Variable-depth search is not select_2opt_move. Registered tsp_2opt only offers improving 2-opt candidates."
+    },
+    {
+      "doi": "10.1287/ijoc.15.1.82.15157",
+      "heuristic_name": "Chained Lin-Kernighan",
+      "why": "Chained Lin-Kernighan for very large TSPLIB instances.",
+      "steps": [
+        "Implement Chained Lin-Kernighan for large-scale TSPs",
+        "Obtain tours within 1 percent of optimal on instances with tens of thousands of cities"
+      ],
+      "eoh_map": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "not_the_original": "Still variable-depth search, not candidate-list 2-opt move_selector."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

@@ -1,0 +1,144 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_resource",
+    "label": "Resource-constrained packing",
+    "definition": "Extra resources besides size.",
+    "search_query": "resource constrained packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Multi-resource BF",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Resource FFD",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "resource constrained packing heuristic",
+  "harvested_at": "2026-09-14T08:26:40Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.1040.0089",
+      "title": "A Set-Covering-Based Heuristic Approach for Bin-Packing Problems",
+      "authors": [
+        "Michele Monaci",
+        "Paolo Toth"
+      ],
+      "year": 2006,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 79,
+      "abstract": "Several combinatorial optimization problems can be formulated as large set-covering problems. In this work, we use the set-covering formulation to obtain a general heuristic algorithm for this type of problem, and describe our implementation of the algorithm for solving two variants of the well-known (one-dimensional) bin-packing problem: the two-constraint bin-packing problem and the basic version of the two-dimensional bin-packing problem, where the objects cannot be rotated and no additional requirements are imposed. In our approach, both the “column-generation” and the “column-optimization” phases are heuristically performed. In particular, in the first phase, we do not generate the entire set of columns, but only a small subset of it, by using greedy procedures and fast constructive heuristic algorithms from the literature. In the second phase, we solve the associated set-covering instance by means of a Lagrangian-based heuristic algorithm. Extensive computational results on test instances from the literature show that, for the two considered problems, this approach is competitive, with respect to both the quality of the solution and the computing time, with the best heuristic and metaheuristic algorithms proposed so far.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.1040.0089",
+      "seeded": true,
+      "seed_heuristic": "Two-constraint packing",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/9f2d4f50zf230z4165zb71az75cab4c0d1bb",
+      "title": "Exact and heuristic methods for resource constrained project scheduling problem",
+      "authors": [
+        "Anis Kooli"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes exactes et approchées pour le problème de gestion de projet à contraintes de ressources \n         Le problème de gestion de projet à contraintes de ressources est un des problèmesles plus étudiés dans la littérature. Il consiste à planifier des activités soumises à desrelations de précédence, et nécessitant des ressources renouvelables. L’objectif est deminimiser la durée du projet, soit le makespan. Nous étudions le problème de gestion deprojet à contraintes de ressources. Nous nous sommes intéressées à la résolution exactedu problème. Dans la première partie de la thèse, nous élaborons une série de bornesinférieures basées sur le raisonnement énergétique et des formulations mathématiques.Les résultats montrent que les bornes proposées surpassent ceux de la littérature. Dansla deuxième partie, nous proposons des procédures par séparation et évaluation utilisantles bornes inférieures dévelopées dans la première partie.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/9f2d4f50zf230z4165zb71az75cab4c0d1bb"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.35453/nedjr-ascn-2018-0092",
+      "title": "A RESOURCE OPTIMISATION BASED HEURISTIC FOR RESOURCE CONSTRAINED PROJECT SCHEDULING PROBLEM",
+      "authors": [
+        "Mazhar Ali",
+        "Saif Ullah",
+        "Mirza Jahanzaib"
+      ],
+      "year": 2019,
+      "venue": "NED University Journal of Research",
+      "cited_by_count": 1,
+      "abstract": "Resource constrained project scheduling problem has significant application in industries. Although several heuristic solutions have been developed in the literature to address this problem, most of these have lesser focus on scheduling of shared and scarce resources. The presented study proposes a resource optimisation based heuristic (ROBH) to optimise the utilisation of shared resources so as to minimise the penalty cost of projects. The proposed ROBH identifies shared resources within the project activities and shifts the activities from the bottleneck resource to the residual resources. The performance of the proposed ROBH was tested using the standard benchmark instances of project scheduling problems available in the existing literature. The results were compared with those obtained from the heuristics available in the project scheduling problem library. This comparison indicated that the results provided by ROBH are significant as compared to the results obtained from the heuristics available in the literature.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.35453/nedjr-ascn-2018-0092"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.1089355",
+      "title": "A Heuristic Methodology for Solving Spatial a Resource-Constrained Project Scheduling Problems",
+      "authors": [
+        "Eline De Frene",
+        "Damien Schatteman",
+        "Willy Herroelen",
+        "Stijn Van de Vonder"
+      ],
+      "year": 2008,
+      "venue": null,
+      "cited_by_count": 2,
+      "abstract": "In this paper we present a heuristic methodology for solving resource-constrained project scheduling problems with renewable and spatial resources. We especially concentrate on spatial resources that are encountered in construction projects, but our analysis can easily be generalized to other sectors. Our methodology is based on the application of a schedule generation scheme on apriority list of activities. We explain why the parallel schedule generation scheme is not applicable for projects with spatial resources. We introduce a procedure for transforming priority lists into precedence and resource feasible lists that avoid deadlocks on the spatial resources. We conclude from a computational experiment on two sets of instances that priority rules performing well for the regular resource-constrained project scheduling problem also perform well in the presence of spatial resources and allow to effectively solve large problems in very short CPU time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.1089355"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.30534/ijeter/2021/05962021",
+      "title": "Performance of Heuristic Priority Rule for Multiskilled Resource-Constrained Scheduling",
+      "authors": [],
+      "year": 2021,
+      "venue": "International Journal of Emerging Trends in Engineering Research",
+      "cited_by_count": 0,
+      "abstract": "Nowadays, without a classification system that helps the project manager to decide which heuristic applies when mitigating the multiskilled resource-constrainedscheduling, they must try several of rules until they find one that compares favorably (shortest duration) with the results of the other heuristic priority rules. This study explored the twenty-three existing heuristics’ performance for multiskilled resource-constrained scheduling. The results found that the heuristics with good performance are TIMROS, TIMRES, ACROS, WCS ACS and ACTRES. Overall, they outperform the others in shortening the project duration. It should be pointed out that the heuristics dealing with the use of several information are likely better to get shorter project duration. There are enough statistical evidences to conclude that their criterions  have  a  significant  effect on  reducing  project duration by approximately 1-2 times of the standard deviation. The top four heuristics: TIMROS, TIMRES, ACROS and ACTRESS classified into the composite rule produced the lowest average of project duration. It is also found that Serial Schedule Scheme (SSS) underperformthe Partial Schedule Scheme (PSS). This study has the contribution for the project managers to decide which heuristic applies when mitigating the multiskilled resource overallocation problem in term of minimum project duration",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.30534/ijeter/2021/05962021"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1142/s0217595907001334",
+      "title": "A NEW HEURISTIC ALGORITHM FOR CONSTRAINED RECTANGLE-PACKING PROBLEM",
+      "authors": [
+        "DUANBING CHEN",
+        "WENQI HUANG"
+      ],
+      "year": 2007,
+      "venue": "Asia-Pacific Journal of Operational Research",
+      "cited_by_count": 4,
+      "abstract": "The constrained rectangle-packing problem is the problem of packing a subset of rectangles into a larger rectangular container, with the objective of maximizing the layout value. It has many industrial applications such as shipping, wood and glass cutting, etc. Many algorithms have been proposed to solve it, for example, simulated annealing, genetic algorithm and other heuristic algorithms. In this paper a new heuristic algorithm is proposed based on two strategies: the rectangle selecting strategy and the rectangle packing strategy. We have applied the algorithm to 21 smaller, 630 larger and other zero-waste instances. The computational results demonstrate that the integrated performance of the algorithm is rather satisfying and the algorithm developed is fairly efficient for solving the constrained rectangle-packing problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1142/s0217595907001334"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su13179956",
+      "title": "Comparison of Heuristic Priority Rules in the Solution of the Resource-Constrained Project Scheduling Problem",
+      "authors": [
+        "Osman Hürol Türkakın",
+        "David Arditi",
+        "Ekrem Manisalı"
+      ],
+      "year": 2021,
+      "venue": "Sustainability",
+      "cited_by_count": 12,
+      "abstract": "Resource-constrained project scheduling (RCPS) aims to minimize project duration under limited resource availabilities. The heuristic methods that are often used to solve the RCPS problem make use of different priority rules. The comparative merits of different priority rules have not been discussed in the literature in sufficient detail. This study is a response to this research gap. It compares 17 heuristic priority rules and seeks the best performing heuristic priority rule. This is the first study ever that compares heuristic priority rules by considering combinations of variations in (1) resource allocation procedures, (2) number of activities, (3) number of resource constraints, and (4) resource supply levels. The objective is to understand the relative merits of heuristic rules used in solving the RCPS problem. The findings indicate that the “minimum late finish time” rule generates the shortest predicted project duration when used in parallel resource allocation, whereas the “minimum late start time”, “minimum late finish time”, and the “highest rank of positional weight 2” rules perform best in serial resource allocation. It was also found that parallel resource allocation is slightly superior to serial resource allocation in most instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su13179956"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:44Z"
+}

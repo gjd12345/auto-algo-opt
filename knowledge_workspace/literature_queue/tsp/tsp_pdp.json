@@ -1,0 +1,134 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_pdp",
+    "label": "TSP with pickups and deliveries",
+    "definition": "Paired pickup-delivery.",
+    "search_query": "pickup delivery TSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Paired insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "PDP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "pickup delivery TSP heuristic",
+  "harvested_at": "2026-09-14T08:24:36Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.21535",
+      "title": "An improved approximation algorithm for the capacitated TSP with pickup and delivery on a tree",
+      "authors": [
+        "Zhou Xu",
+        "Xiaofan Lai",
+        "Andrew Lim",
+        "Fan Wang"
+      ],
+      "year": 2013,
+      "venue": "Networks",
+      "cited_by_count": 1,
+      "abstract": "Abstract In this research, we study the capacitated traveling salesman problem with pickup and delivery (CTSPPD) on a tree, which aims to determine the best route for a vehicle with a finite capacity to transport amounts of a product from pickup points to delivery points on a tree network, such that the vehicle's total travel distance is kept to a minimum. It has several applications in logistics and is known to be NP‐hard. We develop a 2‐approximation algorithm that is a significant improvement over the best constant approximation ratio of 5 derived from existing CTSPPD literature. Computational results show that the proposed algorithm also achieves good average performance over randomly generated instances. © 2013 Wiley Periodicals, Inc. NETWORKS, Vol. 63(2), 179–195 2014",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.21535"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/drones7070407",
+      "title": "Development of Heuristic Approaches for Last-Mile Delivery TSP with a Truck and Multiple Drones",
+      "authors": [
+        "Marco Rinaldi",
+        "Stefano Primatesta",
+        "Martin Bugaj",
+        "Ján Rostáš",
+        "Giorgio Guglieri"
+      ],
+      "year": 2023,
+      "venue": "Drones",
+      "cited_by_count": 34,
+      "abstract": "Unmanned Aerial Vehicles (UAVs) are gaining momentum in many civil and military sectors. An example is represented by the logistics sector, where UAVs have been proven to be able to improve the efficiency of the process itself, as their cooperation with trucks can decrease the delivery time and reduce fuel consumption. In this paper, we first state a mathematical formulation of the Travelling Salesman Problem (TSP) applied to logistic routing, where a truck cooperates synchronously with multiple UAVs for parcel delivery. Then, we propose, implement, and compare different sub-optimal routing approaches to the formulated mFSTSP (multiple Flying Sidekick Travelling Salesman Problem) since the inherent combinatorial computational complexity of the problem makes it unattractable for commercial Mixed-Integer Linear Programming (MILP) solvers. A local search algorithm, two hybrid genetic algorithms that permutate feasible and infeasible solutions, and an alternative ad-hoc greedy method are evaluated in terms of the total delivery time of the output schedule. For the sake of the evaluation, the savings in terms of delivery time over the well-documented truck-only TSP solution are investigated for each proposed routing solution, and this is repeated for two different scenarios. Monte Carlo simulations corroborate the results.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/drones7070407"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.29.1.45",
+      "title": "A Network Flow Based Heuristic for Bulk Pickup and Delivery Routing",
+      "authors": [
+        "Marshall L. Fisher",
+        "Baoxing Tang",
+        "Zhang Zheng"
+      ],
+      "year": 1995,
+      "venue": "Transportation Science",
+      "cited_by_count": 10,
+      "abstract": "We consider a problem in which a fleet of vehicles must be scheduled to pickup and deliver a set of orders in truckload quantities. We describe a new algorithm based on a network flow relaxation which imposes necessary conditions on the flow of empty vehicles from order delivery points to order pickup points. The network flow model provides a lower bound and a nearly feasible solution that can be made feasible with some simple heuristics. Our algorithm is fast and has performed well on a set of more than 430 test problems which include a number of real problems obtained from the Shanghai Truck Transportation Corporation. On real problems and on random problems generated using real pickup and delivery points, the algorithm consistently produces solutions within 1% of optimality.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.29.1.45"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1050.0135",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Stefan Ropke",
+        "David Pisinger"
+      ],
+      "year": 2006,
+      "venue": "Transportation Science",
+      "cited_by_count": 2281,
+      "abstract": "The pickup and delivery problem with time windows is the problem of serving a number of transportation requests using a limited amount of vehicles. Each request involves moving a number of goods from a pickup location to a delivery location. Our task is to construct routes that visit all locations such that corresponding pickups and deliveries are placed on the same route, and such that a pickup is performed before the corresponding delivery. The routes must also satisfy time window and capacity constraints. \n          This paper presents a heuristic for the problem based on an extension of the large neighborhood search heuristic previously suggested for solving the vehicle routing problem with time windows. The proposed heuristic is composed of a number of competing subheuristics that are used with a frequency corresponding to their historic performance. This general framework is denoted adaptive large neighborhood search. \n          The heuristic is tested on more than 350 benchmark instances with up to 500 requests. It is able to improve the best known solutions from the literature for more than 50% of the problems. \n          The computational experiments indicate that it is advantageous to use several competing subheuristics instead of just one. We believe that the proposed heuristic is very robust and is able to adapt to various instance characteristics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1050.0135"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.21917",
+      "title": "A two‐level local search heuristic for pickup and delivery problems in express freight trucking",
+      "authors": [
+        "Luigi De Giovanni",
+        "Nicola Gastaldon",
+        "Filippo Sottovia"
+      ],
+      "year": 2019,
+      "venue": "Networks",
+      "cited_by_count": 10,
+      "abstract": "Abstract We consider a multiattribute vehicle routing problem inspired by a freight transportation company operating a fleet of heterogeneous trucks. The company offers an express service for requests including multiple pickup and multiple delivery positions spread in a regional area, with associated soft or hard time windows often falling in the same working day. Routes are planned on a daily basis and reoptimized on‐the‐fly to fit new requests, taking into account constraints and preferences on capacities, hours of service, route termination points. The objective is to maximize the difference between the revenue from satisfied orders and the operational costs. The problem mixes attributes from both intercity less‐than‐truckload and express couriers operations, and we propose a two‐level local search heuristic. The first level assigns orders to vehicles through a variable neighborhood stochastic tabu search; the second level optimizes the route service sequences. The algorithm, enhanced by neighborhood filtering and parallel exploration, is embedded in a decision support tool currently in use in a small trucking company. Results have been compared to bounds obtained from a mathematical programming model solved by column generation. Experience on the field and test on literature instances attest to the quality of results and the efficiency of the proposed approach.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.21917"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1609/aaai.v24i1.7532",
+      "title": "The Tree Representation of Feasible Solutions for the TSP with Pickup and Delivery and LIFO Loading",
+      "authors": [
+        "Dejian Tu",
+        "Songshan Guo",
+        "Hu Qin",
+        "Wee-Chong Oon",
+        "Andrew Lim"
+      ],
+      "year": 2010,
+      "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+      "cited_by_count": 2,
+      "abstract": "The feasible solutions of the traveling salesman problem with pickup and delivery (TSPPD) are represented by vertex lists in existing literature. However, when the TSPPD requires that the loading and unloading operations must be performed in a last-in-first-out (LIFO) manner, we show that its feasible solutions can be represented by trees. Consequently, we develop a variable neighbourhood search (VNS) heuristic for the TSPPD with last-in-first-out loading (TSPPDL) involving several search operators based on the tree data structure. Experiments show that our VNS heuristic is superior to the current best heuristics for TSPPDL in terms of both solution quality and computing time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1609/aaai.v24i1.7532"
+    }
+  ]
+}

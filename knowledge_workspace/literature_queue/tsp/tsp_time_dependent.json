@@ -1,0 +1,141 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_time_dependent",
+    "label": "Time-dependent TSP",
+    "definition": "Travel time depends on departure.",
+    "search_query": "time dependent TSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Time-dependent NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "TD 2-opt",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "time dependent TSP heuristic",
+  "harvested_at": "2026-09-14T08:24:40Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.26.3.185",
+      "title": "Time Dependent Vehicle Routing Problems: Formulations, Properties and Heuristic Algorithms",
+      "authors": [
+        "Chryssi Malandraki",
+        "Mark S. Daskin"
+      ],
+      "year": 1992,
+      "venue": "Transportation Science",
+      "cited_by_count": 453,
+      "abstract": "The time dependent vehicle routing problem (TDVRP) is defined as follows. A vehicle fleet of fixed capacities serves customers of fixed demands from a central depot. Customers are assigned to vehicles and the vehicles routed so that the total time of the routes is minimized. The travel time between two customers or between a customer and the depot depends on the distance between the points and time of day. Time windows for serving the customers may also be present. The time dependent traveling salesman problem (TDTSP) is a special case of the TDVRP in which only one vehicle of infinite capacity is available. Mixed integer linear programming formulations of the TDVRP and the TDTSP are presented that treat the travel time functions as step functions. The characteristics and properties of the TDVRP preclude modification of most of the algorithms that have been developed for the vehicle routing problem. Several simple heuristic algorithms are given for the TDTSP and TDVRP without time windows based on the nearest-neighbor heuristic. A mathematical-programming-based heuristic for the TDTSP without time windows using cutting planes is also briefly discussed. Test results on small, randomly generated problems are reported.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.26.3.185",
+      "seeded": true,
+      "seed_heuristic": "Malandraki-Daskin time-dependent TSP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2020.04.02.20050153",
+      "title": "CoViD–19: Meta-heuristic optimization based forecast method on time dependent bootstrapped data",
+      "authors": [
+        "Livio Fenga",
+        "Carlo Del Castello"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 4,
+      "abstract": "Abstract \n         A compounded method – exploiting the searching capabilities of an operation research algorithm and the power of bootstrap techniques – is presented. The resulting algorithm has been successfully tested to predict the turning point reached by the epidemic curve followed by the CoViD–19 virus in Italy. Futures lines of research, which include the generalization of the method to a broad set of distribution, will be finally given.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2020.04.02.20050153"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Many complex discrete manufacturing problems, such as manufacturing sequencing problem or machine scheduling problem etc, can be converted into a general traveling salesman problem (TSP). TSP has been proven to be NP-complete. The genetic algorithm is improved with two heuristic rules for TSP. The first heuristic rule is the four vertices and three lines inequality. It is applied to the local Hamiltonian paths to generate the better solutions. The second heuristic rule is executed to reverse the local Hamiltonian paths, which generates new better solutions. The two heuristic rules coordinate with each other and they are merged into the optimization process of genetic algorithm to improve its performance. The computation results show that the improved genetic algorithm can find the near optimal solutions for most of the TSP instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/a14010021",
+      "title": "Dynamic Shortest Paths Methods for the Time-Dependent TSP",
+      "authors": [
+        "Christoph Hansknecht",
+        "Imke Joormann",
+        "Sebastian Stiller"
+      ],
+      "year": 2021,
+      "venue": "Algorithms",
+      "cited_by_count": 13,
+      "abstract": "The time-dependent traveling salesman problem (TDTSP) asks for a shortest Hamiltonian tour in a directed graph where (asymmetric) arc-costs depend on the time the arc is entered. With traffic data abundantly available, methods to optimize routes with respect to time-dependent travel times are widely desired. This holds in particular for the traveling salesman problem, which is a corner stone of logistic planning. In this paper, we devise column-generation-based IP methods to solve the TDTSP in full generality, both for arc- and path-based formulations. The algorithmic key is a time-dependent shortest path problem, which arises from the pricing problem of the column generation and is of independent interest—namely, to find paths in a time-expanded graph that are acyclic in the underlying (non-expanded) graph. As this problem is computationally too costly, we price over the set of paths that contain no cycles of length k. In addition, we devise—tailored for the TDTSP—several families of valid inequalities, primal heuristics, a propagation method, and a branching rule. Combining these with the time-dependent shortest path pricing we provide—to our knowledge—the first elaborate method to solve the TDTSP in general and with fully general time-dependence. We also provide for results on complexity and approximability of the TDTSP. In computational experiments on randomly generated instances, we are able to solve the large majority of small instances (20 nodes) to optimality, while closing about two thirds of the remaining gap of the large instances (40 nodes) after one hour of computation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/a14010021"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.339.332",
+      "title": "Comparison of Heuristic for Flow Shop Scheduling Problems with Sequence Dependent Setup Time",
+      "authors": [
+        "Parinya Kaweegitbundit"
+      ],
+      "year": 2011,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 5,
+      "abstract": "This paper considers flow shop scheduling problems with sequence dependent setup time. The makespan criterion has been considered. In this paper presented a comparison of three heuristics for solves this problem. The memetic algorithm, genetic algorithm and NEH heuristic have been compared. In the experimental, the result from memetic algorithm is maximum the best solution. Therefore, the MA heuristic outperforms other heuristic.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.339.332"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:21Z"
+}

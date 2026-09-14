@@ -1,0 +1,152 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "ovrp",
+    "label": "Open VRP",
+    "definition": "Routes need not return.",
+    "search_query": "open vehicle routing heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Open NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Open savings",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "open vehicle routing heuristic",
+  "harvested_at": "2026-09-14T08:00:43Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e",
+      "title": "Vehicle routing problems with profits, exact and heuristic approaches",
+      "authors": [
+        "Racha El-Hajj"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Problèmes de tournées de véhicules avec profits, méthodes exactes et approchées \n         Nous nous intéressons dans cette thèse à la résolution du problème de tournées sélectives (Team Orienteering Problem - TOP) et ses variantes. Ce problème est une extension du problème de tournées de véhicules en imposan tcertaines limitations de ressources. Nous proposons un algorithme de résolution exacte basé sur la programmation linéaire en nombres entiers (PLNE) en ajoutant plusieurs inégalités valides capables d’accélérer la résolution. D’autre part, en considérant des périodes de travail strictes pour chaque véhicule durant sa tournée, nous traitons une des variantes du TOP qui est le problème de tournées sélectives multipériodique (multiperiod TOP - mTOP) pour lequel nous développons une métaheuristique basée sur l’optimisation par essaim pour le résoudre. Un découpage optimal est proposé pour extraire la solution optimale de chaque particule en considérant les tournées saturées et pseudo saturées .Finalement, afin de prendre en considération la disponibilité des clients, une fenêtre de temps est associée à chacun d’entre eux, durant laquelle ils doivent être servis. La variante qui en résulte est le problème de tournées sélectives avec fenêtres de temps (TOP with Time Windows - TOPTW). Deux algorithmes exacts sont proposés pour résoudre ce problème. Le premier est basé sur la génération de colonnes et le deuxième sur la PLNE à laquelle nous ajoutons plusieurs coupes spécifiques à ce problème.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.18825/iremjournal.1174543",
+      "title": "Solution Of Capacitated Vehicle Routing Problem For A Food Delivery Company With Heuristic Methods",
+      "authors": [
+        "Nurhayat TOK",
+        "Şerife ÖZKAR"
+      ],
+      "year": 2023,
+      "venue": "International Review of Economics and Management",
+      "cited_by_count": 0,
+      "abstract": "A food delivery company operates in Balıkesir performs to the distribution for the products of a certain brand from the central warehouse to the customers located in the central districts of Altıeylül and Karesi by using two vehicles with high capacity. The company visits customers on certain routes to meet their daily demands and is able to meet all demands at the end of the day. In this study, the distribution of the company's products was considered as a Vehicle Routing Problem, and it was aimed to reconstruct the distribution routes of the vehicles with the help of various algorithms and to provide cost savings in terms of the distance traveled. In order to solve the problem, first of all, an appropriate capacity assumption was made for the vehicles by considering the daily demand amounts of the customers. Under this assumption, first new customer groups to be visited in daily periods were created, and then new routes were obtained for the relevant customer groups. In this process, the problem was designed as a Capacity Constrained Vehicle Routing Problem, and the results obtained using Fisher and Jaikumar's Algorithm and Clarke and Wright's Savings Algorithm were evaluated. When the results obtained are compared with the current route status of the company, it has been determined that it is possible to achieve a high rate of improvement by using the routes determined by algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.18825/iremjournal.1174543"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26554/sti.2021.6.2.53-57",
+      "title": "Heuristic Approach For Robust Counterpart Open Capacitated Vehicle Routing Problem With Time Windows",
+      "authors": [
+        "Evi Yuliza",
+        "Fitri Maya",
+        "Siti Suzlin Supadi"
+      ],
+      "year": 2021,
+      "venue": "Science and Technology Indonesia",
+      "cited_by_count": 6,
+      "abstract": "Garbage is one of the environmental problems. The process of transporting garbage sometimes occurs delays such as congestion and engine failure. Robust optimization model called a robust counterpart open capacitated vehicle routing problem (RCOCVRP) with time windows was formulated to get over this delays. This model has formulated with the limitation of vehicle capacity and time windows with an uncertainty of waste volume and travel time. The RCOCVRP model with time windows is solved by a heuristic approach. The heuristic approach used to solve the RCOCVRP model with time windows uses the nearest neighbor and the cheapest insertion heuristic algorithm. The RCOCVRP with time windows model is implemented on the problem of transporting waste in Sako sub-district. The solutions of these two heuristic approaches are compared and analyzed. The RCOCVRP model with time windows to optimize the route problems of waste transport vehicles that is solved using the cheapest insertion heuristics algorithm is more effective than the nearest neighbor method.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26554/sti.2021.6.2.53-57"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.58837/chula.the.2017.11",
+      "title": "Cuckoo search and enhanced artificial bee colony heuristic methods for vehicle routing problem with backhaul and time window constraints",
+      "authors": [
+        "Tanawat Worawattawechai"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The vehicle routing problem with backhauls and time windows (VRPBTW) aims to find a feasible vehicle route that minimizes the total traveling distance while imposing capacity, backhaul, and time-window constraints. In this dissertation, a mathematical model of VRPBTW is introduced to obtain an optimal solution. The heuristics, namely the nearest urgent candidate (NUC), which applies the urgency priority and candidate techniques, and the nearest neighbor with roulette wheel selection (NNRW) which is a combination of a roulette wheel selection method and the improved nearest neighbor heuristic, are also presented to solve this problem. Moreover, two metaheuristic methods are presented to obtain the optimal or near optimal solutions. The first is a cuckoo search (CS) algorithm, which is applied to this problem for the first time. The second is the enhanced artificial bee colony (EABC) algorithm which uses a forbidden list, the sequential search for onlookers, and the combination of neighborhood search techniques. The computational results indicate that proposed algorithms yield good performance in terms of solution quality, especially EABC. It obtained 33 ties or new best known solutions out of 45 instances comparing with the best known solutions found in the literature. Hence, the proposed algorithms are the effective ways to solve the VRPBTW.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.58837/chula.the.2017.11"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.36079/lamintang.v1i1.9",
+      "title": "Solving Rich Vehicle Routing Problem Using Three Steps Heuristic",
+      "authors": [
+        "Editor"
+      ],
+      "year": 2019,
+      "venue": "International Journal of Artificial Intelligence",
+      "cited_by_count": 0,
+      "abstract": "Vehicle Routing Problem (VRP) relates to the problem of providing optimum service with a fleet of vehicles to customers. It is a combinatorial optimization problem. The objective is usually to maximize the profit of the operation. However, for public transportation owned and operated by the government, accessibility takes priority over profitability. Accessibility usually reduces profit, while increasing profit tends to reduce accessibility. In this research, we look at how accessibility can be increased without penalizing the profitability. This requires the determination of routes with minimum fuel consumption, the maximum number of ports of call and maximum load factor satisfying a number of pre-determined constraints: hard and soft constraints. To solve this problem, we propose a heuristic algorithm. The results from this experiment show that the algorithm proposed has better performance compared to the partitioning set.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.36079/lamintang.v1i1.9"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.20944/preprints202206.0074.v1",
+      "title": "A Cooperative Parallel Tabu Search Meta-heuristic for the Vehicle Routing Problem with Time Windows",
+      "authors": [
+        "Hassan El Fahim"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper presents a cooperative parallel tabu search meta-heuristic for the vehicle routing problem with time windows. It is based on the scheme in which several search threads cooperate by asynchronously exchanging information on the best solutions identified. The exchanges are performed through a mechanism called adaptive memory which holds and manages a pool of solutions. This enforces the asynchronous strategy of information exchanges and ensures the independence of the individual search threads. Each of these independent threads implements a tabu search meta-heuristic. Comprehensive computational experiments and comparisons to best known solutions show that the proposed cooperative parallel tabu search algorithm is able to achieve 48 new best solutions on VRPTW benchmark instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.20944/preprints202206.0074.v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amm.361-363.2079",
+      "title": "Improved Heuristic Search Algorithm for Capacitated Vehicle Routing Problem",
+      "authors": [
+        "Chun Yu Ren"
+      ],
+      "year": 2013,
+      "venue": "Applied Mechanics and Materials",
+      "cited_by_count": 0,
+      "abstract": "The paper is focused on the capacitated vehicle routing problem. And solve this type of problems utilizing improved Heuristic Search Algorithm from the overall situation. According to the features of the problem, the essay centered the construct initial solution to construct neighborhood structure. For the operation, 1-exchange and 2-opt* were applied, it can also fasten the speed of convergence, and boost the search efficiency. Finally, the good performance of this algorithm can be proved by experiment calculation and concrete examples.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amm.361-363.2079"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1155/2013/874349",
+      "title": "A Heuristic Approach Based on Clarke‐Wright Algorithm for Open Vehicle Routing Problem",
+      "authors": [
+        "Tantikorn Pichpibul",
+        "Ruengsak Kawtummachai"
+      ],
+      "year": 2013,
+      "venue": "The Scientific World Journal",
+      "cited_by_count": 30,
+      "abstract": "We propose a heuristic approach based on the Clarke‐Wright algorithm (CW) to solve the open version of the well‐known capacitated vehicle routing problem in which vehicles are not required to return to the depot after completing service. The proposed CW has been presented in four procedures composed of Clarke‐Wright formula modification, open‐route construction, two‐phase selection, and route postimprovement. Computational results show that the proposed CW is competitive and outperforms classical CW in all directions. Moreover, the best known solution is also obtained in 97% of tested instances (60 out of 62).",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1155/2013/874349"
+    }
+  ]
+}

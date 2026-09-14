@@ -1,0 +1,21 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_asymmetric",
+  "selected": [
+    {
+      "doi": "10.1287/opre.6.6.791",
+      "heuristic_name": "Croes 2-opt on directed distances",
+      "why": "Croes states the 2-edge exchange applies to asymmetric as well as symmetric TSP.",
+      "steps": [
+        "Start from a closed tour",
+        "Improve by 2-edge exchange",
+        "Distances may be asymmetric"
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "move_selector",
+      "not_the_original": "Registered tsp_2opt offers Euclidean 2-opt candidates; directed 3-opt is not in the candidate list."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

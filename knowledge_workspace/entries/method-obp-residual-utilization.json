@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Residual-utilization score from the frozen OBP elite",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "evolved-score"
+  ],
+  "status": "reviewed",
+  "summary": "exp(item/(residual+item)) minus a squared penalty on small positive residuals.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "online",
+    "interface": "score(item, bins)",
+    "objective": "relative gap"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "sources": [],
+    "implementations": [
+      "impl-obp-best-code-residual-util"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:evidence/final_batch_20260630/best_codes/bp_online_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "evidence/final_batch_20260630/best_codes/bp_online_best.py",
+      "sha256": "42fa7edc09d9cb88680e39089f236f3b6440029e17912e84b637e038d6424a08"
+    }
+  ],
+  "id": "method-obp-residual-utilization",
+  "content_sha256": "8b26bdc54c2af062d1d2f4e32c985e2fd275f0501ceab1dcd5543904a5a4c5d1"
+}

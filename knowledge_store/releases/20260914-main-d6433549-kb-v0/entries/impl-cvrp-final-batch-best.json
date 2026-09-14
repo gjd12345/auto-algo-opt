@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "CVRP construct elite: farthest seed plus savings-as-next-node-score",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "From the depot it picks the farthest feasible customer. On-route, if rest_capacity/demands.max()>0.4 it maximises dist(depot,u)+dist(depot,current)-dist(current,u) — the CW savings formula used as a next-node score. Othe",
+  "attributes": {
+    "interface": "select_next_node using depot-farthest seed and Clarke–Wright savings formula as a score",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "evidence/final_batch_20260630/best_codes/cvrp_construct_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:evidence/final_batch_20260630/best_codes/cvrp_construct_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "evidence/final_batch_20260630/best_codes/cvrp_construct_best.py",
+      "sha256": "5cc54410a99383063fbf7e2876fe0519bbdc46a5b2b037d291522b3754c44495"
+    }
+  ],
+  "id": "impl-cvrp-final-batch-best",
+  "content_sha256": "42ec4580b9341ae0a500bd4b990d191ec4038b60a05b3369e959095d334b2ab4"
+}

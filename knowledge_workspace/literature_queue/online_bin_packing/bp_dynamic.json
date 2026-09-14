@@ -1,0 +1,167 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_dynamic",
+    "label": "Dynamic packing",
+    "definition": "Insert and delete over time.",
+    "search_query": "dynamic bin packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Dynamic FF",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Repacking local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "dynamic bin packing heuristic",
+  "harvested_at": "2026-09-14T08:26:21Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0212043",
+      "title": "Fast Parallel Computation of Polynomials Using Few Processors",
+      "authors": [
+        "L. G. Valiant",
+        "S. Skyum",
+        "S. Berkowitz",
+        "C. Rackoff"
+      ],
+      "year": 1983,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 192,
+      "abstract": "It is shown that any multivariate polynomial of degree d that can be computed sequentially in C steps can be computed in parallel in $O((\\log d)(\\log C + \\log d))$ steps using only $(Cd)^{O(1)} $ processors.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0212043",
+      "seeded": true,
+      "seed_heuristic": "Dynamic packing algorithms",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0212045",
+      "title": "Authenticated Algorithms for Byzantine Agreement",
+      "authors": [
+        "D. Dolev",
+        "H. R. Strong"
+      ],
+      "year": 1983,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 459,
+      "abstract": "Reaching agreement in a distributed system in the presence of faulty processors is a central issue for reliable computer systems. Using an authentication protocol, one can limit the undetected behavior of faulty processors to a simple failure to relay messages to all intended targets. In this paper we show that, in spite of such an ability to limit faulty behavior, and no matter what message types or protocols are allowed, reaching (Byzantine) agreement requires at least $t + 1$ phases or rounds of information exchange, where t is an upper bound on the number of faulty processors. We present algorithms for reaching agreement based on authentication that require a total number of messages sent by correctly operating processors that is polynomial in both t and the number of processors, n. The best algorithm uses only $t + 1$ phases and $O(nt)$ messages.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0212045",
+      "seeded": true,
+      "seed_heuristic": "Dynamic bin packing",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6418302",
+      "title": "A Collaborative Heuristic and Enhanced Black-winged Kite Algorithm for Solving 3D Bin Packing Problems in Complex Scenarios",
+      "authors": [
+        "Guirong Dong"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "As solving 3D Bin Packing Problems (3D-BPP) involves the consideration of numerous types of items, different sizes and multiple constraints, the existing packing algorithms hardly meet demands for the balance among efficiency, accuracy and robustness in practical applications, such as warehouse management and intelligent manufacturing. In this study, a global-local collaborative optimization architecture that is inspired by the enhanced black-winged kite algorithm (BKA), has been proposed, called col-EBKA, to establish a stable and mappable continuous-discrete transformation mechanism that enables a deep coupling between global exploration of BKA and local optimization processes of heuristic strategies, thereby achieving a balance between search efficiency and accuracy and demonstrating great robustness in solving 3D-BPP. Moreover, a cooperative constraint combining a hyperplane constraint and a region-exclusive placement constraint (Hyperplane-Region Cooperative Constraint) has been defined to reserve exclusive space for special items such as fragile items, fresh food items, etc., thereby mitigating the risk of item damage. To verify the effectiveness of the proposed col-EBKA architecture in solving complex problems, experimental validations have been conducted on the Bischoff and Ratcliff benchmark dataset and a real-world packing case to demonstrate the performance superiority over exiting methods. Results have shown that col-EBKA has achieved an average space utilization rate of 92.69% on weakly heterogeneous datasets and 88.57% on strongly heterogeneous datasets, thereby exhibiting remarkable robustness. In the real-world packing case involving protected-item constraints, the proposed col-EBKA architecture has also excelled in good space utilization under HRCC, offering significant theoretical basis for e-commerce logistics and transportation using robots.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6418302"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/electronics14101956",
+      "title": "Neural-Driven Constructive Heuristic for 2D Robotic Bin Packing Problem",
+      "authors": [
+        "Mariusz Kaleta",
+        "Tomasz Śliwiński"
+      ],
+      "year": 2025,
+      "venue": "Electronics",
+      "cited_by_count": 4,
+      "abstract": "This study addresses the two-dimensional weakly homogeneous Bin Packing Problem (2D-BPP) in the context of robotic packing, where items must be arranged in a manner feasible for robotic manipulation. Traditional heuristics for this NP-hard problem often lack adaptability across diverse datasets, while metaheuristics typically suffer from slow convergence. To overcome these limitations, we propose a novel neural-driven constructive heuristic. The method employs a population of simple feed-forward neural networks, which are trained using black-box optimization via the Covariance Matrix Adaptation Evolution Strategy (CMA-ES). The resulting neural network dynamically scores candidate placements within the constructive heuristic. Unlike conventional heuristics, the approach adapts to instance-specific characteristics without relying on predefined rules. Evaluated on datasets generated by 2DCPackGen and real-world logistic scenarios, the proposed method consistently outperforms benchmark heuristics such as MaxRects and Skyline, reducing the average number of bins required across various item types and demand ranges. The most significant improvements occur in complex instances, with up to 86% of 2DCPackGen cases yielding superior results. This heuristic offers a flexible and extremely fast, data-driven solution to the algorithm selection problem, demonstrating robustness and potential for broader application in combinatorial optimization while avoiding the scalability issues of reinforcement learning-based methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/electronics14101956"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00500-022-07118-4",
+      "title": "A hierarchical hyper-heuristic for the bin packing problem",
+      "authors": [
+        "Francesca Guerriero",
+        "Francesco Paolo Saccomanno"
+      ],
+      "year": 2022,
+      "venue": "Soft Computing",
+      "cited_by_count": 18,
+      "abstract": "Abstract \n          This paper addresses the two-dimensional irregular bin packing problem, whose main aim is to allocate a given set of irregular pieces to larger rectangular containers (bins), while minimizing the number of bins required to contain all pieces. To solve the problem under study a dynamic hierarchical hyper-heuristic approach is proposed. The main idea of the hyper-heuristics is to search the space of low-level heuristics for solving computationally difficult problems. The proposed approach is “dynamic” since the low-level heuristic to be executed is chosen on the basis of the main characteristics of the instance to be solved. The term “hierarchical” is used to indicate the fact that the main hyper-heuristic can execute either simple heuristics or can run in a “recursive fashion” a hyper-heuristic. The developed solution strategy is evaluated empirically by performing extensive experiments on irregular packing benchmark instances. A comparison with the state-of-the-art approaches is also carried out. The computational results are very encouraging.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00500-022-07118-4"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.756-759.2705",
+      "title": "A Constructive Heuristic for Two-Dimensional Bin Packing",
+      "authors": [
+        "Bo Han Wang",
+        "Jia Min Liu",
+        "Yong Yue",
+        "Malcolm Keech"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 1,
+      "abstract": "Two-dimensional bin packing is encountered in various applications where small rectangular items are packed into a minimum number of large rectangular objects (bins). Aiming at an optimal area utilization, the paper presents an effective constructive heuristic approach to two-dimensional bin packing. The heuristic approach integrates ranking, placement and search strategies along with an effective handling method of the remaining areas during the packing process. In order to obtain an optimal arrangement in a given area, all items are examined for possible positions and orientations using the search strategies. In addition, an effective handling method of the remaining areas is applied through appropriate partitioning and merging to minimize waste areas. Tests with a number of standard test and real world instances have shown that the performance of the proposed approach is superior to that of other approaches published.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.756-759.2705"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1162/evco_a_00121",
+      "title": "A Lifelong Learning Hyper-heuristic Method for Bin Packing",
+      "authors": [
+        "Kevin Sim",
+        "Emma Hart",
+        "Ben Paechter"
+      ],
+      "year": 2015,
+      "venue": "Evolutionary Computation",
+      "cited_by_count": 66,
+      "abstract": "We describe a novel hyper-heuristic system that continuously learns over time to solve a combinatorial optimisation problem. The system continuously generates new heuristics and samples problems from its environment; and representative problems and heuristics are incorporated into a self-sustaining network of interacting entities inspired by methods in artificial immune systems. The network is plastic in both its structure and content, leading to the following properties: it exploits existing knowledge captured in the network to rapidly produce solutions; it can adapt to new problems with widely differing characteristics; and it is capable of generalising over the problem space. The system is tested on a large corpus of 3,968 new instances of 1D bin-packing problems as well as on 1,370 existing problems from the literature; it shows excellent performance in terms of the quality of solutions obtained across the datasets and in adapting to dynamically changing sets of problem instances compared to previous approaches. As the network self-adapts to sustain a minimal repertoire of both problems and heuristics that form a representative map of the problem space, the system is further shown to be computationally efficient and therefore scalable.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1162/evco_a_00121"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.1040.0089",
+      "title": "A Set-Covering-Based Heuristic Approach for Bin-Packing Problems",
+      "authors": [
+        "Michele Monaci",
+        "Paolo Toth"
+      ],
+      "year": 2006,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 79,
+      "abstract": "Several combinatorial optimization problems can be formulated as large set-covering problems. In this work, we use the set-covering formulation to obtain a general heuristic algorithm for this type of problem, and describe our implementation of the algorithm for solving two variants of the well-known (one-dimensional) bin-packing problem: the two-constraint bin-packing problem and the basic version of the two-dimensional bin-packing problem, where the objects cannot be rotated and no additional requirements are imposed. In our approach, both the “column-generation” and the “column-optimization” phases are heuristically performed. In particular, in the first phase, we do not generate the entire set of columns, but only a small subset of it, by using greedy procedures and fast constructive heuristic algorithms from the literature. In the second phase, we solve the associated set-covering instance by means of a Lagrangian-based heuristic algorithm. Extensive computational results on test instances from the literature show that, for the two considered problems, this approach is competitive, with respect to both the quality of the solution and the computing time, with the best heuristic and metaheuristic algorithms proposed so far.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.1040.0089"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:33Z"
+}

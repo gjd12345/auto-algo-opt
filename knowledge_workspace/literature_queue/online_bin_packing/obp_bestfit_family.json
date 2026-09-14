@@ -1,0 +1,152 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "obp_bestfit_family",
+    "label": "Best-Fit online family",
+    "definition": "Prefer tight residual.",
+    "search_query": "Best Fit online bin packing worst case Johnson",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "bin_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Best Fit",
+        "adapter_kind": "bin_score"
+      },
+      {
+        "name": "Almost Best Fit",
+        "adapter_kind": "bin_score"
+      }
+    ]
+  },
+  "query": "Best Fit online bin packing Johnson worst case",
+  "harvested_at": "2026-09-14T08:13:24Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0203025",
+      "title": "Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms",
+      "authors": [
+        "D. S. Johnson",
+        "A. Demers",
+        "J. D. Ullman",
+        "M. R. Garey",
+        "R. L. Graham"
+      ],
+      "year": 1974,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 691,
+      "abstract": "The following abstract problem models several practical problems in computer science and operations research: given a list L of real numbers between 0 and l, place the elements of L into a minimum number $L^ * $ of “bins” so that no bin contains numbers whose sum exceeds l. Motivated by the likelihood that an excessive amount of computation will be required by any algorithm which actually determines an optimal placement, we examine the performance of a number of simple algorithms which obtain “good” placements. The first-fit algorithm places each number, in succession, into the first bin in which it fits. The best-fit algorithm places each number, in succession, into the most nearly full bin in which it fits. We show that neither the first-fit nor the best-fit algorithm will ever use more than $\\frac{17}{10}L^ * + 2$ bins. Furthermore, we outline a proof that, if L is in decreasing order, then neither algorithm will use more than $\\frac{11}{9} L^ * + 4$ bins. Examples are given to show that both upper bounds are essentially the best possible. Similar results are obtained when the list L contains no numbers larger than $\\alpha &lt; 1$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0203025",
+      "seeded": true,
+      "seed_heuristic": "Best Fit / Almost Best Fit",
+      "seed_adapter_kind": "bin_score"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0222004",
+      "title": "Tight Worst-Case Performance Bounds for Next-\n                    <i>k</i>\n                    -Fit Bin Packing",
+      "authors": [
+        "Weizhen Mao"
+      ],
+      "year": 1993,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 18,
+      "abstract": "The bin packing problem is to pack a list of reals in $( {0,1} ]$ into unit-capacity bins using the minimum number of bins. Let $R[A]$ be the limiting worst value for the ratio ${{A(L)} / {L^ * }}$ as $L^ * $ goes to $\\infty $, where $A(L)$ denotes the number of bins used in the approximation algorithm A, and $L^ * $ denotes the minimum number of bins needed to pack L. Obviously, $R[A]$ reflects the worst-case behavior of A. For Next-k-Fit($NkF$ for short, $k \\geqslant 2$), which is a linear time approximation algorithm for bin packing, it was known that $1.7 + \\frac{3}{{10(k - 1)}} \\leqslant R[NkF] \\leqslant 2$. In this paper, a tight bound $R[NkF] = 1.7 + \\frac{3}{{10(k - 1)}}$ is proved.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0222004"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23917/khif.v8i2.17069",
+      "title": "Job Scheduling on Grid Computing Using First Fit, Best Fit, and Worst Fit",
+      "authors": [
+        "Ardi Pujiyanta",
+        "Fiftin Novianto"
+      ],
+      "year": 2022,
+      "venue": "Khazanah Informatika : Jurnal Ilmu Komputer dan Informatika",
+      "cited_by_count": 1,
+      "abstract": "Grid computing can be considered large-scale distributed cluster computing and parallel distributed network processing. The two most important issues in managing user work are resource allocation and scheduling of required resources. When user jobs are submitted, they are managed by resource intermediaries who find and allocate the right resources. After the resource allocation stage, work scheduled on the existing resources according to the user's required resources. In most grid systems with traditional scheduling, jobs are submitted and placed in waiting room queues to wait for the required resources to become available. Each grid system can use a different scheduling algorithm to execute jobs based on other parameters, such as resources, delivery time, and execution duration. There is no guarantee that these traditional scheduling algorithms will get the job done. The First Come First Serve Left Right Hole Scheduling (FCFS-LRH) reservation strategy improves resource utilization in a grid system by using a local scheduler. Compared to traditional strategies. There are two objectives of this research. First, compare the first fit, best fit, and worst fit algorithms to find empty timeslots and place them in a virtual view. Second, reduce the idle time value. The results showed that the FCFS-LRH method could reduce the idle time value of the FCFS-EDF and FCFS methods. The overall execution time of the first fit with the FCFS-LRH strategy is better than the FCFS-EDF",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23917/khif.v8i2.17069"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00453-021-00844-5",
+      "title": "Best Fit Bin Packing with Random Order Revisited",
+      "authors": [
+        "Susanne Albers",
+        "Arindam Khan",
+        "Leon Ladewig"
+      ],
+      "year": 2021,
+      "venue": "Algorithmica",
+      "cited_by_count": 17,
+      "abstract": "Abstract Best Fit is a well known online algorithm for the bin packing problem, where a collection of one-dimensional items has to be packed into a minimum number of unit-sized bins. In a seminal work, Kenyon [SODA 1996] introduced the (asymptotic) random order ratio as an alternative performance measure for online algorithms. Here, an adversary specifies the items, but the order of arrival is drawn uniformly at random. Kenyon’s result establishes lower and upper bounds of 1.08 and 1.5, respectively, for the random order ratio of Best Fit. Although this type of analysis model became increasingly popular in the field of online algorithms, no progress has been made for the Best Fit algorithm after the result of Kenyon. We study the random order ratio of Best Fit and tighten the long-standing gap by establishing an improved lower bound of 1.10. For the case where all items are larger than 1/3, we show that the random order ratio converges quickly to 1.25. It is the existence of such large items that crucially determines the performance of Best Fit in the general case. Moreover, this case is closely related to the classical maximum-cardinality matching problem in the fully online model. As a side product, we show that Best Fit satisfies a monotonicity property on such instances, unlike in the general case. In addition, we initiate the study of the absolute random order ratio for this problem. In contrast to asymptotic ratios, absolute ratios must hold even for instances that can be packed into a small number of bins. We show that the absolute random order ratio of Best Fit is at least 1.3. For the case where all items are larger than 1/3, we derive upper and lower bounds of 21/16 and 1.2, respectively.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00453-021-00844-5"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/rsa.10037",
+      "title": "Linear waste of best fit bin packing on skewed distributions",
+      "authors": [
+        "Claire Kenyon",
+        "Michael Mitzenmacher"
+      ],
+      "year": 2002,
+      "venue": "Random Structures &amp; Algorithms",
+      "cited_by_count": 4,
+      "abstract": "Abstract We prove that Best Fit bin packing has linear waste on the discrete distribution U { j , k } (where items are drawn uniformly from the set {1/ k , 2/ k , …, j / k }) for sufficiently large k when j = α k and 0.66 ≤ α &lt; 2/3. Our results extend to continuous skewed distributions, where items are drawn uniformly on [0, a ], for 0.66 ≤ a &lt; 2/3. This implies that the expected asymptotic performance ratio of Best Fit is strictly greater than 1 for these distributions. © 2002 Wiley Periodicals, Inc. Random Struct. Alg., 20:441–464, 2002",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/rsa.10037"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s0036144501395423",
+      "title": "Perfect Packing Theorems and the Average-Case Behavior of Optimal and Online Bin Packing",
+      "authors": [
+        "E. G. Coffman",
+        "C. Courcoubetis",
+        "M. R. Garey",
+        "D. S. Johnson",
+        "P. W. Shor",
+        "R. R. Weber",
+        "M. Yannakakis"
+      ],
+      "year": 2002,
+      "venue": "SIAM Review",
+      "cited_by_count": 13,
+      "abstract": "We consider the one-dimensional bin packing problem under the discrete uniform distributions $U\\{j,k\\}$, $1 \\leq j \\leq k-1$, in which the bin capacity is k and item sizes are chosen uniformly from the set $\\{1,2,\\ldots,j\\}$. Note that for $0 &lt; u = j/k \\leq 1$ this is a discrete version of the previously studied continuous uniform distribution $U(0,u]$, where the bin capacity is 1 and item sizes are chosen uniformly from the interval $(0,u]$. We show that the average-case performance of heuristics can differ substantially between the two types of distributions. In particular, there is an online algorithm that has constant expected wasted space under $U\\{j,k\\}$ for any $j,k$ with $1 \\leq j &lt; k-1$, whereas no online algorithm can have $o(n^{1/2})$ expected waste under $U(0,u]$ for any $0 &lt; u \\leq 1$. Our $U\\{j,k\\}$ result is an application of a general theorem of Courcoubetis and Weber that covers all discrete distributions. Under each such distribution, the optimal expected waste for a random list of n items must be either $\\Theta (n)$, $\\Theta (n^{1/2} )$, or $O(1)$, depending on whether certain ``perfect' packings exist. The perfect packing theorem needed for the $U\\{j,k\\}$ distributions is an intriguing result of independent combinatorial interest, and its proof is a cornerstone of the paper. We also survey other recent results comparing the behavior of heuristics under discrete and continuous uniform distributions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s0036144501395423"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s009753979834669x",
+      "title": "Variable-Sized Bin Packing: Tight Absolute Worst-Case Performance Ratios for Four Approximation Algorithms",
+      "authors": [
+        "Chengbin Chu",
+        "Rémy La"
+      ],
+      "year": 2001,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 28,
+      "abstract": "In this paper we consider a one-dimensional bin packing problem where the bins do not have identical sizes, or a variable-sized bin packing problem, to minimize the bin consumption, i.e., the total size of the opened bins. The identical size problem has been extensively studied in the literature both for static and dynamic settings. The worst-case or average-case performance has been analyzed. Our problem setting particularly arises in metal cutting industries. Therefore, it presents a great practical relevance. Four greedy approximation algorithms based on a construction approach called largest object first with least absolute waste (LFLAW), largest object first with least relative waste (LFLRW), least absolute waste (LAW), and least relative waste (LRW) are examined. Their absolute worst-case performances are analyzed. The worst case bounds are 2 for LFLAW and LFLRW, 3 for LAW, and 2+ln 2 for LRW. We also show that these worst-case bounds are tight.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s009753979834669x"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:44Z"
+}

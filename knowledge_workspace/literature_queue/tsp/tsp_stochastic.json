@@ -1,0 +1,169 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_stochastic",
+    "label": "Stochastic TSP",
+    "definition": "Random distances or presence.",
+    "search_query": "stochastic TSP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Expected-cost NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Recourse 2-opt",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "stochastic TSP heuristic",
+  "harvested_at": "2026-09-14T08:24:38Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/bf01580616",
+      "title": "Cyclical games with prohibitions",
+      "authors": [
+        "Alexander V. Karzanov",
+        "Vasilij N. Lebedev"
+      ],
+      "year": 1993,
+      "venue": "Mathematical Programming",
+      "cited_by_count": 35,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/bf01580616",
+      "seeded": true,
+      "seed_heuristic": "Stochastic TSP heuristics",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.38.6.1019",
+      "title": "A Priori Optimization",
+      "authors": [
+        "Dimitris J. Bertsimas",
+        "Patrick Jaillet",
+        "Amedeo R. Odoni"
+      ],
+      "year": 1990,
+      "venue": "Operations Research",
+      "cited_by_count": 181,
+      "abstract": "Consider a complete graph G = (V, E) in which each node is present with probability p. We are interested in solving combinatorial optimization problems on subsets of nodes which are present with a certain probability. We introduce the idea of a priori optimization as a strategy competitive to the strategy of reoptimization, under which the combinatorial optimization problem is solved optimally for every instance. We consider four problems: the traveling salesman problem (TSP), the minimum spanning tree, vehicle routing, and traveling salesman facility location. We discuss the applicability of a priori optimization strategies in several areas and show that if the nodes are randomly distributed in the plane the a priori and reoptimization strategies are very close in terms of performance. We characterize the complexity of a priori optimization and address the question of approximating the optimal a priori solutions with polynomial time heuristics with provable worst-case guarantees. Finally, we use the TSP as an example to find practical solutions based on ideas of local optimality.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.38.6.1019",
+      "seeded": true,
+      "seed_heuristic": "Jaillet a priori TSP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Many complex discrete manufacturing problems, such as manufacturing sequencing problem or machine scheduling problem etc, can be converted into a general traveling salesman problem (TSP). TSP has been proven to be NP-complete. The genetic algorithm is improved with two heuristic rules for TSP. The first heuristic rule is the four vertices and three lines inequality. It is applied to the local Hamiltonian paths to generate the better solutions. The second heuristic rule is executed to reverse the local Hamiltonian paths, which generates new better solutions. The two heuristic rules coordinate with each other and they are merged into the optimization process of genetic algorithm to improve its performance. The computation results show that the improved genetic algorithm can find the near optimal solutions for most of the TSP instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26906/sunz.2024.2.144",
+      "title": "COMPARATIVE ANALYSIS OF THE APPLICATION OF HEURISTIC ALGORITHMS FOR SOLVING THE TSP PROBLEM",
+      "authors": [
+        "О. Skakalina",
+        "A. Kapiton"
+      ],
+      "year": 2024,
+      "venue": "Системи управління, навігації та зв’язку. Збірник наукових праць",
+      "cited_by_count": 2,
+      "abstract": "The need to solve the traveling salesman problem (TSP) often arises when solving practically significant optimization problems, such as problems in the field of economics, logistics in the widest range of applications, in chains of technical programs. Quite often, the specifics of these problems require obtaining a solution that is as close to the exact value as possible. But the TSP problem is NP-complex, that is, its exact solution can be obtained only in exponential time. Therefore, it is not efficient to solve the TSP problem by the full search algorithm in the presence of a large number of vertices of the graph. However, there are various heuristic algorithms that allow finding a rational solution to this problem with a large number of vertices in a time acceptable for the relevant subject area. In this work, the problem of the traveling salesman is defined as a mathematical programming task of finding the shortest path for the movement of a traveling salesman (traveling salesman), the goal of which is to visit all the objects involved in the task in the shortest time and with minimal costs. Appropriate adaptations of the heuristic algorithms, namely the genetic algorithm and the ant colony algorithm, were developed in the MATLAB environment. A computational experiment was performed on the same input sample, a comparative analysis of the performance of two heuristic algorithms, and the effectiveness of the use of heuristic algorithms for solving NP-complex problems was proven.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26906/sunz.2024.2.144"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.51976/ijari.211406",
+      "title": "Meta Heuristic Optimization of TSP using Genetic Algorithm",
+      "authors": [
+        "Richa Singh",
+        "Suraiya Parveen",
+        "Aparna ."
+      ],
+      "year": 2014,
+      "venue": "International Journal of Advance Research and Innovation",
+      "cited_by_count": 0,
+      "abstract": "Initiation of this paper demarcates the limits of artificial intelligence, as it calls artificial intelligence a science for its extensibility and genetic algorithm to provide an affable decision to solve a popular routing problem named as Travelling Salesman Problem. This study will help more in moving to a world where a computer will be able to program based on natural selection and evolution.\nThe travelling salesperson (or, salesman) problem (TSP) is an important combinatorial optimization problem. A combinatorial optimization problem helps to find an optimal object from a finite set of objects which does not follows an exhaustive search but the set of feasible solution is discrete.\nTSP aims to find the shortest path that travels through every city in a provided set of cities exactly once and travels back to the initial city using genetic algorithm. TSP is complex as it is a NP-complete problem. This literature proposes a heuristic approach for solving TSP: To find shortest path that travels through every city in a provided set of cities exactly once and travels back to the initial city. Proposed solution will provide a faster solution but not necessarily an optimal solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.51976/ijari.211406"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7422313",
+      "title": "CHH-LLM: LLM-Driven Contract-Guided Hybrid Hyper-Heuristic Evolution for TSP Solving",
+      "authors": [
+        "Yingnian Wu",
+        "Lechen Zhang",
+        "JING ZHANG",
+        "Shiwei Gao",
+        "Zitao Zhang",
+        "Hao Tan",
+        "Rui Yang"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "As combinatorial optimization problems grow in scale and application complexity, the traveling salesman problem has become a representative benchmark for assessing search performance, generalization capability, and automated algorithm design in intelligent optimization. Existing methods still face several challenges on TSP instances with varying scales, distributions, and structural characteristics. Traditional heuristics depend heavily on manually designed rules; heuristics generated by large language models may lack executability and stability; and a single policy may not adapt effectively across different instance distributions. To address these limitations, we propose CHH-LLM, an LLM-driven, contract-guided hybrid hyper-heuristic evolutionary framework. First, the Hybrid Hyper-Heuristic Generation mechanism uses an LLM to generate key heuristic submodules within a fixed ant colony optimization search framework. These submodules include heuristic matrices, edge-scoring rules, and local-search policies. This design integrates classical search mechanisms with generative policy design. Second, the Contract-Guided Verification and Self-Repair mechanism embeds code checks, type constraints, semantic filtering, and automatic repair into the policy evolution loop. These mechanisms improve the executability, numerical stability, and search reliability of generated heuristics. Finally, the Distribution-Aware Policy-Family Co-Evolution mechanism constructs conditional policy families based on instance size, node distribution, and graph-structure statistics, enabling adaptive policy selection and co-optimization across TSP instances. Experimental results show improvements in tour quality, the stability of generated policies, and cross-instance generalization capability. Overall, CHH-LLM offers a reliable and verifiable approach to the LLM-assisted automated design of combinatorial optimization algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7422313"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3233/978-1-61499-927-0-231",
+      "title": "A Heuristic Algorithm to Eliminate Edges for TSP",
+      "authors": [
+        "Wang Yong",
+        "Geng Chang Xin",
+        "Wu Yi Wen"
+      ],
+      "year": 2018,
+      "venue": "Frontiers in Artificial Intelligence and Applications",
+      "cited_by_count": 0,
+      "abstract": "A heuristic algorithm is provided to trim many edges for reducing the search space of traveling salesman problem (TSP). The heuristic algorithm is designed according to a probability model and the fuzzy numbers plays an important role to enhance the performance. The heuristic algorithm may lose a few edges in some optimal solutions if the parameter N is too small or F is too big in the algorithm. Since we are not sure whether all optimal solutions in the original graph are trimmed, the best and worst solutions in the preserved graphs are not proven. The experimental results demonstrate that the heuristic algorithm computes a residual graph with less than nlog2n edges for most of the TSP instances in the TSPLIB. Thus, the computation times of algorithms for TSP will be greatly reduced when these TSP instances on sparse graphs are resolved.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3233/978-1-61499-927-0-231"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:19Z"
+}

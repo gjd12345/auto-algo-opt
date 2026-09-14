@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "TSP controller: evolve a plan over frozen local-search primitives",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The evolved function only schedules frozen primitives two_opt, relocate, or_opt_2, three_opt with integer budgets and a relative-gain stop. Underlying search implementations stay frozen. Template is two_opt/relocate/thre",
+  "attributes": {
+    "interface": "build_search_plan(problem_size, total_budget) -> [(primitive, budget, min_gain)]",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/tsp_search_controller/prob.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_search_controller/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_search_controller/prob.py",
+      "sha256": "14022f0879aa2eb3a18c9bff3bb41cfffb16dd19071be319f305da623587d0ec"
+    }
+  ],
+  "id": "impl-tsp-search-controller",
+  "content_sha256": "712a328d9286c84ee06bb68567b7b9aa891091dec64dde7f7b26ecb047b98cfa"
+}

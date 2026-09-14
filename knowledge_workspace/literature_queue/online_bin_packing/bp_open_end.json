@@ -1,0 +1,124 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_open_end",
+    "label": "Open-end packing",
+    "definition": "Last item may overflow slightly.",
+    "search_query": "open end bin packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Open-end FF",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Open-end BF",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "open end bin packing heuristic",
+  "harvested_at": "2026-09-14T08:26:35Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6987299",
+      "title": "Branch and Price for the Variable-Sized Open-End Bin Packing Problem with Conflicts",
+      "authors": [
+        "Bowen Miao",
+        "Yongxi Cheng",
+        "Jun Wu"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper addresses a new bin packing problem that simultaneously involves variable-sized bins with different costs, an open-end mechanism that allows the last item placed in a bin to exceed its capacity at a penalty, and pairwise conflicts that prohibit incompatible items from being assigned to the same bin. This problem, referred to as the variable-sized open-end bin packing problem with conflicts (VSOEBPPC), generalizes the classical bin packing problem by jointly integrating three of its well-studied extensions, with the objective of minimizing the total cost of the bins used and the total overflow penalty. To solve this problem, we propose an exact branch-and-price algorithm, where the pricing subproblem is a variant of the knapsack problem with conflicts that incorporates a penalized open-end overflow. We solve the pricing subproblem by a two-stage scheme in which a heuristic pricing stage precedes exact pricing. We further incorporate several strategies, including warm starting of the restricted master problem, a depth-dependent branching strategy, and an efficient column-pool management, to improve the computational efficiency. Computational results show that our algorithm can handle the VSOEBPPC effectively. On two well-studied special cases, obtained by deactivating the open-end mechanism or fixing a single bin type, it further yields tighter root-node lower bounds and higher-quality solutions than the state-of-the-art metaheuristics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6987299"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.51.5.759.16753",
+      "title": "The Ordered Open-End Bin-Packing Problem",
+      "authors": [
+        "Jian Yang",
+        "Joseph Y.-T. Leung"
+      ],
+      "year": 2003,
+      "venue": "Operations Research",
+      "cited_by_count": 29,
+      "abstract": "We study a variant of the classical bin-packing problem, the ordered open-end bin-packing problem, where first a bin can be filled to a level above 1 as long as the removal of the last piece brings the bin's level back to below 1 and second, the last piece is the largest-indexed piece among all pieces in the bin. We conduct both worst-case and average-case analyses for the problem. In the worst-case analysis, pieces of size 1 play distinct roles and render the analysis more difficult with their presence. We give lower bounds for the performance ratio of any online algorithm for cases both with and without the 1-pieces, and in the case without the 1-pieces, identify an online algorithm whose worst-case performance ratio is less than 2 and an offline algorithm with good worst-case performance. In the average-case analysis, assuming that pieces are independently and uniformly drawn from [0, 1], we find the optimal asymptotic average ratio of the number of occupied bins over the number of pieces. We also introduce other online algorithms and conduct simulation study on the average-case performances of all the proposed algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.51.5.759.16753"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6418302",
+      "title": "A Collaborative Heuristic and Enhanced Black-winged Kite Algorithm for Solving 3D Bin Packing Problems in Complex Scenarios",
+      "authors": [
+        "Guirong Dong"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "As solving 3D Bin Packing Problems (3D-BPP) involves the consideration of numerous types of items, different sizes and multiple constraints, the existing packing algorithms hardly meet demands for the balance among efficiency, accuracy and robustness in practical applications, such as warehouse management and intelligent manufacturing. In this study, a global-local collaborative optimization architecture that is inspired by the enhanced black-winged kite algorithm (BKA), has been proposed, called col-EBKA, to establish a stable and mappable continuous-discrete transformation mechanism that enables a deep coupling between global exploration of BKA and local optimization processes of heuristic strategies, thereby achieving a balance between search efficiency and accuracy and demonstrating great robustness in solving 3D-BPP. Moreover, a cooperative constraint combining a hyperplane constraint and a region-exclusive placement constraint (Hyperplane-Region Cooperative Constraint) has been defined to reserve exclusive space for special items such as fragile items, fresh food items, etc., thereby mitigating the risk of item damage. To verify the effectiveness of the proposed col-EBKA architecture in solving complex problems, experimental validations have been conducted on the Bischoff and Ratcliff benchmark dataset and a real-world packing case to demonstrate the performance superiority over exiting methods. Results have shown that col-EBKA has achieved an average space utilization rate of 92.69% on weakly heterogeneous datasets and 88.57% on strongly heterogeneous datasets, thereby exhibiting remarkable robustness. In the real-world packing case involving protected-item constraints, the proposed col-EBKA architecture has also excelled in good space utilization under HRCC, offering significant theoretical basis for e-commerce logistics and transportation using robots.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6418302"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.1070.0415",
+      "title": "An Optimization Algorithm for the Ordered Open-End Bin-Packing Problem",
+      "authors": [
+        "Alberto Ceselli",
+        "Giovanni Righini"
+      ],
+      "year": 2008,
+      "venue": "Operations Research",
+      "cited_by_count": 19,
+      "abstract": "The ordered open-end bin-packing problem is a variant of the bin-packing problem in which the items to be packed are sorted in a given order and the capacity of each bin can be exceeded by the last item packed into the bin. We present a branch-and-price algorithm for its exact optimization. The pricing subproblem is a special variant of the binary knapsack problem, in which the items are ordered and the last one does not consume capacity. We present a specialized optimization algorithm for this subproblem. The speed of the column generation algorithm is improved by subgradient optimization steps, allowing for multiple pricing and variable fixing. Computational results are presented on instances of different sizes and items with different correlations between their size and their position in the given order.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.1070.0415"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/electronics14101956",
+      "title": "Neural-Driven Constructive Heuristic for 2D Robotic Bin Packing Problem",
+      "authors": [
+        "Mariusz Kaleta",
+        "Tomasz Śliwiński"
+      ],
+      "year": 2025,
+      "venue": "Electronics",
+      "cited_by_count": 4,
+      "abstract": "This study addresses the two-dimensional weakly homogeneous Bin Packing Problem (2D-BPP) in the context of robotic packing, where items must be arranged in a manner feasible for robotic manipulation. Traditional heuristics for this NP-hard problem often lack adaptability across diverse datasets, while metaheuristics typically suffer from slow convergence. To overcome these limitations, we propose a novel neural-driven constructive heuristic. The method employs a population of simple feed-forward neural networks, which are trained using black-box optimization via the Covariance Matrix Adaptation Evolution Strategy (CMA-ES). The resulting neural network dynamically scores candidate placements within the constructive heuristic. Unlike conventional heuristics, the approach adapts to instance-specific characteristics without relying on predefined rules. Evaluated on datasets generated by 2DCPackGen and real-world logistic scenarios, the proposed method consistently outperforms benchmark heuristics such as MaxRects and Skyline, reducing the average number of bins required across various item types and demand ranges. The most significant improvements occur in complex instances, with up to 86% of 2DCPackGen cases yielding superior results. This heuristic offers a flexible and extremely fast, data-driven solution to the algorithm selection problem, demonstrating robustness and potential for broader application in combinatorial optimization while avoiding the scalability issues of reinforcement learning-based methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/electronics14101956"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00500-022-07118-4",
+      "title": "A hierarchical hyper-heuristic for the bin packing problem",
+      "authors": [
+        "Francesca Guerriero",
+        "Francesco Paolo Saccomanno"
+      ],
+      "year": 2022,
+      "venue": "Soft Computing",
+      "cited_by_count": 18,
+      "abstract": "Abstract \n          This paper addresses the two-dimensional irregular bin packing problem, whose main aim is to allocate a given set of irregular pieces to larger rectangular containers (bins), while minimizing the number of bins required to contain all pieces. To solve the problem under study a dynamic hierarchical hyper-heuristic approach is proposed. The main idea of the hyper-heuristics is to search the space of low-level heuristics for solving computationally difficult problems. The proposed approach is “dynamic” since the low-level heuristic to be executed is chosen on the basis of the main characteristics of the instance to be solved. The term “hierarchical” is used to indicate the fact that the main hyper-heuristic can execute either simple heuristics or can run in a “recursive fashion” a hyper-heuristic. The developed solution strategy is evaluated empirically by performing extensive experiments on irregular packing benchmark instances. A comparison with the state-of-the-art approaches is also carried out. The computational results are very encouraging.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00500-022-07118-4"
+    }
+  ]
+}

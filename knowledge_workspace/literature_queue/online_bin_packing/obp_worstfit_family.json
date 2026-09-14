@@ -1,0 +1,144 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "obp_worstfit_family",
+    "label": "Worst-Fit online family",
+    "definition": "Prefer emptiest bin.",
+    "search_query": "Worst Fit online bin packing",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "bin_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Worst Fit",
+        "adapter_kind": "bin_score"
+      },
+      {
+        "name": "Almost Worst Fit",
+        "adapter_kind": "bin_score"
+      }
+    ]
+  },
+  "query": "Worst Fit online bin packing algorithm",
+  "harvested_at": "2026-09-14T08:13:28Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0203025",
+      "title": "Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms",
+      "authors": [
+        "D. S. Johnson",
+        "A. Demers",
+        "J. D. Ullman",
+        "M. R. Garey",
+        "R. L. Graham"
+      ],
+      "year": 1974,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 691,
+      "abstract": "The following abstract problem models several practical problems in computer science and operations research: given a list L of real numbers between 0 and l, place the elements of L into a minimum number $L^ * $ of “bins” so that no bin contains numbers whose sum exceeds l. Motivated by the likelihood that an excessive amount of computation will be required by any algorithm which actually determines an optimal placement, we examine the performance of a number of simple algorithms which obtain “good” placements. The first-fit algorithm places each number, in succession, into the first bin in which it fits. The best-fit algorithm places each number, in succession, into the most nearly full bin in which it fits. We show that neither the first-fit nor the best-fit algorithm will ever use more than $\\frac{17}{10}L^ * + 2$ bins. Furthermore, we outline a proof that, if L is in decreasing order, then neither algorithm will use more than $\\frac{11}{9} L^ * + 4$ bins. Examples are given to show that both upper bounds are essentially the best possible. Similar results are obtained when the list L contains no numbers larger than $\\alpha &lt; 1$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0203025",
+      "seeded": true,
+      "seed_heuristic": "Worst Fit / Almost Worst Fit",
+      "seed_adapter_kind": "bin_score"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0222004",
+      "title": "Tight Worst-Case Performance Bounds for Next-\n                    <i>k</i>\n                    -Fit Bin Packing",
+      "authors": [
+        "Weizhen Mao"
+      ],
+      "year": 1993,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 18,
+      "abstract": "The bin packing problem is to pack a list of reals in $( {0,1} ]$ into unit-capacity bins using the minimum number of bins. Let $R[A]$ be the limiting worst value for the ratio ${{A(L)} / {L^ * }}$ as $L^ * $ goes to $\\infty $, where $A(L)$ denotes the number of bins used in the approximation algorithm A, and $L^ * $ denotes the minimum number of bins needed to pack L. Obviously, $R[A]$ reflects the worst-case behavior of A. For Next-k-Fit($NkF$ for short, $k \\geqslant 2$), which is a linear time approximation algorithm for bin packing, it was known that $1.7 + \\frac{3}{{10(k - 1)}} \\leqslant R[NkF] \\leqslant 2$. In this paper, a tight bound $R[NkF] = 1.7 + \\frac{3}{{10(k - 1)}}$ is proved.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0222004"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.2673951",
+      "title": "Interior-Point Based Online Stochastic Bin Packing",
+      "authors": [
+        "Varun Gupta",
+        "Ana Radovanovic"
+      ],
+      "year": 2015,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Bin packing is an algorithmic problem that arises in diverse applications such as remnant inventory systems, shipping logistics, and appointment scheduling. In its simplest variant, a sequence of T items (e.g., orders for raw material, packages for delivery) is revealed one at a time, and each item must be packed on arrival in an available bin (e.g., remnant pieces of raw material in inventory, shipping containers). The sizes of items are i.i.d. samples from an unknown distributions, but the sizes are known when the items arrive. The goal is to minimize the number of non­empty bins (equivalently waste, defined to be the total unused space in non­empty bins). This problem has been extensively studied in the Operations Research and Theoretical Computer Science communities, yet all existing heuristics either rely on learning the distribution or exhibit ​o(T) additive suboptimality compared to the optimal offline algorithm only for certain classes of distributions (those with sublinear optimal expected waste). In this paper, we propose a family of algorithms which are the first truly distribution-­oblivious algorithms for stochastic bin packing, and achieve ​O(√T) additive suboptimality for all item size distributions. Our algorithms are inspired by approximate interior­-point algorithms for convex optimization. In addition to regret guarantees for i.i.d. sequences, we also prove a family of novel regret bounds for general non­i.i.d. input sequences, including guarantees for locally adversarially perturbed i.i.d. sequences. To the best of our knowledge these are the first such results for non-­i.i.d. and non­-random-­permutation input sequences for online stochastic packing.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.2673951"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.20944/preprints202001.0329.v2",
+      "title": "An Exploratory Algorithm for the Rectangle Packing Problem on the Basis of the Best Fit Algorithm and the Lowest Front-Line Strategy",
+      "authors": [
+        "Mohammad Bozorgi",
+        "Morteza Mohammadi Zanjireh"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Nowadays, the wasting of resources is one of the fundamental challenges of the industrial sector. The rectangle packing problem can be very effective in this context. Practical applications of this issue in the timing and designing of the industries and businesses are very remarkable. The purpose of this issue is to arrange a set of rectangles with specific dimensions in a rectangular page with a specific width and unlimited height without overlapping. The fundamental challenge in this issue is that this is an NP-complete issue. Therefore, it is difficult to achieve the best arrangement, which has the maximum rate of resource utilization and also has a linear running time. Many algorithms have been presented to estimate a practical solution for this issue. In the past decades, the best fit method has been one of the most useful methods for this purpose. This study presents a combinatorial algorithm based on two algorithms, including the lowest front-line strategy and the best-fit algorithm. The running results indicate that the suggested algorithm performs well, despite its simplicity. The time complexity of the suggested algorithm is O(nm), in which n is the number of input rectangles and m is the number of the created front lines.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.20944/preprints202001.0329.v2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2478/fcds-2024-0005",
+      "title": "Online Three-Dimensional Bin Packing: A DRL Algorithm with the Buffer Zone",
+      "authors": [
+        "Jiawei Zhang",
+        "Tianping Shuai"
+      ],
+      "year": 2024,
+      "venue": "Foundations of Computing and Decision Sciences",
+      "cited_by_count": 3,
+      "abstract": "Abstract \n          The online 3D bin packing problem(3D-BPP) is widely used in the logistics industry and is of great practical significance for promoting the intelligent transformation of the industry. The heuristic algorithm relies too much on manual experience to formulate more perfect packing rules. In recent years, many scholars solve 3D-BPP via deep reinforcement learning(DRL) algorithms. However, they ignore many skills used in manual packing, one of the most important skill is workers put the item aside if the item is packed improperly. Inspired by this skill, we propose a DRL algorithm with a buffer zone. Firstly, we define the wasted space and the buffer zone. And then, we integrate them into the DRL algorithm framework. Importantly, we compare the bin utilization with di erent thresholds of wasted space and di erent buffer zone sizes. Experimental results show that our algorithm outperforms existing heuristic algorithms and DRL algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2478/fcds-2024-0005"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s0895480100369948",
+      "title": "An Optimal Online Algorithm for Bounded Space Variable-Sized Bin Packing",
+      "authors": [
+        "Steven S. Seiden"
+      ],
+      "year": 2001,
+      "venue": "SIAM Journal on Discrete Mathematics",
+      "cited_by_count": 20,
+      "abstract": "An online algorithm for variable-sized bin packing, based on the Harmonic algorithm of Lee and Lee,[J. ACM, 32 (1985), pp. 562--572], is investigated. This algorithm was proposed by Csirik, [Acta Inform., 26 (1989), pp. 697--709], who proved that for all sets of bin sizes, 1.69103 upper bounds its performance ratio. The upper bound is improved in the sense that we give a method of calculating the performance ratio to any accuracy for any set of bin sizes. Further, it is shown that the algorithm is optimal among those which use bounded space. An interesting feature of the analysis is that, although it is shown that our algorithm achieves a performance ratio arbitrarily close to the optimum value, it is not known precisely what that value is. The case where bins of capacity 1 and $\\alpha \\in (0,1)$ are used is studied in greater detail. It is shown that among algorithms which are allowed to choose $\\alpha$, the optimal performance ratio lies in [1.37530,1.37532].",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s0895480100369948"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1017/s0021900200038109",
+      "title": "Next-fit bin packing with random piece sizes",
+      "authors": [
+        "Shlomo Halfin"
+      ],
+      "year": 1989,
+      "venue": "Journal of Applied Probability",
+      "cited_by_count": 0,
+      "abstract": "Investigations into time-slotted communication channels for transmission of data packets led us to analyze the stochastic behavior of the next-fit bin packing algorithm. In this paper we obtain results for general piece-size distributions and truncated distributions, we calculate explicit solutions for the case of the truncated exponential, and we apply the results to calculate the maximal throughput of the time-slotted communication channel.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1017/s0021900200038109"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:44Z"
+}

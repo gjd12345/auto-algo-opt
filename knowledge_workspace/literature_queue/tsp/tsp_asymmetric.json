@@ -1,0 +1,161 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_asymmetric",
+    "label": "Asymmetric TSP",
+    "definition": "Directed distances, d(i,j) may differ from d(j,i).",
+    "search_query": "asymmetric traveling salesman ATSP nearest neighbor heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Directed Nearest Neighbor",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Directed 3-opt",
+        "adapter_kind": "move_selector"
+      }
+    ]
+  },
+  "query": "asymmetric TSP nearest neighbor directed distances",
+  "harvested_at": "2026-09-14T08:12:01Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.6.6.791",
+      "title": "A Method for Solving Traveling-Salesman Problems",
+      "authors": [
+        "G. A. Croes"
+      ],
+      "year": 1958,
+      "venue": "Operations Research",
+      "cited_by_count": 1207,
+      "abstract": "The traveling-salesman problem is a generalized form of the simple problem to find the smallest closed loop that connects a number of points in a plane. Efforts in the past to find an efficient method for solving it have met with only partial success. The present paper describes a method of solution that has the following properties (a) It is applicable to both symmetric and asymmetric problems with random elements (b) It does not use subjective decisions, so that it can be completely mechanized (c) It is appreciably faster than any other method proposed (d) It can be terminated at any point where the solution obtained so far is deemed sufficiently accurate.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.6.6.791",
+      "seeded": true,
+      "seed_heuristic": "Croes 2-opt (asymmetric setting)",
+      "seed_adapter_kind": "move_selector"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/bf01580113",
+      "title": "Matching, Euler tours and the Chinese postman",
+      "authors": [
+        "Jack Edmonds",
+        "Ellis L. Johnson"
+      ],
+      "year": 1973,
+      "venue": "Mathematical Programming",
+      "cited_by_count": 761,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/bf01580113",
+      "seeded": true,
+      "seed_heuristic": "Kanellakis-Papadimitriou ATSP local search",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5194/egusphere-egu23-1870",
+      "title": "Characterization of Earthquake Clustering in Contractional Regions, based on Nearest-Neighbor distances and Network Analysis",
+      "authors": [
+        "Antonella Peresan",
+        "Mohammad Talebi",
+        "Mehdi Zare"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The features of earthquake clusters in two contactional domains, located in Northeastern Italy and North-Central Iran, have been investigated. The tectonic and seismicity of the two study areas, namely the Alps-Dinarides junction and the Alborz regions, are controlled by the convergence between the African and Arabian plates and the Eurasia plate. Both regions are characterized by a rather complex structural setting, mainly including reverse and strike-slip faulting systems, and by moderate to high seismic activity.The nearest-neighbor approach has been used for the identification of the earthquake clusters in the space-time-energy domain. This approach permits for a data-driven identification of clusters so that, within multi-event clusters, the features of secondary and higher orders dependent events can be explored. The investigation of seismicity in Northeastern Italy is based on bulletins compiled at the National Institute of Oceanography and Applied Geophysics (OGS) in 1977-2018, while in North-Central Iran the dataset was extracted from the catalog compiled by the Iranian Seismological Center (IRSC) for the period 1996-2022. According to preliminary analysis of the used earthquake catalogs, two corresponding regions have been identified, where a satisfactory completeness level is assessed for events with magnitude greater than 2.0. Robust values of the scaling parameters, namely the b-value and the fractal dimension of epicenters, have also been computed and are used to calculate the nearest-neighbor distances and to identify the earthquake clusters.The results obtained in the two regions confirm that the complexity of clusters structure depends on the tectonic, structural, and geophysical properties of the area. Moreover, the complexity measures, borrowed from network theory (i.e. the Centralization and Outdegree indexes), consistently capture the complexity of the identified clusters. Besides, in both investigated regions, the results allowed us identifying two macro-areas, which are characterized by different clustering features, namely: high complexity indexes,, which indicate simple (burst-like) structure of clusters, and low complexity indexes, corresponding to complex multi-level (swarm-like) structure of clusters. Specifically, we found that \"swarm-like\" (high complexity) sequences are prevalent along the thrust faulting Alpine and Central-West Alborz systems, whereas \"burst-like\" (low complexity) sequences prevail along the strike-slip Dinaric and Central-East Alborz domains.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5194/egusphere-egu23-1870"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1159/000156818",
+      "title": "Contrasting Chimpanzees and Bonobos: Nearest Neighbor Distances and Choices",
+      "authors": [
+        "Frances J. White",
+        "Colin A. Chapman"
+      ],
+      "year": 1994,
+      "venue": "Folia Primatologica",
+      "cited_by_count": 29,
+      "abstract": "In an effort to understand factors underlying differences in the social organization of Pan troglodytes and P. paniscus, we measured the nearest neighbor distances and choices for chimpanzees in Kibale National Park, Uganda, and for bonobos in Lomako Forest, Zaire. We assume that the spatial organization of a set of individuals should reflect the underlying relationships between them. Bonobos were found to have smaller nearest neighbor distances than chimpanzees. The distribution and variability of the distances suggested that chimpanzees have a more restricted range of nearest neighbor distances than bonobos, avoiding situations of very close proximity. Selection of the sex of the nearest neighbor by a focal animal differed between the species. For example, male bonobos rarely had another male as their nearest neighbor, while male chimpanzees frequently did. Similarly, male bonobos tended to move apart when observed together, while it was female chimpanzees who tended to move apart when together. These observations are considered with respect to the nature of the social interactions in these species.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1159/000156818"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.62762/tmwi.2025.370327",
+      "title": "A 2-Step Nearest Neighbor Approach to TSP for Mobile Data Collection Route Optimization in IoT",
+      "authors": [
+        "Abul Kalam Azad"
+      ],
+      "year": 2025,
+      "venue": "ICCK Transactions on Mobile and Wireless Intelligence",
+      "cited_by_count": 0,
+      "abstract": "The Traveling Salesman Problem (TSP) is a well-known NP-hard problem that aims to find the optimal tour among cities, visiting each exactly once and returning to the origin. Over the years, many researchers have proposed various approaches to find near-optimal solutions for TSP. This paper proposed a variant of the nearest neighbor algorithm termed the 2-step nearest neighbor algorithm. Unlike the original nearest neighbor approach, this algorithm considers two nearest nodes as potential next nodes. For each of those nearest nodes, the two nearest nodes have been considered. The sub-tour with the minimum cost among the resulting four has added to the final tour. This process continues until all nodes are covered. The performance of the proposed algorithm compared with that of existing brute-force, nearest-neighbor, and genetic algorithms. The proposed algorithm's utility extends from classical TSP instances to route planning for mobile data collectors in Internet of things (IoT) environments. In such scenarios, a mobile collector visits distributed IoT sensor nodes to gather data and return to its base station, minimizing total travel costs and making the problem analogous to TSP. Result analysis shows that in most scenarios, the proposed approach yields a shorter distance tour than the existing nearest neighbor approach, though with slightly increased computational time. The approach could also be adapted based on the number of nodes, the optimal solution requirement, and available computational resources. The code is available at https://github.com/azad-nstu/CS570-Proj-1-Traveling-Salesman-Problem-TSP.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.62762/tmwi.2025.370327"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00521-022-07816-y",
+      "title": "Solving TSP by using combinatorial Bees algorithm with nearest neighbor method",
+      "authors": [
+        "Murat Sahin"
+      ],
+      "year": 2022,
+      "venue": "Neural Computing and Applications",
+      "cited_by_count": 33,
+      "abstract": "Abstract Bees Algorithm (BA) is a popular meta-heuristic method that has been used in many different optimization areas for years. In this study, a new version of combinatorial BA is proposed and explained in detail to solve Traveling Salesman Problems (TSPs). The nearest neighbor method was used in the population generation section of BA, and the Multi-Insert function was added to the local search section instead of the Swap function. To see the efficiency of the proposed method, 24 different TSPs were used in experimentation and the obtained results were compared with both classical combinatorial BA and other successful meta-heuristic methods. After detailed analyses and experimental studies on different problems, it has been observed that the proposed method performs well for TSPs and competes well with other methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00521-022-07816-y"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.55826/jtmit.v4i3.790",
+      "title": "Penyelesaian TSP Distribusi LPG dengan Algoritma Nearest Neighbor dan Insertion",
+      "authors": [
+        "Jasmine Najwa Raihana",
+        "Wahyuda",
+        "Ridzky Zul Asdi"
+      ],
+      "year": 2025,
+      "venue": "Jurnal Teknologi dan Manajemen Industri Terapan",
+      "cited_by_count": 0,
+      "abstract": "PT XYZ merupakan perusahaan penyedia energi gas, khususnya Liquified Petroleum Gas (LPG), yang mendistribusikan produknya ke berbagai wilayah di Kalimantan Timur, termasuk Samarinda. Namun, proses distribusi masih belum efisien karena penentuan rute pengiriman bergantung pada pengalaman supir tanpa perencanaan sistematis, sehingga mengakibatkan jarak tempuh dan biaya operasional yang tinggi. Penelitian ini bertujuan mengoptimalkan rute distribusi LPG dengan menerapkan algoritma Nearest Neighbor dan Insertion untuk meminimalkan jarak tempuh dan biaya bahan bakar. Data jarak antarlokasi diperoleh melalui Google Maps dan diolah dalam bentuk matriks jarak sebelum dihitung menggunakan kedua algoritma. Hasil menunjukkan bahwa algoritma Nearest Neighbor menghasilkan total jarak tempuh 574,61 km, memotong jarak sebesar 40,98 km (6,657%) dari jarak awal 615,59 km, dengan biaya bahan bakar Rp1.869.193,01 dan penghematan Rp133.306,99. Sementara itu, algoritma Insertion memberikan hasil lebih optimal dengan jarak 524,05 km, pengurangan 91,54 km (14,870%), serta biaya bahan bakar Rp1.704.722,50 dan penghematan sebesar Rp297.777,50. Dengan demikian, algoritma Insertion terbukti lebih efektif dalam menyelesaikan permasalahan Traveling Salesman Problem (TSP) pada distribusi LPG, serta berkontribusi dalam meningkatkan efisiensi operasional dan keandalan distribusi LPG di PT XYZ.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.55826/jtmit.v4i3.790"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2307/1934161",
+      "title": "Estimation of Density from a Sample of Joint Point and Nearest‐Neighbor Distances",
+      "authors": [
+        "C. L. Batcheler"
+      ],
+      "year": 1971,
+      "venue": "Ecology",
+      "cited_by_count": 23,
+      "abstract": "Distances are measured from sample points to the nearest member of a population, from that member to its nearest neighbor, and from that neighbor to its nearest neighbor. The point—to—nearest member is used to obtain an estimate of density, which is characteristically unbiased if the population is random, but biased if the population is uniformly or contagiously distributed. The bias is corrected by an exponential function of the sum of the point distances divided by the sum of either the nearest— or second—nearest—neighbor distances. The distances also provide an index of departure from randomness.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2307/1934161"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:03Z"
+}

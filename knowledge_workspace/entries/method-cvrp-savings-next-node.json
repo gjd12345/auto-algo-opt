@@ -1,0 +1,45 @@
+{
+  "type": "method",
+  "title": "Savings formula used as a next-node score",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "savings",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "One frozen elite maximises dist(depot,u)+dist(depot,current)-dist(current,u) while constructing a route.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean route length"
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "sources": [
+      "src-clarke-wright"
+    ],
+    "implementations": [
+      "impl-cvrp-final-batch-best"
+    ]
+  },
+  "source_refs": [
+    "src-clarke-wright"
+  ],
+  "evidence_refs": [
+    "code:evidence/final_batch_20260630/best_codes/cvrp_construct_best.py",
+    "gap:not-full-clarke-wright-merge"
+  ],
+  "code_refs": [
+    {
+      "path": "evidence/final_batch_20260630/best_codes/cvrp_construct_best.py",
+      "sha256": "5cc54410a99383063fbf7e2876fe0519bbdc46a5b2b037d291522b3754c44495"
+    }
+  ],
+  "id": "method-cvrp-savings-next-node",
+  "content_sha256": "f5caca59efbcdad654dde152046bf18c467fdea64c6d1404d1f3b4c036d4dfeb"
+}

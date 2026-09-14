@@ -1,0 +1,141 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_metric",
+    "label": "Metric TSP",
+    "definition": "Distances satisfy the triangle inequality.",
+    "search_query": "metric TSP approximation Christofides nearest neighbor",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Nearest Neighbor",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Christofides",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "Christofides algorithm traveling salesman heuristic",
+  "harvested_at": "2026-09-14T08:12:05Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0206041",
+      "title": "An Analysis of Several Heuristics for the Traveling Salesman Problem",
+      "authors": [
+        "Daniel J. Rosenkrantz",
+        "Richard E. Stearns",
+        "Philip M. Lewis, II"
+      ],
+      "year": 1977,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 736,
+      "abstract": "Several polynomial time algorithms finding “good,” but not necessarily optimal, tours for the traveling salesman problem are considered. We measure the closeness of a tour by the ratio of the obtained tour length to the minimal tour length. For the nearest neighbor method, we show the ratio is bounded above by a logarithmic function of the number of nodes. We also provide a logarithmic lower bound on the worst case. A class of approximation methods we call insertion methods are studied, and these are also shown to have a logarithmic upper bound. For two specific insertion methods, which we call nearest insertion and cheapest insertion, the ratio is shown to have a constant upper bound of 2, and examples are provided that come arbitrarily close to this upper bound. It is also shown that for any $n\\geqq 8$, there are traveling salesman problems with n nodes having tours which cannot be improved by making $n/4$ edge changes, but for which the ratio is $2(1-1/n)$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0206041",
+      "seeded": true,
+      "seed_heuristic": "Nearest Neighbor (metric analysis)",
+      "seed_adapter_kind": "next_node_score"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1218/1/012038",
+      "title": "New heuristic algorithm for traveling salesman problem",
+      "authors": [
+        "M L Shahab"
+      ],
+      "year": 2019,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 2,
+      "abstract": "Abstract \n        Traveling salesman problem (TSP) is a basis for many bigger problems. If we can find an efficient method (that produce a good result in a short time) to solve the TSP, then we will also be able to solve many other problems. In this research, we proposed a new heuristic algorithm for TSP. We used 80 problems from TSPLIB to test the proposed heuristic algorithm. The proposed heuristic algorithm can find the best-known distance for 36 different TSPs. The average of all Goodness Value is 99.50%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1218/1/012038"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5772/intechopen.1004380",
+      "title": "Perspective Chapter: Experimental Analysis of Black Hole Algorithm with Heuristic Algorithms in Traveling Salesman Problem",
+      "authors": [
+        "Mehmet Fatih Demiral"
+      ],
+      "year": 2024,
+      "venue": "Response Surface Methods - Theory, Applications and Optimization Techniques",
+      "cited_by_count": 0,
+      "abstract": "Black hole algorithm (BHA) is a popular metaheuristic algorithm proposed and applied for data clustering in 2013. BHA was applied to continuous and discrete problems; it is also hybridized with some algorithms in the literature. The pure BHA shows better performance than others in discrete optimization, such as traveling salesman problems. However, it requires improving the algorithm with competitive heuristics. Many heuristics have often been used to construct the initial tour of a salesman, such as the nearest neighbor algorithm (NN), nearest insertion algorithm (NI), cheapest insertion algorithm (CI), random insertion algorithm (RI), furthest insertion algorithm (FI), and minimal spanning tree algorithm (MST). In addition, the black hole algorithm is combined with popular heuristics, such as swap/or insert, reverse/or 2-opt swap, and swap-reverse/or 3-opt swap, and tested with proper parameters in this study. In the experimentation, classical datasets are used via TSP-library. The experimental results are given as best, average solutions/or deviations, and CPU time for all datasets. Besides, the hybrid algorithms demonstrate a better performance rate to get optimality. Finally, hybrid algorithms solve the discrete optimization problem in a short computing time for all datasets.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5772/intechopen.1004380"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.21.2.498",
+      "title": "An Effective Heuristic Algorithm for the Traveling-Salesman Problem",
+      "authors": [
+        "S. Lin",
+        "B. W. Kernighan"
+      ],
+      "year": 1973,
+      "venue": "Operations Research",
+      "cited_by_count": 2854,
+      "abstract": "This paper discusses a highly effective heuristic procedure for generating optimum and near-optimum solutions for the symmetric traveling-salesman problem. The procedure is based on a general approach to heuristics that is believed to have wide applicability in combinatorial optimization problems. The procedure produces optimum solutions for all problems tested, “classical” problems appearing in the literature, as well as randomly generated test problems, up to 110 cities. Run times grow approximately as n\n           2 \n          ; in absolute terms, a typical 100-city problem requires less than 25 seconds for one case (GE635), and about three minutes to obtain the optimum with above 95 per cent confidence.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.21.2.498"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.36.3.478",
+      "title": "A Heuristic Algorithm for the Traveling Salesman Location Problem on Networks",
+      "authors": [
+        "David Simchi-Levi",
+        "Oded Berman"
+      ],
+      "year": 1988,
+      "venue": "Operations Research",
+      "cited_by_count": 87,
+      "abstract": "In this paper, we present a heuristic for the traveling salesman location problem on a network. Each day the salesman (e.g., a repair vehicle) must visit all the calls that are registered in a service list. Each call is generated with a given probability and the service list contains at most n calls. The heuristic requires O(n 3 ) time to find the location that “minimizes” the expected distance traveled. A worst case analysis of the heuristic indicates that it will produce a solution which is at most 50% worse than the optimal solution. The paper also contains several asymptotic results for the problem in the plane.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.36.3.478"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47191/ijmcr/v11i6.01",
+      "title": "AN ALGORITHM FOR PERFORMING TRAVELING SALESMAN ON GIVEN N POINTS",
+      "authors": [
+        "Bahman Mashood"
+      ],
+      "year": 2023,
+      "venue": "INTERNATIONAL JOURNAL OF MATHEMATICS AND COMPUTER RESEARCH",
+      "cited_by_count": 0,
+      "abstract": "Given N points in some General metric space M, we want to connect them so that from each point we can access any other points such that the union of all connecting lines have minimal length",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47191/ijmcr/v11i6.01"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:05Z"
+}

@@ -1,0 +1,152 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "obp_1d",
+    "label": "1D online bin packing",
+    "definition": "Irrevocable assignment of arriving items.",
+    "search_query": "online bin packing First Fit Best Fit Harmonic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "bin_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "First Fit",
+        "adapter_kind": "bin_score"
+      },
+      {
+        "name": "Best Fit",
+        "adapter_kind": "bin_score"
+      }
+    ]
+  },
+  "query": "online bin packing First Fit Best Fit Harmonic",
+  "harvested_at": "2026-09-14T08:00:46Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/359436.359453",
+      "title": "A comparison of next-fit, first-fit, and best-fit",
+      "authors": [
+        "Carter Bays"
+      ],
+      "year": 1977,
+      "venue": "Communications of the ACM",
+      "cited_by_count": 59,
+      "abstract": "“Next-fit” allocation differs from first-fit in that a first-fit allocator commences its search for free space at a fixed end of memory, whereas a next-fit allocator commences its search wherever it previously stopped searching. This strategy is called “modified first-fit” by Shore [2] and is significantly faster than the first-fit allocator. To evaluate the relative efficiency of next-fit (as well as to confirm Shore's results) a simulation was written in Basic Plus on the PDP-11, using doubly linked lists to emulate the memory structure of the simulated computer. The simulation was designed to perform essentially in the manner described in [2]. The results of the simulation of the three methods show that the efficiency of next-fit is decidedly inferior to first-fit and best-fit when the mean size of the block requested is less than about 1/16 the total memory available. Beyond this point all three allocation schemes have similar efficiencies.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/359436.359453"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23917/khif.v8i2.17069",
+      "title": "Job Scheduling on Grid Computing Using First Fit, Best Fit, and Worst Fit",
+      "authors": [
+        "Ardi Pujiyanta",
+        "Fiftin Novianto"
+      ],
+      "year": 2022,
+      "venue": "Khazanah Informatika : Jurnal Ilmu Komputer dan Informatika",
+      "cited_by_count": 1,
+      "abstract": "Grid computing can be considered large-scale distributed cluster computing and parallel distributed network processing. The two most important issues in managing user work are resource allocation and scheduling of required resources. When user jobs are submitted, they are managed by resource intermediaries who find and allocate the right resources. After the resource allocation stage, work scheduled on the existing resources according to the user's required resources. In most grid systems with traditional scheduling, jobs are submitted and placed in waiting room queues to wait for the required resources to become available. Each grid system can use a different scheduling algorithm to execute jobs based on other parameters, such as resources, delivery time, and execution duration. There is no guarantee that these traditional scheduling algorithms will get the job done. The First Come First Serve Left Right Hole Scheduling (FCFS-LRH) reservation strategy improves resource utilization in a grid system by using a local scheduler. Compared to traditional strategies. There are two objectives of this research. First, compare the first fit, best fit, and worst fit algorithms to find empty timeslots and place them in a virtual view. Second, reduce the idle time value. The results showed that the FCFS-LRH method could reduce the idle time value of the FCFS-EDF and FCFS methods. The overall execution time of the first fit with the FCFS-LRH strategy is better than the FCFS-EDF",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23917/khif.v8i2.17069"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00453-021-00844-5",
+      "title": "Best Fit Bin Packing with Random Order Revisited",
+      "authors": [
+        "Susanne Albers",
+        "Arindam Khan",
+        "Leon Ladewig"
+      ],
+      "year": 2021,
+      "venue": "Algorithmica",
+      "cited_by_count": 17,
+      "abstract": "Abstract Best Fit is a well known online algorithm for the bin packing problem, where a collection of one-dimensional items has to be packed into a minimum number of unit-sized bins. In a seminal work, Kenyon [SODA 1996] introduced the (asymptotic) random order ratio as an alternative performance measure for online algorithms. Here, an adversary specifies the items, but the order of arrival is drawn uniformly at random. Kenyon’s result establishes lower and upper bounds of 1.08 and 1.5, respectively, for the random order ratio of Best Fit. Although this type of analysis model became increasingly popular in the field of online algorithms, no progress has been made for the Best Fit algorithm after the result of Kenyon. We study the random order ratio of Best Fit and tighten the long-standing gap by establishing an improved lower bound of 1.10. For the case where all items are larger than 1/3, we show that the random order ratio converges quickly to 1.25. It is the existence of such large items that crucially determines the performance of Best Fit in the general case. Moreover, this case is closely related to the classical maximum-cardinality matching problem in the fully online model. As a side product, we show that Best Fit satisfies a monotonicity property on such instances, unlike in the general case. In addition, we initiate the study of the absolute random order ratio for this problem. In contrast to asymptotic ratios, absolute ratios must hold even for instances that can be packed into a small number of bins. We show that the absolute random order ratio of Best Fit is at least 1.3. For the case where all items are larger than 1/3, we derive upper and lower bounds of 21/16 and 1.2, respectively.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00453-021-00844-5"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/rsa.10037",
+      "title": "Linear waste of best fit bin packing on skewed distributions",
+      "authors": [
+        "Claire Kenyon",
+        "Michael Mitzenmacher"
+      ],
+      "year": 2002,
+      "venue": "Random Structures &amp; Algorithms",
+      "cited_by_count": 4,
+      "abstract": "Abstract We prove that Best Fit bin packing has linear waste on the discrete distribution U { j , k } (where items are drawn uniformly from the set {1/ k , 2/ k , …, j / k }) for sufficiently large k when j = α k and 0.66 ≤ α &lt; 2/3. Our results extend to continuous skewed distributions, where items are drawn uniformly on [0, a ], for 0.66 ≤ a &lt; 2/3. This implies that the expected asymptotic performance ratio of Best Fit is strictly greater than 1 for these distributions. © 2002 Wiley Periodicals, Inc. Random Struct. Alg., 20:441–464, 2002",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/rsa.10037"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/507553.507566",
+      "title": "Stochastic online binpacking problem",
+      "authors": [
+        "David Gamarnik"
+      ],
+      "year": 2001,
+      "venue": "ACM SIGMETRICS Performance Evaluation Review",
+      "cited_by_count": 0,
+      "abstract": "We consider the following stochastic bin packing process: the items of different sizes arrive at times\n       t \n      = 0, 1, 2, … and are packed into unit size bins using \"largest first\" rule. The unpacked items form queues. Coffman and Stolyar [3] introduced this system and posed the following question: under which conditions expected queue lengths are bounded (system is stable)? We provide exact computable conditions for stability of this system using Lyapunov function technique. The result holds for a very general class of distributions of the arrival processes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/507553.507566"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/360933.360949",
+      "title": "On the external storage fragmentation produced by first-fit and best-fit allocation strategies",
+      "authors": [
+        "John E. Shore"
+      ],
+      "year": 1975,
+      "venue": "Communications of the ACM",
+      "cited_by_count": 42,
+      "abstract": "Published comparisons of the external fragmentation produced by first-fit and best-fit memory allocation have not been consistent. Through simulation, a series of experiments were performed in order to obtain better data on the relative performance of first-fit and best-fit and a better understanding of the reasons underlying observed differences. The time-memory-product efficiencies of first-fit and best-fit were generally within 1 to 3 percent of each other. Except for small populations, the size of the request population had little effect on allocation efficiency. For exponential and hyperexponential distributions of requests, first-fit outperformed best-fit; but for normal and uniform distributions, and for exponential distributions distorted in various ways, best-fit out-performed first-fit. It is hypothesized that when first-fit outperforms best-fit, it does so because first-fit, by preferentially allocating toward one end of memory, encourages large blocks to grow at the other end. Sufficient contiguous space is thereby more likely to be available for relatively large requests. Results of simulation experiments supported this hypothesis and showed that the relative performance of first-fit and best-fit depends on the frequency of requests that are large compared to the average request. When the coefficient of variation of the request distribution is greater than or approximately equal to unity, first-fit outperformed best-fit.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/360933.360949"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1093/acprof:oso/9780190658748.003.0004",
+      "title": "Finding the Fit",
+      "authors": [
+        "Todd Berliner"
+      ],
+      "year": 2017,
+      "venue": "Oxford Scholarship Online",
+      "cited_by_count": 0,
+      "abstract": "Chapter 4 illustrates the theory of narration presented in the previous chapter, offering an extended analysis of an unusual narrative pattern in Red River , which violates Hollywood’s cardinal rules regarding narrative unity, probability, causality, and story logic. Disunity in this classical Hollywood narrative adds variety to our filmgoing experience; stimulates our imagination, curiosity, and creative problem-solving processes; and liberates our thinking from the burdens and limitations of good sense.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1093/acprof:oso/9780190658748.003.0004"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1093/oso/9780198807841.003.0003",
+      "title": "Norms, Reasons, and Fit",
+      "authors": [
+        "Garrett Cullity"
+      ],
+      "year": 2018,
+      "venue": "Oxford Scholarship Online",
+      "cited_by_count": 0,
+      "abstract": "What kind of elements provide the foundations of morality? The answer defended in this chapter is ‘norms of presumptive fitness’. This is explained and defended by contrasting it with Ross’s more familiar answer: ‘prima facie duties’. ‘Fitness’ is a name for the relation that desire bears to the desirable and praise to the praiseworthy. Presumptive fitness is the relation of being fit-unless-undermined. The case for grounding morality on norms of this kind is that it offers to rectify the ways in which Ross’s view is too self-contained, too narrow, too shallow, too unqualified, and too simple. In the course of explaining this, the chapter provides an account of the relationship between wrongness, reasons, value, and importance.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1093/oso/9780198807841.003.0003"
+    }
+  ]
+}

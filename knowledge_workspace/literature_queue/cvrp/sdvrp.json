@@ -1,0 +1,184 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "sdvrp",
+    "label": "Split-delivery VRP",
+    "definition": "A customer may be split.",
+    "search_query": "split delivery VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Split-delivery savings",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Split local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "split delivery VRP heuristic",
+  "harvested_at": "2026-09-14T08:00:39Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.23.2.141",
+      "title": "Savings by Split Delivery Routing",
+      "authors": [
+        "Moshe Dror",
+        "Pierre Trudeau"
+      ],
+      "year": 1989,
+      "venue": "Transportation Science",
+      "cited_by_count": 353,
+      "abstract": "This paper examines a relaxed version of the generic vehicle routing problem. In this version, a delivery to a demand point can be split between any number of vehicles. In spite of this relaxation the problem remains computationally hard. The main contribution of this paper is in demonstrating the potential for cost savings through split deliveries. The solution scheme allowing for split deliveries is compared with a solution in which no split deliveries are allowed on a large set of 540 problems. Significant cost savings are realized both in terms of the total distance and the number of vehicles required. The vehicle routes constructed by our procedure, tend to cover cohesive geographical zones and retain some properties of optimal solutions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.23.2.141",
+      "seeded": true,
+      "seed_heuristic": "Dror-Trudeau split delivery",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31004/jutin.v7i1.24844",
+      "title": "Penyelesaian Split Delivery VRP dengan Ant Colony Optimization (Studi Kasus: Pengiriman Produk di PT Sinarmas Distribusi Nusantara)",
+      "authors": [
+        "Anita Br Ginting",
+        "Reza Fayaqun",
+        "Muhammad Ardhya Bisma"
+      ],
+      "year": 2024,
+      "venue": "Jurnal Teknik Industri Terintegrasi",
+      "cited_by_count": 0,
+      "abstract": "PT Sinarmar Distribusi distributes its products to all Distribution Center (DC) every day. Currently PT Sinarmas Distribution Nusantara uses a predetermined route every day using Colt Diesel Double vehicles with maximum transport capacity of 500 cartons.   Currently the number of products carried by each vehicle never reaches its maximum carrying capacity. PT Sinarmas Distribusi Nusantara wants vehicle transport capacity to be used optimally. This route problem at PT Sinarmas Distribusi Nusantara can be defined as Split Delivery Vehicle Routing Problem (SDVRP). Ant Colony Optimization (ACO) is a metaheuristic that can be used to solve SDVRP. By using ACO the resulting route is always shorter than the current route and the number of vehicles used is smaller.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31004/jutin.v7i1.24844"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.70004",
+      "title": "An A‐Priori‐Splitting‐Based Heuristic for the Split Delivery Vehicle Routing Problem With Time Windows",
+      "authors": [
+        "Christian Becker",
+        "Michael Schneider"
+      ],
+      "year": 2025,
+      "venue": "Networks",
+      "cited_by_count": 2,
+      "abstract": "ABSTRACT \n          The split delivery vehicle routing problem with time windows (SDVRPTW) extends the well‐known VRPTW by the option of satisfying individual customer demands with more than one vehicle. The SDVRPTW is relatively well studied from an exact viewpoint, but efficient heuristics that are able to provide near‐optimal solutions within short runtimes have not been proposed in the literature. In this article, we design a heuristic for the SDVRPTW, called granular tabu search with balanced customer splitting (GTS‐BCS), that is based on the principle of a priori customer splitting introduced by Chen, International Transactions in Operational Research, 24, 27–41, 2017. The main idea of this approach is to split customers into subcustomers with an a priori splitting rule and then use a solver for the unsplit counterpart of the problem to solve the resulting split‐instance. We use theoretical properties of optimal SDVRPTW solutions and numerical experiments to find well‐balanced splitting rules that find a good tradeoff between the flexibility needed to explore a large number of promising splits of the original demand and keeping the number of generated subcustomers as low as possible. We observe that starting the search from a so‐called no‐split solution, that is, a solution in which customer splits are only possible for customers whose demand exceeds the vehicle capacity, has strong positive effects on both solution quality and runtimes. The final configuration of our GTS‐BCS is able to compute near‐optimal solutions on the common SDVRPTW benchmark sets within comparatively short runtimes. We also investigate whether the proposed splitting rules can be transferred to the standard SDVRP. To this end, we use the same a priori customer splitting framework as in GTS‐BCS and integrate the hybrid genetic search of Vidal, Computers and Operations Research, 140, 105643, 2022 for solving the unsplit counterpart of the SDVRP – the CVRP. Numerical experiments show that the resulting algorithm is nearly competitive to the state‐of‐the‐art dedicated methods for the SDVRP.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.70004"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.2022.0353",
+      "title": "Exact and Heuristic Methods for the Split Delivery Vehicle Routing Problem",
+      "authors": [
+        "Mette Gamst",
+        "Richard Martin Lusby",
+        "Stefan Ropke"
+      ],
+      "year": 2024,
+      "venue": "Transportation Science",
+      "cited_by_count": 6,
+      "abstract": "This paper describes an exact branch-and-cut (B&amp;C) algorithm for the split delivery vehicle routing problem. The underlying model is based on a previously proposed two-index vehicle flow formulation that models a relaxation of the problem. We dynamically separate two well-known classes of valid inequalities, namely capacity and connectivity cuts, and use an in-out algorithm to improve the convergence of the cutting phase. We generate no-good cuts from feasible integer solutions to the relaxation using a recently proposed single-commodity flow formulation in the literature. The exact methodology is complemented by a very effective adaptive large neighborhood search (ALNS) heuristic that provides high-quality upper bounds to initiate the B&amp;C algorithm. Key ingredients in the design of the heuristic include the use of a tailored construction algorithm, which can exploit the situation in which the ratio of the number of customers to the minimum number of vehicles needed is low, and the use of a route-based formulation to improve the solutions found before, during, and after the ALNS procedure. An earlier version of this work was submitted to the DIMACS (Center for Discrete Mathematics and Theoretical Computer Science) implementation challenge, where it placed third. On sets of well-known benchmark instances for limited and unlimited fleet variants of the problem, we demonstrate that the heuristic provides very competitive solutions, with respective average gaps of 0.19% and 0.18% from best-known values. Furthermore, the exact B&amp;C framework is also highly competitive with state-of-the-art methods, providing solutions with an average optimality gap of 1.82%.  History: This paper has been accepted for the Transportation Science Special Section on DIMACS Implementation Challenge: Vehicle Routing Problems.  Supplemental Material: The online appendices are available at https://doi.org/10.1287/trsc.2022.0353 .",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.2022.0353"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1070.0204",
+      "title": "An Optimization-Based Heuristic for the Split Delivery Vehicle Routing Problem",
+      "authors": [
+        "Claudia Archetti",
+        "M. Grazia Speranza",
+        "Martin W. P. Savelsbergh"
+      ],
+      "year": 2008,
+      "venue": "Transportation Science",
+      "cited_by_count": 110,
+      "abstract": "The split delivery vehicle routing problem is concerned with serving the demand of a set of customers with a fleet of capacitated vehicles at minimum cost. Contrary to what is assumed in the classical vehicle routing problem, a customer can be served by more than one vehicle, if convenient. We present a solution approach that integrates heuristic search with optimization by using an integer program to explore promising parts of the search space identified by a tabu search heuristic. Computational results show that the method improves the solution of the tabu search in all but one instance of a large test set.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1070.0204"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.22238",
+      "title": "A heuristic with a performance guarantee for the commodity constrained split delivery vehicle routing problem",
+      "authors": [
+        "Matteo Petris",
+        "Claudia Archetti",
+        "Diego Cattaruzza",
+        "Maxime Ogier",
+        "Frédéric Semet"
+      ],
+      "year": 2024,
+      "venue": "Networks",
+      "cited_by_count": 8,
+      "abstract": "Abstract The commodity constrained split delivery vehicle routing problem (C‐SDVRP) is a routing problem where customer demands are composed of multiple commodities. A fleet of capacitated vehicles must serve customer demands in a way that minimizes the total routing costs. Vehicles can transport any set of commodities and customers are allowed to be visited multiple times. However, the demand for a single commodity must be delivered by one vehicle only. In this work, we developed a heuristic with a performance guarantee to solve the C‐SDVRP. The proposed heuristic is based on a set covering formulation, where the exponentially‐many variables correspond to routes. First, a subset of the variables is obtained by solving the linear relaxation of the formulation by means of a column generation approach which embeds a new pricing heuristic aimed to reduce the computational time. Solving the linear relaxation gives a valid lower bound used as a performance guarantee for the heuristic. Then, we devise a restricted master heuristic to provide good upper bounds: the formulation is restricted to the subset of variables found so far and solved as an integer program with a commercial solver. A local search based on a mathematical programming operator is applied to improve the solution. We test the heuristic algorithm on benchmark instances from the literature. The comparison with the state‐of‐the‐art heuristics for solving the C‐SDVRP shows that our approach significantly improves the solution time, while keeping a comparable solution quality and improving some best‐known solutions. In addition, our approach is able to solve large instances with 100 customers and six commodities, and also provides very good quality lower bounds. Furthermore, an instance of the C‐SDVRP can be transformed into a CVRP instance by simply duplicating each customer as many times as the requested commodities and by assigning as demand the demand of the single commodity. Hence, we compare heuristics for the C‐SDVRP against the state‐of‐the‐art heuristic for the Capacitated Vehicle Routing Problem (CVRP). The latter approach revealed to have the best performance. However, our approach provides solutions of comparable quality and has the interest of providing a performance guarantee.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.22238"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.159.100",
+      "title": "Solutions to VRP in Home Delivery Based on Ant Colony Optimization Algorithm",
+      "authors": [
+        "Meng Jie Hu",
+        "Jian Ping Wang",
+        "Xiao Min Li"
+      ],
+      "year": 2010,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Home delivery is a new trend in logistics at present. The distribution path planning has a great impact on customer’s satisfaction and the total cost of operation in home delivery industry. In This paper, we construct the distribution path planning problems in the industry of logistics and home delivery based on Ant Colony Optimization Algorithm, the optimal vehicle’s number and the best distribution path can be found in the shortest time by using the model advised in the paper. It is found that there is no obvious correlation between the service and the total costs of delivery after the analysis. So, home delivery companies can select the optimal path planning, i.e. a lower cost of delivery and higher level of service, according to their service policies.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.159.100"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su172411308",
+      "title": "Urban Pickup-and-Delivery VRP with Soft Time Windows Under Travel-Time Uncertainty: An Empirical Comparison of Robust and Deterministic Approaches",
+      "authors": [
+        "Daniel Kubek"
+      ],
+      "year": 2025,
+      "venue": "Sustainability",
+      "cited_by_count": 1,
+      "abstract": "Urban freight pickup-and-delivery services operate in road networks where travel times are highly variable due to congestion, incidents, and operational restrictions. Such variability threatens the punctuality of deliveries and complicates the design of reliable service schedules. This paper examines an urban pickup-and-delivery vehicle routing problem with soft time windows under travel-time uncertainty and provides an empirical comparison of robust and deterministic planning approaches on a real road network. The problem is formulated as a time-dependent pickup-and-delivery VRP with soft time windows, where link travel times are represented by a finite set of scenarios calibrated from observed network conditions. The objective function combines four components that are central to urban freight operations: total travel time, total distance, and penalties for earliness and lateness relative to customer time windows. This structure captures the trade-off between routing efficiency and service quality. On this basis, a robust model is constructed that optimises tour plans with respect to scenario-based worst-case or risk-aggregated costs, while a standard deterministic model minimises the same objective using nominal (average) travel times only. An empirical study on a real urban network compares the deterministic and robust solutions with respect to delivery punctuality, tour length, and time-window violations across a range of demand and variability settings. The results show that robust routing systematically reduces the frequency and magnitude of late deliveries at the expense of only moderate increases in planned distance and travel time. Although energy use and emissions are not modelled explicitly, the improved reliability and reduced need for reactive re-routing indicate a potential to support more reliable and resource-efficient urban freight operations in the context of sustainable city logistics.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su172411308"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1757-899x/852/1/012090",
+      "title": "Comparison study between nearest neighbor and farthest insert algorithms for solving VRP model using heuristic method approach",
+      "authors": [
+        "Wilson Kosasih",
+        "Ahmad",
+        "Lithrone Laricha Salomon",
+        "Febricky"
+      ],
+      "year": 2020,
+      "venue": "IOP Conference Series: Materials Science and Engineering",
+      "cited_by_count": 5,
+      "abstract": "Abstract In Indonesia, transportation costs from physical distribution still tend to be high because not all business people can optimize their distribution routes. This paper discusses a comparative study between Nearest Neighbor and Farthest Insert algorithms in solving a Vehicle Routing Problem (VRP) model. Aim of this study is to determine the most optimum distribution route so that the distance or time or transportation costs can be minimized. This research was conducted at a bottled water distribution company. In the end, the comparative study was considered effective as a basis for decision making on the distribution route, where there were indications of distance savings or reduced costs, and increased utilization of the higher vehicle fleet.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1757-899x/852/1/012090"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:49Z"
+}

@@ -1,0 +1,143 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_assign",
+    "label": "Assignment knapsack",
+    "definition": "Assign items to agents with budgets.",
+    "search_query": "assignment knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Assign greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Regret assignment",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "assignment knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:50Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/bf01588971",
+      "title": "An analysis of approximations for maximizing submodular set functions—I",
+      "authors": [
+        "G. L. Nemhauser",
+        "L. A. Wolsey",
+        "M. L. Fisher"
+      ],
+      "year": 1978,
+      "venue": "Mathematical Programming",
+      "cited_by_count": 3060,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/bf01588971",
+      "seeded": true,
+      "seed_heuristic": "GAP heuristics",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/b3d4919cza920z4e7fz8da1z73415f5d5f20",
+      "title": "Heuristic Methods for Calculating Dynamic Traffic Assignment",
+      "authors": [
+        "Mostafa Ameli"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour le calcul d'affectation dynamique du trafic \n         Les systèmes de transport sont caractérisés de manière dynamique non seulement par des interactions non linéaires entre les différents composants, mais également par des boucles de rétroaction entre l'état du réseau et les décisions des utilisateurs. En particulier, la congestion du réseau impacte à la fois la répartition de la demande locale en modifiant les choix d’itinéraire et la demande multimodale globale. Selon les conditions du réseau, ils peuvent décider de changer, par exemple, leur mode de transport. Plusieurs équilibres peuvent être définis pour les systèmes de transport. L'équilibre de l'utilisateur correspond à la situation dans laquelle chaque utilisateur est autorisé à se comporter de manière égoïste et à minimiser ses propres frais de déplacement. L'optimum du système correspond à une situation où le coût total du transport de tous les utilisateurs est minimal. Dans ce contexte, l’étude vise à calculer les modèles de flux d'itinéraires dans un réseau prenant en compte différentes conditions d’équilibre et à étudier l’équilibre du réseau dans un contexte dynamique. L'étude se concentre sur des modèles de trafic capables de représenter une dynamique du trafic urbain à grande échelle. Trois sujets principaux sont abordés. Premièrement, des méthodes heuristiques et méta-heuristiques rapides sont développées pour déterminer les équilibres avec différents types de trafic. Deuxièmement, l'existence et l'unicité des équilibres d'utilisateurs sont étudiées. Lorsqu'il n'y a pas d'unicité, la relation entre des équilibres multiples est examinée. De plus, l'impact de l'historique du réseau est analysé. Troisièmement, une nouvelle approche est développée pour analyser l’équilibre du réseau en fonction du niveau de la demande. Cette approche compare les optima des utilisateurs et du système et vise à concevoir des stratégies de contrôle afin de déplacer la situation d'équilibre de l'utilisateur vers l'optimum du système",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/b3d4919cza920z4e7fz8da1z73415f5d5f20"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23956/ijermt.v6i7.181",
+      "title": "Clustering Analysis of Greedy Heuristic Method in Zero_One Knapsack Problem",
+      "authors": [
+        "V. Selvi"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Emerging Research in Management and Technology",
+      "cited_by_count": 0,
+      "abstract": "Knapsack problem is a surely understood class of optimization problems, which tries to expand the profit of items in a knapsack without surpassing its capacity, Knapsack can be solved by several algorithms such like Greedy, dynamic programming, Branch &amp; bound etc. The solution to the zero_one knapsack problem (KP) can be viewed as the result of a sequence of decision. Clustering is the process of resolving that type of applications. Different clustering application for grouping elements with equal priority. In this paper we are introducing greedy heuristic algorithm for solving zero_one knapsack problem. We will exhibit a relative investigation of the Greedy, dynamic programming, B&amp;B and Genetic algorithms regarding of the complexity of time requirements, and the required programming efforts and compare the total value for each of them. Greedy and Genetic algorithms can be used to solve the 0-1 Knapsack problem within a reasonable time complexity. The worst-case time complexity (Big-O) of both algorithms is O(N). Using the greedy method, the algorithm can produce high quality clusters while reduce time the best partioning avoid the memory confinement problem during the process.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23956/ijermt.v6i7.181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6551799",
+      "title": "A decomposition-based heuristic for large-scale fleet assignment problems",
+      "authors": [
+        "Reinout Annaert",
+        "Pieter Smet",
+        "Greet Vanden Berghe"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The fleet assignment problem concerns assigning rental jobs to a jointly managed fleet of heterogeneous resources. Each job is characterized by a rental period, pickup and drop-off locations and resource requirements. It further involves decisions on whether it is worthwhile to offer resource substitutions when resources with the requested properties are unavailable. It also involves decisions on whether it is worthwhile to transfer resources between depots, which represent the locations where resources are based when not assigned to rentals, given the resulting transfer costs and the temporary unavailability of resources. The objective is to maximize profit. In practice, fleet assignment requires acceptable solutions within short computation times for daily operations, as well as high-quality solutions for longer overnight algorithm runs. Although previously proposed methods can capture such rental scenarios, none can efficiently handle the scale and strict time requirements of many real-world problems. This paper investigates the potential for optimizing fleet assignments as quickly as possible. It proposes a decomposition-based guided ruin and recreate approach for solving large-scale fleet assignment problems. Experiments conducted on real-world data from multiple vehicle and equipment rental companies demonstrate the approach’s general applicability across different problem scales, fleet compositions, transfer operations and decision horizons. To stimulate further research on fleet assignment, the datasets used and solutions generated are made publicly available.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6551799"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1865/4/042009",
+      "title": "An Efficient Heuristic Algorithm for Solving 0-1 Knapsack Problem",
+      "authors": [
+        "Hong Yang",
+        "Xiong Guo"
+      ],
+      "year": 2021,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 1,
+      "abstract": "Abstract \n        The model for 0-1 knapsack problem based on greedy strategy and expectation efficiency has some advantages, e.g., quick convergence and low complexity, but it also inherently exists some limitations to be enhanced and improved, such as the restricted greedy and the overmuch calculation on expectation efficiency. To this end, an efficient algorithm is proposed to optimize the previous model. At first, the greedy degree is maximized, that is, some items are permanently loaded into knapsack in advance as many as possible. Then, the conventional expectation efficiency model is improved greatly, at the same time, the number of calculations with respect to expectation efficiency is decreased by ignoring some unnecessary items. Compared to the previous algorithm, the experimental results reveal that the proposed optimization algorithm has the significant advantages in time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1865/4/042009"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:43:13Z"
+}

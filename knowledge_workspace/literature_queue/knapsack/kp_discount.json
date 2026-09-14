@@ -1,0 +1,126 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_discount",
+    "label": "Discount knapsack",
+    "definition": "Discounts on combinations.",
+    "search_query": "discount knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Discount greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Combo local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "discount knapsack heuristic",
+  "harvested_at": "2026-09-14T08:26:56Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6643040",
+      "title": "Pattern-Based Control for Dynamic Stochastic Multi-Knapsack Problems with Multiple Item Types",
+      "authors": [
+        "Junyi DONG",
+        "Discount LI",
+        "Qian Liu",
+        "Xiangtong Qi"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The dynamic stochastic multi-knapsack problem, which handles dynamically arrived requests, captures key features of real-time resource allocation in applications such as cloud computing and online advertising. Theoretically speaking, it is computationally challenging due to the strong NP-hardness inherited from the multi-knapsack structure and the curse of dimensionality arising from stochastic dynamics. In practice, some problems may reveal additional features that can facilitate problem solving. In this paper, we focus on such a case where requests belong to some item types. This enables us to develop a pattern-based control framework that explicitly exploits the combinatorial structure of packing decisions. Within this framework, we propose two complementary policies. The PB-BPC policy integrates packing patterns into dual pricing to obtain tighter upper bounds, and the PB-DPC policy further refines this approach by solving a pattern-level primal linear program via column generation and using the resulting allocation targets to guide online decisions. Moreover, we establish that the PB-DPC policy is asymptotically optimal. Its revenue loss relative to the deterministic linear programming upper bound is bounded by a constant independent of problem scale, implying that the relative optimality gap vanishes as the system size increases. Numerical experiments demonstrate the superiority of the proposed pattern-based policies across a variety of settings, achieving up to a 6\\% improvement in revenue ratio over baseline methods in most cases. Our results provide a tractable and near-optimal solution framework for large-scale dynamic packing systems and yield actionable insights for resource allocation control in revenue management.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6643040"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4137161",
+      "title": "An Adaptive Grey Wolf Optimization with Differential Evolution Operator for Solving the Discount {0-1} Knapsack Problem",
+      "authors": [
+        "Zijian Wang",
+        "Xi Fang",
+        "Fei Gao",
+        "Liang Xie",
+        "Xianchen Meng"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "The discount {0-1} knapsack problem (D {0-1} KP) is a new variant of the knapsack problem. It is an NP-hard problem and also a binary optimization problem. As a new intelligent algorithm that imitates the leadership function of wolves, the grey wolf optimizer (GWO) can solve NP problems more effectively than accurate algorithms. At the same time, the GWO has fewer parameters, faster calculations, and easier implementation than other intelligent algorithms. This paper introduces a method of adaptively updating the prey position of wolves and a differential evolution operator with a scaling factor that adaptively changes according to the number of iterations, and selects which operator to use for iteration by the value of the search agent parameter. Finally, it combines the improved greedy repair operator based on D {0-1} KP to form the adaptive grey wolf optimization with differential evolution operator (de-AGWO). The experimental results of the standard test function prove that the algorithm in this paper has a significant improvement in function optimization performance. And the experimental results of the D {0-1} KP prove that the algorithm has better solution results except for the unrelated data sets, and it has excellent results when solving small-scale data sets.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4137161"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1108/mip-03-2022-0113",
+      "title": "Absolute number heuristic in discount frames",
+      "authors": [
+        "Bo Wang"
+      ],
+      "year": 2022,
+      "venue": "Marketing Intelligence &amp; Planning",
+      "cited_by_count": 5,
+      "abstract": "Purpose \n          This study examines whether the absolute number heuristic holds for consumers' responses to higher-priced versus lower-priced products. Further, it explores whether the different construal level as induced from presence or absence of a product image can be a boundary condition for the absolute number heuristic. \n        \n        \n          Design/methodology/approach \n          Four experiments were conducted. In Experiments 1 and 2, participants were presented with a discount either in the amount off or percent off format, for products whose prices were 99 Yuan, 100 Yuan and 101 Yuan, respectively. In Experiment 3, the prices were changed to be 90 Yuan, 900 Yuan and 9,000 Yuan, respectively. In Experiment 4, the prices were 48 Yuan and 480 Yuan, respectively. \n        \n        \n          Findings \n          Experiment 1 showed neither main effect of discount frame nor interaction between price level and discount frame for all dependent variables (i.e. willingness to pay or WTP, purchase intention, attitude and perceived value), thus posing a challenge to the absolute number heuristic. Notably, the lack of main effect and interaction for purchase intention, attitude and perceived value were replicated in Experiments 2, 3 and 4. With WTP being the dependent variable, however, Experiment 4 showed that the effect of discount frame was dependent on price level. \n        \n        \n          Research limitations/implications \n          The current findings pose a challenge to the absolute number heuristic and contribute to the literature by revealing that the joint effects of price level and discount frame can be moderated by whether an ad contains the product image. \n        \n        \n          Practical implications \n          It is necessary for marketers to realize that inclusion of a product image may eliminate the effect of discount frame. Specifically, in terms of promoting a relatively expensive product, in order for the percent off discount to enhance the amount of money that consumers are willing to pay, an ad without a product image may be more favorable. \n        \n        \n          Originality/value \n          The current study is the first to challenge the absolute number heuristic by showing that the interaction between price level and discount frame is contingent on whether an ad contains the product image.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1108/mip-03-2022-0113"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23956/ijermt.v6i7.181",
+      "title": "Clustering Analysis of Greedy Heuristic Method in Zero_One Knapsack Problem",
+      "authors": [
+        "V. Selvi"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Emerging Research in Management and Technology",
+      "cited_by_count": 0,
+      "abstract": "Knapsack problem is a surely understood class of optimization problems, which tries to expand the profit of items in a knapsack without surpassing its capacity, Knapsack can be solved by several algorithms such like Greedy, dynamic programming, Branch &amp; bound etc. The solution to the zero_one knapsack problem (KP) can be viewed as the result of a sequence of decision. Clustering is the process of resolving that type of applications. Different clustering application for grouping elements with equal priority. In this paper we are introducing greedy heuristic algorithm for solving zero_one knapsack problem. We will exhibit a relative investigation of the Greedy, dynamic programming, B&amp;B and Genetic algorithms regarding of the complexity of time requirements, and the required programming efforts and compare the total value for each of them. Greedy and Genetic algorithms can be used to solve the 0-1 Knapsack problem within a reasonable time complexity. The worst-case time complexity (Big-O) of both algorithms is O(N). Using the greedy method, the algorithm can produce high quality clusters while reduce time the best partioning avoid the memory confinement problem during the process.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23956/ijermt.v6i7.181"
+    }
+  ]
+}

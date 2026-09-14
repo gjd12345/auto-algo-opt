@@ -1,0 +1,147 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_bilevel",
+    "label": "Bilevel knapsack",
+    "definition": "Leader-follower.",
+    "search_query": "bilevel knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Leader greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Reaction heuristic",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "bilevel knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:39Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s10107-006-0045-9",
+      "title": "Polyhedral properties for the intersection of two knapsacks",
+      "authors": [
+        "Quentin Louveaux",
+        "Robert Weismantel"
+      ],
+      "year": 2006,
+      "venue": "Mathematical Programming",
+      "cited_by_count": 6,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1007/s10107-006-0045-9",
+      "seeded": true,
+      "seed_heuristic": "Bilevel knapsack",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.2015.0676",
+      "title": "Bilevel Knapsack with Interdiction Constraints",
+      "authors": [
+        "Alberto Caprara",
+        "Margarida Carvalho",
+        "Andrea Lodi",
+        "Gerhard J. Woeginger"
+      ],
+      "year": 2016,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 81,
+      "abstract": "We consider a bilevel integer programming model that extends the classic 0–1 knapsack problem in a very natural way. The model describes a Stackelberg game where the leader’s decision interdicts a subset of the knapsack items for the follower. As this interdiction of items substantially increases the difficulty of the problem, it prevents the application of the classical methods for bilevel programming and of the specialized approaches that are tailored to other bilevel knapsack variants. Motivated by the simple description of the model, by its complexity, by its economic applications, and by the lack of algorithms to solve it, we design a novel viable way for computing optimal solutions. Finally, we present extensive computational results that show the effectiveness of the new algorithm on instances from the literature and on randomly generated instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.2015.0676"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.23956/ijermt.v6i7.181",
+      "title": "Clustering Analysis of Greedy Heuristic Method in Zero_One Knapsack Problem",
+      "authors": [
+        "V. Selvi"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Emerging Research in Management and Technology",
+      "cited_by_count": 0,
+      "abstract": "Knapsack problem is a surely understood class of optimization problems, which tries to expand the profit of items in a knapsack without surpassing its capacity, Knapsack can be solved by several algorithms such like Greedy, dynamic programming, Branch &amp; bound etc. The solution to the zero_one knapsack problem (KP) can be viewed as the result of a sequence of decision. Clustering is the process of resolving that type of applications. Different clustering application for grouping elements with equal priority. In this paper we are introducing greedy heuristic algorithm for solving zero_one knapsack problem. We will exhibit a relative investigation of the Greedy, dynamic programming, B&amp;B and Genetic algorithms regarding of the complexity of time requirements, and the required programming efforts and compare the total value for each of them. Greedy and Genetic algorithms can be used to solve the 0-1 Knapsack problem within a reasonable time complexity. The worst-case time complexity (Big-O) of both algorithms is O(N). Using the greedy method, the algorithm can produce high quality clusters while reduce time the best partioning avoid the memory confinement problem during the process.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.23956/ijermt.v6i7.181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/130906593",
+      "title": "A Study on the Computational Complexity of the Bilevel Knapsack Problem",
+      "authors": [
+        "Alberto Caprara",
+        "Margarida Carvalho",
+        "Andrea Lodi",
+        "Gerhard J. Woeginger"
+      ],
+      "year": 2014,
+      "venue": "SIAM Journal on Optimization",
+      "cited_by_count": 67,
+      "abstract": "We analyze the computational complexity of three fundamental variants of the bilevel knapsack problem. All three variants are shown to be complete for the second level of the polynomial hierarchy. We also discuss the somewhat easier situation where the weight and profit coefficients in the knapsack problem are encoded in unary: two of the considered bilevel variants become solvable in polynomial time, whereas the third becomes NP-complete. Furthermore, we design a polynomial time approximation scheme for this third variant, whereas the other two variants cannot be approximated in polynomial time within any constant factor (assuming P\\;$\\ne$\\;NP).",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/130906593"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s12532-023-00244-6",
+      "title": "Exact methods for discrete $${\\varGamma }$$-robust interdiction problems with an application to the bilevel knapsack problem",
+      "authors": [
+        "Yasmine Beck",
+        "Ivana Ljubić",
+        "Martin Schmidt"
+      ],
+      "year": 2023,
+      "venue": "Mathematical Programming Computation",
+      "cited_by_count": 6,
+      "abstract": "Abstract Developing solution methods for discrete bilevel problems is known to be a challenging task—even if all parameters of the problem are exactly known. Many real-world applications of bilevel optimization, however, involve data uncertainty. We study discrete min-max problems with a follower who faces uncertainties regarding the parameters of the lower-level problem. Adopting a  $$\\varGamma $$ \n          Γ \n          -robust approach, we present an extended formulation and a multi-follower formulation to model this type of problem. For both settings, we provide a generic branch-and-cut framework. Specifically, we investigate interdiction problems with a monotone  $$\\varGamma $$ \n          Γ \n          -robust follower and we derive problem-tailored cuts, which extend existing techniques that have been proposed for the deterministic case. For the  $$\\varGamma $$ \n          Γ \n          -robust knapsack interdiction problem, we computationally evaluate and compare the performance of the proposed algorithms for both modeling approaches.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s12532-023-00244-6"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:43:09Z"
+}

@@ -1,0 +1,124 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_prec",
+    "label": "Precedence knapsack",
+    "definition": "Item precedences.",
+    "search_query": "precedence constrained knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Precedence greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Topo-order greedy",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "precedence constrained knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:23Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/inte.22.3.100",
+      "title": "Precedence Constrained Routing and Helicopter Scheduling: Heuristic Design",
+      "authors": [
+        "M. T. Fiala Timlin",
+        "W. R. Pulleyblank"
+      ],
+      "year": 1992,
+      "venue": "Interfaces",
+      "cited_by_count": 39,
+      "abstract": "Mobil Producing Nigeria has an offshore oil field consisting of approximately 45 platforms. Each day certain platforms must be visited to regulate flow rates and a number of people must be transported between specified pairs of platforms. All transport is performed by helicopter. Mobil wanted to find a route for each daily set of stops that satisfied all the requirements and minimized the total distance flown. We developed two heuristics that produce very good solutions to this problem. The first ignores the problem of helicopter capacity, and the second handles it explicitly. Mobil has cited two benefits of the optimization software: all routing requirements are satisfied, and a significant reduction of total daily flying time has been achieved.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/inte.22.3.100"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.1030.0050",
+      "title": "A Local-Search-Based Heuristic for the Demand-Constrained Multidimensional Knapsack Problem",
+      "authors": [
+        "Paola Cappanera",
+        "Marco Trubian"
+      ],
+      "year": 2005,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 38,
+      "abstract": "We consider an extension of the 0–1 multidimensional knapsack problem in which there are greater-than-or-equal-to inequalities, called demand constraints, in addition to the standard less-than-or-equal-to constraints. Moreover, the objective function coefficients are not constrained in sign. This problem is worth considering because it is embedded in models of practical application, it has an intriguing combinatorial structure, and it appears to be a challenging problem for commercial ILP solvers. Our approach is based on a nested tabu-search algorithm in which neighborhoods with different structures are exploited. First, a tabu-search procedure is carried out in which mainly the infeasible region is explored. Once feasibility has been established, a second tabu-search procedure, which analyzes only feasible solutions, is applied. The algorithm has been tested on a wide set of instances. Computational results are discussed.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.1030.0050"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4350988",
+      "title": "Cardinality-Constrained Continuous Knapsack Problem with Concave Piecewise-Linear Utilities",
+      "authors": [
+        "Miao Bai",
+        "Carlos Cardonha"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We study an extension of the cardinality-constrained knapsack problem wherein each item has a concave piecewise linear utility structure (CCKP), which is motivated by applications such as resource management problems in monitoring and surveillance tasks. Our main contributions are combinatorial algorithms for the offline CCKP and an online version of the CCKP. For the offline problem, we present a fully polynomial-time approximation scheme and show that it can be cast as the maximization of a submodular function with cardinality constraints; the latter property allows us to derive a greedy (1 − 1/e)-approximation algorithm. For the online CCKP in the random order model, we derive a 10.427/α -competitive algorithm based on α-approximation algorithms for the offline CCKP; moreover, we derive stronger guarantees for the cases wherein the cardinality capacity is very small or relatively large. Finally, we investigate the empirical performance of the proposed algorithms in numerical experiments.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4350988"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6092646",
+      "title": "A Continuous-Knapsack-Based Framework for Constrained Static Assortment Optimization",
+      "authors": [
+        "Yanzhi Li",
+        "Woonghee Tim Huh",
+        "Hongbin Zhang"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We consider the constrained static assortment optimization problem under the Multinomial Logit (MNL) model and its extensions, including the Customized Assortment Problem (CAP) and the joint assortment and pricing problem. Building on the knapsack formulation of MNL assortment planning, we introduce a novel concept, termed the modified reduced profit, defined as the maximum attainable value of the knapsack model for a given item set under a fixed no-purchase probability. We further establish that the modified reduced profit, which is a continuous knapsack set function, is monotone and submodular. This structural property allows us to leverage standard greedy algorithms to obtain a (1-1/e-ϵ)-approximation for general constraint families, including cardinality, budget, and matroid constraints. Our results significantly improve upon the best-known approximation guarantees for these problems, particularly for matroid constraints and the CAP model with a constant number of segments. Furthermore, we provide a faster constant-factor approximation algorithm that achieves a ratio of (1-1/e)/2 with lower query complexity, offering a practical trade-off between solution quality and computational efficiency.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6092646"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    }
+  ]
+}

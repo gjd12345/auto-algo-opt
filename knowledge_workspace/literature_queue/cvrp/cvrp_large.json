@@ -1,0 +1,151 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_large",
+    "label": "Large-scale CVRP",
+    "definition": "Hundreds of customers.",
+    "search_query": "large scale VRP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Restricted NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Ruin-and-recreate",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "large scale capacitated VRP nearest neighbor heuristic",
+  "harvested_at": "2026-09-14T08:12:59Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.15.4.333.24890",
+      "title": "The Granular Tabu Search and Its Application to the Vehicle-Routing Problem",
+      "authors": [
+        "Paolo Toth",
+        "Daniele Vigo"
+      ],
+      "year": 2003,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 388,
+      "abstract": "We describe a new variant, called granular tabu search, of the well-known tabu-search approach. The method uses an effective intensification/diversification tool that can be successfully applied to a wide class of graph-theoretic and combinatorial-optimization problems. Granular tabu search is based on the use of drastically restricted neighborhoods, not containing the moves that involve only elements that are not likely to belong to good feasible solutions. These restricted neighborhoods are called granular, and may be seen as an efficient implementation of candidate-list strategies proposed for tabu-search algorithms. Results of computational testing of the proposed approach on the well-known symmetric capacitated and distance-constrained vehicle-routing problem are discussed, showing that the approach is able to determine very good solutions within short computing times.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.15.4.333.24890",
+      "seeded": true,
+      "seed_heuristic": "Toth-Vigo granular tabu",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1757-899x/852/1/012090",
+      "title": "Comparison study between nearest neighbor and farthest insert algorithms for solving VRP model using heuristic method approach",
+      "authors": [
+        "Wilson Kosasih",
+        "Ahmad",
+        "Lithrone Laricha Salomon",
+        "Febricky"
+      ],
+      "year": 2020,
+      "venue": "IOP Conference Series: Materials Science and Engineering",
+      "cited_by_count": 5,
+      "abstract": "Abstract In Indonesia, transportation costs from physical distribution still tend to be high because not all business people can optimize their distribution routes. This paper discusses a comparative study between Nearest Neighbor and Farthest Insert algorithms in solving a Vehicle Routing Problem (VRP) model. Aim of this study is to determine the most optimum distribution route so that the distance or time or transportation costs can be minimized. This research was conducted at a bottled water distribution company. In the end, the comparative study was considered effective as a basis for decision making on the distribution route, where there were indications of distance savings or reduced costs, and increased utilization of the higher vehicle fleet.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1757-899x/852/1/012090"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2021.02.05.429957",
+      "title": "Large-scale tandem mass spectrum clustering using fast nearest neighbor searching",
+      "authors": [
+        "Wout Bittremieux",
+        "Kris Laukens",
+        "William Stafford Noble",
+        "Pieter C. Dorrestein"
+      ],
+      "year": 2021,
+      "venue": null,
+      "cited_by_count": 5,
+      "abstract": "Abstract \n         \n          Rationale \n          \n          Advanced algorithmic solutions are necessary to process the ever increasing amounts of mass spectrometry data that is being generated. Here we describe the\n           falcon \n          spectrum clustering tool for efficient clustering of millions of MS/MS spectra.\n          \n         \n         \n          Methods \n          \n           falcon \n          succeeds in efficiently clustering large amounts of mass spectral data using advanced techniques for fast spectrum similarity searching. First, high-resolution spectra are binned and converted to low-dimensional vectors using feature hashing. Next, the spectrum vectors are used to construct nearest neighbor indexes for fast similarity searching. The nearest neighbor indexes are used to efficiently compute a sparse pairwise distance matrix without having to exhaustively perform all pairwise spectrum comparisons within the relevant precursor mass tolerance. Finally, density-based clustering is performed to group similar spectra into clusters.\n          \n         \n         \n          Results \n          \n          Several state-of-the-art spectrum clustering tools were evaluated using a large draft human proteome dataset consisting of 25 million spectra, indicating that alternative tools produce clustering results with different characteristics. Notably,\n           falcon \n          generates larger highly pure clusters than alternative tools, leading to a larger reduction in data volume without the loss of relevant information for more efficient downstream processing.\n          \n         \n         \n          Conclusions \n          \n           falcon \n          is a highly efficient spectrum clustering tool. It is publicly available as open source under the permissive BSD license at\n           https://github.com/bittremieux/falcon \n          .",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2021.02.05.429957"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21070/icecrs.v12i3.1935",
+      "title": "Nearest Neighbor Heuristic Minimizes Logistics Distribution Distance And Travel Time",
+      "authors": [
+        "Naufal Akmal Christiono",
+        "Dewi Komala Sari"
+      ],
+      "year": 2024,
+      "venue": "Proceedings of The ICECRS",
+      "cited_by_count": 0,
+      "abstract": "General Background Supply chain systems require strategic management to distribute production outputs continuously and accurately to consumers. Specific Background PT. Laprint Jaya experiences fluctuating shipping volumes and limited delivery fleets, causing complex Single Depot Capacitated Vehicle Routing Problems during dense daily schedules. Knowledge Gap Traditional routing decisions often fail to overcome fleet limitations and geographical complexities, requiring a practical technology approach to determine the shortest continuous paths. Aims This study analyzes optimal shipping routes regarding physical span and duration using the Nearest Neighbor method. Results Implementing this specific approach successfully cut the delivery span by 25 kilometers and reduced the total duration by 35 minutes compared to the initial manual routing procedures. Novelty This research demonstrates the practical integration of the Nearest Neighbor algorithm with digital maps to solve multi-point manufacturing product distribution problems. Implications Adopting this routing strategy facilitates supply chain management in determining optimal shipping operations, avoiding delays, and maximizing overall operational sustainability.\n\nHighlights:\n\n\n\nThe Single Depot Capacitated Vehicle Routing Problem occurs due to fluctuating shipping volumes and restricted fleet capacities.\n\n\nDigital map integration identifies the shortest continuous paths for complex delivery schedules.\n\n\nOptimized shipping operations successfully cut 25 kilometers and saved 35 minutes from the initial route.\n\n\nKeywords: Vehicle Routing Problem, Supply Chain Management, Delivery Route Optimization, Heuristic Algorithm, Operational Efficiency",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21070/icecrs.v12i3.1935"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2024.01.28.577627",
+      "title": "Approximate Nearest Neighbor Graph Provides Fast and Efficient Embedding with Applications in Large-scale Biological Data",
+      "authors": [
+        "Jianshu Zhao",
+        "Jean Pierre-Both",
+        "Konstantinos T. Konstantinidis"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n         \n         Dimension reduction (or embedding), as a popular way to visualize data, has been a fundamental technique in many applications. Non-linear dimension reduction such as t-SNE and UMAP has been widely used in visualizing single cell RNA sequencing data and metagenomic binning and thus receive many attentions in bioinformatics and computational biology. Here in this paper, we further improve UMAP-like non-linear dimension reduction algorithms by updating the graph- based nearest neighbor search algorithm (e.g. we use Hierarchical Navigable Small World Graph, or HNSW instead of K-graph) and combine several aspects of t-SNE and UMAP to create a new non-linear dimension reduction algorithm. We also provide several additional features including computation of LID (Local Intrinsic Dimension) and hubness, which can reflect structures and properties of the underlying data that strongly affect nearest neighbor search algorithm in traditional UMAP-like algorithms and thus the quality of embeddings. We also combined the improved non-linear dimension reduction algorithm with probabilistic data structures such as MinHash-likes ones (e.g., ProbMinHash et.al.) for large-scale biological sequence data visualization. Our library is called annembed and it was implemented and fully parallelized in Rust. We benchmark it against popular tools mentioned above using standard testing datasets and it showed competitive accuracy. Additionally, we apply our library in three real-world problems: visualizing large-scale microbial genomic database, visualizing single cell RNA sequencing data and metagenomic binning, to showcase the performance, scalability and efficiency of the library when distance computation is expensive or when the number of data points is large (e.g. millions or billions). Annembed can be found here:\n          https://github.com/jean-pierreBoth/annembed",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2024.01.28.577627"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2022.09.08.507181",
+      "title": "<tt>DrTransformer</tt>\n                  : Heuristic cotranscriptional RNA folding using the nearest neighbor energy model",
+      "authors": [
+        "Stefan Badelt",
+        "Ronny Lorenz",
+        "Ivo L. Hofacker"
+      ],
+      "year": 2022,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n         \n          Background \n          Folding during transcription can have an important influence on the structure and function of ℝNA molecules, as regions closer to the 5’ end can fold into metastable structures before potentially stronger interactions with the 3’ end become available. Thermodynamic ℝNA folding models are not suitable to analyze this problem, as they can only calculate properties of the equilibrium distribution. Other software packages that simulate the kinetic process of ℝNA folding during transcription exist, but they are mostly applicable for short sequences. \n         \n         \n          Results \n          We present a new algorithm that tracks changes to the ℝNA secondary structure ensemble during transcription. At every transcription step, new representative local minima are identified, a neighborhood relation is defined and transition rates are estimated for kinetic simulations. After every simulation, a part of the ensemble is removed and the remainder is used to search for new potentially relevant structures. The presented algorithm is deterministic (up to numeric instabilities of simulations), fast (in comparison with existing methods), and it is capable of folding ℝNAs much longer than 200 nucleotides. \n         \n         \n          Availability \n          \n          This software is open-source and available at\n           https://github.com/ViennaRNA/drtransformer \n          .",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2022.09.08.507181"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.61194/sijl.v2i1.187",
+      "title": "Capacitated Vehicle Routing Problem (CVRP) with Sweep and Nearest Neighbor Algorithm",
+      "authors": [
+        "Erly Ekayanti",
+        "Sugianto",
+        "Imaduddin Bachtiar Efendi"
+      ],
+      "year": 2024,
+      "venue": "Sinergi International Journal of Logistics",
+      "cited_by_count": 5,
+      "abstract": "The Capacitated Vehicle Routing Problem (CVRP) presents significant challenges in shipping route optimization and logistics management. These challenges include balancing vehicle capacity, minimizing travel distance, and efficiently grouping delivery points, all of which are crucial for enhancing operational efficiency and reducing costs. This research aims to apply a combination of the Sweep and Nearest Neighbor algorithms to address the CVRP, seeking to improve route efficiency and manage vehicle capacity effectively. The Sweep algorithm is employed to cluster pickup points based on their polar angle from the depot, facilitating efficient grouping and optimal vehicle capacity management. Within each cluster, the Nearest Neighbor algorithm is implemented to optimize the sequence of visits, minimizing total travel distance by sequentially selecting the next closest point. The Haversine Distance is used to calculate the distances between points, ensuring geographical accuracy compared to the Euclidean method. Experimental results demonstrate that this hybrid approach yields shorter routes. Quantitative analysis shows a significant reduction 13% in total travel distance when using this combination of algorithms, highlighting its effectiveness in solving the CVRP. This research demonstrates that combining the Sweep and Nearest Neighbor algorithms provides an efficient solution to the CVRP, improving route optimization and vehicle capacity management. The findings contribute valuable insights to logistics management, with practical implications for enhancing shipping route efficiency.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.61194/sijl.v2i1.187"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:18Z"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_metric",
+  "selected": [
+    {
+      "doi": "10.1137/0206041",
+      "heuristic_name": "Nearest Neighbor",
+      "why": "Rosenkrantz et al. analyse nearest-neighbor construction for metric TSP.",
+      "steps": [
+        "Build a tour by nearest-neighbor selection among remaining nodes",
+        "The analysis assumes metric/triangle-inequality distances"
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "next_node_score",
+      "not_the_original": "k-NN truncation is the evaluator contract, not the 1977 paper."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

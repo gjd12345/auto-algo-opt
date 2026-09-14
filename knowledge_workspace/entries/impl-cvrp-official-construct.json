@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Official CVRP construct: nearest feasible customer",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The evaluator owns capacity filtering and forced depot return when no customer fits. The template returns the nearest feasible unvisited customer. Returning 0 is an early depot return. This is not Clarke–Wright merging, ",
+  "attributes": {
+    "interface": "select_next_node(..., rest_capacity, demands, ...); may return 0 for depot",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/cvrp_construct/prob.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/cvrp_construct/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/cvrp_construct/prob.py",
+      "sha256": "aa8954d02d05949ab6425c592b073e834b7d46fe6a1111cbfa5ac8cad1ca81b7"
+    }
+  ],
+  "id": "impl-cvrp-official-construct",
+  "content_sha256": "2707773b5f267f6e7b5e223f4c8936e802d8a96f2476700a1ad3eb850fe19b25"
+}

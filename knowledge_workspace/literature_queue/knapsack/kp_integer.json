@@ -1,0 +1,159 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_integer",
+    "label": "Integer knapsack",
+    "definition": "Integer copies.",
+    "search_query": "integer knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Integer density greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Rounding heuristic",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "integer knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:45Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.27.3.431",
+      "title": "The Status of Nonlinear Programming Software",
+      "authors": [
+        "Allan D. Waren",
+        "Leon S. Lasdon"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "cited_by_count": 52,
+      "abstract": "Desirable features of software for solving nonlinear optimization problems are discussed, and several available codes for solving NLPs are described in terms of these features. Codes are classified by algorithm type. Addresses where codes may be obtained are given. The paper concludes with a brief survey of available computational experience with several classes of algorithms and with some of the specific codes considered.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.27.3.431",
+      "seeded": true,
+      "seed_heuristic": "Integer knapsack heuristics",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.5.2.266",
+      "title": "Discrete-Variable Extremum Problems",
+      "authors": [
+        "George B. Dantzig"
+      ],
+      "year": 1957,
+      "venue": "Operations Research",
+      "cited_by_count": 648,
+      "abstract": "This paper reviews some recent successes in the use of linear programming methods for the solution of discrete-variable extremum problems. One example of the use of the multistage approach of dynamic programming for this purpose is also discussed.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.5.2.266",
+      "seeded": true,
+      "seed_heuristic": "Integer / unbounded greedy",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.22531/muglajsci.469475",
+      "title": "COMPARISON OF CLASSIC AND GREEDY HEURISTIC ALGORITHM RESULTS IN INTEGER PROGRAMMING: KNAPSACK PROBLEMS",
+      "authors": [
+        "Burcu DURMUŞ",
+        "Öznur İŞÇİ GÜNERİ",
+        "Aynur İNCEKIRIK"
+      ],
+      "year": 2019,
+      "venue": "Mugla Journal of Science and Technology",
+      "cited_by_count": 4,
+      "abstract": "This study\nis designed to investigate the comparison of Greedy and classic algorithm\nsolution results and the results of solution algorithms for integer linear\nprogramming (ILP) problems. The purpose of the study is to examine the\nheuristic Greedy algorithm that solves the ILP problems and to reveal the differences\nand similarities between the classic and heuristic Greedy algorithms on the\napplication.\n\nFor this purpose, a software (JAVA Program)\nwhich solves Knapsack Problems (KP) with Greedy terminology has been developed\nand problems in different models have been solved with objective function and\nconstraints. The problems are solved by both the conventional classic algorithm\nand the Greedy algorithm and the solution results are compared. In the\nstudy, the results of pure and (0-1) binary backpack problems were found to be\nthe same as those of heuristic algorithms for small problems. In addition, the\ndeveloped program solves single and two-dimensional KP in the literature.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.22531/muglajsci.469475"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.675602",
+      "title": "Fast Fourier Transform and its Applications to Integer Knapsack Problems",
+      "authors": [
+        "Yurii Nesterov"
+      ],
+      "year": 2005,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "In this paper we suggest a new efficient technique for solving integer knapsack problems. Our algorithms can be seen as application of Fast Fourier Transform to generating functions of integer polytopes. Using this approach, it is possible to count the number of boolean solutions of a single n-dimensional Diophantine equation [a,x]= b in O(|a|1 ln|a1|ln n) operations. Another application example is an integer knapsack optimization problem of volume b, which can be solved in O(|a|1 ln|a1|ln n + b ln2 n) operations of exact real arithmetics. These complexity estimates improve by a factor of n the complexity of the traditional Dynamic Programming technique.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.675602"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.30996/heuristic.v23i1.133590",
+      "title": "Optimization of Vehicle Polish Liquid Production Quantity at Son Polish Using Integer Programming",
+      "authors": [
+        "Aloysius Lionel Moise",
+        "Herlina Herlina"
+      ],
+      "year": 2026,
+      "venue": "Heuristic",
+      "cited_by_count": 0,
+      "abstract": "Son Polish is an industry that produces various liquid products that are useful for caring for the body and components in automotive vehicles. Although it has been established for a long time, Son Polish will only undergo the acquisition process for the first time in 2025. So that in its implementation, Son Polish does not have a production management system in determining the optimal daily production output by considering the capacity of the company's resources. Considering that Son Polish currently has 8 types of products, each of which has different resource needs, of course. This condition causes a deviation that occurs between the amount of production and consumer demand who have various types of products. Therefore, the purpose of this study is to determine the optimal combination of production amounts. Based on the results of the integer programming model using the branch and bound method which was completed using lingo software, a combination of Son Polish production was obtained by producing 3 batches of Son Spray, 2 batches of Son Jelly, 1 batch of Son Taro, 2 batches of Tire Polish, 2 batches of Son Black, 1 batch of Son R, 1 batch of Haalus Compound and 1 batch of Rough Compound. With a profit obtained of Rp. 136,365,000.00/month or equivalent to Rp. 5,454,600.00/day.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.30996/heuristic.v23i1.133590"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.16.1.103",
+      "title": "Dynamic Programming Algorithms for the Integer Programming Problem—I: The Integer Programming Problem Viewed as a Knapsack Type Problem",
+      "authors": [
+        "Jeremy F. Shapiro"
+      ],
+      "year": 1968,
+      "venue": "Operations Research",
+      "cited_by_count": 47,
+      "abstract": "Gomory has transformed the integer programming problem into a related group optimization problem which can be more easily solved. An optimal solution to the group problem is optimal for the integer programming problem from which it is derived if the solution is feasible. An algorithm (IP Algorithm I) for solving the group optimization problem is developed, and sufficient conditions on its use are given. The usefulness of IP Algorithm I is extended by amending it to find alternative optima. In a subsequent paper, this algorithm is extended to an algorithm that can solve any integer programming problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.16.1.103"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6393594",
+      "title": "A Hybrid Population PDHG Heuristic for Feasibility Recovery in Mixed-Integer Programming",
+      "authors": [
+        "Jin Xin Cao"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Mixed-integer programming (MIP) often becomes difficult in practice not because the relaxation is uninformative, but because fractional trajectories fail to cross the last barrier to feasibility. We propose a hybrid population primaldual hybrid gradient heuristic (HP-PDHG) that combines population PDHG relaxation search with a barrier-crossing perturbation, progressive projection toward integrality, and feasibility-aware repair. Although one perturbation mechanism is inspired by WKB-style tunneling, the method is classical and serves as a feasibility-recovery heuristic. On the audited four-instance benchmark, HP-PDHG returns feasible incumbents on all four cases, whereas the matched population-PDHG baseline is infeasible on all four. In a 20-seed robustness study (80 paired runs), HP-PDHG achieves 80/80 feasible outcomes versus 0/80 for the baseline, with paired sign-test p = 8.27 × 10−25 and paired Wilcoxon p = 2.75×10−15. On a 12-instance official MIPLIB 2017 extension evaluated over five seeds, HP-PDHG reduces mean audited violation on 8 instances, ties on 2, loses on 2, and wins the per-instance Wilcoxon test (p = 0.032); the largest reductions occur on p200x1188c (81.8%), neos3046615-murg (62.7%), and neos-2657525-crna (53.6%). On a six-instance subset benchmarked against GA, DE, SHADE, SL-PSO, and a populationPDHG baseline, HP-PDHG attains the best average Friedman rank (1.75), although Holm-adjusted pairwise tests remain conservative. Ablation shows that progressive projection and repair are decisive, while the barrier-crossing perturbation mainly broadens exploration. A 390-run sensitivity study indicates a broad plateau rather than a narrow optimum. These results support HP-PDHG as a MIP feasibility heuristic.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6393594"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:43:11Z"
+}

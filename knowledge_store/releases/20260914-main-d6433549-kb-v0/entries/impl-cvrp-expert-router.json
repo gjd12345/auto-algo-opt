@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "CVRP expert router: evolve select_expert over frozen construct experts",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Nine numeric instance features are computed from coords/demands/capacity. Four frozen construct experts (hashed in a contract) are pre-evaluated; the candidate only maps features to one expert_id. Fitness is mean relativ",
+  "attributes": {
+    "interface": "select_expert(instance_features, expert_summaries) -> expert_id",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py",
+      "sha256": "739ca01d69a1b5dd385c040e61bcb94b9d9cabe6d4376d0f6c33c57ffbc0ae18"
+    }
+  ],
+  "id": "impl-cvrp-expert-router",
+  "content_sha256": "c345de398dd98bf06a454e2c172d9b72f85c8fc59d564141e3a1482c9b7bde68"
+}

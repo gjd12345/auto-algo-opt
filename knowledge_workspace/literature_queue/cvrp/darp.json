@@ -1,0 +1,148 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "darp",
+    "label": "Dial-a-ride",
+    "definition": "Passenger transport with windows.",
+    "search_query": "dial a ride problem heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "DARP insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "DARP regret",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "dial a ride problem heuristic",
+  "harvested_at": "2026-09-14T08:25:34Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.29.4.342",
+      "title": "Computational Approaches to Stochastic Vehicle Routing Problems",
+      "authors": [
+        "Dimitris Bertsimas",
+        "Philippe Chervi",
+        "Michael Peterson"
+      ],
+      "year": 1995,
+      "venue": "Transportation Science",
+      "cited_by_count": 82,
+      "abstract": "We report computational test results for several graph-based a priori heuristics for the Euclidean plane versions of two well-known stochastic optimization problems, the probabilistic traveling salesman problem (PTSP) and the probabilistic (or stochastic) vehicle routing problem (PVRP). These heuristics are termed a priori because they design vehicle routes prior to realization of demands. Our tests compare the quality of such solutions to sample averages of a posteriori solutions of the deterministic realizations—the underlying TSPs and VRPs. Our results indicate that the simplest implementations give average cost performance within 5% of the latter, while the best implementations show a gap of only about 1%. Since running times are modest, we conclude that the a priori approaches offer a large potential benefit to the practitioner seeking to obtain good performance in a situation where solving repeated deterministic instances of the TSP or VRP is impractical or otherwise undesirable.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.29.4.342",
+      "seeded": true,
+      "seed_heuristic": "DARP heuristic",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/cb2afb16zc952z49cazaf27zef38db0b67be",
+      "title": "Heuristic and exact algorithms for solving the electric autonomous dial-a-ride problem",
+      "authors": [
+        "Yue Su"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Algorithmes heuristiques et exacts pour résoudre le problème du dial-a-ride avec les véhicules électriques autonomes \n         Cette thèse propose des algorithmes heuristiques et exacts efficaces pour résoudre le problème E-ADARP (Electric Autonomous Dial-A-Ride Problem), qui consiste à concevoir un ensemble d'itinéraires à coût minimum qui répond à toutes les demandes des clients pour une flotte de véhicules électriques autonomes (EAVs). L'E-ADARP présente deux caractéristiques importantes : (i) l'emploi des EAVs et une politique de recharge partielle; (ii) la fonction objectif de somme pondérée qui minimise le temps de trajet total et le temps de trajet total excédentaire de l'utilisateur. Dans cette thèse, nous proposons d'abord un algorithme de recuit déterministe (DA). La recharge partielle (i) est gérée par un schéma d'évaluation d'itinéraire exact de complexité temporelle linéaire. Pour aborder (ii), nous proposons une nouvelle méthode qui permet des calculs efficaces du temps de parcours minimal de l'utilisateur en introduisant une représentation fragmentée des chemins. Pour valider les performances de l'algorithme DA, nous comparons les résultats de notre algorithme aux résultats de l'algorithme Branch-and-Cut (B&amp;C) sur les instances existantes. Notre algorithme DA fournit 25 nouvelles meilleures solutions et 45 solutions égales pour 84 instances existantes. Nous établissons de nouvelles instances avec jusqu'à 8 véhicules et 96 requêtes, et nous fournissons 19 nouvelles solutions pour ces instances. Ensuite, nous présentons un algorithme CG, qui est intégré dans le schéma Branch-and-price (B&amp;P) pour résoudre exactement l'E-ADARP. Notre algorithme CG s'appuie sur un algorithme d'étiquetage efficace pour générer des colonnes avec des coûts réduits négatifs. Dans l'extension des étiquettes, le principal défi consiste à déterminer tous les horaires optimaux de temps de trajet en excès d'utilisateur. Pour résoudre ce problème, nous appliquons la représentation basée sur les fragments et proposons une nouvelle approche pour extraire les fragments des arcs tout en garantissant l'optimalité de l'excès de temps de parcours de l'utilisateur. Nous construisons ensuite un nouveau graphe qui préserve toutes les routes réalisables du graphe original en énumérant tous les fragments réalisables, en les extrayant en arcs et en les connectant les uns aux autres, aux dépôts et aux stations de recharge de manière réalisable. Sur le nouveau graphe, nous appliquons des règles de dominance fortes et des vérifications de faisabilité à temps constant pour calculer efficacement les chemins les plus courts. Dans les expériences, nous résolvons 71 instances sur 84 optimalement, améliorons 30 bornes inférieures et générons 41 nouvelles meilleures solutions sur des instances précédemment résolues et non résolues. Enfin, nous étudions le bi-objectif E-ADARP (BO-EADARP), qui traite le temps de trajet total et le temps de trajet total de l'utilisateur excédentaire comme des objectifs distincts. Pour aborder le BO-EADARP, nous introduisons deux algorithmes de recherche dans l'espace de critères et un algorithme de recherche dans l'espace de décision ( l'algorithme BOBP). Nous appliquons ces algorithmes pour résoudre le BO-EADARP sur des instances de petite à moyenne taille avec différentes restrictions de batterie minimales. Parmi les trois algorithmes, l'algorithme BOBP s'avère être le plus efficace. Nous analysons ensuite les solutions efficaces sous différentes contraintes énergétiques. Nos observations révèlent une augmentation notable des temps de trajet totaux pour les solutions efficaces obtenues avec des restrictions d'énergie plus élevées, tandis que les temps de trajet excédentaires totaux correspondants restent stables. Pour chaque niveau de restriction d'énergie, les solutions efficaces obtenues offrent des informations managériales pour les fournisseurs de services rentables et non rentables: un objectif peut être amélioré significativement avec une légère augmentation de l'autre.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/cb2afb16zc952z49cazaf27zef38db0b67be"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/a12020039",
+      "title": "A Hybrid Adaptive Large Neighborhood Heuristic for a Real-Life Dial-a-Ride Problem",
+      "authors": [
+        "Slim Belhaiza"
+      ],
+      "year": 2019,
+      "venue": "Algorithms",
+      "cited_by_count": 15,
+      "abstract": "The transportation of elderly and impaired people is commonly solved as a Dial-A-Ride Problem (DARP). The DARP aims to design pick-up and delivery vehicle routing schedules. Its main objective is to accommodate as many users as possible with a minimum operation cost. It adds realistic precedence and transit time constraints on the pairing of vehicles and customers. This paper tackles the DARP with time windows (DARPTW) from a new and innovative angle as it combines hybridization techniques with an adaptive large neighborhood search heuristic algorithm. The main objective is to improve the overall real-life performance of vehicle routing operations. Real-life data are refined and fed to a hybrid adaptive large neighborhood search (Hybrid-ALNS) algorithm which provides a near-optimal routing solution. The computational results on real-life instances, in the Canadian city of Vancouver and its region, and DARPTW benchmark instances show the potential improvements achieved by the proposed heuristic and its adaptability.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/a12020039"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20335",
+      "title": "A heuristic two‐phase solution approach for the multi‐objective dial‐a‐ride problem",
+      "authors": [
+        "Sophie N. Parragh",
+        "Karl F. Doerner",
+        "Richard F. Hartl",
+        "Xavier Gandibleux"
+      ],
+      "year": 2009,
+      "venue": "Networks",
+      "cited_by_count": 75,
+      "abstract": "Abstract \n          In this article, we develop a heuristic two‐phase solution procedure for the dial‐a‐ride problem with two objectives. Besides the minimum cost objective a client centered objective has been defined. Phase one consists of an iterated variable neighborhood search‐based heuristic, generating approximate weighted sum solutions; phase two is a path relinking module, computing additional efficient solutions. Results for two sets of benchmark instances are reported. For the smaller instances, exact efficient sets are generated by means of the ϵ‐constraint method. Comparison shows that the proposed two‐phase method is able to generate high‐quality approximations of the true Pareto frontier. © 2009 Wiley Periodicals, Inc. NETWORKS, 2009",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20335"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1142/s0217595912500467",
+      "title": "A HYBRID GREEDY RANDOMIZED ADAPTIVE SEARCH HEURISTIC TO SOLVE THE DIAL-A-RIDE PROBLEM",
+      "authors": [
+        "FRANCESCA GUERRIERO",
+        "MARIA ELENA BRUNI",
+        "FRANCESCA GRECO"
+      ],
+      "year": 2013,
+      "venue": "Asia-Pacific Journal of Operational Research",
+      "cited_by_count": 18,
+      "abstract": "This paper presents a hybrid metaheuristic for solving the static dial-a-ride problem with heterogeneous vehicles and fixed costs. The hybridization combines a reactive greedy randomized adaptive search, used as outer scheme, with a tabu search heuristic in the local search phase. The algorithm is evaluated on well-known instances taken from the literature and on a set of randomly generated test problems, varying in the number of customers. Extensive computational results show the effectiveness of the hybrid approach in terms of trade-off between solution quality and computational time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1142/s0217595912500467"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-5283220/v1",
+      "title": "Deep Reinforcement Learning for Dial-A-Ride Problem",
+      "authors": [
+        "Özge ASLAN YILDIZ",
+        "İnci SARIÇİÇEK",
+        "Ahmet YAZICI"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "Abstract \n     Intelligent transportation systems are an essential issue within the scope of smart mobility. The Dial-a-Ride problem provides a solution integrated with intelligent transportation technologies to enable individuals to use public transportation systems effectively and efficiently. This problem involves determining the most effective and efficient routes using limited vehicles and resources to meet the demands of individuals in a specific region who need to travel to various destinations. Logistics service providers require systems that can deliver optimal solutions to these combinatorial problems within a reasonable time. Recently, there has been a significant increase in the use of artificial intelligence optimization algorithms such as meta-heuristics to solve such problems. However, to the best of our knowledge, no studies have explored the use of reinforcement learning for solving the DARP. In this study, the transformer-based deep reinforcement learning method is proposed to solve the Dial and Ride problem for a single service vehicle. The proposed method is compared against four different metaheuristic methods and demonstrates superior performance over them. Additionally, the proposed method is tested on a real-world scenario generated in the Buyukdere neighborhood of Eskisehir. The results demonstrate that the proposed method make it possible to solve the problem within a reasonable time. This study confirms that reinforcement learning can effectively address Dial-a-Ride Problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-5283220/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4483800",
+      "title": "A Linearly Decreasing Deterministic Annealing Algorithm for the Multivehicle Dial-a-Ride Problem",
+      "authors": [
+        "Amir Mortazavi",
+        "Milad Ghasri",
+        "Tapabrata Ray"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "Dial a ride problem (DARP) is a complex version of the pick-up and delivery problem with many practical applications in the field of transportation. This study proposes an enhanced deterministic annealing algorithm for the solution of large-scale multi-vehicle DARPs. The proposed method always explores the feasible search space; therefore, a feasible solution is guaranteed at any point of termination. This method utilises advanced local search operators to accelerate the search for optimal solutions and it relies on a linearly decreasing deterministic annealing schedule to limit poor jumps during the course of search. This study puts forward a systematic series of experiments to compare the performance of solution methods from various angles. The proposed method is compared with the most efficient methods reported in the literature i.e., the Adaptive Large Neighbourhood Search (ALNS), Evolutionary Local Search (ELS), and Deterministic Annealing (DA) using standard benchmarks. The results suggest that the proposed algorithm is on average faster than the state-of-the-art algorithms in reaching competitive objective values across the range of benchmarks.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4483800"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:01Z"
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_tw",
+  "selected": [
+    {
+      "doi": "10.1287/opre.46.3.330",
+      "heuristic_name": "Generalized Insertion Heuristic (TSPTW)",
+      "why": "Original TSPTW insertion construction with neighbourhood insert, reoptimization, feasibility/backtracking, and remove-reinsert post-optimization",
+      "steps": [
+        "Build route by inserting at each step a vertex into its neighbourhood on the current route",
+        "Perform local reoptimization after insertion",
+        "Check feasibility of the remaining route; backtrack when needed",
+        "After a feasible route, post-optimize by successive removal and reinsertion of all vertices"
+      ],
+      "eoh_map": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "not_the_original": "Insertion into a partial tour is not select_next_node. Not Solomon I1; Gendreau et al. generalized insertion for TSPTW."
+    }
+  ],
+  "rejected": [
+    {
+      "doi": "10.1145/2330163.2330219",
+      "reason": "missing abstract"
+    },
+    {
+      "doi": "10.1371/journal.pone.0130224",
+      "reason": "missing abstract"
+    },
+    {
+      "doi": "10.1007/s11067-017-9369-7",
+      "reason": "missing abstract"
+    },
+    {
+      "doi": "10.1145/298151.298356",
+      "reason": "missing abstract"
+    }
+  ],
+  "cannot_classify": false
+}

@@ -1,0 +1,40 @@
+{
+  "id": "method-lit-cvrp-basic-nearest-neighbor-visit-order",
+  "type": "method",
+  "title": "Nearest Neighbor visit order",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "literature",
+    "nearest-neighbor-visit-o"
+  ],
+  "status": "reviewed",
+  "summary": "Abstract states Nearest Neighbor is used to order visits, which is next-customer scoring by proximity.",
+  "attributes": {
+    "method_family": "literature",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "not_the_original": "Application paper: Clarke-Wright forms routes, then NN orders visits. Evaluator already filters capacity; this adapter is only the NN choice, not CW merge and not Sweep.",
+    "origin": "openalex+grok-4.5-screen"
+  },
+  "relations": {
+    "problems": [
+      "problem-lit-cvrp-basic"
+    ],
+    "sources": [
+      "src-lit-10-26760-mindjournal-v11i1-1-14"
+    ],
+    "implementations": []
+  },
+  "source_refs": [
+    "src-lit-10-26760-mindjournal-v11i1-1-14"
+  ],
+  "evidence_refs": [
+    "literature:10.26760/mindjournal.v11i1.1-14"
+  ],
+  "code_refs": [],
+  "content_sha256": "8c1e45e2aec9819f014f6fce466421db701ed80992fe4f185fcb5ab773f7c224"
+}

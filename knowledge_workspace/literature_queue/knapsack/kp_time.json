@@ -1,0 +1,120 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_time",
+    "label": "Time-dependent knapsack",
+    "definition": "Profits vary with time.",
+    "search_query": "time dependent knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Time-slot greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "TD knapsack local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "time dependent knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:25Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/asmb.2389",
+      "title": "Heuristic policies for stochastic knapsack problem with time‐varying random demand",
+      "authors": [
+        "Yingdong Lu"
+      ],
+      "year": 2018,
+      "venue": "Applied Stochastic Models in Business and Industry",
+      "cited_by_count": 1,
+      "abstract": "Abstract In this paper, we consider the classic stochastic (dynamic) knapsack problem, a fundamental mathematical model in revenue management, with general time‐varying random demand. Our main goal is to study the optimal policies, which can be obtained by solving the dynamic programming formulated for the problem, both qualitatively and quantitatively. It is well known that, when the demand size is fixed and the demand distribution is stationary over time, the value function of the dynamic programming exhibits extremely useful first‐ and second‐order monotonicity properties, which lead to monotonicity properties of the optimal policies. In this paper, we are able to verify that these results still hold even in the case that the price distributions are time dependent. When we further relax the demand size distribution assumptions and allow them to be arbitrary, for example, in random batches, we develop a scheme for using value function of alternative unit demand systems to provide bounds to the value function. These results confirm some of the basic understandings of the stochastic knapsack problem. As a natural consequence, we propose a new class of heuristic policies, two‐dimensional switch‐over policies, and discuss numerical procedures for optimizing the parameters of the policies. Extensive numerical experiments demonstrate that these switch‐over policies can provide performances that are in a close neighborhood of the optimum statistically.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/asmb.2389"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2020.04.02.20050153",
+      "title": "CoViD–19: Meta-heuristic optimization based forecast method on time dependent bootstrapped data",
+      "authors": [
+        "Livio Fenga",
+        "Carlo Del Castello"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 4,
+      "abstract": "Abstract \n         A compounded method – exploiting the searching capabilities of an operation research algorithm and the power of bootstrap techniques – is presented. The resulting algorithm has been successfully tested to predict the turning point reached by the epidemic curve followed by the CoViD–19 virus in Italy. Futures lines of research, which include the generalization of the method to a broad set of distribution, will be finally given.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2020.04.02.20050153"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.339.332",
+      "title": "Comparison of Heuristic for Flow Shop Scheduling Problems with Sequence Dependent Setup Time",
+      "authors": [
+        "Parinya Kaweegitbundit"
+      ],
+      "year": 2011,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 5,
+      "abstract": "This paper considers flow shop scheduling problems with sequence dependent setup time. The makespan criterion has been considered. In this paper presented a comparison of three heuristics for solves this problem. The memetic algorithm, genetic algorithm and NEH heuristic have been compared. In the experimental, the result from memetic algorithm is maximum the best solution. Therefore, the MA heuristic outperforms other heuristic.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.339.332"
+    }
+  ]
+}

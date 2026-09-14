@@ -1,0 +1,149 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_loading",
+    "label": "VRP with loading",
+    "definition": "LIFO or 3D loading.",
+    "search_query": "VRP loading constraints heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "LIFO insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "3D packing + routing",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "VRP loading constraints heuristic",
+  "harvested_at": "2026-09-14T08:25:51Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1070.0192",
+      "title": "Empirical Features of Congested Traffic States and Their Implications for Traffic Modeling",
+      "authors": [
+        "Martin Schönhof",
+        "Dirk Helbing"
+      ],
+      "year": 2007,
+      "venue": "Transportation Science",
+      "cited_by_count": 218,
+      "abstract": "We address the controversial issue of traffic flow modeling, whether first-order, second-order, or other traffic models are best supported by empirical facts and theoretical considerations. This is done by a critical discussion of the pros and cons of the different theoretical approaches and by the analysis of a large set of empirical data with new evaluation techniques. Specifically, we investigate characteristic properties of the congested traffic states on a 30-km-long stretch of the German freeway A5 near Frankfurt/Main. Among the approximately 245 breakdowns of traffic flow at several different bottlenecks in 165 days, we have identified five different kinds of spatiotemporal congestion patterns and their combinations. Based on an “adaptive smoothing method” for the visualization of detector data, we also discuss particular features of breakdowns, such as signs of unstable traffic flow and the “boomerang effect,” which often seems to be caused by overtaking maneuvers of trucks. Controversial issues such as “synchronized flow” or stop-and-go waves are addressed as well. Our empirical results are compared with the implications of different theoretical concepts such as first-order traffic models and the phase diagram of congested traffic states predicted by some second-order models and the nonlocal, gas-kinetic based traffic model (GKT model). For a correct understanding of empirical observations such as the “general pattern,” it is important to consider particularities such as the fact that off-ramps can act as bottlenecks, when activated by downstream on-ramp bottlenecks. As sequences of off- and on-ramps generate different congestion patterns than single on-ramps, they must be treated as interconnected bottlenecks. Furthermore, our empirical results question Kerner’s three-phase theory.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1070.0192",
+      "seeded": true,
+      "seed_heuristic": "VRP with loading constraints",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20192",
+      "title": "A Tabu search heuristic for the vehicle routing problem with two‐dimensional loading constraints",
+      "authors": [
+        "Michel Gendreau",
+        "Manuel Iori",
+        "Gilbert Laporte",
+        "Silvaro Martello"
+      ],
+      "year": 2007,
+      "venue": "Networks",
+      "cited_by_count": 178,
+      "abstract": "Abstract This article addresses the well‐known Capacitated Vehicle Routing Problem (CVRP), in the special case where the demand of a customer consists of a certain number of two‐dimensional weighted items. The problem calls for the minimization of the cost of transportation needed for the delivery of the goods demanded by the customers, and carried out by a fleet of vehicles based at a central depot. In order to accommodate all items on the vehicles, a feasibility check of the two‐dimensional packing (2L) must be executed on each vehicle. The overall problem, denoted as 2L‐CVRP, is NP‐hard and particularly difficult to solve in practice. We propose a Tabu Search algorithm, in which the loading component of the problem is solved through heuristics, lower bounds, and a truncated branch‐and‐bound procedure. The effectiveness of the algorithm is demonstrated through extensive computational experiments. © 2007 Wiley Periodicals, Inc. NETWORKS, 2008",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20192"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3926/jiem.8741",
+      "title": "Clustering-based column generation and heuristic methods for the container loading problem with practical constraints: A case study",
+      "authors": [
+        "Sezgi Tekil-Ergün",
+        "Ferhan Çebi"
+      ],
+      "year": 2026,
+      "venue": "Journal of Industrial Engineering and Management",
+      "cited_by_count": 0,
+      "abstract": "Purpose: This study addresses a real-world container loading problem (CLP) encountered in a logistics company in Turkey, filling a gap in the literature by solving practical constraints using a state-of-the-art algorithm. The problem involves constraints such as rotations, stackability, loading priorities, and mixed loading constraints.Design/methodology/approach: To overcome the computational challenges posed by large-scale instances, a novel three-step approach is proposed. First, the K-Means clustering algorithm is applied to group objects with similar dimensions. Then, each group is allocated to containers using a Column Generation (CG) method combined with a 3D-Best Fit Decreasing with Orientation (3D-BFDO) algorithm. Additionally, the CG process is enhanced by integrating a machine learning (ML) model to predict reduced-cost columns, improving computational efficiency and solution quality.Findings: Extensive experiments demonstrate that the proposed approach significantly improves container space utilization while reducing operational costs. The results highlight the effectiveness of ML and K-Means in enhancing traditional optimization techniques.Research limitations/implications: The study focuses on a specific set of practical constraints relevant to real-world logistics applications. Further research could explore additional constraints and scalability to different logistics environments.Practical implications: The approach offers a practical solution for logistics companies dealing with a large-scale CLP by optimizing space utilization and reducing operational costs. The integration of ML into CG presents a viable method for improving decision-making in logistics.Originality/value: The study bridges the gap between theoretical models and real-world logistics challenges by introducing a data-driven enhancement to traditional optimization techniques. The proposed integration of K-Means clustering and ML into CG represents an innovative contribution to container loading optimization.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3926/jiem.8741"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.7250/itms-2020-0008",
+      "title": "Parameter tuning of a local search heuristic for a vehicle routing problem with loading constraints",
+      "authors": [
+        "Hanne Pollaris",
+        "Gerrit Karel Janssens",
+        "Kris Braekers",
+        "An Caris"
+      ],
+      "year": 2020,
+      "venue": "Information Technology and Management Science",
+      "cited_by_count": 0,
+      "abstract": "A vehicle routing problem (VRP) with sequence-based pallet loading and axle weight constraints is introduced in the study. An Iterated Local Search (ILS) metaheuristic algorithm is used to solve the problem. Like any metaheuristic, a number of parameters need to be set before running the experiments. Parameter tuning is important because the value of the parameters may have a substantial impact on the efficacy of a heuristic algorithm. While traditionally, parameter values have been set manually using expertise and experimentation, recently several automated tuning methods have been proposed. The performance of the routing algorithm is mostly improved by using parameter tuning, but no single best tuning method for routing algorithms exists. The tuning method, Iterated F-race, is chosen because it seems to be a very robust method and it has been shown to perform well on the ILS metaheuristic and other metaheuristics. The research aims at developing an algorithm, which performs well over a wide range of network sizes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.7250/itms-2020-0008"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.945-949.3438",
+      "title": "VRP Problem Research with Workshop Road Constraints Based on Tabu Search",
+      "authors": [
+        "Yun Jie Feng",
+        "Hai Ping Zhu",
+        "Fei He"
+      ],
+      "year": 2014,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 1,
+      "abstract": "Aiming at general constraints in vehicle routing problem in workshop, this paper improve and simplify some relative constraints to make it more in line with real conditions in workshop. Different situations are discussed and experimentally computed respectively. The results show that tabu search is effective to get satisfactory algorithmic solutions, and this problem can be expanded to meet more additional constraints.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.945-949.3438"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31224/osf.io/xzmby",
+      "title": "QUANTUM ANNEALING OPTIMIZATION OF A HEURISTIC SURROGATE MODEL FOR PWR FUEL LOADING",
+      "authors": [
+        "Andy Whyte",
+        "Geoff Parks"
+      ],
+      "year": 2019,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "An efficient fuel arrangement must be generated by PWR operators every 6–18 months. This complex problem has been extensively researched with two broad approaches, heuristic and stochastic methods becoming accepted. This initial study qualitatively introduces the concept of encoding full-core PWR fuel loading patterns into a form suitable for quantum annealing. The concepts of adiabatic quantum computers and quantum annealing are introduced and a surrogate model encoding of a set of heuristics for loading pattern design produced in a form suitable for use in present-day quantum annealers. The simulated results show significant similarity to benchmark loading patterns.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31224/osf.io/xzmby"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/ijitwe.335036",
+      "title": "Research on VRP Model Optimization of Cold Chain Logistics Under Low-Carbon Constraints",
+      "authors": [
+        "Ruixue Ma",
+        "Qiang Zhu"
+      ],
+      "year": 2023,
+      "venue": "International Journal of Information Technology and Web Engineering",
+      "cited_by_count": 6,
+      "abstract": "The research in this article aims to consider low-carbon factors, through reasonable vehicle allocation and optimization of distribution routes, to achieve high satisfaction and low total cost, and to provide an optimized solution for fresh food distribution companies. In this article, cargo damage cost, energy cost, and carbon emission cost are added to the total cost, and customer satisfaction constraints based on time and quality are added, respectively, to construct a multi-vehicle cold chain VRP model under the low-carbon perspective. In order to obtain a good initial path method, a good chromosome is generated and added to the initial chromosome population according to the constraints of the vehicle type and time window, and the local elite retention strategy is combined to speed up the population convergence. Finally, taking the data of A Fresh Food Company as an example, the MATLAB software is used to realize the programming, which verifies the validity and superiority of the multi-vehicle cold chain VRP model under the low-carbon perspective.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/ijitwe.335036"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:15Z"
+}

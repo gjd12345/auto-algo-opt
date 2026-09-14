@@ -1,0 +1,166 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_batch",
+    "label": "Batch packing",
+    "definition": "Items arrive in batches.",
+    "search_query": "batch bin packing heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "bin_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Batch Best Fit",
+        "adapter_kind": "bin_score"
+      },
+      {
+        "name": "Sort-within-batch FFD",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "batch bin packing heuristic Batch Best Fit",
+  "harvested_at": "2026-09-14T08:13:16Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0204038",
+      "title": "Preserving Proximity in Arrays",
+      "authors": [
+        "Arnold L. Rosenberg"
+      ],
+      "year": 1975,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 31,
+      "abstract": "Efficiency of storage management in algorithms which use arrays is often enhanced if the arrays are stored in a proximity-preserving manner; that is, array positions which are close to one another in the array are stored close to one another. This paper is devoted to studying certain qualitative and quantitative questions concerning preservation of proximity by array storage schemes (or,realizations). It is shown that fully extendible array realizations cannot preserve proximity in any global sense, not even proximity along a single direction (say, along rows). They can, however, preserve proximity in certain local senses; and realizations which are optimal in various senses of local preservation are exhibited. Partially extendible array storage schemes can preserve proximity in a global way; bounds on their “diameters of preservation” are derived, and optimal schemes are exhibited.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0204038",
+      "seeded": true,
+      "seed_heuristic": "Multifit / batch packing context",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0203025",
+      "title": "Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms",
+      "authors": [
+        "D. S. Johnson",
+        "A. Demers",
+        "J. D. Ullman",
+        "M. R. Garey",
+        "R. L. Graham"
+      ],
+      "year": 1974,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 691,
+      "abstract": "The following abstract problem models several practical problems in computer science and operations research: given a list L of real numbers between 0 and l, place the elements of L into a minimum number $L^ * $ of “bins” so that no bin contains numbers whose sum exceeds l. Motivated by the likelihood that an excessive amount of computation will be required by any algorithm which actually determines an optimal placement, we examine the performance of a number of simple algorithms which obtain “good” placements. The first-fit algorithm places each number, in succession, into the first bin in which it fits. The best-fit algorithm places each number, in succession, into the most nearly full bin in which it fits. We show that neither the first-fit nor the best-fit algorithm will ever use more than $\\frac{17}{10}L^ * + 2$ bins. Furthermore, we outline a proof that, if L is in decreasing order, then neither algorithm will use more than $\\frac{11}{9} L^ * + 4$ bins. Examples are given to show that both upper bounds are essentially the best possible. Similar results are obtained when the list L contains no numbers larger than $\\alpha &lt; 1$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0203025",
+      "seeded": true,
+      "seed_heuristic": "Any Fit on a known batch",
+      "seed_adapter_kind": "bin_score"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/507553.507566",
+      "title": "Stochastic online binpacking problem",
+      "authors": [
+        "David Gamarnik"
+      ],
+      "year": 2001,
+      "venue": "ACM SIGMETRICS Performance Evaluation Review",
+      "cited_by_count": 0,
+      "abstract": "We consider the following stochastic bin packing process: the items of different sizes arrive at times\n       t \n      = 0, 1, 2, … and are packed into unit size bins using \"largest first\" rule. The unpacked items form queues. Coffman and Stolyar [3] introduced this system and posed the following question: under which conditions expected queue lengths are bounded (system is stable)? We provide exact computable conditions for stability of this system using Lyapunov function technique. The result holds for a very general class of distributions of the arrival processes.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/507553.507566"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1111/itor.12030",
+      "title": "An improved best‐fit heuristic for the orthogonal strip packing problem",
+      "authors": [
+        "Jannes Verstichel",
+        "Patrick De Causmaecker",
+        "Greet Vanden Berghe"
+      ],
+      "year": 2013,
+      "venue": "International Transactions in Operational Research",
+      "cited_by_count": 25,
+      "abstract": "Abstract The best‐fit heuristic is a simple and powerful tool for solving the two‐dimensional orthogonal strip packing problem. It is the most efficient constructive heuristic on a wide range of rectangular strip packing benchmark problems. In this paper, the results of the original best‐fit heuristic are further improved by adding new item orderings and item placement strategies, resulting in the three‐way best‐fit heuristic. By applying these steps, significantly better results are obtained in comparable computation time. Furthermore, some data structures are implemented, which increase the scalability of the heuristic for large problem instances and a slightly altered heuristic with an optimal  time complexity is proposed. Both heuristics produce similar results, but the optimal time heuristic is significantly faster than the three‐way best‐fit heuristic on all but the smallest instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1111/itor.12030"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26434/chemrxiv-2025-wq0tr",
+      "title": "Heuristic Scheduling Strategies for Single-Reactor Pharmaceutical Batch Production Under Uncertainty: A Comparative Statistical and Machine Learning Analysis.",
+      "authors": [
+        "Anfal Rababah"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract Background: Pharmaceutical batch production faces significant scheduling challenges due to operational uncertainties including equipment failures, yield variability, and demand fluctuations. While scheduling heuristics are widely used in practice, their comparative performance under varying uncertainty conditions remains insufficiently characterized, particularly for single-reactor configurations common in specialty pharmaceutical manufacturing. Methods: A discrete-event simulation model was developed for a single 10,000L bioreactor producing three antibiotic products with fermentation times of 48, 72, and 120 hours. Three scheduling heuristics (FIFO, SPT, LPT) were evaluated across three uncertainty levels (Low, Medium, High) using 150 randomly generated demand scenarios, yielding 450 total observations. Statistical analyses included two-way factorial ANOVA, Kruskal-Wallis tests, multiple linear regression, and ANCOVA. Machine learning classification models (Random Forest, Gradient Boosting, SVM, Decision Tree, Logistic Regression) were trained to predict schedule robustness. Results: Both heuristic type (F = 225.71, p &lt; .001, η² = 0.285) and uncertainty level (F = 346.69, p &lt; .001, η² = 0.437) significantly affected makespan, with no interaction effect (p = .981). SPT achieved mean makespan of 1,992 hours compared to 2,387 hours for FIFO (16.5% improvement). However, SPT and LPT were not significantly different from each other (p = 1.000 after Bonferroni correction). Uncertainty increased makespan by 28.2% from low to high conditions. Machine learning models achieved 90-97% classification accuracy, with Polynomial SVM performing best (96.7% accuracy, AUC = 0.972). Feature importance analysis consistently identified heuristic choice and uncertainty level as the dominant predictors, together explaining approximately 63% of classification accuracy. Conclusions: Campaign-based scheduling strategies (SPT, LPT) significantly outperform round-robin approaches (FIFO) across all uncertainty conditions, with benefits remaining consistent regardless of uncertainty level. The equivalence of SPT and LPT suggests that either campaign strategy is effective, providing operational flexibility. Machine learning models can reliably predict schedule robustness, enabling proactive risk management in pharmaceutical manufacturing. Keywords: batch scheduling, pharmaceutical manufacturing, scheduling heuristics, uncertainty quantification, machine learning classification, discrete-event simulation",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26434/chemrxiv-2025-wq0tr"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s00453-021-00844-5",
+      "title": "Best Fit Bin Packing with Random Order Revisited",
+      "authors": [
+        "Susanne Albers",
+        "Arindam Khan",
+        "Leon Ladewig"
+      ],
+      "year": 2021,
+      "venue": "Algorithmica",
+      "cited_by_count": 17,
+      "abstract": "Abstract Best Fit is a well known online algorithm for the bin packing problem, where a collection of one-dimensional items has to be packed into a minimum number of unit-sized bins. In a seminal work, Kenyon [SODA 1996] introduced the (asymptotic) random order ratio as an alternative performance measure for online algorithms. Here, an adversary specifies the items, but the order of arrival is drawn uniformly at random. Kenyon’s result establishes lower and upper bounds of 1.08 and 1.5, respectively, for the random order ratio of Best Fit. Although this type of analysis model became increasingly popular in the field of online algorithms, no progress has been made for the Best Fit algorithm after the result of Kenyon. We study the random order ratio of Best Fit and tighten the long-standing gap by establishing an improved lower bound of 1.10. For the case where all items are larger than 1/3, we show that the random order ratio converges quickly to 1.25. It is the existence of such large items that crucially determines the performance of Best Fit in the general case. Moreover, this case is closely related to the classical maximum-cardinality matching problem in the fully online model. As a side product, we show that Best Fit satisfies a monotonicity property on such instances, unlike in the general case. In addition, we initiate the study of the absolute random order ratio for this problem. In contrast to asymptotic ratios, absolute ratios must hold even for instances that can be packed into a small number of bins. We show that the absolute random order ratio of Best Fit is at least 1.3. For the case where all items are larger than 1/3, we derive upper and lower bounds of 21/16 and 1.2, respectively.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s00453-021-00844-5"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/rsa.10037",
+      "title": "Linear waste of best fit bin packing on skewed distributions",
+      "authors": [
+        "Claire Kenyon",
+        "Michael Mitzenmacher"
+      ],
+      "year": 2002,
+      "venue": "Random Structures &amp; Algorithms",
+      "cited_by_count": 4,
+      "abstract": "Abstract We prove that Best Fit bin packing has linear waste on the discrete distribution U { j , k } (where items are drawn uniformly from the set {1/ k , 2/ k , …, j / k }) for sufficiently large k when j = α k and 0.66 ≤ α &lt; 2/3. Our results extend to continuous skewed distributions, where items are drawn uniformly on [0, a ], for 0.66 ≤ a &lt; 2/3. This implies that the expected asymptotic performance ratio of Best Fit is strictly greater than 1 for these distributions. © 2002 Wiley Periodicals, Inc. Random Struct. Alg., 20:441–464, 2002",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/rsa.10037"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/jcm14020422",
+      "title": "Batch-to-Batch Variation and Patient Heterogeneity in Thymoglobulin Binding and Specificity: One Size Does Not Fit All",
+      "authors": [
+        "Nicoline H. M. den Hollander",
+        "Diahann T. S. L. Jansen",
+        "Bart O. Roep"
+      ],
+      "year": 2025,
+      "venue": "Journal of Clinical Medicine",
+      "cited_by_count": 0,
+      "abstract": "Background: Thymoglobulin is used to prevent allograft rejection and is being explored at low doses as intervention immunotherapy in type 1 diabetes. Thymoglobulin consists of a diverse pool of rabbit antibodies directed against many different targets on human thymocytes that can also be expressed by other leukocytes. Since Thymoglobulin is generated by injecting rabbits with human thymocytes, this conceivably leads to differences between Thymoglobulin batches. Methods: We compared different batches for antibody composition and variation between individuals in binding to PBMC and T cell subsets, and induction of cytokines. Four different batches of Thymoglobulin were directly conjugated with Alexa-Fluor 647. Blood was collected from five healthy donors, and PBMCs were isolated and stained with Thymoglobulin followed or preceded by a panel of fluorescent antibodies to identify PBMC and T cell subsets. In addition, whole blood was incubated with unlabeled Thymoglobulin to measure cytokine induction. Results: Cluster analysis of flow cytometry data shows that Thymoglobulin bound to all PBMC subpopulations including regulatory T cells. However, Thymoglobulin binding was highly variable between donors and to a lesser extent between batches. Cytokines related to cytokine release syndrome were highly, but variably, increased by all Thymoglobulin batches, with strong differences between donors and moderate differences between batches. Discussion: The variation in Thymoglobulin binding and action between donors regarding PBMC recognition and cytokine response may underlie the different clinical responses to Thymoglobulin therapy and require personalized dose adjustment to maximize efficacy and minimize adverse side effects.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/jcm14020422"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:40Z"
+}

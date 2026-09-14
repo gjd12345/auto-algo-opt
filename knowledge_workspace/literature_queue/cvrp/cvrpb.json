@@ -1,0 +1,146 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrpb",
+    "label": "VRP with backhauls",
+    "definition": "Linehaul then backhaul.",
+    "search_query": "vehicle routing backhauls heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Backhaul insertion",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Linehaul-first NN",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "vehicle routing backhauls heuristic",
+  "harvested_at": "2026-09-14T08:25:22Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230190306",
+      "title": "How to find a battleship",
+      "authors": [
+        "Amos Fiat",
+        "Adi Shamir"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "cited_by_count": 12,
+      "abstract": "Abstract Consider a “sea” of M squares which contains (at some unknown location) a “battleship” of K squares. Both the sea and the battleship can assume any rectangular shape. Our goal is to find the battleship by probing at least one of its squares. In this paper we describe a deterministic strategy for this problem which is guaranteed to locate the battleship in at most c 1  M/K probes, where c 1 ≈︁ 3.065.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230190306",
+      "seeded": true,
+      "seed_heuristic": "Goetschalckx backhaul VRP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.12681/eadd/38966",
+      "title": "Solving the dynamic vehicle routing problem with mixed backhauls through re-optimization",
+      "authors": [
+        "Γεώργιος Νινίκας"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "In this dissertation we studied the Dynamic Vehicle Routing Problem with Mixed Backhauls (DVRPMB), which seeks to assign, in the most efficient way, dynamic pick-up requests that arrive in real-time while a predefined distribution plan is being executed. We used periodic re-optimization to deal with the dynamic arrival of pick-up orders. We developed the formulation of the re-optimization problem, and re-modelled it to a form amenable to applying Branch-and-Price (B&amp;P) for obtaining exact solutions. In order to address challenging cases (e.g. without time windows), we also proposed a novel Column Generation-based insertion heuristic that provides near-optimal solutions in an efficient manner.Using the aforementioned approach, the dissertation focused on the re-optimization process for addressing the DVRPMB, which comprises a) the re-optimization policy, i.e. when to re-plan, and b) the implementation tactic, i.e. what part of the new plan to communicate to the fleet drivers. We presented and analyzed several re-optimization strategies (combinations of policy and tactic) often met in practice by conducting an extensive series of designed experiments. We did so, by assuming initially unlimited fleet resources under a straightforward objective (i.e. minimize distance traveled). Based on the results obtained, we proposed guidelines for the selection of the appropriate re-optimization strategy with respect to various key problem characteristics (geographical distribution, time windows, degree of dynamism, etc.).Subsequently, we In this dissertation we studied the Dynamic Vehicle Routing Problem with Mixed Backhauls (DVRPMB), which seeks to assign, in the most efficient way, dynamic pick-up requests that arrive in real-time while a predefined distribution plan is being executed. We used periodic re-optimization to deal with the dynamic arrival of pick-up orders. We developed the formulation of the re-optimization problem, and re-modelled it to a form amenable to applying Branch-and-Price (B&amp;P) for obtaining exact solutions. In order to address challenging cases (e.g. without time windows), we also proposed a novel Column Generation-based insertion heuristic that provides near-optimal solutions in an efficient manner.Using the aforementioned approach, the dissertation focused on the re-optimization process for addressing the DVRPMB, which comprises a) the re-optimization policy, i.e. when to re-plan, and b) the implementation tactic, i.e. what part of the new plan to communicate to the fleet drivers. We presented and analyzed several re-optimization strategies (combinations of policy and tactic) often met in practice by conducting an extensive series of designed experiments. We did so, by assuming initially unlimited fleet resources under a straightforward objective (i.e. minimize distance traveled). Based on the results obtained, we proposed guidelines for the selection of the appropriate re-optimization strategy with respect to various key problem characteristics (geographical distribution, time windows, degree of dynamism, etc.).Subsequently, we studied the case in which the number of available vehicles is limited and, consequently, not all orders may be served. To address this, we proposed the required modifications in both the DVRPMB model and the solution approach. By using a conventional objective that strictly maximizes service, we illustrated through appropriate experimentation that the performance of the re-optimization strategies have similar behavior as in the unlimited fleet case. Furthermore, we proposed novel objective functions that account for vehicle productivity during each re-optimization cycle and we illustrated that these objectives may offer improved customer service, especially for cases with relatively high vehicle availability and wide time windows. Moreover, we applied the proposed method to a case study of a next-day courier service provider and illustrated that the method significantly outperforms both current planning practices, as well as a sophisticated insertion-based heuristic. Finally, we investigated an interesting and novel variant of DVRPMB that allows transfer of delivery orders between vehicles during plan implementation, in order to better utilize fleet capacity and re-distribute its workload as needed in a real-time fashion. We introduced a novel mathematical formulation for the re-optimization problem with load transfers, and proposed an appropriate heuristic that is able to address cases of practical size. We illustrated through extensive experimentation under various operating scenarios that this approach offers significant savings beyond those offered by the previous approaches that do not allow order transfers. χ",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.12681/eadd/38966"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.31.1.49",
+      "title": "A Tabu Search Heuristic for the Vehicle Routing Problem with Backhauls and Time Windows",
+      "authors": [
+        "Christophe Duhamel",
+        "Jean-Yves Potvin",
+        "Jean-Marc Rousseau"
+      ],
+      "year": 1997,
+      "venue": "Transportation Science",
+      "cited_by_count": 83,
+      "abstract": "This article describes a tabu search heuristic for the vehicle routing problem with backhauls and time windows. In this problem, the set of customers is partitioned into two subsets: linehaul customers where a given quantity of goods is delivered from a central depot, and backhaul customers where a given quantity of goods is collected and transported to the depot. Mixed routes with both linehaul and backhaul customers are constructed. A variant of this problem is examined where linehauls must precede bachhauls on each route. Furthermore, the time of beginning of service at each customer location must occur within a particular time interval. Computational results are reported on a standard set of test problems, and comparisons are made with other heuristic approaches and with optimal solutions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.31.1.49"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-2761446/v1",
+      "title": "Multi-Trip Multi-Compartment Vehicle Routing Problem with Backhauls",
+      "authors": [
+        "Sukhpal Ramanand",
+        "KAUSHAL KUMAR"
+      ],
+      "year": 2023,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     The Multi-Trip Multi-Compartment Vehicle Routing Problem with Backhauls (MTMCVRPB) is a complex optimization problem that involves finding the most efficient routes for a heterogeneous fleet of multi-compartment vehicles to transport heterogeneous commodities simultaneously. The problem involves making deliveries and pickups while taking into account capacity constraints on compartments and other specific requirements such as limitation on route length. The MTMCVRPB aims to minimize the total cost of the routes, including the cost of vehicles, fuel and other expenses, while maximizing efficiency of vehicles and fulfilling the demand of customers. In order to solve the MTMCVRPB, this article recommends a mixed integer linear programming (MILP) formulation. The proposed model takes into consideration the demands of both linehaul and backhaul customers, ensuring that on each route linehaul deliveries are made before visiting any backhaul customer. The model was tested on benchmark instances from literature and randomly generated data sets and numerical experiments were performed to demonstrate its effectiveness. The proposed model can be beneficial for the industries such as grocery and food delivery, fuel distribution and garbage collection as these are main applications of this model. We have also provided a saving based heuristic by making certain modifications to find the quick and efficient solution to the proposed model.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-2761446/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/978-1-61692-852-0.ch608",
+      "title": "Meta-heuristic Approach to Solve Mixed Vehicle Routing Problem with Backhauls in Enterprise Information System of Service Industry",
+      "authors": [
+        "S. P. Anbuudayasankar",
+        "K. Ganesh",
+        "Tzong-Ru Lee"
+      ],
+      "year": 2011,
+      "venue": "Enterprise Information Systems",
+      "cited_by_count": 2,
+      "abstract": "This chapter presents the development of simulated annealing (SA) for a health care application which is modeled as Single Depot Vehicle routing problem called Mixed Vehicle Routing Problem with Backhauls (MVRPB), an extension of Vehicle Routing Problem with Backhauls (VRPB). This variant involves both delivery and pick-up customers and sequence of visiting the customers is mixed. The entire pick-up load should be taken back to depot. The latest rapid advancement of meta-heuristics has shown that it can be applied in practice if they are personified in packaged information technology (IT) solutions along with the combination of a Supply Chain Management (SCM) application integrated with an enterprise resource planning (ERP) resulted to this decision support tool. This chapter provides empirical proof in sustain of the hypothesis, that a population extension of SA with supportive transitions leads to a major increase of efficiency and solution quality for MVRPB if and only if the globally optimal solution is located close to the center of all local optimal solutions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/978-1-61692-852-0.ch608"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/978-1-61520-625-4.ch015",
+      "title": "Meta-heuristic Approach to Solve Mixed Vehicle Routing Problem with Backhauls in Enterprise Information System of Service Industry",
+      "authors": [
+        "S. P. Anbuudayasankar",
+        "K. Ganesh",
+        "Tzong-Ru Lee"
+      ],
+      "year": null,
+      "venue": "Enterprise Information Systems and Implementing IT Infrastructures",
+      "cited_by_count": 0,
+      "abstract": "This chapter presents the development of simulated annealing (SA) for a health care application which is modeled as Single Depot Vehicle routing problem called Mixed Vehicle Routing Problem with Backhauls (MVRPB), an extension of Vehicle Routing Problem with Backhauls (VRPB). This variant involves both delivery and pick-up customers and sequence of visiting the customers is mixed. The entire pick-up load should be taken back to depot. The latest rapid advancement of meta-heuristics has shown that it can be applied in practice if they are personified in packaged information technology (IT) solutions along with the combination of a Supply Chain Management (SCM) application integrated with an enterprise resource planning (ERP) resulted to this decision support tool. This chapter provides empirical proof in sustain of the hypothesis, that a population extension of SA with supportive transitions leads to a major increase of efficiency and solution quality for MVRPB if and only if the globally optimal solution is located close to the center of all local optimal solutions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/978-1-61520-625-4.ch015"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/info11090414",
+      "title": "The Effect of Limited Resources in the Dynamic Vehicle Routing Problem with Mixed Backhauls",
+      "authors": [
+        "Georgios Ninikas",
+        "Ioannis Minis"
+      ],
+      "year": 2020,
+      "venue": "Information",
+      "cited_by_count": 4,
+      "abstract": "In the dynamic vehicle routing problem with mixed backhauls (DVRPMB) both pick up orders and delivery orders, not related to each other, are served. The requests of the former arrive dynamically while the latter are known a priori. In this study, we focus on the case of limited fleet, which fulfills all delivery orders, but may not have enough capacity to serve all pick up orders within the available working horizon. The problem’s dynamic nature and the attention to customer service raise interesting considerations, especially related to the problem’s objectives. The problem is solved through periodic re-optimization, acknowledging the fact that this pseudo-dynamic approach may lead to some limitations. For the underlying (static) optimization problem we propose appropriate objective functions, which account for vehicle productivity and propose a branch-and-price (BP) approach to solve it to optimality. The results indicate how the performance of the various objectives is impacted by different re-optimization frequencies and policies in this practically relevant environment of dynamic demand served by a limited fleet. Specifically, extensive experimentation indicates that accounting for vehicle productivity within a typical periodic re-optimization solution framework may result to higher customer service under a range of operational settings, in comparison to conventional objectives.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/info11090414"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:54Z"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "tsp_open",
+  "selected": [
+    {
+      "doi": "10.1137/0206041",
+      "heuristic_name": "Path Nearest Neighbor",
+      "why": "Same NN construction used as a Hamiltonian path (no return).",
+      "steps": [
+        "From the current end city choose a nearest unvisited city",
+        "Repeat until all cities are visited; do not close the tour"
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "next_node_score",
+      "not_the_original": "Official tsp_construct still closes the tour; treat this as a scoring idea only."
+    }
+  ],
+  "rejected": [],
+  "cannot_classify": false
+}

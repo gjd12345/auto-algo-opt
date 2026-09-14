@@ -1,0 +1,27 @@
+{
+  "schema_version": "knowledge-context-v1",
+  "recorded_at": "2026-09-14",
+  "release_id": "20260914-main-d6433549-kb-v0",
+  "release_path": "knowledge_store/releases/20260914-main-d6433549-kb-v0",
+  "manifest_sha256": "bdfc8037c1880431d59586260b939609e6759350068a7a889962ef14cde0a634",
+  "index_sha256": "bb9979051176b1ed995f778b6f8d20b46901d9b414313a6087686db73ce4d9e5",
+  "selected_entries": [
+    {
+      "id": "method-tsp-two-opt",
+      "content_sha256": "778820e7ead485002c29b923f2dd368dbc0d2e814bab6a4cb2b945b7c996f41e",
+      "adopted_summary": "main 上真正做边交换的是 evaluate_tsp_nearest_two_opt.py 的近邻诱导 best-improvement 2-opt，用来修已经构造好的回路，不是 tsp_construct 的 select_next_node。"
+    },
+    {
+      "id": "method-obp-residual-utilization",
+      "content_sha256": "8b26bdc54c2af062d1d2f4e32c985e2fd275f0501ceab1dcd5543904a5a4c5d1",
+      "adopted_summary": "冻结精英 bp_online_best.py 是 exp(item/(residual+item)) 减小残差惩罚；官方模板 return bins 是 Worst Fit；Go firstFit/bestFit 才是经典在线 FF/BF。"
+    },
+    {
+      "id": "method-cvrp-savings-next-node",
+      "content_sha256": "f5caca59efbcdad654dde152046bf18c467fdea64c6d1404d1f3b4c036d4dfeb",
+      "adopted_summary": "一份 CVRP 精英把 Clarke–Wright 公式当作下一城分数，并不是从 n 条单客户路线做 merge。"
+    }
+  ],
+  "purpose": "宿主 Agent 的 Plan 启动读取记录；不构成 Session 级引用校验，也不自动导入 Memory。",
+  "follow_up_policy": "后续补读固定使用该 release_path，即使 knowledge_store/current 已切换。"
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_basic",
+    "label": "Capacitated VRP",
+    "definition": "One depot, capacity, visit each customer once.",
+    "search_query": "capacitated vehicle routing nearest neighbor Clarke Wright",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Nearest feasible customer",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Clarke-Wright savings as next-node score",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "capacitated vehicle routing nearest neighbor Clarke Wright",
+  "harvested_at": "2026-09-14T07:45:48Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.26760/mindjournal.v11i1.1-14",
+      "title": "Penerapan Algoritma Clarke and Wright Saving dalam Capacitated Vehicle Routing Problem dengan Optimasi Nearest Neighbor untuk Rute Terpendek",
+      "authors": [
+        "FARREL ADI IBRAHIM",
+        "YUSUP MIFTAHUDDIN",
+        "MUHAMMAD ICHWAN",
+        "SURYA REZA PUTRA",
+        "WIRAWAN HADIWIBOWO"
+      ],
+      "year": 2026,
+      "venue": "MIND Journal",
+      "cited_by_count": 0,
+      "abstract": "Abstrak Distribusi merupakan komponen krusial dalam aktivitas logistik karena berperan dalam kelancaran proses pengiriman. Penelitian ini bertujuan menyusun rute distribusi dengan jarak terpendek berdasarkan kapasitas kendaraan, menggunakan algoritma Clarke and Wright Saving untuk membentuk rute awal serta algoritma Nearest Neighbor untuk mengatur urutan kunjungan. Pendekatan penelitian dilakukan secara kuantitatif melalui perhitungan algoritmik dengan memanfaatkan data lokasi pelanggan dan jumlah permintaan. Temuan penelitian menunjukkan bahwa rute usulan memiliki total jarak tempuh 151.69 km untuk mendistribusikan 300 ekor ayam beku, atau 18.97 km (11.12%) lebih pendek dibandingkan rute aktual perusahaan yang mencapai 170.66 km. Dengan demikian, penerapan kedua algoritma tersebut mampu menghasilkan rancangan rute yang lebih ringkas sekaligus mempertimbangkan jarak tempuh dan keterbatasan kapasitas kendaraan.Kata kunci: Clarke and Wright Saving, Capacitated Vehicle Routing Problem, Nearest NeighborAbstract Distribution is a crucial component in logistics activities because it plays a role in the smooth delivery process. This study aims to develop the shortest distribution route based on vehicle capacity, using the Clarke and Wright Saving algorithm to form the initial route and the Nearest Neighbor algorithm to arrange the order of visits. The research approach was conducted quantitatively through algorithmic calculations using customer location data and number of requests. The findings show that the proposed route has a total distance of 151.69 km to distribute 300 frozen chickens, which is 18.97 km (11.12%) shorter than the company's actual route of 170.66 km. Thus, the application of these two algorithms is able to produce a more concise route design while considering travel distance and vehicle capacity limitations.Keywords: Clarke and Wright Saving, Capacitated Vehicle Routing Problem, Nearest Neighbor",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.26760/mindjournal.v11i1.1-14"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.32614/cran.package.heumilkr",
+      "title": "heumilkr: Heuristic Capacitated Vehicle Routing Problem Solver",
+      "authors": [
+        "Lukas Schneiderbauer"
+      ],
+      "year": 2024,
+      "venue": "CRAN: Contributed Packages",
+      "cited_by_count": 0,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.32614/cran.package.heumilkr"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.61194/sijl.v2i1.187",
+      "title": "Capacitated Vehicle Routing Problem (CVRP) with Sweep and Nearest Neighbor Algorithm",
+      "authors": [
+        "Erly Ekayanti",
+        "Sugianto",
+        "Imaduddin Bachtiar Efendi"
+      ],
+      "year": 2024,
+      "venue": "Sinergi International Journal of Logistics",
+      "cited_by_count": 5,
+      "abstract": "The Capacitated Vehicle Routing Problem (CVRP) presents significant challenges in shipping route optimization and logistics management. These challenges include balancing vehicle capacity, minimizing travel distance, and efficiently grouping delivery points, all of which are crucial for enhancing operational efficiency and reducing costs. This research aims to apply a combination of the Sweep and Nearest Neighbor algorithms to address the CVRP, seeking to improve route efficiency and manage vehicle capacity effectively. The Sweep algorithm is employed to cluster pickup points based on their polar angle from the depot, facilitating efficient grouping and optimal vehicle capacity management. Within each cluster, the Nearest Neighbor algorithm is implemented to optimize the sequence of visits, minimizing total travel distance by sequentially selecting the next closest point. The Haversine Distance is used to calculate the distances between points, ensuring geographical accuracy compared to the Euclidean method. Experimental results demonstrate that this hybrid approach yields shorter routes. Quantitative analysis shows a significant reduction 13% in total travel distance when using this combination of algorithms, highlighting its effectiveness in solving the CVRP. This research demonstrates that combining the Sweep and Nearest Neighbor algorithms provides an efficient solution to the CVRP, improving route optimization and vehicle capacity management. The findings contribute valuable insights to logistics management, with practical implications for enhancing shipping route efficiency.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.61194/sijl.v2i1.187"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/3665065.3665076",
+      "title": "Capacitated Electric Vehicle Routing Problem using adaptive NEH with Nearest Neighbor Subtours",
+      "authors": [
+        "Andrew Struthers",
+        "Donald Davendra"
+      ],
+      "year": 2024,
+      "venue": "2024 8th International Conference on Intelligent Systems Metaheuristics &amp; Swarm Intelligence (ISMSI)",
+      "cited_by_count": 1,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1145/3665065.3665076"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2306/scienceasia1513-1874.2012.38.307",
+      "title": "An improved Clarke and Wright savings algorithm for the capacitated vehicle routing problem",
+      "authors": [
+        "Tantikorn Pichpibul",
+        "Ruengsak Kawtummachai"
+      ],
+      "year": 2012,
+      "venue": "ScienceAsia",
+      "cited_by_count": 60,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.2306/scienceasia1513-1874.2012.38.307"
+    }
+  ]
+}

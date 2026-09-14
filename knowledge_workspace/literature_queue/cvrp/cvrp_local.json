@@ -1,0 +1,129 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_local",
+    "label": "Local-search CVRP",
+    "definition": "Improve complete routes.",
+    "search_query": "granular tabu VRP local search",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Granular tabu",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Relocate/exchange VND",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "granular tabu VRP local search",
+  "harvested_at": "2026-09-14T08:25:56Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.945-949.3438",
+      "title": "VRP Problem Research with Workshop Road Constraints Based on Tabu Search",
+      "authors": [
+        "Yun Jie Feng",
+        "Hai Ping Zhu",
+        "Fei He"
+      ],
+      "year": 2014,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 1,
+      "abstract": "Aiming at general constraints in vehicle routing problem in workshop, this paper improve and simplify some relative constraints to make it more in line with real conditions in workshop. Different situations are discussed and experimentally computed respectively. The results show that tabu search is effective to get satisfactory algorithmic solutions, and this problem can be expanded to meet more additional constraints.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.945-949.3438"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.9744/jti.11.2.188-194",
+      "title": "TABU SEARCH SEBAGAI LOCAL SEARCH PADA ALGORITMA ANT COLONY UNTUK PENJADWALAN FLOWSHOP",
+      "authors": [
+        "Iwan Halim Sahputra",
+        "Tanti Octavia",
+        "Agus Susanto Chandra"
+      ],
+      "year": 2009,
+      "venue": "Jurnal Teknik Industri",
+      "cited_by_count": 0,
+      "abstract": "Ant colony optimization (ACO) is one of the meta-heuristic methods developed for finding solutions to optimization problems such as scheduling. Local search method is one part of the ACO which determines the quality of the resulting solution. In this paper, Tabu Search was proposed as a method of local search in ACO to solve the problem of flowshop scheduling. The purpose of this scheduling was to minimize the makespan. Makespan and computation time of the proposed method were compared to the ACO that implemented Job-Index as local search method. Using proposed algorithm, makespan values obtained were not significantly different than solutions of ACO using Job-Index method, and had computation time shorter.&#x0D;\n&#x0D;\n&#x0D;\nAbstract in Bahasa Indonesia:&#x0D;\n&#x0D;\nAnt colony optimization (ACO) adalah salah satu metode meta-heuristic yang dikembangkan untuk mencari solusi bagi permasalahan optimasi seperti penjadwalan. Metode local search merupakan salah satu bagian dari ACO yang menentukan kualitas solusi yang dihasilkan. Dalam makalah ini Tabu Search diusulkan sebagai metode local search dalam algoritma ACO untuk menyelesaikan masalah penjadwalan flowshop. Tujuan dari penjadwalan ini adalah untuk meminimalkan makespan. Hasil makespan dan computation time dari metode usulan ini akan dibandingkan dengan algoritma ACO yang menggunakan Job-Index sebagai metode local search. Dengan menggunakan algoritma Tabu Search sebagai local search didapat nilai makespan yang tidak berbeda secara signifikan dibandingkan yang menggunakan metode Job-Index, dengan kelebihan computation time yang lebih singkat.&#x0D;\n&#x0D;\nKata kunci: Tabu Search, Ant Colony Algorithm, Local Search, Penjadwalan Flowshop.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.9744/jti.11.2.188-194"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/math11173740",
+      "title": "A Variable Neighborhood Search Method with a Tabu List and Local Search for Optimizing Routing in Trucks in Maritime Ports",
+      "authors": [
+        "Luka Matijević",
+        "Marko Đurasević",
+        "Domagoj Jakobović"
+      ],
+      "year": 2023,
+      "venue": "Mathematics",
+      "cited_by_count": 3,
+      "abstract": "Logistics problems represent an important class of real-world problems where even small improvements in solution quality can lead to significant decreases in operational costs. However, these problems are usually NP-hard; thus, they are mostly solved using metaheuristic methods. To improve their performance, there is substantial research on crafting new and refined metaheuristics to derive superior solutions. This paper considers a truck routing problem within a naval port, where the objective is to minimize the total distance traveled by all the vehicles to distribute a given set of containers. Due to the large volume of goods that are being transferred through ports, it is imperative to improve the operation times at such ports to improve the throughput. To achieve this goal, a novel variable neighborhood search method that integrates a tabu list, an iterative local search procedure, and parallelization of neighborhood generation is proposed and evaluated. The experimental results demonstrate that the proposed method achieves similar results to the state of the art, but in a smaller amount of time.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/math11173740"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5755/j01.itc.35.3.11770",
+      "title": "ITERATED TABU SEARCH: AN IMPROVEMENT TO STANDARD TABU SEARCH",
+      "authors": [
+        "Alfonsas Misevicius",
+        "Antanas Lenkevicius",
+        "Dalius Rubliauskas"
+      ],
+      "year": 2006,
+      "venue": "Information Technology And Control",
+      "cited_by_count": 16,
+      "abstract": "The goal of this paper is to discuss the tabu search (TS) meta-heuristic and its enhancement for combinatorial optimization problems. Firstly, the issues related to the principles and specific features of the standard TS are concerned. Further, a promising extension to the classical tabu search scheme is introduced. The most important component of this extension is a special kind of diversification mechanism. We give the paradigm of this new improved TS strategy, which is called an iterated tabu search (ITS). ITS was applied to the difficult combinatorial optimization problems, the traveling salesman problem (TSP) and the quadratic assignment problem (QAP). The results of the experiments with the TSP and QAP show the high efficiency of the ITS strategy. The outstanding performance of ITS is also demonstrated by the fact that the new record-breaking solutions were found for the hard QAP instances - tai80a and tai100a.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5755/j01.itc.35.3.11770"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.15.4.333.24890",
+      "title": "The Granular Tabu Search and Its Application to the Vehicle-Routing Problem",
+      "authors": [
+        "Paolo Toth",
+        "Daniele Vigo"
+      ],
+      "year": 2003,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 388,
+      "abstract": "We describe a new variant, called granular tabu search, of the well-known tabu-search approach. The method uses an effective intensification/diversification tool that can be successfully applied to a wide class of graph-theoretic and combinatorial-optimization problems. Granular tabu search is based on the use of drastically restricted neighborhoods, not containing the moves that involve only elements that are not likely to belong to good feasible solutions. These restricted neighborhoods are called granular, and may be seen as an efficient implementation of candidate-list strategies proposed for tabu-search algorithms. Results of computational testing of the proposed approach on the well-known symmetric capacitated and distance-constrained vehicle-routing problem are discussed, showing that the approach is able to determine very good solutions within short computing times.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.15.4.333.24890"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.5267/j.ijiec.2021.6.001",
+      "title": "A granular tabu search for the refrigerated vehicle routing problem with homogeneous fleet",
+      "authors": [
+        "John Willmer Escobar",
+        "José Luis Ramírez Duque",
+        "Rafael García-Cáceres"
+      ],
+      "year": 2022,
+      "venue": "International Journal of Industrial Engineering Computations",
+      "cited_by_count": 10,
+      "abstract": "The Refrigerated Capacitated Vehicle Routing Problem (RCVRP) considers a homogeneous fleet with a refrigerated system to decide the selection of routes to be performed according to customers' requirements. The aim is to keep the energy consumption of the routes as low as possible. We use a thermodynamic model to understand the unloading of products from trucks and the variables' efficiency, such as the temperature during the day influencing energy consumption. By considering various neighborhoods and a shaking procedure, this paper proposes a Granular Tabu Search scheme to solve the RCVRP. Computational tests using adapted benchmark instances from the literature demonstrate that the suggested method delivers high-quality solutions within short computing times, illustrating the refrigeration system's effect on routing decisions.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.5267/j.ijiec.2021.6.001"
+    }
+  ]
+}

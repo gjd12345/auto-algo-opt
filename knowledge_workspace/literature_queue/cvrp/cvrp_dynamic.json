@@ -1,0 +1,126 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_dynamic",
+    "label": "Dynamic VRP",
+    "definition": "Requests arrive online.",
+    "search_query": "dynamic vehicle routing heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Online feasible NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Rolling-horizon 2-opt",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "dynamic vehicle routing heuristic Online feasible NN",
+  "harvested_at": "2026-09-14T08:12:42Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e",
+      "title": "Vehicle routing problems with profits, exact and heuristic approaches",
+      "authors": [
+        "Racha El-Hajj"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Problèmes de tournées de véhicules avec profits, méthodes exactes et approchées \n         Nous nous intéressons dans cette thèse à la résolution du problème de tournées sélectives (Team Orienteering Problem - TOP) et ses variantes. Ce problème est une extension du problème de tournées de véhicules en imposan tcertaines limitations de ressources. Nous proposons un algorithme de résolution exacte basé sur la programmation linéaire en nombres entiers (PLNE) en ajoutant plusieurs inégalités valides capables d’accélérer la résolution. D’autre part, en considérant des périodes de travail strictes pour chaque véhicule durant sa tournée, nous traitons une des variantes du TOP qui est le problème de tournées sélectives multipériodique (multiperiod TOP - mTOP) pour lequel nous développons une métaheuristique basée sur l’optimisation par essaim pour le résoudre. Un découpage optimal est proposé pour extraire la solution optimale de chaque particule en considérant les tournées saturées et pseudo saturées .Finalement, afin de prendre en considération la disponibilité des clients, une fenêtre de temps est associée à chacun d’entre eux, durant laquelle ils doivent être servis. La variante qui en résulte est le problème de tournées sélectives avec fenêtres de temps (TOP with Time Windows - TOPTW). Deux algorithmes exacts sont proposés pour résoudre ce problème. Le premier est basé sur la génération de colonnes et le deuxième sur la PLNE à laquelle nous ajoutons plusieurs coupes spécifiques à ce problème.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/37fa3a3cza23dz4ac5zbaa3z1327ba608d7e"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47344/sdubnts.v62i1.959",
+      "title": "Stochastic dynamic vehicle routing problem survey",
+      "authors": [
+        "Yernar Akhmetbek"
+      ],
+      "year": 2024,
+      "venue": "Suleyman Demirel University Bulletin Natural and Technical Sciences",
+      "cited_by_count": 3,
+      "abstract": "The present article aims to offer an exhaustive and in-depth investigation of the Stochastic Dynamic Vehicle Routing Problem, which remains a significant challenge in the field of transportation logistics. To achievethis objective, we will undertake a meticulous analysis of the latest cutting-edge techniques and methodologies deployed to tackle this complex optimization problem. Furthermore, we will delve into the intricate and multifaceted stochastic and dynamic constraints that pose formidable obstacles to effective route planning and optimization. Through this survey paper, we seek to provide a comprehensive understanding of the current state-of-the-art approaches and highlight the potential avenues for future research in this critical area of transportation logistics. In addition, we will also analyze the application of advanced reinforcement learning methods and Markov decision processes to solve the problem of stochastic dynamic vehicle routing.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47344/sdubnts.v62i1.959"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.18825/iremjournal.1174543",
+      "title": "Solution Of Capacitated Vehicle Routing Problem For A Food Delivery Company With Heuristic Methods",
+      "authors": [
+        "Nurhayat TOK",
+        "Şerife ÖZKAR"
+      ],
+      "year": 2023,
+      "venue": "International Review of Economics and Management",
+      "cited_by_count": 0,
+      "abstract": "A food delivery company operates in Balıkesir performs to the distribution for the products of a certain brand from the central warehouse to the customers located in the central districts of Altıeylül and Karesi by using two vehicles with high capacity. The company visits customers on certain routes to meet their daily demands and is able to meet all demands at the end of the day. In this study, the distribution of the company's products was considered as a Vehicle Routing Problem, and it was aimed to reconstruct the distribution routes of the vehicles with the help of various algorithms and to provide cost savings in terms of the distance traveled. In order to solve the problem, first of all, an appropriate capacity assumption was made for the vehicles by considering the daily demand amounts of the customers. Under this assumption, first new customer groups to be visited in daily periods were created, and then new routes were obtained for the relevant customer groups. In this process, the problem was designed as a Capacity Constrained Vehicle Routing Problem, and the results obtained using Fisher and Jaikumar's Algorithm and Clarke and Wright's Savings Algorithm were evaluated. When the results obtained are compared with the current route status of the company, it has been determined that it is possible to achieve a high rate of improvement by using the routes determined by algorithms.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.18825/iremjournal.1174543"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20182",
+      "title": "A branch‐and‐regret heuristic for stochastic and dynamic vehicle routing problems",
+      "authors": [
+        "Lars Magnus Hvattum",
+        "Arne Løkketangen",
+        "Gilbert Laporte"
+      ],
+      "year": 2007,
+      "venue": "Networks",
+      "cited_by_count": 59,
+      "abstract": "Abstract This paper describes a new Branch‐and‐Regret Heuristic for a class of dynamic and stochastic vehicle routing problems. This work is motivated by a real‐life problem faced by a major transporter in Norway. The heuristic uses stochastic information during the solution process. The new method is shown to be superior to previous heuristics that are uniquely based on a pure dynamic approach. The proposed heuristic is well suited to problems containing stochastic customers, stochastic demands, or both. © 2007 Wiley Periodicals, Inc. NETWORKS, Vol. 49(4), 330–340 2007",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20182"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.18265/2447-9187a2024id8297",
+      "title": "A neighborhood search-based heuristic for the dynamic vehicle routing problem",
+      "authors": [
+        "Wilton Gustavo Gomes da Costa",
+        "Ricardo Santos",
+        "Willy Alves de Oliveira Soler",
+        "Bianca de Almeida Dantas"
+      ],
+      "year": 2025,
+      "venue": "Revista Principia",
+      "cited_by_count": 1,
+      "abstract": "The Vehicle Routing Problem (VRP) is a classical optimization problem focused on determining routes for a fleet of vehicles to fulfill the demands of a set of customers. Due to its wide applicability, particularly in the logistics sector, numerous variants of the VRP have been developed. One such variant is the Dynamic Vehicle Routing Problem (DVRP), characterized by the emergence of new customer demands after the initial routing has been established. The combinatorial complexity of the DVRP poses significant challenges in finding high-quality, feasible solutions within practical runtime limits for real-world, large-scale problems, thereby driving the development of heuristic approaches. This paper introduces a novel heuristic algorithm, Dynamic Search per Neighbors Routes (DSNR), which employs neighborhood search techniques based on the 2-Opt* operator to incorporate new delivery requests into existing routes. The DSNR algorithm was tested using instances from the Loggibud benchmark, representing real-world data from three distinct Brazilian cities. In terms of distance and the number of vehicles required, the proposed approach demonstrated superior performance compared to two existing methods from the literature: the QRP Sweep (QRPS) and K-Means Greedy (KG). The DSNR achieved improvements of 15% to 17% in terms of distance and final delivery costs.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.18265/2447-9187a2024id8297"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1060.0166",
+      "title": "Solving a Dynamic and Stochastic Vehicle Routing Problem with a Sample Scenario Hedging Heuristic",
+      "authors": [
+        "Lars M. Hvattum",
+        "Arne Løkketangen",
+        "Gilbert Laporte"
+      ],
+      "year": 2006,
+      "venue": "Transportation Science",
+      "cited_by_count": 154,
+      "abstract": "The statement of the standard vehicle routing problem cannot always capture all aspects of real-world applications. As a result, extensions or modifications to the model are warranted. Here we consider the case when customers can call in orders during the daily operations; i.e., both customer locations and demands may be unknown in advance. This is modeled as a combined dynamic and stochastic programming problem, and a heuristic solution method is developed where sample scenarios are generated, solved heuristically, and combined iteratively to form a solution to the overall problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1060.0166"
+    }
+  ]
+}

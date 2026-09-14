@@ -1,0 +1,143 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_purchaser",
+    "label": "Traveling purchaser",
+    "definition": "Buy items from markets.",
+    "search_query": "traveling purchaser problem heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "TPP savings",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Market insertion",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "traveling purchaser problem heuristic",
+  "harvested_at": "2026-09-14T08:24:57Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230110308",
+      "title": "Capacitated arc routing problems",
+      "authors": [
+        "Bruce L. Golden",
+        "Richard T. Wong"
+      ],
+      "year": 1981,
+      "venue": "Networks",
+      "cited_by_count": 454,
+      "abstract": "Abstract \n          A capacitated node routing problem, known as the vehicle routing or dispatch problem, has been the focus of much research attention. On the other hand, capacitated arc routing problems have been comparatively neglected. Both classes of problems are extremely rich in theory and applications. Our intent in this paper is to define a capacitated arc routing problem, to provide mathematical programming formulations, to perform a computational complexity analysis, and to present an approximate solution strategy for this class of problems. In addition, we identify several related routing problems and develop tight lower bounds on the optimal solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230110308",
+      "seeded": true,
+      "seed_heuristic": "Golden traveling purchaser",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4773935",
+      "title": "Preprocessing Algorithms for the Traveling Purchaser Problem",
+      "authors": [
+        "Finn Meissner"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "A frequently investigated generalization of the Traveling Salesman Problem is the Traveling Purchaser Problem (TPP). Due to the development of technologies and algorithms, increasingly complex variations of the problem can be solved while computation times shorten. Yet additional room for improvement is offered before applying the algorithms. Due to the structure of the TPP, a decision-maker sometimes has many alternatives and some of these can be eliminated by simple reasoning. By looking closely at the given data, it may be possible to simplify the decision space and reduce the time any algorithm will need to determine a solution. While some of these considerations are already applied in various algorithms, they have, to our knowledge, not yet been used to alter the data in advance. This paper takes existing methods and presents new ways of preprocessing for the TPP, attuned to different variations of the problem. Their suitability is examined using known data sets from the literature.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4773935"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4774293",
+      "title": "The Traveling Purchaser Problem with Zone-Based Tariffs",
+      "authors": [
+        "Finn Meissner"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The Traveling Purchaser Problem serves as a model for a multitude of transportation and procurement issues. In the basic model, a decision-maker buys products from different markets while balancing the prices of each market together with the tour costs from visiting them. &lt;br&gt;&lt;br&gt;One variant that has not been investigated yet describes the problem of additional tariffs payable when a truck enters a particular area to visit markets. This case describes the real-world situation as it is often found, e.g., near country borders. A subset of markets shares an extra fee as soon as one of them is visited.&lt;br&gt;&lt;br&gt;This paper explores this new variant with zone-based tariffs. The model is set up and then examined in detail to understand the particular characteristics of the problem compared to the basic variant. Furthermore, the structure of the solutions is examined to gain deeper insight into this design.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4774293"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1111/itor.70106",
+      "title": "The traveling purchaser problem with promotional packages",
+      "authors": [
+        "Ilker Kucukoglu"
+      ],
+      "year": 2025,
+      "venue": "International Transactions in Operational Research",
+      "cited_by_count": 0,
+      "abstract": "Abstract This study introduces a new variant of the traveling purchaser problem (TPP), called the TPP with promotional packages (TPP‐PP), in which promotional packages are alternatively available for sale in the markets for a limited time. In TPP‐PP, the purchaser has an opportunity to purchase a set of products at a lower cost compared to individual sales of the items in the markets. The TPP‐PP provides more realistic product and market selection plans for many real‐life applications. The TPP‐PP is formulated as a mixed integer linear programming model. To efficiently solve the problem, an adaptive large neighborhood search (ALNS)‐based matheuristic algorithm (M‐ALNS) is introduced by integrating an exact solver into the ALNS. In each iteration of the M‐ALNS, the ALNS procedures are carried out regarding the TPP restrictions. If the corresponding solution is promising, then the exact solver refines the solution by optimizing the procurement plan, including the promotional package sales. In order to analyze the validity of the model formulation and performance of the proposed matheuristic approach, an extensive computational study is performed by using a well‐known TPP benchmark problem set. Results show that the TPP‐PP model yields cost reductions of up to 2.84%, compared to the classic TPP model. Additionally, the proposed M‐ALNS outperforms the GUROBI solver in almost all cases, especially for large‐sized instances, achieving over 20% cost reductions. Compared to optimal TPP solutions, the M‐ALNS provides savings up to 8.92%. Numerical experiments show that the proposed M‐ALNS is capable of finding efficient results for the TPP‐PP.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1111/itor.70106"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su141610190",
+      "title": "The Multi-Depot Traveling Purchaser Problem with Shared Resources",
+      "authors": [
+        "Zahra Sadat Hasanpour Jesri",
+        "Kourosh Eshghi",
+        "Majid Rafiee",
+        "Tom Van Woensel"
+      ],
+      "year": 2022,
+      "venue": "Sustainability",
+      "cited_by_count": 11,
+      "abstract": "Using shared resources has created better opportunities in the field of sustainable logistics and procurement. The Multi-Depot Traveling Purchaser Problem under Shared Resources (MDTPPSR) is a new variant of the Traveling Purchaser Problem (TPP) in sustainable inbound logistics. In this problem, each depot can purchase its products using the shared resources of other depots, and vehicles do not have to return to their starting depots. The routing of this problem is a Multi-Trip, Open Vehicle Routing Problem. A tailored integer programming model is formulated to minimize the total purchasers’ costs. Considering the complexity of the model, we have presented a decomposition-based algorithm that breaks down the problem into two phases. In the first phase, tactical decisions regarding supplier selection and the type of collaboration are made. In the second phase, the sequence of visiting is determined. To amend the decisions made in these phases, two heuristic algorithms based on the removing and insertion of operators are also proposed. The experimental results show that not only can purchasing under shared resources reduce the total cost by up to 29.11%, but it also decreases the number of dispatched vehicles in most instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su141610190"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.2015.0627",
+      "title": "The Stochastic and Dynamic Traveling Purchaser Problem",
+      "authors": [
+        "E. Angelelli",
+        "R. Mansini",
+        "M. Vindigni"
+      ],
+      "year": 2016,
+      "venue": "Transportation Science",
+      "cited_by_count": 24,
+      "abstract": "In this paper, we analyze a dynamic and stochastic variant of the traveling purchaser problem where quantity available for each product in each market decreases over time according to a stochastic process. The multiobjective nature of the problem is faced through a hierarchical evaluation of the different objectives. We introduce three variants of a heuristic approach using reoptimization to exploit new information as it becomes available. The proposed approaches are studied under different operating scenarios characterized by the communication technologies at hand and by the level of information available on the state of the world. Extensive computational results show how communication and a good level of information represent valuable tools for a decision maker, and provide interesting guidelines for decision makers involved with similar stochastic and dynamic problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.2015.0627"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:35Z"
+}

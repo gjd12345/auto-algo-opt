@@ -1,0 +1,162 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "strip_2d",
+    "label": "2D strip packing",
+    "definition": "Pack rectangles into a strip.",
+    "search_query": "two dimensional strip packing heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Bottom-Left",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Best-Fit skyline",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "two dimensional strip packing heuristic",
+  "harvested_at": "2026-09-14T08:00:57Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1590/scielopreprints.12151",
+      "title": "Efficient SAT and MaxSAT techniques for solving the Two-Dimensional Strip Packing Problem",
+      "authors": [
+        "Tuyen Van Kieu",
+        "Duong Quy Le",
+        "Khanh Van To"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The NP-hard Two-Dimensional Strip Packing Problem (2SPP) demands efficient exact solutions. This paper presents SAT-based Order Encoding models incorporating item rotation and adapted symmetry-breaking (SB). It compares three height-minimization strategies: Non-Incremental SAT Bisection, Incremental SAT Bisection, and Direct Weighted Partial MaxSAT Optimization. Benchmarks on established 2SPP instances show our Non-Incremental SAT and Direct MaxSAT strategies significantly outperform earlier incremental techniques. Direct MaxSAT excelled for non-rotational 2SPP, while Non-Incremental SAT was superior for rotational cases among our methods. Google OR-Tools (CP) performed best overall, yet our SAT/MaxSAT methods were highly competitive, outperforming other CP and all tested MIP solvers. SB was generally beneficial. Item rotation increased encoding complexity; while yielding improved optimal heights for some instances, it did not increase the total number of instances solved optimally by our SAT/MaxSAT methods. This work offers insights into SAT/MaxSAT strategy trade-offs and their performance against general solvers.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1590/scielopreprints.12151"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/computers15040216",
+      "title": "Adaptive Sequence-Based Heuristic for Two-Dimensional Guillotine Cutting and Packing Problems",
+      "authors": [
+        "Óscar Oliveira",
+        "Dorabela Gamboa"
+      ],
+      "year": 2026,
+      "venue": "Computers",
+      "cited_by_count": 0,
+      "abstract": "This paper proposes adaptive sequence-based heuristics for solving rectangular two-dimensional guillotine Cutting and Packing Problems (CPPs). These problems are essential in various industrial sectors, aiming to maximise resource utilisation by selecting profitable item subsets or minimise waste by using the fewest possible identical large objects. The core methodology is grounded in the principle that if a specific item sequence generates a high-quality solution, incremental adjustments to that sequence can yield even better outcomes. By iteratively refining item ordering through the BubbleSearch method, the heuristics balance search intensification with the diversification of the solution space. Extensive computational experiments were conducted on benchmark datasets, including SET1, ATP, and CLASS, across multiple problem variants such as the Single Stock-Size Cutting Stock Problem (SSSCSP) and the Single Large Object Placement Problem (SLOPP). The results confirm that these heuristics and their extension with path relinking consistently deliver optimal or near-optimal solutions. These heuristics achieve high performance in computational times that are significantly shorter than existing state-of-the-art methods, demonstrating their robustness, flexibility, and suitability for software transferability and real-world industrial adoption.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/computers15040216"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.756-759.2705",
+      "title": "A Constructive Heuristic for Two-Dimensional Bin Packing",
+      "authors": [
+        "Bo Han Wang",
+        "Jia Min Liu",
+        "Yong Yue",
+        "Malcolm Keech"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 1,
+      "abstract": "Two-dimensional bin packing is encountered in various applications where small rectangular items are packed into a minimum number of large rectangular objects (bins). Aiming at an optimal area utilization, the paper presents an effective constructive heuristic approach to two-dimensional bin packing. The heuristic approach integrates ranking, placement and search strategies along with an effective handling method of the remaining areas during the packing process. In order to obtain an optimal arrangement in a given area, all items are examined for possible positions and orientations using the search strategies. In addition, an effective handling method of the remaining areas is applied through appropriate partitioning and merging to minimize waste areas. Tests with a number of standard test and real world instances have shown that the performance of the proposed approach is superior to that of other approaches published.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.756-759.2705"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.1100.0833",
+      "title": "An Exact Algorithm for the Two-Dimensional Strip-Packing Problem",
+      "authors": [
+        "Marco Antonio Boschetti",
+        "Lorenza Montaletti"
+      ],
+      "year": 2010,
+      "venue": "Operations Research",
+      "cited_by_count": 56,
+      "abstract": "This paper considers the two-dimensional strip-packing problem (2SP) in which a set of rectangular items have to be orthogonally packed, without overlapping, into a strip of a given width and infinite height by minimizing the overall height of the packing. The 2SP is NP-hard in the strong sense and finds many practical applications. We propose reduction procedures, lower and upper bounds, and an exact algorithm for the 2SP. The new lower bounds are both combinatorial bounds and bounds derived from different relaxations of mathematical formulations of the 2SP. The new upper bounds are obtained by constructive heuristics based on different strategies to place the items into the strip. The new exact method is based on a branch-and-bound approach. Computational results on different sets of test problems derived from the literature show the effectiveness of the new lower and upper bounds and of the new exact algorithm.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.1100.0833"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.24425/ijet.2025.153584",
+      "title": "Neural-Driven heuristic for strip packing trained with Black-Box optimization",
+      "authors": [
+        "Mariusz Kaleta",
+        "Tomasz Śliwiński"
+      ],
+      "year": 2025,
+      "venue": "International Journal of Electronics and Telecommunications",
+      "cited_by_count": 1,
+      "abstract": "We address the well-known NP-hard problem of packing rectangular items into a strip, a problem of significant importance in electronics (e.g., packing components on printed circuit boards and macro-cell placement in Very-Large- Scale Integration design) and telecommunications (e.g., allocating data packets over transmission channels). Traditional heuristics and metaheuristics struggle with generalization, efficiency, and adaptability, as they rely on predefined rules or require extensive computational effort for each new problem instance. In this paper, we propose a neural-driven constructive heuristic that leverages a lightware neural network trained via black-box optimization to dynamically evaluate item placement decisions. Instead of relying on static heuristic rules, our approach adapts to the characteristics of each problem instance, enabling more efficient and effective packing strategies. To train the neural network, we employ the Covariance Matrix Adaptation Evolution Strategy (CMA-ES), a state-ofthe- art derivative-free optimization method. Our method learns decision policies by optimizing fill factor improvements over a large dataset of problem instances. Unlike conventional heuristics, our approach dynamically adapts placement decisions based on a broad set of features describing the current partial solution and remaining items. Through extensive computational experiments, we compare our method against well-known strip packing heuristics, including MaxRects and Skyline-based algorithms. The results demonstrate that our approach consistently outperforms the best traditional heuristics, achieving up to 6.74 percentage points of improvement in packing efficiency. Furthermore, our method improves 87.87% of tested instances. Our study highlights the potential of machine learning-driven heuristics in combinatorial optimization and opens avenues for further research into adaptive decision-making strategies in packing and scheduling problems",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.24425/ijet.2025.153584"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/systems10050193",
+      "title": "Optimization of a Rural Portfolio Credit Granting System Using Improved Two-Dimensional Strip Packing Grouping Delay Problem",
+      "authors": [
+        "Huijun Huang",
+        "Yuzhong Li"
+      ],
+      "year": 2022,
+      "venue": "Systems",
+      "cited_by_count": 0,
+      "abstract": "Rural preferential loans usually take the form of portfolio credits. From the perspective of public interest, the total delay time for obtaining loans is expected to be minimized. To use rural portfolio credits effectively, the two-dimensional strip packing grouping delay problem (2SPGDP) is improved to optimize the rural portfolio credit granting system. First, 2SPGDP is established by adding grouping constraints and the latest start time constraints to the two-dimensional strip packing problem, and the total delay is taken as the optimization objective. Second, based on the depth search reverse spanning tree (DSRST) and the insert spare space (ISS) method, the branch-and-bound reverse order insert algorithm (BB-RIA) is designed. Finally, the lag pruning operator (LPO) is designed to reduce lag. The improved model (2SPGDP) and BB-RIA-LPO algorithm are used to solve several classical two-dimensional strip packing problems and a specific rural portfolio credit case. Compared with the Bottom-Left and Branch and Bound Algorithm, our model and algorithm improve the success rate by 25% and reduce the total delay by 6%. The case of rural portfolio credit illustrates the operability and effectiveness of this method.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/systems10050193"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.1060.0293",
+      "title": "A New Bottom-Left-Fill Heuristic Algorithm for the Two-Dimensional Irregular Packing Problem",
+      "authors": [
+        "Edmund Burke",
+        "Robert Hellier",
+        "Graham Kendall",
+        "Glenn Whitwell"
+      ],
+      "year": 2006,
+      "venue": "Operations Research",
+      "cited_by_count": 142,
+      "abstract": "This paper presents a new heuristic algorithm for the two-dimensional irregular stock-cutting problem, which generates significantly better results than the previous state of the art on a wide range of established benchmark problems. The developed algorithm is able to pack shapes with a traditional line representation, and it can also pack shapes that incorporate circular arcs and holes. This in itself represents a significant improvement upon the state of the art. By utilising hill climbing and tabu local search methods, the proposed technique produces 25 new best solutions for 26 previously reported benchmark problems drawn from over 20 years of cutting and packing research. These solutions are obtained using reasonable time frames, the majority of problems being solved within five minutes. In addition to this, we also present 10 new benchmark problems, which involve both circular arcs and holes. These are provided because of a shortage of realistic industrial style benchmark problems within the literature and to encourage further research and greater comparison between this and future methods.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.1060.0293"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.11.4.345",
+      "title": "Heuristic and Metaheuristic Approaches for a Class of Two-Dimensional Bin Packing Problems",
+      "authors": [
+        "Andrea Lodi",
+        "Silvano Martello",
+        "Daniele Vigo"
+      ],
+      "year": 1999,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 264,
+      "abstract": "Two-dimensional bin packing problems consist of allocating, without overlapping, a given set of small rectangles (items) to a minimum number of large identical rectangles (bins), with the edges of the items parallel to those of the bins. According to the specific application, the items may either have a fixed orientation or they can be rotated by 90°. In addition, it may or not be imposed that the items are obtained through a sequence of edge-to-edge cuts parallel to the edges of the bin. In this article, we consider the class of problems arising from all combinations of the above requirements. We introduce a new heuristic algorithm for each problem in the class, and a unified tabu search approach that is adapted to a specific problem by simply changing the heuristic used to explore the neighborhood. The average performance of the single heuristics and of the tabu search are evaluated through extensive computational experiments.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.11.4.345"
+    }
+  ]
+}

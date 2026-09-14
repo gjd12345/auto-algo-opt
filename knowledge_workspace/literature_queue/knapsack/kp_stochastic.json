@@ -1,0 +1,140 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_stochastic",
+    "label": "Stochastic knapsack",
+    "definition": "Random profits or weights.",
+    "search_query": "stochastic knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Expected-density greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Recourse knapsack",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "stochastic knapsack heuristic",
+  "harvested_at": "2026-09-14T08:27:02Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.43.3.477",
+      "title": "A New Scenario Decomposition Method for Large-Scale Stochastic Optimization",
+      "authors": [
+        "John M. Mulvey",
+        "Andrzej Ruszczyński"
+      ],
+      "year": 1995,
+      "venue": "Operations Research",
+      "cited_by_count": 281,
+      "abstract": "A novel parallel decomposition algorithm is developed for large, multistage stochastic optimization problems. The method decomposes the problem into subproblems that correspond to scenarios. The subproblems are modified by separable quadratic terms to coordinate the scenario solutions. Convergence of the coordination procedure is proven for linear programs. Subproblems are solved using a nonlinear interior point algorithm. The approach adjusts the degree of decomposition to fit the available hardware environment. Initial testing on a distributed network of workstations shows that an optimal number of computers depends upon the work per subproblem and its relation to the communication capacities. The algorithm has promise for solving stochastic programs that lie outside current capabilities.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.43.3.477",
+      "seeded": true,
+      "seed_heuristic": "Dean stochastic knapsack",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/asmb.2389",
+      "title": "Heuristic policies for stochastic knapsack problem with time‐varying random demand",
+      "authors": [
+        "Yingdong Lu"
+      ],
+      "year": 2018,
+      "venue": "Applied Stochastic Models in Business and Industry",
+      "cited_by_count": 1,
+      "abstract": "Abstract In this paper, we consider the classic stochastic (dynamic) knapsack problem, a fundamental mathematical model in revenue management, with general time‐varying random demand. Our main goal is to study the optimal policies, which can be obtained by solving the dynamic programming formulated for the problem, both qualitatively and quantitatively. It is well known that, when the demand size is fixed and the demand distribution is stationary over time, the value function of the dynamic programming exhibits extremely useful first‐ and second‐order monotonicity properties, which lead to monotonicity properties of the optimal policies. In this paper, we are able to verify that these results still hold even in the case that the price distributions are time dependent. When we further relax the demand size distribution assumptions and allow them to be arbitrary, for example, in random batches, we develop a scheme for using value function of alternative unit demand systems to provide bounds to the value function. These results confirm some of the basic understandings of the stochastic knapsack problem. As a natural consequence, we propose a new class of heuristic policies, two‐dimensional switch‐over policies, and discuss numerical procedures for optimizing the parameters of the policies. Extensive numerical experiments demonstrate that these switch‐over policies can provide performances that are in a close neighborhood of the optimum statistically.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/asmb.2389"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.14293/s2199-1006.1.sor-.ppddjql.v2",
+      "title": "New Bounds for the Stochastic Knapsack Problem",
+      "authors": [
+        "Ekesh Kumar"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The knapsack problem is a problem in combinatorial optimization that seeks to maximize the objective function \\(\\sum_{i = 1}^{n} v_ix_i\\) subject to the constraints \\(\\sum_{i = 1}^{n} w_ix_i \\leq W\\) and \\(x_i \\in \\{0, 1\\}\\), where \\(\\mathbf{x}, \\mathbf{v} \\in \\mathbb{R}^{n}\\) and \\(W\\) are provided. We consider the stochastic variant of this problem in which \\(\\mathbf{v}\\) remains deterministic, but \\(\\mathbf{x}\\)is an \\(n\\)-dimensional vector drawn uniformly at random from \\([0, 1]^{n}\\). We establish a sufficient condition under which the summation-bound condition is almost surely satisfied. Furthermore, we discuss the implications of this result on the deterministic problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.14293/s2199-1006.1.sor-.ppddjql.v2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.14293/s2199-1006.1.sor-.ppddjql.v1",
+      "title": "New Bounds for the Stochastic Knapsack Problem",
+      "authors": [
+        "Ekesh Kumar"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "The knapsack problem is a problem in combinatorial optimization that seeks to maximize the objective function \\(\\sum_{i = 1}^{n} v_ix_i\\) subject to the constraints \\(\\sum_{i = 1}^{n} w_ix_i \\leq W\\) and \\(x_i \\in \\{0, 1\\}\\), where \\(\\mathbf{x}, \\mathbf{v} \\in \\mathbb{R}^{n}\\) and \\(W\\) are provided. We consider the stochastic variant of this problem in which \\(\\mathbf{v}\\) remains deterministic, but \\(\\mathbf{x}\\)is an \\(n\\)-dimensional vector drawn uniformly at random from \\([0, 1]^{n}\\). We establish a sufficient condition under which the summation-bound condition is almost surely satisfied. Furthermore, we discuss the implications of this result on the deterministic problem.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.14293/s2199-1006.1.sor-.ppddjql.v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/stsy.2019.0055",
+      "title": "Logarithmic Regret in the Dynamic and Stochastic Knapsack Problem with Equal Rewards",
+      "authors": [
+        "Alessandro Arlotto",
+        "Xinchang Xie"
+      ],
+      "year": 2020,
+      "venue": "Stochastic Systems",
+      "cited_by_count": 11,
+      "abstract": "We study a dynamic and stochastic knapsack problem in which a decision maker is sequentially presented with items arriving according to a Bernoulli process over n discrete time periods. Items have equal rewards and independent weights that are drawn from a known nonnegative continuous distribution F. The decision maker seeks to maximize the expected total reward of the items that the decision maker includes in the knapsack while satisfying a capacity constraint and while making terminal decisions as soon as each item weight is revealed. Under mild regularity conditions on the weight distribution F, we prove that the regret—the expected difference between the performance of the best sequential algorithm and that of a prophet who sees all of the weights before making any decision—is, at most, logarithmic in n. Our proof is constructive. We devise a reoptimized heuristic that achieves this regret bound.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/stsy.2019.0055"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:55Z"
+}

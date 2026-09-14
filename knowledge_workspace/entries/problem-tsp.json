@@ -1,0 +1,58 @@
+{
+  "type": "problem",
+  "title": "TSP construct (next city on a k-NN list)",
+  "category": "problem",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "Evolved select_next_node among a truncated nearest-neighbor list; last city forced; start at 0.",
+  "attributes": {
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean closed-tour length",
+    "constraints": [
+      "visit each city once",
+      "k-NN candidate list"
+    ]
+  },
+  "relations": {
+    "methods": [
+      "method-tsp-nearest-neighbor-construct",
+      "method-tsp-two-opt",
+      "method-tsp-double-bridge-ils",
+      "method-tsp-relocation",
+      "method-tsp-or-opt-2",
+      "method-tsp-restricted-3opt"
+    ],
+    "implementations": [
+      "impl-tsp-official-construct",
+      "impl-tsp-official-broad",
+      "impl-tsp-final-batch-best",
+      "impl-tsp-outcome-best",
+      "impl-tsp-neighbor-2opt-repair",
+      "impl-tsp-iterated-2opt",
+      "impl-tsp-relocation-vnd",
+      "impl-tsp-or-opt-2",
+      "impl-tsp-restricted-3opt"
+    ]
+  },
+  "source_refs": [
+    "src-croes-2opt",
+    "src-rosenkrantz-insertion"
+  ],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_construct/prob.py",
+    "code:scripts/evaluate_tsp_nearest_two_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_construct/prob.py",
+      "sha256": "85a20115c73176c77aa4c3b2fea3b36f93dfd84a1e60e2161794def52d453f45"
+    }
+  ],
+  "id": "problem-tsp",
+  "content_sha256": "19abdf98d2a95e00c0ff5dec44204710fc270bdfaebedf4861c6870af5454a16"
+}

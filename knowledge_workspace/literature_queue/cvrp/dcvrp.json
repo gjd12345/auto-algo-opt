@@ -1,0 +1,165 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "dcvrp",
+    "label": "Distance-constrained VRP",
+    "definition": "Route length cap.",
+    "search_query": "distance constrained VRP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Length-feasible NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "DCVRP savings",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "distance constrained VRP heuristic Length-feasible NN",
+  "harvested_at": "2026-09-14T08:12:53Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.12.4.568",
+      "title": "Scheduling of Vehicles from a Central Depot to a Number of Delivery Points",
+      "authors": [
+        "G. Clarke",
+        "J. W. Wright"
+      ],
+      "year": 1964,
+      "venue": "Operations Research",
+      "cited_by_count": 2836,
+      "abstract": "The optimum routing of a fleet of trucks of varying capacities from a central depot to a number of delivery points may require a selection from a very large number of possible routes, if the number of delivery points is also large. This paper, after considering certain theoretical aspects of the problem, develops an iterative procedure that enables the rapid selection of an optimum or near-optimum route. It has been programmed for a digital computer but is also suitable for hand computation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.12.4.568",
+      "seeded": true,
+      "seed_heuristic": "Clarke-Wright with route length",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230070404",
+      "title": "A shortest path algorithm for grid graphs",
+      "authors": [
+        "F. O. Hadlock"
+      ],
+      "year": 1977,
+      "venue": "Networks",
+      "cited_by_count": 96,
+      "abstract": "Abstract \n          \n          Grid graphs are a simple class of planar graphs for which the vertices can be assigned integer coordinates so that neighbors agree in one coordinate and differ by one in the other coordinate. Grid graphs arise in applications from the layout design of integrated circuits to idealized models of city street networks. In many applications, a shortest path between two given vertices is needed. The best known algorithms for the shortest path in a general graph of n vertices are of complexity 0(n\n           2 \n          ). However, if edge lengths are of uniform length, the shortest path can be determined in time 0(n). In this paper, taking advantage of the concept of direction present in grid graphs, an algorithm is developed which is 0(n) in the worst case and 0(√n) in the best case.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230070404",
+      "seeded": true,
+      "seed_heuristic": "Distance-constrained VRP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/eng2.70511",
+      "title": "Crew Rostering in Long‐Distance Freight Railways: A Multi‐Depot\n                    <scp>VRP</scp>\n                    ‐Based Heuristic Approach",
+      "authors": [
+        "Franco Collodetti Mazioli",
+        "Rodrigo de Alvarenga Rosa",
+        "João Henrique Brunow Barbosa",
+        "Hendrigo Venes"
+      ],
+      "year": 2025,
+      "venue": "Engineering Reports",
+      "cited_by_count": 0,
+      "abstract": "ABSTRACT \n          Efficient crew management is a critical challenge in long‐distance freight rail operations, where shift limits, depot logistics, and labor regulations must be jointly considered. This paper addresses the Railway Crew Rostering Problem by proposing a novel mathematical model inspired by the Vehicle Routing Problem with Multiple Depots and Multiple Trips (VRP‐MD‐MT). The model incorporates depot assignment, shift structure, and overtime constraints. A tailored heuristic algorithm is developed and applied to real data from a major Brazilian freight railway. Compared to the company's manual planning, the proposed approach reduced the number of required drivers and significantly decreased overtime in several scenarios. The analysis indicates the potential for meaningful annual cost savings, achieved without reducing the workforce. Beyond cost efficiency, the method offers a standardized planning tool aligned with legal and operational constraints. These results demonstrate the model's practical relevance and computational effectiveness in complex railway environments.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/eng2.70511"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/9f2d4f50zf230z4165zb71az75cab4c0d1bb",
+      "title": "Exact and heuristic methods for resource constrained project scheduling problem",
+      "authors": [
+        "Anis Kooli"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes exactes et approchées pour le problème de gestion de projet à contraintes de ressources \n         Le problème de gestion de projet à contraintes de ressources est un des problèmesles plus étudiés dans la littérature. Il consiste à planifier des activités soumises à desrelations de précédence, et nécessitant des ressources renouvelables. L’objectif est deminimiser la durée du projet, soit le makespan. Nous étudions le problème de gestion deprojet à contraintes de ressources. Nous nous sommes intéressées à la résolution exactedu problème. Dans la première partie de la thèse, nous élaborons une série de bornesinférieures basées sur le raisonnement énergétique et des formulations mathématiques.Les résultats montrent que les bornes proposées surpassent ceux de la littérature. Dansla deuxième partie, nous proposons des procédures par séparation et évaluation utilisantles bornes inférieures dévelopées dans la première partie.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/9f2d4f50zf230z4165zb71az75cab4c0d1bb"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.14710/transmisi.22.4.123-129",
+      "title": "ALGORITMA K-NN DENGAN EUCLIDEAN DISTANCE UNTUK PREDIKSI HASIL PENGGERGAJIAN KAYU SENGON",
+      "authors": [
+        "Anton Yudhana",
+        "Sunardi Sunardi",
+        "Agus Jaka Sri Hartanta"
+      ],
+      "year": 2020,
+      "venue": "Transmisi",
+      "cited_by_count": 2,
+      "abstract": "Industri dengan bahan dasar kayu Sengon (Albizia falcataria) banyak diselenggarakan oleh masyarakat Indonesia untuk keperluan furnitur, instrumen desain interior, bahan kayu plywood, pelapis dinding, plafon, dudukan cor, dan bahan baku kertas. Penggergajian merupakan proses pemotongan batang kayu untuk mendapatkan potongan-potongan yang lebih kecil sesuai dengan variasi dimensi yang diinginkan. Perhitungan prediksi secara manual untuk mendapatkan jumlah dan dimensi potongan membutuhkan waktu lama karena harus dilakukan secara berulang untuk setiap batang, terkadang hasilnya tidak optimal sehingga mengakibatkan kerugian. Penelitian ini menerapkan Algoritma k-Nearest Neighbor (k-NN) dengan Euclidean Distance untuk prediksi hasil penggergajian kayu Sengon. Penelitian diawali dengan perhitungan dengan Ms Excel lalu membangun aplikasi Algoritma k-NN menggunakan bahasa pemrograman PHP dengan database MySQL dan framework Laravel. Data training sejumlah 135 dan data testing sejumlah 10. Nilai k yang digunakan adalah 1, 2, 3, 4, dan 5. Penggunaan aplikasi dilakukan dengan memberikan input berupa panjang dan diameter kayu untuk kemudian dilakukan proses perhitungan k-NN hingga mendapatkan hasil prediksi. Penelitian dengan aplikasi didapatkan hasil prediksi 100% sama dengan hasil perhitungan dengan Ms Excel. Hasil prediksi dengan aplikasi mendapatkan akurasi 70% atau error rate sebesar 30% jika dibandingkan dengan hasil riil di lapangan.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.14710/transmisi.22.4.123-129"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/bf02296341",
+      "title": "Optimal Scaling by Alternating Length-Constrained Nonnegative Least Squares, with Application to Distance-Based Analysis",
+      "authors": [
+        "Patrick J. F. Groenen",
+        "Bart-Jan van Os",
+        "Jacqueline J. Meulman"
+      ],
+      "year": 2000,
+      "venue": "Psychometrika",
+      "cited_by_count": 8,
+      "abstract": "An important feature of distance-based principal components analysis, is that the variables can be optimally transformed. For monotone spline transformation, a nonnegative least-squares problem with a length constraint has to be solved in each iteration. As an alternative algorithm to Lawson and Hanson (1974), we propose the Alternating Length-Constrained Non-Negative Least-Squares (ALC-NNLS) algorithm, which minimizes the nonnegative least-squares loss function over the parameters under a length constraint, by alternatingly minimizing over one parameter while keeping the others fixed. Several properties of the new algorithm are discussed. A Monte Carlo study is presented which shows that for most cases in distance-based principal components analysis, ALC-NNLS performs as good as the method of Lawson and Hanson or sometimes even better in terms of the quality of the solution.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/bf02296341"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.31219/osf.io/ufwhx_v1",
+      "title": "ECHO: Ethically Constrained Heuristic Optimization for Emotionally Robust Reinforcement Learning",
+      "authors": [
+        "Joshua Daniel Curry"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Reinforcement learning with human feedback (RLHF) has accelerated the deployment of powerful language models, but remains vulnerable to emotional compliance drift—subtle shifts in model behavior triggered by tone, vulnerability cues, or affective manipulation. Existing optimization frameworks, including Proximal Policy Optimization (PPO) and Trust Region Policy Optimization (TRPO), treat uncertainty as purely statistical, ignoring emotionally volatile input-output dynamics.We introduce \\textbf{ECHO} (Ethically Constrained Heuristic Optimization), a novel optimization framework that integrates emotional volatility and token-level ethical risk into the curvature-aware update process. ECHO modifies the Fisher Information Matrix (FIM) using a volatility-weighted term $\\sigma^2(p, a)$, defined as a function of prompt-level Emotional Volatility Score (EVS) and model-specific Token Risk. This adjustment enables the optimizer to down-weight risky updates during emotionally ambiguous learning, without compromising convergence.Empirical results across 120 prompts and four models (GPT-3.5, GPT-4, Claude, and RWTO) show that ECHO-enhanced optimization suppresses emotionally induced drift more effectively than traditional RLHF approaches. t-SNE and PCA visualizations confirm tighter response clustering in low-drift regions, and a novel Ethical Risk Score metric demonstrates consistent gains in alignment resilience.ECHO offers a scalable path toward emotionally aware reinforcement learning, bridging the gap between statistical optimization and ethical safety in large language models.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.31219/osf.io/ufwhx_v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-10426574/v1",
+      "title": "Robust Feasible-Domain Modeling for Resource-Constrained Spaceborne Heterogeneous High-Performance Computing",
+      "authors": [
+        "Jianing Rao",
+        "Wenjie Zhao",
+        "Junshe An"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n         A spaceborne heterogeneous computer must finish sensing, preprocessing, artificial-intelligence inference, compression, and data return within one mission window. Processor throughput alone is an incomplete guide because task placement simultaneously determines computation, transfer, energy, peak power, thermal accumulation, and reliability exposure. We developed a reproducible feasible-domain workflow that screens compatibility, transient memory, deadlines, period, peak power, repeated-cycle temperature, and segment reliability before multi-objective selection. Its executable model combines a directed task graph, task-dependent Roofline capability, mapping-induced communication, baseline-increment energy, a first-order RC recurrence, and bounded perturbations. Direct enumeration of a synthetic six-task case reduced 4096 CPU/GPGPU/NPU/FPGA mappings to 18 after timing and capacity checks and to 15 after thermal screening. Compared with the nominal energy-oriented mapping, robust selection used 1.51% more energy and shortened makespan by 122.701 ms. No deadline violation was observed in 1000 seeded replay samples at the declared perturbation strength; the Wilson 95% upper bound was 0.383%. Because the inputs are theoretical model parameters without hardware measurements, the study supports reproducible design screening and makes no claim about flight-system performance.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-10426574/v1"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:14Z"
+}

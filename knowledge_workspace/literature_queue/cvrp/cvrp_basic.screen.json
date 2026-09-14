@@ -1,0 +1,36 @@
+{
+  "schema_version": "literature-screen/v1",
+  "subproblem_id": "cvrp_basic",
+  "selected": [
+    {
+      "doi": "10.26760/mindjournal.v11i1.1-14",
+      "heuristic_name": "Nearest Neighbor visit order",
+      "why": "Abstract states Nearest Neighbor is used to order visits, which is next-customer scoring by proximity.",
+      "steps": [
+        "Among remaining customers, choose the nearest one as the next visit"
+      ],
+      "eoh_map": "possible",
+      "adapter_kind": "next_node_score",
+      "not_the_original": "Application paper: Clarke-Wright forms routes, then NN orders visits. Evaluator already filters capacity; this adapter is only the NN choice, not CW merge and not Sweep."
+    }
+  ],
+  "rejected": [
+    {
+      "doi": "10.61194/sijl.v2i1.187",
+      "reason": "Sweep clustering then NN on clusters is not select_next_node"
+    },
+    {
+      "doi": "10.2306/scienceasia1513-1874.2012.38.307",
+      "reason": "missing abstract"
+    },
+    {
+      "doi": "10.1145/3665065.3665076",
+      "reason": "missing abstract"
+    },
+    {
+      "doi": "10.32614/cran.package.heumilkr",
+      "reason": "CRAN package; missing abstract"
+    }
+  ],
+  "cannot_classify": false
+}

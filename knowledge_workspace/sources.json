@@ -1,0 +1,3373 @@
+{
+  "schema_version": "knowledge-v1",
+  "collected_at": "2026-09-14",
+  "policy": {
+    "network_search_by_host_agent": true,
+    "candidate_limit_per_problem_family": 10,
+    "full_text_distribution": "bibliography_and_autonomous_summary_only",
+    "download_allowlist": "explicitly registered https URL; no executable downloads, pickle loading, authentication bypass or TLS disabling"
+  },
+  "query_log": [
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "Lee Lee 1985 A simple online bin-packing algorithm DOI",
+        "Johnson Demers Ullman Garey Graham worst-case performance bounds one-dimensional packing DOI",
+        "Karmarkar Karp efficient approximation scheme one-dimensional bin-packing DOI"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "The three primary records cover simple online placement, worst-case FF/BF/FFD bounds, and an offline LP-based approximation scheme."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "Croes 1958 method solving traveling salesman problems DOI",
+        "Lin Kernighan 1973 effective heuristic traveling salesman problem DOI",
+        "Rosenkrantz Stearns Lewis 1977 analysis heuristics traveling salesman DOI"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "The selected records cover 2-opt exchange, variable-depth local search, and nearest/insertion construction with explicit worst-case analysis."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "Clarke Wright 1964 scheduling vehicles central depot DOI",
+        "Gillett Miller 1974 heuristic vehicle-dispatch sweep algorithm DOI",
+        "Toth Vigo 2003 granular tabu vehicle routing DOI"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "The selected records cover savings construction, sweep construction plus improvement, and restricted-neighborhood tabu improvement."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_euclidean"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_tw"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_basic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:ovrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_variable"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_1d"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:strip_2d"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_1d_offline"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_large"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_harmonic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_bounded_space"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_gtsp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_mtsp"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_pdp"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_local"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_guillotine"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:cutting_stock"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_dp_fptas"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_mckp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_nonlinear"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_quadratic"
+      ],
+      "screened_candidates": 3,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_setup"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_offline_ffd"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_construct"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_construct"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_metric"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_open"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_stochastic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_asymmetric"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:vrptw"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_clustered"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:sdvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_td"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_minveh"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_loading"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrpb"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:fsmvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:pvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:darp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_worstfit_family"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_irrevocable"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_offline_kk"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_density"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_01"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_md"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_sop"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_clustered"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_prize"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_orienteering"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_minmax"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_dynamic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_time_dependent"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_neighborhoods"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_bottleneck"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_multiobjective"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_colored"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_noisy"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_forbidden"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_covering"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_purchaser"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_drone"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_fuel"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_angular"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "tsp",
+      "queries": [
+        "screen:tsp_local"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:mdvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:hfvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:vrppd"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:pdptw"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:vrpsdp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:irp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_multitrip"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_site"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_stochastic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_dynamic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:evrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_2e"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_prize"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:dcvrp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_mo"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "cvrp",
+      "queries": [
+        "screen:cvrp_large"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_cardinality"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_2d"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_3d"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:vector_bp"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_fragile"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_colored"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_conflicts"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_dynamic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_stochastic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_advice"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_mo"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_batch"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_types"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_lookahead"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_open_end"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:bp_resource"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_bestfit_family"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "online_bin_packing",
+      "queries": [
+        "screen:obp_score"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_unbounded"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_bounded"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_multiple"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_discount"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_online"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_stochastic"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_fuzzy"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_mo"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:subset_sum"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_collapsing"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_prec"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_time"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_circular"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_group"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_generalized"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_compartment"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_bilevel"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_robust"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_integer"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_minmax"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_assign"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    },
+    {
+      "date": "2026-09-14",
+      "problem_family": "knapsack",
+      "queries": [
+        "screen:kp_order_greedy"
+      ],
+      "screened_candidates": 2,
+      "selection_note": "Promoted from literature_drafts after grok-4.5 screen."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-johnson-packing",
+      "title": "Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms",
+      "authors": [
+        "D. S. Johnson",
+        "A. Demers",
+        "J. D. Ullman",
+        "M. R. Garey",
+        "R. L. Graham"
+      ],
+      "year": 1974,
+      "venue": "SIAM Journal on Computing",
+      "pages": "299-325",
+      "doi": "10.1137/0203025",
+      "url": "https://epubs.siam.org/doi/10.1137/0203025",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Primary article defining and analysing First Fit, Best Fit and decreasing-order variants.",
+      "locator": "abstract; pp. 299-325",
+      "notes": "The publisher abstract states the 1.7 OPT + 2 and 11/9 OPT + 4 style bounds; exact theorem use requires checking the article.",
+      "read_depth": "abstract"
+    },
+    {
+      "id": "src-croes-2opt",
+      "title": "A Method for Solving Traveling-Salesman Problems",
+      "authors": [
+        "G. A. Croes"
+      ],
+      "year": 1958,
+      "venue": "Operations Research",
+      "pages": "791-812",
+      "doi": "10.1287/opre.6.6.791",
+      "url": "https://pubsonline.informs.org/doi/10.1287/opre.6.6.791",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original 2-edge exchange method record and an explicit statement that search can be stopped at any point.",
+      "locator": "abstract; pp. 791-812",
+      "notes": "The source discusses symmetric and asymmetric settings; implementation assumptions must be checked separately.",
+      "read_depth": "abstract"
+    },
+    {
+      "id": "src-rosenkrantz-insertion",
+      "title": "An Analysis of Several Heuristics for the Traveling Salesman Problem",
+      "authors": [
+        "Daniel J. Rosenkrantz",
+        "Richard E. Stearns",
+        "Philip M. Lewis II"
+      ],
+      "year": 1977,
+      "venue": "SIAM Journal on Computing",
+      "pages": "563-581",
+      "doi": "10.1137/0206041",
+      "url": "https://epubs.siam.org/doi/10.1137/0206041",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Primary worst-case analysis for nearest-neighbour, nearest insertion and cheapest insertion.",
+      "locator": "abstract; pp. 563-581",
+      "notes": "Bounds assume the metric/triangle-inequality conditions stated by the source.",
+      "read_depth": "abstract"
+    },
+    {
+      "id": "src-clarke-wright",
+      "title": "Scheduling of Vehicles from a Central Depot to a Number of Delivery Points",
+      "authors": [
+        "G. Clarke",
+        "J. W. Wright"
+      ],
+      "year": 1964,
+      "venue": "Operations Research",
+      "pages": "568-581",
+      "doi": "10.1287/opre.12.4.568",
+      "url": "https://pubsonline.informs.org/doi/10.1287/opre.12.4.568",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original savings procedure for depot vehicle routing with capacity-aware route merging.",
+      "locator": "abstract; pp. 568-581",
+      "notes": "The source describes an iterative procedure; exact tie-breaking and feasibility checks are implementation details.",
+      "read_depth": "abstract"
+    },
+    {
+      "id": "src-lit-10-38032-jea-2024-01-004",
+      "title": "Improvement of the Nearest Neighbor Heuristic Search Algorithm for Traveling Salesman Problem",
+      "authors": [
+        "Md. Ziaur Rahman",
+        "Sakibur Rahamn Sheikh",
+        "Ariful Islam",
+        "Md. Azizur Rahman"
+      ],
+      "year": 2024,
+      "venue": "Journal of Engineering Advancements",
+      "doi": "10.38032/jea.2024.01.004",
+      "url": "https://doi.org/10.38032/jea.2024.01.004",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Abstract describes a deterministic nearest-neighbor tour construction that repeatedly adds the closest city, matching the target Nearest Neighbor / next_node_score entrypoint.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Not the classical Rosenkrantz–Stearns–Lewis nearest neighbor; a 2024 deterministic NNA variant that initializes from the globally shortest edge. Evaluator still starts at city 0, so the seed-edge step cannot be reproduced in select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-opre-46-3-330",
+      "title": "A Generalized Insertion Heuristic for the Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Michel Gendreau",
+        "Alain Hertz",
+        "Gilbert Laporte",
+        "Mihnea Stan"
+      ],
+      "year": 1998,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.46.3.330",
+      "url": "https://doi.org/10.1287/opre.46.3.330",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original TSPTW insertion construction with neighbourhood insert, reoptimization, feasibility/backtracking, and remove-reinsert post-optimization",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Insertion into a partial tour is not select_next_node. Not Solomon I1; Gendreau et al. generalized insertion for TSPTW."
+    },
+    {
+      "id": "src-lit-10-26760-mindjournal-v11i1-1-14",
+      "title": "Penerapan Algoritma Clarke and Wright Saving dalam Capacitated Vehicle Routing Problem dengan Optimasi Nearest Neighbor untuk Rute Terpendek",
+      "authors": [
+        "FARREL ADI IBRAHIM",
+        "YUSUP MIFTAHUDDIN",
+        "MUHAMMAD ICHWAN",
+        "SURYA REZA PUTRA",
+        "WIRAWAN HADIWIBOWO"
+      ],
+      "year": 2026,
+      "venue": "MIND Journal",
+      "doi": "10.26760/mindjournal.v11i1.1-14",
+      "url": "https://doi.org/10.26760/mindjournal.v11i1.1-14",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Abstract states Nearest Neighbor is used to order visits, which is next-customer scoring by proximity.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Application paper: Clarke-Wright forms routes, then NN orders visits. Evaluator already filters capacity; this adapter is only the NN choice, not CW merge and not Sweep."
+    },
+    {
+      "id": "src-lit-10-1155-2013-874349",
+      "title": "A Heuristic Approach Based on Clarke‐Wright Algorithm for Open Vehicle Routing Problem",
+      "authors": [
+        "Tantikorn Pichpibul",
+        "Ruengsak Kawtummachai"
+      ],
+      "year": 2013,
+      "venue": "The Scientific World Journal",
+      "doi": "10.1155/2013/874349",
+      "url": "https://doi.org/10.1155/2013/874349",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Open-VRP adaptation of Clarke-Wright with formula modification and open-route construction.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "CW merge of routes is not select_next_node. Abstract does not use savings as a next-customer score."
+    },
+    {
+      "id": "src-lit-10-1137-0215016",
+      "title": "Variable Sized Bin Packing",
+      "authors": [
+        "D. K. Friesen",
+        "M. A. Langston"
+      ],
+      "year": 1986,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/0215016",
+      "url": "https://doi.org/10.1137/0215016",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original paper giving three efficient approximation algorithms for a fixed collection of bin sizes.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Not a 1D online score(item, bins) rule; not named variable-size FFD."
+    },
+    {
+      "id": "src-lit-10-1137-s0097539702412908",
+      "title": "New Bounds for Variable-Sized Online Bin Packing",
+      "authors": [
+        "Steven S. Seiden",
+        "Rob van Stee",
+        "Leah Epstein"
+      ],
+      "year": 2003,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/s0097539702412908",
+      "url": "https://doi.org/10.1137/s0097539702412908",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "New algorithms for variable-sized online bin packing.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Online variable-sized packing; registered OBP interface has a single bin size."
+    },
+    {
+      "id": "src-lit-10-1007-s00453-021-00844-5",
+      "title": "Best Fit Bin Packing with Random Order Revisited",
+      "authors": [
+        "Susanne Albers",
+        "Arindam Khan",
+        "Leon Ladewig"
+      ],
+      "year": 2021,
+      "venue": "Algorithmica",
+      "doi": "10.1007/s00453-021-00844-5",
+      "url": "https://doi.org/10.1007/s00453-021-00844-5",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Abstract studies the online Best Fit bin-packing algorithm.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Paper analyses random-order Best Fit. Adapter is -bins on feasible residuals; First Fit scan-order is not this score. Memory-allocation first-fit paper was dropped."
+    },
+    {
+      "id": "src-lit-10-1287-opre-1060-0293",
+      "title": "A New Bottom-Left-Fill Heuristic Algorithm for the Two-Dimensional Irregular Packing Problem",
+      "authors": [
+        "Edmund Burke",
+        "Robert Hellier",
+        "Graham Kendall",
+        "Glenn Whitwell"
+      ],
+      "year": 2006,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.1060.0293",
+      "url": "https://doi.org/10.1287/opre.1060.0293",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Named Bottom-Left-Fill packing heuristic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "2D irregular stock-cutting BLF, not 1D online score and not classical rectangular strip Bottom-Left."
+    },
+    {
+      "id": "src-lit-10-1137-0602019",
+      "title": "A Tight Asymptotic Bound for Next-Fit-Decreasing Bin-Packing",
+      "authors": [
+        "B. S. Baker",
+        "E. G. Coffman, Jr."
+      ],
+      "year": 1981,
+      "venue": "SIAM Journal on Algebraic Discrete Methods",
+      "doi": "10.1137/0602019",
+      "url": "https://doi.org/10.1137/0602019",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Offline decreasing Next-Fit approximation for one-dimensional bin packing.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "NFD not FFD/Karmarkar-Karp. Sorting the full list is not online score(item, bins)."
+    },
+    {
+      "id": "src-lit-10-1287-opre-21-2-498",
+      "title": "An Effective Heuristic Algorithm for the Traveling-Salesman Problem",
+      "authors": [
+        "S. Lin",
+        "B. W. Kernighan"
+      ],
+      "year": 1973,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.21.2.498",
+      "url": "https://doi.org/10.1287/opre.21.2.498",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original variable-depth TSP heuristic (Lin and Kernighan 1973).",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Variable-depth search is not select_2opt_move. Registered tsp_2opt only offers improving 2-opt candidates."
+    },
+    {
+      "id": "src-lit-10-1287-ijoc-15-1-82-15157",
+      "title": "Chained Lin-Kernighan for Large Traveling Salesman Problems",
+      "authors": [
+        "David Applegate",
+        "William Cook",
+        "André Rohe"
+      ],
+      "year": 2003,
+      "venue": "INFORMS Journal on Computing",
+      "doi": "10.1287/ijoc.15.1.82.15157",
+      "url": "https://doi.org/10.1287/ijoc.15.1.82.15157",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Chained Lin-Kernighan for very large TSPLIB instances.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Still variable-depth search, not candidate-list 2-opt move_selector."
+    },
+    {
+      "id": "src-lit-10-1145-3828-3833",
+      "title": "A simple on-line bin-packing algorithm",
+      "authors": [
+        "C. C. Lee",
+        "D. T. Lee"
+      ],
+      "year": 1985,
+      "venue": "Journal of the ACM",
+      "doi": "10.1145/3828.3833",
+      "url": "https://doi.org/10.1145/3828.3833",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Original Lee-Lee HARMONIC_M online algorithm with Harmonic size classes.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Class-dedicated bins are not a score over the evaluator residual vector unless rewritten as such. Do not treat this as the Go/Python score elites."
+    },
+    {
+      "id": "src-lit-10-1137-0406045",
+      "title": "Improved Space for Bounded-Space, On-Line Bin-Packing",
+      "authors": [
+        "Gerhard Woeginger"
+      ],
+      "year": 1993,
+      "venue": "SIAM Journal on Discrete Mathematics",
+      "doi": "10.1137/0406045",
+      "url": "https://doi.org/10.1137/0406045",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Bounded-space online algorithms based on Harmonic H_k with fewer active bins.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Class-dedicated Harmonic is not residual bin_score. Registered OBP does not cap the number of open bins in the evolved function."
+    },
+    {
+      "id": "src-lit-10-1142-s1793005726500432",
+      "title": "A Novel Heuristic for the Generalized Traveling Salesman Problems with Imprecise Cost Matrices",
+      "authors": [
+        "Prasanta Dutta",
+        "Indadul Khan",
+        "Krishnendu Basuli",
+        "Manas Kumar Maiti"
+      ],
+      "year": 2025,
+      "venue": "New Mathematics and Natural Computation",
+      "doi": "10.1142/s1793005726500432",
+      "url": "https://doi.org/10.1142/s1793005726500432",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "GTSP paper with group sequencing then node selection.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Visit-one-per-cluster is not tsp_construct select_next_node."
+    },
+    {
+      "id": "src-lit-10-14743-apem2021-2-392",
+      "title": "Improved Genetic Algorithm (VNS-GA) using polar coordinate classification for workload balanced multiple Traveling Salesman Problem (mTSP)",
+      "authors": [
+        "Y.D. Wang",
+        "X.C. Lu",
+        "J.R. Shen"
+      ],
+      "year": 2021,
+      "venue": "Advances in Production Engineering &amp; Management",
+      "doi": "10.14743/apem2021.2.392",
+      "url": "https://doi.org/10.14743/apem2021.2.392",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Balanced mTSP metaheuristic with polar initialisation plus VNS-GA.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Multiple salesmen are not tsp_construct."
+    },
+    {
+      "id": "src-lit-10-17977-um055v1i12020p10-17",
+      "title": "TWO PHASE HEURISTIC ALGORITHM (TPHA) PADA MULTIPLE TRAVELLING SALESMAN PROBLEM (MTSP) DAN IMPLEMENTASI PROGRAMNYA",
+      "authors": [
+        "Rahma Try Iriani",
+        "Sapti Wahyuningsih",
+        "Darmawan Satyananda"
+      ],
+      "year": 2020,
+      "venue": "Jurnal Kajian Matematika dan Aplikasinya (JKMA)",
+      "doi": "10.17977/um055v1i12020p10-17",
+      "url": "https://doi.org/10.17977/um055v1i12020p10-17",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "K-Means regions then per-region routing for mTSP.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "mTSP clustering is not select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-1050-0135",
+      "title": "An Adaptive Large Neighborhood Search Heuristic for the Pickup and Delivery Problem with Time Windows",
+      "authors": [
+        "Stefan Ropke",
+        "David Pisinger"
+      ],
+      "year": 2006,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.1050.0135",
+      "url": "https://doi.org/10.1287/trsc.1050.0135",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Ropke and Pisinger ALNS for paired pickup-delivery with time windows.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "ALNS ruin-and-recreate is not select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-29-1-45",
+      "title": "A Network Flow Based Heuristic for Bulk Pickup and Delivery Routing",
+      "authors": [
+        "Marshall L. Fisher",
+        "Baoxing Tang",
+        "Zhang Zheng"
+      ],
+      "year": 1995,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.29.1.45",
+      "url": "https://doi.org/10.1287/trsc.29.1.45",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Network-flow relaxation heuristic for bulk paired pickup and delivery.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Not tsp_construct next-city scoring."
+    },
+    {
+      "id": "src-lit-10-1287-ijoc-15-4-333-24890",
+      "title": "The Granular Tabu Search and Its Application to the Vehicle-Routing Problem",
+      "authors": [
+        "Paolo Toth",
+        "Daniele Vigo"
+      ],
+      "year": 2003,
+      "venue": "INFORMS Journal on Computing",
+      "doi": "10.1287/ijoc.15.4.333.24890",
+      "url": "https://doi.org/10.1287/ijoc.15.4.333.24890",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Toth and Vigo GTS: tabu search on a drastically reduced neighborhood.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Granular tabu is not cvrp_construct select_next_node."
+    },
+    {
+      "id": "src-lit-10-1088-1742-6596-1656-1-012005",
+      "title": "An improved priority heuristic for the fixed guillotine rectangular packing problem",
+      "authors": [
+        "Zhengyang Shang",
+        "Mingming Pan",
+        "Jiabao Pan"
+      ],
+      "year": 2020,
+      "venue": "Journal of Physics: Conference Series",
+      "doi": "10.1088/1742-6596/1656/1/012005",
+      "url": "https://doi.org/10.1088/1742-6596/1656/1/012005",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Recursive guillotine rectangular packing via block division and fill.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "2D guillotine packing is not 1D online score(item, bins)."
+    },
+    {
+      "id": "src-lit-10-1287-opre-1040-0109",
+      "title": "A New Placement Heuristic for the Orthogonal Stock-Cutting Problem",
+      "authors": [
+        "E. K. Burke",
+        "G. Kendall",
+        "G. Whitwell"
+      ],
+      "year": 2004,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.1040.0109",
+      "url": "https://doi.org/10.1287/opre.1040.0109",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Best-fit placement heuristic for orthogonal stock-cutting.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "2D stock-cutting is not 1D online bin_score."
+    },
+    {
+      "id": "src-lit-10-1145-1345375-1345414",
+      "title": "An alternative dynamic programming solution for the 0/1 knapsack",
+      "authors": [
+        "Timothy J. Rolfe"
+      ],
+      "year": 2007,
+      "venue": "ACM SIGCSE Bulletin",
+      "doi": "10.1145/1345375.1345414",
+      "url": "https://doi.org/10.1145/1345375.1345414",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "0/1 knapsack DP that builds an optimal knapsack for each capacity.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-3390-math10040602",
+      "title": "A Memetic Algorithm with a Novel Repair Heuristic for the Multiple-Choice Multidimensional Knapsack Problem",
+      "authors": [
+        "Jaeyoung Yang",
+        "Yong-Hyuk Kim",
+        "Yourim Yoon"
+      ],
+      "year": 2022,
+      "venue": "Mathematics",
+      "doi": "10.3390/math10040602",
+      "url": "https://doi.org/10.3390/math10040602",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Constructive repair heuristic for multiple-choice multidimensional knapsack.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-1142-s0217595912500315",
+      "title": "HEURISTIC AND EXACT SOLUTION METHOD FOR CONVEX NONLINEAR KNAPSACK PROBLEM",
+      "authors": [
+        "BIN ZHANG",
+        "BO CHEN"
+      ],
+      "year": 2012,
+      "venue": "Asia-Pacific Journal of Operational Research",
+      "doi": "10.1142/s0217595912500315",
+      "url": "https://doi.org/10.1142/s0217595912500315",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Heuristic for convex nonlinear integer knapsack using PMC/IMLCR structure.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-1287-ijoc-2013-0555",
+      "title": "A Dynamic Programming Heuristic for the Quadratic Knapsack Problem",
+      "authors": [
+        "Franklin Djeumou Fomeni",
+        "Adam N. Letchford"
+      ],
+      "year": 2014,
+      "venue": "INFORMS Journal on Computing",
+      "doi": "10.1287/ijoc.2013.0555",
+      "url": "https://doi.org/10.1287/ijoc.2013.0555",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DP-based heuristic for the quadratic knapsack problem.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-29007-fx82",
+      "title": "An Iterated Semi-Greedy Algorithm for the 0-1 Quadratic Knapsack Problem",
+      "authors": [
+        "Leticia Leonor Pinto Alva",
+        "Alexander J. Benavides"
+      ],
+      "year": 2018,
+      "venue": "EasyChair Preprints",
+      "doi": "10.29007/fx82",
+      "url": "https://doi.org/10.29007/fx82",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Iterated semi-greedy construction for 0-1 quadratic knapsack.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Quadratic 0-1, not linear density greedy."
+    },
+    {
+      "id": "src-lit-10-1111-itor-13326",
+      "title": "Combining local branching and descent method for solving the multiple‐choice knapsack problem with setups",
+      "authors": [
+        "Samah Boukhari",
+        "Mhand Hifi"
+      ],
+      "year": 2023,
+      "venue": "International Transactions in Operational Research",
+      "doi": "10.1111/itor.13326",
+      "url": "https://doi.org/10.1111/itor.13326",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Iterative cooperation of local branching and descent for knapsack with setups.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-1137-0206041",
+      "title": "An Analysis of Several Heuristics for the Traveling Salesman Problem",
+      "authors": [
+        "Daniel J. Rosenkrantz",
+        "Richard E. Stearns",
+        "Philip M. Lewis, II"
+      ],
+      "year": 1977,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/0206041",
+      "url": "https://doi.org/10.1137/0206041",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Rosenkrantz et al. analyse nearest-neighbor construction for metric TSP.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "k-NN truncation is the evaluator contract, not the 1977 paper."
+    },
+    {
+      "id": "src-lit-10-1287-opre-38-6-1019",
+      "title": "A Priori Optimization",
+      "authors": [
+        "Dimitris J. Bertsimas",
+        "Patrick Jaillet",
+        "Amedeo R. Odoni"
+      ],
+      "year": 1990,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.38.6.1019",
+      "url": "https://doi.org/10.1287/opre.38.6.1019",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "A priori optimization for probabilistic node-presence TSP.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "A priori evaluation is not select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-opre-6-6-791",
+      "title": "A Method for Solving Traveling-Salesman Problems",
+      "authors": [
+        "G. A. Croes"
+      ],
+      "year": 1958,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.6.6.791",
+      "url": "https://doi.org/10.1287/opre.6.6.791",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Croes states the 2-edge exchange applies to asymmetric as well as symmetric TSP.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Registered tsp_2opt offers Euclidean 2-opt candidates; directed 3-opt is not in the candidate list."
+    },
+    {
+      "id": "src-lit-10-1287-opre-35-2-254",
+      "title": "Algorithms for the Vehicle Routing and Scheduling Problems with Time Window Constraints",
+      "authors": [
+        "Marius M. Solomon"
+      ],
+      "year": 1987,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.35.2.254",
+      "url": "https://doi.org/10.1287/opre.35.2.254",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Solomon 1987 VRPTW construction/insertion heuristics and computational study.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Time-window insertion is not cvrp_construct select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-opre-22-2-340",
+      "title": "A Heuristic Algorithm for the Vehicle-Dispatch Problem",
+      "authors": [
+        "Billy E. Gillett",
+        "Leland R. Miller"
+      ],
+      "year": 1974,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.22.2.340",
+      "url": "https://doi.org/10.1287/opre.22.2.340",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Sweep: polar-angle clustering then routing and improvement.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Sweep clustering is not select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-23-2-141",
+      "title": "Savings by Split Delivery Routing",
+      "authors": [
+        "Moshe Dror",
+        "Pierre Trudeau"
+      ],
+      "year": 1989,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.23.2.141",
+      "url": "https://doi.org/10.1287/trsc.23.2.141",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Split-delivery VRP: a customer may be served by more than one vehicle.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Split demand is not in the registered CVRP construct interface."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-26-3-185",
+      "title": "Time Dependent Vehicle Routing Problems: Formulations, Properties and Heuristic Algorithms",
+      "authors": [
+        "Chryssi Malandraki",
+        "Mark S. Daskin"
+      ],
+      "year": 1992,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.26.3.185",
+      "url": "https://doi.org/10.1287/trsc.26.3.185",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Time-dependent VRP formulations and heuristics.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Clock-dependent times are not in the registered Euclidean distance_matrix."
+    },
+    {
+      "id": "src-lit-10-1002-net-20192",
+      "title": "A Tabu search heuristic for the vehicle routing problem with two‐dimensional loading constraints",
+      "authors": [
+        "Michel Gendreau",
+        "Manuel Iori",
+        "Gilbert Laporte",
+        "Silvaro Martello"
+      ],
+      "year": 2007,
+      "venue": "Networks",
+      "doi": "10.1002/net.20192",
+      "url": "https://doi.org/10.1002/net.20192",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "CVRP with two-dimensional loading constraints; tabu couples packing and routing.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Loading state is not in select_next_node."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-31-1-49",
+      "title": "A Tabu Search Heuristic for the Vehicle Routing Problem with Backhauls and Time Windows",
+      "authors": [
+        "Christophe Duhamel",
+        "Jean-Yves Potvin",
+        "Jean-Marc Rousseau"
+      ],
+      "year": 1997,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.31.1.49",
+      "url": "https://doi.org/10.1287/trsc.31.1.49",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Linehaul then backhaul structure with tabu search.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Linehaul/backhaul order is not in the registered construct interface."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-1070-0190",
+      "title": "Heuristic Approaches for the Fleet Size and Mix Vehicle Routing Problem with Time Windows",
+      "authors": [
+        "Mauro Dell'Amico",
+        "Michele Monaci",
+        "Corrado Pagani",
+        "Daniele Vigo"
+      ],
+      "year": 2007,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.1070.0190",
+      "url": "https://doi.org/10.1287/trsc.1070.0190",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Jointly choose heterogeneous fleet composition and routes.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Fleet mix is not a registered EoH entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-26-2-86",
+      "title": "A Heuristic for the Periodic Vehicle Routing Problem",
+      "authors": [
+        "M. Gaudioso",
+        "G. Paletta"
+      ],
+      "year": 1992,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.26.2.86",
+      "url": "https://doi.org/10.1287/trsc.26.2.86",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Periodic VRP: delivery-day combinations and routes to minimise peak fleet.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Multi-day assignment is not select_next_node."
+    },
+    {
+      "id": "src-lit-10-1002-net-20335",
+      "title": "A heuristic two‐phase solution approach for the multi‐objective dial‐a‐ride problem",
+      "authors": [
+        "Sophie N. Parragh",
+        "Karl F. Doerner",
+        "Richard F. Hartl",
+        "Xavier Gandibleux"
+      ],
+      "year": 2009,
+      "venue": "Networks",
+      "doi": "10.1002/net.20335",
+      "url": "https://doi.org/10.1002/net.20335",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Two-phase heuristic for the dial-a-ride problem.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DARP windows and pairing are not in cvrp_construct."
+    },
+    {
+      "id": "src-lit-10-1137-0203025",
+      "title": "Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms",
+      "authors": [
+        "D. S. Johnson",
+        "A. Demers",
+        "J. D. Ullman",
+        "M. R. Garey",
+        "R. L. Graham"
+      ],
+      "year": 1974,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/0203025",
+      "url": "https://doi.org/10.1137/0203025",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Johnson et al. Worst Fit: among feasible bins prefer the largest residual.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "Adapter is return bins (emptiest residual). Official template is this rule."
+    },
+    {
+      "id": "src-lit-10-1109-sfcs-1982-61",
+      "title": "An efficient approximation scheme for the one-dimensional bin-packing problem",
+      "authors": [
+        "Narendra Karmarkar",
+        "Richard M. Karp"
+      ],
+      "year": 1982,
+      "venue": "23rd Annual Symposium on Foundations of Computer Science (sfcs 1982)",
+      "doi": "10.1109/sfcs.1982.61",
+      "url": "https://doi.org/10.1109/sfcs.1982.61",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Karmarkar and Karp efficient approximation scheme for one-dimensional bin packing.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "KK is not score(item, bins)."
+    },
+    {
+      "id": "src-lit-10-1287-opre-5-2-266",
+      "title": "Discrete-Variable Extremum Problems",
+      "authors": [
+        "George B. Dantzig"
+      ],
+      "year": 1957,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.5.2.266",
+      "url": "https://doi.org/10.1287/opre.5.2.266",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Dantzig 1957 discrete extremum / knapsack greedy by value-to-weight.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem. Abstract is survey-level; steps are the standard greedy associated with this paper."
+    },
+    {
+      "id": "src-lit-10-1287-opre-27-6-1101",
+      "title": "New Greedy-Like Heuristics for the Multidimensional 0-1 Knapsack Problem",
+      "authors": [
+        "Richard Loulou",
+        "Eleftherios Michaelides"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.27.6.1101",
+      "url": "https://doi.org/10.1287/opre.27.6.1101",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "Four greedy-like approximations for multidimensional 0-1 knapsack, compared with Toyoda.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "No registered knapsack EoH problem."
+    },
+    {
+      "id": "src-lit-10-5784-22-1-36",
+      "title": "A sequential insertion heuristic for the initial solution to a constrained vehicle routing problem",
+      "authors": [
+        "JW Joubert",
+        "SJ Claasen"
+      ],
+      "year": 2006,
+      "venue": "ORiON",
+      "doi": "10.5784/22-1-36",
+      "url": "https://doi.org/10.5784/22-1-36",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_sop.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230190602",
+      "title": "The prize collecting traveling salesman problem",
+      "authors": [
+        "Egon Balas"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230190602",
+      "url": "https://doi.org/10.1002/net.3230190602",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_prize.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230180306",
+      "title": "Stochastic shortest paths with recourse",
+      "authors": [
+        "Giovanni Andreatta",
+        "Luciano Romeo"
+      ],
+      "year": 1988,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230180306",
+      "url": "https://doi.org/10.1002/net.3230180306",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_orienteering.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230220304",
+      "title": "Complexity results for well‐covered graphs",
+      "authors": [
+        "Ramesh S. Sankaranarayana",
+        "Lorna K. Stewart"
+      ],
+      "year": 1992,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230220304",
+      "url": "https://doi.org/10.1002/net.3230220304",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_minmax.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-s00453-001-0068-9",
+      "title": "Optimal Time-Critical Scheduling via Resource Augmentation",
+      "authors": [
+        "Phillips",
+        "Stein",
+        "Torng",
+        "Wein"
+      ],
+      "year": 2002,
+      "venue": "Algorithmica",
+      "doi": "10.1007/s00453-001-0068-9",
+      "url": "https://doi.org/10.1007/s00453-001-0068-9",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_dynamic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1137-s0097539702416402",
+      "title": "Local Search Heuristics for\n                    <i>k</i>\n                    -Median and Facility Location Problems",
+      "authors": [
+        "Vijay Arya",
+        "Naveen Garg",
+        "Rohit Khandekar",
+        "Adam Meyerson",
+        "Kamesh Munagala",
+        "Vinayaka Pandit"
+      ],
+      "year": 2004,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/s0097539702416402",
+      "url": "https://doi.org/10.1137/s0097539702416402",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_neighborhoods.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230120409",
+      "title": "A matroid related to finitely chainlike, countably infinite networks",
+      "authors": [
+        "A. C. Tucker",
+        "A. H. Zemanian"
+      ],
+      "year": 1982,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230120409",
+      "url": "https://doi.org/10.1002/net.3230120409",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_bottleneck.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-4028-www-scientific-net-amr-694-697-2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_multiobjective.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-j-ejor-2014-07-019",
+      "title": "Robust equilibria in location games",
+      "authors": [
+        "Berno Buechel",
+        "Nils Roehl"
+      ],
+      "year": 2015,
+      "venue": "European Journal of Operational Research",
+      "doi": "10.1016/j.ejor.2014.07.019",
+      "url": "https://doi.org/10.1016/j.ejor.2014.07.019",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_colored.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230140304",
+      "title": "Euclidean shortest paths in the presence of rectilinear barriers",
+      "authors": [
+        "D. T. Lee",
+        "F. P. Preparata"
+      ],
+      "year": 1984,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230140304",
+      "url": "https://doi.org/10.1002/net.3230140304",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_covering.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230110308",
+      "title": "Capacitated arc routing problems",
+      "authors": [
+        "Bruce L. Golden",
+        "Richard T. Wong"
+      ],
+      "year": 1981,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230110308",
+      "url": "https://doi.org/10.1002/net.3230110308",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_purchaser.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-21659",
+      "title": "A Rolling Horizon Heuristic for the Multiperiod Network Design and Routing Problem",
+      "authors": [
+        "Dimitri Papadimitriou",
+        "Bernard Fortz"
+      ],
+      "year": 2015,
+      "venue": "Networks",
+      "doi": "10.1002/net.21659",
+      "url": "https://doi.org/10.1002/net.21659",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_drone.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-3-540-44679-6-25",
+      "title": "Optimizing a Computational Method for Length Lower Bounds for Reflecting Sequences",
+      "authors": [
+        "H. K. Dai"
+      ],
+      "year": 2001,
+      "venue": "Lecture Notes in Computer Science",
+      "doi": "10.1007/3-540-44679-6_25",
+      "url": "https://doi.org/10.1007/3-540-44679-6_25",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_fuel.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-7378178",
+      "title": "A Sharper Explicit Bound on the Subtour-LP Integrality Gap for Metric TSP",
+      "authors": [
+        "Zhao Song"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.7378178",
+      "url": "https://doi.org/10.2139/ssrn.7378178",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_angular.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-j-1538-7305-1965-tb04146-x",
+      "title": "Computer Solutions of the Traveling Salesman Problem",
+      "authors": [
+        "Shen Lin"
+      ],
+      "year": 1965,
+      "venue": "Bell System Technical Journal",
+      "doi": "10.1002/j.1538-7305.1965.tb04146.x",
+      "url": "https://doi.org/10.1002/j.1538-7305.1965.tb04146.x",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for tsp_local.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-7-2-109",
+      "title": "Minimum Cost Schedules for a Public Transportation Route—I. Theory",
+      "authors": [
+        "V. F. Hurdle"
+      ],
+      "year": 1973,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.7.2.109",
+      "url": "https://doi.org/10.1287/trsc.7.2.109",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for mdvrp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230140106",
+      "title": "An algorithm for construction of a <i>k</i>‐connected graph with minimum number of edges and quasiminimal diameter",
+      "authors": [
+        "Ulrich Schumacher"
+      ],
+      "year": 1984,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230140106",
+      "url": "https://doi.org/10.1002/net.3230140106",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for hfvrp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230190205",
+      "title": "Connected reorientations of mixed multigraphs",
+      "authors": [
+        "Weigeng Shi",
+        "Ronald J. Juels"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230190205",
+      "url": "https://doi.org/10.1002/net.3230190205",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for vrppd.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-29099-ijair-v2i2-71",
+      "title": "A Modified Meta-Heuristic Approach for Vehicle Routing Problem with Simultaneous Pickup and Delivery",
+      "authors": [
+        "Alfian Faiz",
+        "Subiyanto Subiyanto",
+        "Ulfah Mediaty Arief"
+      ],
+      "year": 2018,
+      "venue": "International Journal of Artificial Intelligence Research",
+      "doi": "10.29099/ijair.v2i2.71",
+      "url": "https://doi.org/10.29099/ijair.v2i2.71",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for vrpsdp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-trsc-18-1-1",
+      "title": "Network Design and Transportation Planning: Models and Algorithms",
+      "authors": [
+        "T. L. Magnanti",
+        "R. T. Wong"
+      ],
+      "year": 1984,
+      "venue": "Transportation Science",
+      "doi": "10.1287/trsc.18.1.1",
+      "url": "https://doi.org/10.1287/trsc.18.1.1",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for irp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-3230140105",
+      "title": "Graphs with the smallest number of minimum cut sets",
+      "authors": [
+        "Derek Smith"
+      ],
+      "year": 1984,
+      "venue": "Networks",
+      "doi": "10.1002/net.3230140105",
+      "url": "https://doi.org/10.1002/net.3230140105",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_multitrip.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-0377-2217-91-90238-q",
+      "title": "Validation of a model to support the decision to transfer management control systems",
+      "authors": [
+        "Coral R. Snodgrass",
+        "Edward J. Szewczak"
+      ],
+      "year": 1991,
+      "venue": "European Journal of Operational Research",
+      "doi": "10.1016/0377-2217(91)90238-q",
+      "url": "https://doi.org/10.1016/0377-2217(91)90238-q",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_site.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-6893879",
+      "title": "&lt;p&gt;A Monte Carlo Heuristic Framework for Finite-Horizon Inventory Optimization Under Stochastic Demand with Deterioration&lt;/p&gt;",
+      "authors": [
+        "Rajib Dolai"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.6893879",
+      "url": "https://doi.org/10.2139/ssrn.6893879",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_stochastic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-47344-sdubnts-v62i1-959",
+      "title": "Stochastic dynamic vehicle routing problem survey",
+      "authors": [
+        "Yernar Akhmetbek"
+      ],
+      "year": 2024,
+      "venue": "Suleyman Demirel University Bulletin Natural and Technical Sciences",
+      "doi": "10.47344/sdubnts.v62i1.959",
+      "url": "https://doi.org/10.47344/sdubnts.v62i1.959",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_dynamic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-j-ejor-2014-01-005",
+      "title": "A survey of recent research on location-routing problems",
+      "authors": [
+        "Caroline Prodhon",
+        "Christian Prins"
+      ],
+      "year": 2014,
+      "venue": "European Journal of Operational Research",
+      "doi": "10.1016/j.ejor.2014.01.005",
+      "url": "https://doi.org/10.1016/j.ejor.2014.01.005",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for evrp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-net-20428",
+      "title": "Uncertainty feature optimization: An implicit paradigm for problems with noisy data",
+      "authors": [
+        "Niklaus Eggenberg",
+        "Matteo Salani",
+        "Michel Bierlaire"
+      ],
+      "year": 2011,
+      "venue": "Networks",
+      "doi": "10.1002/net.20428",
+      "url": "https://doi.org/10.1002/net.20428",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_2e.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-6804412",
+      "title": "Exact and Heuristic Approaches for the Multi-Vehicle Covering Tour Problem with Prize Collecting",
+      "authors": [
+        "Modoukpè Maryse Eudoxie ASSANVI",
+        "Marcos Roboredo"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.6804412",
+      "url": "https://doi.org/10.2139/ssrn.6804412",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_prize.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-opre-12-4-568",
+      "title": "Scheduling of Vehicles from a Central Depot to a Number of Delivery Points",
+      "authors": [
+        "G. Clarke",
+        "J. W. Wright"
+      ],
+      "year": 1964,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.12.4.568",
+      "url": "https://doi.org/10.1287/opre.12.4.568",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for dcvrp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-s0377-2217-02-00753-1",
+      "title": "A returns policy for distribution channel coordination of perishable items",
+      "authors": [
+        "Kyu Hun Hahn",
+        "Hark Hwang",
+        "Seong Whan Shinn"
+      ],
+      "year": 2004,
+      "venue": "European Journal of Operational Research",
+      "doi": "10.1016/s0377-2217(02)00753-1",
+      "url": "https://doi.org/10.1016/s0377-2217(02)00753-1",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for cvrp_mo.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-s10951-025-00854-z",
+      "title": "Semi-online models for cardinality constrained bin packing",
+      "authors": [
+        "Leah Epstein",
+        "Asaf Levin"
+      ],
+      "year": 2025,
+      "venue": "Journal of Scheduling",
+      "doi": "10.1007/s10951-025-00854-z",
+      "url": "https://doi.org/10.1007/s10951-025-00854-z",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_cardinality.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-4028-www-scientific-net-amr-756-759-2705",
+      "title": "A Constructive Heuristic for Two-Dimensional Bin Packing",
+      "authors": [
+        "Bo Han Wang",
+        "Jia Min Liu",
+        "Yong Yue",
+        "Malcolm Keech"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "doi": "10.4028/www.scientific.net/amr.756-759.2705",
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.756-759.2705",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_2d.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-3390-e28080905",
+      "title": "Multi-Constraint Three-Dimensional Bin Packing Optimization for Mixed Vehicle Types: A Heuristic Approach",
+      "authors": [
+        "Yiting Hao",
+        "Dongqing Cao",
+        "Wenhao Gui"
+      ],
+      "year": 2026,
+      "venue": "Entropy",
+      "doi": "10.3390/e28080905",
+      "url": "https://doi.org/10.3390/e28080905",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_3d.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-6418302",
+      "title": "A Collaborative Heuristic and Enhanced Black-winged Kite Algorithm for Solving 3D Bin Packing Problems in Complex Scenarios",
+      "authors": [
+        "Guirong Dong"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.6418302",
+      "url": "https://doi.org/10.2139/ssrn.6418302",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for vector_bp.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-978-3-540-31856-9-9",
+      "title": "The Core of a Countably Categorical Structure",
+      "authors": [
+        "Manuel Bodirsky"
+      ],
+      "year": 2005,
+      "venue": "Lecture Notes in Computer Science",
+      "doi": "10.1007/978-3-540-31856-9_9",
+      "url": "https://doi.org/10.1007/978-3-540-31856-9_9",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_fragile.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-s00453-012-9662-2",
+      "title": "Polynomial-Time Approximation Schemes for Subset-Connectivity Problems in Bounded-Genus Graphs",
+      "authors": [
+        "Glencora Borradaile",
+        "Erik D. Demaine",
+        "Siamak Tazari"
+      ],
+      "year": 2012,
+      "venue": "Algorithmica",
+      "doi": "10.1007/s00453-012-9662-2",
+      "url": "https://doi.org/10.1007/s00453-012-9662-2",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_colored.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-s0166-218x-01-00255-4",
+      "title": "Variable neighborhood search for the degree-constrained minimum spanning tree problem",
+      "authors": [
+        "Celso C. Ribeiro",
+        "Maurı́cio C. Souza"
+      ],
+      "year": 2002,
+      "venue": "Discrete Applied Mathematics",
+      "doi": "10.1016/s0166-218x(01)00255-4",
+      "url": "https://doi.org/10.1016/s0166-218x(01)00255-4",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_conflicts.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1137-0212043",
+      "title": "Fast Parallel Computation of Polynomials Using Few Processors",
+      "authors": [
+        "L. G. Valiant",
+        "S. Skyum",
+        "S. Berkowitz",
+        "C. Rackoff"
+      ],
+      "year": 1983,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/0212043",
+      "url": "https://doi.org/10.1137/0212043",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_dynamic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-rsa-10037",
+      "title": "Linear waste of best fit bin packing on skewed distributions",
+      "authors": [
+        "Claire Kenyon",
+        "Michael Mitzenmacher"
+      ],
+      "year": 2002,
+      "venue": "Random Structures &amp; Algorithms",
+      "doi": "10.1002/rsa.10037",
+      "url": "https://doi.org/10.1002/rsa.10037",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_stochastic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-978-3-642-15369-3-9",
+      "title": "Approximating Linear Threshold Predicates",
+      "authors": [
+        "Mahdi Cheraghchi",
+        "Johan Håstad",
+        "Marcus Isaksson",
+        "Ola Svensson"
+      ],
+      "year": 2010,
+      "venue": "Lecture Notes in Computer Science",
+      "doi": "10.1007/978-3-642-15369-3_9",
+      "url": "https://doi.org/10.1007/978-3-642-15369-3_9",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for obp_advice.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1137-0204038",
+      "title": "Preserving Proximity in Arrays",
+      "authors": [
+        "Arnold L. Rosenberg"
+      ],
+      "year": 1975,
+      "venue": "SIAM Journal on Computing",
+      "doi": "10.1137/0204038",
+      "url": "https://doi.org/10.1137/0204038",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_batch.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-6987299",
+      "title": "Branch and Price for the Variable-Sized Open-End Bin Packing Problem with Conflicts",
+      "authors": [
+        "Bowen Miao",
+        "Yongxi Cheng",
+        "Jun Wu"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.6987299",
+      "url": "https://doi.org/10.2139/ssrn.6987299",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_open_end.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-ijoc-1040-0089",
+      "title": "A Set-Covering-Based Heuristic Approach for Bin-Packing Problems",
+      "authors": [
+        "Michele Monaci",
+        "Paolo Toth"
+      ],
+      "year": 2006,
+      "venue": "INFORMS Journal on Computing",
+      "doi": "10.1287/ijoc.1040.0089",
+      "url": "https://doi.org/10.1287/ijoc.1040.0089",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for bp_resource.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-opre-27-3-431",
+      "title": "The Status of Nonlinear Programming Software",
+      "authors": [
+        "Allan D. Waren",
+        "Leon S. Lasdon"
+      ],
+      "year": 1979,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.27.3.431",
+      "url": "https://doi.org/10.1287/opre.27.3.431",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_bounded.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-6643040",
+      "title": "Pattern-Based Control for Dynamic Stochastic Multi-Knapsack Problems with Multiple Item Types",
+      "authors": [
+        "Junyi DONG",
+        "Discount LI",
+        "Qian Liu",
+        "Xiangtong Qi"
+      ],
+      "year": 2026,
+      "venue": null,
+      "doi": "10.2139/ssrn.6643040",
+      "url": "https://doi.org/10.2139/ssrn.6643040",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_discount.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-978-3-540-45198-3-7",
+      "title": "An FPTAS for Quickest Multicommodity Flows with Inflow-Dependent Transit Times",
+      "authors": [
+        "Alex Hall",
+        "Katharina Langkau",
+        "Martin Skutella"
+      ],
+      "year": 2003,
+      "venue": "Lecture Notes in Computer Science",
+      "doi": "10.1007/978-3-540-45198-3_7",
+      "url": "https://doi.org/10.1007/978-3-540-45198-3_7",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_online.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-opre-43-3-477",
+      "title": "A New Scenario Decomposition Method for Large-Scale Stochastic Optimization",
+      "authors": [
+        "John M. Mulvey",
+        "Andrzej Ruszczyński"
+      ],
+      "year": 1995,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.43.3.477",
+      "url": "https://doi.org/10.1287/opre.43.3.477",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_stochastic.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-0165-0114-94-90008-6",
+      "title": "Non-monotonic fuzzy measures and the Choquet integral",
+      "authors": [
+        "Toshiaki Murofushi",
+        "Michio Sugeno",
+        "Motoya Machida"
+      ],
+      "year": 1994,
+      "venue": "Fuzzy Sets and Systems",
+      "doi": "10.1016/0165-0114(94)90008-6",
+      "url": "https://doi.org/10.1016/0165-0114(94)90008-6",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_fuzzy.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-bf02023023",
+      "title": "A classification of the one-argument primitive recursive functions",
+      "authors": [
+        "Jovan Naumović"
+      ],
+      "year": 1983,
+      "venue": "Archiv für Mathematische Logik und Grundlagenforschung",
+      "doi": "10.1007/bf02023023",
+      "url": "https://doi.org/10.1007/bf02023023",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_mo.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-47611-jsrhs-v12i4-5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_collapsing.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-inte-22-3-100",
+      "title": "Precedence Constrained Routing and Helicopter Scheduling: Heuristic Design",
+      "authors": [
+        "M. T. Fiala Timlin",
+        "W. R. Pulleyblank"
+      ],
+      "year": 1992,
+      "venue": "Interfaces",
+      "doi": "10.1287/inte.22.3.100",
+      "url": "https://doi.org/10.1287/inte.22.3.100",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_prec.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-asmb-2389",
+      "title": "Heuristic policies for stochastic knapsack problem with time‐varying random demand",
+      "authors": [
+        "Yingdong Lu"
+      ],
+      "year": 2018,
+      "venue": "Applied Stochastic Models in Business and Industry",
+      "doi": "10.1002/asmb.2389",
+      "url": "https://doi.org/10.1002/asmb.2389",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_time.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1016-0166-218x-95-00064-x",
+      "title": "Strongly prime PCP words",
+      "authors": [
+        "Marjo Lipponen",
+        "Gheorghe Päun"
+      ],
+      "year": 1995,
+      "venue": "Discrete Applied Mathematics",
+      "doi": "10.1016/0166-218x(95)00064-x",
+      "url": "https://doi.org/10.1016/0166-218x(95)00064-x",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_circular.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1287-opre-16-1-103",
+      "title": "Dynamic Programming Algorithms for the Integer Programming Problem—I: The Integer Programming Problem Viewed as a Knapsack Type Problem",
+      "authors": [
+        "Jeremy F. Shapiro"
+      ],
+      "year": 1968,
+      "venue": "Operations Research",
+      "doi": "10.1287/opre.16.1.103",
+      "url": "https://doi.org/10.1287/opre.16.1.103",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_group.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-bf01588971",
+      "title": "An analysis of approximations for maximizing submodular set functions—I",
+      "authors": [
+        "G. L. Nemhauser",
+        "L. A. Wolsey",
+        "M. L. Fisher"
+      ],
+      "year": 1978,
+      "venue": "Mathematical Programming",
+      "doi": "10.1007/bf01588971",
+      "url": "https://doi.org/10.1007/bf01588971",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_generalized.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1007-s10107-006-0045-9",
+      "title": "Polyhedral properties for the intersection of two knapsacks",
+      "authors": [
+        "Quentin Louveaux",
+        "Robert Weismantel"
+      ],
+      "year": 2006,
+      "venue": "Mathematical Programming",
+      "doi": "10.1007/s10107-006-0045-9",
+      "url": "https://doi.org/10.1007/s10107-006-0045-9",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "bibliographic_only",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_bilevel.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "metadata_only",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-2139-ssrn-1967411",
+      "title": "Complexity Results and Exact Algorithms for Robust Knapsack Problems",
+      "authors": [
+        "Fabrice Talla Nobibon",
+        "Roel Leus"
+      ],
+      "year": 2011,
+      "venue": null,
+      "doi": "10.2139/ssrn.1967411",
+      "url": "https://doi.org/10.2139/ssrn.1967411",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_robust.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    },
+    {
+      "id": "src-lit-10-1002-nav-20237",
+      "title": "The minmax multidimensional knapsack problem with application to a chance‐constrained problem",
+      "authors": [
+        "Moshe Kress",
+        "Michal Penn",
+        "Maria Polukarov"
+      ],
+      "year": 2007,
+      "venue": "Naval Research Logistics (NRL)",
+      "doi": "10.1002/nav.20237",
+      "url": "https://doi.org/10.1002/nav.20237",
+      "kind": "primary_article",
+      "accessed_on": "2026-09-14",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; release contains citation and autonomous summary only",
+      "selected": true,
+      "selection_reason": "DOI-seeded canonical paper for kp_minmax.",
+      "locator": "OpenAlex abstract",
+      "read_depth": "abstract",
+      "notes": "DOI-directed fill. Adapter is not the original algorithm unless the abstract already matches the entrypoint."
+    }
+  ],
+  "coverage": {
+    "candidate_sources_screened": 9,
+    "selected_sources": 4,
+    "deep_read": 0,
+    "abstract_read": 4,
+    "read_depth_policy": "only full_text_local counts as deep_read",
+    "kept_because_code_match": [
+      "src-clarke-wright",
+      "src-croes-2opt",
+      "src-johnson-packing",
+      "src-rosenkrantz-insertion"
+    ],
+    "dropped_because_no_main_control_flow": [
+      "src-lee-harmonic",
+      "src-karmarkar-karp",
+      "src-lin-kernighan",
+      "src-gillett-miller-sweep",
+      "src-toth-vigo-granular-tabu"
+    ]
+  }
+}

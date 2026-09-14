@@ -1,0 +1,122 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "knapsack",
+  "subproblem": {
+    "id": "kp_quadratic",
+    "label": "Quadratic knapsack",
+    "definition": "Pairwise profits.",
+    "search_query": "quadratic knapsack heuristic",
+    "eoh_map": {
+      "status": "not_registered",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "QKP greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "QKP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "quadratic knapsack heuristic",
+  "harvested_at": "2026-09-14T08:26:51Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1007/s10589-026-00811-2",
+      "title": "The quadratic multidimensional knapsack problem: exact, heuristic, and machine learning methods",
+      "authors": [
+        "Richard J. Forrester",
+        "Lucas A. Waddell"
+      ],
+      "year": 2026,
+      "venue": "Computational Optimization and Applications",
+      "cited_by_count": 0,
+      "abstract": "Abstract \n          This paper presents a multi-faceted approach to solving the quadratic multidimensional knapsack problem (QMDKP), an NP-hard nonlinear combinatorial optimization problem that has received limited attention in the literature. We introduce a new testbed of QMDKP instances with induced profit-weight correlations and evaluate four linearization strategies for solving the problem exactly. To address scalability, we propose several heuristic and metaheuristic methods, including a greedy algorithm, a supervised machine learning (ML)-based approach, and a genetic algorithm. Our underlying ML framework employs binary classification to predict item inclusion probabilities, guiding a greedy construction process. Building on this framework, we explore hybrid strategies such as reduce-fill, expand-repair, and a genetic algorithm with ML-driven repair operators. Extensive computational results show that these ML-enhanced hybrid methods improve upon their baseline heuristics and that the genetic algorithm consistently yields near-optimal solutions. This work provides a generalizable template for hybrid optimization and learning-based approaches to challenging combinatorial problems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1007/s10589-026-00811-2"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/ijoc.2013.0555",
+      "title": "A Dynamic Programming Heuristic for the Quadratic Knapsack Problem",
+      "authors": [
+        "Franklin Djeumou Fomeni",
+        "Adam N. Letchford"
+      ],
+      "year": 2014,
+      "venue": "INFORMS Journal on Computing",
+      "cited_by_count": 43,
+      "abstract": "It is well known that the standard (linear) knapsack problem can be solved exactly by dynamic programming in 𝒪(nc) time, where n is the number of items and c is the capacity of the knapsack. The quadratic knapsack problem, on the other hand, is NP-hard in the strong sense, which makes it unlikely that it can be solved in pseudo-polynomial time. We show, however, that the dynamic programming approach to the linear knapsack problem can be modified to yield a highly effective constructive heuristic for the quadratic version. In our experiments, the lower bounds obtained by our heuristic were consistently within a fraction of a percent of optimal. Moreover, the addition of a simple local search step enabled us to obtain the optimal solution of all instances considered.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/ijoc.2013.0555"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/1214b968z552cz4bc8zbbd1z3455340ba926",
+      "title": "Hybrid Metaheuristics for Quadratic Knapsack Problems",
+      "authors": [
+        "Yuning Chen"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Métaheuristiques Hybrides pour quelques Problèmes de Sac-à-Dos Quadratiques \n         Cette thèse considère quatre problèmes d’optimisation combinatoire connus sous le nom de Problèmes de Sac-à-Dos Quadratiques : le problème de sac-à-dos quadratique (QSP), le problème de sac-à-dos multiple quadratique (QMSP), le problème de sac-à-dos multiple quadratique généralisé (GQMSP) et le nouveau problème de sac-à-dos multiple quadratique bi-objectif (BO-QMSP) présenté dans cette thèse. Parmi eux, le QSP est le modèle de base tandis que les trois autres introduisent des contraintes ou des fonctions objectives supplémentaires. Ces problèmes ont de nombreuses applications pratiques. Étant donné qu’ils appartiennent à la famille NP-difficile, il est difficile de les résoudre dans le cas général. Pour cette raison, cette thèse est consacrée à la création d’approches métaheuristiques hybrides efficaces pour résoudre ces quatre problèmes difficiles. Plus précisément, nous développons une approche itérative d’exploration hyperplane pour le QSP, deux algorithmes hybrides (\"Iterative responsive threshold search\" et \"Evolutionary path relinking\") pour le QMSP, un algorithme mémétique pour le GQMSP et une approche hybride en deux étapes pour le BO-QMSP. Ces algorithmes partagent certains ingrédients fondamentaux (e.g., les opérateurs de mouvement de base et les heuristiques gloutonnes) qui avec quelques adaptations sont généralement applicables à d’autres problèmes de sac-à-dos quadratiques. Ils possèdent également un certain nombre de conceptions spécifiques aux problèmes étudiés. Tous les algorithmes ont été expérimentalement démontrés être en mesure de rivaliser favorablement avec les méthodes de l’état de l’art.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/1214b968z552cz4bc8zbbd1z3455340ba926"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0",
+      "title": "Heuristic methods for solving knapsack type problems",
+      "authors": [
+        "Thekra Al-Douri"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Méthodes heuristiques pour les problèmes de type knapsack \n         Les travaux de recherche de cette thèse s'articulent autour de la résolution du problème du sac à dos en min-max avec de multiples scénarios (en anglais, max-min knapsack problem with multi-scenarios). Cette thèse propose trois approches, plutôt complémentaires, en s'appuyant principalement sur l'aspect perturbation des solutions puis la reconstruction. En partant de ce principe, trois algorithmes approchés ont été étudiés, en partant d'une approche mono-solution vers des approches à base de population. Dans une première partie, un algorithme réactif a été proposé ; il s'appuie sur deux phases imbriquées dans une recherche itérative : la phase de restauration / exploration et la phase de perturbation. La première phase part d'une solution réalisable et tente de l'améliorer en utilisant une stratégie d'exploration spécifique. Cette dernière est basée sur une série d'échanges entre les éléments appartenant ou pas à la solution courante. La deuxième phase commence par construire une solution partielle, en supprimant certains éléments de la solution courante, alors qu'une stratégie de ré-optimisation tente de sélectionner de nouveaux éléments et de les inclure dans une solution dégradée. La stratégie de destruction tente également de diversifier le processus de recherche en dégradant la qualité des solutions dans le but d'éviter des stagnations locales. Dans une deuxième partie, une méthode à base de population a été proposée. Elle s'appuie sur trois phases. Une phase de construction de la population de départ par application d'un algorithme glouton aléatoire, une deuxième phase qui combine une série de solutions deux-à -deux, par l'utilisation de l'opérateur d'intersection et, une troisième phase qui agit sur les successeurs afin d'augmenter la qualité des solutions induites. Les deux dernières phases sont répétées jusqu'à la stabilité de la population. Dans une troisième partie, le problème est résolu en combinant le GRASP (Greedy Randomized Adaptive Search Procedure) et le Path-relinking. Cette approche combine deux stratégies: une stratégie de construction et une autre d'amélioration. D'une part, la première stratégie produit une solution (de départ) réalisable en appliquant le GRASP. D'autre part, chaque solution courante (de départ) est améliorée en appliquant une stratégie basée sur le path-relinking : partir d’un couple de solutions Â« départ-arrivée Â», puis tenter de reconstruire le lien entre ces deux solutions en espérant rencontrer des solutions de meilleures qualités sur le chemin. Ce processus est répété sur une série de solutions",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/77bb03b1z6f68z47dbz931cze0d45ddac1f0"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47611/jsrhs.v12i4.5660",
+      "title": "Using Heuristic Algorithms to Solve the 0-1 Knapsack Problem",
+      "authors": [
+        "Sanatan Mishra",
+        "David Perkins"
+      ],
+      "year": 2023,
+      "venue": "Journal of Student Research",
+      "cited_by_count": 0,
+      "abstract": "The 0-1 Knapsack problem is an NP-complete optimization problem with applications in many places where the most valuable items must be selected for a finite pool. Heuristic algorithms are used to solve that problem, as the exact solutions take far too much time to be useful in such applications. This paper introduces ten novel heuristic algorithms. After that, the paper analyzes their performance on 29 publicly available datasets against one existing heuristic algorithm named “Standard Greedy.” The results show that one of the novel heuristics, “Defensive Greedy,” is the best in balancing speed and accuracy with a time complexity of O(n log n). The advantages of “Defensive Greedy” include that it is around 44.8% faster than “Standard Greedy” and much faster than any exact solution. However, its primary disadvantage is that it lags behind “Standard Greedy” in accuracy by approximately 28%. The nine other novel heuristics were not as fast as “Defensive Greedy,” but two novel heuristics, “Max of All” and “Max of Two,” had a higher accuracy of 2.9% and 2.6%, respectively, than that of “Standard Greedy.”",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47611/jsrhs.v12i4.5660"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29007/fx82",
+      "title": "An Iterated Semi-Greedy Algorithm for the 0-1 Quadratic Knapsack Problem",
+      "authors": [
+        "Leticia Leonor Pinto Alva",
+        "Alexander J. Benavides"
+      ],
+      "year": 2018,
+      "venue": "EasyChair Preprints",
+      "cited_by_count": 1,
+      "abstract": "This paper presents a new Iterated Semi-Greedy Algorithm (ISGA) for the 0-1 Quadratic Knapsack Problem.The proposed ISGA is easier to implement, runs faster, and produces comparable results than state-of-the-art methods. Computational evaluation is performed over a benchmark with large instances of 1000 and 2000 objects.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29007/fx82"
+    }
+  ]
+}

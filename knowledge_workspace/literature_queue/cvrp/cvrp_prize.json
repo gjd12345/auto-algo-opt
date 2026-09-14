@@ -1,0 +1,124 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_prize",
+    "label": "Prize-collecting VRP",
+    "definition": "Optional customers.",
+    "search_query": "prize collecting VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Prize/distance greedy",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Selective VRP local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "prize collecting VRP heuristic",
+  "harvested_at": "2026-09-14T08:25:48Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6804412",
+      "title": "Exact and Heuristic Approaches for the Multi-Vehicle Covering Tour Problem with Prize Collecting",
+      "authors": [
+        "Modoukpè Maryse Eudoxie ASSANVI",
+        "Marcos Roboredo"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This paper introduces the Multi-Vehicle Covering Tour Problem with Prize Collecting (m-CTPPC), a new extension of the Covering Tour Problem that integrates multiple vehicles and prize-collecting requirements. The problem simultaneously combines routing, coverage, and facility selection decisions, leading to a highly challenging optimization setting.We propose two complementary solution approaches. First, an exact branch-cut-and-price algorithm based on a route-based formulation, where the pricing problem is solved as a resource-constrained shortest path using a bidirectional labeling algorithm with ng-route relaxations and rank-1 cuts. Second, a hybrid matheuristic, denoted Hybrid Build-Ruin (HBR), combining randomized construction, ruin-and-recreate diversification, and an exact set-partitioning post-optimization over a pool of routes.Computational experiments on 378 benchmark instances with up to 229 vertices show that the exact method solves 79.4% of the instances to optimality and provides strong bounds overall. The HBR heuristic delivers high-quality solutions within short computational times (10-30 seconds), achieving average gaps of at most 0.3% and frequently matching best known solutions. The results highlight the strong complementarity between both approaches, yielding an effective framework for solving the m-CTPPC.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6804412"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.20944/preprints202604.1066.v1",
+      "title": "A Heuristic-Based Methodology for Collecting Irregular Waste in Sustainable Cities",
+      "authors": [
+        "Ali Tuna Dinçer",
+        "Mehmet Yildirim"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study develops a mobile-supported system that local governments can use in their irregular waste collection services within the scope of smart cities. Irregular waste refers to waste that individuals or organizations produce non-periodically, which arises unexpectedly or in an unusual manner. This waste can accumulate within the city and cause environmental pollution if it is not notified to the municipality or local government for collection. Unlike small-volume household waste collected at routine times, irregular waste is generally large-volume waste such as construction rubble, vegetable oil, mineral oil, and garden waste. Municipalities have different collection vehicles with varying capacities to suit different waste types and quantities. To increase efficiency in the waste collection process, waste locations should be sequenced and vehicles appropriate to the waste type should be allocated in planning. In the irregular waste collection system developed in this study, waste locations are marked on the map applications running on mobile devices, and notifications are sent to the municipality. This provides a faster, more traceable, and effortless service compared to traditional telephone or petition-based notification methods. The Google Maps API was used for processing and visualizing the notification locations on the map. Notification data is recorded in a database by municipality, and daily or 4-hour planning is done using this data. In this study, genetic algorithm and differential evolution algorithm were used for vehicle routing and vehicle type optimization. To compare the efficiency of both methods, 4 different scenarios were designed with different numbers of waste locations and different types and quantities of waste, and the successes of the methods were compared. Route optimization is calculated not statically, however, using real-time traffic data with Google Distance Matrix API integration, generating the shortest and most economical travel route between waste locations. In this way, efficiency is increased for densely populated city centers while providing citizens with an innovative irregular waste collection infrastructure using more up-to-date technologies.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.20944/preprints202604.1066.v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230190602",
+      "title": "The prize collecting traveling salesman problem",
+      "authors": [
+        "Egon Balas"
+      ],
+      "year": 1989,
+      "venue": "Networks",
+      "cited_by_count": 403,
+      "abstract": "Abstract The following is a valid model for an important class of scheduling and routing problems. A salesman who travels between pairs of cities at a cost depending only on the pair, gets a prize in every city that he vitis and pays a penalty to every city that he fails to visit, wishes to minimize his travel costs and net penalties, while visiting enough cities to collect a prescribed amount of prize money. We call this problem the Prize Collecting Traveling Salesman Problem (PCTSP). This paper discusses structural properties of the PCTS polytope, the convex hull of solutions to the PCTSP. In particular, it identifies several families of facet defining inequalities for this polytope. Some of these inequalities are related to facets of the ordinary TS polytope, others to facets of the knapsack polytope. They can be used in algorithms for the PCTSP either as cutting planes or as ingredients of a Lagrangean optimand.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230190602"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.3390/su18115528",
+      "title": "A Heuristic-Based Methodology for Collecting Irregular Waste in Sustainable Cities",
+      "authors": [
+        "Ali Tuna Dinçer",
+        "Mehmet Yildirim"
+      ],
+      "year": 2026,
+      "venue": "Sustainability",
+      "cited_by_count": 0,
+      "abstract": "This study develops a mobile-supported system that municipalities can use in their irregular waste collection services within the scope of smart cities. Irregular waste refers to waste that individuals or organizations produce non-periodically, which arises unexpectedly or in an unusual manner. Unlike small-volume household waste collected at routine times, irregular waste is generally large-volume waste such as construction rubble, vegetable oil, mineral oil, and garden waste. In the irregular waste collection system developed in this study, waste locations are marked on the map of an application running on mobile devices, and notifications are sent to the municipality. The Google Distance Matrix API was used for processing and visualizing the notification locations on the map. Daily or 4 h planning is carried out using this data. In this study, a genetic algorithm and a differential evolution algorithm were used for vehicle routing and vehicle type optimization. To compare the efficiency of both methods, four different scenarios were designed with different numbers of waste locations and different types and amounts of waste, and the successes of the methods were compared. Differential evolution is found to be on average 0.8% better. Optimizations performed with actual road distances were found to be 8.0% more successful than optimizations performed with Euclidean distances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.3390/su18115528"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230250406",
+      "title": "The prize collecting traveling salesman problem: II. Polyhedral results",
+      "authors": [
+        "Egon Balas"
+      ],
+      "year": 1995,
+      "venue": "Networks",
+      "cited_by_count": 35,
+      "abstract": "Abstract The task of developing daily schedules for a steel rolling mill has been formulated as a Prize Collecting Traveling Salesman (PCTS) Problem, in which a salesman who gets a prize for every city he visits seeks a minimum‐cost tour including enough cities to collect a required amount of prize money. This paper addresses the facial structure of the PCTS polytope, the convex hull of solutions to the PCTS problem. In an earlier paper, we generalized to the PCTS polytope the subtour elimination inequalities for the Asymmetric Traveling Salesman (ATS) polytope. Here, we give a general method for deriving a facet defining inequality for the PCTS polytope from any facet defining inequality for the ATS polytope. We apply the procedure to several well‐known families of facet inducing inequalities for the ATS polytope: comb, odd CAT, SD, clique tree, and lifted cycle inequalities. We also extend the cloning and clique lifting procedure for the ATS polytope to the PCTS polytope.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230250406"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1757-899x/852/1/012090",
+      "title": "Comparison study between nearest neighbor and farthest insert algorithms for solving VRP model using heuristic method approach",
+      "authors": [
+        "Wilson Kosasih",
+        "Ahmad",
+        "Lithrone Laricha Salomon",
+        "Febricky"
+      ],
+      "year": 2020,
+      "venue": "IOP Conference Series: Materials Science and Engineering",
+      "cited_by_count": 5,
+      "abstract": "Abstract In Indonesia, transportation costs from physical distribution still tend to be high because not all business people can optimize their distribution routes. This paper discusses a comparative study between Nearest Neighbor and Farthest Insert algorithms in solving a Vehicle Routing Problem (VRP) model. Aim of this study is to determine the most optimum distribution route so that the distance or time or transportation costs can be minimized. This research was conducted at a bottled water distribution company. In the end, the comparative study was considered effective as a basis for decision making on the distribution route, where there were indications of distance savings or reduced costs, and increased utilization of the higher vehicle fleet.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1757-899x/852/1/012090"
+    }
+  ]
+}

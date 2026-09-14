@@ -1,0 +1,145 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "fsmvrp",
+    "label": "Fleet size and mix",
+    "definition": "Choose fleet composition.",
+    "search_query": "fleet size mix VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Golden FSM constructive",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "FSM local search",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "fleet size mix VRP heuristic",
+  "harvested_at": "2026-09-14T08:25:11Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230140106",
+      "title": "An algorithm for construction of a <i>k</i>‐connected graph with minimum number of edges and quasiminimal diameter",
+      "authors": [
+        "Ulrich Schumacher"
+      ],
+      "year": 1984,
+      "venue": "Networks",
+      "cited_by_count": 28,
+      "abstract": "Abstract Two fundamental considerations in the design of a communication network are reliability and maximum transmission delay. In this paper we give an algorithm for construction of an undirected graph with n vertices in which there are k node‐disjoint paths between any two nodes. The generated graphs will have a minimum number of edges and a diameter which is twice as large as the theoretical minimum. The algorithm is useful for the construction of large networks because it has a time complexity of O(n 2 ) .",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230140106",
+      "seeded": true,
+      "seed_heuristic": "Golden fleet size and mix",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/trsc.1070.0190",
+      "title": "Heuristic Approaches for the Fleet Size and Mix Vehicle Routing Problem with Time Windows",
+      "authors": [
+        "Mauro Dell'Amico",
+        "Michele Monaci",
+        "Corrado Pagani",
+        "Daniele Vigo"
+      ],
+      "year": 2007,
+      "venue": "Transportation Science",
+      "cited_by_count": 53,
+      "abstract": "The fleet size and mix vehicle routing problem with time windows (FSMVRPTW) is the problem of determining, at the same time, the composition and the routing of a fleet of heterogeneous vehicles aimed to serve a given set of customers. The routing problem requires us to design a set of minimum-cost routes originating and terminating at a central depot and serving customers with known demands, within given time windows. This paper develops a constructive insertion heuristic and a metaheuristic algorithm for FSMVRPTW. Extensive computational experiments on benchmark instances show that the proposed method is robust and efficient, and outperforms the previously published results.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/trsc.1070.0190"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6139706",
+      "title": "Strategic Fleet Size and Mix Liner Shipping Model on River-Sea under Demand Uncertainty",
+      "authors": [
+        "Abderrahmen Bouchenine"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study addresses the fleet size and mix vehicle routing problem (FSMVRP) in river-sea liner shipping under demand uncertainty, a critical challenge in maritime logistics where fluctuations can lead to capacity mismatches and increased costs. We propose a two-stage stochastic mixed-integer linear programming (MILP) model: the first stage determines the optimal fleet composition (number and types of vessels) to minimize fixed costs before demand realization, while the second stage adjusts routing, cargo flows, and recourse actions to minimize variable operational costs and penalties for unmet demand. The model is solved using Sample Average Approximation (SAA) with Monte Carlo sampling from log-normal demand distributions. Computational experiments, based on a bauxite supply chain case study, evaluate sensitivity to parameters such as sample size, demand variability (coefficient of variation 0.10-0.30), mean demand (8,000-12,000 tons), rental costs, variable costs, and vessel capacities. Results show efficient convergence at N=100-200 scenarios with optimality gaps below 0.51%. Variable costs (39.70% impact), mean demand (30.56%), and vessel capacity (30.05%) are primary drivers, while demand variability (4.72%) and rental costs (0.92%) have limited influence. The optimal fleet favors smaller bulk vessels, suggesting prioritization of operational efficiency over excess capacity. This framework enhances robustness, offering 15-20% potential reductions in mismatches compared to deterministic models, with extensions recommended for spot chartering and multi-period planning.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6139706"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.19030/jabr.v37i5.10382",
+      "title": "Optimal Fleet Size And Mix For A Rental Car Company",
+      "authors": [
+        "Nasreddine Saadouli"
+      ],
+      "year": 2021,
+      "venue": "Journal of Applied Business Research (JABR)",
+      "cited_by_count": 1,
+      "abstract": "In this paper, a linear programming model for optimizing the fleet size and mix for a rental car company is developed and solved. Rental car companies depend on their fleet of vehicles for generating the entirety of their income. Additionally, the investments required are typically very significant due to the high cost of vehicles. Consequently, the composition of the fleet could significantly affect the company’s profitability and sustainability in a volatile demand environment. Determining the optimal fleet size and mix has been the focus of research in particular in revenue and yield management and VRP streams. However, most models focused on cost minimization without taking into account the resale value of vehicles once retired from the fleet. This paper addresses the problem from a return maximization perspective while taking into account resale values of vehicles. Sensitivity analysis is carried out to gain further insight into the problem and enable the model to support the company’s management in refining the strategic plan.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.19030/jabr.v37i5.10382"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1111/itor.12379",
+      "title": "An iterative biased‐randomized heuristic for the fleet size and mix vehicle‐routing problem with backhauls",
+      "authors": [
+        "Javier Belloso",
+        "Angel A. Juan",
+        "Javier Faulin"
+      ],
+      "year": 2017,
+      "venue": "International Transactions in Operational Research",
+      "cited_by_count": 57,
+      "abstract": "Abstract This paper analyzes the fleet mixed vehicle‐routing problem with backhauls, a rich and realistic variant of the popular vehicle‐routing problem in which both delivery and pick‐up customers are served from a central depot using a heterogeneous and configurable fleet of vehicles. After a literature review on the issue and a detailed description of the problem, a solution based on a multistart biased‐randomized heuristic is proposed. Our algorithm uses an iterative method that relies on solving a series of smaller instances of the homogeneous‐fleet version of the problem and then using these subsolutions as partial solutions for the original heterogeneous instance. In order to better guide the exploration of the solutions space, the algorithm employs several biased‐randomized processes: a first one for selecting a vehicle type; a second one for sorting the savings list; and a third one to define the number of routes that must be selected from the homogenous‐fleet subsolution. The computational experiments show that our approach is competitive and able to provide 20 new best‐known solutions for a 36‐instance benchmark recently proposed in the literature.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1111/itor.12379"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.20331",
+      "title": "Valid inequalities for the fleet size and mix vehicle routing problem with fixed costs",
+      "authors": [
+        "Roberto Baldacci",
+        "Maria Battarra",
+        "Daniele Vigo"
+      ],
+      "year": 2009,
+      "venue": "Networks",
+      "cited_by_count": 30,
+      "abstract": "Abstract In the well‐known vehicle routing problem (VRP), a set of identical vehicles located at a central depot is to be optimally routed to supply customers with known demands subject to vehicle capacity constraints. An important variant of the VRP arises when a mixed fleet of vehicles, characterized by different capacities and costs, is available for distribution activities. The problem is known as fleet size and mix VRP with fixed costs FSMF and has several practical applications. In this article, we present a new mixed integer programming formulation for FSMF based on a two‐commodity network flow approach. New valid inequalities are proposed to strengthen the linear programming relaxation of the mathematical formulation. The effectiveness of the proposed cuts is extensively tested on benchmark instances. © 2009 Wiley Periodicals, Inc. NETWORKS, 2009",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.20331"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4018/ijamc.2016100102",
+      "title": "Quantum Inspired Algorithm for a VRP with Heterogeneous Fleet Mixed Backhauls and Time Windows",
+      "authors": [
+        "Meryem Berghida",
+        "Abdelmadjid Boukra"
+      ],
+      "year": 2016,
+      "venue": "International Journal of Applied Metaheuristic Computing",
+      "cited_by_count": 12,
+      "abstract": "This paper presents a new Quantum Inspired Harmony Search algorithm with Variable Population Size QIHSVPS for a complex variant of vehicle routing problem (VRP), called HVRPMBTW (Vehicle Routing Problem with Heterogeneous fleet, Mixed Backhauls and Time Windows). This variant is characterized by a limited number of vehicles with various capacities and costs. The vehicles serve two types of customers: linehauls customers and backhauls customers. Each customer must be visited in a specific interval of time. The authors propose to use quantum principles to accelerate evolution process and variable population size to decrease the number of solution's evaluation, when the improvement is insignificant. This new approach was tested on benchmarks and produces satisfactory results compared to other approaches.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4018/ijamc.2016100102"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:51Z"
+}

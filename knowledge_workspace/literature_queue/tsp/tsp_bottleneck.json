@@ -1,0 +1,141 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_bottleneck",
+    "label": "Bottleneck TSP",
+    "definition": "Minimise the longest edge.",
+    "search_query": "bottleneck traveling salesman heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Bottleneck NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Threshold binary search + MST",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "bottleneck traveling salesman heuristic Bottleneck NN",
+  "harvested_at": "2026-09-14T08:12:21Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1002/net.3230120409",
+      "title": "A matroid related to finitely chainlike, countably infinite networks",
+      "authors": [
+        "A. C. Tucker",
+        "A. H. Zemanian"
+      ],
+      "year": 1982,
+      "venue": "Networks",
+      "cited_by_count": 0,
+      "abstract": "Abstract The determination of the currents and voltages in a countably infinite electrical network containing infinite energy requires not only the imposition of Kirchoff's laws and Ohm's laws but also the arbitrary assignment of the current‐voltage pairs in certain sets of branches, called joints. For finitely chainlike, countably infinite networks the maximal joint sets satisfy the base axioms of a matroid.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1002/net.3230120409",
+      "seeded": true,
+      "seed_heuristic": "Bottleneck TSP heuristic context",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.32.2.380",
+      "title": "An Algorithm for the Bottleneck Traveling Salesman Problem",
+      "authors": [
+        "Giorgio Carpaneto",
+        "Silvano Martello",
+        "Paolo Toth"
+      ],
+      "year": 1984,
+      "venue": "Operations Research",
+      "cited_by_count": 12,
+      "abstract": "Given a graph with arc costs, the Bottleneck Traveling Salesman Problem is to find a Hamiltonian circuit that minimizes the largest cost of any of its arcs. Lower bounds for the problem (bottleneck assignment problem, bottleneck paths, bottleneck arborescence, cuts) are analyzed and combined to obtain a bounding procedure for a breadth-first branch and bound algorithm. At each node of the branch-decision tree, the algorithm uses a heuristic search to find a Hamiltonian circuit containing only arcs whose cost is not greater than the current lower bound, the aim being to reduce the number of nodes explored. Extensive computational results are discussed. These show that, unlike the classical Traveling Salesman Problem, the same algorithm can be used successfully for large numbers of vertices both in symmetric and in asymmetric cases. Results for Euclidean graphs are also presented.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.32.2.380"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/1811/1/012068",
+      "title": "Minimizing capacity of Electric Vehicle Battery using Bottleneck Traveling Salesman Problem",
+      "authors": [
+        "Rio Aurachman",
+        "Dyah Putri Saraswari"
+      ],
+      "year": 2021,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 2,
+      "abstract": "Abstract \n        Electrical vehicle technology has now developed. Various public transportation can start using electric power sources. However, there are battery capacity constraints. When the distance is too far, the battery capacity is not sufficient to provide the required power. In this paper, we will explain how the bottleneck travel salesman problem is applied to minimize battery capacity requirements. So that vehicles can choose the right route by minimizing the maximum distance between destinations. The optimization process is carried out with the Brute Force algorithm and python programming language.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/1811/1/012068"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1145/2406336.2406345",
+      "title": "A Hybrid Genetic Algorithm for the Bottleneck Traveling Salesman Problem",
+      "authors": [
+        "Zakir Hussain Ahmed"
+      ],
+      "year": 2013,
+      "venue": "ACM Transactions on Embedded Computing Systems",
+      "cited_by_count": 15,
+      "abstract": "The bottleneck traveling salesman problem is to find a Hamiltonian circuit that minimizes the largest cost of any of its arcs in a graph. A simple genetic algorithm (GA) using sequential constructive crossover has been developed to obtain heuristic solution to the problem. The hybrid GA incorporates 2-opt search, another proposed local search and immigration to the simple GA for obtaining better solution. The efficiency of our hybrid GA to the problem against two existing heuristic algorithms has been examined for some symmetric TSPLIB instances. The comparative study shows the effectiveness of our hybrid algorithm. Finally, we present solutions to the problem for asymmetric TSPLIB instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1145/2406336.2406345"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6425358",
+      "title": "Proactive Heuristic Synthesis (PHS): Addressing the Reactive Bottleneck through Latent Idle Consolidation in LLMs",
+      "authors": [
+        "Ali Zulfiqar"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Current Large Language Model (LLM) architectures are fundamentally reactive, operating within a \"Prompt-Response\" paradigm that leaves significant computational resources dormant during inter-prompt intervals. This paper introduces Proactive Heuristic Synthesis (PHS), an architectural framework that enables models to transition into a state of Latent Idle Consolidation. Unlike \"thought-at-inference\" methods (e.g., Quiet-STaR) which impose latency penalties, or static distillation methods (e.g., Fast Quiet-STaR) which lack continuous adaptability, PHS shifts the computational burden to asynchronous idle cycles. The framework utilizes a Regret-Based Replay mechanism defined by the counterfactual delta between initial inference failure and post-exploration success to target high-value optimization trajectories. Unlike recent replay methods such as SuRe, which prioritize high-perplexity samples for memory retention, PHS prioritizes high-regret samples for reasoning evolution. By autonomously navigating these associations, the model synthesizes novel heuristics verified via a Dual-Model Consensus engine to prevent generation-verification collapse. This paper establishes the mathematical formulation and architectural blueprint of PHS. We theoretically demonstrate that by shifting from perplexity-driven retention to regret-driven evolution, PHS provides an asymptotically optimal solution to the latencyreasoning trade-off. Furthermore, relying on recent bounds in recursive training, we formalize how our Dual-Model Consensus mathematically mitigates model collapse, offering a rigorous pathway to zero-latency self-evolution in LLMs.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6425358"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:24Z"
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "tsp",
+  "subproblem": {
+    "id": "tsp_angular",
+    "label": "Angular-metric TSP",
+    "definition": "Cost uses turning angles.",
+    "search_query": "angular metric TSP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Angle-aware NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Or-opt for turning cost",
+        "adapter_kind": "move_selector"
+      }
+    ]
+  },
+  "query": "angular metric TSP heuristic Angle-aware NN",
+  "harvested_at": "2026-09-14T08:12:30Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7378178",
+      "title": "A Sharper Explicit Bound on the Subtour-LP Integrality Gap for Metric TSP",
+      "authors": [
+        "Zhao Song"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "&lt;div&gt;\n Karlin, Klein, and Oveis Gharan introduced a randomized better-than-3/2 approximation algorithm for metric TSP [KKO21] and subsequently established the corresponding improvement in the integrality gap of the subtour-elimination LP [KKO22], with an explicit constant ε &amp;gt; 1.00000·10−36. Gurvits, Klein, and Leake subsequently improved the certified saving to 2.18000· 10−34 [GKL24]. We further obtain a randomized polynomial-time (3/2 − ε)-approximation for every fixed ε &amp;lt; ε⋆, where ε⋆ &amp;gt; 2.05522 · 10−30, and consequently the subtour-elimination LP has integrality gap at most 3/2 − ε⋆.&amp;nbsp;\n&lt;/div&gt;",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7378178"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.4028/www.scientific.net/amr.694-697.2787",
+      "title": "The Genetic Algorithm with Two Heuristic Rules for TSP",
+      "authors": [
+        "Yong Wang"
+      ],
+      "year": 2013,
+      "venue": "Advanced Materials Research",
+      "cited_by_count": 0,
+      "abstract": "Many complex discrete manufacturing problems, such as manufacturing sequencing problem or machine scheduling problem etc, can be converted into a general traveling salesman problem (TSP). TSP has been proven to be NP-complete. The genetic algorithm is improved with two heuristic rules for TSP. The first heuristic rule is the four vertices and three lines inequality. It is applied to the local Hamiltonian paths to generate the better solutions. The second heuristic rule is executed to reverse the local Hamiltonian paths, which generates new better solutions. The two heuristic rules coordinate with each other and they are merged into the optimization process of genetic algorithm to improve its performance. The computation results show that the improved genetic algorithm can find the near optimal solutions for most of the TSP instances.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.4028/www.scientific.net/amr.694-697.2787"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7144998",
+      "title": "A Two-Stage Scheduling Heuristic for the Deadline-Constrained Traveling Salesman Problem with a Drone Station (TSP-DS)",
+      "authors": [
+        "Jiahe Ling"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "This study investigates a deadline-constrained traveling salesman problem with drone stations in which a truck replenishes fixed drone pads and drones serve geographically eligible customers. The objective is to minimize total order tardiness under release times and soft delivery deadlines. A mixed-integer programming formulation jointly determines pad activation, truck routing, customer-to-pad assignment, drone sequencing, and delivery timing. Because the integrated model becomes computationally difficult at realistic demand scales, this study proposes LBIP-VND, an iterative two-stage heuristic combining load-balanced assignment, tardiness-based best insertion, variable-neighborhood descent, and truck routing guided by pad-level tardiness penalties. The method is evaluated on semi-synthetic Manhattan instances containing 48 candidate pads and approximately 1,500 orders with 60-minute delivery targets. Across all tested scales and departure settings, LBIP-VND produced feasible schedules within a few seconds. For full-size instances, average runtime was 2.88 seconds and average total tardiness was 9.53 hours across approximately 1,500 orders. Under a relaxed midnight-departure benchmark, all instances achieved zero tardiness. In contrast, the exact formulation exhibited rapidly increasing runtime and did not reliably produce competitive full-scale solutions within a two-hour limit. The results demonstrate that scheduling-based decomposition can provide scalable, service-level-oriented solutions for large fixed-pad truck--drone delivery systems.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7144998"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.20944/preprints202609.0140.v1",
+      "title": "A Sharper Explicit Bound on the Subtour-LP Integrality Gap for Metric TSP",
+      "authors": [
+        "Zhao Song"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Karlin, Klein, and Oveis Gharan introduced a randomized better-than-$3/2$ approximation algorithm for metric TSP [KKO21] and subsequently established the corresponding improvement in the integrality gap of the subtour-elimination LP [KKO22], with an explicit constant $\\varepsilon&amp;gt;1.00000\\cdot10^{-36}$. Gurvits, Klein, and Leake subsequently improved the certified saving to $2.18000\\cdot10^{-34}$ [GKL24]. We further obtain a randomized polynomial-time $(3/2-\\varepsilon)$-approximation for every fixed $\\varepsilon&amp;lt;\\varepsilon_\\star$, where $\\varepsilon_\\star&amp;gt;2.05522\\cdot10^{-30}$, and consequently the subtour-elimination LP has integrality gap at most $3/2-\\varepsilon_\\star$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.20944/preprints202609.0140.v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7389297",
+      "title": "The Metric TSP 4/3 Bound with Support at Most n+8: Structural Reduction and Slice-First Enumeration",
+      "authors": [
+        "Husain Naser"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We prove that the metric traveling-salesman subtour relaxation has integrality gap at most 4∕3 whenever an optimal extreme solution on 𝑛 nodes has at most 𝑛 + 8 positive components. A structural proper-split argument maps every nonintegral surplus-seven vertex to an extreme surplus-eight child with no smaller pointwise positive gap, so the 𝑛 + 7 case follows from the 𝑛 + 8 case without a separate enumeration. For surplus eight, the computational obstacle is that ancestors extend to order 16, beyond the available complete enumeration of subtour vertices. We introduce slice-first enumeration: rather than generate the ambient vertex population and filter by support size, we enumerate biconnected support graphs with 𝑛 + 8 edges, build the corresponding reduced subtour faces, and retain their full-support vertices. The finite campaign contains 735,627 ancestors; all are closed by exact rational Hamiltonian-walk packing certificates. A threshold-directed form of Gap-Bounding requires only a feasible packing meeting the 4∕3 transport threshold rather than an optimal packing. Independent nauty-lrs computations at orders 11–15 reproduce the certified archive exactly; at order 16, all 3,874 cubic supports yield 148,725 classes. A standard-library verifier reconstructs every theorem-facing certificate and formal completeness gate with zero errors. Together with earlier results for lower support surplus, this establishes the 4∕3 bound through support 𝑛 + 8. The unrestricted 4∕3 conjecture remains open.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7389297"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.7395957",
+      "title": "The Metric TSP 4/3 Bound with Support at Most n+8: Structural Reduction and Slice-First Enumeration",
+      "authors": [
+        "Husain Naser"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "We prove that the metric traveling-salesman subtour relaxation has integrality gap at most 4∕3 whenever an optimal extreme solution on 𝑛 nodes has at most 𝑛 + 8 positive components. A structural proper-split argument maps every nonintegral surplus-seven vertex to an extreme surplus-eight child with no smaller pointwise positive gap, so the 𝑛 + 7 case follows from the 𝑛 + 8 case without a separate enumeration. For surplus eight, the computational obstacle is that ancestors extend to order 16, beyond the available complete enumeration of subtour vertices. We introduce slice-first enumeration: rather than generate the ambient vertex population and filter by support size, we enumerate biconnected support graphs with 𝑛 + 8 edges, build the corresponding reduced subtour faces, and retain their full-support vertices. The finite campaign contains 735,627 ancestors; all are closed by exact rational Hamiltonian-walk packing certificates. A threshold-directed form of Gap-Bounding requires only a feasible packing meeting the 4∕3 transport threshold rather than an optimal packing. Independent nauty-lrs computations at orders 11–15 reproduce the certified archive exactly; at order 16, all 3,874 cubic supports yield 148,725 classes. A standard-library verifier reconstructs every theorem-facing certificate and formal completeness gate with zero errors. Together with earlier results for lower support surplus, this establishes the 4∕3 bound through support 𝑛 + 8. The unrestricted 4∕3 conjecture remains open.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.7395957"
+    }
+  ]
+}

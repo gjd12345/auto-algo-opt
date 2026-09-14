@@ -1,0 +1,165 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_clustered",
+    "label": "Clustered VRP",
+    "definition": "Customers in clusters.",
+    "search_query": "clustered VRP heuristic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "target_heuristics": [
+      {
+        "name": "Cluster-first NN",
+        "adapter_kind": "next_node_score"
+      },
+      {
+        "name": "Sweep-like angular NN",
+        "adapter_kind": "next_node_score"
+      }
+    ]
+  },
+  "query": "cluster-first nearest neighbor vehicle routing",
+  "harvested_at": "2026-09-14T08:12:47Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.12.4.568",
+      "title": "Scheduling of Vehicles from a Central Depot to a Number of Delivery Points",
+      "authors": [
+        "G. Clarke",
+        "J. W. Wright"
+      ],
+      "year": 1964,
+      "venue": "Operations Research",
+      "cited_by_count": 2836,
+      "abstract": "The optimum routing of a fleet of trucks of varying capacities from a central depot to a number of delivery points may require a selection from a very large number of possible routes, if the number of delivery points is also large. This paper, after considering certain theoretical aspects of the problem, develops an iterative procedure that enables the rapid selection of an optimum or near-optimum route. It has been programmed for a digital computer but is also suitable for hand computation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.12.4.568",
+      "seeded": true,
+      "seed_heuristic": "Clarke-Wright savings",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.22.2.340",
+      "title": "A Heuristic Algorithm for the Vehicle-Dispatch Problem",
+      "authors": [
+        "Billy E. Gillett",
+        "Leland R. Miller"
+      ],
+      "year": 1974,
+      "venue": "Operations Research",
+      "cited_by_count": 796,
+      "abstract": "This paper introduces and illustrates an efficient algorithm, called the sweep algorithm, for solving medium- as well as large-scale vehicle-dispatch problems with load and distance constraints for each vehicle. The locations that are used to make up each route are determined according to the polar-coordinate angle for each location. An iterative procedure is then used to improve the total distance traveled over all routes. The algorithm has the feature that the amount of computation required increases linearly with the number of locations if the average number of locations for each route remains relatively constant. For example, if the average number of locations per route is 7.5, the algorithm takes approximately 75 seconds to solve a 75-location problem on an IBM 360/67 and approximately 115 seconds to solve a 100-location problem. In contrast, the time to solve a problem with a fixed number of locations increases quadratically with the average number of locations per route. The sweep algorithm generally produces results that are significantly better than those produced by Gaskell's savings approach and are generally slightly better than Christofides and Eilon's results; however, the sweep algorithm is not as computationally efficient as Gaskell's and is slightly less so than Christofides and Eilon's.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.22.2.340",
+      "seeded": true,
+      "seed_heuristic": "Gillett-Miller sweep",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.55732/jrt.v3i2.263",
+      "title": "VEHICLE ROUTING PROBLEM DENGAN APLIKASI METODE NEAREST NEIGHBOR",
+      "authors": [
+        "Waluyo Prasetyo",
+        "Muchammad Tamyiz"
+      ],
+      "year": 2017,
+      "venue": "Journal of Research and Technology",
+      "cited_by_count": 4,
+      "abstract": "Transportation problem is just like inventory, this is an activity in logistics area. This activity is possible to make some production in one place and to consume them in another place. The aim of this research were to evaluate the existing network distribution model performance and to provide sugestions to proper the networkdistribution model used. The applied metode to achieve the goal was Nearest Neighbor Algorithm. The results were: (a) Distance saving was 538,2 Km or 26,59%, (b)Distribution time of product could be reduced to 9,37 hours or 19,07%, (c) Fuel cost could be reduced to 403.650 rupiahs or 26,59%, (d) Driver and assistance cost could be saved to 272.850 rupiahs or 4,5%, and (f) Total of distribution cost could be saved to 676.500 rupiahs or 25,71%.\r\nKeywords: Logistics, Distribution, Nearest Neighborhod, Distance, Cost.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.55732/jrt.v3i2.263"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1742-6596/2421/1/012027",
+      "title": "Study vehicle routing problem using Nearest Neighbor Algorithm",
+      "authors": [
+        "Rio Ferdiani Harahap",
+        "Sawaluddin"
+      ],
+      "year": 2023,
+      "venue": "Journal of Physics: Conference Series",
+      "cited_by_count": 0,
+      "abstract": "Abstract \n        Vehicle routing problem (VRP) has a key role in logistics management. VRP plays a role in designing the optimal route used by a number of vehicles placed at the depot to serve a number of customers with known requests. To solve the VRP, the nearest neighbor algorithm used to get the most optimal results. The Nearest Neighbor algorithm is a heuristic method which is done by starting the starting point than looking for the nearest point. In this paper, algorithm nearest neighbour can save the distance of 13,14% and cost 13,17%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1742-6596/2421/1/012027"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.61194/sijl.v2i1.187",
+      "title": "Capacitated Vehicle Routing Problem (CVRP) with Sweep and Nearest Neighbor Algorithm",
+      "authors": [
+        "Erly Ekayanti",
+        "Sugianto",
+        "Imaduddin Bachtiar Efendi"
+      ],
+      "year": 2024,
+      "venue": "Sinergi International Journal of Logistics",
+      "cited_by_count": 5,
+      "abstract": "The Capacitated Vehicle Routing Problem (CVRP) presents significant challenges in shipping route optimization and logistics management. These challenges include balancing vehicle capacity, minimizing travel distance, and efficiently grouping delivery points, all of which are crucial for enhancing operational efficiency and reducing costs. This research aims to apply a combination of the Sweep and Nearest Neighbor algorithms to address the CVRP, seeking to improve route efficiency and manage vehicle capacity effectively. The Sweep algorithm is employed to cluster pickup points based on their polar angle from the depot, facilitating efficient grouping and optimal vehicle capacity management. Within each cluster, the Nearest Neighbor algorithm is implemented to optimize the sequence of visits, minimizing total travel distance by sequentially selecting the next closest point. The Haversine Distance is used to calculate the distances between points, ensuring geographical accuracy compared to the Euclidean method. Experimental results demonstrate that this hybrid approach yields shorter routes. Quantitative analysis shows a significant reduction 13% in total travel distance when using this combination of algorithms, highlighting its effectiveness in solving the CVRP. This research demonstrates that combining the Sweep and Nearest Neighbor algorithms provides an efficient solution to the CVRP, improving route optimization and vehicle capacity management. The findings contribute valuable insights to logistics management, with practical implications for enhancing shipping route efficiency.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.61194/sijl.v2i1.187"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.55732/jrt.v4i1.265",
+      "title": "VEHICLE ROUTING PROBLEM ON JUICE DISTRIBUTION USING NEAREST NEIGHBOR METHOD",
+      "authors": [
+        "Muchammad Tamyiz",
+        "Waluyo Prasetyo"
+      ],
+      "year": 2018,
+      "venue": "Journal of Research and Technology",
+      "cited_by_count": 0,
+      "abstract": "Product distribution problem becomes an important topic in a company transportation system. PT Amanah Prima Indonesia (API), a company that focuses on national-scalejuice production. With the sum of scattered consumers in Semarang, it is necessary a solution in the products distribution to obtain operational efficiency.The method used is Nearest Neighborh Algorithm. The results obtained are: (a) The total distance traveled by the truck results in a distance savings of 144.20 Km or 40.06%, (b) The time of product distribution can be reduced for 5.15 hours or by 30.31%, (c) The savings of fuel cost resulted Rp.108,150,- or 40.06%, (, d) There is no difference cost for the driver and partner, which is Rp.600,000, and (e) Total savings for product distribution cost obtained of Rp.108,150, - or 12.43%.&#x0D;\nKeywords: Cost, VRP, Transportation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.55732/jrt.v4i1.265"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.36456/waktu.v14i2.138",
+      "title": "VEHICLE ROUTING UNTUK PICK UP PROBLEM DENGAN PENDEKATAN MOST VALUEABLE NEIGHBORHOOD DAN NEAREST NEIGHBOR PADA JASA PENGIRIMAN BARANG",
+      "authors": [
+        "Sudiana Wirasambada",
+        "Dwi Iryaning Handayani"
+      ],
+      "year": 2016,
+      "venue": "WAKTU: Jurnal Teknik UNIPA",
+      "cited_by_count": 0,
+      "abstract": "Berkembangnya bisnis jasa pengiriman barang mendorong perusahaan-perusahaan jasa pengiriman barang&#x0D;\nseperti PT. X memperluas jaringan bisnisnya. Sistem agen yang diterapkan menyebabkan lokasi pick up&#x0D;\nbarang menjadi lebih banyak. Oleh karena itu, optimalisasi penjadwalan rute kendaraan adalah hal yang&#x0D;\npenting untuk menurunkan kemungkinan barang yang tidak terangkut, menurunkan biaya operasional, dan&#x0D;\nmeningkatkan keuntungan. Tujuan penelitian yaitu melakukan optimalisasi rute pada operator jasa&#x0D;\npengiriman barang PT. X dengan mengggunakan pendekatan heuristik. Dua metode heuristik akan&#x0D;\ndigunakan, yaitu metode most valueable neighborhood (MVN-VRP) dan metode nearest neighbor (NN-VRP).&#x0D;\nKedua metode tersebut dibandingkan berdasarkan total nilai kargo yang dikumpulkan dan jarak tempuh&#x0D;\nkendaraan. Hasil penelitian ini menunjukkan bahwa untuk memaksimalkan nilai kargo yang diangkut atau&#x0D;\nmeminimalkan opportunity value yang hilang metode MVN-VRP lebih baik digunakan dibanding dengan&#x0D;\nmetode NN-VRP. Meskipun memiliki jarak tempuh yang lebih panjang, rute MVN-VRP lebih optimal dalam&#x0D;\noptimalisasi nilai kargo.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.36456/waktu.v14i2.138"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.15408/inprime.v7i2.47049",
+      "title": "Multi-Depot Vehicle Routing with Heterogeneous Vehicles using Nearest Neighbor Combined with Simulated Annealing",
+      "authors": [
+        "Debby Agustine",
+        "Janson Naiborhu",
+        "Ikha Magdalena"
+      ],
+      "year": 2025,
+      "venue": "InPrime: Indonesian Journal of Pure and Applied Mathematics",
+      "cited_by_count": 0,
+      "abstract": "The Vehicle Routing Problem (VRP) is an essential component of contemporary logistics, which becomes more complex as the Multi-Depot Vehicle Routing Problem (MDVRP) and the Multi-Depot Vehicle Routing Problem with a Heterogeneous Fleet (MDVRPHF). The main objective of MDVRPHF is to meet all customer demands while minimizing total distribution costs by using vehicles with varying capacities. This paper proposes a metaheuristic framework that first uses the Nearest Neighbor (NN) algorithm to build initial routes and then employs the Simulated Annealing (SA) algorithm to optimize the arrangement of goods within each vehicle, ensuring capacity limits are met. Computational experiments using real-world inspired data, representing 20 items distributed from a Bandung depot to multiple customers with three heterogeneous vehicle types, showed that the proposed hybrid NN–SA method achieved an 18.4% reduction in total distribution cost compared to the NN method alone. These results indicate that this integrated approach offers a practical, computationally efficient solution to the complexities of MDVRPHF, establishing it as a useful tool for logistics planning.\nKeywords: Multi-Depot Vehicle Routing Problem; Heterogeneous Fleet; Nearest Neighbor; Simulated Annealing; Metaheuristics.\n \nAbstrak\nVehicle Routing Problem (VRP) merupakan bagian penting dari logistik kontemporer, yang kompleksitasnya meningkat menjadi Multi-Depot Vehicle Routing Problem (MDVRP) dan Multi-Depot Vehicle Routing Problem with a Heterogeneous Fleet (MDVRPHF). Untuk MDVRPHF, tujuan utamanya adalah memenuhi seluruh permintaan pelanggan sambil meminimalkan biaya distribusi total dengan memanfaatkan kendaraan berkapasitas berbeda. Makalah ini mengusulkan kerangka kerja metaheuristik yang pertama-tama menggunakan algoritma Nearest Neighbor (NN) untuk membentuk rute awal, kemudian algoritma Simulated Annealing (SA) digunakan untuk mengoptimalkan penataan barang di setiap kendaraan agar batas kapasitas terpenuhi. Eksperimen komputasi menggunakan data uji berbasis kondisi nyata yang merepresentasikan distribusi 20 item dari satu depot di Bandung ke beberapa pelanggan dengan tiga jenis kendaraan heterogen. Hasil penelitian menunjukkan bahwa metode hibrida NN–SA ini menghasilkan penurunan biaya distribusi total sebesar 18,4% dibandingkan metode NN murni, yang menunjukkan bahwa pendekatan terpadu ini memberikan solusi praktis dan efisien secara komputasi untuk kompleksitas MDVRPHF.\nKata Kunci: Multi-Depot Vehicle Routing Problem; Armada Heterogen; Nearest Neighbor; Simulated Annealing; Metaheuristik.\n2020MSC: 90B06, 90C59.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.15408/inprime.v7i2.47049"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:13Z"
+}

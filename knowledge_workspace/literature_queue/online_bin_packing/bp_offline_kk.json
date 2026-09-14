@@ -1,0 +1,169 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "online_bin_packing",
+  "subproblem": {
+    "id": "bp_offline_kk",
+    "label": "Karmarkar-Karp / differencing",
+    "definition": "Offline LP or differencing.",
+    "search_query": "Karmarkar Karp bin packing approximation",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Karmarkar-Karp differencing",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Multifit",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "Karmarkar Karp bin packing approximation",
+  "harvested_at": "2026-09-14T08:26:48Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0204038",
+      "title": "Preserving Proximity in Arrays",
+      "authors": [
+        "Arnold L. Rosenberg"
+      ],
+      "year": 1975,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 31,
+      "abstract": "Efficiency of storage management in algorithms which use arrays is often enhanced if the arrays are stored in a proximity-preserving manner; that is, array positions which are close to one another in the array are stored close to one another. This paper is devoted to studying certain qualitative and quantitative questions concerning preservation of proximity by array storage schemes (or,realizations). It is shown that fully extendible array realizations cannot preserve proximity in any global sense, not even proximity along a single direction (say, along rows). They can, however, preserve proximity in certain local senses; and realizations which are optimal in various senses of local preservation are exhibited. Partially extendible array storage schemes can preserve proximity in a global way; bounds on their “diameters of preservation” are derived, and optimal schemes are exhibited.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0204038",
+      "seeded": true,
+      "seed_heuristic": "Coffman-Garey-Johnson Multifit",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1109/sfcs.1982.61",
+      "title": "An efficient approximation scheme for the one-dimensional bin-packing problem",
+      "authors": [
+        "Narendra Karmarkar",
+        "Richard M. Karp"
+      ],
+      "year": 1982,
+      "venue": "23rd Annual Symposium on Foundations of Computer Science (sfcs 1982)",
+      "cited_by_count": 275,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1109/sfcs.1982.61",
+      "seeded": true,
+      "seed_heuristic": "Karmarkar-Karp",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0216012",
+      "title": "An Efficient Approximation Scheme for Variable-Sized Bin Packing",
+      "authors": [
+        "Frank D. Murgolo"
+      ],
+      "year": 1987,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 60,
+      "abstract": "In the classical bin packing problem one is required to pack a given list of items into the smallest possible number of unit-sized bins. Because this problem is NP-complete, researchers have tried to find efficient approximation algorithms that solve this problem in a reasonable amount of time. If we let $A(I)$ be the number of bins used by algorithm A to pack a list of items I, and ${\\textit{OPT}}(I)$ be the minimum number of bins necessary to pack I, one defines the asymptotic performance ratio of A to be ${{A(I)} / {{\\textit{OPT}}(I)}}$, as ${\\textit{OPT}}(I)$ tends to infinity. De la Vega and Lueker presented an approximation scheme, which for any $ \\in &gt; 0$, yields an approximation algorithm with performance ratio $1 + \\varepsilon $. This scheme has time complexity polynomial in n, the number of items, but exponential in ${1 / \\varepsilon }$. Karmarkar and Karp extended this scheme to one that has time complexity polynomial in n and ${1 / \\varepsilon }$. In the variable-sized bin packing problem, one is given a list of items to pack and a set of different bin sizes to be used in packing the items. For an algorithm A, $A(I)$ is the sum of the sizes of the bins used to pack the list I. This sum is the quantity one wishes to minimize. Friesen and Langston presented an approximation algorithm with performance ratio $\\frac{4}{3}$ with time complexity polynomial in the number of items and the number of different bin sizes. In this paper we present an approximation scheme which for any given positive a produces a scheme with performance ratio $1 + \\varepsilon $. This algorithm has time complexity polynomial in the number of items, the number of bins, and ${1 / \\varepsilon }$.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0216012"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/moor.1040.0112",
+      "title": "Fast Approximation Schemes for Two-Stage, Two-Dimensional Bin Packing",
+      "authors": [
+        "Alberto Caprara",
+        "Andrea Lodi",
+        "Michele Monaci"
+      ],
+      "year": 2005,
+      "venue": "Mathematics of Operations Research",
+      "cited_by_count": 26,
+      "abstract": "We present an asymptotic fully polynomial time approximation scheme for the two-dimensional generalization of Bin Packing, which requires packing (or cutting) a given set of rectangles from the minimum number of square bins, with the further restriction that packing the rectangles in the bins is done in two stages, as is frequently the case in real-world applications. To the best of our knowledge, this is the first approximation scheme for a nontrivial two-dimensional (and real-world) generalization of a classical one-dimensional packing problem in which rectangles have to be packed in (finite) squares. In addition to the approximability result, we obtain as a byproduct of our analysis an interesting structural result, namely the asymptotic optimality of the lower bound provided by the natural linear programming relaxation of the problem, having one variable for each bin pattern, that can be solved effectively by column generation techniques. Besides its practical relevance, a main reason to concentrate on the two-stage version of the problem is that its study continues to shed light on the general version. In particular, we strongly conjecture that the approximation guarantee of our algorithm for two-dimensional Bin Packing without the two-stage restriction is better than the best known ones. A simplification of the method leads to an approximation scheme for the two-stage version of two-dimensional Strip Packing.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/moor.1040.0112"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1017/s0021900200111799",
+      "title": "Probabilistic analysis of optimum partitioning",
+      "authors": [
+        "Narendra Karmarkar",
+        "Richard M. Karp",
+        "George S. Lueker",
+        "Andrew M. Odlyzko"
+      ],
+      "year": 1986,
+      "venue": "Journal of Applied Probability",
+      "cited_by_count": 6,
+      "abstract": "Given a set of n items with real-valued sizes, the optimum partition problem asks how it can be partitioned into two subsets so that the absolute value of the difference of the sums of the sizes over the two subsets is minimized. We present bounds on the probability distribution of this minimum under the assumption that the sizes are independent random variables drawn from a common distribution. For a large class of distributions, we determine the asymptotic behavior of the median of this minimum, and show that it is exponentially small.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1017/s0021900200111799"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/0222021",
+      "title": "A Monte-Carlo Algorithm for Estimating the Permanent",
+      "authors": [
+        "N. Karmarkar",
+        "R. Karp",
+        "R. Lipton",
+        "L. Lovász",
+        "M. Luby"
+      ],
+      "year": 1993,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 59,
+      "abstract": "Let A be an $n \\times n$ matrix with 0-1 valued entries, and let ${\\operatorname{per}}(A)$ be the permanent of A. This paper describes a Monte-Carlo algorithm that produces a “good in the relative sense” estimate of ${\\operatorname{per}}(A)$ and has running time ${\\operatorname{poly}}(n)2^{{n / 2}} $, where ${\\operatorname{poly}}(n)$ denotes a function that grows polynomially with n.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/0222021"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2307/3214002",
+      "title": "Probabilistic analysis of optimum partitioning",
+      "authors": [
+        "Narendra Karmarkar",
+        "Richard M. Karp",
+        "George S. Lueker",
+        "Andrew M. Odlyzko"
+      ],
+      "year": 1986,
+      "venue": "Journal of Applied Probability",
+      "cited_by_count": 35,
+      "abstract": "Given a set of n items with real-valued sizes, the optimum partition problem asks how it can be partitioned into two subsets so that the absolute value of the difference of the sums of the sizes over the two subsets is minimized. We present bounds on the probability distribution of this minimum under the assumption that the sizes are independent random variables drawn from a common distribution. For a large class of distributions, we determine the asymptotic behavior of the median of this minimum, and show that it is exponentially small.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2307/3214002"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1137/s009753979834669x",
+      "title": "Variable-Sized Bin Packing: Tight Absolute Worst-Case Performance Ratios for Four Approximation Algorithms",
+      "authors": [
+        "Chengbin Chu",
+        "Rémy La"
+      ],
+      "year": 2001,
+      "venue": "SIAM Journal on Computing",
+      "cited_by_count": 28,
+      "abstract": "In this paper we consider a one-dimensional bin packing problem where the bins do not have identical sizes, or a variable-sized bin packing problem, to minimize the bin consumption, i.e., the total size of the opened bins. The identical size problem has been extensively studied in the literature both for static and dynamic settings. The worst-case or average-case performance has been analyzed. Our problem setting particularly arises in metal cutting industries. Therefore, it presents a great practical relevance. Four greedy approximation algorithms based on a construction approach called largest object first with least absolute waste (LFLAW), largest object first with least relative waste (LFLRW), least absolute waste (LAW), and least relative waste (LRW) are examined. Their absolute worst-case performances are analyzed. The worst case bounds are 2 for LFLAW and LFLRW, 3 for LAW, and 2+ln 2 for LRW. We also show that these worst-case bounds are tight.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1137/s009753979834669x"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:45Z"
+}

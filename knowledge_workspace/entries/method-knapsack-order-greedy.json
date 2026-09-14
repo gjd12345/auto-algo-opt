@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Knapsack: accept items in file order if they fit",
+  "category": "method",
+  "problem_family": "knapsack",
+  "tags": [
+    "knapsack",
+    "greedy"
+  ],
+  "status": "reviewed",
+  "summary": "SelectItems takes each JSON item in order when weight<=remaining; objective is -value.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "SelectItems",
+    "objective": "maximise value"
+  },
+  "relations": {
+    "problems": [
+      "problem-knapsack"
+    ],
+    "sources": [],
+    "implementations": [
+      "impl-knapsack-order-greedy"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/knapsack/knapsack_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/knapsack/knapsack_solver.go",
+      "sha256": "d4bbdd5e3547b3789c35e90d7de1f6e0d2f043fb8b6f2dfb9c3dd82505a5bc25"
+    }
+  ],
+  "id": "method-knapsack-order-greedy",
+  "content_sha256": "7e702798f2fdec990024726afe0ab7e4c9bd9b9b15e192cd71ba57446cdbb47c"
+}

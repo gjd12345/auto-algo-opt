@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Q3 harmonic_only file is piecewise Best-Fit scoring, not HARMONIC_M",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Despite the filename harmonic_only, the code is base=1/(residual) (Best-Fit style), with large-item exact-fit boost, medium-item waste penalty, and small-item preference for residual near 50. There is no HARMONIC size-cl",
+  "attributes": {
+    "interface": "score(item, bins) piecewise on item/capacity",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/q3_card_components/best_codes/bp_online_harmonic_only_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/q3_card_components/best_codes/bp_online_harmonic_only_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/q3_card_components/best_codes/bp_online_harmonic_only_best.py",
+      "sha256": "e109a3d27ca662ab0dee5a1851fa31ac7f4fdd4cfbea67c7a273ed6d0e298cde"
+    }
+  ],
+  "id": "impl-obp-q3-piecewise-score",
+  "content_sha256": "5aae862abaa45b2020b510460766e3d0272019242d2beea157edb61251a949ce"
+}

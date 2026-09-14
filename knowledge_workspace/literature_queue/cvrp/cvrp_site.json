@@ -1,0 +1,146 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "cvrp_site",
+    "label": "Site-dependent VRP",
+    "definition": "Some vehicles cannot serve some sites.",
+    "search_query": "site dependent VRP heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Site-feasible NN",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Restricted savings",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "site dependent VRP heuristic",
+  "harvested_at": "2026-09-14T08:25:36Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1016/0377-2217(91)90238-q",
+      "title": "Validation of a model to support the decision to transfer management control systems",
+      "authors": [
+        "Coral R. Snodgrass",
+        "Edward J. Szewczak"
+      ],
+      "year": 1991,
+      "venue": "European Journal of Operational Research",
+      "cited_by_count": 0,
+      "abstract": null,
+      "abstract_missing": true,
+      "url": "https://doi.org/10.1016/0377-2217(91)90238-q",
+      "seeded": true,
+      "seed_heuristic": "Site-dependent VRP",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1088/1757-899x/852/1/012090",
+      "title": "Comparison study between nearest neighbor and farthest insert algorithms for solving VRP model using heuristic method approach",
+      "authors": [
+        "Wilson Kosasih",
+        "Ahmad",
+        "Lithrone Laricha Salomon",
+        "Febricky"
+      ],
+      "year": 2020,
+      "venue": "IOP Conference Series: Materials Science and Engineering",
+      "cited_by_count": 5,
+      "abstract": "Abstract In Indonesia, transportation costs from physical distribution still tend to be high because not all business people can optimize their distribution routes. This paper discusses a comparative study between Nearest Neighbor and Farthest Insert algorithms in solving a Vehicle Routing Problem (VRP) model. Aim of this study is to determine the most optimum distribution route so that the distance or time or transportation costs can be minimized. This research was conducted at a bottled water distribution company. In the end, the comparative study was considered effective as a basis for decision making on the distribution route, where there were indications of distance savings or reduced costs, and increased utilization of the higher vehicle fleet.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1088/1757-899x/852/1/012090"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3",
+      "title": "Exact and anytime heuristic search for the Time Dependent Traveling Salesman Problem with Time Windows",
+      "authors": [
+        "Romain Fontaine"
+      ],
+      "year": null,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Recherche heuristique exacte et anytime pour résoudre le Voyageur de commerce dépendant du temps avec fenêtres temporelles \n         Le problème du voyageur de commerce (TSP, pour Traveling Salesman Problem) dépendant du temps (TD, pour Time Dependent) est une généralisation du TSP qui permet de prendre en compte les conditions de trafic lors de la planification de tournées en milieu urbain : les temps de trajet varient en fonction des horaires de départ au lieu d'être constants. Le TD-TSPTW généralise ce problème en associant à chaque point de passage une fenêtre temporelle (TW, pour Time Window) qui restreint les horaires de visite. Les approches de résolution exactes telles que la programmation linéaire en nombres entiers ou la programmation dynamique passent mal à l’échelle, tandis que les approches heuristiques ne garantissent pas la qualité des solutions obtenues. Dans cette thèse, nous proposons une nouvelle approche exacte et anytime pour le TD-TSPTW visant à obtenir rapidement des solutions approchées puis à les améliorer progressivement jusqu'à prouver leur optimalité. Nous montrons d'abord comment rapporter le TD-TSPTW à une recherche de meilleur chemin dans un graphe états-transitions. Nous décrivons ensuite des algorithmes permettant de résoudre ce problème en nous concentrant sur les extensions exactes et anytime d'A*, et en proposons une nouvelle par hybridation. Nous montrons comment combiner ces algorithmes avec de la recherche locale -- afin de trouver plus rapidement de meilleures solutions -- ainsi qu'avec des bornes et de la propagation de contraintes de TW -- afin de réduire la taille de l'espace de recherche. Enfin, nous fournissons des résultats expérimentaux visant à (i) valider nos principaux choix de conception, (ii) comparer notre approche à l'état de l'art en considérant des benchmarks ayant différents degrés de réalisme et différentes granularités temporelles et (iii) comparer ces approches TD à de récents solveurs pour le TSPTW dans le cas constant. Ces résultats montrent que notre approche apporte un bon compromis entre le temps nécessaire pour (i) trouver de bonnes solutions et (ii) trouver des solutions optimales et prouver leur optimalité, aussi bien dans le cas TD que dans le cas constant.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.70675/09043c22zfaa5z4e3bz868bz8ac1958d96f3"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4706948",
+      "title": "A queue-dependent 2-cutoff heuristic for scheduling of routine and urgent tasks",
+      "authors": [
+        "Refael Hassin",
+        "Jiesen Wang"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "&lt;div&gt;\n The presence of urgent customers, whose service cannot be delayed, is common in clinics, maintenance systems, government departments, etc. As a result, service slots are often reserved for such customers, and if the number of arrivals exceeds the reserved capacity, costly overtime work may be incurred. In contrast, routine customers can be appointed to a later day. The system manager must decide how many routine customers to serve today and how many to postpone, given the current number of unserved routine customers.&amp;nbsp;&lt;span&gt;We characterize the optimal strategy that minimizes the expected waiting and overtime costs, and introduce a 2-cutoff heuristic that closely approximates the optimal policy. In addition, we examine a special case with no urgent customers and propose alternative solution methods for this simpler setting.&lt;/span&gt;\n&lt;/div&gt;",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4706948"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-7374243/v1",
+      "title": "A queue-dependent 2-cutoff heuristic for scheduling of routine and urgent tasks",
+      "authors": [
+        "Refael Hassin",
+        "Jiesen Wang"
+      ],
+      "year": 2025,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Abstract \n     The presence of urgent customers, whose service cannot be delayed, is common in clinics, maintenance systems, government departments, etc. As a result, service slots are often reserved for such customers, and if the number of arrivals exceeds the reserved capacity, costly overtime work may be incurred. In contrast, routine customers can be appointed to a later day. The system manager must decide how many routine customers to serve today and how many to postpone, given the current number of unserved routine customers. We characterize the optimal strategy that minimizes the expected waiting and overtime costs, and introduce a 2-cutoff heuristic that closely approximates the optimal policy. In addition, we examine a special case with no urgent customers and propose alternative solution methods for this simpler setting.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-7374243/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1101/2020.04.02.20050153",
+      "title": "CoViD–19: Meta-heuristic optimization based forecast method on time dependent bootstrapped data",
+      "authors": [
+        "Livio Fenga",
+        "Carlo Del Castello"
+      ],
+      "year": 2020,
+      "venue": null,
+      "cited_by_count": 4,
+      "abstract": "Abstract \n         A compounded method – exploiting the searching capabilities of an operation research algorithm and the power of bootstrap techniques – is presented. The resulting algorithm has been successfully tested to predict the turning point reached by the epidemic curve followed by the CoViD–19 virus in Italy. Futures lines of research, which include the generalization of the method to a broad set of distribution, will be finally given.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1101/2020.04.02.20050153"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.35889/progresif.v18i1.768",
+      "title": "Analisis Permodelan Periodic VRP with Driver-Consistency dan Consistency-VRP with Time-Windows",
+      "authors": [
+        "Muhammad Reza Riansyah",
+        "Arief Setyanto",
+        "Eko Pramono"
+      ],
+      "year": 2022,
+      "venue": "Progresif: Jurnal Ilmiah Komputer",
+      "cited_by_count": 0,
+      "abstract": "&lt;p&gt;&lt;strong&gt;Abstrak.&lt;/strong&gt; Sistem distribusi merupakan bagian penting dalam aktivitas pemasaran untuk mempermudah penyampaian barang dan jasa kepada konsumen. Dalam sistem distribusi terdapat komponen-komponen berupa Pelanggan, Kendaraan, Pengemudi, Rute dan Depot yang menjadi tujuan pendistribusian. Dalam menentukan rute terdapat berbagai masalah yang dapat ditemukan yaitu dengan &lt;em&gt;Vehicle Routing Problem&lt;/em&gt; (VRP). VRP digunakan untuk menentukan beberapa rute dimana dalam setiap rute dilalui oleh suatu kendaraan yang memulai perjalanan dari depot awal sampai depot akhir dengan permintaan pasti maupun tidak pasti. Penelitian ini di buat untuk membanding model &lt;em&gt;Periodic VRP with Driver-Consistency&lt;/em&gt; (PVRP-DC) dan &lt;em&gt;Consistency-VRP with Time-Windows&lt;/em&gt; (ConVRP-TW). Hasil penelitian ini menemukan perbedaan yang dihasilkan pada kedua model tersebut yaitu PVRP-DC dan ConVRP-TW dan VRP lainnya memiliki persamaan untuk mencari solusi rute yang optimal dengan batasan-batasan tertentu. Dengan permodelan PVRP-DC dapat menghemat jarak sebesar 25% dan ConVRP-TW dapat menghemat jarak 26%.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;&lt;em&gt;Kata kunci&lt;/em&gt;&lt;/strong&gt;&lt;strong&gt;&lt;em&gt;:&lt;/em&gt;&lt;/strong&gt;&lt;em&gt; Permodelan; Sistem distribusi; Periodic VRP with Driver-Consistency; Consistency-VRP with Time-Windows&lt;/em&gt;&lt;/p&gt;&lt;p align=\"center\"&gt; &lt;/p&gt;&lt;p&gt;&lt;em&gt;&lt;strong&gt;Abstract&lt;/strong&gt;. The distribution system is an important part of marketing activities to facilitate the delivery of goods and services to consumers. In the distribution system there are components in the form of Customers, Vehicles, Drivers, Routes and Depots which are the purpose of distribution. In determining the route, there are various problems that can be found, namely the Vehicle Routing Problem (VRP). VRP is used to determine several routes in which each route is traversed by a vehicle starting from the initial depot to the final depot with definite or uncertain requests. This study was made to compare the Periodic VRP with Driver-Consistency (PVRP-DC) and Consistency-VRP with Time-Windows (ConVRP-TW) models. The results of this study found the differences between the two models, namely PVRP-DC and ConVRP-TW and other VRPs have similarities to find the optimal route solution with certain limitations. By modeling PVRP-DC can save distance by 25% and ConVRP-TW can save distance by 26%.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;&lt;em&gt;Keywords&lt;/em&gt;&lt;/strong&gt;&lt;em&gt;: Modeling; Distribution system; Periodic VRP with Driver-Consistency; Consistency-VRP with Time-Windows&lt;/em&gt;&lt;/p&gt;",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.35889/progresif.v18i1.768"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:42:04Z"
+}

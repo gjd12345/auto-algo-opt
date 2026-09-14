@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Neighbor-restricted single-node relocation",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "relocate",
+    "vnd"
+  ],
+  "status": "reviewed",
+  "summary": "Move one city to a neighbor-induced edge if the 6-term delta is strictly negative, then 2-opt.",
+  "attributes": {
+    "method_family": "local_search",
+    "online_offline": "offline",
+    "interface": "best_relocation",
+    "objective": "tour cost"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "implementations": [
+      "impl-tsp-relocation-vnd"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_relocation_vnd.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_relocation_vnd.py",
+      "sha256": "9a17936cca9c6229d241a75583bc9bc745b8dfea9e2f10228f4c7a9a05c654b7"
+    }
+  ],
+  "id": "method-tsp-relocation",
+  "content_sha256": "7a1370bae42d27a4662cdb2f8bad36f724282280823cfe05145d81a644bf8a2c"
+}

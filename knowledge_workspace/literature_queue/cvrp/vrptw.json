@@ -1,0 +1,177 @@
+{
+  "schema_version": "literature-queue/v1",
+  "family": "cvrp",
+  "subproblem": {
+    "id": "vrptw",
+    "label": "VRP with time windows",
+    "definition": "Customers have time windows.",
+    "search_query": "VRPTW Solomon insertion heuristic",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable"
+    },
+    "target_heuristics": [
+      {
+        "name": "Solomon I1",
+        "adapter_kind": "not_mappable"
+      },
+      {
+        "name": "Solomon I2",
+        "adapter_kind": "not_mappable"
+      }
+    ]
+  },
+  "query": "VRPTW Solomon insertion heuristic",
+  "harvested_at": "2026-09-14T08:00:31Z",
+  "works": [
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.1287/opre.35.2.254",
+      "title": "Algorithms for the Vehicle Routing and Scheduling Problems with Time Window Constraints",
+      "authors": [
+        "Marius M. Solomon"
+      ],
+      "year": 1987,
+      "venue": "Operations Research",
+      "cited_by_count": 3426,
+      "abstract": "This paper considers the design and analysis of algorithms for vehicle routing and scheduling problems with time window constraints. Given the intrinsic difficulty of this problem class, approximation methods seem to offer the most promise for practical size problems. After describing a variety of heuristics, we conduct an extensive computational study of their performance. The problem set includes routing and scheduling environments that differ in terms of the type of data used to generate the problems, the percentage of customers with time windows, their tightness and positioning, and the scheduling horizon. We found that several heuristics performed well in different problem environments; in particular an insertion-type heuristic consistently gave very good results.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.1287/opre.35.2.254",
+      "seeded": true,
+      "seed_heuristic": "Solomon I1/I2 insertion",
+      "seed_adapter_kind": "not_mappable"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.37373/jenius.v6i2.1652",
+      "title": "Optimasi rute pengangkutan sampah menggunakan metode VRPTW dan Nearest Insertion Heuristic di Kecamatan Jatisampurna",
+      "authors": [
+        "Harditriyono Putra",
+        "Andary Asvaroza Munita"
+      ],
+      "year": 2025,
+      "venue": "JENIUS : Jurnal Terapan Teknik Industri",
+      "cited_by_count": 0,
+      "abstract": "Dinas Lingkungan Hidup melalui Unit Pelaksana Teknis Dinas Lingkungan Hidup (UPTD LH) Kecamatan Jatisampurna bertanggung jawab untuk mengelola pengangkutan sampah rumah tangga di wilayah Kecamatan Jatisampurna. Pengangkutan sampah dilakukan dengan dua metode. Metode pertama adalah pengumpulan dari rumah ke rumah dan dibuang ke TPA Sumur Batu setelah kontainer penuh. Metode kedua adalah pengumpulan dari dua stasiun pemindahan yang disebut stasiun Betawi Permai dan stasiun Bumi Eraska, dimana sampah dikumpulkan dari rumah ke rumah oleh petugas dari daerah sekitar kedua stasiun pemindahan tersebut sebelum diangkut ke TPA Sumur Batu. Berdasarkan kedua metode tersebut, UPTD LH membutuhkan sembilan truk sampah untuk mengelola layanan pembuangan sampah dan berencana untuk menambah jumlah stasiun transfer untuk meningkatkan layanan. Pemerintah daerah menyetujui pembangunan tambahan sebanyak tujuh stasiun transfer. Penelitian ini bertujuan untuk mempelajari rute optimal untuk mendapatkan total biaya pengangkutan sampah rumah tangga yang minimum. Beberapa penelitian dan metodologi telah diusulkan dengan metode Vehicle Routing Problem (VRP) seperti bagaimana menganalisis rute pengangkutan sampah kota yang sudah ada untuk dioptimalkan dengan metode Branch and Bones dan metodologi lain seperti Traveling Salesmen Problem namun masih dalam permasalahan yang serupa. Pada penelitian ini, kami mengembangkan Vehicle Routing Problem dengan metode Time Windows dan Nearest Insertion Heuristic untuk menentukan rute terbaik dari sembilan stasiun transfer yang dapat dioptimalkan. Hasil dari penelitian ini menunjukkan 5 rute yang optimal. Total biaya yang dikeluarkan untuk operasional pengangkutan sampah adalah sebesar Rp. 78.667.627.6/bulan. Rute optimal ini dapat mengurangi penggunaan kendaraan dari sembilan truk menjadi lima truk atau mengurangi emisi gas buang sebesar 45%.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.37373/jenius.v6i2.1652"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29303/jm.v7i4.10213",
+      "title": "Evaluating Swarm-Genetics for VRPTW: Robustness Across Seeds and Fleet Efficiency On Solomon Benchmarks",
+      "authors": [
+        "Aprizal Resky",
+        "Zaitun Zaitun",
+        "Dhirga Tandi Teppa"
+      ],
+      "year": 2025,
+      "venue": "Mandalika Mathematics and Educations Journal",
+      "cited_by_count": 0,
+      "abstract": "The Vehicle Routing Problem with Time Windows (VRPTW) is a challenging NP-hard problem in logistics optimization. This study evaluates a Swarm-Genetics algorithm, a hybrid method combining Particle Swarm Optimization (PSO) and Genetic Algorithm (GA) with swarm regeneration and adaptive parameter control. The algorithm was tested on 57 Solomon benchmark instances (C, R, RC) under three random seeds to assess robustness. Results show that the algorithm is robust across seeds, producing stable outcomes with minimal variation. It frequently preserves fleet efficiency, often matching the Best Known Solutions (BKS) in vehicle count, particularly for clustered instances. However, routing distances remain less competitive, with average gaps of about 10% for clustered, 12–13% for random, and over 20% for mixed cases. Convergence analysis further indicates rapid early improvements but stagnation in complex distributions. Overall, Swarm-Genetics provides a robust and fleet-efficient framework, though further enhancements are needed to improve distance quality.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29303/jm.v7i4.10213"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.6396625",
+      "title": "State-Dependent Route-Pool Control for Degenerate VRPTW Column Generation",
+      "authors": [
+        "Jin Xin Cao"
+      ],
+      "year": 2026,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Exact column-generation methods for the vehicle routing problem with time windows (VRPTW) often suffer from pricing degeneracy: an exact pricing oracle can repeatedly return many negative reduced-cost routes that are economically similar and structurally overlapping, so route admission becomes a control problem rather than a pure pricing problem. This paper develops a state-dependent route-pool control framework for degenerate VRPTW column generation. The method keeps diversified multi-column admission as the default regime and activates a monotone hard mode only after pricing reaches the time limit or approaches it closely. Hard mode combines dual stabilization, ambiguity-guided subset-row separation, reservoir reuse of previously discovered negative routes, and a composite admission score balancing reduced-cost benefit, structural novelty, and customer-level ambiguity. We state the exact trigger and ambiguity definitions implemented in code, derive basic properties of the stabilized pricing signal and ambiguity measure, and interpret the admission score as a master-facing control layer inside exact optimization. The empirical chain is fully auditable: benchmark assets, best-known-solution sources, configuration hashes, run manifests, and generated tables all remain linked. On the main six-instance Solomon line, the adaptive policy improves average LP progress from 13.57% to 14.12%, lowers average pricing time from 574.70 s to 522.83 s, and slightly lowers the final primal gap from 36.48% to 36.21% relative to a matched diversified baseline rerun. A new attribution study shows that the full adaptive policy outperforms reduced-cost-only, cuts-only, reservoir-only, and stabilization-only alternatives on LP progress, while not significantly dominating an always-hard bundle. A hard-trio sensitivity study shows that the policy family is robust in shape but tunable along an LP-time frontier. Additional transfer and larger-scale studies remain mixed, so the paper advances a bounded methodological claim: state-dependent route-pool control is a credible and auditable way to manage degeneracy in exact VRPTW column generation, but not a claim of universal solver dominance.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.6396625"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4830661",
+      "title": "Generating Practical Last-mile Delivery Routes using a Data-informed Insertion Heuristic",
+      "authors": [
+        "Hesam Rashidi",
+        "Mehdi Nourinejad",
+        "Matthew  J. Roorda"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Empirical evidence suggests that couriers often deviate from pre-planned delivery routes due to practical realities that routing algorithms may overlook. We statistically demonstrate that driver choices of a delivery route are influenced by more than just travel time, and their past experiences inform their navigation decisions. Factors like turn sharpness, backtracking distance, and neighbourhood visit timing also have a significant impact on their navigational decisions. This paper proposes a Data-informed Insertion Heuristic (DIIH) for Travelling Salesman Problems (TSPs). The DIIH creates a TSP tour based on a cost function inferred from historical courier-performed delivery routes. We train and test the DIIH on the dataset from Amazon’s Last-mile Research Challenge, which contains historically realized TSP instances classified into one of three quality classes: high, medium, or low. The route quality labels indicate the satisfaction level of Amazon’s logistics planners regarding a given observed route based on their productivity, courier experience, and customer satisfaction levels. We train an energy-based model to predict the likelihood of a route being of high quality when executed in the field. We show that this model generalizes well to unseen data, and we leverage it to create the DIIH’s cost function. We show that the DIIH generates 22.4% and 24.1% additional high-quality solutions than the Amazon challenge winner and courier-performed routes, respectively. This improvement comes with an increase of 20.6% and 13.9% in the median travel time. While the DIIH demonstrates a promising performance, in terms of the disparity metric used in the challenge, it is not competitive with the winner. We explain how Amazon’s disparity metric does not provide insight into an algorithm’s practical performance and propose that a probabilistic evaluation of a route’s quality based on its characteristics - like the energy-based model in this study - is a better alternative.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4830661"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.2139/ssrn.4828958",
+      "title": "Generating Practical Last-mile Delivery Routes using a Data-informed Insertion Heuristic",
+      "authors": [
+        "Hesam Rashidi",
+        "Mehdi Nourinejad",
+        "Matthew  J. Roorda"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 0,
+      "abstract": "Empirical evidence suggests that couriers often deviate from pre-planned delivery routes due to practical realities that routing algorithms may overlook. We statistically demonstrate that drivers’ choice of a delivery route is influenced by more than just travel time, and their past experiences inform their navigation decisions. Factors like turn sharpness, backtracking distance, and neighbourhood visit timing also have a significant impact on their navigational decisions. This paper proposes a Data-informed Insertion Heuristic (DIIH) for Travelling Salesman Problems (TSPs). The DIIH incrementally creates a TSP tour based on a cost function inferred from historical courier-performed delivery routes. We train and test the DIIH on the dataset from Amazon’s Last-mile Research Challenge. The dataset contains historically realized TSP instances classified into one of three quality classes: high, medium, or low. The route quality labels indicate the satisfaction level of Amazon’s logistics planners regarding a given observed route based on their productivity, courier experience, and customer satisfaction levels. We train an energy-based model to predict the likelihood of a route being of high quality when executed in the field. We show that this model generalizes well to unseen data, and we utilize it to create the DIIH’s cost function. While the DIIH is not competitive with the winner in terms of the disparity metric used in the challenge, we show that the DIIH generates 22.4% and 24.1% additional high-quality solutions than the Amazon challenge winner and courier-performed routes, respectively. This improvement comes with a modest increase of 20.6% and 13.9% in the median travel time. Furthermore, this paper explains how Amazon’s disparity metric does not provide the full picture of an algorithm’s practical performance and proposes that a probabilistic evaluation of a route’s quality based on its characteristics - like the energy-based model in this study - may be a better alternative.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.2139/ssrn.4828958"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.29313/jrm.v1i2.483",
+      "title": "Implementasi Algoritma Cheapest Insertion Heuristic dalam Menentukan Rute Pengiriman Barang",
+      "authors": [
+        "Farid Risqullah Fargiana"
+      ],
+      "year": 2022,
+      "venue": "Jurnal Riset Matematika",
+      "cited_by_count": 0,
+      "abstract": "Abstract. The online trading system has become a common thing for today's society. Freight forwarding companies, whose job is to deliver goods from sellers to buyers, have an important role in online trading. One of the freight-forwarding companies is SiCepat Express Baleendah. The delivery route used by SiCepat Express Baleendah is not organized so it is often inefficient. This problem in Mathematics is known as the Traveling Salesman Problem and can be solved using the Cheapest Insertion Heuristic (CIH) Algorithm. Hence, it is necessary to know how to determine the route of delivery of goods using the CIH Algorithm, also, the comparison of results and efficiency between the routes obtained from the application of the CIH Algorithm and the routes used by SiCepat Express Baleendah. From the research, it was found that the total distance for shipping goods obtained using the CIH Algorithm with Python was 3,757 km, while the route from SiCepat Express Baleendah was 4.840 km. The application of the CIH Algorithm with Python is proven to provide a route with a total distance of 22.38% smaller than the total distance traveled by the route used by SiCepat Express Baleendah.&#x0D;\nAbstrak. Sistem jual beli secara online sudah menjadi hal yang umum bagi kalangan masyarakat saat ini. Perusahaan pengirim barang, yang bertugas untuk mengirimkan barang dari penjual ke pembeli, memiliki peran penting dalam jual-beli online. Salah satu perusahaan pengiriman barang adalah SiCepat Express Baleendah. Rute pengiriman barang yang digunakan oleh SiCepat Express Baleendah tidak terorganisir sehingga seringkali tidak efisien. Permasalahan tersebut dalam Ilmu Matematika dikenal sebagai Travelling Salesman Problem dan dapat diselesaikan dengan Algoritma Cheapest Insertion Heuristic (CIH). Berdasarkan hal tersebut perlu diketahui cara menentukan rute pengiriman barang menggunakan Algoritma CIH serta perbandingan hasil dan efisiensi antara rute yang diperoleh dari penerapan Algoritma CIH dengan rute yang digunakan SiCepat Express Baleendah. Dari penelitian didapatkan total jarak tempuh pengiriman barang yang diperoleh menggunakan Algoritma CIH dengan Python adalah sebesar 3,757 km, sedangkan hasil yang digunakan oleh SiCepat Express Baleendah adalah sebesar 4,840 km. Penerapan Algoritma CIH dengan Python terbukti memberikan rute dengan total jarak tempuh 22,38% lebih kecil dibandingkan total jarak tempuh rute yang digunakan oleh SiCepat Express Baleendah.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.29313/jrm.v1i2.483"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.21203/rs.3.rs-4973948/v1",
+      "title": "Comparative Review of Single-Criteria and Multi-Criteria Optimisation Problems using Meta-heuristic Algorithms.",
+      "authors": [
+        "Cornelius Okechukwu",
+        "Radek Silhavy",
+        "Solomon Oyelere",
+        "Petr Silhavy"
+      ],
+      "year": 2024,
+      "venue": null,
+      "cited_by_count": 1,
+      "abstract": "Abstract \n     This paper explores using metaheuristic algorithms for single-criteria optimisation problems (SCOP) and multi-criteria optimisation problems (MCOP). It highlights the critical differences between these types, noting that SCOP focusses on a single objective while MCOP deals with conflicting goals. We applied metaheuristic algorithms inspired by natural phenomena to both problem types and provided a table comparing generic algorithms with problem-specific adaptations (PSAs), including their applications. A case study customised a contemporary algorithm for the Traveling Salesman Problem (TSP) using Genetic Algorithms (GA). At the same time, another examined the differences between generic algorithms and PSAs in a multi-criteria context with the Multi-Objective Knapsack Problem, utilising Multi-Objective Genetic Algorithms (MOGA) and Multi-Objective Particle Swarm Optimisation (MOPSO) alongside their tailored versions. The results indicate that PSAs outperform generic algorithms in SCOPs. The GA for TSP reduced the total journey distance over the generations, indicating progress towards optimal solutions. Similarly, in MCOP, tailored algorithms produced higher quality Pareto fronts, with better average hypervolume values and lower standard deviations than generic alternatives. We also discuss recent advancements and suggest future research directions for enhancing metaheuristic applications in optimisation.",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.21203/rs.3.rs-4973948/v1"
+    },
+    {
+      "provider": "crossref",
+      "openalex_id": null,
+      "doi": "10.47532/1m67t318",
+      "title": "KOMPARASI ALGORITMA CHEAPEST INSERTION HEURISTIC(CIH) DAN GREEDY DALAM OPTIMASI RUTEPENDISTRIBUSIAN BARANG",
+      "authors": [
+        "L.Virginayoga Hignasari"
+      ],
+      "year": 2026,
+      "venue": "Jurnal Ilmiah Vastuwidya",
+      "cited_by_count": 0,
+      "abstract": "Penelitian ini bertujuan untuk membandingkan algoritma yang secara efektif dapat memberikan solusi lebih baik terkait masalah penentuan rute terpendek dalam distribusi barang. Penelitian ini merupakan penelitian kualitatif. Objek penelitian adalah rute pengiriman barang sebuah usaha yang bergerak di bidang printing dan konveksi. Algoritma yang dibandingkan dalam penelitian ini adalah algoritma Cheapest Insertion Heuristic (CIH) dan Greedy. Kedua algoritma memiliki kelebihan dan kekurangan dalam pencarian rute terpendek.Dari hasil analisis menggunakan kedua algoritma tersebut, algoritma Cheapest Insertion Heuristic (CIH) dan Greedy mampu memberikan hasil optimasi yang hampir sama. Yang membedakan hanyalah pemilihan rute perjalananya saja. Adapaun kelebihan dari algoritma Greedy adalah langkah perhitunganya yang lebih sederhana daripada algoritma Cheapest Insertion Heuristic (CIH). Sedangkan kekurangan dari algoritma Greedy adalah kurang tepat digunakan untuk mencari rute terpendek dengan jumlah tempat yang dikunjungi relatif banyak. Kelebihan algoritma Cheapest Insertion Heuristic (CIH) adalah algoritma ini masih stabil digunakan untuk jumlah tempat yang dikunjungi relatif banyak. Sedangkan kekurangan algoritma Cheapest Insertion Heuristic (CIH) adalah prinsip penghitunganya yang rumit dan relatif lebih lama daripada algoritma Greedy",
+      "abstract_missing": false,
+      "url": "https://doi.org/10.47532/1m67t318"
+    }
+  ],
+  "doi_seeded_at": "2026-09-14T08:41:46Z"
+}

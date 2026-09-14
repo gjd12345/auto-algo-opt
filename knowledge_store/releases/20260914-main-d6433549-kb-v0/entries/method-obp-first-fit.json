@@ -1,0 +1,43 @@
+{
+  "type": "method",
+  "title": "First Fit as implemented in the Go OBP solver",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "first-fit"
+  ],
+  "status": "reviewed",
+  "summary": "Walk open bins in creation order and place into the first residual that fits; else open a bin.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "online",
+    "interface": "firstFit(items, capacity)",
+    "objective": "bin count"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "sources": [
+      "src-johnson-packing"
+    ],
+    "implementations": [
+      "impl-obp-go-solver"
+    ]
+  },
+  "source_refs": [
+    "src-johnson-packing"
+  ],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go",
+      "sha256": "2c185f07c02f75a7e5d9ec55be81b19f4289075adc862ed032d2b96a67df63b5"
+    }
+  ],
+  "id": "method-obp-first-fit",
+  "content_sha256": "3f55eca97635835ce83a4bc44b1c577dd96dd71d35b45436d869f90a5b4ca024"
+}

@@ -138,7 +138,7 @@ py -3.11 -m agent_skill_loop session init `
 然后由 Coding Agent 按 Skill 合同循环执行：
 
 1. `session state`，确认身份、预算和当前阶段。
-2. 可选执行 `session memory search/read`，由 Agent 决定是否消费正文。
+2. 按需执行 `session memory search/read`，由 Agent 决定是否消费正文。
 3. Agent 生成 Plan，并用 `session submit-plan --file` 提交。
 4. `session execute` 启动一次官方 EoH；轮询 `session state`，任务终态后调用非阻塞的 `session collect` 收集结果。
 5. 用 `session read-evaluation` 读取可信事实，Agent 生成 Evaluate，并用 `session submit-evaluation --file` 提交。
@@ -162,7 +162,7 @@ Session 只冻结搜索策略的默认值和边界：Plan 可在每轮通过 `se
 - Runtime 或 Skill identity 不匹配时，只允许读取证据和停止，不能编辑数据库绕过门禁。
 - 模型文本不能决定 objective、valid、预算或 incumbent；这些由 Runtime、EoH 和确定性评测器决定。
 - 导出的 Skill 必须在同一套件上重新评测；无效候选只留在审计证据中，不进入可复用集合。
-- Memory 是横切的可选能力，不是主闭环的一站：Plan 可读，Evaluate/Runtime 可写；默认不把其他问题的记忆混入检索。
+- Memory 是横切能力，不是主闭环的一站：普通 Session 默认开启，Plan 可读，Evaluate/Runtime 可写；`--no-memory` 可显式关闭，受控 benchmark 默认关闭。默认不把其他问题的记忆混入检索。
 
 ## 文档与证据
 
@@ -174,4 +174,4 @@ Session 只冻结搜索策略的默认值和边界：Plan 可在每轮通过 `se
 - [v1.0 验收记录](reports/v1.0-acceptance.md)
 - [历史方案与验收归档](reports/archive/README.md)
 
-`docs/3plus1_implementation_plan.md` 仅作为已废止方案的发现标记；历史报告和研究材料不属于运行时依赖，也不自动进入 prompt。
+`docs/3plus1_implementation_plan.md` 仅作为已废止方案的发现标记；历史报告和研究材料不属于运行时依赖，也不自动进入 prompt。离线知识库不进入生产 Session 包，说明见 [docs/knowledge_base.md](docs/knowledge_base.md)。

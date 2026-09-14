@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "CVRP construct broad trainer (same primitive, more instances)",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Broad subclass of the official construct evaluator. The evolved function is still select_next_node among feasible customers.",
+  "attributes": {
+    "interface": "select_next_node; extra instances / held-out reporting",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/cvrp_construct/prob_broad.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/cvrp_construct/prob_broad.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/cvrp_construct/prob_broad.py",
+      "sha256": "96641e4c96766c072300e24a9c83a821e5ee5a74f767733b3adffa5d14d0f77d"
+    }
+  ],
+  "id": "impl-cvrp-official-broad",
+  "content_sha256": "b8a12e10a42bfb293064d9441f6d3f8eaa4b2252d811ddfc1d00babab0659d4c"
+}
