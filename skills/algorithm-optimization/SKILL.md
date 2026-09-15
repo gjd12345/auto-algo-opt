@@ -43,6 +43,39 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 6. Write `evaluation.json`. Use `plan_alignment=aligned`, `partial`, `misaligned`, or `unknown`; new submissions MUST NOT emit the historical `deviated` spelling. Choose `memory_action.kind` as `none`, `insight`, or `solution` only when Memory is enabled; otherwise use `disabled`. Submit it once and inspect the returned Memory status.
 7. Call `session finish-round --decision continue` only when the state and budget permit another round. Otherwise call it with `complete`, or use `session stop` for an explicit stop.
 
+## Default round progress reporting
+
+After each completed round, update a compact `round_progress.md` at the
+Session output root and keep the previous rows unchanged. At Session
+completion, print the complete table before the final prose summary. Build it
+only from Runtime-verified state, request ledger, solver ledger, collected
+evaluation facts, incumbent before/after facts, and Memory references.
+
+Use these columns:
+
+```text
+Round | Plan input / mechanism | EoH requests delta / cumulative; solver
+      | valid / generated | generated candidate objectives
+      | incumbent before -> after / delta | Memory | status
+```
+
+Use `—` for a fact that is not present; never infer a score, request count,
+Memory reference, or causal explanation. The Plan's `reasoning_summary` may
+be shown as the explanation for the chosen mechanism, but it is not Runtime
+evidence. The candidate objective list must preserve the evaluation facts'
+candidate identities and indicate invalid candidates by their verified error
+code rather than silently dropping them.
+
+Compute `status` deterministically: `improved` when the verified incumbent
+objective decreases, `stagnated` when it is unchanged, `all-invalid` when no
+generated candidate is valid, `diversified` when the Plan declares a new
+mechanism family or distinct hypotheses and the facts show a valid candidate
+without an incumbent improvement, `budget-limited` when the Runtime reports a
+budget stop, and `seed-insufficient` when the Runtime reports insufficient
+verified seeds. If more than one applies, use the most specific terminal
+condition (`all-invalid`, `seed-insufficient`, `budget-limited`) before the
+quality condition.
+
 After every mutation, refresh state rather than guessing the next version. Reuse the same `operation_id` when retrying an uncertain command; never invent a new ID to repeat an effectful `execute` task.
 
 Read the focused contracts before producing documents:

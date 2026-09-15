@@ -88,3 +88,41 @@ When Memory is enabled, choose exactly one of:
 When Memory is disabled, use `{"kind":"disabled"}`. A baseline or invalid candidate cannot become a solution. An invalid candidate may support a specific failure insight with its real evidence reference; do not turn one failure into an unconditional ban or fabricate code/evaluation identity.
 
 A parseable Evaluate remains valid when its proposed solution later fails the deterministic publication gate. Inspect the returned Memory status (`rejected` or `failed`) and continue from the verified evaluation facts; do not resubmit or rerun EoH merely to force a Memory write.
+
+## `round_progress.md`
+
+The human-readable round trace is a required Session deliverable. After each
+`finish-round`, append or update one row at the Session output root; do not
+rewrite earlier rows from memory. The final response must include the complete
+table before the narrative conclusion.
+
+Recommended shape:
+
+```markdown
+| Round | Plan input / mechanism | EoH requests Δ / Σ; solver | Valid / generated | Generated candidate objectives | Incumbent before → after / Δ | Memory | Status |
+|---:|---|---:|---:|---|---|---|---|
+| 1 | ... | 8 / 8; 8 | 3 / 4 | 6.79, invalid:invalid_return, 6.45 | 6.956 → 6.452 / -0.504 | — | improved |
+```
+
+The row is a presentation of facts, not a second evaluation. Populate it
+from the following sources:
+
+| Column | Authoritative source |
+|---|---|
+| Plan input / mechanism | normalized Plan plus optional `reasoning_summary` |
+| EoH requests | request ledger, with per-round delta and Session cumulative total |
+| solver | solver ledger / dual-budget facts |
+| Valid / generated | `evaluation_facts.candidates` filtered to generated origins |
+| Candidate objectives | each candidate identity, objective, validity, and verified error code |
+| Incumbent and delta | `incumbent_before`, `incumbent_after`, and Runtime-computed objective delta |
+| Memory | exact read references and submitted publication reference, or `—` |
+| Status | deterministic facts only |
+
+Use `—` when a source does not contain the value. Do not replace an invalid
+candidate with a baseline score, and do not claim that a mechanism caused an
+improvement merely because it appears in the Plan. The recommended status
+precedence is: `all-invalid`, `seed-insufficient`, `budget-limited`, then
+`improved`, `stagnated`, or `diversified`. `diversified` requires a new
+declared mechanism family or distinct mechanism hypotheses plus at least one
+valid generated candidate; it does not mean that the Agent's explanation was
+successful.
