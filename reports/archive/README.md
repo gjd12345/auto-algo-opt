@@ -20,3 +20,13 @@
 - [Optical transfer 研究材料](research/optical_transfer/)
 
 研究材料和旧资产在重新评测前不得作为默认 prompt 记忆使用。
+
+## 2026-09-17 整理补充
+
+- [2026-09-14 v1.1a失败门禁](acceptance/v11a_closure_acceptance_20260914.md)：历史结果，不代表后续fixture失败。
+- [2026-09-15 实验预注册计划](plans/experiment_plan_after_c5e2d23.md)：保留当时预算，不按后来结果倒改计划。
+- [kb-lit7审阅](knowledge/kb_lit7_review/review.md)、[kb-ui9审阅](knowledge/kb_ui9/README.md)、[kb-v0审阅](knowledge/kb_v0_review/review.md)：截图/JSON/脚本按组归档，内容保留。
+
+历史脚本如需重放，从仓库根目录使用归档后的脚本路径；内部旧路径文字保持原始审阅上下文。
+例如 `python -m reports.archive.knowledge.kb_lit7_review.reproduce`；历史缺陷修复后旧断言可能不再成立。
+本次未移动带SHA256清单的benchmark证据包，也未删除任何私有实验记录。
