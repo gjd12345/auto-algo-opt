@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optics-artifact-session"
+version = "0.2.0"
+description = "Isolated native optical-prescription Session with post-search audit"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.setuptools]
+packages = ["optics_backend", "artifact_session", "optical_design_skill"]
+package-dir = {optics_backend = "src/optics_backend", artifact_session = "src/artifact_session", optical_design_skill = "skills/optical-design"}
+
+[tool.setuptools.package-data]
+optical_design_skill = ["SKILL.md", "references/*.md"]
