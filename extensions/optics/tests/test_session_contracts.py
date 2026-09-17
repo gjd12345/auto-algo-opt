@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from artifact_session import ledger, runtime, supervisor
 from artifact_session.store import DDL, SessionError, connect, dumps, record
-from optics_backend.artifacts import canonical, digest
+from optics_backend.artifacts import canonical, digest, save
 import time
 
 
@@ -38,6 +38,14 @@ class SessionContracts(unittest.TestCase):
             ledger.reserve_generation(self.run, "3", 1, {})
         with connect(self.run) as db:
             self.assertEqual(ledger.counts(db)["MODEL_REQUEST"], 2)
+
+    def test_recovery_blocks_live_physics_child(self):
+        save(self.run / "assessments/a/process_owner.json", {"pid": 42, "birth": "child"})
+        with patch("artifact_session.supervisor.process_birth", return_value="child"):
+            with self.assertRaisesRegex(SessionError, "CHILD_PROCESS_STILL_RUNNING"):
+                supervisor.recover(self.run, "recover", 1)
+        with connect(self.run) as db:
+            self.assertEqual(record(db)["version"], 1)
 
     def test_next_round_has_fresh_budget(self):
         result = runtime.finish_round(self.run, "continue", "finish", 1)

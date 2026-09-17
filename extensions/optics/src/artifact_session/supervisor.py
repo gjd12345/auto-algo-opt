@@ -78,6 +78,9 @@ def stop(run, op, version):
         terminate_owned(task)
     with transaction(run) as db:
         if record(db)["state"] == "STOPPING":
+            from .recovery import reconcile_completed, interrupted_round
+            reconcile_completed(db, run)
+            interrupted_round(db, run, record(db)["round"])
             for item in db.execute("SELECT * FROM effects WHERE state IN ('RESERVED','STARTED')").fetchall():
                 detail = {**json.loads(item["detail"]), "process_confirmed_dead": True}
                 db.execute("UPDATE effects SET state=?,detail=? WHERE id=?", ("UNKNOWN" if item["state"] == "STARTED" else "CANCELLED_NOT_STARTED", dumps(detail), item["id"]))
@@ -96,8 +99,27 @@ def recover(run, op, version):
                 raise SessionError("STARTING_PROCESS_OWNERSHIP_UNKNOWN")
             if process_birth(task["pid"]) == task["birth"]:
                 raise SessionError("TASK_STILL_RUNNING")
+        # A dead coordinator does not imply its provider/physics child is dead.
+        from optics_backend.artifacts import strict
+        for owner_file in list(Path(run).glob("assessments/*/process_owner.json")) + list(Path(run).glob("candidates/*/process_owner.json")):
+            owner = strict(owner_file.read_bytes())
+            if owner["birth"] is None or process_birth(owner["pid"]) == owner["birth"]:
+                raise SessionError("CHILD_PROCESS_STILL_RUNNING")
+        if conf.get("schema_id") and conf.get("provider") != "fixture":
+            for effect in db.execute("SELECT detail FROM effects WHERE kind='MODEL_REQUEST' AND state='STARTED'"):
+                cid = json.loads(effect[0])["candidate_id"]
+                if not (Path(run) / "candidates" / cid / "process_owner.json").exists():
+                    raise SessionError("PROVIDER_PROCESS_OWNERSHIP_UNKNOWN")
         # A finished terminal receipt is collected by the runner transaction; missing
         # receipt is not permission to replay the operation or a profile.
+        from .recovery import reconcile_completed, interrupted_round
+        try:
+            recovered = reconcile_completed(db, run)
+        except (OSError, ValueError, KeyError) as exc:
+            db.execute("UPDATE tasks SET state='INTERRUPTED' WHERE state IN ('STARTING','RUNNING')")
+            change(db, state="FAILED", reason="RECOVERY_EVIDENCE_FAILED")
+            event(db, "recovery_failed", {"error_type": type(exc).__name__, "detail": str(exc)})
+            return {"recovery_error": "RECOVERY_EVIDENCE_FAILED", "assessments_recovered": []}
         unknown_online = False
         for item in db.execute("SELECT * FROM effects WHERE state IN ('STARTED','RESERVED')").fetchall():
             detail = {**json.loads(item["detail"]), "process_confirmed_dead": True}
@@ -110,11 +132,12 @@ def recover(run, op, version):
             change(db, state="STOPPED", reason="GLOBAL_DEADLINE")
         elif row["state"] == "SEARCHING" and active:
             from .runtime import seal
+            interrupted_round(db, run, row["round"])
             seal(db, run, "UNKNOWN_SEARCH_EFFECT" if unknown_online else "WORKER_INTERRUPTED")
         elif row["state"] == "FINALIZING" and active:
             # No auto re-launch: finalization continuation requires a new explicit action.
             change(db, state="SEARCH_SEALED", reason="AUDIT_INTERRUPTED")
         else:
             change(db, state=row["state"])
-        return {"unknown_effects_preserved": True, "tasks_reconciled": len(active)}
+        return {"unknown_effects_preserved": True, "tasks_reconciled": len(active), "assessments_recovered": recovered}
     return operation(run, "recover", op, version, {}, mutation)[0]

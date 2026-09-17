@@ -25,6 +25,8 @@ def main():
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    from artifact_session.supervisor import process_birth
+    save(args.output / "process_owner.json", {"pid": os.getpid(), "birth": process_birth(os.getpid())})
     with connect(args.run) as db:
         conf = config(db)
     request = strict(args.request.read_bytes())

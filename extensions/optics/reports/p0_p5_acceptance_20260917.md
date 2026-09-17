@@ -1,5 +1,20 @@
 # 光学处方优化：P0–P5 实现与验收
 
+## 后续修复验收（2026-09-17，优先于下方历史结论）
+
+- durable assessment→SQLite窗口已修复：完整terminal及全部文件hash、输入处方、task/adapter/environment身份、逐profile账本必须一致，才事务收录；同时恢复baseline、candidate、incumbent和中断轮事实。不会重新执行模型或物理评测。
+- COMPLETE assessment但candidate尚未提交的第二窗口也使用相同恢复路径。审计恢复只使用原冻结队列，不扩充队列。损坏证据将run置FAILED。
+- 主进程已死不代表子进程已死：新增provider/physics所有权记录；仍存活的子进程阻止recover。
+- 实际子进程os._exit(77)分别注入baseline、candidate、audit落盘后的崩溃，三项恢复及重复调用不重放通过；候选事实损坏拒绝通过。证据：`.local/recovery_final/receipt.json`。
+- 停止/单profile超时回归及两轮Memory/反馈fixture通过：`.local/lifecycle_recovery`、`.local/session_recovery`。本轮无模型请求。
+- 包内原始独立verifier已按SHA256SUMS导入，依赖严格按原requirements版本和wheel hash安装。已有t1_live_02最终处方由其重新执行四档物理，22/22断言通过，runner COMPLETED/PASS、reward=1、new_model_calls=0。证据：`.local/verifier_live02`，verification SHA256=e7dd5c977d4439a98362ac556ffdc78b9bc6c6e4ad96b132bba374e967112cd1。未修改旧run的封存summary。
+- 这是Windows Python3.12.11 verifier结果，Linux3.12.14仍未通过环境门槛（再次检查WSL仍HCS_E_SERVICE_NOT_AVAILABLE，Docker命令不可用）。不宣称原环境复现。
+- 准许下一步受控Windows adapted协议实验，不是无条件跨平台发布。外层实验明确交给GPT-5.6-Luna，修复验收由Astra完成。
+
+500预算口径：总物理profile上限500；Runtime最多496（online476含baseline + audit5份×4），额外预留最终独立verifier4次。候选与模型请求最多475，单轮最多20，由Luna根据反馈选轮次及每轮额度；墙钟3600秒、audit预留120秒、Memory开启。配置在新run初始化冻结，禁止追加。
+
+以下为首轮实现时的历史验收记录，其“恢复窗口未闭合/独立verifier未跑”已被本节更新；原始live成绩、token及历史hash保持不变。
+
 日期：2026-09-17。基线：8a37fdda128e0f4032a2ac829ccf9f7ed56fb853。
 实现位于独立分支 codex/optics-backend-v1、独立 extensions/optics 包。
 

@@ -34,6 +34,10 @@ def main():
             pass
         with transaction(args.run) as db:
             current = record(db)
+            if current["state"] in ("STOPPED", "FAILED", "COMPLETED"):
+                return
+            from artifact_session.recovery import reconcile_completed, interrupted_round
+            reconcile_completed(db, args.run)
             for effect in db.execute("SELECT * FROM effects WHERE state IN ('RESERVED','STARTED')").fetchall():
                 info = {**json.loads(effect["detail"]), "process_confirmed_dead": True}
                 db.execute("UPDATE effects SET state=?,detail=? WHERE id=?",
@@ -44,6 +48,7 @@ def main():
                 return
             if task["purpose"] == "search" and current["state"] == "SEARCHING":
                 from artifact_session.runtime import seal
+                interrupted_round(db, args.run, task["round"])
                 db.execute("UPDATE rounds SET state='EVALUATE_SKIPPED' WHERE id=?", (task["round"],))
                 seal(db, args.run, "SEARCH_DEADLINE")
             else:

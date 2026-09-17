@@ -229,6 +229,9 @@ def main():
                 "mode": args.mode, "response": args.response}
     if request != expected:
         return 4
+    if args.session_run:
+        from artifact_session.supervisor import process_birth
+        save(args.output / "process_owner.json", {"pid": os.getpid(), "birth": process_birth(os.getpid())})
     try:
         return run(args)
     except Exception as exc:

@@ -55,16 +55,18 @@ All these tools make zero external model requests:
 ## Boundaries
 
 See [P0–P5 acceptance and live results](reports/p0_p5_acceptance_20260917.md).
-Windows Python 3.12.11 was exercised; original Linux Python 3.12.14 and independent
-verifier have not been validated. Local audit PASS is not verifier certification.
+Windows Python 3.12.11 was exercised; original Linux Python 3.12.14 is unverified.
+The prior T1 final prescription separately passed the supplied independent verifier
+on Windows (22 assertions). Local audit PASS alone is not verifier certification.
 T3 was calibrated offline, not optimized with a live model.
 
 Evidence assumes a trusted host. Digests are not signatures and process isolation
 is not a malicious-evaluator sandbox. Physics children have no provider credential;
 OS-enforced network denial is not implemented. Unknown effects are never replayed.
-A crash between durable assessment output and SQLite commit can leave an assessment
-INCOMPLETE: files survive but are not automatically promoted. This recovery window
-is a tracked limitation, not a completed acceptance item.
+Recovery validates complete durable assessment receipts against task, artifact,
+environment and effect identities before atomically restoring assessment/candidate/
+incumbent state. Incomplete receipts are not promoted; conflicts fail closed and
+live children block recovery. See the recovery addendum in the acceptance report.
 
 Private assets, raw evidence and credentials must not be committed.
 The [P1 acceptance](reports/p1_acceptance_20260917.md) is historical.
