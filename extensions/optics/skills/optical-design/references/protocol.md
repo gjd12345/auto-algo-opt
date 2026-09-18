@@ -27,6 +27,33 @@ An insight requires Evaluate to propose it. memory-write fields: id, kind=`insig
 summary, body, based_on (latest version ref or null), evidence_ref (current online ref).
 Describe task/sampling/candidate limits and uncertainty. No solution publication,
 cross-task retrieval or audit evidence. Memory is optional and may be disabled.
+state.memory_status distinguishes not_decided, none, disabled, pending and published.
+When enabled, a proposed insight blocks voluntary finish-round until memory-write
+succeeds (MEMORY_PUBLICATION_PENDING). A hard deadline takes precedence. Do not
+bypass CAS or write a post-seal draft into Runtime; report an unpublished draft honestly.
+
+## Search-quality guidance
+
+Read candidate online_diagnostics and prescription_delta before interpreting a
+failed hypothesis. Signed focus_error_mm is not an absolute constraint violation.
+For unchanged geometry, sensor_delta = target_signed_error - measured_signed_error.
+Changing curvature or thickness changes the focal plane: recompute compensation.
+Report focus_constraint_margin_mm separately from dimensionless normalized margin.
+A feasible boundary point is not evidence of tolerance robustness.
+
+Duplicate parents do not test a new mechanism. selected_but_unchanged is diagnostic,
+not a violation: variables_to_adjust permits changes rather than requiring all of them.
+Separate malformed/unexecuted proposals, wrong compensation, constraint failures,
+and genuinely evaluated but worse mechanisms. Consecutive failures trigger diagnosis,
+not an unconditional family switch. Correct a localized execution mistake before
+rejecting a mechanism; use distinct, physically coupled hypotheses after genuine ties
+or worsening. Keep task bounds, ranking, budget and audit isolation unchanged.
+
+For shape/thickness comparisons, state intended focal/defocus compensation and
+actual deltas; a small number of local probes cannot exclude an entire family.
+Report batch completion separately from target attainment, and user-reported
+reference scores separately from verified same-protocol comparisons. Costs from
+the generator do not include the host Agent or supervisor. Do not label this EoH.
 
 execute/finalize return a task ID, not completed physics. Poll state, then collect and
 read-evaluation. At hard search limits the runtime can seal and mark Agent Evaluate

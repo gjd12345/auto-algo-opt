@@ -30,7 +30,7 @@ python -m artifact_session state --run <directory>
 python -m artifact_session submit-plan --run <directory> --file <plan.json> --operation-id <unique-id> --expected-state-version <version>
 python -m artifact_session execute --run <directory> --operation-id <unique-id> --expected-state-version <version>
 python -m artifact_session collect --run <directory> --operation-id <unique-id> --expected-state-version <version>
-python -m artifact_session read-evaluation --run <directory>
+python -m artifact_session read-evaluation --run <directory> --round <n>
 python -m artifact_session report --run <directory> --output <report.md>
 ```
 
@@ -39,6 +39,22 @@ state versions rather than guessing. tools/prepare_pilot.py demonstrates config
 preparation without requests. Credentials are environment-only. Every run freezes
 finite request/profile/deadline limits, even if the overall research budget is open.
 Code changes require a new Session, not identity bypass on a historical run.
+
+### Continue from an online parent
+
+An optional `online_parent` in a new Session config contains `source_run`,
+`assessment_id`, `facts_sha256`, and `canonical_artifact_sha256`. The source must
+be sealed, have no running task, and contain a complete online assessment of the
+same task. Audit assessments are rejected. Initialization freezes a verified copy
+of the prescription; the original task baseline stays unchanged.
+
+Before generation, the new run evaluates both baseline and imported parent using
+its own online evaluator and budget. Only a strictly better parent replaces the
+incumbent. Reserve two startup online profiles instead of one. Inherited parents
+are not generated discoveries; reports show baseline/parent/generated costs
+separately. Completed parent reassessments recover idempotently without replay.
+Old frozen Sessions must keep their original installation; install the changed
+Runtime in a separate environment for new Sessions.
 
 ## Focused offline acceptance
 

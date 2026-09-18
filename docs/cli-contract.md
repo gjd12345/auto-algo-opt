@@ -871,3 +871,14 @@ budgets.repair_attempts
 figures are analytical views over the same ledger; they never create a second
 budget pool. Seed re-evaluation is charged to the same solver budget, and a
 test evaluation cannot change these training selections.
+# Memory publication correction
+
+`session memory-revise --run DIR --file memory-action.json --operation-id ID
+--expected-state-version N` corrects a failed/rejected current-round Memory proposal
+in READY_TO_FINISH. The file is a MemoryAction, not a replacement Evaluate. Original
+evaluation and proposal evidence remain immutable. Reuse ID/input after uncertainty;
+all source, evidence, CAS and solution gates still apply. Published proposals cannot
+be revised here (`MEMORY_REVISION_NOT_ALLOWED`); use a later versioned Evaluate update.
+State exposes publication status, write outcomes and read-page count. None decisions
+may include `reason`; Skill requires it for new submissions, historical inputs remain
+compatible. Insight requires `**Why:**` and `**How to apply:**` in its body.

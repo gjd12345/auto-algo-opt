@@ -647,6 +647,47 @@ def parse_evaluation(raw, enabled, evidence_refs):
     except ValueError as exc: fail("MEMORY_ACTION_INVALID","submit-evaluation",str(exc))
 
 
+def validate_memory_publication(memory, row):
+    if memory.kind not in {"insight", "solution"}:
+        return
+    from agent_skill_loop.memory.api import MemoryEntry, _validate_entry
+    if memory.project != row["problem"] or memory.scene != get_problem(row["problem"]).entrypoint:
+        fail("MEMORY_SCENE_IDENTITY_MISMATCH", "submit-evaluation")
+    try:
+        _validate_entry(MemoryEntry(name=memory.name, description=memory.description,
+                                   type=memory.kind, project=memory.project, scene=memory.scene, body=memory.body))
+    except ValueError as exc:
+        fail("MEMORY_ACTION_INVALID", "submit-evaluation", str(exc))
+
+
+def memory_revise(*, run, operation_id, expected_state_version, file, expected_run_id=None):
+    """Correct a failed proposal without rewriting Evaluate or re-executing EoH."""
+    action = "memory-revise"
+    text = Path(file).read_text(encoding="utf-8")
+    with opened(run, action, expected_run_id) as (root, con):
+        with db._transaction(con):
+            row, rd, ih, result = begin(con, action, operation_id, expected_state_version, {"document_sha256": db._sha256(text)})
+            if result is None:
+                require_state(row, rd, action, "READY_TO_FINISH")
+                if rd["memory_commit_status"] not in {"failed", "rejected"}:
+                    fail("MEMORY_REVISION_NOT_ALLOWED", action)
+                memory = MemoryAction.from_dict(strict_json_object(text), enabled=bool(row["memory_enabled"]))
+                if memory.kind not in {"insight", "solution"}:
+                    fail("MEMORY_ACTION_INVALID", action)
+                validate_memory_publication(memory, row)
+                ref = f"rounds/round_{rd['round_id']:04d}/memory_revisions/{db._sha256(operation_id)}.json"
+                sha = save(root, ref, memory.as_dict())
+                con.execute("INSERT INTO memory_writes(run_id,round_id,operation_id,kind,proposal_ref,status,created_at_utc) VALUES (?,?,?,?,?,'proposed',?)",
+                            (row["run_id"], rd["round_id"], operation_id, memory.kind, ref, db._utc_now()))
+                con.execute("UPDATE rounds SET memory_proposal_ref=?,memory_commit_status='proposed' WHERE run_id=? AND round_id=?", (ref,row["run_id"],rd["round_id"]))
+                result = receipt(con,row,rd,action,operation_id,ih,{"proposal_ref":ref,"proposal_sha256":sha,"memory":{"status":"proposed"}})
+        from agent_skill_loop.session_memory import commit_pending
+        commit_pending(root, operation_id)
+        result = json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?", (operation_id,)).fetchone()[0])
+        db.flush_audit(root)
+        return result
+
+
 def submit_evaluation(*, run, operation_id, expected_state_version, file, expected_run_id=None):
     action = "submit-evaluation"
     text = Path(file).read_text(encoding="utf-8")
@@ -662,6 +703,7 @@ def submit_evaluation(*, run, operation_id, expected_state_version, file, expect
                 save(root,f"{prefix}/submissions/{db._sha256(text)}.json",text)
                 raw = strict_json_object(text)
                 memory = parse_evaluation(raw,bool(row["memory_enabled"]),set(facts["evidence_refs"]))
+                validate_memory_publication(memory, row)
                 ref = prefix+"/evaluation.submitted.json"
                 sha = save(root,ref,text)
                 status = "proposed" if memory.kind in {"insight","solution"} else memory.kind

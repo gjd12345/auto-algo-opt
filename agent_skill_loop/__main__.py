@@ -493,14 +493,14 @@ def build_parser() -> argparse.ArgumentParser:
     session_stop.set_defaults(func=cmd_session_stop)
 
     for name, function in (("submit-plan", "submit_plan"), ("execute", "execute"), ("collect", "collect"),
-                           ("read-evaluation", "read_evaluation"), ("submit-evaluation", "submit_evaluation"), ("finish-round", "finish_round")):
+                           ("read-evaluation", "read_evaluation"), ("submit-evaluation", "submit_evaluation"), ("memory-revise", "memory_revise"), ("finish-round", "finish_round")):
         command = session_sub.add_parser(name)
         command.add_argument("--run", required=True)
         command.add_argument("--run-id")
         if name != "read-evaluation":
             command.add_argument("--operation-id", required=True)
             command.add_argument("--expected-state-version", type=int, required=True)
-        if name in {"submit-plan", "submit-evaluation"}: command.add_argument("--file", required=True)
+        if name in {"submit-plan", "submit-evaluation", "memory-revise"}: command.add_argument("--file", required=True)
         if name == "finish-round": command.add_argument("--decision", choices=["continue", "complete"], required=True)
         if name == "read-evaluation":
             command.add_argument("--round", dest="round_id", type=int)

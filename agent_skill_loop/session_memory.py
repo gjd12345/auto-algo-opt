@@ -38,6 +38,12 @@ def _commit_pending(root, operation_id):
             if db._sha256(submitted)!=rd["submitted_evaluation_sha256"]:
                 raise ValueError("evaluation_submission_hash_mismatch")
             expected=MemoryAction.from_dict(strict_json_object(submitted).get("memory_action"),enabled=bool(row["memory_enabled"]))
+            receipt = json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?", (operation_id,)).fetchone()[0])
+            if receipt["action"] == "memory-revise":
+                proposal_text = (root/proposal["proposal_ref"]).read_text(encoding="utf-8")
+                if receipt["result"]["proposal_ref"] != proposal["proposal_ref"] or db._sha256(proposal_text) != receipt["result"]["proposal_sha256"]:
+                    raise ValueError("memory_revision_hash_mismatch")
+                expected = MemoryAction.from_dict(raw, enabled=bool(row["memory_enabled"]))
             if raw!=expected.as_dict():
                 raise ValueError("memory_proposal_identity_mismatch")
             spec=get_problem(row["problem"])
@@ -106,6 +112,6 @@ def _record_status(con, proposal, operation_id, status, error, reference):
     previous=json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?",(operation_id,)).fetchone()[0])
     result=previous["result"]
     result["memory"]={"status":status,"error_code":error,"reference":reference}
-    receipt=db._envelope(con,row,rd,action="submit-evaluation",operation_id=operation_id,result=result)
+    receipt=db._envelope(con,row,rd,action=previous["action"],operation_id=operation_id,result=result)
     con.execute("UPDATE operations SET receipt_json=?,result_state_version=? WHERE operation_id=?",(db._json(receipt),version,operation_id))
     db._queue_audit(con,row["run_id"],version,[("state_transition",{"memory_status":status,"operation_id":operation_id,"reference":reference})])

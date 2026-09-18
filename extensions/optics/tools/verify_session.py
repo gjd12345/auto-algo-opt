@@ -100,7 +100,8 @@ def main():
     wait(args.output)
     summary, markdown = build(args.output)
     assert summary["run_state"] == "COMPLETED" and summary["external_requests"] == 0
-    assert summary["counts"]["MODEL_REQUEST"] == 2 and summary["counts"]["ONLINE_PROFILE"] == 3
+    assert summary["counts"]["MODEL_REQUEST"] == 2 and summary["counts"]["ONLINE_PROFILE"] == 2
+    assert summary["rounds"][0]["evaluation_reused"] == 1
     assert summary["counts"]["AUDIT_PROFILE"] == 0
     assert summary["final"]["best_verified_artifact"] is None
     save(args.output / "fixture_receipt.json", summary)

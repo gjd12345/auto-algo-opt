@@ -7,6 +7,24 @@ on:
     branches: [main, agent-skill-loop-0908]
 
 jobs:
+  optics:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install ./extensions/optics pytest pyyaml
+      - run: python tools/validate_skill.py extensions/optics/skills/optical-design
+      - run: python -m pytest extensions/optics/tests -q
+      - run: python -m compileall -q extensions/optics/src
+      - run: python extensions/optics/tools/verify_wheel.py
+      # Real task differential/verifier require the private audited source archive;
+      # they remain separate acceptance gates, not implied by these public tests.
+
   knowledge:
     strategy:
       matrix:

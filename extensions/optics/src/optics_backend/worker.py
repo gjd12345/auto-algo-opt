@@ -9,6 +9,7 @@ import sys
 import time
 import os
 import threading
+import importlib.metadata
 
 # This file is launched with -I; only the installed, fixed adapter source is added.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -19,8 +20,13 @@ from optics_backend.ranking import RANKING_HASH, rank_key
 
 
 def environment_identity():
+    distributions = sorted({(d.metadata["Name"].lower().replace("_", "-"), d.version)
+                            for d in importlib.metadata.distributions() if d.metadata["Name"]})
     return {"python": sys.version, "platform": platform.platform(),
-            "implementation": platform.python_implementation(), "dependencies": "stdlib-only"}
+            "architecture": platform.machine(), "implementation": platform.python_implementation(),
+            "dependency_scope": "all-installed-distributions (conservative superset, not a stdlib assertion)",
+            "dependencies": [{"name": name, "version": version} for name, version in distributions],
+            "dependency_manifest_sha256": digest(canonical(distributions))}
 
 
 def adapter_hash():
@@ -165,6 +171,10 @@ def run(args):
                 "environment_manifest_hash": digest(canonical(env))}
     save(args.output / "assessment_identity.json", identity)
     save(args.output / "environment.json", env)
+    if getattr(args, "static_only", False):
+        save(args.output / "static_validation.json", {"identity": identity, "prescription": candidate})
+        save(args.output / "terminal.json", {"status": "static_valid", "profile_executions": 0})
+        return 0
     start = time.monotonic()
     try:
         result = physics_result(a, candidate, task, baseline, protocol, args.mode, args.output,
@@ -185,8 +195,8 @@ def run(args):
     online_ok = args.mode == "online" and physics_status == "OK"
     p = profile_values[0]
     facts = {"schema_id": "optics-offline-facts/v1", "mode": args.mode,
-             "purpose": "online_calibration" if args.mode == "online" else "diagnostic_audit",
-             "verification_pipeline": False, "evaluation_identity": identity,
+             "purpose": "online_calibration" if args.mode == "online" else "local_verification_audit" if args.session_run else "diagnostic_audit",
+             "verification_pipeline": bool(args.mode == "audit" and args.session_run), "evaluation_identity": identity,
              "evaluation_identity_sha256": digest(canonical(identity)),
              "artifact_ref": artifact_dir.relative_to(args.output).as_posix(),
              "submission_status": "valid", "execution_status": "complete", "physics_status": physics_status,
@@ -221,6 +231,7 @@ def main():
     parser.add_argument("--assessment-id")
     parser.add_argument("--parent", type=Path)
     parser.add_argument("--plan", type=Path)
+    parser.add_argument("--static-only", action="store_true")
     args = parser.parse_args()
     # Ownership errors must not create/overwrite diagnostics in another caller's directory.
     request = strict((args.output / "execution_request.json").read_bytes())

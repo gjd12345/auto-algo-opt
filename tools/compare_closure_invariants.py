@@ -9,6 +9,15 @@ def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def differences(left, right, path=""):
+    if isinstance(left, dict) and isinstance(right, dict):
+        return [d for key in sorted(left.keys() | right.keys())
+                for d in differences(left.get(key), right.get(key), path + "/" + key)]
+    if isinstance(left, list) and isinstance(right, list) and len(left) == len(right):
+        return [d for i, (a, b) in enumerate(zip(left, right)) for d in differences(a, b, path + "/" + str(i))]
+    return [] if left == right else [{"path": path, "left": left, "right": right}]
+
+
 def derive(root):
     config = read(root / "session/config_frozen.json")
     def population(number):
@@ -42,5 +51,6 @@ if __name__ == "__main__":
     if len(paths) != 2:
         raise SystemExit("exactly_two_platform_invariants_required")
     if read(paths[0]) != read(paths[1]):
+        print(json.dumps(differences(read(paths[0]), read(paths[1])), indent=2))
         raise SystemExit("cross_platform_semantic_mismatch")
     print("cross_platform_semantic_parity: passed")

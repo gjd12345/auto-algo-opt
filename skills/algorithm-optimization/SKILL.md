@@ -36,12 +36,20 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 ## Session loop
 
 1. Read `session state` and use its current `state_version` for the next mutation.
-2. In `WAITING_FOR_PLAN`, optionally `session memory search`, then `session memory read` for at most two selected entries. For rounds after the first, copy `state.feedback_basis` into the Plan. `feedback_ref` alone is only a path string, not that object.
+2. In `WAITING_FOR_PLAN`, when Memory is enabled, search the current problem and read at most two relevant complete entries. If deliberately skipping search or adopting no result, explain why in `reasoning_summary`; do not force irrelevant memories into a Plan. For rounds after the first, copy `state.feedback_basis` into the Plan. `feedback_ref` alone is only a path string, not that object. Check the returned injection manifest: adopted but omitted is not consumed by EoH.
 3. Write a strict `plan.json` and submit it with `session submit-plan`.
 4. Call `session execute` once. Poll `session state` until the task is terminal, then call `session collect`. A `STARTUP_FAILED` or `EVIDENCE_STORAGE_FAILED` terminal reason is an infrastructure failure, not an algorithm result; preserve the evidence and start a new Session after the environment is fixed.
 5. Call `session read-evaluation` and reason only from its deterministic facts. The incumbent has already been selected by the Runtime before this step.
 6. Write `evaluation.json`. Use `plan_alignment=aligned`, `partial`, `misaligned`, or `unknown`; new submissions MUST NOT emit the historical `deviated` spelling. Choose `memory_action.kind` as `none`, `insight`, or `solution` only when Memory is enabled; otherwise use `disabled`. Submit it once and inspect the returned Memory status.
 7. Call `session finish-round --decision continue` only when the state and budget permit another round. Otherwise call it with `complete`, or use `session stop` for an explicit stop.
+
+Every Evaluate must consider whether evidence supports a reusable, scoped insight,
+an update to existing knowledge, a gated solution, or no write. For `none`, include
+`reason`; no improvement is required for an insight, but a repeated log entry is not
+new knowledge. Failed/rejected publication can be corrected in READY_TO_FINISH with
+`session memory-revise --file <memory-action.json>` using a fresh operation ID/current
+version. Never rerun EoH or rewrite accepted Evaluate to fix Memory. Do not revise a
+published entry through this command; ordinary versioned updates use the next Evaluate.
 
 ## Default round progress reporting
 

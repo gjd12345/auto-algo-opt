@@ -26,7 +26,7 @@ FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
 MEMORY_ACTION_KEYS = frozenset({
     "kind", "name", "description", "project", "scene", "body",
     "source_skill_ref", "memory_based_on", "evidence_ref",
-    "based_on",  # read-compatible alias for historical solution submissions
+    "reason", "based_on",  # read-compatible alias for historical solution submissions
 })
 OPERATION_TYPES = frozenset({"add", "remove", "replace", "preserve"})
 MEMORY_ACTION_TYPES = frozenset({"disabled", "none", "insight", "solution"})
@@ -244,6 +244,7 @@ class MemoryAction:
     source_skill_ref: str | None = None
     memory_based_on: str | None = None
     evidence_ref: str | None = None
+    reason: str | None = None
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any], *, enabled: bool) -> "MemoryAction":
@@ -258,7 +259,8 @@ class MemoryAction:
         if enabled and kind == "disabled":
             raise ValueError("memory_action_disabled_mismatch")
         if kind in {"none", "disabled"}:
-            return cls(kind)
+            reason = _text(raw["reason"], "memory_reason", max_chars=2048) if raw.get("reason") is not None else None
+            return cls(kind, reason=reason)
         source_skill_ref = raw.get("source_skill_ref")
         memory_based_on = raw.get("memory_based_on")
         legacy_based_on = raw.get("based_on")
@@ -299,6 +301,7 @@ class MemoryAction:
             "source_skill_ref": self.source_skill_ref,
             "memory_based_on": self.memory_based_on,
             "evidence_ref": self.evidence_ref,
+            "reason": self.reason,
         }.items() if value is not None}
 
 

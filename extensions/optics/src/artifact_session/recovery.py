@@ -62,6 +62,10 @@ def reconcile_completed(db, run):
             if not root["baseline"]:
                 change(db, baseline=dumps(ref), incumbent=dumps(ref) if rank_key(facts) is not None else root["incumbent"])
             continue
+        from .parent_import import accept_parent, parent_path
+        if conf.get("online_parent") and source == parent_path(run):
+            accept_parent(db, run, ref, facts)
+            continue
         cid = source.parent.name
         candidate = db.execute("SELECT * FROM candidates WHERE id=?", (cid,)).fetchone()
         if source != run / "candidates" / cid / "prescription.json" or not candidate or candidate["round"] != item["round"]:
@@ -91,12 +95,57 @@ def reconcile_completed(db, run):
                   "request_ref": {"path": f"candidates/{cid}/request.json", "sha256": digest(canonical(original_request))},
                   "assessment_ref": ref, "ranking_key": facts["ranking_key"], "online_feasible": facts["online_feasible"],
                   "comparison": comparison, "recovered": True}
+        from .feedback import online_diagnostics, prescription_delta
+        result["online_diagnostics"] = online_diagnostics(facts)
+        context = original_request["context"]
+        result["prescription_delta"] = prescription_delta(
+            context["parent_prescription"], strict((directory / facts["artifact_ref"] / "prescription.json").read_bytes()),
+            context["task_contract"], context["plan"])
         incumbent = json.loads(root["incumbent"]) if root["incumbent"] else None
         incumbent_facts = reload_facts(run / incumbent["directory"], conf["task_contract_hash"]) if incumbent else None
         if compare(incumbent_facts, facts)["decision"] == "accept":
             change(db, incumbent=dumps(ref))
         db.execute("UPDATE candidates SET state='COMPLETE',detail=? WHERE id=?", (dumps(result), cid))
         event(db, "candidate_recovered", result)
+    # Cache hits create no new assessment row. Recover their separate durable
+    # receipts using the original request and the fully verified source facts.
+    for candidate in db.execute("SELECT * FROM candidates WHERE state!='COMPLETE'").fetchall():
+        directory = run / "candidates" / candidate["id"]
+        receipt_path = directory / "reuse_receipt.json"
+        if not receipt_path.exists():
+            continue
+        result = strict(receipt_path.read_bytes())
+        request = strict((directory / "request.json").read_bytes())
+        if (result["candidate_id"] != candidate["id"] or
+                result["request_ref"]["sha256"] != digest(canonical(request)) or
+                json.loads(candidate["detail"]).get("prompt_sha256") != digest(canonical(request))):
+            raise SessionError("RECOVERY_REUSE_REQUEST_MISMATCH")
+        ref = result["evaluation_reused_from"]
+        source = db.execute("SELECT facts FROM assessments WHERE id=? AND mode='online' AND state='COMPLETE'", (ref["assessment_id"],)).fetchone()
+        if not source or json.loads(source[0]) != ref or result["assessment_ref"] != ref:
+            raise SessionError("RECOVERY_REUSE_SOURCE_MISMATCH")
+        facts = reload_facts(run / ref["directory"], conf["task_contract_hash"])
+        validated = strict((directory / "static/static_validation.json").read_bytes())
+        artifact_hash = digest(canonical(strict((directory / "prescription.json").read_bytes())))
+        if (validated["identity"] != facts["evaluation_identity"] or
+                artifact_hash != facts["evaluation_identity"]["canonical_artifact_sha256"] or
+                digest(canonical(facts)) != ref["facts_sha256"]):
+            raise SessionError("RECOVERY_REUSE_IDENTITY_MISMATCH")
+        parent = result["parent_ref"]
+        prior = reload_facts(run / parent["directory"], conf["task_contract_hash"])
+        if (prior["evaluation_identity"]["canonical_artifact_sha256"] != digest(canonical(request["context"]["parent_prescription"])) or
+                canonical(result["comparison"]) != canonical(compare(prior, facts)) or
+                result["ranking_key"] != facts["ranking_key"]):
+            raise SessionError("RECOVERY_REUSE_COMPARISON_MISMATCH")
+        root = record(db)
+        if root["seal"]:
+            raise SessionError("RECOVERY_AFTER_SEAL_CONFLICT")
+        current = json.loads(root["incumbent"]) if root["incumbent"] else None
+        current_facts = reload_facts(run / current["directory"], conf["task_contract_hash"]) if current else None
+        if compare(current_facts, facts)["decision"] == "accept":
+            change(db, incumbent=dumps(ref))
+        db.execute("UPDATE candidates SET state='COMPLETE',detail=? WHERE id=?", (dumps(result), candidate["id"]))
+        event(db, "candidate_reuse_recovered", result)
     return recovered
 
 

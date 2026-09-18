@@ -19,8 +19,13 @@ Do not change frozen model/configuration or expand budget while a run is active.
 Every round: consume prior online facts, propose a physically motivated variable
 subset, execute, collect, inspect results, submit evidence-grounded Evaluate, optionally
 write a bounded insight, then continue or seal. Do not mistake ties for improvement.
-Update the round progress table after each completed round and print the full table
-before the final summary. Use only runtime facts; missing values remain unknown.
+Resolve Memory before finish-round: an insight proposal must be published while the
+run is SEARCHING; choosing none is legitimate. Never defer publication until audit.
+Use the online diagnostic and actual prescription delta, not the Plan wording, to
+decide what was tested. See the protocol's search-quality guidance before reflection.
+After each completed round run `python -m artifact_session report --run <directory>
+--output <directory>/round_progress.md`. Print that deterministic table before the
+final summary; do not hand-edit its numbers. Put Agent interpretation outside it.
 
 Audit runs only after search is sealed. Never route audit observations back into Plan,
 generation or Memory. Local audit PASS is not independent verifier PASS. A baseline

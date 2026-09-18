@@ -27,6 +27,8 @@ def initialize(run, raw):
     conf = freeze(raw)
     conf["init_input_hash"] = digest(canonical(raw))
     run.mkdir(parents=True, exist_ok=False)
+    if conf.get("online_parent"):
+        evidence(run, "imports/online_parent/prescription.json", conf["online_parent"]["prescription"])
     with connect(run) as db:
         db.executescript(DDL)
         db.execute("INSERT INTO run(id,config,config_hash,state,version,round) VALUES(1,?,?,'SEARCHING',1,1)",
@@ -46,6 +48,7 @@ def state(run):
                 "termination_reason": row["reason"], "rounds": rounds, "tasks": tasks, "counts": counts(db),
                 "incumbent": json.loads(row["incumbent"]) if row["incumbent"] else None,
                 "final": json.loads(row["final"]) if row["final"] else None,
+                "memory_status": memory_status(db, run, row["round"]),
                 "config_hash": row["config_hash"], "controller_contract_hash": conf["controller_contract_hash"],
                 "global_seconds_remaining": max(0, conf["global_deadline"] - time.time())}
 
@@ -63,8 +66,10 @@ def submit_plan(run, plan, op, version):
         validate_plan(plan, conf, row["round"], previous_ref, memory_refs)
         used, b, n = counts(db), conf["budgets"], plan["candidate_budget"]
         baseline_cost = 0 if row["baseline"] else 1
+        from .parent_import import accepted_receipt
+        parent_cost = int(bool(conf.get("online_parent")) and accepted_receipt(db) is None)
         if (used["candidate_attempts"] + n > b["max_candidate_attempts"] or used["MODEL_REQUEST"] + n > b["max_generation_requests"]
-                or used["ONLINE_PROFILE"] + n + baseline_cost > min(b["max_online_assessments"], b["max_profile_executions"] - conf["audit_capacity_partition"])):
+                or used["ONLINE_PROFILE"] + n + baseline_cost + parent_cost > min(b["max_online_assessments"], b["max_profile_executions"] - conf["audit_capacity_partition"])):
             raise SessionError("PLAN_BUDGET")
         ref = evidence(run, f"rounds/{row['round']:04d}/plan.json", plan)
         db.execute("UPDATE rounds SET state='READY_TO_EXECUTE',plan=? WHERE id=?", (dumps(ref), row["round"]))
@@ -123,6 +128,10 @@ def finish_round(run, decision, op, version):
         current = db.execute("SELECT * FROM rounds WHERE id=?", (row["round"],)).fetchone()
         if row["state"] != "SEARCHING" or current["state"] != "READY_TO_FINISH" or decision not in ("continue", "complete"):
             raise SessionError("FINISH_ROUND_STATE")
+        # A proposed insight must be resolved before voluntary closure. Hard
+        # deadlines still win; never reopen a sealed run to write Memory.
+        if memory_status(db, run, row["round"])["status"] == "pending" and time.time() < conf["search_deadline"]:
+            raise SessionError("MEMORY_PUBLICATION_PENDING")
         db.execute("UPDATE rounds SET state='ROUND_COMPLETED' WHERE id=?", (row["round"],))
         used, b = counts(db), conf["budgets"]
         exhausted = used["candidate_attempts"] >= b["max_candidate_attempts"] or used["MODEL_REQUEST"] >= b["max_generation_requests"]
@@ -255,3 +264,20 @@ def memory_write(run, value, op, version):
         change(db, state="SEARCHING")
         return {"memory_ref": ref, "version": number}
     return operation(run, "memory-write", op, version, value, mutation)[0]
+
+
+def memory_status(db, run, round_id):
+    if not config(db).get("memory_enabled", False):
+        return {"status": "disabled", "publications": []}
+    current = db.execute("SELECT * FROM rounds WHERE id=?", (round_id,)).fetchone()
+    if not current or not current["evaluation"]:
+        return {"status": "not_decided", "publications": []}
+    evaluation = read(run, json.loads(current["evaluation"]))
+    if evaluation["memory_action"] == "none":
+        return {"status": "none", "publications": []}
+    refs = []
+    for item in db.execute("SELECT ref FROM memory ORDER BY id,version"):
+        ref = json.loads(item[0])
+        if read(run, ref)["evidence_ref"] == json.loads(current["facts"]):
+            refs.append(ref)
+    return {"status": "published" if refs else "pending", "publications": refs}

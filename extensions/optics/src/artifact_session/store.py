@@ -19,13 +19,14 @@ CREATE TABLE run(id INTEGER PRIMARY KEY CHECK(id=1), config TEXT NOT NULL, confi
  incumbent TEXT, baseline TEXT, seal TEXT, final TEXT);
 CREATE TABLE rounds(id INTEGER PRIMARY KEY, state TEXT NOT NULL, plan TEXT, facts TEXT, evaluation TEXT);
 CREATE TABLE operations(id TEXT PRIMARY KEY, input_hash TEXT NOT NULL, receipt TEXT NOT NULL);
-CREATE TABLE tasks(id TEXT PRIMARY KEY, round INTEGER, purpose TEXT, state TEXT NOT NULL,
+CREATE TABLE tasks(id TEXT PRIMARY KEY, round INTEGER REFERENCES rounds(id), purpose TEXT CHECK(purpose IN ('search','audit')), state TEXT NOT NULL,
  pid INTEGER, birth TEXT, result TEXT);
-CREATE TABLE effects(id TEXT PRIMARY KEY, kind TEXT NOT NULL, assessment TEXT, round INTEGER,
- state TEXT NOT NULL, detail TEXT NOT NULL);
-CREATE TABLE assessments(id TEXT PRIMARY KEY, round INTEGER, mode TEXT NOT NULL, state TEXT NOT NULL,
+CREATE TABLE effects(id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('MODEL_REQUEST','ONLINE_PROFILE','AUDIT_PROFILE')),
+ assessment TEXT REFERENCES assessments(id), round INTEGER REFERENCES rounds(id),
+ state TEXT NOT NULL CHECK(state IN ('RESERVED','STARTED','COMPLETE','FAILED','UNKNOWN','CANCELLED_NOT_STARTED')), detail TEXT NOT NULL);
+CREATE TABLE assessments(id TEXT PRIMARY KEY, round INTEGER REFERENCES rounds(id), mode TEXT NOT NULL CHECK(mode IN ('online','audit')), state TEXT NOT NULL,
  artifact TEXT, facts TEXT, sequence INTEGER);
-CREATE TABLE candidates(id TEXT PRIMARY KEY, round INTEGER NOT NULL, state TEXT NOT NULL, detail TEXT NOT NULL);
+CREATE TABLE candidates(id TEXT PRIMARY KEY, round INTEGER NOT NULL REFERENCES rounds(id), state TEXT NOT NULL, detail TEXT NOT NULL);
 CREATE TABLE memory(id TEXT NOT NULL, version INTEGER NOT NULL, ref TEXT NOT NULL,
  PRIMARY KEY(id,version));
 CREATE TABLE memory_reads(id TEXT NOT NULL, version INTEGER NOT NULL, hash TEXT NOT NULL,

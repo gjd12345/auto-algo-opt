@@ -206,7 +206,8 @@ def _skill_content_hash() -> str:
     if not (skill_root / "SKILL.md").is_file():
         raise ValueError("optimization_skill_resources_missing")
     digest = hashlib.sha256()
-    for path in sorted(p for p in skill_root.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml"}):
+    for path in sorted((p for p in skill_root.rglob("*") if p.is_file() and p.suffix in {".md", ".yaml"}),
+                       key=lambda p: p.relative_to(skill_root).as_posix()):
         name = "skills/algorithm-optimization/" + path.relative_to(skill_root).as_posix()
         digest.update(name.encode("utf-8"))
         digest.update(path.read_bytes())
@@ -630,7 +631,7 @@ def _allowed_actions(run_state: str, round_state: str) -> list[str]:
     if round_state == "WAITING_FOR_EVALUATION":
         return ["state", "read_evaluation", "submit_evaluation", "stop"]
     if round_state == "READY_TO_FINISH":
-        return ["state", "read_evaluation", "finish_round", "stop"]
+        return ["state", "read_evaluation", "memory_revise", "finish_round", "stop"]
     return ["state"]
 
 
@@ -1798,6 +1799,11 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             "memory": {
                 "enabled": bool(current_run["memory_enabled"]),
                 "store": current_run["memory_store"],
+                "publication_status": current_round["memory_commit_status"] if current_round else None,
+                "writes": [dict(x) for x in connection.execute(
+                    "SELECT round_id,kind,status,error_code,reference FROM memory_writes WHERE run_id=? ORDER BY write_id",
+                    (current_run["run_id"],))],
+                "read_page_count": connection.execute("SELECT COUNT(*) FROM memory_reads WHERE run_id=?", (current_run["run_id"],)).fetchone()[0],
             },
         }
         if result["integrity"]["audit"] == "ok":

@@ -26,7 +26,7 @@ def child_environment():
 
 def evaluate(bundle: Path, task_hash: str, candidate: Path, output: Path,
              *, mode="online", response=False, timeout=600, session_run=None, assessment_id=None,
-             parent=None, plan=None):
+             parent=None, plan=None, static_only=False):
     load_task(bundle, task_hash)
     if mode not in ("online", "audit"):
         raise ValueError("UNKNOWN_EVALUATION_MODE")
@@ -46,6 +46,8 @@ def evaluate(bundle: Path, task_hash: str, candidate: Path, output: Path,
                "--owner-token", owner]
     if response:
         command.append("--response")
+    if static_only:
+        command.append("--static-only")
     if session_run is not None:
         command += ["--session-run", str(Path(session_run).resolve()), "--assessment-id", assessment_id]
     if parent is not None:
@@ -69,6 +71,8 @@ def evaluate(bundle: Path, task_hash: str, candidate: Path, output: Path,
         stream.write(child.stderr)
     if child.returncode:
         raise OfflineFailure(child.returncode if child.returncode in (2, 4, 5) else 4, output)
+    if static_only:
+        return strict((output / "static_validation.json").read_bytes())
     return reload_facts(output, task_hash)
 
 

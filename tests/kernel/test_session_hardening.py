@@ -157,6 +157,38 @@ def test_memory_publish_before_db_receipt_replays_one_version(tmp_path,monkeypat
     assert len(list((tmp_path/"memory").glob("*/*.md")))==1
 
 
+def test_failed_memory_revision_preserves_evaluate_and_replays(tmp_path, monkeypatch):
+    root=tmp_path/"run"; file=prepare_evaluation(root,tmp_path)
+    original=MemoryAPI.write
+    with monkeypatch.context() as m:
+        m.setattr(MemoryAPI,"write",lambda *a,**k: (_ for _ in ()).throw(OSError("disk unavailable")))
+        failed=actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=1,file=file)
+    assert failed["result"]["memory"]["status"]=="failed"
+    before=(root/"rounds/round_0001/evaluation.submitted.json").read_bytes()
+    correction=tmp_path/"memory.json"
+    correction.write_text(json.dumps(json.loads(file.read_text())["memory_action"]))
+    result=actions.memory_revise(run=root,operation_id="fix-memory",expected_state_version=failed["state_version"],file=correction)
+    assert result["result"]["memory"]["status"]=="published"
+    assert actions.memory_revise(run=root,operation_id="fix-memory",expected_state_version=failed["state_version"],file=correction)==result
+    assert (root/"rounds/round_0001/evaluation.submitted.json").read_bytes()==before
+    assert len(list((tmp_path/"memory").glob("*/*.md")))==1
+    finished=actions.finish_round(run=root,operation_id="next",expected_state_version=result["state_version"],decision="continue")
+    found=actions.memory_search(run=root)["result"]["memories"]
+    assert len(found)==1
+    page=actions.memory_read(run=root,reference=found[0]["reference"])["result"]
+    assert page["complete_memory_consumption"] is True
+    assert "**How to apply:**" in page["body"]
+
+
+def test_invalid_insight_is_rejected_before_accepting_evaluate(tmp_path):
+    root=tmp_path/"run"; file=prepare_evaluation(root,tmp_path)
+    raw=json.loads(file.read_text());raw["memory_action"]["body"]="missing sections"
+    file.write_text(json.dumps(raw))
+    with pytest.raises(db.SessionError,match="insight_body_sections_missing"):
+        actions.submit_evaluation(run=root,operation_id="bad",expected_state_version=1,file=file)
+    assert not (root/"rounds/round_0001/evaluation.submitted.json").exists()
+
+
 def test_session_supervisor_hang_is_terminal_and_unknown_request_not_refunded(tmp_path,monkeypatch):
     from agent_skill_loop import session_supervisor
     from agent_skill_loop.session_ledger import SessionRequestBudget

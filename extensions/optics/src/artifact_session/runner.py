@@ -14,6 +14,7 @@ from optics_backend.artifacts import canonical, digest, extract_response, save, 
 from optics_backend.offline import OfflineFailure, child_environment, evaluate, reload_facts
 from optics_backend.ranking import compare, rank_key
 from artifact_session.contracts import check_runtime
+from artifact_session.feedback import online_diagnostics, prescription_delta
 from artifact_session.ledger import counts, finish_effect, reserve_assessment, reserve_generation, start_effect
 from artifact_session.store import SessionError, change, config, connect, dumps, event, evidence, read, record, transaction
 
@@ -34,6 +35,19 @@ def facts_for(run, ref):
 def prescription(run, ref):
     facts = facts_for(run, ref)
     return Path(run) / ref["directory"] / facts["artifact_ref"] / "prescription.json"
+
+
+def reusable_online(run, identity):
+    if identity["mode"] != "online":
+        raise SessionError("ONLINE_REUSE_ONLY")
+    with connect(run) as db:
+        refs = [json.loads(x[0]) for x in db.execute(
+            "SELECT facts FROM assessments WHERE mode='online' AND state='COMPLETE' ORDER BY sequence,id")]
+    for ref in refs:
+        facts = facts_for(run, ref)
+        if facts["evaluation_identity"] == identity:
+            return ref, facts
+    return None, None
 
 
 def reconcile_effects(run, assessment, dead=True):
@@ -101,7 +115,7 @@ def prompt(run, plan, parent_ref, recent):
                 # Explicit memory degradation does not invalidate parent/task evidence.
                 continue
     context = {"task_contract": task, "plan": plan, "parent_prescription": parent,
-               "parent_online": {k: parent_facts[k] for k in ("quality_q", "constraints", "ranking_key", "online_feasible")},
+               "parent_online": {**online_diagnostics(parent_facts), "ranking_key": parent_facts["ranking_key"]},
                "recent_candidate_feedback": recent, "memory": memory}
     if len(canonical(context)) > 30_000:
         context["memory"] = []
@@ -173,6 +187,19 @@ def search(run, task):
         ref, facts = assess(run, Path(conf["bundle"]) / "assets/initial_prescription.json", "online", task["round"])
         with transaction(run) as db:
             change(db, baseline=dumps(ref), incumbent=dumps(ref) if rank_key(facts) is not None else None)
+    if conf.get("online_parent"):
+        from artifact_session.parent_import import accepted_receipt, accept_parent, parent_path
+        with connect(run) as db:
+            imported = accepted_receipt(db)
+            attempted = db.execute("SELECT 1 FROM assessments WHERE artifact=?", (str(parent_path(run)),)).fetchone()
+        if imported is None:
+            if attempted:
+                raise SessionError("ONLINE_PARENT_REASSESSMENT_REQUIRES_RECOVERY")
+            read(run, {"path": "imports/online_parent/prescription.json",
+                       "sha256": conf["online_parent"]["canonical_artifact_sha256"]})
+            ref, facts = assess(run, parent_path(run), "online", task["round"])
+            with transaction(run) as db:
+                accept_parent(db, run, ref, facts)
     row, _ = inspect(run)
     before = json.loads(row["incumbent"]) if row["incumbent"] else None
     recent = None
@@ -219,12 +246,31 @@ def search(run, task):
         candidate = directory / "prescription.json"
         candidate.write_bytes(fragment)
         try:
-            ref, facts = assess(run, candidate, "online", task["round"], plan_path, prescription(run, parent_ref))
+            # Static validation runs in the same isolated worker and checks the
+            # current parent/Plan before any identity reuse or physics reservation.
+            validated = evaluate(Path(conf["bundle"]), conf["task_contract_hash"], candidate,
+                                 directory / "static", static_only=True, plan=plan_path,
+                                 parent=prescription(run, parent_ref),
+                                 timeout=max(.001, min(30, conf["search_deadline"] - time.time())))
+            ref, facts = reusable_online(run, validated["identity"])
+            if ref is not None:
+                result["evaluation_reused_from"] = ref
+            if ref is None:
+                ref, facts = assess(run, candidate, "online", task["round"], plan_path, prescription(run, parent_ref))
             previous = facts_for(run, parent_ref)
             comparison = compare(previous, facts)
             result.update({"assessment_ref": ref, "ranking_key": facts["ranking_key"],
                            "online_feasible": facts["online_feasible"], "comparison": comparison})
+            result["online_diagnostics"] = online_diagnostics(facts)
+            task_spec = request["context"]["task_contract"]
+            result["prescription_delta"] = prescription_delta(
+                request["context"]["parent_prescription"],
+                strict(prescription(run, ref).read_bytes()), task_spec, plan)
             save(directory / "comparison.json", comparison)
+            if "evaluation_reused_from" in result:
+                # Durable receipt precedes SQLite acceptance so recovery never
+                # needs to rerun generation or reserve a replacement profile.
+                save(directory / "reuse_receipt.json", result)
             with transaction(run) as db:
                 if comparison["decision"] == "accept":
                     change(db, incumbent=dumps(ref))
@@ -241,7 +287,7 @@ def search(run, task):
             finish_candidate(run, cid, "UNKNOWN", result)
             stop_reason = result["error"]
         outcomes.append(result)
-        recent = {k: result[k] for k in ("candidate_id", "ranking_key", "error", "online_feasible") if k in result}
+        recent = {k: result[k] for k in ("candidate_id", "assessment_ref", "ranking_key", "error", "online_feasible", "online_diagnostics", "prescription_delta") if k in result}
         if stop_reason:
             break
     with transaction(run) as db:

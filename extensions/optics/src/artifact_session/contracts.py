@@ -25,7 +25,7 @@ def hashes():
     if not (skill / "SKILL.md").is_file():
         raise SessionError("SKILL_RESOURCE_MISSING")
     return {"runtime_hash": digest(canonical({p.name: digest(p.read_bytes()) for p in sorted(source.glob("*.py"))})),
-            "skill_hash": digest(canonical({p.relative_to(skill).as_posix(): digest(p.read_bytes()) for p in sorted(skill.rglob("*.md"))})),
+            "skill_hash": digest(canonical({p.relative_to(skill).as_posix(): digest(p.read_bytes()) for p in sorted(skill.rglob("*.md"), key=lambda p: p.relative_to(skill).as_posix())})),
             "assessment_adapter_hash": adapter_hash(), "ranking_contract_hash": RANKING_HASH,
             "environment_manifest_hash": digest(canonical(environment_identity()))}
 
@@ -41,7 +41,7 @@ def freeze(raw):
     required = {"init_operation_id", "bundle", "task_contract_hash", "provider", "model", "endpoint",
                 "credential_env_name", "provider_parameters", "budgets", "memory_enabled", "controller_identity",
                 "experiment_protocol_mode", "protocol_notes"}
-    if set(raw) - required - {"fixture_responses"} or required - set(raw):
+    if set(raw) - required - {"fixture_responses", "online_parent"} or required - set(raw):
         raise SessionError("CONFIG_FIELDS")
     bundle = Path(raw["bundle"]).resolve()
     manifest = load_task(bundle, raw["task_contract_hash"])
@@ -91,6 +91,9 @@ def freeze(raw):
             raise SessionError("FIXTURE_RESPONSES_REQUIRED")
         # Freeze the exact supplied responses, never construct answers in the runtime.
         frozen["fixture_responses"] = list(raw["fixture_responses"])
+    if "online_parent" in raw:
+        from .parent_import import freeze_parent
+        frozen["online_parent"] = freeze_parent(raw["online_parent"], raw["task_contract_hash"])
     return frozen
 
 

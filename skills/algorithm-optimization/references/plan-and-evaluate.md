@@ -82,12 +82,27 @@ Use the deterministic facts from `read-evaluation`; do not recalculate or claim 
 When Memory is enabled, choose exactly one of:
 
 - `{"kind":"none"}`;
+- New Agent submissions should use `{"kind":"none","reason":"No new reusable finding beyond the existing entry ..."}`; the old shape remains read-compatible.
 - an `insight` with `name`, `description`, `project`, `scene`, `body`, and optional evidence/basis references;
 - a `solution` with `## Execution`, `**Why:**`, `**How to apply:**`, and `**Reusable Experience:**`, plus exact `source_skill_ref` and `evidence_ref`, only when the verified generated skill passes the frozen solution threshold. Use `memory_based_on` only to update the exact latest version of the same Memory entry; it is independent of the source Skill.
 
 When Memory is disabled, use `{"kind":"disabled"}`. A baseline or invalid candidate cannot become a solution. An invalid candidate may support a specific failure insight with its real evidence reference; do not turn one failure into an unconditional ban or fabricate code/evaluation identity.
 
 A parseable Evaluate remains valid when its proposed solution later fails the deterministic publication gate. Inspect the returned Memory status (`rejected` or `failed`) and continue from the verified evaluation facts; do not resubmit or rerun EoH merely to force a Memory write.
+
+Insight bodies MUST include the literal sections `**Why:**` and `**How to apply:**`.
+Include the observation, evidence, applicability limits and uncertainty; do not infer
+universal ineffectiveness from one failed candidate. `project` must equal the frozen
+problem ID, `scene` its exact entrypoint (not a free-form description).
+
+Publication shape is checked before Evaluate is accepted. If a later publication
+fails or is rejected, `session memory-revise --run ... --operation-id ...
+--expected-state-version ... --file <memory-action.json>` accepts a corrected Memory
+action only in READY_TO_FINISH. It keeps the original Evaluate and failed proposal,
+rechecks all evidence/solution gates, and never calls a model or evaluator. Retry an
+uncertain revision with the SAME ID/input. Inspect state.memory.writes for outcome.
+Report search/read/adoption/injection separately from publication; omission under the
+context cap is not successful EoH consumption. Disabled controls remain disabled.
 
 ## `round_progress.md`
 
