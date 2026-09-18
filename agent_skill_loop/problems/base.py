@@ -53,6 +53,12 @@ class ProblemSpec:
     # Human-readable baseline provenance, not a search-policy instruction.
     baseline_description: str = ""
 
+    # Optional train-side behavior observer.  It must evaluate the candidate
+    # in the same pass as the objective and return (objectives, metrics,
+    # behavior_evidence).  Problems without an observer remain fully valid.
+    evaluate_with_behavior: Callable[[Any, list[Mapping[str, Any]], str], tuple[list[float], dict[str, Any] | None, Mapping[str, Any]]] | None = None
+    behavior_contract: Mapping[str, Any] | None = None
+
     @property
     def content_hash(self) -> str:
         """Stable identity for the problem/interface contract itself."""
@@ -67,6 +73,8 @@ class ProblemSpec:
             "split_offsets": dict(self.split_offsets),
             "capability_contract": self.capability_contract(),
         }
+        if self.behavior_contract is not None:
+            payload["behavior_contract"] = dict(self.behavior_contract)
         text = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
 

@@ -40,8 +40,15 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 3. Write a strict `plan.json` and submit it with `session submit-plan`.
 4. Call `session execute` once. Poll `session state` until the task is terminal, then call `session collect`. A `STARTUP_FAILED` or `EVIDENCE_STORAGE_FAILED` terminal reason is an infrastructure failure, not an algorithm result; preserve the evidence and start a new Session after the environment is fixed.
 5. Call `session read-evaluation` and reason only from its deterministic facts. The incumbent has already been selected by the Runtime before this step.
+   Inspect the linked `execution_delta.json` for actual parent provenance,
+   code differences, complete behavior evidence, and per-instance effects.
+   Use [Iteration A evidence and Reflection v2](references/iteration-a-evidence.md)
+   to separate observations, hypotheses, and next-step decisions. Unknown
+   lineage or incomplete behavior is not evidence of sameness.
 6. Write `evaluation.json`. Use `plan_alignment=aligned`, `partial`, `misaligned`, or `unknown`; new submissions MUST NOT emit the historical `deviated` spelling. Choose `memory_action.kind` as `none`, `insight`, or `solution` only when Memory is enabled; otherwise use `disabled`. Submit it once and inspect the returned Memory status.
 7. Call `session finish-round --decision continue` only when the state and budget permit another round. Otherwise call it with `complete`, or use `session stop` for an explicit stop.
+   Check the returned `memory_consumption_ref` and hash: selected/compiled,
+   gateway-attempted, omitted, and published are different states.
 
 Every Evaluate must consider whether evidence supports a reusable, scoped insight,
 an update to existing knowledge, a gated solution, or no write. For `none`, include

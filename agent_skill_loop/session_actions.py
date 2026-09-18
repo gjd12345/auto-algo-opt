@@ -208,7 +208,7 @@ def _prepare_population_seeds(root, con, run, rd, config):
 
 def complete_reads(con, run_id, round_id):
     groups = {}
-    for row in con.execute("SELECT * FROM memory_reads WHERE run_id=? AND round_id=? ORDER BY offset_chars", (run_id, round_id)):
+    for row in con.execute("SELECT * FROM memory_reads WHERE run_id=? AND round_id=? AND status='complete' ORDER BY offset_chars", (run_id, round_id)):
         key = (row["reference"], row["body_sha256"], row["total_chars"])
         end = groups.get(key, 0)
         if row["offset_chars"] <= end:
@@ -293,6 +293,22 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         result = {"memories": memories[:limit], "next_cursor": str(offset+limit) if has_more else None,
                   "enabled": bool(row["memory_enabled"]), "degraded": error is not None or bool(diagnostics),
                   "error": error, "diagnostics": diagnostics}
+        try:
+            current_skill_hash = db._skill_content_hash()
+        except (ImportError, OSError, ValueError):
+            current_skill_hash = None
+        recordable = (db._runtime_source_hash() == row["runtime_source_sha256"]
+                      and current_skill_hash == row["optimization_skill_sha256"])
+        if recordable:
+            with db._transaction(con):
+                con.execute("INSERT INTO memory_searches(run_id,round_id,query_sha256,filters_json,result_refs_json,status,error_code,searched_at_utc) VALUES (?,?,?,?,?,?,?,?)",
+                            (row["run_id"], rd["round_id"], db._sha256(query),
+                             db._json({"memory_type":memory_type,"scene":scene or get_problem(row["problem"]).entrypoint,"limit":limit,"offset":offset,
+                                       "include_shared":include_shared,"include_cross_project":include_cross_project}),
+                             db._json([{"reference":x["reference"],"version":x["version"],"body_sha256":x["body_sha256"]} for x in memories[:limit]]),
+                             "disabled" if not row["memory_enabled"] else "degraded" if result["degraded"] else "hit" if memories else "no_hits",
+                             error,db._utc_now()))
+        result["search_receipt_recorded"] = recordable
         return db._envelope(con, row, rd, action=action, result=result)
 
 
@@ -308,6 +324,8 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None):
             try:
                 page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(reference, max_chars=limit, offset=offset)
             except (ValueError, OSError) as exc:
+                con.execute("INSERT INTO memory_reads(run_id,round_id,reference,body_sha256,offset_chars,returned_chars,total_chars,read_at_utc,status,error_code) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                            (row["run_id"],rd["round_id"],reference,"",offset,0,0,db._utc_now(),"failed",type(exc).__name__))
                 return db._envelope(con, row, rd, action=action, result={"degraded": True, "error": str(exc), "complete_memory_consumption": False})
             page.pop("path", None)
             page["returned_chars"] = len(page["body"])
@@ -610,6 +628,41 @@ def collect(*, run, operation_id, expected_state_version, expected_run_id=None):
                 if task["state"] != "EXITED": fail("ACTION_NOT_ALLOWED",action)
                 facts = collect_facts(root,con,row,rd,task)
                 prefix = f"rounds/round_{rd['round_id']:04d}"
+                from agent_skill_loop.evidence.execution import build_execution_delta
+                from agent_skill_loop.session_supervisor import task_output
+                from eoh_frozen.export import read_evidence
+                _, suite = db._verify_files(root, row, action=action)
+                evidence_dir = task_output(root, con, task)
+                source_rows = read_evidence(evidence_dir, suite) if evidence_dir.is_dir() else []
+                plan_text = local(root, rd["normalized_plan_ref"]).read_text(encoding="utf-8")
+                if db._sha256(plan_text) != rd["normalized_plan_sha256"]:
+                    fail("EVIDENCE_INTEGRITY_FAILED", action)
+                plan = json.loads(plan_text)
+                incumbent_code = load_skill(root / rd["incumbent_before_ref"]).code if rd["incumbent_before_ref"] else None
+                previous_hashes = set()
+                for earlier in con.execute("SELECT evaluation_facts_ref,evaluation_facts_sha256 FROM rounds WHERE run_id=? AND round_id<? AND evaluation_facts_ref IS NOT NULL",
+                                           (row["run_id"], rd["round_id"])):
+                    earlier_text = local(root, earlier["evaluation_facts_ref"]).read_text(encoding="utf-8")
+                    if db._sha256(earlier_text) != earlier["evaluation_facts_sha256"]:
+                        fail("EVIDENCE_INTEGRITY_FAILED", action)
+                    old_facts = json.loads(earlier_text)
+                    if (not isinstance(old_facts, dict) or old_facts.get("suite_hash") != row["suite_hash"]
+                            or old_facts.get("evaluator_hash") != row["evaluator_hash"]):
+                        fail("EVALUATION_IDENTITY_MISMATCH", action)
+                    previous_hashes.update(item["code_sha256"] for item in (old_facts.get("candidates") or [])
+                                           if isinstance(item, dict) and isinstance(item.get("code_sha256"), str))
+                execution_delta = build_execution_delta(
+                    source_rows, plan_ref=rd["normalized_plan_ref"], plan_sha256=rd["normalized_plan_sha256"],
+                    hypothesis=plan.get("hypothesis"), incumbent_code=incumbent_code,
+                    incumbent_ref=rd["incumbent_before_ref"], reference_skill_ref=plan.get("reference_skill_ref"),
+                    behavior_supported=get_problem(row["problem"]).evaluate_with_behavior is not None,
+                    previous_evaluated_hashes=previous_hashes,
+                )
+                delta_ref = prefix + "/execution_delta.json"
+                delta_sha = save(root, delta_ref, execution_delta)
+                facts["execution_delta"] = {"ref": delta_ref, "sha256": delta_sha,
+                                            "generated_count": len(execution_delta["candidates"])}
+                facts["evidence_refs"].append(delta_ref)
                 ref = prefix + "/evaluation_facts.json"
                 sha = save(root,ref,facts)
                 after = facts.get("incumbent_after") or {}
@@ -742,6 +795,11 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                             or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0
                             or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"])):
                         fail("CANNOT_CONTINUE_BUDGET",action)
+                from agent_skill_loop.evidence.memory import project_memory_consumption
+                task = con.execute("SELECT * FROM tasks WHERE task_id=?", (rd["task_id"],)).fetchone() if rd["task_id"] else None
+                consumption = project_memory_consumption(root, con, row, rd, task)
+                memory_ref = f"rounds/round_{rd['round_id']:04d}/memory_consumption.json"
+                memory_sha = save(root, memory_ref, consumption)
                 now=db._utc_now()
                 con.execute("UPDATE rounds SET state='ROUND_COMPLETED',decision=?,finished_at_utc=? WHERE run_id=? AND round_id=?",(decision,now,row["run_id"],rd["round_id"]))
                 if decision=="continue":
@@ -749,6 +807,7 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                                 (row["run_id"],rd["round_id"]+1,row["state_version"]+1,rd["round_id"],rd["evaluation_facts_ref"],rd["incumbent_after_ref"],rd["incumbent_after_objective"],rd["incumbent_after_ref"],rd["incumbent_after_objective"],now))
                     con.execute("UPDATE runs SET active_round_id=? WHERE run_id=?",(rd["round_id"]+1,row["run_id"]))
                 else: con.execute("UPDATE runs SET state='COMPLETED',finished_at_utc=? WHERE run_id=?",(now,row["run_id"]))
-                result=receipt(con,row,rd,action,operation_id,ih,{"decision":decision})
+                result=receipt(con,row,rd,action,operation_id,ih,{"decision":decision,
+                    "memory_consumption_ref":memory_ref,"memory_consumption_sha256":memory_sha})
         db.flush_audit(root)
         return result

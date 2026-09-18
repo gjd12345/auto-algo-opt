@@ -23,6 +23,7 @@ except Exception:  # pragma: no cover
     np = None  # type: ignore[assignment]
 
 from agent_skill_loop.contracts import EvaluationResult
+from agent_skill_loop.evidence import ObservedCandidateError, ObserverFailure, combine_behavior_evidence
 from agent_skill_loop.problems.base import ProblemSpec, get_problem, register_problem
 from agent_skill_loop.problems.cvrp import (
     BASELINE_CODE,
@@ -68,6 +69,8 @@ from agent_skill_loop.problems.obp import (
     TEMPLATE_PROGRAM as OBP_TEMPLATE_PROGRAM,
     build_suite as obp_build_suite,
     evaluate_instances as _evaluate_obp_instances,
+    evaluate_instances_with_behavior as _evaluate_obp_instances_with_behavior,
+    BEHAVIOR_CONTRACT as OBP_BEHAVIOR_CONTRACT,
     validate_instances as _validate_obp_instances,
     suite_hash as obp_suite_hash,
 )
@@ -154,6 +157,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "obp.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
+    parts.append(parent.joinpath("evidence", "behavior.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
 
 
@@ -671,8 +675,18 @@ def _evaluate_tsp2_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tup
     return objectives, metrics
 
 
-def _evaluate_problem(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any] | None]:
+def _evaluate_problem(
+    spec: ProblemSpec,
+    fn: Any,
+    instances: list[Mapping[str, Any]],
+    suite_hash_value: str,
+) -> tuple[list[float], dict[str, Any] | None]:
     """Per-instance objective evaluation dispatched by problem spec."""
+    if spec.evaluate_with_behavior is not None:
+        objectives, metrics, evidence = spec.evaluate_with_behavior(fn, instances, suite_hash_value)
+        merged = dict(metrics or {})
+        merged["behavior_evidence"] = dict(evidence)
+        return objectives, merged
     return spec.evaluate_instances(fn, instances)
 
 
@@ -690,6 +704,10 @@ def _candidate_exception_detail(exc: BaseException) -> str | None:
 
 
 def _classify_candidate_exception(exc: BaseException) -> tuple[str, str | None]:
+    if isinstance(exc, ObserverFailure):
+        return "observer_error", None
+    if isinstance(exc, ObservedCandidateError):
+        return _classify_candidate_exception(exc.original)
     if isinstance(exc, EvalError):
         return exc.error_code, exc.detail
     if isinstance(exc, ValueError):
@@ -711,7 +729,12 @@ def _slice_instance_metrics(metrics: Mapping[str, Any] | None) -> dict[str, Any]
     return result
 
 
-def _evaluate_partial_instances(spec: ProblemSpec, fn: Any, instances: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _evaluate_partial_instances(
+    spec: ProblemSpec,
+    fn: Any,
+    instances: list[Mapping[str, Any]],
+    suite_hash_value: str,
+) -> list[dict[str, Any]]:
     """Evaluate every instance and retain successes when another instance fails.
 
     This diagnostic/set path deliberately keeps the same candidate function in
@@ -730,7 +753,7 @@ def _evaluate_partial_instances(spec: ProblemSpec, fn: Any, instances: list[Mapp
         }
         try:
             with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-                values, metrics = _evaluate_problem(spec, fn, [instance])
+                values, metrics = _evaluate_problem(spec, fn, [instance], suite_hash_value)
             if not isinstance(values, list) or len(values) != 1:
                 raise ValueError("invalid_return")
             objective = float(values[0])
@@ -747,6 +770,7 @@ def _evaluate_partial_instances(spec: ProblemSpec, fn: Any, instances: list[Mapp
             })
         except Exception as exc:
             error_code, error_detail = _classify_candidate_exception(exc)
+            observed = exc.behavior_evidence if isinstance(exc, ObservedCandidateError) else None
             records.append({
                 **base,
                 "valid": False,
@@ -754,17 +778,18 @@ def _evaluate_partial_instances(spec: ProblemSpec, fn: Any, instances: list[Mapp
                 "error_code": error_code,
                 "error_detail": error_detail,
                 "elapsed_seconds": time.monotonic() - started,
-                "metrics": {},
+                "metrics": {"behavior_evidence": observed} if observed is not None else {},
             })
     return records
 
 
-def _merge_partial_metrics(records: list[Mapping[str, Any]]) -> dict[str, Any]:
+def _merge_partial_metrics(records: list[Mapping[str, Any]], suite_hash_value: str) -> dict[str, Any]:
     """Reassemble per-instance metrics for an all-valid partial pass."""
     keys = {
         str(key)
         for record in records
         for key in (record.get("metrics") or {})
+        if key != "behavior_evidence"
     }
     merged: dict[str, Any] = {"partial_instance_results": records}
     for key in sorted(keys):
@@ -773,6 +798,18 @@ def _merge_partial_metrics(records: list[Mapping[str, Any]]) -> dict[str, Any]:
             merged[key] = values[0]
         else:
             merged[key] = values
+    behavior_rows = [
+        (record.get("metrics") or {}).get("behavior_evidence")
+        for record in records
+        if isinstance((record.get("metrics") or {}).get("behavior_evidence"), Mapping)
+    ]
+    combined = combine_behavior_evidence(
+        behavior_rows,
+        suite_hash=suite_hash_value,
+        expected_instances=len(records),
+    ) if behavior_rows else None
+    if combined is not None:
+        merged["behavior_evidence"] = combined
     return merged
 
 
@@ -797,10 +834,10 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         if not callable(fn):
             raise ValueError("missing_entrypoint")
         if request.get("collect_partial") is True:
-            partial_records = _evaluate_partial_instances(spec, fn, instances)
+            partial_records = _evaluate_partial_instances(spec, fn, instances, expected)
             if all(record.get("valid") is True for record in partial_records):
                 per_instance = [float(record["objective"]) for record in partial_records]
-                metrics = _merge_partial_metrics(partial_records)
+                metrics = _merge_partial_metrics(partial_records, expected)
                 return {
                     "valid": True,
                     "objective": float(sum(per_instance) / len(per_instance)),
@@ -811,6 +848,14 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
                     "elapsed_seconds": time.monotonic() - started,
                     "metrics": metrics,
                 }
+            observed = [
+                (record.get("metrics") or {}).get("behavior_evidence")
+                for record in partial_records
+                if isinstance((record.get("metrics") or {}).get("behavior_evidence"), Mapping)
+            ]
+            combined = combine_behavior_evidence(
+                observed, suite_hash=expected, expected_instances=len(partial_records)
+            ) if observed else None
             return {
                 "valid": False,
                 "objective": None,
@@ -822,10 +867,11 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
                 "metrics": {
                     "partial_evaluation": True,
                     "partial_instance_results": partial_records,
+                    **({"behavior_evidence": combined} if combined is not None else {}),
                 },
             }
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-            per_instance, metrics = _evaluate_problem(spec, fn, instances)
+            per_instance, metrics = _evaluate_problem(spec, fn, instances, expected)
         objective = float(sum(per_instance) / len(per_instance))
         if not math.isfinite(objective) or any(not math.isfinite(float(x)) for x in per_instance):
             raise ValueError("nonfinite_objective")
@@ -838,6 +884,26 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
             "error_detail": None,
             "elapsed_seconds": time.monotonic() - started,
             "metrics": metrics,
+        }
+    except ObserverFailure:
+        return {
+            "valid": False, "objective": None, "instance_objectives": [],
+            "suite_hash": suite_hash_value, "error_code": "observer_error",
+            "error_detail": None, "elapsed_seconds": time.monotonic() - started,
+            "metrics": {"behavior_evidence": {"status": "unavailable", "reason": "observer_error",
+                                               "behavior_signature": None, "comparable": False}},
+        }
+    except ObservedCandidateError as exc:
+        error_code, error_detail = _classify_candidate_exception(exc.original)
+        return {
+            "valid": False,
+            "objective": None,
+            "instance_objectives": [],
+            "suite_hash": suite_hash_value,
+            "error_code": error_code,
+            "error_detail": error_detail,
+            "elapsed_seconds": time.monotonic() - started,
+            "metrics": {"behavior_evidence": exc.behavior_evidence},
         }
     except EvalError as exc:
         return {
@@ -1084,6 +1150,8 @@ OBP_SPEC = ProblemSpec(
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
     baseline_description=OBP_BASELINE_DESCRIPTION,
+    evaluate_with_behavior=_evaluate_obp_instances_with_behavior,
+    behavior_contract=OBP_BEHAVIOR_CONTRACT,
 )
 
 register_problem(OBP_SPEC)

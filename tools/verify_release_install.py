@@ -38,6 +38,7 @@ import json, sys
 from pathlib import Path
 import agent_skill_loop, algorithm_optimization_skill
 from agent_skill_loop import session_runtime as db
+from agent_skill_loop.session_supervisor import run_startup_preflight
 prefix = Path(sys.prefix).resolve()
 assert Path(agent_skill_loop.__file__).resolve().is_relative_to(prefix)
 skill = Path(algorithm_optimization_skill.__file__).resolve().parent
@@ -51,7 +52,17 @@ assert state['integrity']['skill_identity'] == 'ok'
 assert state['integrity']['runtime_identity'] == 'ok'
 assert state['feedback_basis'] is None
 assert not any(x.startswith('eoh.') for x in sys.modules)
-print(json.dumps({'wheel_install': 'passed', 'skill_sha256': db._skill_content_hash(), 'session_init_state': 'passed', 'provider_requests': 0}))
+con = db._connect(Path('run/session.sqlite3'))
+try:
+    frozen_run = db._require_run(con, action='preflight', run_id=None)
+    checked = run_startup_preflight(Path('run').resolve(), {'task_id':'wheel_preflight','round_id':1}, frozen_run)
+    assert checked['status'] == 'passed', checked
+    assert checked['identity']['actual']['modules']['agent_skill_loop'].startswith(str(prefix))
+    assert checked['eval_worker_identity']['module_path'].startswith(str(prefix))
+finally:
+    con.close()
+print(json.dumps({'wheel_install': 'passed', 'skill_sha256': db._skill_content_hash(),
+                  'session_init_state': 'passed', 'worker_identity': 'passed', 'provider_requests': 0}))
 '''
         print(run([str(python), "-c", script, expected], work).strip())
 

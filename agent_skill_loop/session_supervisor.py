@@ -119,7 +119,7 @@ def _startup_preflight_path(root: Path, task) -> Path:
     return root / f"rounds/round_{task['round_id']:04d}/tasks/{task['task_id']}/startup_preflight.json"
 
 
-def run_startup_preflight(root: Path, task) -> dict:
+def run_startup_preflight(root: Path, task, run=None) -> dict:
     """Check the EoH/evaluator child-process boundary before paid work.
 
     This deliberately performs no provider request and no solver evaluation.
@@ -136,11 +136,18 @@ def run_startup_preflight(root: Path, task) -> dict:
         "solver_calls": 0,
     }
     try:
+        problem = run["problem"] if run is not None else None
+        script = (
+            "import json,sys; "
+            "from eoh_frozen.identity import loaded_identity; "
+            "print(json.dumps(loaded_identity(sys.argv[1] or None),sort_keys=True))"
+        )
         probe = subprocess.Popen(
             [
                 sys.executable,
                 "-c",
-                "import eoh; import agent_skill_loop.evaluator; print('startup_preflight_ok')",
+                script,
+                problem or "",
             ],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
@@ -155,12 +162,57 @@ def run_startup_preflight(root: Path, task) -> dict:
             stdout, stderr = probe.communicate(timeout=5)
             result.update(status="failed", error_code="startup_probe_timeout")
         else:
-            if probe.returncode != 0 or b"startup_preflight_ok" not in stdout:
+            if probe.returncode != 0:
                 detail = (stderr or stdout).decode("utf-8", errors="replace").strip()
                 result.update(status="failed", error_code="startup_subprocess_failed", error_detail=detail[:240])
             else:
-                result["checks"] = {"child_process": "ok", "eoh_import": "ok", "evaluator_import": "ok"}
-    except OSError as exc:
+                actual = json.loads(stdout.decode("utf-8"))
+                expected = None
+                mismatches: list[str] = []
+                if run is not None:
+                    expected = {
+                        "runtime_source_sha256": run["runtime_source_sha256"],
+                        "optimization_skill_sha256": run["optimization_skill_sha256"],
+                        "evaluator_sha256": run["evaluator_hash"],
+                        "eoh_commit": run["eoh_commit"],
+                        "problem_spec_hash": run["problem_spec_hash"],
+                    }
+                    comparisons = {
+                        "runtime_source_sha256": actual.get("runtime_source_sha256"),
+                        "optimization_skill_sha256": actual.get("optimization_skill_sha256"),
+                        "evaluator_sha256": actual.get("evaluator_sha256"),
+                        "eoh_commit": (actual.get("upstream") or {}).get("commit"),
+                        "problem_spec_hash": (actual.get("problem") or {}).get("problem_spec_hash"),
+                    }
+                    mismatches = [key for key, value in expected.items() if comparisons.get(key) != value]
+                result["identity"] = {"expected": expected, "actual": actual, "mismatches": mismatches,
+                    "domain": {key:run[key] for key in ("suite_hash", "data_manifest_hash", "metric_spec_hash") if run is not None and key in run.keys()} if run is not None else {},
+                    "controller": {"host": "unknown", "model": run["eoh_model"] if run is not None else None,
+                                   "model_identity_level": "reported_configuration" if run is not None else "unknown"}}
+                if mismatches:
+                    result.update(status="failed", error_code="loaded_identity_mismatch")
+                else:
+                    safe_env = {key: os.environ[key] for key in ("PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL") if key in os.environ}
+                    safe_env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+                    eval_probe = subprocess.run([sys.executable, "-m", "agent_skill_loop.eval_worker", "--identity"],
+                                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                                env=safe_env, timeout=10, check=False,
+                                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+                    if eval_probe.returncode:
+                        result.update(status="failed", error_code="evaluator_worker_unavailable",
+                                      error_detail=eval_probe.stderr.decode("utf-8", errors="replace")[:240])
+                    else:
+                        worker = json.loads(eval_probe.stdout.decode("utf-8"))
+                        result["eval_worker_identity"] = worker
+                        expected_worker = str(Path(actual["modules"]["agent_skill_loop"]).parent / "eval_worker.py")
+                        if (worker.get("evaluator_sha256") != actual.get("evaluator_sha256")
+                                or Path(worker.get("module_path") or "").resolve() != Path(expected_worker).resolve()):
+                            result.update(status="failed", error_code="evaluator_worker_identity_mismatch")
+                        else:
+                            result["checks"] = {"child_process": "ok", "eoh_import": "ok", "evaluator_import": "ok", "identity": "ok", "eval_worker": "ok"}
+    except subprocess.TimeoutExpired as exc:
+        result.update(status="failed", error_code="startup_probe_timeout", error_detail=str(exc)[:240])
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
         result.update(status="failed", error_code="startup_process_unavailable", error_detail=str(exc)[:240])
     try:
         db._atomic_write(path, db._json(result) + "\n")
@@ -421,7 +473,7 @@ def execute_task(root, task_id):
         args.data_manifest_hash = row["data_manifest_hash"] if "data_manifest_hash" in row.keys() else None
         args.problem_spec_hash = row["problem_spec_hash"] if "problem_spec_hash" in row.keys() else None
         args.session={"root":str(root),"task_id":task_id}
-        preflight = run_startup_preflight(root, task)
+        preflight = run_startup_preflight(root, task, row)
         output = task_output(root, con, task)
         if preflight["status"] != "passed":
             output.mkdir(parents=True, exist_ok=True)
@@ -513,6 +565,7 @@ def collect_facts(root, con, run, rd, task):
         return f"{prefix}/{ref}" if ref and ref.startswith("results/") else ref
     candidates=[{"candidate_id":x.get("candidate_id") or x["origin"],"revision":x.get("revision") or "original", "origin":x["origin"],
                  "code_sha256":x["code_sha256"],"evaluation_id":x["evaluation_id"],"code":x["code"],**x["evaluation"],
+                 "generation_parents":x.get("generation_parents"), "lineage_status":x.get("lineage_status"),
                  "generation_request_ref":request_ref(x.get("generation_request_ref")) or (f"{prefix}/results/exchanges/request_{x['source_request_index']}.json" if x.get("source_request_index") else None),
                  "repair_request_ref":request_ref(x.get("repair_request_ref"))} for x in rows]
     return {"round_id":rd["round_id"],"problem":run["problem"],"suite_hash":run["suite_hash"],"evaluator_hash":run["evaluator_hash"],

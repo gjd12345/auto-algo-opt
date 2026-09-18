@@ -44,6 +44,15 @@ def _watch_parent(parent_pid: int) -> None:
 
 
 def main() -> int:
+    if sys.argv[1:] == ["--identity"]:
+        from agent_skill_loop.evaluator import evaluator_source_hash
+        from pathlib import Path
+        payload = {"schema_version":"algorithm-optimization-eval-worker-identity/v1",
+                   "evaluator_sha256":evaluator_source_hash(),
+                   "module_path":str(Path(__file__).resolve()),
+                   "python_executable":str(Path(sys.executable).resolve())}
+        sys.stdout.write(json.dumps(payload, sort_keys=True) + "\n")
+        return 0
     try:
         raw = sys.stdin.buffer.read()
         request = json.loads(raw.decode("utf-8"))

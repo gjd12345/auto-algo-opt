@@ -452,6 +452,9 @@ def build_feedback_summary(
         "major_errors": major_errors,
         "evidence_refs": evidence_refs,
     }
+    delta = facts.get("execution_delta")
+    if isinstance(delta, Mapping):
+        summary["execution_delta"] = {key: delta.get(key) for key in ("ref", "sha256", "generated_count")}
     return summary
 
 

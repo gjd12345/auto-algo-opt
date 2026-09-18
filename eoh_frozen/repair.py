@@ -366,7 +366,7 @@ class RepairingEOH(SeedAwareEOH):
                    "operator": operator}
         self.problem.set_evaluation_context(context)
         try:
-            offspring = super()._build_offspring(population_snapshot, operator)
+            offspring = self._build_with_parent_evidence(population_snapshot, operator, context)
         finally:
             self.problem.set_evaluation_context(None)
         if not isinstance(offspring, dict) or not offspring.get("code"):

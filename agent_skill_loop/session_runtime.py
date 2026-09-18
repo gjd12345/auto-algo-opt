@@ -486,6 +486,19 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
         )""",
         """
+        CREATE TABLE IF NOT EXISTS memory_searches (
+            search_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            query_sha256 TEXT NOT NULL,
+            filters_json TEXT NOT NULL,
+            result_refs_json TEXT NOT NULL,
+            status TEXT NOT NULL,
+            error_code TEXT,
+            searched_at_utc TEXT NOT NULL,
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        )""",
+        """
         CREATE TABLE IF NOT EXISTS memory_writes (
             write_id INTEGER PRIMARY KEY AUTOINCREMENT,
             run_id TEXT NOT NULL,
@@ -548,6 +561,11 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     }.items():
         if name not in table_columns["runs"]:
             connection.execute(f"ALTER TABLE runs ADD COLUMN {name} {definition}")
+    read_columns = {row[1] for row in connection.execute("PRAGMA table_info(memory_reads)")}
+    if "status" not in read_columns:
+        connection.execute("ALTER TABLE memory_reads ADD COLUMN status TEXT NOT NULL DEFAULT 'complete'")
+    if "error_code" not in read_columns:
+        connection.execute("ALTER TABLE memory_reads ADD COLUMN error_code TEXT")
     for name, definition in {
         "population_snapshot_ref": "TEXT",
         "population_snapshot_sha256": "TEXT",
@@ -835,7 +853,9 @@ def flush_audit(output: Path) -> bool:
 
 
 def _verify_files(output: Path, run, *, action: str):
-    read_only = action in {"state", "read-evaluation", "memory_search", "memory_read"}
+    # memory_read records pages durably and is therefore an identity-gated
+    # observation; old Sessions remain inspectable, never silently writable.
+    read_only = action in {"state", "read-evaluation", "memory_search"}
     if not read_only and _runtime_source_hash() != run["runtime_source_sha256"]:
         raise SessionError("RUNTIME_IDENTITY_MISMATCH", "Restore the frozen runtime before mutating this Session", action=action)
     if not read_only and _required_skill_content_hash(action) != run["optimization_skill_sha256"]:
@@ -1568,6 +1588,15 @@ def initialize_session(
             "content_sha256": skill_hash,
         },
         "runtime": {"version": RUNTIME_VERSION, "source_sha256": runtime_hash},
+        "loaded_identity": {
+            "schema_version": "algorithm-optimization-loaded-identity/v1",
+            "runtime_source_sha256": runtime_hash,
+            "optimization_skill_sha256": skill_hash,
+            "evaluator_sha256": evaluator_hash,
+            "eoh_commit": EOH_COMMIT,
+            "problem_spec_hash": problem_spec_hash,
+            "verification_stage": "worker_startup_preflight",
+        },
         "memory": {
             "enabled": memory_path is not None,
             "store": memory_path,

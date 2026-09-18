@@ -10,6 +10,7 @@ management untouched.
 
 from __future__ import annotations
 
+import hashlib
 import threading
 import uuid
 from typing import Any
@@ -27,6 +28,57 @@ class SeedAwareEOH(EOH):
             clear = getattr(self.problem, "clear_seed_bindings", None)
             if callable(clear):
                 clear()
+
+    def _build_with_parent_evidence(self, population_snapshot, operator, context):
+        """Observe upstream's selected parents without choosing or editing them.
+
+        The pinned EoH discards the parent list in _build_offspring.  This is
+        an instance-scoped wrapper of the generation call, restored in finally.
+        The supported adapter has one sampler; review this boundary on upgrade.
+        """
+        original = self.evolution.generate_code
+        original_generate = self.evolution._generate
+        last_call = {}
+
+        def observe_generate(population, operation):
+            parents, code, algorithm = original_generate(population, operation)
+            last_call.clear()
+            last_call.update(parents=parents, code=code)
+            return parents, code, algorithm
+
+        def observe(population, operation):
+            parents, code, algorithm = original(population, operation)
+            # Upstream's duplicate retry discards the retry's parent object.
+            # Only the final _generate call can bind parents to final code.
+            if code != last_call.get("code"):
+                context["generation_parents"] = []
+                context["lineage_status"] = "unknown"
+            else:
+                selected = last_call.get("parents")
+                members = [selected] if isinstance(selected, dict) else selected if isinstance(selected, list) else []
+                context["generation_parents"] = [
+                    {
+                        "selected_parent_position": index,
+                        "population_member_indices": [position for position, member in enumerate(population)
+                                                     if isinstance(member, dict) and member.get("code") == item["code"]],
+                        "code_sha256": hashlib.sha256(item["code"].encode("utf-8")).hexdigest(),
+                        "algorithm": str(item.get("algorithm") or ""),
+                    }
+                    for index, item in enumerate(members)
+                    if isinstance(item, dict) and isinstance(item.get("code"), str)
+                ]
+                context["lineage_status"] = ("no_parent" if selected is None and operation == "i1" else
+                    "verified" if members and len(context["generation_parents"]) == len(members) else "unknown")
+            self.problem.set_evaluation_context(context)
+            return parents, code, algorithm
+
+        self.evolution._generate = observe_generate
+        self.evolution.generate_code = observe
+        try:
+            return super()._build_offspring(population_snapshot, operator)
+        finally:
+            self.evolution.generate_code = original
+            self.evolution._generate = original_generate
 
 
 class ProvenanceEOH(SeedAwareEOH):
@@ -57,7 +109,7 @@ class ProvenanceEOH(SeedAwareEOH):
         try:
             # SeedAwareEOH does not override this method; this is the pinned
             # official EOH implementation and remains the search authority.
-            offspring = super()._build_offspring(population_snapshot, operator)
+            offspring = self._build_with_parent_evidence(population_snapshot, operator, context)
         finally:
             if callable(setter):
                 setter(None)

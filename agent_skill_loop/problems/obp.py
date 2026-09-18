@@ -16,6 +16,8 @@ from typing import Any, Mapping
 
 import numpy as np
 
+from agent_skill_loop.evidence import BehaviorTraceRecorder, ObservedCandidateError, ObserverFailure
+
 
 PROBLEM_NAME = "obp_online"
 ENTRYPOINT = "priority"
@@ -114,34 +116,83 @@ def validate_instances(instances: Any) -> tuple[list[Mapping[str, Any]], None]:
     return instances, None
 
 
-def evaluate_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any]]:
+BEHAVIOR_CONTRACT = {
+    "id": "obp-bin-selection-trace/v1",
+    "event": ["item_index", "selected_bin_id", "opened_new_bin"],
+    "terminal": ["bins_used"],
+    "scope": "frozen-training-suite",
+}
+
+
+def _evaluate_instances(
+    fn: Any,
+    instances: list[Mapping[str, Any]],
+    *,
+    recorder: BehaviorTraceRecorder | None,
+) -> tuple[list[float], dict[str, Any]]:
     raw_objectives: list[float] = []
     references: list[float] = []
     gaps: list[float] = []
     bins_used: list[int] = []
-    for instance in instances:
+    for instance_index, instance in enumerate(instances):
         capacity = float(instance["capacity"])
         remaining: list[float] = []
-        for raw_item in instance["items"]:
-            item = float(raw_item)
-            feasible = [index for index, value in enumerate(remaining) if value + 1e-12 >= item]
-            feasible_values = np.asarray([remaining[index] for index in feasible], dtype=float)
-            argument = feasible_values.copy()
-            priorities = fn(item, argument)
-            if not np.array_equal(argument, feasible_values):
-                raise ValueError("candidate_mutated_input")
-            values = np.asarray(priorities, dtype=float)
-            if values.ndim == 0:
-                values = values.reshape(1)
-            if values.ndim != 1 or len(values) != len(feasible) or not np.all(np.isfinite(values)):
-                raise ValueError("invalid_return")
-            if feasible:
-                # np.argmax is the explicit upstream-compatible stable
-                # tie-break: first maximum wins.
-                selected = feasible[int(np.argmax(values))]
-                remaining[selected] -= item
-            else:
-                remaining.append(capacity - item)
+        if recorder is not None:
+            try:
+                recorder.begin_instance(
+                    instance_id=str(instance.get("instance_id") or instance_index),
+                    instance_index=instance_index,
+                )
+            except Exception as exc:
+                raise ObserverFailure("observer_begin_failed") from exc
+        try:
+            for item_index, raw_item in enumerate(instance["items"]):
+                item = float(raw_item)
+                feasible = [index for index, value in enumerate(remaining) if value + 1e-12 >= item]
+                feasible_values = np.asarray([remaining[index] for index in feasible], dtype=float)
+                argument = feasible_values.copy()
+                priorities = fn(item, argument)
+                if not np.array_equal(argument, feasible_values):
+                    raise ValueError("candidate_mutated_input")
+                values = np.asarray(priorities, dtype=float)
+                if values.ndim == 0:
+                    values = values.reshape(1)
+                if values.ndim != 1 or len(values) != len(feasible) or not np.all(np.isfinite(values)):
+                    raise ValueError("invalid_return")
+                opened = not feasible
+                if feasible:
+                    # np.argmax is the explicit upstream-compatible stable
+                    # tie-break: first maximum wins.
+                    selected = feasible[int(np.argmax(values))]
+                    remaining[selected] -= item
+                else:
+                    selected = len(remaining)
+                    remaining.append(capacity - item)
+                if recorder is not None:
+                    try:
+                        recorder.record({
+                            "item_index": item_index,
+                            "selected_bin_id": selected,
+                            "opened_new_bin": opened,
+                        })
+                    except Exception as exc:
+                        raise ObserverFailure("observer_record_failed") from exc
+        except ObserverFailure:
+            raise
+        except Exception as exc:
+            if recorder is not None:
+                try:
+                    recorder.finish_instance(status="partial", terminal={"bins_used": len(remaining)})
+                    evidence = recorder.finalize(status="partial")
+                except Exception as observer_exc:
+                    raise ObserverFailure("observer_finalize_failed") from observer_exc
+                raise ObservedCandidateError(exc, evidence) from exc
+            raise
+        if recorder is not None:
+            try:
+                recorder.finish_instance(status="complete", terminal={"bins_used": len(remaining)})
+            except Exception as exc:
+                raise ObserverFailure("observer_finalize_failed") from exc
         raw = float(len(remaining))
         reference = float(instance["reference_objective"])
         raw_objectives.append(raw)
@@ -155,6 +206,22 @@ def evaluate_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[lis
         "reference_kind": [instance["reference_kind"] for instance in instances],
         "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)",
     }
+
+
+def evaluate_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any]]:
+    return _evaluate_instances(fn, instances, recorder=None)
+
+
+def evaluate_instances_with_behavior(
+    fn: Any, instances: list[Mapping[str, Any]], suite_hash_value: str
+) -> tuple[list[float], dict[str, Any], Mapping[str, Any]]:
+    recorder = BehaviorTraceRecorder(contract=BEHAVIOR_CONTRACT, suite_hash=suite_hash_value)
+    objectives, metrics = _evaluate_instances(fn, instances, recorder=recorder)
+    try:
+        evidence = recorder.finalize(status="complete")
+    except Exception as exc:
+        raise ObserverFailure("observer_finalize_failed") from exc
+    return objectives, metrics, evidence
 
 
 def first_fit_priority(item: float, bins: np.ndarray) -> np.ndarray:
