@@ -232,12 +232,13 @@ def cmd_run(args: argparse.Namespace) -> int:
                 if time.monotonic() >= deadline and bridge.last_error is None:
                     bridge.last_error = "wall_time_exhausted"
                 error = bridge.last_error
-                if error in {"request_budget_exhausted", "wall_time_exhausted", "solver_budget_exhausted", "round_budget_exhausted", "session_stopped"}:
+                if error in {"request_budget_exhausted", "wall_time_exhausted", "solver_budget_exhausted", "round_budget_exhausted", "phase_budget_exhausted", "session_stopped"}:
                     summary.update(status="stopped", stop_reason={
                         "request_budget_exhausted": "request_limit",
                         "wall_time_exhausted": "wall_time_limit",
                         "solver_budget_exhausted": "solver_call_limit",
                         "round_budget_exhausted": "round_budget_limit",
+                        "phase_budget_exhausted": "phase_budget_limit",
                         "session_stopped": "user_requested",
                     }[error])
                 elif error:
@@ -257,11 +258,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         summary.update(status="invalid_input" if isinstance(exc, ValueError) else "storage_failed",
                        stop_reason="input_error" if isinstance(exc, ValueError) else "storage_error",
                        error_type=type(exc).__name__, error_detail=str(exc)[:200], loop_completed=False)
-        if session and str(exc) in {"solver_budget_exhausted", "round_budget_exhausted", "session_stopped"}:
+        if session and str(exc) in {"solver_budget_exhausted", "round_budget_exhausted", "phase_budget_exhausted", "session_stopped"}:
             summary.update(
                 status="stopped",
                 stop_reason=("solver_call_limit" if str(exc) == "solver_budget_exhausted"
                              else "round_budget_limit" if str(exc) == "round_budget_exhausted"
+                             else "phase_budget_limit" if str(exc) == "phase_budget_exhausted"
                              else "user_requested"),
                 loop_completed=True,
             )

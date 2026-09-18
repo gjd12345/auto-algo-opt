@@ -91,6 +91,9 @@ def test_obp_two_round_population_memory_evidence(tmp_path, monkeypatch):
             collected = actions.collect(run=root, operation_id=f"collect-{round_id}",
                                         expected_state_version=state["state_version"])
             facts = actions.read_evaluation(run=root)["result"]
+            assert facts["search_progress"]["schema_version"].endswith("search-progress/v1")
+            assert "source_duplicate_rate" in facts["search_progress"]["window"]
+            assert facts["request_costs"]["round"]["requests"] >= 1
             assert facts["startup_preflight"]["identity"]["mismatches"] == []
             delta = json.loads((root / facts["execution_delta"]["ref"]).read_text(encoding="utf-8"))
             assert delta["schema_version"].endswith("execution-delta/v1")
@@ -133,3 +136,5 @@ def test_obp_two_round_population_memory_evidence(tmp_path, monkeypatch):
     assert len(rebuilt["rounds"]) == 2
     assert rebuilt["total_requests"] == len(prompts)
     assert rebuilt["rounds"][1]["memory_gateway_attempts"] > 0
+    assert rebuilt["rounds"][1]["search_progress"]["round_id"] == 2
+    assert (root / "round_progress.md").is_file()

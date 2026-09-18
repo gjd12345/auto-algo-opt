@@ -124,6 +124,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         "freeze-selection": benchmark_cli.cmd_freeze_selection,
         "manifest": benchmark_cli.cmd_manifest,
         "pilot-config": benchmark_cli.cmd_pilot_config,
+        "co-pilot-config": benchmark_cli.cmd_co_pilot_config,
         "report": benchmark_cli.cmd_report,
     }
     return int(handlers[args.benchmark_action](args))
@@ -381,6 +382,13 @@ def build_parser() -> argparse.ArgumentParser:
     pilot_config.add_argument("--config", required=True, help="Base ExperimentManifest JSON")
     pilot_config.add_argument("--output")
     pilot_config.set_defaults(func=cmd_benchmark)
+
+    co_pilot_config = benchmark_sub.add_parser(
+        "co-pilot-config", help="Freeze the Iteration-B G0-G4 controlled factor matrix"
+    )
+    co_pilot_config.add_argument("--config", required=True)
+    co_pilot_config.add_argument("--output")
+    co_pilot_config.set_defaults(func=cmd_benchmark)
 
     report = benchmark_sub.add_parser(
         "report",

@@ -18,6 +18,7 @@ MAX_ROUND_CONTEXT_CHARS = 12000
 PLAN_KEYS = frozenset({
     "round_id", "direction", "operations", "preserve", "feedback_basis",
     "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
+    "search_intent",
 })
 PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
@@ -32,6 +33,8 @@ OPERATION_TYPES = frozenset({"add", "remove", "replace", "preserve"})
 MEMORY_ACTION_TYPES = frozenset({"disabled", "none", "insight", "solution"})
 SEARCH_POLICY_KEYS = frozenset({"pop_size", "n_pop", "max_sample_nums"})
 SEARCH_POLICY_MINIMUMS = {"pop_size": 2, "n_pop": 1, "max_sample_nums": 1}
+SEARCH_INTENT_KEYS = frozenset({"phase"})
+SEARCH_PHASES = frozenset({"exploration", "exploitation"})
 FORBIDDEN_PLAN_KEYS = frozenset({
     "code", "budget", "model", "operators", "operator", "evaluator",
     "stop", "stop_reason", "objective", "valid", "instance_objectives",
@@ -125,6 +128,7 @@ class PlanDocument:
     reference_skill_ref: str | None
     hypothesis: str
     search_policy: dict[str, int] | None = None
+    search_intent: dict[str, str] | None = None
     # Optional host-Agent explanation.  It is durable plan metadata only; the
     # Runtime never treats it as execution authority and does not inject it
     # into the upstream EoH prompt.
@@ -203,6 +207,14 @@ class PlanDocument:
                         raise ValueError("PLAN_SEARCH_POLICY_OUT_OF_BOUNDS")
                 elif value < SEARCH_POLICY_MINIMUMS[name]:
                     raise ValueError(f"search_policy_{name}_below_minimum")
+        intent = raw.get("search_intent")
+        if intent is not None:
+            if not isinstance(intent, Mapping):
+                raise ValueError("search_intent_must_be_object")
+            _strict_keys(intent, SEARCH_INTENT_KEYS, "search_intent")
+            if intent.get("phase") not in SEARCH_PHASES:
+                raise ValueError("search_intent_phase_not_allowed")
+            intent = {"phase": str(intent["phase"])}
         return cls(
             round_id,
             _text(raw.get("direction"), "direction"),
@@ -213,6 +225,7 @@ class PlanDocument:
             skill_ref,
             _text(raw.get("hypothesis"), "hypothesis"),
             search,
+            intent,
             reasoning_summary,
         )
 
@@ -228,6 +241,8 @@ class PlanDocument:
             "hypothesis": self.hypothesis,
             "search_policy": dict(self.search_policy) if self.search_policy is not None else None,
         }
+        if self.search_intent is not None:
+            result["search_intent"] = dict(self.search_intent)
         if self.reasoning_summary is not None:
             result["reasoning_summary"] = self.reasoning_summary
         return result
@@ -455,6 +470,19 @@ def build_feedback_summary(
     delta = facts.get("execution_delta")
     if isinstance(delta, Mapping):
         summary["execution_delta"] = {key: delta.get(key) for key in ("ref", "sha256", "generated_count")}
+    progress = facts.get("search_progress")
+    if isinstance(progress, Mapping):
+        # SearchProgress is already bounded by the collector.  Keep the
+        # complete v1 record in facts and pass only its two scoped views and
+        # frozen gate to the next EoH context.
+        summary["search_progress"] = {
+            "schema_version": progress.get("schema_version"),
+            "round_id": progress.get("round_id"),
+            "window": progress.get("window"),
+            "cumulative": progress.get("cumulative"),
+            "policy": progress.get("policy"),
+            "stagnation": progress.get("stagnation"),
+        }
     return summary
 
 
@@ -466,6 +494,7 @@ def compile_round_context(
     search_policy: Mapping[str, int] | None = None,
     feedback_mode: str = "runtime_facts",
     agent_guidance: bool = True,
+    search_progress_mode: str = "expose",
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
 ) -> str:
     """Compile only advisory plan text for the official EoH task prompt."""
@@ -473,6 +502,8 @@ def compile_round_context(
         raise ValueError("invalid_feedback_mode")
     if not isinstance(agent_guidance, bool):
         raise ValueError("agent_guidance_must_be_bool")
+    if search_progress_mode not in {"off", "record_only", "expose"}:
+        raise ValueError("invalid_search_progress_mode")
     unique_memory = {item.get("reference"): item for item in (memory_summaries or [])
                      if item.get("reference") in set(plan.memory_basis) and item.get("body") and not item.get("truncated")}
     if agent_guidance:
@@ -482,6 +513,7 @@ def compile_round_context(
             "preserve": plan.preserve,
             "reference_skill_ref": plan.reference_skill_ref,
             "hypothesis": plan.hypothesis,
+            "search_intent": plan.search_intent,
             "guidance_mode": "agent",
         }
     else:
@@ -498,12 +530,16 @@ def compile_round_context(
             "preserve": "Frozen problem interface, evaluator, and benchmark search policy.",
             "reference_skill_ref": None,
             "hypothesis": "No host-Agent hypothesis is supplied in this control group.",
+            "search_intent": None,
             "guidance_mode": "neutral",
         }
+    feedback_payload = dict(feedback_summary) if feedback_mode == "runtime_facts" and isinstance(feedback_summary, Mapping) else None
+    if feedback_payload is not None and search_progress_mode != "expose":
+        feedback_payload.pop("search_progress", None)
     payload = {
         "round": plan.round_id,
         **guidance,
-        "feedback_summary": dict(feedback_summary) if feedback_mode == "runtime_facts" and isinstance(feedback_summary, Mapping) else None,
+        "feedback_summary": feedback_payload,
         "search_policy": dict(search_policy if search_policy is not None else plan.search_policy)
         if (search_policy is not None or plan.search_policy is not None) else None,
         "memory": [

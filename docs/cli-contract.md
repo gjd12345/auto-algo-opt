@@ -154,6 +154,8 @@ python -m agent_skill_loop benchmark manifest \
   --config experiment_manifest.json --output manifest.json
 python -m agent_skill_loop benchmark pilot-config \
   --config experiment_manifest.json --output pilot.json
+python -m agent_skill_loop benchmark co-pilot-config \
+  --config experiment_manifest.json --output co_pilot.json
 python -m agent_skill_loop benchmark report \
   --manifest manifest.json --selection frozen_selection.json \
   --metrics metrics.json --budget budget.json --output report.json
@@ -165,6 +167,15 @@ the same model, endpoint, benchmark/runtime/Skill identity, search seed,
 population and total evaluator budget. C and D differ only in
 `agent_guidance`; each group must still be run in its own Session and output
 directory.
+
+`co-pilot-config` is also zero-provider and expands the Iteration-B G0--G4
+factor matrix. It freezes the common OBP/model/endpoint/runtime/Skill/search
+identity and evaluator-attempt budget. G0 records SearchProgress only, G1
+adds host guidance, G2 exposes SearchProgress, G3 adds an independent Memory
+store, and G4 additionally enables the frozen stagnation gates and
+exploration/exploitation evaluator subbudgets. Each group must run in its own
+Session and output directory; total evaluator attempts include baseline,
+population-seed, generated, and repair attempts.
 
 `freeze-selection` persists a locked `FrozenSelection`; `final_population_set`
 must be sourced from a `PopulationSnapshot` and must not relabel an archive as

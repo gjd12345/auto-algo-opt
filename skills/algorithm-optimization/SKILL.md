@@ -101,3 +101,33 @@ Read the focused contracts before producing documents:
 - For offline benchmark audit/calibration and benchmark Session options, use
   the focused [benchmark contract](references/benchmark.md). All Skill
   references needed at runtime are contained under this Skill directory.
+
+## Iteration B search progress and outer policy
+
+`evaluation_facts.json` may contain a deterministic `search_progress` sidecar
+(`algorithm-optimization-search-progress/v1`). It reports source and complete
+behavior duplicate rates, valid raw-generation yield, MetricSpec-direction
+fitness progress, cost per novel complete behavior, verified-lineage
+concentration, and valid instance-response diversity. These are scoped
+observations, not information gain, semantic equivalence, or an instruction to
+change an EoH operator or parent.
+
+When `search_progress_mode=expose`, the next round's bounded factual feedback
+may include the sidecar. `record_only` persists it without injecting it into
+the EoH context, and `off` is reserved for controls. Request, token, wall-clock,
+solver, baseline, seed, and repair costs remain explicit; unknown token values
+must remain unknown.
+
+An optional frozen `search_progress_policy` supplies a fixed evaluator-attempt
+window, absolute/relative minimum gain thresholds, minimum behavior coverage,
+and exploration/exploitation phase quotas. Stagnation is `insufficient_window`,
+`progress`, or `stagnated` only after those gates are evaluated. A zero or
+negative gain never passes a positive-gain gate, and relative gain is null when
+the prior objective is zero. Phase quotas are outer evaluator budgets and count
+baseline, seed, generated, and repair attempts; they do not alter official EoH
+selection. A phase quota exhaustion is a budget stop, not an algorithm result.
+
+Same-Session continuation uses the existing `finish-round`, population snapshot,
+seed-selection, and recovery contracts. It is not an exact EoH RNG/checkpoint
+resume. Reconstruct reports from durable facts and hashes, including the
+generated `round_progress.md` trace; never infer progress from model text.

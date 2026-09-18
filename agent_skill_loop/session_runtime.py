@@ -26,6 +26,7 @@ from agent_skill_loop.evaluator import evaluator_source_hash
 from agent_skill_loop.journal import digest, verify_audit_journal
 from agent_skill_loop.contracts import AUDIT_JOURNAL_SCHEMA
 from agent_skill_loop.session_contracts import SEARCH_POLICY_MINIMUMS, SEARCH_POLICY_KEYS
+from agent_skill_loop.evidence.search_progress import normalize_policy
 from agent_skill_loop.problems.base import get_problem
 
 
@@ -457,6 +458,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             evaluator_hash TEXT NOT NULL,
             metric_spec_hash TEXT,
             code_sha256 TEXT NOT NULL,
+            budget_phase TEXT,
             state TEXT NOT NULL CHECK (state IN ('reserved','started','complete','failed','interrupted','unknown')),
             objective REAL,
             valid INTEGER,
@@ -574,7 +576,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     }.items():
         if name not in table_columns["rounds"]:
             connection.execute(f"ALTER TABLE rounds ADD COLUMN {name} {definition}")
-    for name, definition in {"metric_spec_hash": "TEXT", "origin": "TEXT"}.items():
+    for name, definition in {"metric_spec_hash": "TEXT", "origin": "TEXT", "budget_phase": "TEXT"}.items():
         if name not in table_columns["solver_calls"]:
             connection.execute(f"ALTER TABLE solver_calls ADD COLUMN {name} {definition}")
     for name, definition in {
@@ -729,6 +731,7 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
         "seed_reevaluation_attempts": 0,
         "baseline_attempts": 0,
         "repair_attempts": 0,
+        "phase_evaluation_attempts": {},
     }
     if "solver_calls" in table_names:
         rows = connection.execute(
@@ -752,6 +755,11 @@ def _budget_view(connection: sqlite3.Connection, run: sqlite3.Row) -> dict[str, 
                     dual["novel_candidate_evaluations"] += 1
             if revision == "repair_1":
                 dual["repair_attempts"] += 1
+        phase_rows = connection.execute(
+            "SELECT budget_phase, COUNT(*) AS n FROM solver_calls WHERE run_id=? AND budget_phase IS NOT NULL GROUP BY budget_phase",
+            (run["run_id"],),
+        ).fetchall()
+        dual["phase_evaluation_attempts"] = {str(item["budget_phase"]): int(item["n"]) for item in phase_rows}
     max_requests = run["eoh_max_requests"]
     max_solver_calls = run["max_solver_calls"]
     return {
@@ -1292,6 +1300,8 @@ def initialize_session(
         round_budget = manifest_hints.get("round_budget")
     if max_solver_calls is None and manifest_hints.get("evaluation_budget") is not None:
         max_solver_calls = manifest_hints.get("evaluation_budget")
+    manifest_extra_hint = manifest_hints.get("extra") if isinstance(manifest_hints.get("extra"), Mapping) else {}
+    raw_search_progress_policy = manifest_extra_hint.get("search_progress_policy")
     if experiment_manifest is not None and search_policy_defaults is None:
         search_policy_defaults = (manifest_hints.get("extra") or {}).get("search_policy_defaults") or {
             "pop_size": manifest_hints.get("population_size", SEARCH_POLICY_DEFAULTS["pop_size"]),
@@ -1309,6 +1319,14 @@ def initialize_session(
         raise SessionError("INVALID_ARGUMENT", "max_rounds must be a positive integer", action=action)
     if round_budget is not None and (isinstance(round_budget, bool) or not isinstance(round_budget, int) or round_budget < 1):
         raise SessionError("INVALID_ARGUMENT", "round_budget must be a positive integer", action=action)
+    try:
+        search_progress_policy = normalize_policy(
+            raw_search_progress_policy,
+            evaluation_budget=max_solver_calls,
+            max_rounds=max_rounds,
+        )
+    except ValueError as exc:
+        raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
     _validate_init_values(
         action=action,
         eoh_model=eoh_model,
@@ -1497,6 +1515,8 @@ def initialize_session(
             "solver_timeout_seconds": solver_timeout, "repair_request_budget": repair_max_requests,
         },
     }
+    if raw_search_progress_policy is not None:
+        experiment_contracts["search_progress_policy"] = search_progress_policy
     if isinstance(experiment_manifest, Mapping):
         manifest_payload, manifest_hash = _validate_experiment_manifest(
             experiment_manifest,
@@ -1575,6 +1595,7 @@ def initialize_session(
             } if explicit_seed_payload is not None else None,
         },
         "experiment": {"max_rounds": max_rounds, "round_budget": round_budget},
+        "search_progress": {"policy": search_progress_policy},
         "feedback": {"mode": feedback_mode, "source": "runtime_facts" if feedback_mode == "runtime_facts" else None},
         "agent_guidance": bool(agent_guidance),
         "experiment_manifest": {"sha256": manifest_hash, "document": manifest_payload} if manifest_payload is not None else None,

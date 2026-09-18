@@ -395,6 +395,7 @@ def _run_task(root, task_id):
         elif summary["stop_reason"]=="wall_time_limit": reason="DEADLINE_EXCEEDED"
         elif summary["stop_reason"]=="round_budget_limit": reason="ROUND_BUDGET_EXHAUSTED"
         elif summary["stop_reason"]=="solver_call_limit": reason="SOLVER_BUDGET_EXHAUSTED"
+        elif summary["stop_reason"]=="phase_budget_limit": reason="PHASE_BUDGET_EXHAUSTED"
         elif summary["stop_reason"]=="request_limit": reason="REQUEST_BUDGET_EXHAUSTED"
         else: reason="SUCCEEDED" if summary.get("loop_completed") else "FAILED"
     except BaseException as exc:
@@ -545,7 +546,16 @@ def collect_facts(root, con, run, rd, task):
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
     if baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()
-    before={"ref":rd["incumbent_before_ref"],"objective":rd["incumbent_before_objective"]} if rd["incumbent_before_ref"] else None
+    before = None
+    if rd["incumbent_before_ref"]:
+        before_skill = load_skill(root / rd["incumbent_before_ref"])
+        before = {
+            "ref": rd["incumbent_before_ref"],
+            "objective": rd["incumbent_before_objective"],
+            "code_sha256": before_skill.code_sha256,
+            "origin": before_skill.origin,
+            "instance_objectives": list(before_skill.instance_objectives),
+        }
     choices=[]
     for key in ("exported_skill","best_generated_path"):
         if exported.get(key):
@@ -554,7 +564,9 @@ def collect_facts(root, con, run, rd, task):
             matching=[x for x in rows if x["code_sha256"]==skill.code_sha256 and x["evaluation"]["valid"] and x["evaluation"]["objective"]==skill.mean_objective]
             if skill.problem!=run["problem"] or skill.suite_hash!=run["suite_hash"] or skill.evaluator_hash!=run["evaluator_hash"] or not matching:
                 raise ValueError("asset_evidence_identity_mismatch")
-            choices.append({"ref":ref,"objective":skill.mean_objective,"code_sha256":skill.code_sha256,"origin":skill.origin,"evaluation_id":matching[-1]["evaluation_id"]})
+            choices.append({"ref":ref,"objective":skill.mean_objective,"code_sha256":skill.code_sha256,
+                            "origin":skill.origin,"evaluation_id":matching[-1]["evaluation_id"],
+                            "instance_objectives": list(skill.instance_objectives)})
     after=before
     if before:
         skill=load_skill(root/before["ref"])
@@ -568,17 +580,88 @@ def collect_facts(root, con, run, rd, task):
                  "generation_parents":x.get("generation_parents"), "lineage_status":x.get("lineage_status"),
                  "generation_request_ref":request_ref(x.get("generation_request_ref")) or (f"{prefix}/results/exchanges/request_{x['source_request_index']}.json" if x.get("source_request_index") else None),
                  "repair_request_ref":request_ref(x.get("repair_request_ref"))} for x in rows]
+    request_rows = con.execute(
+        "SELECT round_id, state, input_tokens, output_tokens, elapsed_seconds FROM requests WHERE run_id=? ORDER BY sequence",
+        (run["run_id"],),
+    ).fetchall()
+    def request_cost(items):
+        def total(name):
+            values = [item[name] for item in items if item[name] is not None]
+            return sum(values) if values else None
+        return {
+            "requests": len(items),
+            "input_tokens": total("input_tokens"),
+            "output_tokens": total("output_tokens"),
+            "elapsed_seconds": round(sum(float(item["elapsed_seconds"] or 0.0) for item in items), 6),
+        }
+    current_requests = [item for item in request_rows if item["round_id"] == rd["round_id"]]
+    solver_round_attempts = con.execute(
+        "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?", (run["run_id"], rd["round_id"])
+    ).fetchone()[0]
+    request_costs = {
+        "round": request_cost(current_requests),
+        "cumulative": {**request_cost(request_rows), "solver_attempts": con.execute(
+            "SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (run["run_id"],)
+        ).fetchone()[0]},
+    }
+    progress_history = []
+    for earlier in con.execute(
+        "SELECT evaluation_facts_ref,evaluation_facts_sha256 FROM rounds WHERE run_id=? AND round_id<? AND evaluation_facts_ref IS NOT NULL ORDER BY round_id",
+        (run["run_id"], rd["round_id"]),
+    ):
+        old_path = (root / earlier["evaluation_facts_ref"]).resolve()
+        if not old_path.is_relative_to(root.resolve()):
+            raise ValueError("EVIDENCE_REFERENCE_INVALID")
+        old_text = old_path.read_text(encoding="utf-8")
+        if db._sha256(old_text) != earlier["evaluation_facts_sha256"]:
+            raise ValueError("EVIDENCE_INTEGRITY_FAILED")
+        old_facts = json.loads(old_text)
+        if isinstance(old_facts, dict):
+            progress_history.append(old_facts)
+    raw_policy = None
+    manifest = config.get("experiment_manifest") if isinstance(config, dict) else None
+    if isinstance(manifest, dict):
+        extra = manifest.get("document", {}).get("extra", {})
+        if isinstance(extra, dict):
+            raw_policy = extra.get("search_progress_policy")
+    from agent_skill_loop.evidence.search_progress import build_search_progress, evaluate_stagnation, normalize_policy
+    current_facts = {"round_id": rd["round_id"], "problem": run["problem"],
+                     "objective_direction": run["objective_direction"], "candidates": candidates,
+                     "incumbent_before": before, "incumbent_after": after,
+                     "request_costs": request_costs, "round_solver_attempts": solver_round_attempts,
+                     "dual_budget": {"round_evaluation_attempts": solver_round_attempts}}
+    progress = build_search_progress([*progress_history, current_facts], round_id=rd["round_id"],
+                                     request_costs=request_costs, policy=raw_policy)
+    prior_progress = [item.get("search_progress") for item in progress_history if isinstance(item.get("search_progress"), dict)]
+    progress["stagnation"] = evaluate_stagnation([*prior_progress, progress], normalize_policy(raw_policy))
+    budget_view = db._budget_view(con, run)
+    raw_policy = raw_policy if isinstance(raw_policy, dict) else None
+    phase_budget = None
+    if raw_policy is not None:
+        from agent_skill_loop.evidence.search_progress import normalize_policy
+        normalized = normalize_policy(raw_policy)
+        phase_budget = {
+            "policy": normalized,
+            "used": budget_view.get("phase_evaluation_attempts", {}),
+            "remaining": {
+                phase: max(0, int(limit) - int(budget_view.get("phase_evaluation_attempts", {}).get(phase, 0)))
+                for phase, limit in normalized.get("phase_budgets", {}).items()
+            },
+        }
     return {"round_id":rd["round_id"],"problem":run["problem"],"suite_hash":run["suite_hash"],"evaluator_hash":run["evaluator_hash"],
+            "objective_direction": run["objective_direction"],
             "benchmark": {"benchmark_id": run["benchmark_id"], "profile": run["benchmark_profile"], "problem_spec_hash": run["problem_spec_hash"], "benchmark_spec_hash": run["benchmark_spec_hash"],
                           "data_manifest_hash": run["data_manifest_hash"], "reference_manifest_hash": run["reference_manifest_hash"], "metric_spec_hash": metric_run_hash} if "benchmark_id" in run.keys() and run["benchmark_id"] else None,
             "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
             "incumbent_before":before,"incumbent_after":after,"candidates":candidates,"exports":exported,
             "best_generated_ref":f"{prefix}/{exported['best_generated_path']}" if exported.get("best_generated_path") else None,
-            "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":db._budget_view(con,run),
+            "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":budget_view,
             "solver_costs": solver_cost_summary(con, task["task_id"], candidates),
             "population_snapshot": population_snapshot,
-            "dual_budget": {key: db._budget_view(con, run).get(key) for key in ("total_evaluation_attempts", "novel_candidate_evaluations", "seed_reevaluation_attempts", "baseline_attempts", "repair_attempts")},
-            "startup_preflight": preflight,
+            "dual_budget": {key: budget_view.get(key) for key in ("total_evaluation_attempts", "novel_candidate_evaluations", "seed_reevaluation_attempts", "baseline_attempts", "repair_attempts", "phase_evaluation_attempts")},
+            "phase_budget": phase_budget,
+            "startup_preflight": preflight, "request_costs": request_costs,
+            "search_progress": progress,
             "terminal_reason":task["terminal_reason"]}
 
 

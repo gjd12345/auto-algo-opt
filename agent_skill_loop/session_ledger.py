@@ -1,9 +1,38 @@
 """Durable pre-effect request and solver accounting for Session execution."""
 from pathlib import Path
+import json
 import uuid
 
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop.request_budget import RequestBudget, RequestSlot
+from agent_skill_loop.evidence.search_progress import normalize_policy, phase_for_round
+
+
+def _budget_phase(root: Path, con, task) -> tuple[str | None, dict[str, object]]:
+    """Read the immutable outer phase contract and declared round intent."""
+    try:
+        config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
+        search = config.get("search_progress") if isinstance(config, dict) else None
+        policy = normalize_policy(search.get("policy") if isinstance(search, dict) else None)
+        if not policy.get("enabled"):
+            return None, policy
+        rd = con.execute(
+            "SELECT normalized_plan_ref FROM rounds WHERE run_id=? AND round_id=?",
+            (task["run_id"], task["round_id"]),
+        ).fetchone()
+        declared = None
+        if rd and rd["normalized_plan_ref"]:
+            plan = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8"))
+            intent = plan.get("search_intent") if isinstance(plan, dict) else None
+            declared = intent.get("phase") if isinstance(intent, dict) else None
+        phase = phase_for_round(policy, int(task["round_id"]), declared)
+        if policy.get("enforce_subbudgets") and phase is None:
+            raise ValueError("phase_budget_missing")
+        return phase, policy
+    except ValueError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+        raise ValueError("search_progress_policy_invalid") from exc
 
 
 def mark_effect(con,row,task):
@@ -122,12 +151,20 @@ def solver_event(session, payload):
                 if row["state"]!="RUNNING" or task["state"]!="RUNNING": raise ValueError("session_stopped")
                 if row["max_solver_calls"] is not None and used>=row["max_solver_calls"]: raise ValueError("solver_budget_exhausted")
                 if row["round_budget"] is not None and round_used>=row["round_budget"]: raise ValueError("round_budget_exhausted")
+                phase, policy = _budget_phase(Path(root), con, task)
+                if phase and policy.get("enforce_subbudgets"):
+                    phase_used = con.execute(
+                        "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND budget_phase=?",
+                        (row["run_id"], phase),
+                    ).fetchone()[0]
+                    if phase_used >= int(policy["phase_budgets"][phase]):
+                        raise ValueError("phase_budget_exhausted")
                 if payload["suite_hash"]!=row["suite_hash"] or payload["evaluator_hash"]!=row["evaluator_hash"]: raise ValueError("evaluation_identity_mismatch")
                 if row["metric_spec_hash"] is not None and payload.get("metric_spec_hash") != row["metric_spec_hash"]:
                     raise ValueError("metric_spec_identity_mismatch")
                 mark_effect(con,row,task)
-                con.execute("INSERT INTO solver_calls(solver_call_id,run_id,round_id,task_id,candidate_id,revision,origin,evaluation_id,suite_hash,evaluator_hash,metric_spec_hash,code_sha256,state,started_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'started',?)",
-                    (uuid.uuid4().hex,row["run_id"],task["round_id"],task_id,payload.get("candidate_id") or payload.get("origin"),payload.get("revision") or "original",payload.get("origin"),payload["evaluation_id"],payload["suite_hash"],payload["evaluator_hash"],payload.get("metric_spec_hash"),payload["code_sha256"],db._utc_now()))
+                con.execute("INSERT INTO solver_calls(solver_call_id,run_id,round_id,task_id,candidate_id,revision,origin,evaluation_id,suite_hash,evaluator_hash,metric_spec_hash,code_sha256,budget_phase,state,started_at_utc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'started',?)",
+                    (uuid.uuid4().hex,row["run_id"],task["round_id"],task_id,payload.get("candidate_id") or payload.get("origin"),payload.get("revision") or "original",payload.get("origin"),payload["evaluation_id"],payload["suite_hash"],payload["evaluator_hash"],payload.get("metric_spec_hash"),payload["code_sha256"],phase,db._utc_now()))
             else:
                 cursor=con.execute("UPDATE solver_calls SET state=?,objective=?,valid=?,error_code=?,finished_at_utc=? WHERE evaluation_id=? AND code_sha256=? AND task_id=?",
                     ("complete" if result["valid"] else "failed",result["objective"],int(result["valid"]),result["error_code"],db._utc_now(),payload["evaluation_id"],payload["code_sha256"],task_id))

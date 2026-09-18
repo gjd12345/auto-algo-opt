@@ -116,6 +116,9 @@ def main() -> int:
         elif message == "solver_budget_exhausted":
             result = {"status": "budget_exhausted", "stop_reason": "solver_call_limit",
                       "error_type": type(exc).__name__, "error_code": message}
+        elif message == "phase_budget_exhausted":
+            result = {"status": "budget_exhausted", "stop_reason": "phase_budget_limit",
+                      "error_type": type(exc).__name__, "error_code": message}
         else:
             result = {"status": "engine_failed", "error_type": type(exc).__name__,
                       "error_code": "no_valid_initial_population" if message.startswith("Initial population is empty.") else "engine_exception"}

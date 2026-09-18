@@ -18,6 +18,7 @@ Required fields:
   "memory_basis": [],
   "reference_skill_ref": null,
   "hypothesis": "The change may reduce avoidable capacity waste; this is unproven.",
+  "search_intent": {"phase": "exploration"},
   "search_policy": null,
   "reasoning_summary": "The host Agent selected this bounded experiment because ..."
 }
@@ -36,6 +37,12 @@ Session defaults, or provide any subset of `pop_size`, `n_pop`, and
 `max_sample_nums` to request a different round allocation. The Runtime records
 the effective values and rejects a value outside the frozen limits with
 `PLAN_SEARCH_POLICY_OUT_OF_BOUNDS`; this field cannot change hard budgets.
+
+`search_intent.phase` is optional outer metadata with value `exploration` or
+`exploitation` when a frozen SearchProgress policy enables phase quotas. It is
+not an EoH operator or parent-selection instruction. The Runtime counts every
+baseline, seed, generated, and repair evaluator attempt against the selected
+phase quota; omitted intent falls back to the frozen round schedule.
 
 For round 2 and later, the EoH context also contains a Runtime-generated
 `feedback_summary`. It is a bounded fact record from the previous round with

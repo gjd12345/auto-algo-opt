@@ -391,6 +391,9 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     )
                     feedback_summary_ref = f"{prefix}/feedback_summary.json"
                     feedback_summary_sha256 = save(root, feedback_summary_ref, feedback_summary)
+                manifest_document = config.get("experiment_manifest", {}).get("document", {}) if isinstance(config.get("experiment_manifest"), dict) else {}
+                manifest_extra = manifest_document.get("extra", {}) if isinstance(manifest_document, dict) else {}
+                search_progress_mode = str(manifest_extra.get("search_progress_mode", "expose"))
                 effective_policy = db.effective_search_policy(config, plan.search_policy)
                 if row["benchmark_id"] and plan.search_policy is not None:
                     fail("BENCHMARK_SEARCH_POLICY_FIXED", action)
@@ -401,6 +404,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     search_policy=effective_policy,
                     feedback_mode=row["feedback_mode"] if "feedback_mode" in row.keys() else "runtime_facts",
                     agent_guidance=guidance_enabled,
+                    search_progress_mode=search_progress_mode,
                 )
                 payload = json.loads(context.split("\n", 1)[1])
                 manifest = {"plan_sha256": db._sha256(db._json(plan.as_dict())+"\n"), "context_sha256": db._sha256(context),
@@ -409,6 +413,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                             "search_policy_requested": plan.search_policy, "search_policy_effective": effective_policy,
                             "feedback_mode": row["feedback_mode"] if "feedback_mode" in row.keys() else "runtime_facts",
                             "agent_guidance": guidance_enabled,
+                            "search_progress_mode": search_progress_mode,
                             "feedback_summary": {
                                 "ref": feedback_summary_ref,
                                 "sha256": feedback_summary_sha256,
@@ -790,7 +795,7 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                         fail("ROUND_LIMIT_REACHED", action)
                     budget=db._budget_view(con,row)
                     elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
-                    terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED')",(row["run_id"],)).fetchone()
+                    terminal=con.execute("SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN ('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED','PHASE_BUDGET_EXHAUSTED')",(row["run_id"],)).fetchone()
                     if (terminal or row["eoh_round_max_requests"]==0 or row["round_wall_seconds"]==0
                             or budget["eoh_requests_remaining"]==0 or budget["solver_calls_remaining"]==0
                             or (row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"])):
@@ -810,4 +815,6 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                 result=receipt(con,row,rd,action,operation_id,ih,{"decision":decision,
                     "memory_consumption_ref":memory_ref,"memory_consumption_sha256":memory_sha})
         db.flush_audit(root)
+        from agent_skill_loop.evidence.report import write_round_progress
+        write_round_progress(root)
         return result
