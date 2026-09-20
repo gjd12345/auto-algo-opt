@@ -37,6 +37,16 @@ python -m agent_skill_loop benchmark research-loop-config \
 `round_budget=25`、处理类型、Memory 来源、comparison policy、成本可用性规则和
 heldout 锁。每组仍须使用独立 Session 与输出目录。
 
+三个 seed 不从结果中挑选。它们由
+`SHA-256("obp_research_loop_v1/three_seed_diagnostic")` 的前三个 32-bit
+大端整数确定，固定为 `1436574329`、`2082454166`、`3603139526`。
+以下零 provider 命令生成九个 manifest、共同初始 Plan、运行登记表和报告索引：
+
+```text
+python tools/prepare_research_loop_v2.py \
+  --output outputs/research-loop-v2-diagnostic
+```
+
 ## 3. 确定性 comparison packet
 
 每轮 `collect` 生成 `rounds/round_NNNN/comparison_packet.json`，策略版本为
@@ -105,4 +115,3 @@ packet、Memory consumption 一起导出，并生成 `controller_usage.jsonl` �
 - C 可读取外部 run、seed 或组的 Memory；
 - 未知 token 被按零计入；
 - solver 账本、候选身份或 bundle hash 不完整。
-
