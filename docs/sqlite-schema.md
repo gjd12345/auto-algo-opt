@@ -47,7 +47,20 @@ CREATE TABLE memory_reads (
             offset_chars INTEGER NOT NULL,
             returned_chars INTEGER NOT NULL,
             total_chars INTEGER NOT NULL,
-            read_at_utc TEXT NOT NULL,
+            read_at_utc TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'complete', error_code TEXT,
+            FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+        );
+
+CREATE TABLE memory_searches (
+            search_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            round_id INTEGER NOT NULL,
+            query_sha256 TEXT NOT NULL,
+            filters_json TEXT NOT NULL,
+            result_refs_json TEXT NOT NULL,
+            status TEXT NOT NULL,
+            error_code TEXT,
+            searched_at_utc TEXT NOT NULL,
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
         );
 
@@ -218,6 +231,7 @@ CREATE TABLE solver_calls (
             evaluator_hash TEXT NOT NULL,
             metric_spec_hash TEXT,
             code_sha256 TEXT NOT NULL,
+            budget_phase TEXT,
             state TEXT NOT NULL CHECK (state IN ('reserved','started','complete','failed','interrupted','unknown')),
             objective REAL,
             valid INTEGER,

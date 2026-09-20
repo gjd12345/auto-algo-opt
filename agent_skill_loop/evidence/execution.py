@@ -82,13 +82,17 @@ def build_execution_delta(rows: list[Mapping[str, Any]], *, plan_ref: str, plan_
         if isinstance(row.get("code"), str) and row.get("code_sha256") == _sha(row["code"]):
             observed.setdefault(row["code_sha256"], row)
     incumbent = observed.get(_sha(incumbent_code)) if incumbent_code else None
-    seen: set[str] = set()
+    # Baseline and inherited seeds are already evaluated behavior in this
+    # round even when an upstream export orders them after a generated row.
+    seen: set[str] = {
+        str(row["code_sha256"]) for row in rows
+        if row.get("origin") not in {"generated", "generated_repair"}
+        and isinstance(row.get("code_sha256"), str)
+    }
     previous = set(previous_evaluated_hashes or ())
     entries = []
     for row in rows:
         if row.get("origin") not in {"generated", "generated_repair"}:
-            if isinstance(row.get("code_sha256"), str):
-                seen.add(row["code_sha256"])
             continue
         code_hash = row.get("code_sha256")
         parents = row.get("generation_parents")

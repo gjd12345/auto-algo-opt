@@ -140,6 +140,8 @@ def _all_candidates(facts: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any
 
 def _source_metrics(previous: list[Mapping[str, Any]], current: list[Mapping[str, Any]]) -> dict[str, Any]:
     seen = {str(item.get("code_sha256")) for item in previous if item.get("code_sha256")}
+    seen.update(str(item.get("code_sha256")) for item in current
+                if not _generated(item) and item.get("code_sha256"))
     generated = [item for item in current if _generated(item)]
     duplicate = 0
     for item in generated:
@@ -173,6 +175,7 @@ def _behavior_metrics(previous: list[Mapping[str, Any]], current: list[Mapping[s
         return (str(contract), str(suite), str(signature)) if signature and contract and suite else None
 
     seen = {value for value in (key(item) for item in previous) if value is not None}
+    seen.update(value for value in (key(item) for item in current if not _generated(item)) if value is not None)
     generated = [item for item in current if _generated(item)]
     comparable = [item for item in generated if key(item) is not None]
     duplicate = 0
@@ -282,17 +285,49 @@ def _cost_metrics(current_facts: Mapping[str, Any], novel_behavior_count: int) -
     if solver_attempts is None:
         solver_attempts = _number(current_facts.get("round_solver_attempts"))
     request_count = _number(round_cost.get("requests"))
+    input_tokens = round_cost.get("input_tokens")
+    output_tokens = round_cost.get("output_tokens")
     return {
         "round_requests": int(request_count) if request_count is not None else 0,
         "round_solver_attempts": int(solver_attempts) if solver_attempts is not None else 0,
-        "round_input_tokens": round_cost.get("input_tokens"),
-        "round_output_tokens": round_cost.get("output_tokens"),
+        "round_input_tokens": input_tokens,
+        "round_output_tokens": output_tokens,
+        "round_token_status": "complete" if round_cost.get("tokens_complete") is True else "incomplete",
+        "round_provider_elapsed_seconds": round_cost.get("elapsed_seconds"),
+        # Read-compatible alias. This is provider request time, not engine wall time.
         "round_wall_seconds": round_cost.get("elapsed_seconds"),
         "novel_behavior_count": novel_behavior_count,
         "requests_per_novel_behavior": request_count / novel_behavior_count if request_count is not None and novel_behavior_count else None,
         "solver_attempts_per_novel_behavior": solver_attempts / novel_behavior_count if solver_attempts is not None and novel_behavior_count else None,
         "novel_behavior_cost_reason": None if novel_behavior_count else "no_new_complete_behavior_signature",
     }
+
+
+def _attempt_trace(current_facts: Mapping[str, Any], candidates: list[Mapping[str, Any]]) -> dict[str, Any]:
+    direction = str(current_facts.get("objective_direction") or "minimize")
+    before = current_facts.get("incumbent_before") if isinstance(current_facts.get("incumbent_before"), Mapping) else {}
+    best = _number(before.get("objective"))
+    events = []
+    for index, candidate in enumerate(candidates):
+        objective = _number(candidate.get("objective"))
+        valid = candidate.get("valid") is True and objective is not None
+        prior = best
+        if valid and (best is None or (objective < best if direction == "minimize" else objective > best)):
+            best = objective
+        evidence = _behavior(candidate)
+        comparable = bool(evidence and evidence.get("status") == "complete" and evidence.get("comparable") is True)
+        events.append({
+            "attempt_index_in_round": index + 1,
+            "evaluation_id": candidate.get("evaluation_id"),
+            "best_before": prior,
+            "best_after": best,
+            "behavior_comparable": comparable,
+            "generated": _generated(candidate),
+        })
+    declared = current_facts.get("round_solver_attempts")
+    complete = isinstance(declared, int) and not isinstance(declared, bool) and declared == len(events)
+    return {"events": events, "complete": complete, "declared_attempts": declared,
+            "observed_attempts": len(events)}
 
 
 def _merge_scope(*parts: Mapping[str, Any]) -> dict[str, Any]:
@@ -323,7 +358,9 @@ def build_search_progress(
     if request_costs is not None:
         current = {**current, "request_costs": request_costs}
     cost = _cost_metrics(current, int(behavior["behavior_novel_count"]))
-    window = _merge_scope(source, behavior, yield_metrics, lineage, diversity, fitness, cost)
+    attempt_trace = _attempt_trace(current, current_candidates)
+    window = _merge_scope(source, behavior, yield_metrics, lineage, diversity, fitness, cost,
+                          {"attempt_trace": attempt_trace})
 
     all_candidates = _all_candidates(facts)
     cumulative_source = _source_metrics([], all_candidates)
@@ -367,41 +404,51 @@ def evaluate_stagnation(progress_history: Sequence[Mapping[str, Any]], policy: M
         return {"status": "disabled", "policy": normalized, "reason": "policy_disabled"}
     records = [item for item in progress_history if isinstance(item, Mapping)]
     window = int(normalized["window_evaluations"])
-    attempts = 0
-    selected: list[Mapping[str, Any]] = []
-    for item in reversed(records):
-        attempts += int((item.get("window") or {}).get("round_solver_attempts") or 0)
-        selected.append(item)
-        if attempts >= window:
-            break
-    selected.reverse()
+    traces = []
+    selected_rounds = []
+    for item in records:
+        trace = ((item.get("window") or {}).get("attempt_trace") or {})
+        if trace.get("complete") is not True or not isinstance(trace.get("events"), list):
+            return {"status": "insufficient_window", "policy": normalized,
+                    "reason": "exact_attempt_trace_unavailable", "attempts": len(traces),
+                    "required_attempts": window}
+        for event in trace["events"]:
+            traces.append((item.get("round_id"), event))
+    attempts = len(traces)
     if attempts < window:
         return {"status": "insufficient_window", "policy": normalized, "reason": "fixed_evaluation_window_not_filled", "attempts": attempts, "required_attempts": window}
-    first = (selected[0].get("window") or {}).get("incumbent_before_objective")
-    last = (selected[-1].get("window") or {}).get("incumbent_after_objective")
-    absolute_gain = _number(first)
-    if absolute_gain is not None and last is not None:
-        absolute_gain = float(first) - float(last)
+    selected = traces[-window:]
+    selected_rounds = list(dict.fromkeys(round_id for round_id, _event in selected))
+    first = _number(selected[0][1].get("best_before"))
+    last = _number(selected[-1][1].get("best_after"))
+    direction = str((records[-1].get("window") or {}).get("objective_direction") or "minimize")
+    absolute_gain = None
+    if first is not None and last is not None:
+        absolute_gain = first - last if direction == "minimize" else last - first
     relative_gain = None
     if absolute_gain is not None and _number(first) not in (None, 0.0):
         relative_gain = absolute_gain / abs(float(first))
-    complete = sum(int((item.get("window") or {}).get("behavior_comparable_count") or 0) for item in selected)
-    generated = sum(int((item.get("window") or {}).get("generation_attempt_count") or 0) for item in selected)
+    complete = sum(bool(event.get("behavior_comparable")) for _round_id, event in selected if event.get("generated"))
+    generated = sum(bool(event.get("generated")) for _round_id, event in selected)
     coverage = complete / generated if generated else 0.0
-    gain_gate = (absolute_gain is not None and absolute_gain > 0 and absolute_gain >= normalized["min_absolute_gain"]) or (
-        relative_gain is not None and relative_gain > 0 and relative_gain >= normalized["min_relative_gain"]
-    )
+    absolute_gate = absolute_gain is not None and absolute_gain >= normalized["min_absolute_gain"]
+    relative_gate = None if first in (None, 0.0) else (
+        relative_gain is not None and relative_gain >= normalized["min_relative_gain"])
+    gain_gate = absolute_gate and (relative_gate is True if relative_gate is not None else True)
     coverage_gate = coverage >= normalized["min_behavior_coverage"]
     return {
         "status": "progress" if gain_gate and coverage_gate else "stagnated",
         "policy": normalized,
-        "window_round_ids": [item.get("round_id") for item in selected],
-        "attempts": attempts,
+        "window_round_ids": selected_rounds,
+        "attempts": window,
+        "available_attempts": attempts,
         "required_attempts": window,
         "absolute_gain": absolute_gain,
         "relative_gain": relative_gain,
         "behavior_coverage": coverage,
         "gain_gate": bool(gain_gate),
+        "absolute_gain_gate": bool(absolute_gate),
+        "relative_gain_gate": relative_gate,
         "coverage_gate": bool(coverage_gate),
         "reason": None if gain_gate and coverage_gate else "gain_or_behavior_coverage_gate_not_met",
     }

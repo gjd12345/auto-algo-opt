@@ -18,6 +18,21 @@ Phase 4.1（2026-09-13）及 Phase 5（2026-09-13）补充合同：
 
 新客户端应提交 `plan_alignment=misaligned` 表示偏离计划；历史 `deviated` 拼写仍兼容。
 
+研究闭环 v2（2026-09-20）补充合同：
+
+- `algorithm-optimization-research-loop-pilot/v1` 只允许 `obp_online / obp_evolution_mini`，
+  主预算固定为 100 solver calls、四轮、每轮 25；heldout 在诊断期锁定。
+- 每轮事实 MUST 生成策略版本为 `obp-research-contrasts/v1` 的
+  `comparison_packet.json`。候选关联 MUST 使用精确 `evaluation_id + code_sha256`；
+  objective 相等 MUST NOT 作为身份回退。
+- treatment A 禁止 `reflection_basis`；B、C 的第二轮及以后 MUST 精确引用上一轮已接受的
+  `evaluation.submitted.json` 及 SHA。Runtime 只验证引用，不将其直接注入 EoH。
+- C 的 Memory store MUST 是本 Session 输出目录内的新空库，只能消费相同 run 更早轮次的
+ 记录。insight MUST 绑定合法 evidence ref，并声明适用条件和未知边界。
+- controller token 不可用时 MUST 记录 `unavailable` 和 `null`，MUST NOT 按零合计。
+  外层用量事件不得包含私有思维内容。
+- 完整实验说明、选择规则和进入诊断门槛见 `research-loop-v2.md`。
+
 ---
 
 ## 1. 核心定义

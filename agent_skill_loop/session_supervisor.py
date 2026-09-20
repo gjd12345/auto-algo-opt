@@ -588,10 +588,16 @@ def collect_facts(root, con, run, rd, task):
         def total(name):
             values = [item[name] for item in items if item[name] is not None]
             return sum(values) if values else None
+        tokens_complete = all(item["input_tokens"] is not None and item["output_tokens"] is not None
+                              for item in items)
         return {
             "requests": len(items),
             "input_tokens": total("input_tokens"),
             "output_tokens": total("output_tokens"),
+            "tokens_complete": tokens_complete,
+            "unknown_token_requests": sum(item["input_tokens"] is None or item["output_tokens"] is None
+                                           for item in items),
+            "provider_elapsed_seconds": round(sum(float(item["elapsed_seconds"] or 0.0) for item in items), 6),
             "elapsed_seconds": round(sum(float(item["elapsed_seconds"] or 0.0) for item in items), 6),
         }
     current_requests = [item for item in request_rows if item["round_id"] == rd["round_id"]]
@@ -599,9 +605,11 @@ def collect_facts(root, con, run, rd, task):
         "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?", (run["run_id"], rd["round_id"])
     ).fetchone()[0]
     request_costs = {
-        "round": request_cost(current_requests),
+        "round": {**request_cost(current_requests), "engine_wall_seconds": float(task["engine_elapsed_seconds"] or 0.0)},
         "cumulative": {**request_cost(request_rows), "solver_attempts": con.execute(
             "SELECT COUNT(*) FROM solver_calls WHERE run_id=?", (run["run_id"],)
+        ).fetchone()[0], "engine_wall_seconds": con.execute(
+            "SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?", (run["run_id"],)
         ).fetchone()[0]},
     }
     progress_history = []

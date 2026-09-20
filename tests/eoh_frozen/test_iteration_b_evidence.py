@@ -66,7 +66,9 @@ def test_g4_fixture_freezes_progress_context_and_phase_budget(tmp_path, monkeypa
             evaluation_file = tmp_path / f"evaluation-{round_id}.json"
             evaluation_file.write_text(json.dumps({
                 "plan_alignment": "aligned", "observations": [{"claim": "fixture evidence", "evidence_refs": [facts["evidence_refs"][0]]}],
-                "hypotheses": [], "next_search_advice": {}, "memory_action": {"kind": "none", "reason": "fixture only"},
+                "hypotheses": [],
+                "next_search_advice": {"direction": "separate the next phase from the stalled mechanism"},
+                "memory_action": {"kind": "none", "reason": "fixture only"},
             }), encoding="utf-8")
             evaluated = actions.submit_evaluation(run=root, operation_id=f"evaluation-{round_id}", expected_state_version=collected["state_version"], file=evaluation_file)
             actions.finish_round(run=root, operation_id=f"finish-{round_id}", expected_state_version=evaluated["state_version"], decision="continue" if round_id == 1 else "complete")

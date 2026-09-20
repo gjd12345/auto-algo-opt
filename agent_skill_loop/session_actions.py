@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -94,6 +95,35 @@ def save(root, ref, value):
     text = value if isinstance(value, str) else db._json(value) + "\n"
     db._atomic_write(local(root, ref), text)
     return db._sha256(text)
+
+
+def _manifest_extra(root):
+    config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
+    manifest = config.get("experiment_manifest")
+    document = manifest.get("document", manifest) if isinstance(manifest, dict) else {}
+    return document.get("extra", {}) if isinstance(document, dict) and isinstance(document.get("extra", {}), dict) else {}
+
+
+def _reflection_contract(root, con, row, rd):
+    """Return (requirement, exact previous accepted note) for this treatment."""
+    treatment = str(_manifest_extra(root).get("treatment") or "")
+    if treatment == "facts_to_plan":
+        return "forbidden", None
+    if treatment not in {"explicit_reflection", "reflection_with_online_memory"}:
+        return "optional", None
+    if rd["previous_round_id"] is None:
+        return "forbidden", None
+    previous = con.execute(
+        "SELECT submitted_evaluation_ref,submitted_evaluation_sha256 FROM rounds WHERE run_id=? AND round_id=?",
+        (row["run_id"], rd["previous_round_id"]),
+    ).fetchone()
+    if previous is None or not previous["submitted_evaluation_ref"] or not previous["submitted_evaluation_sha256"]:
+        fail("REFLECTION_REFERENCE_UNAVAILABLE", "submit-plan")
+    return "required", {
+        "round_id": rd["previous_round_id"],
+        "evaluation_ref": previous["submitted_evaluation_ref"],
+        "evaluation_sha256": previous["submitted_evaluation_sha256"],
+    }
 
 
 def _prepare_population_seeds(root, con, run, rd, config):
@@ -214,6 +244,70 @@ def complete_reads(con, run_id, round_id):
         if row["offset_chars"] <= end:
             groups[key] = max(end, row["offset_chars"] + row["returned_chars"])
     return {ref: sha for (ref, sha, total), end in groups.items() if end >= total}
+
+
+def record_controller_usage(*, run, file, expected_run_id=None):
+    """Persist one immutable public controller-cost event without private reasoning."""
+    action = "record-controller-usage"
+    raw = strict_json_object(Path(file).read_text(encoding="utf-8"))
+    allowed = {
+        "schema_version", "event_id", "round_id", "treatment", "activity", "model",
+        "input_tokens", "output_tokens", "elapsed_seconds", "availability",
+        "unavailable_reason", "source",
+    }
+    if set(raw) - allowed or raw.get("schema_version") != "algorithm-optimization-controller-usage/v1":
+        fail("CONTROLLER_USAGE_INVALID", action)
+    event_id = raw.get("event_id")
+    if not isinstance(event_id, str) or not event_id or len(event_id) > 128 or any(not (char.isalnum() or char in "-_") for char in event_id):
+        fail("CONTROLLER_USAGE_INVALID", action)
+    round_id = raw.get("round_id")
+    if isinstance(round_id, bool) or not isinstance(round_id, int) or round_id < 1:
+        fail("CONTROLLER_USAGE_INVALID", action)
+    activity = raw.get("activity")
+    if activity not in {"plan", "reflection", "memory_search", "memory_read", "other"}:
+        fail("CONTROLLER_USAGE_INVALID", action)
+    availability = raw.get("availability")
+    if availability not in {"complete", "unavailable"}:
+        fail("CONTROLLER_USAGE_INVALID", action)
+    elapsed = raw.get("elapsed_seconds")
+    if elapsed is not None and (isinstance(elapsed, bool) or not isinstance(elapsed, (int, float))
+                                or not math.isfinite(float(elapsed)) or elapsed < 0):
+        fail("CONTROLLER_USAGE_INVALID", action)
+    for name in ("input_tokens", "output_tokens"):
+        value = raw.get(name)
+        if value is not None and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
+            fail("CONTROLLER_USAGE_INVALID", action)
+    if availability == "complete" and (raw.get("input_tokens") is None or raw.get("output_tokens") is None):
+        fail("CONTROLLER_USAGE_TOKENS_REQUIRED", action)
+    if availability == "unavailable" and (not isinstance(raw.get("unavailable_reason"), str)
+                                            or not raw["unavailable_reason"].strip()):
+        fail("CONTROLLER_USAGE_REASON_REQUIRED", action)
+    if not isinstance(raw.get("model"), str) or not raw["model"].strip() or not isinstance(raw.get("source"), str) or not raw["source"].strip():
+        fail("CONTROLLER_USAGE_INVALID", action)
+    with opened(run, action, expected_run_id) as (root, con):
+        row = db._require_run(con, action=action, run_id=expected_run_id)
+        if row["max_rounds"] is not None and round_id > row["max_rounds"]:
+            fail("CONTROLLER_USAGE_ROUND_INVALID", action)
+        treatment = str(_manifest_extra(root).get("treatment") or "")
+        if treatment and raw.get("treatment") != treatment:
+            fail("CONTROLLER_USAGE_TREATMENT_MISMATCH", action)
+        normalized = {key: raw.get(key) for key in sorted(allowed) if key in raw}
+        normalized["total_tokens"] = (
+            normalized["input_tokens"] + normalized["output_tokens"]
+            if availability == "complete" else None
+        )
+        text = db._json(normalized) + "\n"
+        target = root / "controller_usage" / f"{event_id}.json"
+        from agent_skill_loop.file_lock import exclusive_file_lock
+        with exclusive_file_lock(root / ".controller-usage.lock", busy="controller_usage_busy"):
+            if target.exists():
+                if target.read_text(encoding="utf-8") != text:
+                    fail("CONTROLLER_USAGE_EVENT_CONFLICT", action)
+            else:
+                db._atomic_write(target, text)
+        return db._envelope(con, row, db._round(con, row), action=action,
+                            result={"recorded": True, "event_ref": target.relative_to(root).as_posix(),
+                                    "event_sha256": db._sha256(text), "availability": availability})
 
 
 def _terminate_before_execute(con, root, run, rd, operation_id, input_hash, reason, detail):
@@ -352,21 +446,30 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 try:
                     feedback_enabled = row["feedback_mode"] != "off" if "feedback_mode" in row.keys() else True
                     guidance_enabled = bool(row["agent_guidance"]) if "agent_guidance" in row.keys() else True
+                    reflection_requirement, available_reflection = _reflection_contract(root, con, row, rd)
                     plan = PlanDocument.from_dict(strict_json_object(text), expected_round_id=rd["round_id"], suite_hash=row["suite_hash"],
                         available_feedback_refs={rd["feedback_ref"]} if feedback_enabled and rd["feedback_ref"] else set(),
                         expected_feedback_round_id=rd["previous_round_id"] if feedback_enabled else None,
                         available_memory_refs=set(reads),
                         available_skill_refs={rd["incumbent_before_ref"]} if rd["incumbent_before_ref"] else set(),
-                        search_policy_limits=db.search_policy_limits(config))
+                        search_policy_limits=db.search_policy_limits(config),
+                        available_reflection_basis=available_reflection,
+                        reflection_requirement=reflection_requirement)
                 except ValueError as exc:
                     code = str(exc).split(":")[0].upper()
                     if code == "MEMORY_REFERENCE_NOT_FOUND": code = "MEMORY_REFERENCE_NOT_COMPLETELY_READ"
                     fail(code, action, str(exc))
                 bodies = []
+                treatment = str(_manifest_extra(root).get("treatment") or "")
                 for ref in plan.memory_basis:
                     body = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(ref)
                     if body["body_sha256"] != reads[ref] or body["truncated"]:
                         fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
+                    if treatment == "reflection_with_online_memory":
+                        provenance = body.get("provenance") if isinstance(body.get("provenance"), dict) else {}
+                        source_round = provenance.get("round_id")
+                        if provenance.get("source_run_id") != row["run_id"] or not str(source_round).isdigit() or int(source_round) >= rd["round_id"]:
+                            fail("MEMORY_REFERENCE_OUTSIDE_CURRENT_RUN_HISTORY", action)
                     bodies.append(body)
                 feedback_summary = None
                 feedback_summary_ref = None
@@ -414,6 +517,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                             "feedback_mode": row["feedback_mode"] if "feedback_mode" in row.keys() else "runtime_facts",
                             "agent_guidance": guidance_enabled,
                             "search_progress_mode": search_progress_mode,
+                            "reflection_basis": plan.reflection_basis.as_dict() if plan.reflection_basis else None,
                             "feedback_summary": {
                                 "ref": feedback_summary_ref,
                                 "sha256": feedback_summary_sha256,
@@ -668,6 +772,23 @@ def collect(*, run, operation_id, expected_state_version, expected_run_id=None):
                 facts["execution_delta"] = {"ref": delta_ref, "sha256": delta_sha,
                                             "generated_count": len(execution_delta["candidates"])}
                 facts["evidence_refs"].append(delta_ref)
+                from agent_skill_loop.evidence.comparison import build_comparison_packet
+                comparison_packet = build_comparison_packet(
+                    source_rows,
+                    plan=plan,
+                    plan_ref=rd["normalized_plan_ref"],
+                    plan_sha256=rd["normalized_plan_sha256"],
+                    execution_delta=execution_delta,
+                    search_progress=facts.get("search_progress"),
+                    request_costs=facts.get("request_costs"),
+                    problem=row["problem"],
+                    suite_hash=row["suite_hash"],
+                )
+                packet_ref = prefix + "/comparison_packet.json"
+                packet_sha = save(root, packet_ref, comparison_packet)
+                facts["comparison_packet"] = {"ref": packet_ref, "sha256": packet_sha,
+                                              "schema_version": comparison_packet["schema_version"]}
+                facts["evidence_refs"].append(packet_ref)
                 ref = prefix + "/evaluation_facts.json"
                 sha = save(root,ref,facts)
                 after = facts.get("incumbent_after") or {}
@@ -705,7 +826,7 @@ def parse_evaluation(raw, enabled, evidence_refs):
     except ValueError as exc: fail("MEMORY_ACTION_INVALID","submit-evaluation",str(exc))
 
 
-def validate_memory_publication(memory, row):
+def validate_memory_publication(memory, row, *, treatment=""):
     if memory.kind not in {"insight", "solution"}:
         return
     from agent_skill_loop.memory.api import MemoryEntry, _validate_entry
@@ -716,6 +837,13 @@ def validate_memory_publication(memory, row):
                                    type=memory.kind, project=memory.project, scene=memory.scene, body=memory.body))
     except ValueError as exc:
         fail("MEMORY_ACTION_INVALID", "submit-evaluation", str(exc))
+    if treatment == "reflection_with_online_memory" and memory.kind == "insight":
+        if not memory.evidence_ref:
+            fail("MEMORY_EVIDENCE_REQUIRED", "submit-evaluation")
+        body = memory.body or ""
+        if "**Applicability:**" not in body or "**Limitations:**" not in body:
+            fail("MEMORY_SCOPE_REQUIRED", "submit-evaluation",
+                 "online research insights require Applicability and Limitations sections")
 
 
 def memory_revise(*, run, operation_id, expected_state_version, file, expected_run_id=None):
@@ -732,7 +860,7 @@ def memory_revise(*, run, operation_id, expected_state_version, file, expected_r
                 memory = MemoryAction.from_dict(strict_json_object(text), enabled=bool(row["memory_enabled"]))
                 if memory.kind not in {"insight", "solution"}:
                     fail("MEMORY_ACTION_INVALID", action)
-                validate_memory_publication(memory, row)
+                validate_memory_publication(memory, row, treatment=str(_manifest_extra(root).get("treatment") or ""))
                 ref = f"rounds/round_{rd['round_id']:04d}/memory_revisions/{db._sha256(operation_id)}.json"
                 sha = save(root, ref, memory.as_dict())
                 con.execute("INSERT INTO memory_writes(run_id,round_id,operation_id,kind,proposal_ref,status,created_at_utc) VALUES (?,?,?,?,?,'proposed',?)",
@@ -761,7 +889,10 @@ def submit_evaluation(*, run, operation_id, expected_state_version, file, expect
                 save(root,f"{prefix}/submissions/{db._sha256(text)}.json",text)
                 raw = strict_json_object(text)
                 memory = parse_evaluation(raw,bool(row["memory_enabled"]),set(facts["evidence_refs"]))
-                validate_memory_publication(memory, row)
+                treatment = str(_manifest_extra(root).get("treatment") or "")
+                if treatment == "reflection_with_online_memory" and memory.kind == "none" and not memory.reason:
+                    fail("MEMORY_REASON_REQUIRED", action)
+                validate_memory_publication(memory, row, treatment=treatment)
                 ref = prefix+"/evaluation.submitted.json"
                 sha = save(root,ref,text)
                 status = "proposed" if memory.kind in {"insight","solution"} else memory.kind
@@ -790,6 +921,33 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                     fail("MEMORY_COMMIT_PENDING",action,"Replay submit-evaluation with its original operation_id before finishing")
                 if decision not in {"continue","complete"}: fail("INVALID_ARGUMENT",action)
                 if decision=="continue":
+                    # Older/manual fixtures can enter READY_TO_FINISH without a
+                    # collected evaluation.  They have no stagnation record to
+                    # gate; normal collected rounds always carry both refs.
+                    if rd["evaluation_facts_ref"] and rd["submitted_evaluation_ref"]:
+                        facts_text = local(root, rd["evaluation_facts_ref"]).read_text(encoding="utf-8")
+                        submitted_text = local(root, rd["submitted_evaluation_ref"]).read_text(encoding="utf-8")
+                        if (db._sha256(facts_text) != rd["evaluation_facts_sha256"]
+                                or db._sha256(submitted_text) != rd["submitted_evaluation_sha256"]):
+                            fail("EVIDENCE_INTEGRITY_FAILED", action)
+                        facts = json.loads(facts_text)
+                        submitted = strict_json_object(submitted_text)
+                        stagnation = ((facts.get("search_progress") or {}).get("stagnation") or {})
+                        if stagnation.get("status") == "stagnated":
+                            observations = submitted.get("observations")
+                            advice = submitted.get("next_search_advice")
+                            accepted_refs = set(facts.get("evidence_refs") or [])
+                            evidence_bound = isinstance(observations, list) and any(
+                                isinstance(observation, dict)
+                                and isinstance(observation.get("evidence_refs"), list)
+                                and bool(observation["evidence_refs"])
+                                and set(observation["evidence_refs"]).issubset(accepted_refs)
+                                for observation in observations
+                            )
+                            if not evidence_bound:
+                                fail("STAGNATION_CONTINUE_EVIDENCE_REQUIRED", action)
+                            if not isinstance(advice, dict) or not isinstance(advice.get("direction"), str) or not advice["direction"].strip():
+                                fail("STAGNATION_CONTINUE_JUSTIFICATION_REQUIRED", action)
                     max_rounds = row["max_rounds"] if "max_rounds" in row.keys() else None
                     if max_rounds is not None and rd["round_id"] >= max_rounds:
                         fail("ROUND_LIMIT_REACHED", action)

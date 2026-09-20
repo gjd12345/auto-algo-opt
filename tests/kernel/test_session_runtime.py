@@ -69,7 +69,9 @@ def test_memory_can_be_explicitly_disabled(tmp_path):
     initialize_session(output=run, operation_id="init", eoh_model="fixture",
                        size=4, count=1, memory_enabled=False)
     state = read_state(run=run)
-    assert state["memory"] == {"enabled": False, "store": None}
+    assert {"enabled": state["memory"]["enabled"], "store": state["memory"]["store"]} == {
+        "enabled": False, "store": None,
+    }
 
 
 def test_stop_is_idempotent_and_checks_state_version(tmp_path):

@@ -156,6 +156,10 @@ python -m agent_skill_loop benchmark pilot-config \
   --config experiment_manifest.json --output pilot.json
 python -m agent_skill_loop benchmark co-pilot-config \
   --config experiment_manifest.json --output co_pilot.json
+python -m agent_skill_loop benchmark research-loop-config \
+  --config experiment_manifest.json --output research_loop.json
+python -m agent_skill_loop benchmark research-loop-report \
+  --index diagnostic-index.json --output diagnostic-report.json
 python -m agent_skill_loop benchmark report \
   --manifest manifest.json --selection frozen_selection.json \
   --metrics metrics.json --budget budget.json --output report.json
@@ -176,6 +180,15 @@ store, and G4 additionally enables the frozen stagnation gates and
 exploration/exploitation evaluator subbudgets. Each group must run in its own
 Session and output directory; total evaluator attempts include baseline,
 population-seed, generated, and repair attempts.
+
+`research-loop-config` is a zero-provider pre-registration step for the OBP
+A/B/C diagnostic. It fixes 100 solver calls, four 25-call rounds, the common
+comparison-packet policy, A/B input parity, C's run-internal empty-start
+Memory, and the heldout lock. `research-loop-report` reads only hash-checked
+compact bundles named in an index. It carries a normally completed early
+run's final incumbent to call 100, separates technical failures, keeps unknown
+token counts as `null`, and produces paired descriptive diagnostics without
+significance claims or heldout access.
 
 `freeze-selection` persists a locked `FrozenSelection`; `final_population_set`
 must be sourced from a `PopulationSnapshot` and must not relabel an archive as

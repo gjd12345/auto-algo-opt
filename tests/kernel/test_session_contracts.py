@@ -77,9 +77,15 @@ def test_feedback_summary_is_bounded_fact_only_context():
             "ref": "rounds/round_0001/exported_skill",
             "origin": "baseline",
             "code_sha256": "base-sha",
+            "evaluation_id": "baseline-evaluation",
             "objective": 10.0,
         },
         "candidates": [
+            {
+                "candidate_id": "baseline", "revision": "original", "origin": "baseline",
+                "evaluation_id": "baseline-evaluation", "code_sha256": "base-sha",
+                "valid": True, "objective": 10.0, "instance_objectives": [9.0, 11.0],
+            },
             {
                 "candidate_id": "candidate_1", "revision": "original", "origin": "generated",
                 "evaluation_id": "evaluation-1", "code_sha256": "candidate-sha",
@@ -112,4 +118,19 @@ def test_feedback_summary_is_bounded_fact_only_context():
     assert "must not be injected" not in context
     assert "reasoning_summary" not in context
     assert summary["objective_delta"] == -2.0
+    assert summary["incumbent_candidate_match"]["status"] == "resolved"
     assert summary["generated_candidate_counts"] == {"total": 2, "valid": 1, "invalid": 1}
+
+
+def test_feedback_never_resolves_incumbent_by_equal_objective():
+    facts = {
+        "suite_hash": "suite", "evaluator_hash": "evaluator", "baseline": {},
+        "incumbent_after": {"code_sha256": "missing", "evaluation_id": "missing-eval", "objective": 1.0},
+        "candidates": [{"candidate_id": "tie", "code_sha256": "other", "evaluation_id": "other-eval",
+                        "origin": "generated", "valid": True, "objective": 1.0,
+                        "instance_objectives": [0.0, 2.0]}],
+        "evidence_refs": ["evaluation:other-eval"],
+    }
+    summary = build_feedback_summary(facts, evaluation_ref="facts.json", evaluation_sha256="sha", previous_round_id=1)
+    assert summary["incumbent_candidate_match"]["status"] == "identity_unresolved"
+    assert "instance_objectives" not in summary["incumbent"]

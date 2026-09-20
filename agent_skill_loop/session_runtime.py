@@ -1077,6 +1077,21 @@ def _validate_experiment_manifest(
     for name, actual in expected.items():
         if getattr(manifest, name) != actual:
             raise SessionError("INVALID_ARGUMENT", f"experiment_manifest_{name}_mismatch", action="init")
+    extra = manifest.extra if isinstance(manifest.extra, Mapping) else {}
+    if extra.get("research_loop_schema") == "algorithm-optimization-research-loop-pilot/v1":
+        required = {
+            "problem_scope": "obp_online",
+            "benchmark_profile": "obp_evolution_mini",
+            "primary_budget_resource": "solver_calls",
+            "comparison_packet_policy": "obp-research-contrasts/v1",
+            "controller_usage_requirement": "complete_or_explicitly_unavailable",
+            "heldout_policy": "locked_no_access_diagnostic",
+            "diversity_interpretation": "diagnostic_only",
+        }
+        if benchmark.problem_id != "obp_online" or any(extra.get(key) != value for key, value in required.items()):
+            raise SessionError("INVALID_ARGUMENT", "research_loop_contract_mismatch", action="init")
+        if (manifest.evaluation_budget, manifest.rounds, manifest.round_budget) != (100, 4, 25):
+            raise SessionError("INVALID_ARGUMENT", "research_loop_budget_contract_mismatch", action="init")
     return manifest.as_dict(), manifest.content_hash
 
 
@@ -1277,6 +1292,22 @@ def initialize_session(
     memory_store = str(Path(memory_store).expanduser().resolve()) if memory_store else (
         str(default_memory_store()) if memory_enabled else None
     )
+    manifest_extra_hint = (
+        manifest_hints.get("extra") if isinstance(manifest_hints.get("extra"), Mapping) else {}
+    )
+    if manifest_extra_hint.get("research_loop_schema") == "algorithm-optimization-research-loop-pilot/v1":
+        treatment = manifest_extra_hint.get("treatment")
+        expected_memory = treatment == "reflection_with_online_memory"
+        if treatment not in {"facts_to_plan", "explicit_reflection", "reflection_with_online_memory"}:
+            raise SessionError("INVALID_ARGUMENT", "research_loop_treatment_invalid", action=action)
+        if memory_enabled is not expected_memory:
+            raise SessionError("INVALID_ARGUMENT", "research_loop_memory_treatment_mismatch", action=action)
+        if expected_memory:
+            expected_store = (output / "memory").resolve()
+            if memory_store is None or Path(memory_store).resolve() != expected_store:
+                raise SessionError("INVALID_ARGUMENT", "research_loop_memory_store_must_be_run_internal", action=action)
+            if not output.exists() and expected_store.exists() and any(expected_store.iterdir()):
+                raise SessionError("INVALID_ARGUMENT", "research_loop_memory_store_not_empty", action=action)
     if inheritance_mode not in {"incumbent_only", "population_seeds", "explicit_seeds"}:
         raise SessionError("INVALID_ARGUMENT", "invalid inheritance mode", action=action)
     if inheritance_mode == "explicit_seeds" and explicit_seed_set is None:
@@ -1300,7 +1331,6 @@ def initialize_session(
         round_budget = manifest_hints.get("round_budget")
     if max_solver_calls is None and manifest_hints.get("evaluation_budget") is not None:
         max_solver_calls = manifest_hints.get("evaluation_budget")
-    manifest_extra_hint = manifest_hints.get("extra") if isinstance(manifest_hints.get("extra"), Mapping) else {}
     raw_search_progress_policy = manifest_extra_hint.get("search_progress_policy")
     if experiment_manifest is not None and search_policy_defaults is None:
         search_policy_defaults = (manifest_hints.get("extra") or {}).get("search_policy_defaults") or {

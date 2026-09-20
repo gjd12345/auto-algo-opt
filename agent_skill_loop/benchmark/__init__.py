@@ -23,8 +23,12 @@ from .contracts import (
 from .catalog import benchmark_profile, load_benchmark_registry, load_profile_suite
 from .archive import ArchiveEntry, build_archive, build_archive_from_session, freeze_selection
 from .report import build_report
+from .research_report import build_research_loop_report
 from .harness import calibrate_differential, calibrate_production, calibrate_upstream, evaluate_candidate, evaluate_candidate_set, evaluate_selection
-from .pilot import CO_PILOT_GROUPS, PILOT_GROUPS, build_co_pilot_manifests, build_pilot_manifests
+from .pilot import (
+    CO_PILOT_GROUPS, PILOT_GROUPS, RESEARCH_LOOP_GROUPS,
+    build_co_pilot_manifests, build_pilot_manifests, build_research_loop_manifests,
+)
 
 __all__ = [
     "ALLOWED_ASSET_STATUSES",
@@ -40,6 +44,7 @@ __all__ = [
     "build_archive",
     "build_archive_from_session",
     "build_report",
+    "build_research_loop_report",
     "benchmark_profile",
     "evaluation_identity",
     "load_benchmark_registry",
@@ -57,4 +62,6 @@ __all__ = [
     "build_pilot_manifests",
     "CO_PILOT_GROUPS",
     "build_co_pilot_manifests",
+    "RESEARCH_LOOP_GROUPS",
+    "build_research_loop_manifests",
 ]

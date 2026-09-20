@@ -18,12 +18,13 @@ MAX_ROUND_CONTEXT_CHARS = 12000
 PLAN_KEYS = frozenset({
     "round_id", "direction", "operations", "preserve", "feedback_basis",
     "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
-    "search_intent",
+    "search_intent", "reflection_basis",
 })
 PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
 OPERATION_NON_AUTHORITY_METADATA_KEYS = frozenset({"mechanism_note"})
 FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
+REFLECTION_KEYS = frozenset({"round_id", "evaluation_ref", "evaluation_sha256"})
 MEMORY_ACTION_KEYS = frozenset({
     "kind", "name", "description", "project", "scene", "body",
     "source_skill_ref", "memory_based_on", "evidence_ref",
@@ -118,6 +119,37 @@ class FeedbackBasis:
 
 
 @dataclass(frozen=True)
+class ReflectionBasis:
+    """Exact reference to the previous accepted Agent research note."""
+
+    round_id: int
+    evaluation_ref: str
+    evaluation_sha256: str
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, Any]) -> "ReflectionBasis":
+        _strict_keys(raw, REFLECTION_KEYS, "reflection_basis")
+        round_id = _integer(raw.get("round_id"), "reflection_round_id")
+        if round_id < 1:
+            raise ValueError("reflection_round_id_invalid")
+        sha = _text(raw.get("evaluation_sha256"), "reflection_evaluation_sha256", max_chars=64)
+        if len(sha) != 64 or any(char not in "0123456789abcdef" for char in sha):
+            raise ValueError("reflection_evaluation_sha256_invalid")
+        return cls(
+            round_id,
+            _text(raw.get("evaluation_ref"), "reflection_evaluation_ref", max_chars=512),
+            sha,
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "round_id": self.round_id,
+            "evaluation_ref": self.evaluation_ref,
+            "evaluation_sha256": self.evaluation_sha256,
+        }
+
+
+@dataclass(frozen=True)
 class PlanDocument:
     round_id: int
     direction: str
@@ -129,6 +161,7 @@ class PlanDocument:
     hypothesis: str
     search_policy: dict[str, int] | None = None
     search_intent: dict[str, str] | None = None
+    reflection_basis: ReflectionBasis | None = None
     # Optional host-Agent explanation.  It is durable plan metadata only; the
     # Runtime never treats it as execution authority and does not inject it
     # into the upstream EoH prompt.
@@ -147,6 +180,8 @@ class PlanDocument:
         expected_feedback_round_id: int | None = None,
         available_skill_refs: set[str] | None = None,
         search_policy_limits: Mapping[str, tuple[int, int]] | None = None,
+        available_reflection_basis: Mapping[str, Any] | None = None,
+        reflection_requirement: str = "optional",
     ) -> "PlanDocument":
         if not isinstance(raw, Mapping):
             raise ValueError("plan_must_be_object")
@@ -215,6 +250,18 @@ class PlanDocument:
             if intent.get("phase") not in SEARCH_PHASES:
                 raise ValueError("search_intent_phase_not_allowed")
             intent = {"phase": str(intent["phase"])}
+        reflection_raw = raw.get("reflection_basis")
+        reflection = None if reflection_raw is None else ReflectionBasis.from_dict(reflection_raw)
+        if reflection_requirement not in {"optional", "required", "forbidden"}:
+            raise ValueError("reflection_requirement_invalid")
+        if reflection_requirement == "required" and reflection is None:
+            raise ValueError("reflection_reference_required")
+        if reflection_requirement == "forbidden" and reflection is not None:
+            raise ValueError("reflection_reference_forbidden")
+        if reflection is not None:
+            expected = dict(available_reflection_basis or {})
+            if reflection.as_dict() != expected:
+                raise ValueError("reflection_reference_not_previous_accepted_evaluation")
         return cls(
             round_id,
             _text(raw.get("direction"), "direction"),
@@ -226,6 +273,7 @@ class PlanDocument:
             _text(raw.get("hypothesis"), "hypothesis"),
             search,
             intent,
+            reflection,
             reasoning_summary,
         )
 
@@ -243,6 +291,7 @@ class PlanDocument:
         }
         if self.search_intent is not None:
             result["search_intent"] = dict(self.search_intent)
+        result["reflection_basis"] = self.reflection_basis.as_dict() if self.reflection_basis else None
         if self.reasoning_summary is not None:
             result["reasoning_summary"] = self.reasoning_summary
         return result
@@ -399,10 +448,17 @@ def build_feedback_summary(
     after = facts.get("incumbent_after") if isinstance(facts.get("incumbent_after"), Mapping) else {}
     incumbent_row = None
     after_hash = after.get("code_sha256")
-    if after_hash:
-        incumbent_row = next((item for item in candidates if item.get("code_sha256") == after_hash), None)
-    if incumbent_row is None and after.get("objective") is not None:
-        incumbent_row = next((item for item in candidates if _objective(_row_value(item, "objective")) == _objective(after.get("objective")) and _row_value(item, "valid") is True), None)
+    after_evaluation_id = after.get("evaluation_id")
+    if after_hash and after_evaluation_id:
+        incumbent_row = next((item for item in candidates
+                              if item.get("code_sha256") == after_hash
+                              and item.get("evaluation_id") == after_evaluation_id), None)
+    incumbent_match = {
+        "status": "resolved" if incumbent_row is not None else "identity_unresolved",
+        "reason": None if incumbent_row is not None else "exact_evaluation_id_and_code_sha256_not_found",
+        "evaluation_id": after_evaluation_id,
+        "code_sha256": after_hash,
+    }
 
     incumbent: dict[str, Any] | None = None
     if after:
@@ -451,6 +507,7 @@ def build_feedback_summary(
     summary = {
         "source": source,
         "incumbent": incumbent,
+        "incumbent_candidate_match": incumbent_match,
         "best_generated_candidate": compact_best,
         "objective_delta": objective_delta,
         "improvement_vs_incumbent": improvement,

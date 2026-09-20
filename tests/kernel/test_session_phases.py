@@ -287,7 +287,7 @@ def test_memory_failure_or_solution_rejection_keeps_evaluation(tmp_path,monkeypa
     monkeypatch.setattr(MemoryAPI,"write",broken)
     file=tmp_path/"evaluation.json"
     file.write_text(json.dumps(dict(plan_alignment="unknown",observations=[dict(claim="fixture evidence",evidence_refs=["evaluation:fixture"])],hypotheses=[],next_search_advice={},
-        memory_action=dict(kind=kind,name="test",description="fixture",project="cvrp_construct",scene="select_next_node",body="**Why:** fixture\n**How to apply:** fixture\n**Reusable Experience:** fixture"))))
+        memory_action=dict(kind=kind,name="test",description="fixture",project="cvrp_construct",scene="select_next_node",body="**Why:** fixture\n**How to apply:** fixture\n## Execution\nfixture\n**Reusable Experience:** fixture"))))
     evaluated=actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=1,file=file)
     assert evaluated["result"]["evaluation_accepted"]
     assert evaluated["result"]["memory"]["status"]==expected

@@ -138,3 +138,13 @@ def test_obp_two_round_population_memory_evidence(tmp_path, monkeypatch):
     assert rebuilt["rounds"][1]["memory_gateway_attempts"] > 0
     assert rebuilt["rounds"][1]["search_progress"]["round_id"] == 2
     assert (root / "round_progress.md").is_file()
+    from tools.export_benchmark_evidence import export_bundle, verify_bundle
+    bundle = tmp_path / "compact-evidence"
+    export_bundle(root, bundle)
+    assert verify_bundle(bundle)["verified"] is True
+    assert (bundle / "rounds/round_0001/comparison_packet.json").is_file()
+    assert (bundle / "rounds/round_0002/execution_delta.json").is_file()
+    assert (bundle / "rounds/round_0002/memory_consumption.json").is_file()
+    cost = json.loads((bundle / "cost_summary.json").read_text(encoding="utf-8"))
+    assert cost["outer_controller"]["status"] == "unavailable"
+    assert cost["total_model_tokens"] is None

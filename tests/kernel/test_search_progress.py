@@ -62,6 +62,11 @@ def test_stagnation_uses_fixed_attempt_window_and_behavior_gate():
             "incumbent_after_objective": after,
             "behavior_comparable_count": coverage,
             "generation_attempt_count": 1,
+            "objective_direction": "minimize",
+            "attempt_trace": {"complete": True, "events": [{
+                "best_before": before, "best_after": after,
+                "behavior_comparable": bool(coverage), "generated": True,
+            }]},
         }}
     result = evaluate_stagnation([progress(1, 10, 10, 1), progress(2, 10, 10, 1)], policy)
     assert result["status"] == "stagnated"

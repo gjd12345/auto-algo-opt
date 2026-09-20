@@ -125,6 +125,8 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         "manifest": benchmark_cli.cmd_manifest,
         "pilot-config": benchmark_cli.cmd_pilot_config,
         "co-pilot-config": benchmark_cli.cmd_co_pilot_config,
+        "research-loop-config": benchmark_cli.cmd_research_loop_config,
+        "research-loop-report": benchmark_cli.cmd_research_loop_report,
         "report": benchmark_cli.cmd_report,
     }
     return int(handlers[args.benchmark_action](args))
@@ -390,6 +392,20 @@ def build_parser() -> argparse.ArgumentParser:
     co_pilot_config.add_argument("--output")
     co_pilot_config.set_defaults(func=cmd_benchmark)
 
+    research_loop_config = benchmark_sub.add_parser(
+        "research-loop-config", help="Freeze the OBP A/B/C reflection and online-Memory diagnostic"
+    )
+    research_loop_config.add_argument("--config", required=True)
+    research_loop_config.add_argument("--output")
+    research_loop_config.set_defaults(func=cmd_benchmark)
+
+    research_loop_report = benchmark_sub.add_parser(
+        "research-loop-report", help="Build the hash-checked A/B/C diagnostic report from compact bundles"
+    )
+    research_loop_report.add_argument("--index", required=True)
+    research_loop_report.add_argument("--output")
+    research_loop_report.set_defaults(func=cmd_benchmark)
+
     report = benchmark_sub.add_parser(
         "report",
         help="Build a deterministic report from a locked selection and offline facts",
@@ -515,6 +531,11 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--candidate")
             command.add_argument("--include-diff", action="store_true")
         command.set_defaults(func=cmd_session_action, session_function=function)
+    controller_usage = session_sub.add_parser("record-controller-usage")
+    controller_usage.add_argument("--run", required=True)
+    controller_usage.add_argument("--run-id")
+    controller_usage.add_argument("--file", required=True)
+    controller_usage.set_defaults(func=cmd_session_action, session_function="record_controller_usage")
     memory = session_sub.add_parser("memory")
     memory_sub = memory.add_subparsers(dest="memory_action", required=True)
     for name in ("search", "read"):

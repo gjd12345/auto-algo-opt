@@ -18,6 +18,8 @@ PILOT_GROUPS = ("A", "B", "C", "D")
 PILOT_SCHEMA = "algorithm-optimization-controlled-pilot/v1"
 CO_PILOT_GROUPS = ("G0", "G1", "G2", "G3", "G4")
 CO_PILOT_SCHEMA = "algorithm-optimization-co-controlled-pilot/v1"
+RESEARCH_LOOP_GROUPS = ("A", "B", "C")
+RESEARCH_LOOP_SCHEMA = "algorithm-optimization-research-loop-pilot/v1"
 
 
 def _manifest_values(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -25,6 +27,104 @@ def _manifest_values(payload: Mapping[str, Any]) -> dict[str, Any]:
     for key in ("schema_version", "manifest_version", "experiment_manifest_sha256"):
         values.pop(key, None)
     return values
+
+
+def build_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
+    """Freeze the OBP A/B/C reflection and online-Memory diagnostic."""
+    if not isinstance(base, Mapping):
+        raise ValueError("research_loop_base_manifest_invalid")
+    try:
+        source = ExperimentManifest(**_manifest_values(base))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"research_loop_base_manifest_invalid:{exc}") from exc
+    if source.repair_mode != "off" or source.inheritance_mode != "population_seeds":
+        raise ValueError("research_loop_requires_population_seeds_and_repair_off")
+    extra_base = dict(source.extra)
+    if extra_base.get("knowledge_mode", "off") != "off":
+        raise ValueError("research_loop_requires_knowledge_off")
+    extra_base.update({
+        "research_loop_schema": RESEARCH_LOOP_SCHEMA,
+        "problem_scope": "obp_online",
+        "benchmark_profile": "obp_evolution_mini",
+        "primary_budget_resource": "solver_calls",
+        "comparison_packet_policy": "obp-research-contrasts/v1",
+        "controller_usage_requirement": "complete_or_explicitly_unavailable",
+        "heldout_policy": "locked_no_access_diagnostic",
+        "diversity_interpretation": "diagnostic_only",
+        "knowledge_mode": "off",
+        "search_progress_mode": "expose",
+        "search_progress_policy": {
+            "schema_version": POLICY_SCHEMA_VERSION,
+            "enabled": True,
+            "window_evaluations": 25,
+            "min_absolute_gain": 0.0001,
+            "min_relative_gain": 0.0001,
+            "min_behavior_coverage": 0.5,
+            "phase_budgets": {"exploration": 50, "exploitation": 50},
+            "phase_schedule": ["exploration", "exploration", "exploitation", "exploitation"],
+            "enforce_subbudgets": True,
+        },
+        "search_policy_defaults": {"pop_size": source.population_size, "n_pop": 2, "max_sample_nums": 100},
+        "search_policy_limits": {
+            "pop_size": [source.population_size, source.population_size],
+            "n_pop": [2, 2], "max_sample_nums": [100, 100],
+        },
+    })
+    if "resource_contract" in extra_base:
+        resources = dict(extra_base["resource_contract"])
+        resources.update(evaluation_budget=100, round_evaluation_budget=25)
+        extra_base["resource_contract"] = resources
+
+    def make(treatment: str, memory_enabled: bool, memory_source: str) -> ExperimentManifest:
+        extra = {**extra_base, "treatment": treatment, "memory_source": memory_source,
+                 "agent_input_contract": "same_comparison_packet_schema_and_selection_policy"}
+        return ExperimentManifest(
+            benchmark_spec_hash=source.benchmark_spec_hash,
+            metric_spec_hash=source.metric_spec_hash,
+            eoh_commit=source.eoh_commit,
+            runtime_hash=source.runtime_hash,
+            skill_hash=source.skill_hash,
+            model=source.model,
+            endpoint_identity=source.endpoint_identity,
+            inheritance_mode="population_seeds",
+            feedback_mode="runtime_facts",
+            agent_guidance=True,
+            repair_mode="off",
+            memory_enabled=memory_enabled,
+            evaluation_budget=100,
+            population_size=source.population_size,
+            rounds=4,
+            round_budget=25,
+            search_seed=source.search_seed,
+            manifest_version=source.manifest_version,
+            extra=extra,
+        )
+
+    manifests = {
+        "A": make("facts_to_plan", False, "disabled"),
+        "B": make("explicit_reflection", False, "disabled"),
+        "C": make("reflection_with_online_memory", True, "run_internal_empty_start"),
+    }
+    groups = {
+        group: {"description": {
+            "A": "same evidence packet, facts directly to next Plan",
+            "B": "A plus an explicit evidence-bound research note",
+            "C": "B plus run-internal online Memory from an empty store",
+        }[group], "manifest": {**manifest.as_dict(), "experiment_manifest_sha256": manifest.content_hash}}
+        for group, manifest in manifests.items()
+    }
+    return {
+        "schema_version": RESEARCH_LOOP_SCHEMA,
+        "pilot_id": "obp_research_loop_v1",
+        "shared_factors": {
+            "problem_scope": "obp_online", "benchmark_profile": "obp_evolution_mini",
+            "primary_budget_resource": "solver_calls", "evaluation_budget": 100,
+            "rounds": 4, "round_budget": 25, "search_seed": source.search_seed,
+            "comparison_packet_policy": "obp-research-contrasts/v1",
+            "heldout_policy": "locked_no_access_diagnostic",
+        },
+        "groups": groups,
+    }
 
 
 def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
