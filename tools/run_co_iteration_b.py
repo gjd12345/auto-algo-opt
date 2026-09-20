@@ -25,10 +25,14 @@ from agent_skill_loop.evidence.report import reconstruct_session_evidence
 
 MODEL = "qwen/deepseek-v4.1-flash"
 API_KEY_ENV = "MODEL_ROUTER_API_KEY"
+BENCHMARK_PROFILE = "obp_search_mini"
 TOTAL_EVALUATION_BUDGET = 100
 ROUND_EVALUATION_BUDGET = 50
-TOTAL_REQUEST_BUDGET = 24
-ROUND_REQUEST_BUDGET = 12
+# Provider requests include the probe and failed/truncated generations.  Keep
+# this budget independent from evaluator attempts so transient provider output
+# does not terminate the experiment before EoH can use its 100 evaluations.
+TOTAL_REQUEST_BUDGET = 240
+ROUND_REQUEST_BUDGET = 120
 MAX_ROUNDS = 2
 POLL_SECONDS = 2.0
 DEFAULT_ENGINE_WALL_SECONDS = 3600.0
@@ -61,30 +65,146 @@ def _endpoint() -> str:
     return value
 
 
-def _plan(group: str, round_id: int, state: dict[str, Any]) -> dict[str, Any]:
+def _plan(
+    group: str,
+    round_id: int,
+    state: dict[str, Any],
+    *,
+    previous_facts: dict[str, Any] | None,
+    memory_basis: list[str],
+) -> dict[str, Any]:
     progress = group in {"G2", "G3", "G4"}
+    window = ((previous_facts or {}).get("search_progress") or {}).get("window") or {}
+    duplicate_rate = window.get("behavior_duplicate_rate")
+    valid_yield = window.get("valid_generation_yield")
+    if group == "G0":
+        direction = "Run the frozen official EoH search with a neutral host Plan."
+        operations = [{
+            "type": "preserve",
+            "target": "search mechanism",
+            "mechanism": "let official EoH choose operators and parents without adaptive host guidance",
+        }]
+    elif round_id == 1:
+        direction = (
+            "Explore several distinct online bin-selection mechanisms, including stable bin-order, "
+            "residual-capacity fit, and item-dependent hybrids."
+        )
+        operations = [{
+            "type": "replace",
+            "target": "priority mechanism family",
+            "mechanism": "generate behaviorally distinct hypotheses rather than coefficient-only variants",
+        }]
+    elif progress and isinstance(duplicate_rate, (int, float)) and duplicate_rate >= 0.5:
+        direction = (
+            "Previous behavior was highly duplicated; switch mechanism family and test stable "
+            "first-feasible or item-dependent bin-order rules instead of another best-fit variant."
+        )
+        operations = [{
+            "type": "replace",
+            "target": "priority mechanism family",
+            "mechanism": "move from repeated residual-capacity scoring to a distinct stable-order hypothesis",
+        }]
+    else:
+        direction = (
+            "Use the previous verified objectives and validity results to refine a distinct legal "
+            "online bin-selection mechanism."
+        )
+        operations = [{
+            "type": "replace",
+            "target": "priority mechanism",
+            "mechanism": "test a bounded structural alternative supported by the previous round facts",
+        }]
     plan = {
         "round_id": round_id,
-        "direction": f"CO Iteration B {group}: preserve the frozen OBP contract and test the assigned outer treatment",
-        "operations": [{
-            "type": "preserve",
-            "target": "interface",
-            "mechanism": "preserve the official EoH operator, parent selection, evaluator and benchmark gate",
-        }],
+        "direction": direction,
+        "operations": operations,
         "preserve": "OBP suite, MetricSpec, model, endpoint, inheritance, repair setting and evaluator budget",
         # G0 is the record-only arm: it must not consume or expose runtime
         # feedback.  The other arms receive the previous round's verified
         # evaluation reference when the runtime makes one available.
         "feedback_basis": state.get("feedback_basis") if group != "G0" else None,
-        "memory_basis": [],
+        "memory_basis": memory_basis,
         "reference_skill_ref": None,
-        "hypothesis": "The assigned outer treatment may change observed search progress; no causal effect is assumed.",
+        "hypothesis": "A structurally distinct legal priority rule may reduce the frozen best-fit baseline gap; this is unproven.",
     }
     if group == "G4":
         plan["search_intent"] = {"phase": "exploration" if round_id == 1 else "exploitation"}
     if progress and round_id > 1:
-        plan["reasoning_summary"] = "Use only the previous Runtime-verified SearchProgress facts; do not select EoH parents or operators in the host."
+        plan["reasoning_summary"] = (
+            "Use only the previous Runtime-verified SearchProgress facts. "
+            f"Observed behavior_duplicate_rate={duplicate_rate!r}, valid_generation_yield={valid_yield!r}. "
+            "Official EoH still selects parents and operators."
+        )
     return plan
+
+
+def _read_previous_facts(root: Path, round_id: int) -> dict[str, Any] | None:
+    if round_id <= 1:
+        return None
+    path = root / f"rounds/round_{round_id - 1:04d}/evaluation_facts.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+
+
+def _memory_basis(root: Path, group: str) -> list[str]:
+    if group not in {"G3", "G4"}:
+        return []
+    result = actions.memory_search(
+        run=root,
+        query="OBP online priority search progress duplicate behavior",
+        limit=2,
+    )["result"]
+    adopted: list[str] = []
+    for item in result.get("memories") or []:
+        reference = item.get("reference")
+        if not isinstance(reference, str):
+            continue
+        page = actions.memory_read(run=root, reference=reference, limit=8000)["result"]
+        if page.get("complete_memory_consumption"):
+            adopted.append(reference)
+    return adopted
+
+
+def _evaluation(group: str, round_id: int, facts: dict[str, Any]) -> dict[str, Any]:
+    generated = [
+        item for item in facts.get("candidates") or []
+        if item.get("origin") in {"generated", "generated_repair"}
+    ]
+    valid = [item for item in generated if item.get("valid") is True]
+    evidence_ref = facts.get("execution_delta", {}).get("ref") or facts["evidence_refs"][0]
+    window = (facts.get("search_progress") or {}).get("window") or {}
+    if group in {"G3", "G4"} and round_id == 1:
+        memory_action: dict[str, Any] = {
+            "kind": "insight",
+            "name": f"iteration_b_{group.lower()}_round1_progress",
+            "description": "Scoped OBP search-progress evidence for the next round of this controlled run.",
+            "project": "obp_online",
+            "scene": "priority",
+            "body": (
+                "**Why:** On the frozen OBP search-mini training suite, round 1 observed "
+                f"{len(valid)} valid generated candidates out of {len(generated)} and behavior duplicate rate "
+                f"{window.get('behavior_duplicate_rate')!r}. This is one-run evidence, not a universal rule.\n\n"
+                "**How to apply:** In the next round, use this only as a reason to prefer a structurally distinct "
+                "priority mechanism when duplication is high. Keep the same suite, evaluator, budget, and official "
+                "EoH parent/operator authority."
+            ),
+            "evidence_ref": evidence_ref,
+        }
+    elif group in {"G3", "G4"}:
+        memory_action = {"kind": "none", "reason": "No additional reusable finding beyond the round-1 scoped insight."}
+    else:
+        memory_action = {"kind": "disabled"}
+    return {
+        "plan_alignment": "unknown",
+        "observations": [{
+            "claim": f"Runtime recorded {len(valid)} valid generated candidates out of {len(generated)} in round {round_id}.",
+            "evidence_refs": [evidence_ref],
+        }],
+        "hypotheses": [],
+        "next_search_advice": {
+            "direction": "Use the verified duplicate rate and objective deltas to choose the next bounded mechanism family."
+        },
+        "memory_action": memory_action,
+    }
 
 
 def _wait_for_exit(root: Path, deadline_seconds: float = 2100.0) -> dict[str, Any]:
@@ -117,8 +237,9 @@ def _run_group(base: Path, group: str, manifest: dict[str, Any], endpoint: str,
         eoh_model=MODEL,
         eoh_endpoint=endpoint,
         eoh_api_key_env=API_KEY_ENV,
+        eoh_thinking="disabled",
         benchmark_id="eohs_v1",
-        benchmark_profile_name="obp_evolution_mini",
+        benchmark_profile_name=BENCHMARK_PROFILE,
         eoh_max_requests=TOTAL_REQUEST_BUDGET,
         eoh_round_max_requests=ROUND_REQUEST_BUDGET,
         engine_wall_seconds=engine_wall_seconds,
@@ -130,11 +251,17 @@ def _run_group(base: Path, group: str, manifest: dict[str, Any], endpoint: str,
     rounds: list[dict[str, Any]] = []
     for round_id in range(1, MAX_ROUNDS + 1):
         state = db.read_state(run=root)
-        if manifest["memory_enabled"]:
-            actions.memory_search(run=root, query="OBP online priority", limit=2)
-            state = db.read_state(run=root)
+        previous_facts = _read_previous_facts(root, round_id)
+        memory_basis = _memory_basis(root, group) if manifest["memory_enabled"] else []
+        state = db.read_state(run=root)
         plan_path = base / "plans" / group / f"plan_{round_id:04d}.json"
-        _write(plan_path, _plan(group, round_id, state))
+        _write(plan_path, _plan(
+            group,
+            round_id,
+            state,
+            previous_facts=previous_facts,
+            memory_basis=memory_basis,
+        ))
         planned = actions.submit_plan(run=root, operation_id=f"{group.lower()}-plan-{round_id}",
                                       expected_state_version=state["state_version"], file=plan_path)
         launched = actions.execute(run=root, operation_id=f"{group.lower()}-execute-{round_id}",
@@ -145,15 +272,7 @@ def _run_group(base: Path, group: str, manifest: dict[str, Any], endpoint: str,
         collected = actions.collect(run=root, operation_id=f"{group.lower()}-collect-{round_id}",
                                     expected_state_version=state["state_version"])
         facts = actions.read_evaluation(run=root)["result"]
-        evaluation = {
-            "plan_alignment": "aligned",
-            "observations": [{"claim": "Runtime-verified SearchProgress and evaluation facts are available.",
-                               "evidence_refs": [facts["evidence_refs"][0]]}],
-            "hypotheses": [],
-            "next_search_advice": {},
-            "memory_action": ({"kind": "none", "reason": "No new reusable finding was selected for this controlled pilot."}
-                               if manifest["memory_enabled"] else {"kind": "disabled"}),
-        }
+        evaluation = _evaluation(group, round_id, facts)
         evaluation_path = base / "plans" / group / f"evaluation_{round_id:04d}.json"
         _write(evaluation_path, evaluation)
         evaluated = actions.submit_evaluation(run=root, operation_id=f"{group.lower()}-evaluation-{round_id}",
@@ -201,8 +320,9 @@ def main(selected_groups: tuple[str, ...] | None = None, *, output_name: str = "
             eoh_model=MODEL,
             eoh_endpoint=endpoint,
             eoh_api_key_env=API_KEY_ENV,
+            eoh_thinking="disabled",
             benchmark_id="eohs_v1",
-            benchmark_profile_name="obp_evolution_mini",
+            benchmark_profile_name=BENCHMARK_PROFILE,
             inheritance_mode="population_seeds",
             max_rounds=MAX_ROUNDS,
             round_budget=ROUND_EVALUATION_BUDGET,

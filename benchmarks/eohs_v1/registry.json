@@ -80,6 +80,46 @@
         "instances are regenerated protocol-compatible data with deterministic known-optimum references",
         "the complete TSP and CVRP EoH-S assets are not bundled in v1.1a"
       ]
+    },
+    {
+      "benchmark_id": "eohs_v1",
+      "profile": "obp_search_mini",
+      "problem_id": "obp_online",
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "8310b056ab0d4ea83d194f1d9e8c7873c0a3b892",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "upstream_code",
+      "paper_protocol_profile": "paper_protocol",
+      "manifest_paths": {
+        "dev_train": "manifests/obp_search_mini_train.json",
+        "train": "manifests/obp_search_mini_train.json",
+        "heldout": "manifests/obp_search_mini_test.json",
+        "test": "manifests/obp_search_mini_test.json",
+        "reference": "manifests/obp_search_mini_references.json"
+      },
+      "manifests": {
+        "train_hash": "ccbba6b0a560b439fa9844aa33543beb8e0a031bc9a34303eec7c1761d098c84",
+        "test_hash": "df0e21b7c309cfe3aae69ecac5113719dac907101c7d138fb8a9a3b6e9f584e2",
+        "reference_hash": "7b284a30230a49abcd666306938e759a850a8c5298d807a1491cbc98f4540f70"
+      },
+      "metric_spec_hash": "528bacaad3165a3f4043aad78cded5fa546a8a7431fc0ed19abdc6c1d876f74f",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "known_optimum",
+        "reference_manifest_hash": "7b284a30230a49abcd666306938e759a850a8c5298d807a1491cbc98f4540f70",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective"
+        }
+      },
+      "deviations": [
+        "obp_search_mini is a curated six-instance profile, not the upstream 128-instance training or reported test asset",
+        "instances are regenerated protocol-compatible data with deterministic known-optimum references",
+        "the frozen best-fit baseline has positive gap on every instance"
+      ]
     }
   ]
 }

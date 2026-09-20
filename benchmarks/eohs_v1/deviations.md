@@ -11,6 +11,11 @@ profile for cross-round population-seed tests. It keeps the same online
 protocol but uses fixed known-optimum references and deliberately
 distinguishable legal priority policies. It is also not an upstream asset.
 
+The `obp_search_mini` profile is a separate deterministic six-instance search
+profile. Its best-fit baseline has positive gap by construction so controlled
+live runs can observe improvement. It remains a regenerated,
+protocol-compatible engineering asset rather than an exact upstream corpus.
+
 - `upstream_code` and `paper_protocol` are separate profiles.
 - The OBP reference uses the upstream-compatible rounded lower-bound formula;
   it is recorded as `upstream_compatibility_reference`, not as a known optimum.

@@ -219,7 +219,17 @@ def cmd_run(args: argparse.Namespace) -> int:
                             if stop_requested(Path(session["root"]), session["task_id"]):
                                 bridge.terminal = True
                                 bridge.last_error = "session_stopped"
-                        if time.monotonic() >= deadline or bridge.terminal:
+                        # A request-budget stop is recoverable inside the pinned
+                        # engine: later local generation calls fail immediately,
+                        # while EoH can still finish its bounded queues and write
+                        # the population checkpoint built from completed samples.
+                        # Other terminal conditions still require immediate
+                        # process-tree cancellation.
+                        graceful_request_stop = (
+                            bridge.terminal
+                            and bridge.last_error == "request_budget_exhausted"
+                        )
+                        if time.monotonic() >= deadline or (bridge.terminal and not graceful_request_stop):
                             reason = bridge.last_error if bridge.terminal else "wall_time_exhausted"
                             bridge.terminal = True
                             bridge.last_error = reason

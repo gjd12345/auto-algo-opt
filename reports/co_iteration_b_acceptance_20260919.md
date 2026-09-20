@@ -1,5 +1,7 @@
 # CO Iteration B：SearchProgress 与冻结策略验收
 
+> 历史状态：本报告记录首次真实运行受 12-request cap 阻断的结果。阻断已修复，完整两轮复跑与 heldout 对比见 [co_iteration_b_real_pilot_20260920.md](co_iteration_b_real_pilot_20260920.md)。
+
 日期：2026-09-19。工作区分支：`codex/co-iteration-b`。本报告不包含 API key，也不把真实 provider 的单轮观察解释为算法效果。
 
 ## 交付
