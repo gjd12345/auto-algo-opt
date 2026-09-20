@@ -5,6 +5,7 @@
 ## CO / benchmark
 
 - [研究闭环 v2 基线清单](research_loop_v2_baseline_20260920.md)：隔离基线、原工作区修改处置和历史证据分级。
+- [研究闭环 v2 Router 预检](research_loop_v2_router_preflight_20260920.md)：单请求 EoH probe 的认证失败证据与阶段四门禁。
 - [v1.0 验收](v1.0-acceptance.md)：历史发布门槛。
 - [OBP evolution mini 真实跨轮记录](obp_evolution_mini_real_cross_round_20260914.md)。
 - [实验合同与真实接线](experiment_contracts_and_real_wiring_20260915.md)：同时列出未验证范围。
