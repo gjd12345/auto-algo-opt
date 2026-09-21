@@ -89,6 +89,8 @@ def test_research_loop_manifest_freezes_budget_inputs_and_online_memory_source()
         assert (group["manifest"]["evaluation_budget"], group["manifest"]["rounds"],
                 group["manifest"]["round_budget"]) == (100, 4, 25)
         assert group["manifest"]["extra"]["comparison_packet_policy"] == "obp-research-contrasts/v1"
+        assert group["manifest"]["extra"]["population_seed_policy"] == \
+            "verified_final_population_up_to_capacity_minimum_one"
     assert pilot["groups"]["C"]["manifest"]["memory_enabled"] is True
     assert pilot["groups"]["C"]["manifest"]["extra"]["memory_source"] == "run_internal_empty_start"
 

@@ -71,6 +71,10 @@ def test_population_snapshot_is_faithful_and_seed_selection_is_derived():
     insufficient = SeedSelection.from_snapshot(snapshot, 3)
     assert insufficient.terminated
     assert insufficient.termination_reason == "insufficient_valid_seeds"
+    adaptive = SeedSelection.from_snapshot(snapshot, 4, minimum_valid_members=1)
+    assert not adaptive.terminated
+    assert len(adaptive.selected_members) == 2
+    assert adaptive.target_population_size == 4
 
     with pytest.raises(ValueError, match="population_code_hash_mismatch"):
         PopulationSnapshot.from_members(

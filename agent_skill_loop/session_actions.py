@@ -209,7 +209,16 @@ def _prepare_population_seeds(root, con, run, rd, config):
     except (OSError, TypeError, json.JSONDecodeError) as exc:
         raise db.SessionError("EVIDENCE_INTEGRITY_FAILED", "normalized plan is unavailable for seed selection", action="execute") from exc
     policy = db.effective_search_policy(config, plan_payload.get("search_policy"))
-    selection = SeedSelection.from_snapshot(snapshot, policy["pop_size"])
+    # The upstream EoH parent selector samples with replacement and can grow a
+    # smaller verified seed set back toward pop_size.  Preserve every verified
+    # final-population member up to that capacity, but fail only when none are
+    # executable.  Requiring a full pop_size here made valid runs terminate
+    # before the next provider request whenever upstream diversity contracted.
+    selection = SeedSelection.from_snapshot(
+        snapshot,
+        policy["pop_size"],
+        minimum_valid_members=1,
+    )
     prefix = f"rounds/round_{rd['round_id']:04d}"
     selection_payload = {
         **selection.as_dict(),

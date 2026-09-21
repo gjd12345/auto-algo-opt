@@ -51,6 +51,7 @@ def build_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
         "controller_usage_requirement": "complete_or_explicitly_unavailable",
         "heldout_policy": "locked_no_access_diagnostic",
         "diversity_interpretation": "diagnostic_only",
+        "population_seed_policy": "verified_final_population_up_to_capacity_minimum_one",
         "knowledge_mode": "off",
         "search_progress_mode": "expose",
         "search_progress_policy": {

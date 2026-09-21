@@ -305,9 +305,20 @@ class SeedSelection:
     termination_reason: str | None = None
 
     @classmethod
-    def from_snapshot(cls, snapshot: PopulationSnapshot, target_population_size: int) -> "SeedSelection":
+    def from_snapshot(
+        cls,
+        snapshot: PopulationSnapshot,
+        target_population_size: int,
+        *,
+        minimum_valid_members: int | None = None,
+    ) -> "SeedSelection":
         if isinstance(target_population_size, bool) or target_population_size < 1:
             raise ValueError("invalid_target_population_size")
+        if minimum_valid_members is None:
+            minimum_valid_members = target_population_size
+        if (isinstance(minimum_valid_members, bool) or not isinstance(minimum_valid_members, int)
+                or minimum_valid_members < 1 or minimum_valid_members > target_population_size):
+            raise ValueError("invalid_minimum_valid_members")
         valid = [
             (index, item) for index, item in enumerate(snapshot.members)
             if item.get("objective") is not None and isinstance(item.get("code"), str) and item.get("code_sha256")
@@ -319,7 +330,7 @@ class SeedSelection:
             unique.setdefault(str(item["code_sha256"]), (index, item))
         ordered = sorted(unique.values(), key=lambda pair: (float(pair[1]["objective"]), pair[0]))
         selected = tuple(item for _index, item in ordered[:target_population_size])
-        terminated = len(selected) < target_population_size
+        terminated = len(selected) < minimum_valid_members
         return cls(
             source_snapshot_hash=snapshot.content_hash,
             target_population_size=target_population_size,
