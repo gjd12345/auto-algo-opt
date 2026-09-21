@@ -8,6 +8,8 @@ import math
 from pathlib import Path
 from typing import Any, Mapping
 
+from .contracts import sha256_json
+
 
 SCHEMA_VERSION = "algorithm-optimization-research-loop-report/v1"
 INDEX_SCHEMA_VERSION = "algorithm-optimization-research-loop-index/v1"
@@ -190,7 +192,7 @@ def _memory_chain(root: Path) -> dict[str, Any]:
             "searched_result_refs": [ref for search in item.get("searched", []) if isinstance(search, Mapping)
                                      for ref in search.get("results", [])],
             "read_refs": [read.get("reference") for read in item.get("read", [])
-                          if isinstance(read, Mapping) and read.get("status") == "ok"],
+                          if isinstance(read, Mapping) and read.get("status") in {"ok", "complete"}],
             "selected_refs": list(item.get("selected") or []),
             "gateway_request_refs": [request.get("input_ref") for request in item.get("gateway_requests", [])
                                      if isinstance(request, Mapping)
@@ -250,7 +252,17 @@ def _load_run(item: Mapping[str, Any], base: Path) -> dict[str, Any]:
     if not root.is_dir():
         raise ValueError("research_bundle_missing")
     _verify_bundle(root)
-    manifest = _json(root / "experiment_manifest.json")
+    manifest_record = _json(root / "experiment_manifest.json")
+    if (isinstance(manifest_record, Mapping)
+            and isinstance(manifest_record.get("document"), Mapping)):
+        manifest = dict(manifest_record["document"])
+        if manifest_record.get("sha256") != sha256_json(manifest):
+            raise ValueError("research_manifest_hash_mismatch")
+    else:
+        # Read compatibility for the original compact-bundle fixture shape.
+        manifest = manifest_record
+    if not isinstance(manifest, Mapping):
+        raise ValueError("research_manifest_invalid")
     extra = manifest.get("extra", {}) if isinstance(manifest, Mapping) else {}
     expected = {
         "research_loop_schema": "algorithm-optimization-research-loop-pilot/v1",

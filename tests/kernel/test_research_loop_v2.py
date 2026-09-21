@@ -8,6 +8,7 @@ import pytest
 
 from agent_skill_loop import session_actions
 from agent_skill_loop import session_runtime as db
+from agent_skill_loop.benchmark.contracts import sha256_json
 from agent_skill_loop.benchmark.pilot import build_research_loop_manifests
 from agent_skill_loop.benchmark.research_report import build_research_loop_report
 from agent_skill_loop.evidence.comparison import build_comparison_packet
@@ -119,7 +120,7 @@ def _write_bundle(root: Path, group: str, seed: int) -> None:
         path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
 
     treatment = {"A": "facts_to_plan", "B": "explicit_reflection", "C": "reflection_with_online_memory"}[group]
-    write("experiment_manifest.json", {
+    manifest = {
         "evaluation_budget": 100, "rounds": 4, "round_budget": 25,
         "memory_enabled": group == "C", "extra": {
             "research_loop_schema": "algorithm-optimization-research-loop-pilot/v1",
@@ -128,7 +129,8 @@ def _write_bundle(root: Path, group: str, seed: int) -> None:
             "heldout_policy": "locked_no_access_diagnostic", "treatment": treatment,
             "memory_source": "run_internal_empty_start" if group == "C" else "disabled",
         },
-    })
+    }
+    write("experiment_manifest.json", {"sha256": sha256_json(manifest), "document": manifest})
     evaluation_id, code_hash = f"eval-{group}-{seed}", hashlib.sha256(f"{group}-{seed}".encode()).hexdigest()
     write("bundle.json", {"run_id": f"run-{group}-{seed}", "run_state": "COMPLETED"})
     write("budget_receipt.json", {
@@ -166,7 +168,7 @@ def _write_bundle(root: Path, group: str, seed: int) -> None:
         write("rounds/round_0002/memory_consumption.json", {
             "round_id": 2, "publication": {"writes": []},
             "searched": [{"results": ["memory://run/round1/insight"]}],
-            "read": [{"reference": "memory://run/round1/insight", "status": "ok"}],
+            "read": [{"reference": "memory://run/round1/insight", "status": "complete"}],
             "selected": ["memory://run/round1/insight"],
             "gateway_requests": [{"input_ref": "request-1.json",
                                   "context_status": "gateway_attempt_exact_context"}],
