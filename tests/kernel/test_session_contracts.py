@@ -134,3 +134,62 @@ def test_feedback_never_resolves_incumbent_by_equal_objective():
     summary = build_feedback_summary(facts, evaluation_ref="facts.json", evaluation_sha256="sha", previous_round_id=1)
     assert summary["incumbent_candidate_match"]["status"] == "identity_unresolved"
     assert "instance_objectives" not in summary["incumbent"]
+
+
+def test_feedback_compacts_search_progress_without_losing_full_evidence():
+    events = [{
+        "attempt_index_in_round": index,
+        "evaluation_id": f"evaluation-{index}",
+        "generated": index > 1,
+        "best_before": 0.0,
+        "best_after": 0.0,
+        "behavior_comparable": True,
+    } for index in range(1, 26)]
+    full_window = {
+        "attempt_trace": {"complete": True, "declared_attempts": 25, "observed_attempts": 25, "events": events},
+        "lineage_parent_frequency": {f"parent-{index}": index for index in range(25)},
+        "generation_attempt_count": 24,
+        "valid_generation_count": 24,
+        "behavior_duplicate_rate": 0.8,
+        "round_solver_attempts": 25,
+    }
+    facts = {
+        "suite_hash": "suite-1",
+        "baseline": {},
+        "incumbent_after": {},
+        "candidates": [],
+        "search_progress": {
+            "schema_version": "algorithm-optimization-search-progress/v1",
+            "round_id": 1,
+            "window": full_window,
+            "cumulative": full_window,
+            "policy": {"window_evaluations": 25},
+            "stagnation": {"status": "stagnated", "attempts": 25},
+        },
+    }
+    summary = build_feedback_summary(
+        facts,
+        evaluation_ref="rounds/round_0001/evaluation_facts.json",
+        evaluation_sha256="facts-sha",
+        previous_round_id=1,
+    )
+    progress = summary["search_progress"]
+    assert "attempt_trace" in facts["search_progress"]["window"]
+    assert "attempt_trace" not in progress["window"]
+    assert "lineage_parent_frequency" not in progress["cumulative"]
+    assert progress["window"]["round_solver_attempts"] == 25
+
+    plan = PlanDocument.from_dict(
+        plan_payload(2) | {
+            "feedback_basis": {
+                "round_id": 1,
+                "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+                "suite_hash": "suite-1",
+            },
+        },
+        expected_round_id=2,
+        suite_hash="suite-1",
+        available_feedback_refs={"rounds/round_0001/evaluation_facts.json"},
+    )
+    context = compile_round_context(plan, feedback_summary=summary)
+    assert len(context) < 12_000

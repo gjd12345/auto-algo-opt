@@ -424,6 +424,60 @@ def _compact_candidate(row: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
+_SEARCH_PROGRESS_CONTEXT_FIELDS = (
+    "objective_direction",
+    "incumbent_before_objective",
+    "incumbent_after_objective",
+    "incumbent_absolute_gain",
+    "incumbent_instance_coverage",
+    "incumbent_per_instance_gain",
+    "generation_attempt_count",
+    "valid_generation_count",
+    "invalid_generation_count",
+    "valid_generation_yield",
+    "source_duplicate_count",
+    "source_duplicate_denominator",
+    "source_duplicate_rate",
+    "behavior_comparable_count",
+    "behavior_comparable_coverage",
+    "behavior_duplicate_count",
+    "behavior_duplicate_rate",
+    "behavior_novel_count",
+    "behavior_incomplete_or_unavailable_count",
+    "lineage_verified_candidate_count",
+    "lineage_unknown_or_unverified_count",
+    "lineage_unknown_rate",
+    "lineage_concentration",
+    "instance_response_valid_complete_count",
+    "instance_response_unique_vector_count",
+    "instance_response_diversity_rate",
+    "instance_response_pairwise_l1_mean",
+    "instance_response_pairwise_l1_max",
+    "novel_behavior_count",
+    "requests_per_novel_behavior",
+    "solver_attempts_per_novel_behavior",
+    "round_requests",
+    "round_solver_attempts",
+    "round_input_tokens",
+    "round_output_tokens",
+    "round_token_status",
+    "round_provider_elapsed_seconds",
+    "round_wall_seconds",
+)
+
+
+def _compact_search_progress_view(raw: Any) -> dict[str, Any] | None:
+    """Project an evidence record to fixed-size metrics for the EoH prompt.
+
+    Full attempt traces and frequency maps remain in evaluation_facts.json and
+    its evidence bundle.  They are deliberately excluded here because prompt
+    size must not grow with the solver budget.
+    """
+    if not isinstance(raw, Mapping):
+        return None
+    return {key: raw.get(key) for key in _SEARCH_PROGRESS_CONTEXT_FIELDS if key in raw}
+
+
 def build_feedback_summary(
     facts: Mapping[str, Any],
     *,
@@ -529,14 +583,14 @@ def build_feedback_summary(
         summary["execution_delta"] = {key: delta.get(key) for key in ("ref", "sha256", "generated_count")}
     progress = facts.get("search_progress")
     if isinstance(progress, Mapping):
-        # SearchProgress is already bounded by the collector.  Keep the
-        # complete v1 record in facts and pass only its two scoped views and
-        # frozen gate to the next EoH context.
+        # Keep the complete v1 record in facts.  The next EoH prompt receives
+        # only fixed-size scalar projections, so a larger solver budget cannot
+        # make the context grow without bound.
         summary["search_progress"] = {
             "schema_version": progress.get("schema_version"),
             "round_id": progress.get("round_id"),
-            "window": progress.get("window"),
-            "cumulative": progress.get("cumulative"),
+            "window": _compact_search_progress_view(progress.get("window")),
+            "cumulative": _compact_search_progress_view(progress.get("cumulative")),
             "policy": progress.get("policy"),
             "stagnation": progress.get("stagnation"),
         }

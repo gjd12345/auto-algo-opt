@@ -20,7 +20,7 @@ SEED_DERIVATION_TEXT = "obp_research_loop_v1/three_seed_diagnostic"
 SEED_DERIVATION_SHA256 = "55a062797c1fba96d6c38bc6a252f53eabbd991d2b5c202899a8366fd6c1498a"
 DIAGNOSTIC_SEEDS = (1436574329, 2082454166, 3603139526)
 EXPECTED_ENDPOINT = "https://model-router.edu-aliyun.com/v1/chat/completions"
-EXPECTED_MODEL = "qwen/deepseek-v4.1"
+EXPECTED_MODEL = "qwen/deepseek-v4.1-flash"
 EXPECTED_KEY_ENV = "MODEL_ROUTER_API_KEY"
 
 
@@ -144,4 +144,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
