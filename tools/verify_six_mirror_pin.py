@@ -40,7 +40,8 @@ does not print a numeric ``d``. ``RMS_ABS_GATE`` is not committed. A finite
 measurement exits 4 and cannot exit 0.
 
 ``py -3.12`` only selects the 3.12 series. After the venv exists, this command
-reads ``sys.version`` and exits nonzero unless it is exactly CPython 3.12.14.
+reads ``sys.version`` and exits nonzero unless it is exactly CPython 3.12.10.
+3.12.14 is source-only on Windows; 3.12.10 is the last python.org binary.
 A wrong interpreter, NumPy, or SciPy version is a stack failure (exit 2), not
 a physics-pin failure.
 
@@ -156,7 +157,7 @@ def _stack_status(*, echo: bool) -> int:
         print(f"numpy={numpy_version}")
         print(f"scipy={scipy_version}")
         print(f"blas={blas}")
-    release_ok = sys.version_info[:3] == (3, 12, 14) and sys.version_info.releaselevel == "final"
+    release_ok = sys.version_info[:3] == (3, 12, 10) and sys.version_info.releaselevel == "final"
     if not release_ok or numpy_version != "2.5.3" or scipy_version != "1.18.1":
         print("stack_mismatch")
         return _EXIT_STACK

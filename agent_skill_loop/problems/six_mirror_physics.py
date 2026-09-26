@@ -1,8 +1,8 @@
 """Pinned NumPy wavefront for one declared six-mirror sampling.
 
 ``optics_optim`` is imported inside functions so hermetic tests can import the
-evaluator without SciPy. ``TREE_SHA256`` stays unset until a stage-0
-measurement commits it. An unset or mismatched pin does not trace.
+evaluator without SciPy. ``TREE_SHA256`` is the installed-tree digest, not
+the wheel digest. A mismatch does not trace.
 """
 
 from __future__ import annotations
@@ -16,8 +16,8 @@ from typing import Any
 import numpy as np
 
 WHEEL_SHA256 = "ba8d2b9902bf0ba1260e1d8df32218b256f180499f6fd0ce2061444b917282fa"
-# Filled only after tools/verify_six_mirror_pin.py prints a measurement.
-TREE_SHA256: str | None = None
+# Installed-tree digest measured before any ray trace. Not the wheel SHA-256.
+TREE_SHA256 = "db07d3b6cf537c46bd363d14dd606dbd9538f49b36bcd015b39016a7ae6c44a8"
 THREAD_ENV_VARS = (
     "OMP_NUM_THREADS",
     "MKL_NUM_THREADS",

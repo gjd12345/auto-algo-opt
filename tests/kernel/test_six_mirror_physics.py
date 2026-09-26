@@ -86,7 +86,7 @@ def test_unpinned_install_does_not_load_prescription(monkeypatch):
             tree_sha256=suite["physics_tree_sha256"],
         )
     assert calls == []
-    assert TREE_SHA256 in (None, "")
+    assert TREE_SHA256 == "db07d3b6cf537c46bd363d14dd606dbd9538f49b36bcd015b39016a7ae6c44a8"
 
 
 def test_wheel_argument_mismatch_is_pin_mismatch():
