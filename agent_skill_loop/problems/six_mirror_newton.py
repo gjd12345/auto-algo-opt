@@ -271,6 +271,7 @@ def _metrics(
     final: float,
     accepted_steps: int,
     accepted_alphas: list[float],
+    accepted_rms: list[float],
     status: str,
     iterations_executed: int,
     vectors: int,
@@ -287,6 +288,8 @@ def _metrics(
         "final_rms_waves": final,
         "accepted_steps": accepted_steps,
         "accepted_alphas": list(accepted_alphas),
+        # Stage 1 reads the value after the first accepted step, not only the final.
+        "accepted_rms_waves": list(accepted_rms),
         "solver_status": status,
         "iterations_executed": iterations_executed,
         "parameter_vectors_evaluated": vectors,
@@ -322,6 +325,7 @@ def run_diagonal_newton(
     initial = current
     accepted_steps = 0
     accepted_alphas: list[float] = []
+    accepted_rms: list[float] = []
     status = "max_iterations"
     iterations_executed = 0
     alphas = np.array(
@@ -387,8 +391,16 @@ def run_diagonal_newton(
         current = value
         accepted_steps += 1
         accepted_alphas.append(alpha)
+        accepted_rms.append(value)
     return current, x.copy(), _metrics(
-        initial, current, accepted_steps, accepted_alphas, status, iterations_executed, vectors
+        initial,
+        current,
+        accepted_steps,
+        accepted_alphas,
+        accepted_rms,
+        status,
+        iterations_executed,
+        vectors,
     )
 
 
