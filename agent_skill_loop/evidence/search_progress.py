@@ -308,7 +308,20 @@ def _attempt_trace(current_facts: Mapping[str, Any], candidates: list[Mapping[st
     before = current_facts.get("incumbent_before") if isinstance(current_facts.get("incumbent_before"), Mapping) else {}
     best = _number(before.get("objective"))
     events = []
-    for index, candidate in enumerate(candidates):
+    ledger = current_facts.get("solver_attempts")
+    by_identity = {(item.get("evaluation_id"), item.get("code_sha256")): item for item in candidates}
+    source = ledger if isinstance(ledger, list) else candidates
+    identity_complete = True
+    for index, call in enumerate(source):
+        if not isinstance(call, Mapping):
+            identity_complete = False
+            continue
+        candidate = (by_identity.get((call.get("evaluation_id"), call.get("code_sha256")))
+                     if isinstance(ledger, list) else call)
+        if isinstance(ledger, list) and call.get("state") in {"complete", "failed"} and candidate is None:
+            identity_complete = False
+        if candidate is None:
+            candidate = {}
         objective = _number(candidate.get("objective"))
         valid = candidate.get("valid") is True and objective is not None
         prior = best
@@ -318,16 +331,21 @@ def _attempt_trace(current_facts: Mapping[str, Any], candidates: list[Mapping[st
         comparable = bool(evidence and evidence.get("status") == "complete" and evidence.get("comparable") is True)
         events.append({
             "attempt_index_in_round": index + 1,
-            "evaluation_id": candidate.get("evaluation_id"),
+            "solver_call_id": call.get("solver_call_id") if isinstance(ledger, list) else None,
+            "evaluation_id": call.get("evaluation_id"),
+            "code_sha256": call.get("code_sha256"),
+            "attempt_state": call.get("state") if isinstance(ledger, list) else None,
             "best_before": prior,
             "best_after": best,
             "behavior_comparable": comparable,
-            "generated": _generated(candidate),
+            "generated": _generated(call),
         })
     declared = current_facts.get("round_solver_attempts")
-    complete = isinstance(declared, int) and not isinstance(declared, bool) and declared == len(events)
+    complete = (identity_complete and isinstance(declared, int) and not isinstance(declared, bool)
+                and declared == len(events))
     return {"events": events, "complete": complete, "declared_attempts": declared,
-            "observed_attempts": len(events)}
+            "observed_attempts": len(events),
+            "interrupted_attempts": sum(event["attempt_state"] == "interrupted" for event in events)}
 
 
 def _merge_scope(*parts: Mapping[str, Any]) -> dict[str, Any]:
@@ -420,6 +438,12 @@ def evaluate_stagnation(progress_history: Sequence[Mapping[str, Any]], policy: M
     selected = traces[-window:]
     selected_rounds = list(dict.fromkeys(round_id for round_id, _event in selected))
     first = _number(selected[0][1].get("best_before"))
+    if first is None:
+        # A cold-start window begins before the baseline has established an
+        # incumbent. Compare subsequent gains with the first verified score
+        # in that window instead of declaring every first round stagnated.
+        first = next((_number(event.get("best_after")) for _round_id, event in selected
+                      if _number(event.get("best_after")) is not None), None)
     last = _number(selected[-1][1].get("best_after"))
     direction = str((records[-1].get("window") or {}).get("objective_direction") or "minimize")
     absolute_gain = None

@@ -604,6 +604,11 @@ def collect_facts(root, con, run, rd, task):
     solver_round_attempts = con.execute(
         "SELECT COUNT(*) FROM solver_calls WHERE run_id=? AND round_id=?", (run["run_id"], rd["round_id"])
     ).fetchone()[0]
+    solver_attempts = [dict(item) for item in con.execute(
+        "SELECT solver_call_id,candidate_id,revision,origin,evaluation_id,code_sha256,"
+        "state,objective,valid,error_code FROM solver_calls "
+        "WHERE run_id=? AND round_id=? ORDER BY rowid", (run["run_id"], rd["round_id"])
+    )]
     request_costs = {
         "round": {**request_cost(current_requests), "engine_wall_seconds": float(task["engine_elapsed_seconds"] or 0.0)},
         "cumulative": {**request_cost(request_rows), "solver_attempts": con.execute(
@@ -635,6 +640,7 @@ def collect_facts(root, con, run, rd, task):
     from agent_skill_loop.evidence.search_progress import build_search_progress, evaluate_stagnation, normalize_policy
     current_facts = {"round_id": rd["round_id"], "problem": run["problem"],
                      "objective_direction": run["objective_direction"], "candidates": candidates,
+                     "solver_attempts": solver_attempts,
                      "incumbent_before": before, "incumbent_after": after,
                      "request_costs": request_costs, "round_solver_attempts": solver_round_attempts,
                      "dual_budget": {"round_evaluation_attempts": solver_round_attempts}}
@@ -661,7 +667,8 @@ def collect_facts(root, con, run, rd, task):
             "benchmark": {"benchmark_id": run["benchmark_id"], "profile": run["benchmark_profile"], "problem_spec_hash": run["problem_spec_hash"], "benchmark_spec_hash": run["benchmark_spec_hash"],
                           "data_manifest_hash": run["data_manifest_hash"], "reference_manifest_hash": run["reference_manifest_hash"], "metric_spec_hash": metric_run_hash} if "benchmark_id" in run.keys() and run["benchmark_id"] else None,
             "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
-            "incumbent_before":before,"incumbent_after":after,"candidates":candidates,"exports":exported,
+            "incumbent_before":before,"incumbent_after":after,"candidates":candidates,
+            "solver_attempts": solver_attempts,"exports":exported,
             "best_generated_ref":f"{prefix}/{exported['best_generated_path']}" if exported.get("best_generated_path") else None,
             "evidence_refs":[f"evaluation:{x['evaluation_id']}" for x in rows],"budgets":budget_view,
             "solver_costs": solver_cost_summary(con, task["task_id"], candidates),

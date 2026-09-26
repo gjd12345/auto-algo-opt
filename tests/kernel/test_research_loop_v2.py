@@ -59,6 +59,26 @@ def test_comparison_packet_selection_is_deterministic_and_exact_identity_only():
     assert first["slots"]["behavior_duplicate"]["behavior_relation"] == "same"
 
 
+def test_effect_contrast_skips_identical_reevaluations():
+    repeated_a = _row("explicit_parent", "p" * 64, "eval-a", 1.0, [1.0, 1.0],
+                      origin="explicit_parent", signature="same", request=1)
+    repeated_b = _row("explicit_parent", "p" * 64, "eval-b", 1.0, [1.0, 1.0],
+                      origin="explicit_parent", signature="same", request=2)
+    different = _row("candidate", "c" * 64, "eval-c", 1.01, [1.0, 1.02],
+                     signature="different", request=3)
+    packet = build_comparison_packet(
+        [repeated_a, repeated_b, different],
+        plan={"direction": "test", "hypothesis": "test", "operations": []},
+        plan_ref="plan.json", plan_sha256="a" * 64, execution_delta={"candidates": []},
+        search_progress={}, request_costs={}, problem="obp_online", suite_hash="s" * 64,
+    )
+    effect = packet["slots"]["effect_contrast"]
+    assert packet["selection_policy_version"] == "obp-research-contrasts/v2"
+    assert effect["status"] == "available"
+    assert effect["instance_objective_l1"] > 0
+    assert {effect["left"]["evaluation_id"], effect["right"]["evaluation_id"]} != {"eval-a", "eval-b"}
+
+
 def test_reflection_basis_is_required_or_forbidden_by_treatment_contract():
     payload = {
         "round_id": 2, "direction": "next", "operations": [{"type": "replace", "target": "ranking", "mechanism": "contrast"}],
@@ -89,7 +109,7 @@ def test_research_loop_manifest_freezes_budget_inputs_and_online_memory_source()
     for group in pilot["groups"].values():
         assert (group["manifest"]["evaluation_budget"], group["manifest"]["rounds"],
                 group["manifest"]["round_budget"]) == (100, 4, 25)
-        assert group["manifest"]["extra"]["comparison_packet_policy"] == "obp-research-contrasts/v1"
+        assert group["manifest"]["extra"]["comparison_packet_policy"] == "obp-research-contrasts/v2"
         assert group["manifest"]["extra"]["population_seed_policy"] == \
             "verified_final_population_up_to_capacity_minimum_one"
     assert pilot["groups"]["C"]["manifest"]["memory_enabled"] is True
@@ -125,7 +145,7 @@ def _write_bundle(root: Path, group: str, seed: int) -> None:
         "memory_enabled": group == "C", "extra": {
             "research_loop_schema": "algorithm-optimization-research-loop-pilot/v1",
             "problem_scope": "obp_online", "benchmark_profile": "obp_evolution_mini",
-            "primary_budget_resource": "solver_calls", "comparison_packet_policy": "obp-research-contrasts/v1",
+            "primary_budget_resource": "solver_calls", "comparison_packet_policy": "obp-research-contrasts/v2",
             "heldout_policy": "locked_no_access_diagnostic", "treatment": treatment,
             "memory_source": "run_internal_empty_start" if group == "C" else "disabled",
         },

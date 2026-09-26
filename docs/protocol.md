@@ -22,9 +22,10 @@ Phase 4.1（2026-09-13）及 Phase 5（2026-09-13）补充合同：
 
 - `algorithm-optimization-research-loop-pilot/v1` 只允许 `obp_online / obp_evolution_mini`，
   主预算固定为 100 solver calls、四轮、每轮 25；heldout 在诊断期锁定。
-- 每轮事实 MUST 生成策略版本为 `obp-research-contrasts/v1` 的
+- 新建运行的每轮事实 MUST 生成策略版本为 `obp-research-contrasts/v2` 的
   `comparison_packet.json`。候选关联 MUST 使用精确 `evaluation_id + code_sha256`；
-  objective 相等 MUST NOT 作为身份回退。
+  objective 相等 MUST NOT 作为身份回退。旧运行的 v1 packet 保持原样；
+  v2 的效果差异槽排除逐实例向量完全相同的两次评测。
 - treatment A 禁止 `reflection_basis`；B、C 的第二轮及以后 MUST 精确引用上一轮已接受的
   `evaluation.submitted.json` 及 SHA。Runtime 只验证引用，不将其直接注入 EoH。
 - C 的 Memory store MUST 是本 Session 输出目录内的新空库，只能消费相同 run 更早轮次的

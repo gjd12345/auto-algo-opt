@@ -13,7 +13,7 @@ from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = "algorithm-optimization-comparison-packet/v1"
-SELECTION_POLICY_VERSION = "obp-research-contrasts/v1"
+SELECTION_POLICY_VERSION = "obp-research-contrasts/v2"
 _GENERATED = {"generated", "generated_repair"}
 
 
@@ -159,6 +159,8 @@ def build_comparison_packet(
             continue
         aggregate_delta = abs(float(_evaluation(left)["objective"]) - float(_evaluation(right)["objective"]))
         instance_l1 = sum(abs(a - b) for a, b in zip(left_vector, right_vector))
+        if instance_l1 == 0:
+            continue
         ids = tuple(sorted((str(left["evaluation_id"]), str(right["evaluation_id"]))))
         effect_options.append((aggregate_delta, -instance_l1, ids, left, right, instance_l1))
     if effect_options:
@@ -169,7 +171,7 @@ def build_comparison_packet(
             "aggregate_objective_distance": aggregate_delta, "instance_objective_l1": instance_l1,
         }
     else:
-        effect = _empty("fewer_than_two_valid_complete_instance_vectors")
+        effect = _empty("no_pair_with_distinct_complete_instance_vectors")
 
     generated = [row for row in candidates if row.get("origin") in _GENERATED]
     statuses = Counter()

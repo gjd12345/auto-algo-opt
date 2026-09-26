@@ -109,8 +109,7 @@ def _reflection_contract(root, con, row, rd):
     treatment = str(_manifest_extra(root).get("treatment") or "")
     if treatment == "facts_to_plan":
         return "forbidden", None
-    if treatment not in {"explicit_reflection", "reflection_with_online_memory"}:
-        return "optional", None
+    requirement = "required" if treatment in {"explicit_reflection", "reflection_with_online_memory"} else "optional"
     if rd["previous_round_id"] is None:
         return "forbidden", None
     previous = con.execute(
@@ -118,8 +117,10 @@ def _reflection_contract(root, con, row, rd):
         (row["run_id"], rd["previous_round_id"]),
     ).fetchone()
     if previous is None or not previous["submitted_evaluation_ref"] or not previous["submitted_evaluation_sha256"]:
-        fail("REFLECTION_REFERENCE_UNAVAILABLE", "submit-plan")
-    return "required", {
+        if requirement == "required":
+            fail("REFLECTION_REFERENCE_UNAVAILABLE", "submit-plan")
+        return "optional", None
+    return requirement, {
         "round_id": rd["previous_round_id"],
         "evaluation_ref": previous["submitted_evaluation_ref"],
         "evaluation_sha256": previous["submitted_evaluation_sha256"],

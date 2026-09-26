@@ -9,7 +9,8 @@ from typing import Any
 from .catalog import benchmark_profile, load_benchmark_registry
 from .contracts import ExperimentManifest, FrozenSelection, PopulationSnapshot, sha256_json
 from .harness import calibrate_differential, calibrate_upstream, evaluate_candidate, evaluate_candidate_set, evaluate_selection, load_suite
-from .pilot import build_pilot_manifests, build_co_pilot_manifests, build_research_loop_manifests
+from .pilot import (build_pilot_manifests, build_co_pilot_manifests,
+                    build_research_loop_manifests, build_island605_bp_research_loop_manifests)
 from .report import build_report
 from .research_report import build_research_loop_report
 
@@ -164,6 +165,13 @@ def cmd_co_pilot_config(args: Any) -> int:
 def cmd_research_loop_config(args: Any) -> int:
     payload = json.loads(Path(args.config).read_text(encoding="utf-8"))
     result = build_research_loop_manifests(payload)
+    _write(Path(args.output) if args.output else None, result)
+    return 0
+
+
+def cmd_island605_bp_research_loop_config(args: Any) -> int:
+    payload = json.loads(Path(args.config).read_text(encoding="utf-8"))
+    result = build_island605_bp_research_loop_manifests(payload)
     _write(Path(args.output) if args.output else None, result)
     return 0
 

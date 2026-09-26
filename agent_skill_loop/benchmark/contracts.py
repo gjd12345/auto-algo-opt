@@ -96,13 +96,21 @@ class MetricSpec:
         return sha256_json(self.as_dict())
 
     def score(self, raw_objective: float, reference_objective: float) -> float:
-        """Return a finite relative gap; lower is better for benchmark runs."""
+        """Return a finite per-instance contribution to the frozen fitness."""
         if not math.isfinite(float(raw_objective)) or not math.isfinite(float(reference_objective)):
             raise ValueError("nonfinite_metric_input")
         if reference_objective <= 0:
             raise ValueError("nonpositive_reference_objective")
         if self.direction != "minimize":
             raise ValueError("relative_gap_requires_minimize")
+        if self.aggregation == "ratio_of_means_excess":
+            denominator = self.config.get("dataset_mean_reference")
+            if (isinstance(denominator, bool) or not isinstance(denominator, (int, float))
+                    or not math.isfinite(float(denominator)) or denominator <= 0):
+                raise ValueError("ratio_of_means_denominator_invalid")
+            return (float(raw_objective) - float(reference_objective)) / float(denominator)
+        if self.aggregation != "mean_instance_relative_gap":
+            raise ValueError("metric_aggregation_not_supported")
         return (float(raw_objective) - float(reference_objective)) / float(reference_objective)
 
     def aggregate(self, instance_scores: Sequence[float]) -> float:

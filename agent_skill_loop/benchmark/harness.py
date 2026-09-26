@@ -213,7 +213,7 @@ def _metric_for_suite(suite: Mapping[str, Any], metric_spec: MetricSpec | None =
     kinds = {item.get("reference_kind") for item in suite.get("instances", []) if isinstance(item, Mapping)}
     if kinds and kinds != {metric_spec.reference_kind}:
         raise ValueError("metric_reference_kind_mismatch")
-    if metric_spec.aggregation != "mean_instance_relative_gap":
+    if metric_spec.aggregation not in {"mean_instance_relative_gap", "ratio_of_means_excess"}:
         raise ValueError("metric_aggregation_not_supported")
     return metric_spec
 
@@ -237,7 +237,13 @@ def _benchmark_identity(suite: Mapping[str, Any], metric_spec: MetricSpec, code:
     }
 
 
-def _calibration_code(name: str) -> str:
+def _calibration_code(name: str, problem_id: str = "obp_online") -> str:
+    if problem_id == "bp_online_island605":
+        if name == "first_fit":
+            return "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    return -np.arange(len(bins), dtype=float)\n"
+        if name == "best_fit":
+            return "def score(item: int, bins: np.ndarray) -> np.ndarray:\n    return -bins\n"
+        raise ValueError("unknown_calibration_heuristic")
     if name == "first_fit":
         return "def priority(item, bins):\n    return -np.arange(len(bins), dtype=float)\n"
     if name == "best_fit":
@@ -251,7 +257,7 @@ def calibrate_production(suite: Mapping[str, Any]) -> dict[str, Any]:
     rows: dict[str, list[dict[str, Any]]] = {"first_fit": [], "best_fit": []}
     identities: dict[str, dict[str, str]] = {}
     for name in rows:
-        code = _calibration_code(name)
+        code = _calibration_code(name, str(suite.get("problem")))
         result = evaluate_candidate(code, suite, metric_spec=metric)
         identities[name] = result["identity"]
         if result.get("valid") is not True:

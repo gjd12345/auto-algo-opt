@@ -156,6 +156,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "obp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "bp_island605.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     parts.append(parent.joinpath("evidence", "behavior.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
@@ -1155,3 +1156,21 @@ OBP_SPEC = ProblemSpec(
 )
 
 register_problem(OBP_SPEC)
+
+# Separate identity: historical BP permits selecting unopened bins and uses
+# ratio-of-means fitness. Never change the existing OBP benchmark semantics.
+from agent_skill_loop.problems import bp_island605 as _island605
+from dataclasses import replace as _replace_spec
+
+register_problem(_replace_spec(
+    OBP_SPEC, problem_id=_island605.PROBLEM_NAME, entrypoint="score",
+    interface_version="archive-restored-v1",
+    task_description=_island605.TASK_DESCRIPTION,
+    template_program=_island605.BASELINE_CODE, baseline_code=_island605.BASELINE_CODE,
+    baseline_description="deterministic best fit over all feasible bins including unopened bins",
+    split_offsets={"dev_train": 0}, build_suite=_island605.build_suite,
+    validate_suite=_island605.validate_suite,
+    evaluate_instances=_island605.evaluate_instances,
+    evaluate_with_behavior=_island605.evaluate_with_behavior,
+    behavior_contract=_island605.BEHAVIOR_CONTRACT,
+))

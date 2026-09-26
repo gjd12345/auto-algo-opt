@@ -22,6 +22,7 @@ packages = ["agent_skill_loop", "agent_skill_loop.memory", "agent_skill_loop.pro
 algorithm_optimization_skill = "skills/algorithm-optimization"
 
 [tool.setuptools.package-data]
+"agent_skill_loop.problems" = ["data/*.json"]
 algorithm_optimization_skill = ["SKILL.md", "agents/*.yaml", "references/*.md", "references/examples/*.md"]
 benchmarks = ["eohs_v1/*.json", "eohs_v1/*.md", "eohs_v1/manifests/*.json", "eohs_v1/expected/*.json"]
 

@@ -126,6 +126,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         "pilot-config": benchmark_cli.cmd_pilot_config,
         "co-pilot-config": benchmark_cli.cmd_co_pilot_config,
         "research-loop-config": benchmark_cli.cmd_research_loop_config,
+        "island605-bp-research-loop-config": benchmark_cli.cmd_island605_bp_research_loop_config,
         "research-loop-report": benchmark_cli.cmd_research_loop_report,
         "report": benchmark_cli.cmd_report,
     }
@@ -398,6 +399,13 @@ def build_parser() -> argparse.ArgumentParser:
     research_loop_config.add_argument("--config", required=True)
     research_loop_config.add_argument("--output")
     research_loop_config.set_defaults(func=cmd_benchmark)
+
+    island605_config = benchmark_sub.add_parser(
+        "island605-bp-research-loop-config", help="Freeze training-only island_605 BP A/B/C manifests"
+    )
+    island605_config.add_argument("--config", required=True)
+    island605_config.add_argument("--output")
+    island605_config.set_defaults(func=cmd_benchmark)
 
     research_loop_report = benchmark_sub.add_parser(
         "research-loop-report", help="Build the hash-checked A/B/C diagnostic report from compact bundles"

@@ -28,6 +28,7 @@ from .harness import calibrate_differential, calibrate_production, calibrate_ups
 from .pilot import (
     CO_PILOT_GROUPS, PILOT_GROUPS, RESEARCH_LOOP_GROUPS,
     build_co_pilot_manifests, build_pilot_manifests, build_research_loop_manifests,
+    build_island605_bp_research_loop_manifests,
 )
 
 __all__ = [
@@ -64,4 +65,5 @@ __all__ = [
     "build_co_pilot_manifests",
     "RESEARCH_LOOP_GROUPS",
     "build_research_loop_manifests",
+    "build_island605_bp_research_loop_manifests",
 ]

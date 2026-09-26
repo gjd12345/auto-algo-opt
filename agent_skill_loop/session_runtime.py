@@ -1083,7 +1083,7 @@ def _validate_experiment_manifest(
             "problem_scope": "obp_online",
             "benchmark_profile": "obp_evolution_mini",
             "primary_budget_resource": "solver_calls",
-            "comparison_packet_policy": "obp-research-contrasts/v1",
+            "comparison_packet_policy": "obp-research-contrasts/v2",
             "controller_usage_requirement": "complete_or_explicitly_unavailable",
             "heldout_policy": "locked_no_access_diagnostic",
             "diversity_interpretation": "diagnostic_only",
@@ -1092,6 +1092,31 @@ def _validate_experiment_manifest(
             raise SessionError("INVALID_ARGUMENT", "research_loop_contract_mismatch", action="init")
         if (manifest.evaluation_budget, manifest.rounds, manifest.round_budget) != (100, 4, 25):
             raise SessionError("INVALID_ARGUMENT", "research_loop_budget_contract_mismatch", action="init")
+    if extra.get("research_loop_schema") == "algorithm-optimization-island605-bp-research-loop/v1":
+        required = {
+            "problem_scope": "bp_online_island605",
+            "benchmark_profile": "historically_exposed_train_v1",
+            "primary_budget_resource": "solver_calls",
+            "comparison_packet_policy": "obp-research-contrasts/v2",
+            "controller_usage_requirement": "complete_or_explicitly_unavailable",
+            "heldout_policy": "locked_no_access_diagnostic",
+            "diversity_interpretation": "diagnostic_only",
+            "agent_input_contract": "same_comparison_packet_schema_and_selection_policy",
+        }
+        treatment_memory = {
+            "facts_to_plan": (False, "disabled"),
+            "explicit_reflection": (False, "disabled"),
+            "reflection_with_online_memory": (True, "run_internal_empty_start"),
+        }
+        expected_treatment = treatment_memory.get(extra.get("treatment"))
+        if (benchmark.benchmark_id, benchmark.profile, benchmark.problem_id) != (
+            "island605_bp", "historically_exposed_train_v1", "bp_online_island605"
+        ) or any(extra.get(key) != value for key, value in required.items()) or expected_treatment != (
+            manifest.memory_enabled, extra.get("memory_source")
+        ):
+            raise SessionError("INVALID_ARGUMENT", "island605_bp_research_loop_contract_mismatch", action="init")
+        if (manifest.evaluation_budget, manifest.rounds, manifest.round_budget) != (100, 4, 25):
+            raise SessionError("INVALID_ARGUMENT", "island605_bp_research_loop_budget_mismatch", action="init")
     return manifest.as_dict(), manifest.content_hash
 
 
@@ -1295,7 +1320,10 @@ def initialize_session(
     manifest_extra_hint = (
         manifest_hints.get("extra") if isinstance(manifest_hints.get("extra"), Mapping) else {}
     )
-    if manifest_extra_hint.get("research_loop_schema") == "algorithm-optimization-research-loop-pilot/v1":
+    if manifest_extra_hint.get("research_loop_schema") in {
+        "algorithm-optimization-research-loop-pilot/v1",
+        "algorithm-optimization-island605-bp-research-loop/v1",
+    }:
         treatment = manifest_extra_hint.get("treatment")
         expected_memory = treatment == "reflection_with_online_memory"
         if treatment not in {"facts_to_plan", "explicit_reflection", "reflection_with_online_memory"}:

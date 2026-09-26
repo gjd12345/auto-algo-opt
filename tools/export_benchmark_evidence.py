@@ -132,13 +132,20 @@ def export_bundle(run, output, report_dir=None):
             }
 
         provider_cost = token_summary(requests)
+        provider_elapsed_complete = bool(requests) and all(
+            isinstance(item.get("elapsed_seconds"), (int, float)) for item in requests)
         provider_cost.update({
             "requests": len(requests),
-            "provider_elapsed_seconds": round(sum(float(item.get("elapsed_seconds") or 0) for item in requests), 6),
+            "provider_elapsed_seconds": round(sum(float(item["elapsed_seconds"]) for item in requests), 6)
+            if provider_elapsed_complete else None,
         })
         controller_cost = token_summary(controller_events)
-        controller_cost["elapsed_seconds"] = round(sum(float(item.get("elapsed_seconds") or 0)
-                                                          for item in controller_events), 6)
+        controller_elapsed_complete = bool(controller_events) and all(
+            isinstance(item.get("elapsed_seconds"), (int, float)) for item in controller_events)
+        controller_cost["elapsed_seconds"] = (
+            round(sum(float(item["elapsed_seconds"]) for item in controller_events), 6)
+            if controller_elapsed_complete else None
+        )
         if not controller_events:
             controller_cost["reason"] = "controller_usage_not_recorded"
         files["controller_usage.json"] = encoded({
@@ -152,7 +159,9 @@ def export_bundle(run, output, report_dir=None):
         files["cost_summary.json"] = encoded({
             "schema_version": "algorithm-optimization-cost-summary/v1",
             "solver_calls": len(solver),
-            "engine_wall_seconds": round(sum(float(item.get("engine_elapsed_seconds") or 0) for item in tasks), 6),
+            "engine_wall_seconds": round(sum(float(item["engine_elapsed_seconds"]) for item in tasks), 6)
+            if tasks and all(isinstance(item.get("engine_elapsed_seconds"), (int, float)) for item in tasks)
+            else None,
             "eoh_provider": provider_cost,
             "outer_controller": controller_cost,
             "total_model_tokens": (

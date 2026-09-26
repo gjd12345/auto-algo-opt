@@ -75,6 +75,8 @@ def benchmark_for_spec_hash(benchmark_spec_hash: str) -> tuple[BenchmarkSpec, Me
 def load_profile_suite(benchmark_id: str = "eohs_v1", profile: str = "obp_mini", *, split: str = "dev_train") -> dict[str, Any]:
     """Load a frozen benchmark manifest and attach its deterministic suite hash."""
     benchmark, metric, item = benchmark_profile(benchmark_id, profile)
+    if split not in {"train", "dev_train"} and item.get("heldout_policy") == "locked_no_access_diagnostic":
+        raise ValueError("heldout_locked_no_access")
     paths = item.get("manifest_paths")
     if not isinstance(paths, dict) or split not in paths:
         raise ValueError("benchmark_split_not_found")

@@ -74,6 +74,47 @@ def test_stagnation_uses_fixed_attempt_window_and_behavior_gate():
     assert evaluate_stagnation([progress(1, 10, 10, 1)], policy)["status"] == "insufficient_window"
 
 
+def test_cold_start_window_counts_gain_after_first_verified_baseline():
+    policy = {"enabled": True, "window_evaluations": 3,
+              "min_absolute_gain": 0.001, "min_relative_gain": 0.01,
+              "min_behavior_coverage": 0.5}
+    history = [{"round_id": 1, "window": {"objective_direction": "minimize", "attempt_trace": {
+        "complete": True, "events": [
+            {"best_before": None, "best_after": 0.04, "generated": False, "behavior_comparable": True},
+            {"best_before": 0.04, "best_after": 0.04, "generated": True, "behavior_comparable": True},
+            {"best_before": 0.04, "best_after": 0.017, "generated": True, "behavior_comparable": True},
+        ]}}}]
+    result = evaluate_stagnation(history, policy)
+    assert result["status"] == "progress"
+    assert abs(result["absolute_gain"] - 0.023) < 1e-12
+
+
+def test_interrupted_solver_attempt_remains_on_fixed_budget_axis():
+    baseline = _candidate("baseline", "a" * 64, 0.04, signature="baseline")
+    baseline.update(origin="baseline", evaluation_id="eval-base")
+    winner = _candidate("candidate_2", "b" * 64, 0.02, signature="winner")
+    winner["evaluation_id"] = "eval-winner"
+    calls = [
+        {"solver_call_id": "call-1", "origin": "baseline", "evaluation_id": "eval-base",
+         "code_sha256": "a" * 64, "state": "complete"},
+        {"solver_call_id": "call-2", "origin": "generated", "evaluation_id": "eval-interrupted",
+         "code_sha256": "c" * 64, "state": "interrupted"},
+        {"solver_call_id": "call-3", "origin": "generated", "evaluation_id": "eval-winner",
+         "code_sha256": "b" * 64, "state": "complete"},
+    ]
+    fact = {"round_id": 1, "objective_direction": "minimize", "candidates": [baseline, winner],
+            "solver_attempts": calls, "round_solver_attempts": 3}
+    progress = build_search_progress([fact], round_id=1)
+    trace = progress["window"]["attempt_trace"]
+    assert trace["complete"] is True
+    assert trace["interrupted_attempts"] == 1
+    assert trace["events"][1]["best_before"] == trace["events"][1]["best_after"] == 0.04
+    result = evaluate_stagnation([progress], {"enabled": True, "window_evaluations": 3,
+                                              "min_absolute_gain": 0.001, "min_relative_gain": 0.01,
+                                              "min_behavior_coverage": 0.5})
+    assert result["status"] == "progress"
+
+
 def test_co_pilot_freezes_g0_to_g4_factors():
     base = {
         "benchmark_spec_hash": "a" * 64, "metric_spec_hash": "b" * 64,

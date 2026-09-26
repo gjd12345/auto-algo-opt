@@ -50,7 +50,7 @@ python tools/prepare_research_loop_v2.py \
 ## 3. 确定性 comparison packet
 
 每轮 `collect` 生成 `rounds/round_NNNN/comparison_packet.json`，策略版本为
-`obp-research-contrasts/v1`。只有精确身份链可参与候选关联：
+`obp-research-contrasts/v2`。既有 v1 证据保持原样。只有精确身份链可参与候选关联：
 `evaluation_id + code_sha256`。同分不构成身份。
 
 三个槽位按以下规则选择：
@@ -59,8 +59,9 @@ python tools/prepare_research_loop_v2.py \
    再按评测顺序和 `evaluation_id` 破同分。
 2. **行为重复**：最早的“源码新颖但完整 behavior signature 与更早可比候选相同”的
    生成候选；参照取最早可比候选。
-3. **效果差异**：有效候选中 aggregate objective 距离最小的一对；再优先逐实例向量
-   L1 距离更大者，最后按两个 `evaluation_id` 排序。
+3. **效果差异**：有效且逐实例向量不同的候选中，选 aggregate objective 距离最小的一对；
+   再优先逐实例向量 L1 距离更大者，最后按两个 `evaluation_id` 排序。不存在这样的
+   候选对时留空，不能用同一算法的重复评测填槽。
 
 没有合格案例时保留 `missing` 槽和机器可读原因。invalid、partial、timeout、
 observer failure 只进入状态摘要和最早实例，不得被标成行为相同。

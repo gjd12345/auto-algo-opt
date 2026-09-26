@@ -20,6 +20,7 @@ CO_PILOT_GROUPS = ("G0", "G1", "G2", "G3", "G4")
 CO_PILOT_SCHEMA = "algorithm-optimization-co-controlled-pilot/v1"
 RESEARCH_LOOP_GROUPS = ("A", "B", "C")
 RESEARCH_LOOP_SCHEMA = "algorithm-optimization-research-loop-pilot/v1"
+ISLAND605_BP_RESEARCH_LOOP_SCHEMA = "algorithm-optimization-island605-bp-research-loop/v1"
 
 
 def _manifest_values(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -29,8 +30,14 @@ def _manifest_values(payload: Mapping[str, Any]) -> dict[str, Any]:
     return values
 
 
-def build_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
-    """Freeze the OBP A/B/C reflection and online-Memory diagnostic."""
+def build_research_loop_manifests(
+    base: Mapping[str, Any], *,
+    problem_scope: str = "obp_online",
+    benchmark_profile_name: str = "obp_evolution_mini",
+    research_loop_schema: str = RESEARCH_LOOP_SCHEMA,
+    pilot_id: str = "obp_research_loop_v1",
+) -> dict[str, Any]:
+    """Freeze a registered-domain A/B/C reflection and online-Memory diagnostic."""
     if not isinstance(base, Mapping):
         raise ValueError("research_loop_base_manifest_invalid")
     try:
@@ -43,11 +50,11 @@ def build_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
     if extra_base.get("knowledge_mode", "off") != "off":
         raise ValueError("research_loop_requires_knowledge_off")
     extra_base.update({
-        "research_loop_schema": RESEARCH_LOOP_SCHEMA,
-        "problem_scope": "obp_online",
-        "benchmark_profile": "obp_evolution_mini",
+        "research_loop_schema": research_loop_schema,
+        "problem_scope": problem_scope,
+        "benchmark_profile": benchmark_profile_name,
         "primary_budget_resource": "solver_calls",
-        "comparison_packet_policy": "obp-research-contrasts/v1",
+        "comparison_packet_policy": "obp-research-contrasts/v2",
         "controller_usage_requirement": "complete_or_explicitly_unavailable",
         "heldout_policy": "locked_no_access_diagnostic",
         "diversity_interpretation": "diagnostic_only",
@@ -115,17 +122,36 @@ def build_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
         for group, manifest in manifests.items()
     }
     return {
-        "schema_version": RESEARCH_LOOP_SCHEMA,
-        "pilot_id": "obp_research_loop_v1",
+        "schema_version": research_loop_schema,
+        "pilot_id": pilot_id,
         "shared_factors": {
-            "problem_scope": "obp_online", "benchmark_profile": "obp_evolution_mini",
+            "problem_scope": problem_scope, "benchmark_profile": benchmark_profile_name,
             "primary_budget_resource": "solver_calls", "evaluation_budget": 100,
             "rounds": 4, "round_budget": 25, "search_seed": source.search_seed,
-            "comparison_packet_policy": "obp-research-contrasts/v1",
+            "comparison_packet_policy": "obp-research-contrasts/v2",
             "heldout_policy": "locked_no_access_diagnostic",
         },
         "groups": groups,
     }
+
+
+def build_island605_bp_research_loop_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
+    """Freeze A/B/C on the registered, training-only island_605 BP task."""
+    from .catalog import benchmark_for_spec_hash
+
+    source = ExperimentManifest(**_manifest_values(base))
+    benchmark, metric, _item = benchmark_for_spec_hash(source.benchmark_spec_hash)
+    if (benchmark.benchmark_id, benchmark.profile, benchmark.problem_id) != (
+        "island605_bp", "historically_exposed_train_v1", "bp_online_island605"
+    ) or source.metric_spec_hash != metric.content_hash:
+        raise ValueError("island605_bp_benchmark_identity_required")
+    return build_research_loop_manifests(
+        base,
+        problem_scope="bp_online_island605",
+        benchmark_profile_name="historically_exposed_train_v1",
+        research_loop_schema=ISLAND605_BP_RESEARCH_LOOP_SCHEMA,
+        pilot_id="island605_bp_research_loop_v1",
+    )
 
 
 def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:

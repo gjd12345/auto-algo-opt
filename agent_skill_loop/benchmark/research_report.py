@@ -1,4 +1,4 @@
-"""Offline, hash-checked reporting for the OBP A/B/C research-loop diagnostic."""
+"""Offline, hash-checked reporting for registered A/B/C diagnostics."""
 
 from __future__ import annotations
 
@@ -161,9 +161,13 @@ def _cost_curves(receipt: Mapping[str, Any], controller: Mapping[str, Any],
                                              and isinstance(item.get("output_tokens"), int) for item in outer)
         eoh_tokens = sum(int(item["input_tokens"]) + int(item["output_tokens"]) for item in req) if eoh_complete else None
         outer_tokens = sum(int(item["input_tokens"]) + int(item["output_tokens"]) for item in outer) if outer_complete else None
-        engine_wall = sum(float(item.get("engine_elapsed_seconds") or 0) for item in tasks
-                          if int(item.get("round_id") or 0) <= round_id)
-        controller_elapsed = sum(float(item.get("elapsed_seconds") or 0) for item in outer)
+        included_tasks = [item for item in tasks if int(item.get("round_id") or 0) <= round_id]
+        engine_complete = bool(included_tasks) and all(_finite(item.get("engine_elapsed_seconds")) is not None
+                                                       for item in included_tasks)
+        controller_complete = bool(outer) and all(_finite(item.get("elapsed_seconds")) is not None
+                                                       for item in outer)
+        engine_wall = sum(float(item["engine_elapsed_seconds"]) for item in included_tasks) if engine_complete else None
+        controller_elapsed = sum(float(item["elapsed_seconds"]) for item in outer) if controller_complete else None
         result.append({
             "round_id": round_id,
             "best_so_far_objective": quality.get("best_so_far_objective"),
@@ -171,9 +175,10 @@ def _cost_curves(receipt: Mapping[str, Any], controller: Mapping[str, Any],
             "outer_controller_tokens": outer_tokens,
             "total_model_tokens": eoh_tokens + outer_tokens
             if eoh_tokens is not None and outer_tokens is not None else None,
-            "engine_wall_seconds": round(engine_wall, 6),
-            "controller_elapsed_seconds": round(controller_elapsed, 6),
-            "quality_wall_time_seconds": round(engine_wall + controller_elapsed, 6),
+            "engine_wall_seconds": round(engine_wall, 6) if engine_wall is not None else None,
+            "controller_elapsed_seconds": round(controller_elapsed, 6) if controller_elapsed is not None else None,
+            "quality_wall_time_seconds": round(engine_wall + controller_elapsed, 6)
+            if engine_wall is not None and controller_elapsed is not None else None,
         })
     return result
 
@@ -264,12 +269,20 @@ def _load_run(item: Mapping[str, Any], base: Path) -> dict[str, Any]:
     if not isinstance(manifest, Mapping):
         raise ValueError("research_manifest_invalid")
     extra = manifest.get("extra", {}) if isinstance(manifest, Mapping) else {}
+    domain_contracts = {
+        "algorithm-optimization-research-loop-pilot/v1": ("obp_online", "obp_evolution_mini"),
+        "algorithm-optimization-island605-bp-research-loop/v1": (
+            "bp_online_island605", "historically_exposed_train_v1"),
+    }
+    domain = domain_contracts.get(extra.get("research_loop_schema"))
+    if domain is None:
+        raise ValueError("research_manifest_domain_invalid")
     expected = {
-        "research_loop_schema": "algorithm-optimization-research-loop-pilot/v1",
-        "problem_scope": "obp_online",
-        "benchmark_profile": "obp_evolution_mini",
+        "research_loop_schema": extra.get("research_loop_schema"),
+        "problem_scope": domain[0],
+        "benchmark_profile": domain[1],
         "primary_budget_resource": "solver_calls",
-        "comparison_packet_policy": "obp-research-contrasts/v1",
+        "comparison_packet_policy": extra.get("comparison_packet_policy") if extra.get("comparison_packet_policy") in {"obp-research-contrasts/v1", "obp-research-contrasts/v2"} else None,
         "heldout_policy": "locked_no_access_diagnostic",
         "treatment": GROUP_TREATMENTS[group],
         "memory_source": "run_internal_empty_start" if group == "C" else "disabled",
@@ -302,7 +315,7 @@ def _load_run(item: Mapping[str, Any], base: Path) -> dict[str, Any]:
     failures.extend(_reflection_chain(root, group))
     failures.extend(_cost_failures(cost))
     return {
-        "group": group, "seed": seed, "run_id": bundle.get("run_id"),
+        "group": group, "seed": seed, "problem_scope": domain[0], "run_id": bundle.get("run_id"),
         "bundle": str(item.get("bundle")), "status": "failed" if failures else "complete",
         "failure_reasons": failures, "quality": quality,
         "endpoint_per_instance": _per_instance_endpoint(facts, quality.get("endpoint_identity")),
@@ -319,6 +332,9 @@ def build_research_loop_report(index: Mapping[str, Any], *, base_dir: Path) -> d
     if index.get("schema_version") != INDEX_SCHEMA_VERSION or not isinstance(index.get("runs"), list):
         raise ValueError("research_loop_index_invalid")
     runs = [_load_run(item, base_dir) for item in index["runs"] if isinstance(item, Mapping)]
+    scopes = {item["problem_scope"] for item in runs}
+    if len(scopes) != 1:
+        raise ValueError("research_loop_mixed_problem_scopes")
     identities = [(item["group"], item["seed"]) for item in runs]
     if len(identities) != len(set(identities)):
         raise ValueError("research_loop_duplicate_group_seed")
@@ -347,7 +363,7 @@ def build_research_loop_report(index: Mapping[str, Any], *, base_dir: Path) -> d
     audit_complete = complete_matrix and all(item["status"] == "complete" for item in runs)
     return {
         "schema_version": SCHEMA_VERSION,
-        "scope": "OBP dev_train diagnostic only; no heldout access",
+        "scope": f"{next(iter(scopes))} dev_train diagnostic only; no heldout access",
         "primary_budget_resource": "solver_calls",
         "interpretation": "descriptive three-seed diagnostic; no significance or general-validity claim",
         "runs": runs,

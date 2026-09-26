@@ -120,6 +120,48 @@
         "instances are regenerated protocol-compatible data with deterministic known-optimum references",
         "the frozen best-fit baseline has positive gap on every instance"
       ]
+    },
+    {
+      "benchmark_id": "island605_bp",
+      "profile": "historically_exposed_train_v1",
+      "problem_id": "bp_online_island605",
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "e1b90b337d3b6e97e359e03915ab8eedc5f33a8a",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "archived_bp_online_interface_restored",
+      "paper_protocol_profile": "historically_exposed_five_stream_train",
+      "heldout_policy": "locked_no_access_diagnostic",
+      "manifest_paths": {
+        "dev_train": "manifests/island605_bp_train.json",
+        "train": "manifests/island605_bp_train.json",
+        "heldout": "manifests/island605_bp_heldout_locked.json",
+        "test": "manifests/island605_bp_heldout_locked.json",
+        "reference": "manifests/island605_bp_references.json"
+      },
+      "manifests": {
+        "train_hash": "f900b345fdea0fbda4623fa03e0527b5c96adb4bc98d69c857dea7748f2e8c4a",
+        "test_hash": "1fe78d40ee5210cadee9528a35af253f3c163ba3d873547d64b546d6579ef100",
+        "reference_hash": "1d171a0f423906ef21a46bf83241954e8c02a748414e2f015e908078e905b4e4"
+      },
+      "metric_spec_hash": "fd1c3f2f97b2828d150a73a1a3298e0e34400be085d089917e3dd54a9f3e01d8",
+      "metric_spec": {
+        "metric_id": "island605_ratio_of_means_excess",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "ratio_of_means_excess",
+        "reference_kind": "analytical_reference",
+        "reference_manifest_hash": "1d171a0f423906ef21a46bf83241954e8c02a748414e2f015e908078e905b4e4",
+        "config": {
+          "dataset_mean_reference": 1987.8,
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "frozen_dataset_mean_L1"
+        }
+      },
+      "deviations": [
+        "five historical test-named streams were consumed by earlier fitness and are development training only",
+        "reported historical source commit is unavailable in the local Git object store; task semantics and archived streams were restored from evidence",
+        "no independent heldout is registered; test split is an explicit lock sentinel"
+      ]
     }
   ]
 }
