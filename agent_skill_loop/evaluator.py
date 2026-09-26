@@ -137,6 +137,8 @@ _KNOWN_ERRORS = {
     "invalid_route",
     "forbidden_rebinding",
     "physics_package_missing",
+    "physics_pin_mismatch",
+    "physics_thread_pin_mismatch",
 }
 
 
@@ -171,6 +173,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "obp.py").read_bytes())
     parts.append(parent.joinpath("problems", "six_mirror_newton.py").read_bytes())
+    parts.append(parent.joinpath("problems", "six_mirror_physics.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     parts.append(parent.joinpath("evidence", "behavior.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
@@ -1174,8 +1177,8 @@ register_problem(OBP_SPEC)
 
 # --- six-mirror diagonal Newton ----------------------------------------------
 # The evaluator owns probes, the Armijo gate, and the mean RMS. The evolved
-# entrypoint only returns a relative step or a trial index. The wavefront is
-# injected; this module does not import optical physics.
+# entrypoint only returns a relative step or a trial index. Production physics
+# is loaded by six_mirror_newton; this module does not import optics_optim.
 SIX_SPEC = ProblemSpec(
     problem_id=SIX_PROBLEM_NAME,
     entrypoint=SIX_ENTRYPOINT,

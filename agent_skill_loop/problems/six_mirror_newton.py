@@ -1,7 +1,8 @@
 """Diagonal-Newton decision contract for the six-mirror search.
 
 The evolved entrypoint returns a relative step or an Armijo index. Finite
-differences stay here. The real wavefront is not imported.
+differences stay here. The production path builds one pinned wavefront;
+oracle tests pass a callable and do not import optics_optim.
 """
 
 from __future__ import annotations
@@ -12,6 +13,8 @@ import math
 from typing import Any, Callable, Mapping
 
 import numpy as np
+
+from agent_skill_loop.problems.six_mirror_physics import TREE_SHA256, WHEEL_SHA256, PinnedNumpyWavefront
 
 PROBLEM_NAME = "six_mirror_newton"
 ENTRYPOINT = "select_diagonal_newton_step"
@@ -102,6 +105,8 @@ def _frozen_instance() -> dict[str, Any]:
         "max_backtracks": int(constants["max_backtracks"]),
         "gradient_tolerance": float(constants["gradient_tolerance"]),
         "zero_scale": float(constants["zero_scale"]),
+        "physics_wheel_sha256": WHEEL_SHA256,
+        "physics_tree_sha256": TREE_SHA256 if isinstance(TREE_SHA256, str) and TREE_SHA256 else "",
     }
 
 
@@ -393,9 +398,22 @@ def evaluate_instances(
     wavefront: Callable[[np.ndarray], np.ndarray] | None = None,
     x0: np.ndarray | None = None,
 ) -> tuple[list[float], dict[str, Any]]:
-    if wavefront is None or x0 is None:
-        raise ValueError("physics_package_missing")
-    if not isinstance(instances, list) or len(instances) != 1:
+    if not isinstance(instances, list) or len(instances) != 1 or not isinstance(instances[0], Mapping):
         raise ValueError("invalid_instance")
+    if (wavefront is None) != (x0 is None):
+        raise ValueError("invalid_instance")
+    if wavefront is None:
+        instance = instances[0]
+        pinned = PinnedNumpyWavefront(
+            prescription_version=instance["prescription_version"],
+            field_indices=list(instance["field_indices"]),
+            sample_d=instance["sample_d"],
+            constraints=instance["constraints"],
+            initial_scale=instance["initial_scale"],
+            wheel_sha256=instance["physics_wheel_sha256"],
+            tree_sha256=instance["physics_tree_sha256"],
+        )
+        wavefront = pinned.mean_rms
+        x0 = pinned.x0
     objective, _final_x, metrics = run_diagonal_newton(fn, x0, wavefront)
     return [objective], metrics

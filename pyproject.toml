@@ -14,6 +14,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "PyYAML>=6.0"]
 eoh = ["eoh @ git+https://github.com/FeiLiu36/EoH.git@472545785c936dcfc863d2bc0d6109cf23c7ce62#subdirectory=eoh"]
+six-mirror-scipy = ["scipy==1.18.1"]
 
 [tool.setuptools]
 packages = ["agent_skill_loop", "agent_skill_loop.memory", "agent_skill_loop.problems", "agent_skill_loop.benchmark", "agent_skill_loop.evidence", "eoh_frozen", "algorithm_optimization_skill", "benchmarks", "benchmarks.eohs_v1", "benchmarks.eohs_v1.manifests", "benchmarks.eohs_v1.expected"]

@@ -15,6 +15,7 @@ from agent_skill_loop.problems.six_mirror_newton import (
     run_diagonal_newton,
     suite_hash,
 )
+from agent_skill_loop.problems.six_mirror_physics import WHEEL_SHA256
 
 
 def _load_baseline():
@@ -177,6 +178,8 @@ def test_suite_is_frozen_and_ignores_seed():
     assert first["instances"][0]["sample_d"] == 9
     assert first["instances"][0]["max_iterations"] == 2
     assert first["instances"][0]["initial_scale"] == 1.0
+    assert first["instances"][0]["physics_wheel_sha256"] == WHEEL_SHA256
+    assert first["instances"][0]["physics_tree_sha256"] == ""
     assert "seed" not in first["instances"][0]
     reloaded = json.loads(json.dumps(first))
     assert spec.validate_suite(reloaded)[1] == first["content_hash"]
@@ -204,3 +207,5 @@ def test_suite_is_frozen_and_ignores_seed():
     rejected(max_iterations=1)
     rejected(initial_scale=1e-4)
     rejected(backend="torch")
+    rejected(physics_wheel_sha256="0" * 64)
+    rejected(physics_tree_sha256="f" * 64)

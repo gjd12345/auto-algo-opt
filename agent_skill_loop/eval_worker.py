@@ -14,6 +14,12 @@ import sys
 import threading
 import time
 
+# BLAS reads these at NumPy import. The worker allow-list does not forward them.
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 
 def _watch_parent(parent_pid: int) -> None:
     if parent_pid <= 0 or parent_pid == os.getpid():
