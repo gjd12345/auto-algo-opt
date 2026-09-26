@@ -125,14 +125,18 @@ def hash_installed_tree(package_root: Path) -> str:
     return digest.hexdigest()
 
 
-def measure_installed_tree_sha256() -> str:
-    """Return the installed-tree digest without tracing and without inventing one."""
-    module = _import_optics_optim()
-    _require_distribution(module)
+def _installed_tree_sha256(module: Any) -> str:
     file_name = getattr(module, "__file__", None)
     if not isinstance(file_name, str) or not file_name:
         raise ValueError("physics_pin_mismatch")
     return hash_installed_tree(Path(file_name).resolve().parent)
+
+
+def measure_installed_tree_sha256() -> str:
+    """Return the installed-tree digest without tracing and without inventing one."""
+    module = _import_optics_optim()
+    _require_distribution(module)
+    return _installed_tree_sha256(module)
 
 
 def _require_tree_pin(module: Any, tree_sha256: object) -> None:
@@ -140,11 +144,7 @@ def _require_tree_pin(module: Any, tree_sha256: object) -> None:
     passed = _committed_pin(tree_sha256)
     if expected is None or passed is None or passed != expected:
         raise ValueError("physics_pin_mismatch")
-    file_name = getattr(module, "__file__", None)
-    if not isinstance(file_name, str) or not file_name:
-        raise ValueError("physics_pin_mismatch")
-    measured = hash_installed_tree(Path(file_name).resolve().parent)
-    if measured != expected:
+    if _installed_tree_sha256(module) != expected:
         raise ValueError("physics_pin_mismatch")
 
 
@@ -198,8 +198,6 @@ class PinnedNumpyWavefront:
     def _finish_load(self, module: Any) -> None:
         try:
             prescription = module.load_prescription(version="v2")
-        except ImportError as exc:
-            raise ValueError("physics_package_missing") from exc
         except ValueError as exc:
             if "N_Stop" in str(exc):
                 raise ValueError("n_stop_mismatch") from exc

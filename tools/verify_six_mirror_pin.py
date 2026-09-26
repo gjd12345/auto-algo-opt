@@ -37,9 +37,7 @@ Exit codes: 2 stack mismatch, 3 tree hash uncommitted, 4 RMS gate uncommitted,
 from __future__ import annotations
 
 import argparse
-import contextlib
 import hashlib
-import io
 import math
 import os
 import subprocess
@@ -76,25 +74,17 @@ def _ensure_repo_path() -> None:
 
 
 def _blas_name(numpy_module) -> str:
-    info = None
     try:
         info = numpy_module.show_config(mode="dicts")
     except TypeError:
-        info = None
-    if isinstance(info, dict):
-        build = info.get("Build Dependencies")
-        blas = build.get("blas") if isinstance(build, dict) else None
-        if isinstance(blas, dict) and blas.get("name"):
-            return str(blas["name"])
-    buffer = io.StringIO()
-    with contextlib.redirect_stdout(buffer):
-        numpy_module.show_config()
-    for line in buffer.getvalue().splitlines():
-        lowered = line.lower()
-        if "blas" in lowered and "name" in lowered and ":" in line:
-            return line.split(":", 1)[1].strip()
-    rows = [line.strip() for line in buffer.getvalue().splitlines() if line.strip()]
-    return rows[0] if rows else "unknown"
+        return "unknown"
+    if not isinstance(info, dict):
+        return "unknown"
+    build = info.get("Build Dependencies")
+    blas = build.get("blas") if isinstance(build, dict) else None
+    if isinstance(blas, dict) and blas.get("name"):
+        return str(blas["name"])
+    return "unknown"
 
 
 def _stack_status(*, echo: bool) -> int:
@@ -127,15 +117,12 @@ def _stack_status(*, echo: bool) -> int:
 
 
 def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
     try:
         handle = path.open("rb")
     except OSError as exc:
         raise ValueError("wheel_unreadable") from exc
     with handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+        return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def _wheel_digest(path: Path, expected: str) -> int | None:
@@ -220,11 +207,8 @@ def _measure_with_timeout(wheel: Path) -> int:
         return proc.returncode if proc.returncode else _EXIT_FAILURE
     print(f"delta0={measured - _PUBLISHED_ZERO_STEP_RMS!r}")
     if not math.isfinite(measured):
-        if "nonfinite_result" not in (stdout or ""):
-            print("nonfinite_result")
         return _EXIT_FAILURE
-    if RMS_ABS_GATE is None or "rms_gate_uncommitted" not in (stdout or ""):
-        print("rms_gate_uncommitted")
+    print("rms_gate_uncommitted")
     return _EXIT_GATE
 
 
