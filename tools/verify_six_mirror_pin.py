@@ -299,23 +299,12 @@ def _committed_pin(wheel: Path, *, echo: bool) -> int | None:
 
 
 def _stage0(args: argparse.Namespace) -> int:
-    _ensure_repo_path()
-    if args.measure_worker:
-        stack = _stack_status(echo=False)
-        if stack:
-            return stack
-        from agent_skill_loop.problems.six_mirror_physics import THREAD_ENV_VARS, WHEEL_SHA256
-
-        if tuple(THREAD_ENV_VARS) != _THREAD_ENV_VARS:
-            print("physics_thread_pin_mismatch")
-            return _EXIT_FAILURE
-        mismatch = _wheel_digest(Path(args.wheel), WHEEL_SHA256)
-        if mismatch:
-            return mismatch
-        return _measure_once()
-    pin = _committed_pin(Path(args.wheel), echo=True)
+    # Tree-hash refusal is inside the helper, before mean_rms(x0).
+    pin = _committed_pin(Path(args.wheel), echo=not args.measure_worker)
     if pin is not None:
         return pin
+    if args.measure_worker:
+        return _measure_once()
     if not args.measure:
         print("rms_gate_uncommitted")
         return _EXIT_GATE
@@ -388,7 +377,7 @@ def _read_finished_call(result: Any) -> dict[str, float] | int:
     steps = _metric_int(metrics, "accepted_steps")
     vectors = _metric_int(metrics, "parameter_vectors_evaluated")
     alphas = _finite_floats(metrics.get("accepted_alphas"))
-    accepted_rms = _finite_floats(metrics.get("accepted_rms_waves"))
+    step1 = _metric_float(metrics, "step1_rms_waves")
     status = metrics.get("solver_status")
     if (
         isinstance(objective, bool)
@@ -398,7 +387,6 @@ def _read_finished_call(result: Any) -> dict[str, float] | int:
         or final is None
         or steps is None
         or vectors is None
-        or accepted_rms is None
     ):
         print("metrics_missing")
         return _EXIT_FAILURE
@@ -415,10 +403,9 @@ def _read_finished_call(result: Any) -> dict[str, float] | int:
     if steps != 2:
         print("accepted_steps_mismatch")
         return _EXIT_FAILURE
-    if len(accepted_rms) != 2:
+    if step1 is None:
         print("metrics_missing")
         return _EXIT_FAILURE
-    step1 = accepted_rms[0]
     print(f"step1_rms_waves={step1!r}")
     if status != "max_iterations":
         print("solver_status_mismatch")
@@ -426,7 +413,7 @@ def _read_finished_call(result: Any) -> dict[str, float] | int:
     if not (objective > 0.0) or not (final > 0.0):
         print("nonpositive_final")
         return _EXIT_FAILURE
-    if not _same_bits(final, objective) or not _same_bits(final, accepted_rms[1]):
+    if not _same_bits(final, objective):
         print("final_rms_mismatch")
         return _EXIT_FAILURE
     return {

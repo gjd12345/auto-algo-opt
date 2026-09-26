@@ -271,12 +271,14 @@ def _metrics(
     final: float,
     accepted_steps: int,
     accepted_alphas: list[float],
-    accepted_rms: list[float],
+    step1_rms: float | None,
     status: str,
     iterations_executed: int,
     vectors: int,
 ) -> dict[str, Any]:
     frozen = _frozen_instance()
+    # First accepted RMS sits between the other two. Later steps stay in final_rms_waves.
+    step1 = {} if step1_rms is None else {"step1_rms_waves": step1_rms}
     return {
         "fitness_definition": "mean_rms_waves_on_frozen_suite",
         "prescription_version": frozen["prescription_version"],
@@ -285,11 +287,10 @@ def _metrics(
         "constraints_enabled": False,
         "penalty_merit": None,
         "initial_rms_waves": initial,
+        **step1,
         "final_rms_waves": final,
         "accepted_steps": accepted_steps,
         "accepted_alphas": list(accepted_alphas),
-        # Stage 1 reads the value after the first accepted step, not only the final.
-        "accepted_rms_waves": list(accepted_rms),
         "solver_status": status,
         "iterations_executed": iterations_executed,
         "parameter_vectors_evaluated": vectors,
@@ -325,7 +326,7 @@ def run_diagonal_newton(
     initial = current
     accepted_steps = 0
     accepted_alphas: list[float] = []
-    accepted_rms: list[float] = []
+    step1_rms: float | None = None
     status = "max_iterations"
     iterations_executed = 0
     alphas = np.array(
@@ -391,13 +392,14 @@ def run_diagonal_newton(
         current = value
         accepted_steps += 1
         accepted_alphas.append(alpha)
-        accepted_rms.append(value)
+        if step1_rms is None:
+            step1_rms = value
     return current, x.copy(), _metrics(
         initial,
         current,
         accepted_steps,
         accepted_alphas,
-        accepted_rms,
+        step1_rms,
         status,
         iterations_executed,
         vectors,
