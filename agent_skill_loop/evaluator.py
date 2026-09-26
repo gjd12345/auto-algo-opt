@@ -74,6 +74,19 @@ from agent_skill_loop.problems.obp import (
     validate_instances as _validate_obp_instances,
     suite_hash as obp_suite_hash,
 )
+from agent_skill_loop.problems.six_mirror_newton import (
+    BASELINE_CODE as SIX_BASELINE_CODE,
+    BASELINE_DESCRIPTION as SIX_BASELINE_DESCRIPTION,
+    ENTRYPOINT as SIX_ENTRYPOINT,
+    PROBLEM_NAME as SIX_PROBLEM_NAME,
+    SPLIT_OFFSETS as SIX_SPLIT_OFFSETS,
+    TASK_DESCRIPTION as SIX_TASK_DESCRIPTION,
+    TEMPLATE_PROGRAM as SIX_TEMPLATE_PROGRAM,
+    build_suite as six_build_suite,
+    evaluate_instances as _evaluate_six_instances,
+    suite_hash as six_suite_hash,
+    validate_suite as _validate_six_suite,
+)
 
 _SAFE_BUILTINS = {
     "abs": abs, "all": all, "any": any, "bool": bool, "dict": dict,
@@ -123,6 +136,7 @@ _KNOWN_ERRORS = {
     "candidate_mutated_input", "invalid_return", "capacity_violation", "nonfinite_objective",
     "invalid_route",
     "forbidden_rebinding",
+    "physics_package_missing",
 }
 
 
@@ -156,6 +170,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "obp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "six_mirror_newton.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     parts.append(parent.joinpath("evidence", "behavior.py").read_bytes())
     return hashlib.sha256(b"|".join(parts)).hexdigest()
@@ -1155,3 +1170,32 @@ OBP_SPEC = ProblemSpec(
 )
 
 register_problem(OBP_SPEC)
+
+
+# --- six-mirror diagonal Newton ----------------------------------------------
+# The evaluator owns probes, the Armijo gate, and the mean RMS. The evolved
+# entrypoint only returns a relative step or a trial index. The wavefront is
+# injected; this module does not import optical physics.
+SIX_SPEC = ProblemSpec(
+    problem_id=SIX_PROBLEM_NAME,
+    entrypoint=SIX_ENTRYPOINT,
+    interface_version="v1",
+    task_description=SIX_TASK_DESCRIPTION,
+    template_program=SIX_TEMPLATE_PROGRAM,
+    baseline_code=SIX_BASELINE_CODE,
+    objective_direction="minimize",
+    split_offsets=SIX_SPLIT_OFFSETS,
+    build_suite=six_build_suite,
+    suite_hash=six_suite_hash,
+    validate_suite=_validate_six_suite,
+    evaluate_instances=_evaluate_six_instances,
+    safe_builtins=_SAFE_BUILTINS,
+    forbidden_names=frozenset(_FORBIDDEN_NAMES),
+    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    math_attributes=frozenset(_MATH_ATTRIBUTES),
+    np_math_roots=frozenset(_NP_MATH_ROOTS),
+    allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
+    baseline_description=SIX_BASELINE_DESCRIPTION,
+)
+
+register_problem(SIX_SPEC)

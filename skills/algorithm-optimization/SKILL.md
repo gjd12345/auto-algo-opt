@@ -33,6 +33,14 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
   snapshot. Do not manually sort or inject a cold-start fallback when seed
   selection is insufficient.
 
+## six_mirror_newton
+
+`six_mirror_newton` is a registered code-evolution problem. It evolves only
+`select_diagonal_newton_step`. The wavefront stays outside the genome; do not
+send this problem through `artifact_session`. A submitted plan still must not
+modify the evaluator, suite, or budget. Pinned EoH breeds on fitness rounded
+to 5 decimals; session evidence keeps the full-precision mean RMS.
+
 ## Session loop
 
 1. Read `session state` and use its current `state_version` for the next mutation.
