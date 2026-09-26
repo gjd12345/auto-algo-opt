@@ -74,6 +74,20 @@ BASELINE_CODE = """def select_diagonal_newton_step(phase, scale, gradient, hessi
     return np.asarray(-1, dtype=np.int64)
 """
 
+# Human seed 2. Phase 0 returns q = -gradient. Phase 1 is the baseline Armijo loop.
+SEED_2_CODE = """def select_diagonal_newton_step(phase, scale, gradient, hessian,
+                                current_value, slope, trial_alpha, trial_value):
+    if int(phase) == 0:
+        return -gradient
+    c1 = 0.1
+    for index in range(int(trial_alpha.shape[0])):
+        alpha = float(trial_alpha[index])
+        value = float(trial_value[index])
+        if math.isfinite(value) and value <= float(current_value) + c1 * alpha * float(slope):
+            return np.asarray(index, dtype=np.int64)
+    return np.asarray(-1, dtype=np.int64)
+"""
+
 BASELINE_DESCRIPTION = (
     "relative central-difference diagonal Newton step; coordinates with "
     "curvature not greater than 0 take a zero step, then the first Armijo-feasible trial"

@@ -6,16 +6,23 @@ import math
 import numpy as np
 import pytest
 
-from agent_skill_loop.evaluator import _validate_candidate_ast, evaluate_candidate_request
+from agent_skill_loop.evaluator import _validate_candidate_ast, evaluate_candidate_request, evaluator_source_hash
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.problems.six_mirror_newton import (
     BASELINE_CODE,
     DIMENSION,
+    SEED_2_CODE,
     build_suite,
     run_diagonal_newton,
     suite_hash,
 )
 from agent_skill_loop.problems.six_mirror_physics import WHEEL_SHA256
+from agent_skill_loop.session_runtime import (
+    SessionError,
+    _normalize_explicit_seed_set,
+    _sha256,
+    initialize_session,
+)
 
 
 def _load_baseline():
@@ -209,3 +216,95 @@ def test_suite_is_frozen_and_ignores_seed():
     rejected(backend="torch")
     rejected(physics_wheel_sha256="0" * 64)
     rejected(physics_tree_sha256="f" * 64)
+
+
+def _explicit_seed_identity() -> dict[str, str | None]:
+    spec = get_problem("six_mirror_newton")
+    suite = build_suite(1)
+    return {
+        "problem_spec_hash": spec.content_hash,
+        "suite_hash": suite["content_hash"],
+        "evaluator_hash": evaluator_source_hash(),
+        "data_manifest_hash": None,
+        "metric_spec_hash": None,
+    }
+
+
+def test_seed_2_hash_differs_and_normalizer_drops_objective():
+    assert _sha256(SEED_2_CODE) != _sha256(BASELINE_CODE)
+    assert SEED_2_CODE[SEED_2_CODE.index("    c1 = 0.1"):] == BASELINE_CODE[BASELINE_CODE.index("    c1 = 0.1"):]
+    namespace = {"np": np, "math": math}
+    exec(SEED_2_CODE, namespace)
+    gradient = np.arange(DIMENSION, dtype=np.float64)
+    direction = namespace["select_diagonal_newton_step"](
+        0, np.ones(DIMENSION), gradient, np.ones(DIMENSION), 1.0, 0.0, np.zeros(0), np.zeros(0)
+    )
+    assert np.array_equal(direction, -gradient)
+    _validate_candidate_ast(SEED_2_CODE, get_problem("six_mirror_newton"))
+    identity = _explicit_seed_identity()
+    normalized = _normalize_explicit_seed_set(
+        {
+            **identity,
+            "objective": 0.010906458907220248,
+            "members": [{
+                "algorithm": "curvature-disabled gradient",
+                "code": SEED_2_CODE,
+                "objective": 0.010906458907220248,
+                "evaluation_id": "caller-supplied",
+            }],
+        },
+        problem_spec_hash=identity["problem_spec_hash"],
+        suite_hash=identity["suite_hash"],
+        evaluator_hash=identity["evaluator_hash"],
+        data_manifest_hash=identity["data_manifest_hash"],
+        metric_spec_hash=identity["metric_spec_hash"],
+    )
+    assert "objective" not in json.dumps(normalized)
+    assert "evaluation_id" not in json.dumps(normalized)
+    member = normalized["members"][0]
+    assert set(member) == {"algorithm", "algorithm_text_sha256", "code", "code_sha256"}
+    assert member["code"] == SEED_2_CODE
+    assert member["code_sha256"] == _sha256(SEED_2_CODE)
+
+
+def test_explicit_seed_population_of_two_passes_initialize_session_size_check(tmp_path):
+    identity = _explicit_seed_identity()
+    policy = {"pop_size": 2, "n_pop": 2, "max_sample_nums": 8}
+    members = [
+        {"algorithm": "diagonal Newton baseline", "code": BASELINE_CODE, "objective": 0.021483322678436757},
+        {"algorithm": "curvature-disabled gradient", "code": SEED_2_CODE, "objective": 0.010906458907220248},
+    ]
+    with pytest.raises(SessionError, match="explicit seed set is smaller than target population"):
+        initialize_session(
+            output=tmp_path / "short",
+            operation_id="init-short",
+            problem="six_mirror_newton",
+            eoh_model="fixture",
+            count=1,
+            size=62,
+            memory_enabled=False,
+            inheritance_mode="explicit_seeds",
+            explicit_seed_set={"members": members[:1], **identity},
+            search_policy_defaults=policy,
+        )
+    receipt = initialize_session(
+        output=tmp_path / "two",
+        operation_id="init-two",
+        problem="six_mirror_newton",
+        eoh_model="fixture",
+        count=1,
+        size=62,
+        memory_enabled=False,
+        inheritance_mode="explicit_seeds",
+        explicit_seed_set={"members": members, **identity, "objective": 0.010906458907220248},
+        search_policy_defaults=policy,
+    )
+    assert receipt["run_state"] == "RUNNING"
+    assert receipt["result"]["provider_requests"] == 0
+    assert receipt["result"]["solver_calls"] == 0
+    payload = json.loads((tmp_path / "two" / "seeds" / "explicit_seeds.json").read_text(encoding="utf-8"))
+    assert len(payload["members"]) == 2
+    assert [item["code"] for item in payload["members"]] == [BASELINE_CODE, SEED_2_CODE]
+    assert "objective" not in json.dumps(payload)
+    config = json.loads((tmp_path / "two" / "config_frozen.json").read_text(encoding="utf-8"))
+    assert config["eoh"]["search_policy_defaults"]["pop_size"] == 2
