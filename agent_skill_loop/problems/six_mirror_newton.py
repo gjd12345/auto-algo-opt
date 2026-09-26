@@ -18,14 +18,12 @@ ENTRYPOINT = "select_diagonal_newton_step"
 DIMENSION = 62
 SPLIT_OFFSETS = {"dev_train": 0x5EED0032}
 
-# Evaluator-owned. hessian_floor is the baseline comparison, not a clip here.
 # batch_size only chunks the oracle; it does not change the step.
 EVALUATOR_CONSTANTS = {
     "eps": 1e-5,
     "zero_scale": 0.0,
     "armijo_c1": 0.1,
     "gradient_tolerance": 1e-8,
-    "hessian_floor": 0.0,
     "max_iterations": 2,
     "initial_step": 1.0,
     "backtrack_factor": 0.5,
@@ -170,11 +168,6 @@ def validate_suite(suite: Mapping[str, Any]) -> tuple[list[Mapping[str, Any]], s
     return list(instances), expected
 
 
-def default_wavefront(points: np.ndarray) -> np.ndarray:
-    """Pinned optics are not available in this module."""
-    raise ValueError("physics_package_missing")
-
-
 def _mean_rms_rows(wavefront: Callable[[np.ndarray], np.ndarray], points: np.ndarray) -> np.ndarray:
     points = np.asarray(points, dtype=np.float64)
     if points.ndim != 2 or points.shape[1] != DIMENSION or points.shape[0] < 1:
@@ -208,11 +201,6 @@ def _invoke(
     hessian_arg = np.array(hessian, dtype=np.float64, copy=True)
     alpha_arg = np.array(trial_alpha, dtype=np.float64, copy=True)
     value_arg = np.array(trial_value, dtype=np.float64, copy=True)
-    scale_before = scale_arg.copy()
-    gradient_before = gradient_arg.copy()
-    hessian_before = hessian_arg.copy()
-    alpha_before = alpha_arg.copy()
-    value_before = value_arg.copy()
     result = fn(
         phase,
         scale_arg,
@@ -224,11 +212,11 @@ def _invoke(
         value_arg,
     )
     if (
-        not np.array_equal(scale_arg, scale_before)
-        or not np.array_equal(gradient_arg, gradient_before)
-        or not np.array_equal(hessian_arg, hessian_before)
-        or not np.array_equal(alpha_arg, alpha_before)
-        or not np.array_equal(value_arg, value_before)
+        not np.array_equal(scale_arg, scale)
+        or not np.array_equal(gradient_arg, gradient)
+        or not np.array_equal(hessian_arg, hessian)
+        or not np.array_equal(alpha_arg, trial_alpha)
+        or not np.array_equal(value_arg, trial_value)
     ):
         raise ValueError("candidate_mutated_input")
     return result
@@ -406,7 +394,6 @@ def evaluate_instances(
     x0: np.ndarray | None = None,
 ) -> tuple[list[float], dict[str, Any]]:
     if wavefront is None or x0 is None:
-        default_wavefront(np.zeros((1, DIMENSION), dtype=np.float64))
         raise ValueError("physics_package_missing")
     if not isinstance(instances, list) or len(instances) != 1:
         raise ValueError("invalid_instance")
