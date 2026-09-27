@@ -5,7 +5,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from agent_skill_loop import client
 from agent_skill_loop import session_actions as actions
@@ -14,7 +19,6 @@ from agent_skill_loop.benchmark.pilot import build_island605_memory_content_mani
 from agent_skill_loop.session_fork import import_collected_first_round
 
 
-ROOT = Path(__file__).resolve().parents[1]
 BATCH = ROOT / "outputs/island605-bp-memory-content-v1"
 PLAN = ROOT / "docs/research-loop-v2-memory-content-next-experiment.md"
 BASE = ROOT / "outputs/island605-bp-abc-diagnostic-20260926-v4/manifests/seed_1836735484_A.json"
@@ -101,14 +105,14 @@ def _manifest(seed: int, arm: str) -> dict:
     return manifest
 
 
-def _init(seed: int, arm: str) -> Path:
-    run = BATCH / "runs" / f"seed_{seed}" / arm
+def _init(seed: int, arm: str, run_name: str | None = None) -> Path:
+    run = BATCH / "runs" / f"seed_{seed}" / (run_name or arm)
     if run.exists():
         raise ValueError("study_run_already_exists")
     manifest = _manifest(seed, arm)
     memory = arm == "M"
     runtime.initialize_session(
-        output=run, operation_id=f"memory-content-v1-init-{seed}-{arm}",
+        output=run, operation_id=f"memory-content-v1-init-{seed}-{run.name}",
         problem="bp_online_island605", benchmark_id="island605_bp",
         benchmark_profile_name="historically_exposed_train_v1",
         experiment_manifest=manifest, inheritance_mode="population_seeds",
@@ -127,40 +131,48 @@ def _init(seed: int, arm: str) -> Path:
     return run
 
 
-def init_source(seed: int) -> dict:
-    run = _init(seed, "N")
+def init_source(seed: int, source_name: str = "N") -> dict:
+    run = _init(seed, "N", source_name)
     state = runtime.read_state(run=run)
     actions.submit_plan(
         run=run, file=BATCH / "initial_plan.json",
-        operation_id=f"memory-content-v1-initial-plan-{seed}",
+        operation_id=f"memory-content-v1-initial-plan-{seed}-{source_name}",
         expected_state_version=state["state_version"],
     )
     return {"run": str(run), "state": runtime.read_state(run=run)["state"]}
 
 
-def execute_source(seed: int) -> dict:
+def execute_source(seed: int, source_name: str = "N") -> dict:
     _prereg()
-    source = BATCH / "runs" / f"seed_{seed}" / "N"
+    source = BATCH / "runs" / f"seed_{seed}" / source_name
     state = runtime.read_state(run=source)
     if state["state"] != "READY_TO_EXECUTE":
         raise ValueError("source_not_ready_to_execute")
     client.load_local_env()
     actions.execute(
-        run=source, operation_id=f"memory-content-v1-execute-shared-{seed}",
+        run=source, operation_id=f"memory-content-v1-execute-shared-{seed}-{source_name}",
         expected_state_version=state["state_version"],
     )
     return {"run": str(source), "state": runtime.read_state(run=source)["state"]}
 
 
-def init_branches(seed: int) -> dict:
+def init_branches(seed: int, source_name: str = "N") -> dict:
     _prereg()
-    source = BATCH / "runs" / f"seed_{seed}" / "N"
+    source = BATCH / "runs" / f"seed_{seed}" / source_name
     state = runtime.read_state(run=source)
     if state["state"] != "WAITING_FOR_EVALUATION" or state["budgets"]["solver_calls_used"] != 25:
         raise ValueError("shared_first_round_not_collected_exactly")
+    if (state.get("task") or {}).get("terminal_reason") != "ROUND_BUDGET_EXHAUSTED":
+        raise ValueError("shared_first_round_terminal_not_reusable")
     results = {}
     for arm in ("R", "F", "M"):
-        target = _init(seed, arm)
+        target = BATCH / "runs" / f"seed_{seed}" / arm
+        if target.exists():
+            target_state = runtime.read_state(run=target)
+            if target_state["state"] != "WAITING_FOR_PLAN" or target_state["state_version"] != 1:
+                raise ValueError("study_branch_not_fresh_for_import")
+        else:
+            target = _init(seed, arm)
         results[arm] = import_collected_first_round(
             source=source, target=target,
             operation_id=f"memory-content-v1-import-{seed}-{arm}",
@@ -172,13 +184,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("prepare", "init-source", "execute-source", "init-branches"))
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--source-name", default="N")
     args = parser.parse_args()
     if args.action == "prepare":
         result = prepare()
     else:
         if args.seed not in SEEDS:
             parser.error("--seed must be one of the three preregistered seeds")
-        result = {"init-source": init_source, "execute-source": execute_source, "init-branches": init_branches}[args.action](args.seed)
+        if not re.fullmatch(r"N(?:_retry[1-9][0-9]*)?", args.source_name):
+            parser.error("--source-name must be N or N_retryN")
+        result = {"init-source": init_source, "execute-source": execute_source, "init-branches": init_branches}[args.action](args.seed, args.source_name)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
 
 
