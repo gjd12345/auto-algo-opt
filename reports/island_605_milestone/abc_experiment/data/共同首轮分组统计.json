@@ -1,0 +1,187 @@
+{
+  "schema_version": "common-first-round-complete-analysis/v1",
+  "paired_seeds": [
+    2257253183,
+    783449680,
+    1455563558
+  ],
+  "paired_sample_size": 3,
+  "physical_solver_calls": 750,
+  "accounted_solver_calls": 900,
+  "groups": {
+    "A": {
+      "endpoint_mean": 0.009256464433041553,
+      "endpoint_sd": 0.003589810398412571,
+      "endpoint_median": 0.007546030787805615,
+      "post_fork_auc_mean": 1.3399067645973775,
+      "endpoint_by_seed": [
+        0.007546030787805615,
+        0.006841734580943758,
+        0.013381627930375289
+      ],
+      "auc_by_seed": [
+        1.1612838313713654,
+        1.5537780460810948,
+        1.304658416339672
+      ],
+      "valid_generations": 234,
+      "generation_attempts": 252,
+      "collected_generated_candidates": 249,
+      "interrupted_generation_attempts": 3,
+      "behavior_duplicate_count": 82,
+      "behavior_comparable_count": 234,
+      "provider_input_tokens_mean": 295833.6666666667,
+      "provider_output_tokens_mean": 36749.333333333336,
+      "provider_elapsed_seconds_mean": 495.1747613333333,
+      "engine_elapsed_seconds_mean": 824.5967402666225
+    },
+    "B": {
+      "endpoint_mean": 0.007948485763155247,
+      "endpoint_sd": 0.00026619894466894034,
+      "endpoint_median": 0.008049099506992657,
+      "post_fork_auc_mean": 1.395747392427139,
+      "endpoint_by_seed": [
+        0.008049099506992657,
+        0.008149713250830064,
+        0.007646644531643022
+      ],
+      "auc_by_seed": [
+        0.8853003320253547,
+        2.2483147197907236,
+        1.0536271254653387
+      ],
+      "valid_generations": 234,
+      "generation_attempts": 252,
+      "collected_generated_candidates": 250,
+      "interrupted_generation_attempts": 2,
+      "behavior_duplicate_count": 106,
+      "behavior_comparable_count": 234,
+      "provider_input_tokens_mean": 294279.3333333333,
+      "provider_output_tokens_mean": 33069,
+      "provider_elapsed_seconds_mean": 500.3897573333333,
+      "engine_elapsed_seconds_mean": 751.1309597665771
+    },
+    "C": {
+      "endpoint_mean": 0.016567729818559883,
+      "endpoint_sd": 0.01789180950387027,
+      "endpoint_median": 0.006338665861756717,
+      "post_fork_auc_mean": 1.5144380722406683,
+      "endpoint_by_seed": [
+        0.006338665861756717,
+        0.037227085219841034,
+        0.006137438374081899
+      ],
+      "auc_by_seed": [
+        0.9668980782774927,
+        2.822919810846162,
+        0.75349632759835
+      ],
+      "valid_generations": 229,
+      "generation_attempts": 252,
+      "collected_generated_candidates": 250,
+      "interrupted_generation_attempts": 2,
+      "behavior_duplicate_count": 98,
+      "behavior_comparable_count": 229,
+      "provider_input_tokens_mean": 326783.6666666667,
+      "provider_output_tokens_mean": 35251.666666666664,
+      "provider_elapsed_seconds_mean": 497.804714,
+      "engine_elapsed_seconds_mean": 798.7183818666116
+    }
+  },
+  "contrasts": {
+    "B_minus_A": {
+      "endpoint_differences": [
+        0.0005030687191870421,
+        0.0013079786698863066,
+        -0.005734983398732267
+      ],
+      "endpoint_difference_mean": -0.001307978669886306,
+      "endpoint_difference_sd": 0.003854964093101523,
+      "endpoint_improvement_count": 1,
+      "auc_differences": [
+        -0.27598349934601063,
+        0.6945366737096288,
+        -0.2510312908743333
+      ],
+      "auc_difference_mean": 0.055840627829761624,
+      "descriptive_quality_threshold_met": false,
+      "preregistered_quality_signal_evaluable": false,
+      "preregistered_quality_signal": null,
+      "signal_rule": "at_least_two_improved_pairs_and_mean_improvement_at_least_0.0005"
+    },
+    "C_minus_B": {
+      "endpoint_differences": [
+        -0.0017104336452359401,
+        0.02907737196901097,
+        -0.001509206157561123
+      ],
+      "endpoint_difference_mean": 0.008619244055404636,
+      "endpoint_difference_sd": 0.017717544170187866,
+      "endpoint_improvement_count": 2,
+      "auc_differences": [
+        0.081597746252138,
+        0.5746050910554383,
+        -0.3001307978669887
+      ],
+      "auc_difference_mean": 0.11869067981352921,
+      "descriptive_quality_threshold_met": false,
+      "preregistered_quality_signal_evaluable": false,
+      "preregistered_quality_signal": null,
+      "signal_rule": "at_least_two_improved_pairs_and_mean_improvement_at_least_0.0005"
+    }
+  },
+  "physical_provider_cost": {
+    "input_tokens": 2551718,
+    "output_tokens": 259714,
+    "requests": 652,
+    "provider_elapsed_seconds": 3611.2057719999993,
+    "engine_wall_seconds": 5891.274733699644
+  },
+  "controller_cost_status": "unavailable",
+  "total_model_token_status": "incomplete",
+  "total_model_tokens": null,
+  "controller_identity_status": {
+    "seeds_1_and_2": "same_Codex_host_subagent_mode_exact_model_unavailable",
+    "seed_3_A_and_C": "Codex_host_subagent_mode_exact_model_unavailable",
+    "seed_3_B": "fresh_Codex_CLI_gpt-5.5",
+    "fixed_controller_model_contract": "not_independently_verified"
+  },
+  "strict_treatment_effect_claim_eligible": false,
+  "same_host_mode_two_seed_description": {
+    "B_minus_A": {
+      "endpoint_differences": [
+        0.0005030687191870421,
+        0.0013079786698863066
+      ],
+      "endpoint_difference_mean": 0.0009055236945366744,
+      "auc_differences": [
+        -0.27598349934601063,
+        0.6945366737096288
+      ],
+      "auc_difference_mean": 0.20927658718180908
+    },
+    "C_minus_B": {
+      "endpoint_differences": [
+        -0.0017104336452359401,
+        0.02907737196901097
+      ],
+      "endpoint_difference_mean": 0.013683469161887514,
+      "auc_differences": [
+        0.081597746252138,
+        0.5746050910554383
+      ],
+      "auc_difference_mean": 0.32810141865378817
+    }
+  },
+  "heldout_accessed": false,
+  "confirmatory_claim": false,
+  "limitations": [
+    "three paired seeds only",
+    "five training streams reused for selection",
+    "outer model identity and total token usage unavailable",
+    "seed 3 B used a known gpt-5.5 CLI controller after agent-thread exhaustion; model equivalence with other branches cannot be established",
+    "host interruption and concurrency confound end-to-end time",
+    "A may voluntarily write notes; contrast is mandatory notes plus explicit references",
+    "C includes extra information and token input, not equal-total-cost comparison"
+  ]
+}
