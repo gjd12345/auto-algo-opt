@@ -469,6 +469,9 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     code = str(exc).split(":")[0].upper()
                     if code == "MEMORY_REFERENCE_NOT_FOUND": code = "MEMORY_REFERENCE_NOT_COMPLETELY_READ"
                     fail(code, action, str(exc))
+                if (_manifest_extra(root).get("study_id") == "island605_bp_memory_content_control_v1"
+                        and plan.memory_basis):
+                    fail("HISTORICAL_MATERIAL_CONTROLLER_ONLY", action)
                 bodies = []
                 treatment = str(_manifest_extra(root).get("treatment") or "")
                 for ref in plan.memory_basis:
@@ -870,6 +873,9 @@ def memory_revise(*, run, operation_id, expected_state_version, file, expected_r
                 memory = MemoryAction.from_dict(strict_json_object(text), enabled=bool(row["memory_enabled"]))
                 if memory.kind not in {"insight", "solution"}:
                     fail("MEMORY_ACTION_INVALID", action)
+                if (_manifest_extra(root).get("study_id") == "island605_bp_memory_content_control_v1"
+                        and len(memory.body or "") > 1200):
+                    fail("HISTORICAL_MATERIAL_EXCEEDS_FROZEN_LIMIT", action)
                 validate_memory_publication(memory, row, treatment=str(_manifest_extra(root).get("treatment") or ""))
                 ref = f"rounds/round_{rd['round_id']:04d}/memory_revisions/{db._sha256(operation_id)}.json"
                 sha = save(root, ref, memory.as_dict())
@@ -902,6 +908,9 @@ def submit_evaluation(*, run, operation_id, expected_state_version, file, expect
                 treatment = str(_manifest_extra(root).get("treatment") or "")
                 if treatment == "reflection_with_online_memory" and memory.kind == "none" and not memory.reason:
                     fail("MEMORY_REASON_REQUIRED", action)
+                if (_manifest_extra(root).get("study_id") == "island605_bp_memory_content_control_v1"
+                        and memory.kind in {"insight", "solution"} and len(memory.body or "") > 1200):
+                    fail("HISTORICAL_MATERIAL_EXCEEDS_FROZEN_LIMIT", action)
                 validate_memory_publication(memory, row, treatment=treatment)
                 ref = prefix+"/evaluation.submitted.json"
                 sha = save(root,ref,text)

@@ -82,7 +82,7 @@ def import_collected_first_round(*, source: Path, target: Path, operation_id: st
         if src_extra.get("treatment") != "facts_to_plan" or dst_extra.get("treatment") not in {"explicit_reflection", "reflection_with_online_memory"}:
             raise ValueError("common_first_round_treatment_invalid")
         for key in set(src_extra) | set(dst_extra):
-            if key not in {"treatment", "memory_source"} and src_extra.get(key) != dst_extra.get(key):
+            if key not in {"treatment", "memory_source", "study_arm"} and src_extra.get(key) != dst_extra.get(key):
                 raise ValueError(f"common_first_round_manifest_{key}_mismatch")
         if dst_extra["treatment"] == "reflection_with_online_memory":
             memory = target / "memory"

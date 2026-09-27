@@ -154,6 +154,32 @@ def build_island605_bp_research_loop_manifests(base: Mapping[str, Any]) -> dict[
     )
 
 
+def build_island605_memory_content_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
+    """Freeze the neutral source and three controller-only historical treatments."""
+    prior = build_island605_bp_research_loop_manifests(base)
+    parent = {"N": "A", "R": "B", "F": "B", "M": "C"}
+    groups = {}
+    for arm, source_group in parent.items():
+        source = prior["groups"][source_group]["manifest"]
+        extra = {
+            **source["extra"],
+            "study_id": "island605_bp_memory_content_control_v1",
+            "study_arm": arm,
+            "controller_material_policy": "outer_controller_history_v1",
+            "controller_material_max_chars": 1200,
+            "controller_model": "gpt-5.5",
+            "eoh_historical_material": "none",
+        }
+        manifest = ExperimentManifest(**{**_manifest_values(source), "extra": extra})
+        groups[arm] = {"manifest": {**manifest.as_dict(), "experiment_manifest_sha256": manifest.content_hash}}
+    return {
+        "schema_version": "island605-bp-memory-content-study/v1",
+        "study_id": "island605_bp_memory_content_control_v1",
+        "groups": groups,
+        "shared_factors": {**prior["shared_factors"], "controller_model": "gpt-5.5", "material_limit_chars": 1200},
+    }
+
+
 def build_pilot_manifests(base: Mapping[str, Any]) -> dict[str, Any]:
     """Expand a validated base manifest into the fixed A/B/C/D pilot.
 

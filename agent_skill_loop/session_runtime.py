@@ -1117,6 +1117,20 @@ def _validate_experiment_manifest(
             raise SessionError("INVALID_ARGUMENT", "island605_bp_research_loop_contract_mismatch", action="init")
         if (manifest.evaluation_budget, manifest.rounds, manifest.round_budget) != (100, 4, 25):
             raise SessionError("INVALID_ARGUMENT", "island605_bp_research_loop_budget_mismatch", action="init")
+        if extra.get("study_id") == "island605_bp_memory_content_control_v1":
+            arm_contract = {
+                "N": ("facts_to_plan", False, "disabled"),
+                "R": ("explicit_reflection", False, "disabled"),
+                "F": ("explicit_reflection", False, "disabled"),
+                "M": ("reflection_with_online_memory", True, "run_internal_empty_start"),
+            }
+            expected_arm = arm_contract.get(extra.get("study_arm"))
+            if (expected_arm != (extra.get("treatment"), manifest.memory_enabled, extra.get("memory_source"))
+                    or extra.get("controller_material_policy") != "outer_controller_history_v1"
+                    or extra.get("controller_material_max_chars") != 1200
+                    or extra.get("controller_model") != "gpt-5.5"
+                    or extra.get("eoh_historical_material") != "none"):
+                raise SessionError("INVALID_ARGUMENT", "island605_memory_content_contract_mismatch", action="init")
     return manifest.as_dict(), manifest.content_hash
 
 
