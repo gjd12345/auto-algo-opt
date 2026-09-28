@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -288,7 +290,17 @@ def export_run_evidence(output: Path, suite: dict, *, parent=None) -> dict:
                 "repair_evaluation_id": repair.get("repair_evaluation_id"),
                 "repair_summary": repair.get("repair_summary"),
             })
-        save_skill(folder, skill, evidence=evidence)
+        # Windows can briefly deny a directory rename while an indexer or
+        # scanner has a handle open. Retry only that transient failure, and
+        # never overwrite a directory that appeared in the meantime.
+        for retry in range(3):
+            try:
+                save_skill(folder, skill, evidence=evidence)
+                break
+            except PermissionError as exc:
+                if os.name != "nt" or retry == 2 or folder.exists():
+                    raise PermissionError(f"export_save_skill:{version}: {exc}") from exc
+                time.sleep(0.1 * (retry + 1))
         saved.append((skill, folder))
         if is_generated or is_repaired:
             generated.append((skill, folder))

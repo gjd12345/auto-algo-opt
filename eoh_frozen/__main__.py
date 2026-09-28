@@ -299,7 +299,8 @@ def cmd_run(args: argparse.Namespace) -> int:
             if summary.get("engine_error_code") == "no_valid_initial_population" and summary.get("generated_valid_candidates", 0) == 0 and summary.get("generation_requests", 0) > 0:
                 summary.update(status="no_valid_candidate", stop_reason="no_valid_candidate", loop_completed=True)
         except (OSError, ValueError, KeyError, TypeError) as exc:
-            summary.update(export_status="failed", export_error=type(exc).__name__)
+            summary.update(export_status="failed", export_error=type(exc).__name__,
+                           export_error_detail=str(exc)[:500])
             summary["prior_status"] = summary["status"]
             summary["prior_stop_reason"] = summary["stop_reason"]
             summary.update(status="export_failed", stop_reason="export_error", loop_completed=False)
