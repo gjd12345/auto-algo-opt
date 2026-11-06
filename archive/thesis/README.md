@@ -35,4 +35,4 @@
 - 605 次共享同一个精英池，**不是 605 次独立重复**。
 - 证据包提交 `e1b90b337d3b6e97e359e03915ab8eedc5f33a8a`，此后未重跑。
 
-校验：`MANIFEST.sha256`（13 条）可用 `sha256sum -c MANIFEST.sha256` 复核。
+校验：`MANIFEST.sha256`（14 条 = 13 个研究文件 + 本 README）可用 `sha256sum -c MANIFEST.sha256` 复核。

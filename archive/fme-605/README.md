@@ -17,7 +17,7 @@ git checkout archive/fme-rq1b -- evidence agent_records reports/strategy_experim
 git checkout 3740e9d5 -- docs/eoh-605-analysis-review.md docs/RAG_PAPERS_2026_ANALYSIS.md
 ```
 
-校验：`MANIFEST.sha256`（294 条）可用 `sha256sum -c MANIFEST.sha256` 复核。
+校验：`MANIFEST.sha256`（295 条 = 294 个研究文件 + 本 README）可用 `sha256sum -c MANIFEST.sha256` 复核。
 
 ## 内容
 

@@ -8,7 +8,7 @@
 在 `integration/thesis-core` 上：
 
 ```powershell
-git rm -r extensions          # 109 个文件：artifact_session(14 模块) + optics_backend(7 模块) + reports/skills/tests/tools
+git rm -r extensions          # 45 个已跟踪文件：artifact_session(14 模块) + optics_backend(7 模块) + reports/skills/tests/tools
 ```
 
 同时删除 CI 的 `optics` job、`README.md` 的光学路线与快速开始、`docs/README.md` 与 `reports/README.md` 的光学入口，并清理 `.gitattributes` 中指向该目录的规则。

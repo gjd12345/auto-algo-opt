@@ -36,7 +36,7 @@
 
 ### Removed
 
-- `extensions/optics/`（109 文件）及其 CI、测试、依赖与文档入口；六镜牛顿（`six_mirror_*`）随之退出主干（它的代码只存在于 tag `archive/six-mirror`）。
+- `extensions/optics/`（45 个已跟踪文件，另 2 份设计文档迁入归档）及其 CI、测试、依赖与文档入口；六镜牛顿（`six_mirror_*`）随之退出主干（它的代码只存在于 tag `archive/six-mirror`）。
 - `README` 的"光学设计"路线与快速开始，改为单主线叙事 + 归档说明。
 
 ### Fixed
