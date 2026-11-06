@@ -1,0 +1,47 @@
+{
+  "schema_version": "algorithm-optimization-archive/v1",
+  "run_id": "run_7e1e3664f7bb4bd083615844e273b84a",
+  "problem": "obp_online",
+  "suite_hash": "52de3a0385cfad008d67e8392dcddfe38efaeeef03a266ecb85511c249fcd99c",
+  "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+  "benchmark": {
+    "benchmark_id": "eohs_v1",
+    "profile": "obp_evolution_mini",
+    "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+    "reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e"
+  },
+  "source_facts": [
+    {
+      "round_id": 1,
+      "ref": "rounds/round_0001/evaluation_facts.json",
+      "sha256": "ecc310837e7f8fc1add63e5db6f14ea5365c2884eee1d40d5c8bef705dee7aca",
+      "candidate_count": 2
+    }
+  ],
+  "entries": [
+    {
+      "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    return -bins",
+      "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+      "objective": 0.0,
+      "evaluation_id": "de615911d4fa45448a371b7405c20ab0",
+      "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+      "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+      "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "origin": "generated",
+      "candidate_id": "candidate_1",
+      "revision": "original",
+      "algorithm": "",
+      "algorithm_text_sha256": "",
+      "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/1",
+      "score_evaluation_ref": "evaluation:de615911d4fa45448a371b7405c20ab0",
+      "first_evaluation_order": 1
+    }
+  ],
+  "entry_count": 1,
+  "status": "complete",
+  "archive_sha256": "de6d67518af2d072a6fb90ca68f53f3f65eda76767a878de60b0d793b196ec03"
+}

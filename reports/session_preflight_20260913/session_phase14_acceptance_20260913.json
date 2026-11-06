@@ -1,0 +1,164 @@
+{
+  "command": [
+    "py",
+    "-3.11",
+    "-m",
+    "agent_skill_loop",
+    "session",
+    "state",
+    "--run",
+    "outputs\\session_phase14_acceptance_20260913"
+  ],
+  "exit_code": 0,
+  "stdout": {
+    "ok": true,
+    "action": "state",
+    "run_id": "run_5998b83ade3e4e7aa8f79bb77caef750",
+    "round_id": 1,
+    "run_state": "STOPPED",
+    "state": "STOPPED",
+    "state_version": 8,
+    "allowed_actions": [
+      "state",
+      "read_evaluation"
+    ],
+    "operation_id": null,
+    "evidence_refs": [
+      "rounds/round_0001/plan.json",
+      "rounds/round_0001/round_context.txt",
+      "rounds/round_0001/context_manifest.json",
+      "rounds/round_0001/evaluation_facts.json"
+    ],
+    "result": {
+      "integrity": {
+        "config": "ok",
+        "suite": "ok",
+        "runtime_identity": "mismatch",
+        "skill_identity": "mismatch",
+        "audit": "ok"
+      },
+      "policy_identity": {
+        "optimization_skill": {
+          "id": "algorithm-optimization",
+          "version": "v1.1",
+          "content_sha256": "3ad436f6703715850cc130f90aeb71eea9e5b6ff5268c0df906c6fea982a7068"
+        },
+        "runtime": {
+          "version": "0.1.0",
+          "source_sha256": "7072c47243730c549405da8f4fadc545a8c1212584872b440c992600bfe5a9da"
+        },
+        "memory_policy": {
+          "id": "markdown-memory",
+          "version": "v1"
+        },
+        "eoh_policy": {
+          "engine": "official_eoh",
+          "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+          "repair_policy": "off"
+        }
+      },
+      "budgets": {
+        "eoh_max_requests": 32,
+        "eoh_requests_used": 1,
+        "eoh_requests_remaining": 31,
+        "eoh_round_max_requests": 16,
+        "max_solver_calls": 100,
+        "solver_calls_used": 1,
+        "solver_calls_remaining": 99,
+        "engine_wall_seconds": 1200.0,
+        "round_wall_seconds": 600.0,
+        "repair_max_requests": 0
+      },
+      "incumbent": {
+        "ref": "rounds/round_0001/eoh_run/exported_skill",
+        "objective": 6.956218555013656
+      },
+      "feedback_ref": null,
+      "task": {
+        "task_id": "task_7c86f54135414e229609a1338b992e9c",
+        "run_id": "run_5998b83ade3e4e7aa8f79bb77caef750",
+        "round_id": 1,
+        "state": "COLLECTED",
+        "external_effect_started": 1,
+        "terminal_reason": "PROVIDER_TERMINAL",
+        "terminal_ref": "rounds/round_0001/tasks/task_7c86f54135414e229609a1338b992e9c/terminal.json",
+        "terminal_sha256": "ea77b9bc55c93f72d9295b43e91a73971d03be8ea9bf35ab5249b541130dd059",
+        "process_id": 85952,
+        "heartbeat_at_utc": null,
+        "engine_elapsed_seconds": 2.1880000000237487,
+        "hard_deadline_utc": "2026-09-13T01:57:09.061877+00:00",
+        "created_at_utc": "2026-09-13T01:47:08.890Z",
+        "started_at_utc": "2026-09-13T01:47:09.061Z",
+        "finished_at_utc": "2026-09-13T01:47:11.255Z"
+      },
+      "config_ref": "config_frozen.json",
+      "config_sha256": "f16cea3403ff1283299eaa26050bd2839b316ac3f145f3d356863e1388f508ca",
+      "memory": {
+        "enabled": true,
+        "store": "C:\\Windows\\System32\\auto-algo-opt\\outputs\\session_phase14_memory_20260913"
+      }
+    },
+    "integrity": {
+      "config": "ok",
+      "suite": "ok",
+      "runtime_identity": "mismatch",
+      "skill_identity": "mismatch",
+      "audit": "ok"
+    },
+    "policy_identity": {
+      "optimization_skill": {
+        "id": "algorithm-optimization",
+        "version": "v1.1",
+        "content_sha256": "3ad436f6703715850cc130f90aeb71eea9e5b6ff5268c0df906c6fea982a7068"
+      },
+      "runtime": {
+        "version": "0.1.0",
+        "source_sha256": "7072c47243730c549405da8f4fadc545a8c1212584872b440c992600bfe5a9da"
+      },
+      "memory_policy": {
+        "id": "markdown-memory",
+        "version": "v1"
+      },
+      "eoh_policy": {
+        "engine": "official_eoh",
+        "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+        "repair_policy": "off"
+      }
+    },
+    "budgets": {
+      "eoh_max_requests": 32,
+      "eoh_requests_used": 1,
+      "eoh_requests_remaining": 31,
+      "eoh_round_max_requests": 16,
+      "max_solver_calls": 100,
+      "solver_calls_used": 1,
+      "solver_calls_remaining": 99,
+      "engine_wall_seconds": 1200.0,
+      "round_wall_seconds": 600.0,
+      "repair_max_requests": 0
+    },
+    "incumbent": {
+      "ref": "rounds/round_0001/eoh_run/exported_skill",
+      "objective": 6.956218555013656
+    },
+    "feedback_ref": null,
+    "task": {
+      "task_id": "task_7c86f54135414e229609a1338b992e9c",
+      "run_id": "run_5998b83ade3e4e7aa8f79bb77caef750",
+      "round_id": 1,
+      "state": "COLLECTED",
+      "external_effect_started": 1,
+      "terminal_reason": "PROVIDER_TERMINAL",
+      "terminal_ref": "rounds/round_0001/tasks/task_7c86f54135414e229609a1338b992e9c/terminal.json",
+      "terminal_sha256": "ea77b9bc55c93f72d9295b43e91a73971d03be8ea9bf35ab5249b541130dd059",
+      "process_id": 85952,
+      "heartbeat_at_utc": null,
+      "engine_elapsed_seconds": 2.1880000000237487,
+      "hard_deadline_utc": "2026-09-13T01:57:09.061877+00:00",
+      "created_at_utc": "2026-09-13T01:47:08.890Z",
+      "started_at_utc": "2026-09-13T01:47:09.061Z",
+      "finished_at_utc": "2026-09-13T01:47:11.255Z"
+    }
+  },
+  "stderr": ""
+}

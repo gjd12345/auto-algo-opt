@@ -9,10 +9,10 @@ import sys
 import time
 import os
 import threading
-import importlib.metadata
 
 # This file is launched with -I; only the installed, fixed adapter source is added.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from optics_backend import __version__
 from optics_backend.artifacts import (CANONICALIZATION, canonical, digest, extract_response,
                                       load_artifact, require_python, save, store_artifact, strict)
 from optics_backend.sources import load_task
@@ -20,13 +20,19 @@ from optics_backend.ranking import RANKING_HASH, rank_key
 
 
 def environment_identity():
-    distributions = sorted({(d.metadata["Name"].lower().replace("_", "-"), d.version)
-                            for d in importlib.metadata.distributions() if d.metadata["Name"]})
+    # Keep a reproducible dependency manifest that is identical in the Session
+    # parent and isolated -I workers. The package has no third-party runtime
+    # dependencies; its installed source is the frozen dependency evidence.
+    root = Path(__file__).resolve().parent
+    source_files = {p.relative_to(root).as_posix(): digest(p.read_bytes())
+                    for p in sorted(root.glob("*.py"))}
+    dependencies = [{"name": "optics-artifact-session", "version": __version__,
+                    "source_files": source_files}]
     return {"python": sys.version, "platform": platform.platform(),
             "architecture": platform.machine(), "implementation": platform.python_implementation(),
-            "dependency_scope": "all-installed-distributions (conservative superset, not a stdlib assertion)",
-            "dependencies": [{"name": name, "version": version} for name, version in distributions],
-            "dependency_manifest_sha256": digest(canonical(distributions))}
+            "dependency_scope": "frozen-installed-source (no third-party runtime dependencies)",
+            "dependencies": dependencies,
+            "dependency_manifest_sha256": digest(canonical(dependencies))}
 
 
 def adapter_hash():

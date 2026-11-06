@@ -56,8 +56,18 @@ def export_bundle(run, output, report_dir=None):
         config = json.loads(config_bytes)
         files = {"experiment_manifest.json": encoded(config["experiment_manifest"]),
                  "archive.json": encoded(build_archive_from_session(run))}
+        manifest_document = config["experiment_manifest"].get("document", config["experiment_manifest"])
+        extra = manifest_document.get("extra", {})
+        if extra.get("treatment") == "D1":
+            for key in ("controller_identity", "execution_environment", "source_identity"):
+                if not isinstance(extra.get(key), dict) or not extra[key]:
+                    raise ValueError("d1_identity_missing:" + key)
+                # These identities are frozen inside the validated Session
+                # config/manifest, not reconstructed from the export machine.
+                files[key + ".json"] = encoded(extra[key])
         rounds = [dict(row) for row in con.execute("SELECT * FROM rounds ORDER BY round_id")]
         source_hashes = {}
+        controller_rounds = []
         for row in rounds:
             for stem in ("evaluation_facts", "population_snapshot", "seed_selection",
                          "normalized_plan", "submitted_evaluation", "round_context"):
@@ -75,6 +85,19 @@ def export_bundle(run, output, report_dir=None):
                     raise ValueError("source_hash_mismatch:" + ref)
                 files[ref] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
                 source_hashes[ref] = expected
+            plan_ref = row.get("normalized_plan_ref")
+            controller_rounds.append({
+                "round_id": row["round_id"],
+                "feedback_basis": json.loads(files[plan_ref]).get("feedback_basis") if plan_ref in files else None,
+                "normalized_plan": {"ref": plan_ref, "sha256": row.get("normalized_plan_sha256")},
+                "submitted_evaluation": {"ref": row.get("submitted_evaluation_ref"),
+                                         "sha256": row.get("submitted_evaluation_sha256")},
+            })
+        if extra.get("treatment") == "D1":
+            files["controller_rounds.json"] = encoded({
+                "schema_version": "host-agent-round-evidence/v1", "rounds": controller_rounds,
+                "scope": "Public decisions and evidence references; no private chain-of-thought",
+            })
         requests = [dict(row) for row in con.execute(
             "SELECT request_id,sequence,round_id,purpose,state,input_tokens,output_tokens,"
             "elapsed_seconds,error_code,finish_reason FROM requests ORDER BY sequence")]

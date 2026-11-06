@@ -1,0 +1,280 @@
+{
+  "schema_version": "algorithm-optimization-benchmark-report/v1",
+  "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+  "selection_kind": "final_population_set",
+  "selection_sha256": "47ca918156348009b4662a19ea56cb2af2111ac80561032d2697d077e120e5fc",
+  "result_source": "artifact_reevaluated",
+  "metrics": {
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "47ca918156348009b4662a19ea56cb2af2111ac80561032d2697d077e120e5fc",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "selection_kind": "final_population_set",
+    "best_training_fitness": 0.0,
+    "training": {
+      "rounds": [
+        {
+          "round_id": 1,
+          "generated": 49,
+          "valid_generated": 49,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "code_sha256": "c250c13f31d10d99efa9272e4aa76befe5be339121492ff9e807fc6b33186fe0",
+            "evaluation_id": "2022d0715f0f49ada7e9c2431c404184",
+            "objective": 0.0,
+            "origin": "baseline",
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 1,
+            "novel_candidate_evaluations": 48,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 0,
+            "total_evaluation_attempts": 50
+          },
+          "distinct_valid_code_count": 48
+        },
+        {
+          "round_id": 2,
+          "generated": 47,
+          "valid_generated": 40,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "objective": 0.0,
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 2,
+            "novel_candidate_evaluations": 95,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 2,
+            "total_evaluation_attempts": 100
+          },
+          "distinct_valid_code_count": 40
+        }
+      ],
+      "generated_candidates": 96,
+      "valid_generated_candidates": 89,
+      "invalid_generated_candidates": 7,
+      "generated_valid_rate": 0.9270833333333334,
+      "distinct_valid_generated_code_count": 88,
+      "duplicate_valid_generated_code_count": 1,
+      "best_generated_fitness": 0.0,
+      "invalid_error_counts": {
+        "candidate_error": 3,
+        "forbidden_attribute": 4
+      }
+    },
+    "heldout_aggregate_fitness": 0.0
+  },
+  "budget": {
+    "eoh_max_requests": 160,
+    "eoh_requests_used": 98,
+    "eoh_requests_remaining": 62,
+    "eoh_round_max_requests": 80,
+    "max_solver_calls": 100,
+    "solver_calls_used": 100,
+    "solver_calls_remaining": 0,
+    "round_budget": 50,
+    "round_solver_calls_used": 50,
+    "round_solver_calls_remaining": 0,
+    "engine_wall_seconds": 1200.0,
+    "round_wall_seconds": 600.0,
+    "repair_max_requests": null,
+    "total_evaluation_attempts": 100,
+    "novel_candidate_evaluations": 95,
+    "seed_reevaluation_attempts": 2,
+    "baseline_attempts": 2,
+    "repair_attempts": 0,
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "47ca918156348009b4662a19ea56cb2af2111ac80561032d2697d077e120e5fc"
+  },
+  "test_isolation": {
+    "selection_locked_before_test": true,
+    "selection_sha256": "47ca918156348009b4662a19ea56cb2af2111ac80561032d2697d077e120e5fc",
+    "test_result_sha256": "99c2230a9d6db3de61fd510b1bbaf5dc3df62c29812f4d5333e8e1a342e8ce2d",
+    "test_evaluated": true,
+    "test_updates_training": false,
+    "status": "verified"
+  },
+  "test": {
+    "schema_version": "algorithm-optimization-benchmark-selection-evaluation/v1",
+    "selection_kind": "final_population_set",
+    "selection_sha256": "47ca918156348009b4662a19ea56cb2af2111ac80561032d2697d077e120e5fc",
+    "selection_locked_before_test": true,
+    "test_benchmark_id": "eohs_v1",
+    "test_profile": "obp_evolution_mini",
+    "test_split": "heldout",
+    "test_benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "test_suite_hash": "9ff2d6ea43b54e94927b45a2bff0c139eec9cd4070b1ba5f3a4fe3525145bb7a",
+    "test_data_manifest_hash": "f5c4f5729ad115286aa1dad2f622a06877f715b99004dac634b316bdfde45ffb",
+    "test_reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "instance_ids": [
+      "obp-evolution-mini-test-0",
+      "obp-evolution-mini-test-1"
+    ],
+    "test_problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "member_results": [
+      {
+        "member_index": 0,
+        "candidate_id": "candidate_1",
+        "code_sha256": "3e92736fb8fbb920556d455bef3c89b929074c624d1a53cd3db8f96f65d06e5c",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "bd336311a8d7770196e8cd7a0158911484ba50da96bb757ddec79ceb7ca37875"
+      },
+      {
+        "member_index": 1,
+        "candidate_id": "candidate_2",
+        "code_sha256": "f0405b8a15c133aa41bbfb40b3e53b5c83606f484afce21c578c65e99edfe400",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "5b941470eb8d792d4a0e627280ccc487052602cfcedbf8d2610c9889329b19b7"
+      }
+    ],
+    "per_instance": [
+      {
+        "instance_id": "obp-evolution-mini-test-0",
+        "member_gaps": [
+          0.0,
+          0.2
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 2
+      },
+      {
+        "instance_id": "obp-evolution-mini-test-1",
+        "member_gaps": [
+          0.0,
+          0.0
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 2
+      }
+    ],
+    "aggregate_fitness": 0.0,
+    "valid_member_count": 2,
+    "instance_count": 2,
+    "complete_instance_coverage": true,
+    "test_evaluation_attempts": 2,
+    "test_instance_evaluation_attempts": 4,
+    "test_updates_training": false
+  }
+}

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="Kami">
+<meta name="description" content="从 605 次 Island 运行中取出 TSP、CVRP、在线装箱三条最优轨迹，按代列出大模型改启发式的过程与效果。">
+<meta name="keywords" content="EoH, Island Model, TSP, CVRP, 在线装箱, 启发式进化">
+<meta name="generator" content="Kami">
+<title>605 次运行中三条最优启发式的代数与效果</title>
+<style>
+  @font-face { font-family: "TsangerJinKai02"; src: url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W04.ttf") format("truetype"); font-weight: 400; }
+  @font-face { font-family: "TsangerJinKai02"; src: url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/TsangerJinKai02-W05.ttf") format("truetype"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("https://cdn.jsdelivr.net/gh/tw93/Kami@main/assets/fonts/JetBrainsMono.woff2") format("woff2"); font-weight: 400; }
+
+  @page {
+    size: 338mm 190mm;
+    margin: 0;
+    background: #f5f4ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --parchment:  #f5f4ed;
+    --ivory:      #faf9f5;
+    --near-black: #141413;
+    --dark-warm:  #3d3d3a;
+    --olive:      #504e49;
+    --stone:      #6b6a64;
+    --brand:      #1B365D;
+    --brand-tint: #EEF2F7;
+    --border:     #e8e6dc;
+    --border-soft:#e5e3d8;
+
+    --serif: "TsangerJinKai02", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif;
+    --sans:  var(--serif);
+    --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Consolas, Monaco, "TsangerJinKai02", "Source Han Serif SC", monospace;
+
+    --rhythm-module:  14pt;
+    --rhythm-section: 18pt;
+  }
+
+  body {
+    color: var(--near-black);
+    font-family: var(--sans);
+    font-size: 13pt;
+    line-height: 1.55;
+    letter-spacing: 0.3pt;
+    background: var(--parchment);
+  }
+
+  .slide {
+    width: 338mm;
+    height: 190mm;
+    padding: 14mm 18mm 18mm 18mm;
+    background: var(--parchment);
+    break-after: page;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .slide:last-child { break-after: auto; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 9.5pt;
+    letter-spacing: 2pt;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 2pt;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 10mm;
+    right: 18mm;
+    font-family: var(--mono);
+    font-size: 9pt;
+    color: var(--stone);
+    letter-spacing: 0.5pt;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-mark {
+    position: absolute;
+    bottom: 10mm;
+    left: 18mm;
+    font-family: var(--mono);
+    font-size: 9pt;
+    color: var(--stone);
+    letter-spacing: 1.5pt;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.3pt;
+    color: var(--near-black);
+    margin-bottom: 8pt;
+  }
+
+  .lead {
+    font-family: var(--sans);
+    font-size: 11pt;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.3pt;
+    color: var(--olive);
+    margin-bottom: 10pt;
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.data thead td {
+    font-weight: 500;
+    color: var(--dark-warm);
+    padding: 6pt 8pt 8pt 8pt;
+    border-bottom: 1pt solid var(--border);
+    font-size: 10.5pt;
+    letter-spacing: 0.4pt;
+  }
+  table.data thead td:first-child { color: var(--dark-warm); }
+  table.data td {
+    padding: 9pt 8pt;
+    border-bottom: 0.3pt solid var(--border);
+    font-size: 10.5pt;
+    line-height: 1.45;
+    letter-spacing: 0.3pt;
+    vertical-align: top;
+  }
+  table.data tbody td:first-child {
+    font-weight: 500;
+    color: var(--brand);
+    width: 22%;
+  }
+  table.data tbody td:nth-child(2) { width: 48%; }
+  table.data tbody td:nth-child(3) { width: 30%; }
+
+  .prob-kicker {
+    display: block;
+    font-family: var(--mono);
+    font-size: 8pt;
+    letter-spacing: 1.2pt;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 3pt;
+  }
+  .prob-name {
+    display: block;
+    font-size: 13pt;
+    line-height: 1.3;
+    color: var(--brand);
+    margin-bottom: 4pt;
+  }
+  .prob-task {
+    display: block;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: var(--olive);
+    font-weight: 400;
+  }
+
+  .gen {
+    font-family: var(--mono);
+    font-size: 9.5pt;
+    line-height: 1.58;
+    letter-spacing: 0.1pt;
+    color: var(--dark-warm);
+  }
+  .gen b {
+    font-weight: 500;
+    color: var(--brand);
+    font-family: var(--mono);
+  }
+
+  .effect-num {
+    display: block;
+    font-family: var(--serif);
+    font-size: 15pt;
+    font-weight: 500;
+    color: var(--brand);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    margin-bottom: 4pt;
+  }
+  .effect-note {
+    display: block;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: var(--olive);
+    font-weight: 400;
+  }
+
+  .co {
+    font-family: var(--sans);
+    font-size: 10.5pt;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.3pt;
+    color: var(--brand);
+    position: absolute;
+    bottom: 16mm;
+    left: 18mm;
+    right: 18mm;
+  }
+
+  @media screen {
+    html { background: #e8e6dc; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px 16px 48px 16px;
+      background: #e8e6dc;
+    }
+    .slide {
+      box-shadow: 0 4pt 24pt rgba(0, 0, 0, 0.05);
+      height: auto;
+      min-height: 190mm;
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <span class="eyebrow">Island 605 · 最优轨迹</span>
+  <h2>装箱、TSP、CVRP 三条最优启发式都相对冻结基线下降，装箱 excess 改善 83%</h2>
+  <p class="lead">从 605 次 Island 运行中各取目标最低的一次。模型为 deepseek-v4-flash，官方 EoH 构造接口，种群 6，算子 e1 / e2 / m1 / m2。代数分数来自该 run 的 population_generation 文件。</p>
+
+  <table class="data">
+    <thead>
+      <tr>
+        <td>问题</td>
+        <td>大模型进化过程</td>
+        <td>进化效果</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="prob-kicker">bp_online · 192 次</span>
+          <span class="prob-name">在线装箱</span>
+          <span class="prob-task">为当前物品给可行箱打分。Weibull 流，箱容 100。目标是相对 L1 下界的 excess。</span>
+        </td>
+        <td>
+          <div class="gen">
+            G0&nbsp;&nbsp;<b>0.02324</b>&nbsp;&nbsp;利用率奖励 + 残差惩罚，已优于基线<br>
+            G1–7&nbsp;&nbsp;<b>0.02324</b>&nbsp;&nbsp;最优停住，最差个体从 1.52 收到 0.037<br>
+            G8&nbsp;&nbsp;<b>0.00674</b>&nbsp;&nbsp;改成指数利用率，减去中等正残差二次惩罚；恰好装满不罚
+          </div>
+        </td>
+        <td>
+          <span class="effect-num">0.0398 → 0.00674</span>
+          <span class="effect-note">相对基线 −83.1%。这是 excess 指标，不是箱数降了 83%。gen=8，约 596 秒。</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="prob-kicker">tsp_construct · 206 次</span>
+          <span class="prob-name">旅行商问题</span>
+          <span class="prob-task">每步选下一个城市。50 点、8 实例。目标是平均回路长度。</span>
+        </td>
+        <td>
+          <div class="gen">
+            G0&nbsp;&nbsp;<b>6.983</b>&nbsp;&nbsp;regret + 长边惩罚，接近最近邻<br>
+            G1&nbsp;&nbsp;<b>6.350</b>&nbsp;&nbsp;骨架开始换<br>
+            G2&nbsp;&nbsp;<b>6.110</b>&nbsp;&nbsp;写入剩余点最近邻滚动估价<br>
+            G4&nbsp;&nbsp;<b>6.005</b>&nbsp;&nbsp;按剩余点数调权重：前期看路径，后期看当前边<br>
+            G8&nbsp;&nbsp;<b>6.004</b>&nbsp;&nbsp;定型。长边惩罚仍在，没有做 2-opt 交换
+          </div>
+        </td>
+        <td>
+          <span class="effect-num">6.56 → 6.00393</span>
+          <span class="effect-note">相对基线 −8.48%。206 次中最优。gen=8，约 652 秒。</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="prob-kicker">cvrp_construct · 207 次</span>
+          <span class="prob-name">带容量车辆路径</span>
+          <span class="prob-task">选下一个客户或回仓。50 客户、容量 40、16 实例。目标是平均总路程。</span>
+        </td>
+        <td>
+          <div class="gen">
+            G0&nbsp;&nbsp;<b>13.283</b>&nbsp;&nbsp;仓库 farthest-first 开线，途中近邻 / sweep<br>
+            G1&nbsp;&nbsp;<b>12.802</b>&nbsp;&nbsp;已明显低于基线 13.519<br>
+            G8&nbsp;&nbsp;<b>12.677</b>&nbsp;&nbsp;途中规则继续收紧<br>
+            G12&nbsp;&nbsp;<b>12.465</b>&nbsp;&nbsp;途中改为 savings 选下一个点<br>
+            G16&nbsp;&nbsp;<b>12.356</b>&nbsp;&nbsp;容量紧时近则继续、远则回仓
+          </div>
+        </td>
+        <td>
+          <span class="effect-num">13.519 → 12.35639</span>
+          <span class="effect-note">相对基线 −8.60%。207 次中最优。gen=16，约 967 秒。</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="co">基线是 Round 1 A_pure 冻结中位数。各岛共享精英池，605 次运行互相依赖。分数只对这套官方构造评测成立。</div>
+  <div class="page-num">01</div>
+  <div class="footer-mark">ISLAND 605 · 2026-06-30</div>
+</section>
+
+</body>
+</html>

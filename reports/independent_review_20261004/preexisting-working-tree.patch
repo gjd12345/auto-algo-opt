@@ -1,0 +1,179 @@
+diff --git a/extensions/optics/src/artifact_session/runner.py b/extensions/optics/src/artifact_session/runner.py
+index aadec117..25807ca1 100644
+--- a/extensions/optics/src/artifact_session/runner.py
++++ b/extensions/optics/src/artifact_session/runner.py
+@@ -95,6 +95,74 @@ def assess(run, candidate, mode, round_id, plan_path=None, parent=None):
+         raise
+ 
+ 
++_MAX_PROMPT_CONTEXT_BYTES = 30_000
++
++
++def _compact_online_diagnostics(value):
++    """Keep actionable online evidence while removing large field matrices."""
++    if not isinstance(value, dict):
++        return value
++    constraints = {}
++    for name, item in (value.get("constraints") or {}).items():
++        if not isinstance(item, dict):
++            continue
++        constraints[name] = {key: item.get(key) for key in
++                             ("constraint_id", "metric", "observed", "target", "operator",
++                              "passed", "normalized_margin") if key in item}
++    configurations = []
++    for item in value.get("configurations") or []:
++        if not isinstance(item, dict):
++            continue
++        fields = []
++        for field in item.get("fields") or []:
++            if not isinstance(field, dict):
++                continue
++            mtf = {}
++            for sample in field.get("mtf") or []:
++                if isinstance(sample, dict) and "frequency_lp_mm" in sample:
++                    mtf[str(sample["frequency_lp_mm"])] = min(
++                        sample.get("sagittal", float("inf")),
++                        sample.get("tangential", float("inf")))
++            fields.append({"field_label": field.get("field_label"),
++                           "quality_q": field.get("quality_q"),
++                           "minimum_mtf": mtf})
++        configurations.append({key: item.get(key) for key in
++                               ("profile_id", "configuration_index", "signed_focus_error_mm",
++                                "absolute_focus_error_mm", "sensor_z_mm",
++                                "paraxial_focus_plane_z_mm") if key in item} |
++                              {"fields": fields})
++    return {key: value.get(key) for key in
++            ("quality_q", "online_feasible", "focus_constraint_margin_mm",
++             "focus_normalized_margin", "focus_convention", "failed_constraints")
++            if key in value} | {"constraints": constraints, "configurations": configurations}
++
++
++def _compact_candidate_feedback(value):
++    """Preserve round linkage, ranking evidence, failures, and actual deltas."""
++    if not isinstance(value, dict):
++        return value
++    compact = []
++    for item in value.get("candidate_results") or []:
++        diag = item.get("online_diagnostics") or {}
++        compact.append({
++            "candidate_id": item.get("candidate_id"),
++            "error": item.get("error"),
++            "assessment_ref": item.get("assessment_ref"),
++            "comparison": item.get("comparison"),
++            "prescription_delta": item.get("prescription_delta"),
++            "ranking_key": item.get("ranking_key"),
++            "online_feasible": diag.get("online_feasible"),
++            "quality_q": diag.get("quality_q"),
++            "focus_constraint_margin_mm": diag.get("focus_constraint_margin_mm"),
++            "failed_constraints": diag.get("failed_constraints"),
++            "constraints": {name: (diag.get("constraints") or {}).get(name)
++                            for name in diag.get("failed_constraints") or []},
++        })
++    return {key: value.get(key) for key in
++            ("previous_round_ref", "incumbent_after", "incumbent_before") if key in value} | {
++                "candidate_results": compact}
++
++
+ def prompt(run, plan, parent_ref, recent):
+     _, conf = inspect(run)
+     task = strict((Path(conf["bundle"]) / "assets/task_spec.json").read_bytes())
+@@ -117,9 +185,13 @@ def prompt(run, plan, parent_ref, recent):
+     context = {"task_contract": task, "plan": plan, "parent_prescription": parent,
+                "parent_online": {**online_diagnostics(parent_facts), "ranking_key": parent_facts["ranking_key"]},
+                "recent_candidate_feedback": recent, "memory": memory}
+-    if len(canonical(context)) > 30_000:
++    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
++        context["parent_online"] = _compact_online_diagnostics(context["parent_online"])
++        context["recent_candidate_feedback"] = _compact_candidate_feedback(
++            context.get("recent_candidate_feedback"))
++    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
+         context["memory"] = []
+-    if len(canonical(context)) > 30_000:
++    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
+         raise SessionError("CONTEXT_LIMIT")
+     system = ("Optimize this optical prescription using the provided task and actual online feedback. "
+               "Return exactly one JSON object with description (string) and prescription (complete object). "
+diff --git a/extensions/optics/src/optics_backend/worker.py b/extensions/optics/src/optics_backend/worker.py
+index dc31d4c6..fb7cf88b 100644
+--- a/extensions/optics/src/optics_backend/worker.py
++++ b/extensions/optics/src/optics_backend/worker.py
+@@ -9,10 +9,10 @@ import sys
+ import time
+ import os
+ import threading
+-import importlib.metadata
+ 
+ # This file is launched with -I; only the installed, fixed adapter source is added.
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++from optics_backend import __version__
+ from optics_backend.artifacts import (CANONICALIZATION, canonical, digest, extract_response,
+                                       load_artifact, require_python, save, store_artifact, strict)
+ from optics_backend.sources import load_task
+@@ -20,13 +20,19 @@ from optics_backend.ranking import RANKING_HASH, rank_key
+ 
+ 
+ def environment_identity():
+-    distributions = sorted({(d.metadata["Name"].lower().replace("_", "-"), d.version)
+-                            for d in importlib.metadata.distributions() if d.metadata["Name"]})
++    # Keep a reproducible dependency manifest that is identical in the Session
++    # parent and isolated -I workers. The package has no third-party runtime
++    # dependencies; its installed source is the frozen dependency evidence.
++    root = Path(__file__).resolve().parent
++    source_files = {p.relative_to(root).as_posix(): digest(p.read_bytes())
++                    for p in sorted(root.glob("*.py"))}
++    dependencies = [{"name": "optics-artifact-session", "version": __version__,
++                    "source_files": source_files}]
+     return {"python": sys.version, "platform": platform.platform(),
+             "architecture": platform.machine(), "implementation": platform.python_implementation(),
+-            "dependency_scope": "all-installed-distributions (conservative superset, not a stdlib assertion)",
+-            "dependencies": [{"name": name, "version": version} for name, version in distributions],
+-            "dependency_manifest_sha256": digest(canonical(distributions))}
++            "dependency_scope": "frozen-installed-source (no third-party runtime dependencies)",
++            "dependencies": dependencies,
++            "dependency_manifest_sha256": digest(canonical(dependencies))}
+ 
+ 
+ def adapter_hash():
+diff --git a/tools/export_benchmark_evidence.py b/tools/export_benchmark_evidence.py
+index 1e8ba84b..6ec33983 100644
+--- a/tools/export_benchmark_evidence.py
++++ b/tools/export_benchmark_evidence.py
+@@ -56,8 +56,18 @@ def export_bundle(run, output, report_dir=None):
+         config = json.loads(config_bytes)
+         files = {"experiment_manifest.json": encoded(config["experiment_manifest"]),
+                  "archive.json": encoded(build_archive_from_session(run))}
++        manifest_document = config["experiment_manifest"].get("document", config["experiment_manifest"])
++        extra = manifest_document.get("extra", {})
++        if extra.get("treatment") == "D1":
++            for key in ("controller_identity", "execution_environment", "source_identity"):
++                if not isinstance(extra.get(key), dict) or not extra[key]:
++                    raise ValueError("d1_identity_missing:" + key)
++                # These identities are frozen inside the validated Session
++                # config/manifest, not reconstructed from the export machine.
++                files[key + ".json"] = encoded(extra[key])
+         rounds = [dict(row) for row in con.execute("SELECT * FROM rounds ORDER BY round_id")]
+         source_hashes = {}
++        controller_rounds = []
+         for row in rounds:
+             for stem in ("evaluation_facts", "population_snapshot", "seed_selection",
+                          "normalized_plan", "submitted_evaluation", "round_context"):
+@@ -75,6 +85,19 @@ def export_bundle(run, output, report_dir=None):
+                     raise ValueError("source_hash_mismatch:" + ref)
+                 files[ref] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
+                 source_hashes[ref] = expected
++            plan_ref = row.get("normalized_plan_ref")
++            controller_rounds.append({
++                "round_id": row["round_id"],
++                "feedback_basis": json.loads(files[plan_ref]).get("feedback_basis") if plan_ref in files else None,
++                "normalized_plan": {"ref": plan_ref, "sha256": row.get("normalized_plan_sha256")},
++                "submitted_evaluation": {"ref": row.get("submitted_evaluation_ref"),
++                                         "sha256": row.get("submitted_evaluation_sha256")},
++            })
++        if extra.get("treatment") == "D1":
++            files["controller_rounds.json"] = encoded({
++                "schema_version": "host-agent-round-evidence/v1", "rounds": controller_rounds,
++                "scope": "Public decisions and evidence references; no private chain-of-thought",
++            })
+         requests = [dict(row) for row in con.execute(
+             "SELECT request_id,sequence,round_id,purpose,state,input_tokens,output_tokens,"
+             "elapsed_seconds,error_code,finish_reason FROM requests ORDER BY sequence")]

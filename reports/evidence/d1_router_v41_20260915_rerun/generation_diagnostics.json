@@ -1,0 +1,106 @@
+{
+  "schema_version": "generation-diagnostics/v1",
+  "requests": [
+    {
+      "sequence": 1,
+      "round_id": 1,
+      "purpose": "eoh_probe",
+      "state": "complete",
+      "error_code": null,
+      "finish_reason": "stop",
+      "response_chars": 1,
+      "response_bytes": 1,
+      "source_ref": "rounds/round_0001/eoh_run/results/exchanges/request_1.json",
+      "source_sha256": "daf61d492e54d8cd20b8d22ba8eae7bd8ab58171253be19543d1aa186c5077b1"
+    },
+    {
+      "sequence": 2,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "error_code": null,
+      "finish_reason": "stop",
+      "response_chars": 543,
+      "response_bytes": 543,
+      "source_ref": "rounds/round_0001/eoh_run/results/exchanges/request_2.json",
+      "source_sha256": "9378d6b4f9d871b279594b3f3c3ebcb65c6c8f4653dc2812880f4308d81dc5f4"
+    },
+    {
+      "sequence": 3,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "failed",
+      "error_code": "http_504",
+      "finish_reason": null,
+      "response_chars": null,
+      "response_bytes": null,
+      "source_ref": null,
+      "source_sha256": null
+    },
+    {
+      "sequence": 4,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "error_code": "generation_truncated",
+      "finish_reason": "length",
+      "response_chars": 0,
+      "response_bytes": 0,
+      "source_ref": "rounds/round_0001/eoh_run/results/exchanges/request_4.json",
+      "source_sha256": "f33e2e6f93511068309770cc6ed0e60a3b1178e0b40510c6d9453b5d7760497e"
+    },
+    {
+      "sequence": 5,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "error_code": "generation_truncated",
+      "finish_reason": "length",
+      "response_chars": 0,
+      "response_bytes": 0,
+      "source_ref": "rounds/round_0001/eoh_run/results/exchanges/request_5.json",
+      "source_sha256": "3838782551db12dc83f6b66fca0c42b99d608a452c64edfb85aa4b42e48fd4c3"
+    },
+    {
+      "sequence": 6,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "failed",
+      "error_code": "http_504",
+      "finish_reason": null,
+      "response_chars": null,
+      "response_bytes": null,
+      "source_ref": null,
+      "source_sha256": null
+    },
+    {
+      "sequence": 7,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "unknown",
+      "error_code": null,
+      "finish_reason": null,
+      "response_chars": null,
+      "response_bytes": null,
+      "source_ref": null,
+      "source_sha256": null
+    }
+  ],
+  "generation": {
+    "completed": 3,
+    "truncated": 2,
+    "truncated_fraction_of_completed": 0.6666666666666666,
+    "empty": 2,
+    "missing_response_evidence": 3,
+    "unknown": 1,
+    "repair_requests": 0,
+    "parse_failed": null,
+    "recovered": null,
+    "recovery_observability": "upstream_retry_lineage_not_recorded; not inferred from adjacent requests",
+    "response_chars": {
+      "min": 0,
+      "median": 0,
+      "max": 543
+    }
+  }
+}

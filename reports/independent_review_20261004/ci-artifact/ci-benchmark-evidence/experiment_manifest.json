@@ -1,0 +1,77 @@
+{
+  "sha256": "4997111ad441467a3d6b5765e1f1e2e1bdabb47d368d94fcd85ba9ef04efa28c",
+  "document": {
+    "schema_version": "algorithm-optimization-experiment-manifest/v1",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "runtime_hash": "cbf133a7d0157e01e43fa41150a63a7b7e2a8d4d1e8247ae82ce9eb22bb6f050",
+    "skill_hash": "2add248f2d643b5dadd336c801d51b7d69e850a0b2d263fca26ed049cf66ef53",
+    "model": "fixture",
+    "endpoint_identity": "http://127.0.0.1:33271/v1/chat/completions",
+    "inheritance_mode": "population_seeds",
+    "feedback_mode": "runtime_facts",
+    "agent_guidance": false,
+    "repair_mode": "off",
+    "memory_enabled": false,
+    "evaluation_budget": 20,
+    "population_size": 2,
+    "rounds": 2,
+    "round_budget": 10,
+    "search_seed": 20260908,
+    "extra": {
+      "search_policy_defaults": {
+        "max_sample_nums": 20,
+        "n_pop": 2,
+        "pop_size": 2
+      },
+      "search_policy_limits": {
+        "max_sample_nums": [
+          20,
+          20
+        ],
+        "n_pop": [
+          2,
+          2
+        ],
+        "pop_size": [
+          2,
+          2
+        ]
+      },
+      "generation_contract": {
+        "protocol_version": "openai-path-bridge/v1",
+        "model": "fixture",
+        "endpoint_identity": "http://127.0.0.1:33271/v1/chat/completions",
+        "thinking": "provider-default",
+        "temperature": 1.0,
+        "max_output_tokens": 16384,
+        "request_timeout_seconds": 180.0,
+        "concurrency": 1,
+        "provider_seed": null,
+        "generation_parameters": {
+          "temperature": 1.0,
+          "max_tokens": 16384
+        },
+        "repair_parameters": {
+          "temperature": 0.2,
+          "max_tokens": 8192,
+          "response_format": {
+            "type": "json_object"
+          }
+        },
+        "response_policy": "content_only_complete_v1"
+      },
+      "resource_contract": {
+        "request_budget": 40,
+        "round_request_budget": null,
+        "wall_clock_budget": 120,
+        "round_wall_clock_budget": 60,
+        "evaluation_budget": 20,
+        "round_evaluation_budget": 10,
+        "solver_timeout_seconds": 20.0,
+        "repair_request_budget": null
+      }
+    }
+  }
+}

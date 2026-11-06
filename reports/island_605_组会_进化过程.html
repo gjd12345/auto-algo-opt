@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>605 次 Island 进化：问题、代数与效果</title>
+  <style>
+    :root{
+      --navy:#10132b;--purple:#5635a5;--violet:#7656c6;--lavender:#eee9fb;
+      --paper:#f7f5ef;--white:#fff;--ink:#202132;--muted:#697080;--line:#d9d5e5;
+      --green:#168866;--green-soft:#dff3eb;--orange:#d77a1f;--orange-soft:#fff0df;
+      --red:#c94a51;--red-soft:#fde8e8;--blue:#287bb5;--blue-soft:#e2f1fb;
+      --serif:"Noto Serif SC","Source Han Serif SC","STSong",Georgia,serif;
+      --sans:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
+      --mono:"Cascadia Code","JetBrains Mono",Consolas,monospace;
+      --shadow:0 18px 46px rgba(37,28,75,.10);
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--navy);color:var(--ink)}
+    body{font-family:var(--sans)}
+    .deck{position:relative;width:100%;height:100%}
+    .slide{position:absolute;inset:0;display:none;flex-direction:column;padding:5.6vh 6.7vw 7.5vh;
+      overflow:hidden;background:var(--paper)}
+    .slide.active{display:flex;animation:slideIn .36s ease-out}
+    @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .slide.cover,.slide.closing{color:#f7f4ff;background:
+      radial-gradient(900px 520px at 6% 0%,rgba(120,78,207,.85),transparent 64%),
+      radial-gradient(700px 460px at 95% 90%,rgba(33,123,181,.32),transparent 62%),
+      linear-gradient(140deg,#191438 0%,#11162d 70%,#0f2633 100%)}
+    .slide.cover::before,.slide.closing::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.13;
+      background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:42px 42px}
+    .section-label{position:relative;z-index:1;font:700 12px/1.2 var(--mono);letter-spacing:.16em;
+      text-transform:uppercase;color:var(--purple);margin-bottom:2.1vh}
+    .cover .section-label,.closing .section-label{color:#cabdff}
+    h1,h2,h3,p{margin:0}
+    h1{position:relative;z-index:1;max-width:1120px;font:800 clamp(42px,5.8vw,86px)/1.08 var(--serif);
+      letter-spacing:-.045em}
+    h2{font:800 clamp(32px,4vw,61px)/1.1 var(--serif);letter-spacing:-.035em;color:var(--navy);margin-bottom:3.1vh}
+    .closing h2{color:#fff}
+    h3{font:800 clamp(17px,1.55vw,25px)/1.25 var(--serif);color:var(--navy)}
+    .lead{position:relative;z-index:1;max-width:1050px;margin-top:2.6vh;font-size:clamp(17px,1.55vw,25px);
+      line-height:1.58;color:#ded8ef}
+    .accent{color:#c9ff76}.purple{color:var(--purple)}.green{color:var(--green)}
+    .orange{color:var(--orange)}.blue{color:var(--blue)}.red{color:var(--red)}
+    .grid{display:grid;gap:18px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{position:relative;background:var(--white);border:1px solid var(--line);border-radius:14px;
+      padding:22px 24px;box-shadow:var(--shadow);min-width:0}
+    .card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:4px;background:var(--purple);border-radius:0 0 4px 4px}
+    .card.green-card::before{background:var(--green)}.card.orange-card::before{background:var(--orange)}
+    .card.blue-card::before{background:var(--blue)}.card.red-card::before{background:var(--red)}
+    .tag{display:inline-block;margin-bottom:13px;padding:5px 9px;border-radius:999px;background:var(--lavender);
+      color:var(--purple);font:700 11px/1 var(--mono);letter-spacing:.06em}
+    .tag.new{background:var(--green-soft);color:var(--green)}.tag.limit{background:var(--orange-soft);color:var(--orange)}
+    .metric{font:900 clamp(34px,4vw,64px)/1 var(--serif);letter-spacing:-.04em;color:var(--navy)}
+    .metric small{font:700 .33em var(--sans);letter-spacing:0;color:var(--muted)}
+    .caption{margin-top:9px;color:var(--muted);font-size:clamp(13px,1vw,17px);line-height:1.48}
+    .body{font-size:clamp(15px,1.18vw,20px);line-height:1.65;color:#464b59}
+    .body strong{color:var(--navy)}
+    .callout{padding:16px 19px;border-left:5px solid var(--purple);background:#efebf8;border-radius:0 10px 10px 0;
+      font-size:clamp(15px,1.18vw,20px);line-height:1.55;color:#3f365b}
+    .callout.green-callout{border-color:var(--green);background:var(--green-soft);color:#244e42}
+    .callout.orange-callout{border-color:var(--orange);background:var(--orange-soft);color:#65431f}
+    .split{display:grid;grid-template-columns:1.05fr .95fr;gap:3.6vw;align-items:center;flex:1}
+    .timeline{position:relative;z-index:1;display:grid;grid-template-columns:1fr 100px 1fr;gap:18px;align-items:stretch;margin-top:5vh}
+    .timeline-card{padding:23px 25px;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.08);
+      backdrop-filter:blur(8px)}
+    .timeline-card.current{border-color:#c9ff76;background:rgba(201,255,118,.10)}
+    .timeline-card h3{color:#fff;margin-bottom:14px}.timeline-card p{color:#d7d3e6;font-size:clamp(14px,1.05vw,18px);line-height:1.65}
+    .timeline-arrow{display:grid;place-items:center;color:#c9ff76;font:800 42px var(--serif)}
+    .compare{display:grid;gap:11px}
+    .compare-row{display:grid;grid-template-columns:165px 1fr 42px 1fr;gap:13px;align-items:center;padding:13px 15px;
+      background:var(--white);border:1px solid var(--line);border-radius:12px}
+    .compare-row .label{font:800 14px var(--serif);color:var(--navy)}
+    .compare-row .before,.compare-row .after{font-size:clamp(13px,1.05vw,17px);line-height:1.4;color:var(--muted)}
+    .compare-row .after{color:#254b42}.compare-row .arrow{text-align:center;color:var(--green);font-size:22px;font-weight:900}
+    .flow{display:flex;align-items:stretch;gap:10px}
+    .flow-node{flex:1;padding:17px;background:var(--white);border:1px solid var(--line);border-radius:12px;min-width:0}
+    .flow-node b{display:block;color:var(--navy);font:800 16px var(--serif);margin-bottom:7px}
+    .flow-node span{display:block;color:var(--muted);font-size:13px;line-height:1.45}
+    .flow-arrow{align-self:center;color:var(--purple);font-size:24px;font-weight:900}
+    .ops{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:18px}
+    .op{padding:15px 16px;border-radius:12px;border:1px solid var(--line);background:#fbfafe}
+    .op .op-no{font:800 12px var(--mono);color:var(--purple);margin-bottom:7px}
+    .op b{display:block;font:800 16px var(--serif);color:var(--navy);margin-bottom:5px}
+    .op p{font-size:13px;line-height:1.45;color:var(--muted)}
+    .footer{margin-top:auto;padding-top:2vh;color:#9296a3;font:11px var(--mono)}
+    .cover .footer,.closing .footer{color:#aaa5bf}
+    .nav{position:fixed;left:2.5vw;bottom:2vh;z-index:30;display:flex;gap:8px}
+    .nav button{width:34px;height:29px;border:1px solid rgba(86,53,165,.35);background:rgba(255,255,255,.9);color:var(--purple);
+      border-radius:5px;cursor:pointer}.nav button:hover{background:var(--purple);color:#fff}
+    .counter{position:fixed;right:2.8vw;bottom:2.3vh;z-index:30;font:700 12px var(--mono);color:#8a8d9c}
+    .counter b{color:var(--purple)}
+    .progress{position:fixed;left:0;bottom:0;width:100%;height:4px;background:#ddd8e8;z-index:30}
+    .progress i{display:block;height:100%;width:10%;background:linear-gradient(90deg,var(--purple),var(--blue));transition:width .25s}
+    .hint{position:fixed;left:50%;bottom:2.3vh;transform:translateX(-50%);z-index:30;color:#9394a1;font:11px var(--mono)}
+    .gen-table{width:100%;border-collapse:separate;border-spacing:0 10px}
+    .gen-table th{text-align:left;font:700 12px var(--mono);letter-spacing:.08em;color:var(--purple);padding:0 16px 4px}
+    .gen-table td{background:var(--white);border:1px solid var(--line);padding:14px 16px;vertical-align:top;box-shadow:var(--shadow)}
+    .gen-table td:first-child{border-radius:14px 0 0 14px;width:22%}
+    .gen-table td:nth-child(2){width:48%;border-left:0;border-right:0}
+    .gen-table td:last-child{border-radius:0 14px 14px 0;width:30%}
+    .prob-kicker{display:block;font:700 11px var(--mono);color:var(--purple);letter-spacing:.06em;margin-bottom:6px}
+    .prob-name{display:block;font:800 20px var(--serif);color:var(--navy);margin-bottom:6px}
+    .prob-task{display:block;font-size:13px;line-height:1.45;color:var(--muted)}
+    .gen-line{display:grid;grid-template-columns:54px 78px 1fr;gap:8px;align-items:baseline;padding:4px 0;font-size:13px;line-height:1.4}
+    .gen-line .g{font:800 12px var(--mono);color:var(--purple)}
+    .gen-line .v{font:800 13px var(--mono);color:var(--navy)}
+    .gen-line .d{color:var(--muted)}
+    .effect-num{display:block;font:900 26px/1.1 var(--serif);color:var(--green);letter-spacing:-.03em;margin-bottom:6px}
+    .effect-note{display:block;font-size:13px;line-height:1.45;color:var(--muted)}
+    .case-list{display:grid;gap:7px}
+    .case-row{display:grid;grid-template-columns:52px 92px 1fr;gap:8px;align-items:start;padding:8px 10px;border-radius:8px;background:#f8f7fb}
+    .case-row b{font:800 12px var(--mono);color:var(--navy)}
+    .case-row .delta{font:800 12px var(--mono);color:var(--green)}
+    .case-row span:last-child{font-size:13px;line-height:1.42;color:var(--muted)}
+    .code-panel{display:flex;flex-direction:column;min-width:0;padding:17px 19px;border:1px solid var(--line);border-radius:14px;background:var(--white);box-shadow:var(--shadow)}
+    .code-panel h3{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:9px}
+    .code-panel h3 span{font:700 11px var(--mono);color:var(--muted)}
+    .code-panel pre{margin:0;padding:13px 15px;border-radius:10px;background:#171a2c;color:#e8eaf4;overflow:hidden;
+      white-space:pre-wrap;font:13px/1.5 var(--mono)}
+    .code-panel.new pre{background:#12352d}
+    .code-panel p{margin-top:12px;font-size:15px;line-height:1.5;color:var(--muted)}
+    .code-panel p strong{color:var(--navy)}
+    .code-compare{display:grid;grid-template-columns:1fr 1fr;gap:17px;flex:1}
+    .env-track{height:11px;border-radius:99px;background:#e9e5ef;overflow:hidden}
+    .env-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--green))}
+    .decision-rule{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;flex:1}
+    .rule-intro{padding:13px 18px;border-left:4px solid #c9ff76;background:rgba(255,255,255,.09);color:#f4f2fb;
+      font-size:clamp(14px,1.04vw,17px);line-height:1.48}
+    .rule-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .rule-step{min-height:142px;padding:15px 14px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.08)}
+    .rule-step .rule-no{font:800 11px var(--mono);color:#c9ff76}
+    .rule-step b{display:block;margin:8px 0 6px;color:#fff;font:800 15px var(--serif)}
+    .rule-step p{color:#d9d6e5;font-size:12px;line-height:1.48}
+    @media(max-width:1000px){
+      .slide{padding:4.5vh 5vw 8vh}
+      .grid.four,.ops{grid-template-columns:repeat(2,1fr)}
+      .timeline{grid-template-columns:1fr 60px 1fr}.split,.code-compare{grid-template-columns:1fr;gap:2vh}
+      .hint{display:none}
+    }
+    @media print{
+      html,body{overflow:visible;background:#fff}
+      .slide,.slide.active{position:relative;display:flex;width:297mm;height:167mm;page-break-after:always}
+      .nav,.counter,.progress,.hint{display:none}
+    }
+  </style>
+</head>
+<body>
+<main class="deck" aria-label="605次Island进化问题代数与效果">
+
+  <section class="slide cover active" data-slide="1">
+    <div class="section-label">组会材料 · Island 605 · 2026-06-30</div>
+    <h1>大模型在三类问题上<br>自动进化出<span class="accent">更好的构造启发式</span></h1>
+    <p class="lead">605 次运行覆盖在线装箱、旅行商、带容量车辆路径。本材料只讲优化较好的三条最优轨迹：问题是什么、每一代改了什么、最后效果如何。</p>
+    <div class="timeline">
+      <div class="timeline-card">
+        <div class="tag">设定</div>
+        <h3>官方 EoH 构造接口</h3>
+        <p>模型只写一步选择函数。种群 6，代数 8 或 16，算子 e1 / e2 / m1 / m2，deepseek-v4-flash。</p>
+      </div>
+      <div class="timeline-arrow">→</div>
+      <div class="timeline-card current">
+        <div class="tag new">本页要回答</div>
+        <h3>改得好的问题怎么来的</h3>
+        <p>从共享岛里取出各问题目标最低的一次，按代列出分数和机制变化。</p>
+      </div>
+    </div>
+    <div class="footer">原始 run 在 agent_ad-archive-20260710 · 冻结摘要 evidence/final_batch_20260630</div>
+  </section>
+
+  <section class="slide" data-slide="2">
+    <div class="section-label">01 · 605 次运行是什么</div>
+    <h2>605 是运行次数，不是 605 个独立发现</h2>
+    <div class="grid four">
+      <article class="card"><div class="tag">合计</div><div class="metric">605</div><div class="caption">三次问题运行之和：192 + 206 + 207</div></article>
+      <article class="card green-card"><div class="tag new">装箱</div><div class="metric">192</div><div class="caption">bp_online · 最优 excess 0.00674</div></article>
+      <article class="card blue-card"><div class="tag">TSP</div><div class="metric">206</div><div class="caption">tsp_construct · 最优回路 6.00393</div></article>
+      <article class="card orange-card"><div class="tag">CVRP</div><div class="metric">207</div><div class="caption">cvrp_construct · 最优路程 12.35639</div></article>
+    </div>
+    <div class="callout" style="margin-top:22px"><strong>并行方式：</strong>5 个 gen=8 岛 + 3 个 gen=16 岛，共享精英池。后到的岛会读到先完成运行的代码，因此这些运行互相依赖。</div>
+    <div class="footer">基线是 Round 1 A_pure 冻结中位数：装箱 0.0398 · TSP 6.56 · CVRP 13.519</div>
+  </section>
+
+  <section class="slide" data-slide="3">
+    <div class="section-label">02 · 三个问题</div>
+    <h2>模型只设计一步规则，外围循环由评测器固定</h2>
+    <div class="grid three">
+      <article class="card green-card">
+        <div class="tag new">bp_online</div>
+        <h3>在线装箱</h3>
+        <p class="body" style="margin-top:12px">函数 <strong>score(item, bins)</strong> 给可行箱打分，分数越高越优先放入。</p>
+        <p class="caption">Weibull 物品流，箱容 100。目标是相对 L1 下界的 excess，越小越好。</p>
+      </article>
+      <article class="card blue-card">
+        <div class="tag">tsp_construct</div>
+        <h3>旅行商问题</h3>
+        <p class="body" style="margin-top:12px">函数 <strong>select_next_node</strong> 从当前城市选下一个未访问城市。</p>
+        <p class="caption">50 个随机点，8 个实例。目标是平均回路长度。</p>
+      </article>
+      <article class="card orange-card">
+        <div class="tag">cvrp_construct</div>
+        <h3>带容量车辆路径</h3>
+        <p class="body" style="margin-top:12px">函数 <strong>select_next_node</strong> 选下一个客户，也可提前回仓开新车。</p>
+        <p class="caption">50 客户 + 仓库，容量 40，16 个实例。目标是平均总路程。</p>
+      </article>
+    </div>
+    <div class="callout orange-callout" style="margin-top:20px"><strong>起点都是简单规则：</strong>装箱用剩余容量当分数，TSP / CVRP 用最近邻。后面看到的改善，都是模型在这个固定接口里改出来的。</div>
+    <div class="footer">官方 EoH ICML 2024 评测器 · 实例 seed=2024</div>
+  </section>
+
+  <section class="slide" data-slide="4">
+    <div class="section-label">03 · 大模型怎么进化</div>
+    <h2>先写可运行函数，再按分数改骨架和参数</h2>
+    <div class="flow">
+      <div class="flow-node"><b>① 注入契约和策略卡</b><span>API 规则 + 两张文献卡，告诉模型函数签名和可参考想法</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><b>② 第 0 代写 3–6 个函数</b><span>一句话算法描述 + Python 实现，立刻在固定实例上打分</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><b>③ 四算子继续改</b><span>换形态、抽骨架、改结构、调参数，评测后留下更好的</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><b>④ 写入共享池</b><span>该 run 最优代码供其他岛后续使用</span></div>
+    </div>
+    <div class="ops">
+      <div class="op"><div class="op-no">e1</div><b>换形态</b><p>写出与父代完全不同的新算法。</p></div>
+      <div class="op"><div class="op-no">e2</div><b>抽骨架</b><p>先找父代共同点，再写受其启发的新算法。</p></div>
+      <div class="op"><div class="op-no">m1</div><b>改结构</b><p>在一个父代上做可识别的结构修改。</p></div>
+      <div class="op"><div class="op-no">m2</div><b>调参数</b><p>识别主要数值，改阈值和权重。</p></div>
+    </div>
+    <div class="footer">描述只进入下一轮提示；分数只看可执行代码的目标值</div>
+  </section>
+
+  <section class="slide" data-slide="5">
+    <div class="section-label">04 · 优化较好的三条轨迹</div>
+    <h2 style="font-size:clamp(28px,3.2vw,48px);margin-bottom:1.4vh">装箱改善最大，TSP / CVRP 各缩短约 8.5%</h2>
+    <table class="gen-table">
+      <thead>
+        <tr><th>问题</th><th>大模型进化过程</th><th>进化效果</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="prob-kicker">BP_ONLINE · 192 次</span>
+            <span class="prob-name">在线装箱</span>
+            <span class="prob-task">给可行箱打分。目标是相对 L1 下界的 excess。</span>
+          </td>
+          <td>
+            <div class="gen-line"><span class="g">G0</span><span class="v">0.02324</span><span class="d">利用率 + 残差惩罚，已优于基线</span></div>
+            <div class="gen-line"><span class="g">G1–7</span><span class="v">0.02324</span><span class="d">最优停住，最差个体从 1.52 收到 0.037</span></div>
+            <div class="gen-line"><span class="g">G8</span><span class="v">0.00674</span><span class="d">指数利用率 − 中等正残差二次惩罚；恰好装满不罚</span></div>
+          </td>
+          <td>
+            <span class="effect-num">0.0398 → 0.00674</span>
+            <span class="effect-note">相对基线 −83.1%。这是 excess，不是箱数降了 83%。gen=8。</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="prob-kicker">TSP_CONSTRUCT · 206 次</span>
+            <span class="prob-name">旅行商问题</span>
+            <span class="prob-task">每步选下一个城市。50 点、8 实例，平均回路长。</span>
+          </td>
+          <td>
+            <div class="gen-line"><span class="g">G0</span><span class="v">6.983</span><span class="d">regret + 长边惩罚，接近最近邻</span></div>
+            <div class="gen-line"><span class="g">G2</span><span class="v">6.110</span><span class="d">写入剩余点最近邻滚动估价</span></div>
+            <div class="gen-line"><span class="g">G4</span><span class="v">6.005</span><span class="d">按剩余点数调权重：前期看路径，后期看当前边</span></div>
+            <div class="gen-line"><span class="g">G8</span><span class="v">6.004</span><span class="d">定型。没有做 2-opt 交换</span></div>
+          </td>
+          <td>
+            <span class="effect-num">6.56 → 6.00393</span>
+            <span class="effect-note">相对基线 −8.48%。206 次中最优。gen=8。</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="prob-kicker">CVRP_CONSTRUCT · 207 次</span>
+            <span class="prob-name">带容量车辆路径</span>
+            <span class="prob-task">选下一个客户或回仓。50 客户、容量 40。</span>
+          </td>
+          <td>
+            <div class="gen-line"><span class="g">G0</span><span class="v">13.283</span><span class="d">仓库 farthest-first 开线，途中近邻 / sweep</span></div>
+            <div class="gen-line"><span class="g">G1</span><span class="v">12.802</span><span class="d">已明显低于基线 13.519</span></div>
+            <div class="gen-line"><span class="g">G12</span><span class="v">12.465</span><span class="d">途中改为 savings 选下一个点</span></div>
+            <div class="gen-line"><span class="g">G16</span><span class="v">12.356</span><span class="d">容量紧时近则继续、远则回仓</span></div>
+          </td>
+          <td>
+            <span class="effect-num">13.519 → 12.35639</span>
+            <span class="effect-note">相对基线 −8.60%。207 次中最优。gen=16。</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="footer">三条轨迹均取各问题目标最低的一次 run；代数来自 population_generation_*.json</div>
+  </section>
+
+  <section class="slide" data-slide="6">
+    <div class="section-label">05 · 在线装箱最优 run</div>
+    <h2>前 7 代最优停住，第 8 代一次改写打到 0.00674</h2>
+    <div class="code-compare">
+      <article class="code-panel">
+        <h3>第 0 代已有雏形 <span>0.02324</span></h3>
+        <pre>residual = bins - item
+utilization = item / (item + residual)
+forbidden = (residual > 0) & (residual < item)
+score = utilization - residual**2 / (item + 1)</pre>
+        <p><strong>行为：</strong>奖励装得满，并惩罚留下小于一件物品的空隙。已经优于基线 0.0398，但还不是最终公式。</p>
+      </article>
+      <article class="code-panel new">
+        <h3>第 8 代保存代码 <span>0.00674</span></h3>
+        <pre>residual = bins - item
+utilization = exp(item / (residual + item + 1e-9))
+penalty = ((residual > 0) & (residual < 2*item))
+         * (residual - item)**2 / (item + 1e-9)
+score = utilization - penalty</pre>
+        <p><strong>实际变化：</strong>利用率改成指数；惩罚落到中等正残差。恰好装满不罚，留下以后还能放下同类物品的空隙。</p>
+      </article>
+    </div>
+    <div class="footer">island_1 / high_gen_bp_online / r27 · 约 596 秒 · gen=8</div>
+  </section>
+
+  <section class="slide" data-slide="7">
+    <div class="section-label">06 · TSP 最优 run</div>
+    <h2>从 regret 惩罚走到剩余路径滚动，回路从 6.98 收到 6.00</h2>
+    <div class="split">
+      <div>
+        <div class="case-list">
+          <div class="case-row"><b>G0</b><span class="delta">6.983</span><span>regret + 长边惩罚，接近最近邻水平。</span></div>
+          <div class="case-row"><b>G1</b><span class="delta">6.350</span><span>骨架开始换，分数第一次明显下降。</span></div>
+          <div class="case-row"><b>G2</b><span class="delta">6.110</span><span>对剩余点做最近邻滚动，估价走完再回到终点。</span></div>
+          <div class="case-row"><b>G4</b><span class="delta">6.005</span><span>按剩余点数调权重：前期看滚动路径，后期看当前边。</span></div>
+          <div class="case-row"><b>G8</b><span class="delta">6.004</span><span>定型。注释里的 2-opt 意识是长边惩罚，没有交换边。</span></div>
+        </div>
+        <div class="callout green-callout" style="margin-top:16px"><strong>相对基线 6.56：</strong>缩短 8.48%。206 次运行里这是最低值。</div>
+      </div>
+      <article class="card blue-card">
+        <div class="tag">最终选择器在做什么</div>
+        <p class="body">对每个候选城市打一个加权分：当前边长度、从该点出发用最近邻走完剩余点的路径估价、最好/最差距离之差、过长边惩罚。</p>
+        <p class="caption" style="margin-top:14px">剩余点很少时退回最近邻。完整滚动代价较高，这是静态复杂度判断，不是计时结果。</p>
+        <div class="metric" style="margin-top:22px;font-size:42px">6.00393</div>
+        <div class="caption">island_5 / high_gen · gen=8 · 约 652 秒</div>
+      </article>
+    </div>
+    <div class="footer">run_tsp_construct_E2_highgen_g8_r27</div>
+  </section>
+
+  <section class="slide" data-slide="8">
+    <div class="section-label">07 · CVRP 最优 run</div>
+    <h2>gen=16 的后半段把途中规则换成 savings，路程收到 12.36</h2>
+    <div class="split">
+      <div>
+        <div class="case-list">
+          <div class="case-row"><b>G0</b><span class="delta">13.283</span><span>仓库选最远客户开线，途中近邻或 sweep。</span></div>
+          <div class="case-row"><b>G1</b><span class="delta">12.802</span><span>已低于基线 13.519。</span></div>
+          <div class="case-row"><b>G8</b><span class="delta">12.677</span><span>途中规则继续收紧，仍未定型。</span></div>
+          <div class="case-row"><b>G12</b><span class="delta">12.465</span><span>途中改为 Clarke–Wright savings 当选点分数。</span></div>
+          <div class="case-row"><b>G16</b><span class="delta">12.356</span><span>容量紧时：很近才继续服务，否则回仓。</span></div>
+        </div>
+      </div>
+      <article class="code-panel new">
+        <h3>保存代码在做什么 <span>12.35639</span></h3>
+        <pre>if current == depot:
+    return farthest feasible customer
+if rest_capacity / (2 * max_demand) > 0.4:
+    maximize savings
+    d(depot,u)+d(depot,current)-d(current,u)
+else:
+    nearest if close, else return depot</pre>
+        <p><strong>相对基线 13.519：</strong>缩短 8.60%。全局最优出现在 gen=16，不是 gen=8。</p>
+      </article>
+    </div>
+    <div class="footer">gen16_island_1 / run_cvrp_construct_E2_gen16_g16_r7 · 约 967 秒</div>
+  </section>
+
+  <section class="slide" data-slide="9">
+    <div class="section-label">08 · 605 次汇总</div>
+    <h2>317 次相对旧基线超过 5%，三条最优都来自真实评测</h2>
+    <div class="grid three">
+      <article class="card green-card">
+        <div class="tag new">装箱 192</div>
+        <div class="metric">−83.1<small>%</small></div>
+        <div class="caption">最好改善。中位改善 7.35%。109 次超过 5%。20 次差于基线。</div>
+      </article>
+      <article class="card blue-card">
+        <div class="tag">TSP 206</div>
+        <div class="metric">−8.48<small>%</small></div>
+        <div class="caption">最好改善。中位改善 5.29%。115 次超过 5%。仅 1 次差于基线。</div>
+      </article>
+      <article class="card orange-card">
+        <div class="tag">CVRP 207</div>
+        <div class="metric">−8.60<small>%</small></div>
+        <div class="caption">最好改善。中位改善 4.88%。93 次超过 5%。仅 1 次差于基线。</div>
+      </article>
+    </div>
+    <div class="grid two" style="margin-top:18px">
+      <div class="callout green-callout"><strong>已经能说：</strong>在这套官方构造评测上，大模型靠共享岛和四算子写出了可复现的更好启发式；605 条精英代码互不相同。</div>
+      <div class="callout orange-callout"><strong>不能直接说：</strong>这是 605 个独立科学重复，或这些分数可以带到新套件、新规模、搜索式接口上。</div>
+    </div>
+    <div class="footer">数字与 batch_status.json、归档 pool_index.jsonl 一致，605/605 个 run 目录可对上</div>
+  </section>
+
+  <section class="slide closing" data-slide="10">
+    <div class="section-label">09 · 怎么读这些结果</div>
+    <h2>三条最优轨迹说明系统会改启发式，<span class="accent">分数仍绑在旧评测上</span></h2>
+    <div class="decision-rule">
+      <div class="rule-intro"><strong>一句话：</strong>装箱把 excess 从 0.023 收到 0.00674，TSP / CVRP 各缩短约 8.5%。改善来自可执行代码和固定实例打分，不是报告文字。</div>
+      <div class="rule-flow">
+        <div class="rule-step"><span class="rule-no">01</span><b>看机制</b><p>装箱惩罚中等残差，TSP 做剩余路径滚动，CVRP 用 farthest-first + savings。</p></div>
+        <div class="rule-step"><span class="rule-no">02</span><b>看代数</b><p>装箱靠第 8 代一次改写；TSP 在第 4 代已接近最优；CVRP 需要 gen=16 的后半段。</p></div>
+        <div class="rule-step"><span class="rule-no">03</span><b>看边界</b><p>共享池相关、旧基线、构造接口。换套件必须重评，不能继承这些分数。</p></div>
+      </div>
+    </div>
+    <div class="footer">完整文字报告：reports/island_605_experiment_report.md</div>
+  </section>
+
+</main>
+
+<div class="nav"><button id="prev" aria-label="上一页">←</button><button id="next" aria-label="下一页">→</button></div>
+<div class="hint">← → / Space 翻页 · F11 全屏 · Ctrl+P 导出 PDF</div>
+<div class="counter"><b id="current">01</b> / <span id="total">10</span></div>
+<div class="progress"><i id="progressBar"></i></div>
+
+<script>
+  (() => {
+    const slides = [...document.querySelectorAll('.slide')];
+    const current = document.getElementById('current');
+    const total = document.getElementById('total');
+    const progressBar = document.getElementById('progressBar');
+    let index = 0;
+    total.textContent = String(slides.length).padStart(2, '0');
+
+    function show(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === index));
+      current.textContent = String(index + 1).padStart(2, '0');
+      progressBar.style.width = `${((index + 1) / slides.length) * 100}%`;
+      history.replaceState(null, '', `#${index + 1}`);
+    }
+
+    document.getElementById('prev').addEventListener('click', () => show(index - 1));
+    document.getElementById('next').addEventListener('click', () => show(index + 1));
+    document.addEventListener('keydown', event => {
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) {
+        event.preventDefault();
+        show(index + 1);
+      }
+      if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) {
+        event.preventDefault();
+        show(index - 1);
+      }
+      if (event.key === 'Home') show(0);
+      if (event.key === 'End') show(slides.length - 1);
+    });
+
+    let touchStartX = null;
+    document.addEventListener('touchstart', event => {
+      touchStartX = event.changedTouches[0].clientX;
+    }, {passive: true});
+    document.addEventListener('touchend', event => {
+      if (touchStartX === null) return;
+      const delta = event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(delta) > 55) show(index + (delta < 0 ? 1 : -1));
+      touchStartX = null;
+    }, {passive: true});
+
+    const initialSlide = Number(location.hash.slice(1));
+    show(Number.isFinite(initialSlide) && initialSlide > 0 ? initialSlide - 1 : 0);
+    window.addEventListener('hashchange', () => {
+      const requestedSlide = Number(location.hash.slice(1));
+      if (Number.isFinite(requestedSlide) && requestedSlide > 0 && requestedSlide !== index + 1) {
+        show(requestedSlide - 1);
+      }
+    });
+  })();
+</script>
+</body>
+</html>

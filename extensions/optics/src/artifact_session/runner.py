@@ -95,6 +95,74 @@ def assess(run, candidate, mode, round_id, plan_path=None, parent=None):
         raise
 
 
+_MAX_PROMPT_CONTEXT_BYTES = 30_000
+
+
+def _compact_online_diagnostics(value):
+    """Keep actionable online evidence while removing large field matrices."""
+    if not isinstance(value, dict):
+        return value
+    constraints = {}
+    for name, item in (value.get("constraints") or {}).items():
+        if not isinstance(item, dict):
+            continue
+        constraints[name] = {key: item.get(key) for key in
+                             ("constraint_id", "metric", "observed", "target", "operator",
+                              "passed", "normalized_margin") if key in item}
+    configurations = []
+    for item in value.get("configurations") or []:
+        if not isinstance(item, dict):
+            continue
+        fields = []
+        for field in item.get("fields") or []:
+            if not isinstance(field, dict):
+                continue
+            mtf = {}
+            for sample in field.get("mtf") or []:
+                if isinstance(sample, dict) and "frequency_lp_mm" in sample:
+                    mtf[str(sample["frequency_lp_mm"])] = min(
+                        sample.get("sagittal", float("inf")),
+                        sample.get("tangential", float("inf")))
+            fields.append({"field_label": field.get("field_label"),
+                           "quality_q": field.get("quality_q"),
+                           "minimum_mtf": mtf})
+        configurations.append({key: item.get(key) for key in
+                               ("profile_id", "configuration_index", "signed_focus_error_mm",
+                                "absolute_focus_error_mm", "sensor_z_mm",
+                                "paraxial_focus_plane_z_mm") if key in item} |
+                              {"fields": fields})
+    return {key: value.get(key) for key in
+            ("quality_q", "online_feasible", "focus_constraint_margin_mm",
+             "focus_normalized_margin", "focus_convention", "failed_constraints")
+            if key in value} | {"constraints": constraints, "configurations": configurations}
+
+
+def _compact_candidate_feedback(value):
+    """Preserve round linkage, ranking evidence, failures, and actual deltas."""
+    if not isinstance(value, dict):
+        return value
+    compact = []
+    for item in value.get("candidate_results") or []:
+        diag = item.get("online_diagnostics") or {}
+        compact.append({
+            "candidate_id": item.get("candidate_id"),
+            "error": item.get("error"),
+            "assessment_ref": item.get("assessment_ref"),
+            "comparison": item.get("comparison"),
+            "prescription_delta": item.get("prescription_delta"),
+            "ranking_key": item.get("ranking_key"),
+            "online_feasible": diag.get("online_feasible"),
+            "quality_q": diag.get("quality_q"),
+            "focus_constraint_margin_mm": diag.get("focus_constraint_margin_mm"),
+            "failed_constraints": diag.get("failed_constraints"),
+            "constraints": {name: (diag.get("constraints") or {}).get(name)
+                            for name in diag.get("failed_constraints") or []},
+        })
+    return {key: value.get(key) for key in
+            ("previous_round_ref", "incumbent_after", "incumbent_before") if key in value} | {
+                "candidate_results": compact}
+
+
 def prompt(run, plan, parent_ref, recent):
     _, conf = inspect(run)
     task = strict((Path(conf["bundle"]) / "assets/task_spec.json").read_bytes())
@@ -117,9 +185,13 @@ def prompt(run, plan, parent_ref, recent):
     context = {"task_contract": task, "plan": plan, "parent_prescription": parent,
                "parent_online": {**online_diagnostics(parent_facts), "ranking_key": parent_facts["ranking_key"]},
                "recent_candidate_feedback": recent, "memory": memory}
-    if len(canonical(context)) > 30_000:
+    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
+        context["parent_online"] = _compact_online_diagnostics(context["parent_online"])
+        context["recent_candidate_feedback"] = _compact_candidate_feedback(
+            context.get("recent_candidate_feedback"))
+    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
         context["memory"] = []
-    if len(canonical(context)) > 30_000:
+    if len(canonical(context)) > _MAX_PROMPT_CONTEXT_BYTES:
         raise SessionError("CONTEXT_LIMIT")
     system = ("Optimize this optical prescription using the provided task and actual online feedback. "
               "Return exactly one JSON object with description (string) and prescription (complete object). "
