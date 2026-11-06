@@ -30,7 +30,17 @@ def test_memory_kernel_lock_released_after_owner_killed(tmp_path):
             api.write(entry())
         owner.kill()
         owner.wait(timeout=5)
-        result=api.write(entry(),operation_key="recover")
+        # Windows may release the byte-range lock a few hundred milliseconds
+        # after the killed owner is reaped; the kernel lock is still the
+        # authority, so wait for it to become free instead of racing it.
+        deadline=time.monotonic()+5
+        while True:
+            try:
+                result=api.write(entry(),operation_key="recover")
+                break
+            except ValueError:
+                if time.monotonic()>deadline: raise
+                time.sleep(.05)
         assert result["version"]==1
         assert api.write(entry(),operation_key="recover")["replayed"]
     finally:

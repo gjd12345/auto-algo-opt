@@ -681,12 +681,15 @@ def _evaluate_problem(
     fn: Any,
     instances: list[Mapping[str, Any]],
     suite_hash_value: str,
+    *,
+    allow_behavior: bool = True,
 ) -> tuple[list[float], dict[str, Any] | None]:
     """Per-instance objective evaluation dispatched by problem spec."""
     if spec.evaluate_with_behavior is not None:
         objectives, metrics, evidence = spec.evaluate_with_behavior(fn, instances, suite_hash_value)
         merged = dict(metrics or {})
-        merged["behavior_evidence"] = dict(evidence)
+        if allow_behavior:
+            merged["behavior_evidence"] = dict(evidence)
         return objectives, merged
     return spec.evaluate_instances(fn, instances)
 
@@ -730,11 +733,22 @@ def _slice_instance_metrics(metrics: Mapping[str, Any] | None) -> dict[str, Any]
     return result
 
 
+TRAINING_SPLITS = frozenset({"train", "dev_train"})
+
+
+def _training_scope(suite: Mapping[str, Any] | None) -> bool:
+    """Behavior evidence is a training-side fact; held-out suites never carry it."""
+    split = suite.get("split") if isinstance(suite, Mapping) else None
+    return split in TRAINING_SPLITS
+
+
 def _evaluate_partial_instances(
     spec: ProblemSpec,
     fn: Any,
     instances: list[Mapping[str, Any]],
     suite_hash_value: str,
+    *,
+    allow_behavior: bool = True,
 ) -> list[dict[str, Any]]:
     """Evaluate every instance and retain successes when another instance fails.
 
@@ -754,7 +768,7 @@ def _evaluate_partial_instances(
         }
         try:
             with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-                values, metrics = _evaluate_problem(spec, fn, [instance], suite_hash_value)
+                values, metrics = _evaluate_problem(spec, fn, [instance], suite_hash_value, allow_behavior=allow_behavior)
             if not isinstance(values, list) or len(values) != 1:
                 raise ValueError("invalid_return")
             objective = float(values[0])
@@ -771,7 +785,7 @@ def _evaluate_partial_instances(
             })
         except Exception as exc:
             error_code, error_detail = _classify_candidate_exception(exc)
-            observed = exc.behavior_evidence if isinstance(exc, ObservedCandidateError) else None
+            observed = exc.behavior_evidence if (allow_behavior and isinstance(exc, ObservedCandidateError)) else None
             records.append({
                 **base,
                 "valid": False,
@@ -824,6 +838,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         spec = get_problem(problem)
         instances, expected = _validate_suite(spec, suite)
         suite_hash_value = expected
+        allow_behavior = _training_scope(suite)
         tree = _validate_candidate_ast(code, spec)
 
         builtins_dict = dict(spec.safe_builtins)
@@ -835,7 +850,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
         if not callable(fn):
             raise ValueError("missing_entrypoint")
         if request.get("collect_partial") is True:
-            partial_records = _evaluate_partial_instances(spec, fn, instances, expected)
+            partial_records = _evaluate_partial_instances(spec, fn, instances, expected, allow_behavior=allow_behavior)
             if all(record.get("valid") is True for record in partial_records):
                 per_instance = [float(record["objective"]) for record in partial_records]
                 metrics = _merge_partial_metrics(partial_records, expected)
@@ -872,7 +887,7 @@ def evaluate_candidate_request(request: Mapping[str, Any]) -> dict[str, Any]:
                 },
             }
         with contextlib.redirect_stdout(_QuietSink()), contextlib.redirect_stderr(_QuietSink()):
-            per_instance, metrics = _evaluate_problem(spec, fn, instances, expected)
+            per_instance, metrics = _evaluate_problem(spec, fn, instances, expected, allow_behavior=allow_behavior)
         objective = float(sum(per_instance) / len(per_instance))
         if not math.isfinite(objective) or any(not math.isfinite(float(x)) for x in per_instance):
             raise ValueError("nonfinite_objective")
