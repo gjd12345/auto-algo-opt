@@ -1,0 +1,49 @@
+{
+  "metrics": {
+    "instance_count": 56,
+    "before_pair_better": 33,
+    "before_same": 0,
+    "before_pair_worse": 23,
+    "before_median_pair_vs_robust_delta_pct": -0.33189096111828076,
+    "after_pair_better": 29,
+    "after_same": 0,
+    "after_pair_worse": 27,
+    "after_median_pair_vs_robust_delta_pct": -0.14919446996575214,
+    "before_median_absolute_gap_pct": 1.9005874536390466,
+    "after_median_absolute_gap_pct": 1.613470844334025,
+    "median_absolute_gap_reduction_fraction": 0.1510672969850877,
+    "gap_shrink_instances": 37,
+    "gap_same_instances": 0,
+    "gap_expand_instances": 19,
+    "gap_shrink_two_sided_sign_test_p": 0.022241389472860112,
+    "direction_flip_instances": 8,
+    "repair_by_archive": {
+      "fast_pair": {
+        "median_cost_delta_pct": -1.9266480364923066,
+        "improved_instances": 55,
+        "same_instances": 1,
+        "worse_instances": 0
+      },
+      "robust_four": {
+        "median_cost_delta_pct": -2.115119491321371,
+        "improved_instances": 54,
+        "same_instances": 2,
+        "worse_instances": 0
+      }
+    },
+    "feasible_rate": 1.0
+  },
+  "checks": {
+    "median_gap_reduction": false,
+    "shrink_direction": true,
+    "shrink_sign_test": true,
+    "feasible": true
+  },
+  "decision": "archive_difference_persists_beyond_matched_local_repair",
+  "schema_version": "tsp-matched-archive-local-repair/v1",
+  "protocol_sha256": "39e7dfd515cdfe682154a23bb6fb39dcdb30ff98b01a2eb3b939b0886a9f5304",
+  "repair_result_sha256": "c974c4661220c4efac00ee4e11def2041edc359e0a389eb25bcd33c048735634",
+  "comparison_sha256": "9f7cb3241bb0d483e7c72561c8960bb0148955f6def1449feccf649f4ce8e9d4",
+  "repair_row_count": 112,
+  "unique_repair_coordinate_count": 112
+}

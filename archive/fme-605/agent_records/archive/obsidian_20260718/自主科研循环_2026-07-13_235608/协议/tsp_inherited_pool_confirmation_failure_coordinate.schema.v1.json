@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-ad.local/schemas/tsp_inherited_pool_confirmation_failure_coordinate.schema.v1.json",
+  "title": "TSP inherited-pool confirmation failure coordinate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "coordinate_id",
+    "suite",
+    "problem",
+    "arm",
+    "seed",
+    "instance",
+    "stage",
+    "attempt_index",
+    "occurred_at",
+    "provider",
+    "model",
+    "error_type",
+    "message_short",
+    "retry_count",
+    "recoverability",
+    "blocking",
+    "duplicate_coordinate",
+    "cohort_action",
+    "resolved",
+    "raw_response_saved",
+    "secret_redacted"
+  ],
+  "properties": {
+    "schema_version": {"const": "agent-ad-failure-coordinate/v1"},
+    "coordinate_id": {
+      "type": "string",
+      "pattern": "^tsp_construct/(fresh_start|inherited_top6)/91(0[1-9]|10)(/held_out/(eil51|st70|kroA100|ch130|kroA200|tsp225|a280))?$"
+    },
+    "suite": {"const": "tsp_inherited_pool_confirmation_v1"},
+    "problem": {"const": "tsp_construct"},
+    "arm": {"enum": ["fresh_start", "inherited_top6"]},
+    "seed": {"type": "integer", "minimum": 9101, "maximum": 9110},
+    "instance": {
+      "type": ["string", "null"],
+      "enum": [null, "eil51", "st70", "kroA100", "ch130", "kroA200", "tsp225", "a280"]
+    },
+    "stage": {
+      "enum": [
+        "preflight",
+        "provider",
+        "seed_eval",
+        "generation",
+        "training_eval",
+        "held_out",
+        "analyze",
+        "report",
+        "persist"
+      ]
+    },
+    "attempt_index": {"type": "integer", "minimum": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "provider": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "error_type": {
+      "enum": [
+        "connection",
+        "rate_limit",
+        "quota",
+        "timeout",
+        "generation_failure",
+        "parse_failure",
+        "evaluation_failure",
+        "infeasible",
+        "missing_summary",
+        "schema_failure",
+        "hash_mismatch",
+        "duplicate_coordinate",
+        "persistence_failure",
+        "unexpected_exception"
+      ]
+    },
+    "status_code": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+    "message_short": {"type": "string", "minLength": 1, "maxLength": 500},
+    "retry_count": {"type": "integer", "minimum": 0},
+    "recoverability": {"enum": ["transient", "permanent", "unknown"]},
+    "blocking": {"type": "boolean"},
+    "duplicate_coordinate": {"type": "boolean"},
+    "cohort_action": {
+      "enum": [
+        "retry_same_coordinate",
+        "resume_same_provider",
+        "mark_coordinate_failed",
+        "abort_cohort",
+        "restart_new_provider_cohort",
+        "none"
+      ]
+    },
+    "artifact_path": {"type": ["string", "null"]},
+    "traceback_path": {"type": ["string", "null"]},
+    "resolved": {"type": "boolean"},
+    "resolved_at": {"type": ["string", "null"], "format": "date-time"},
+    "resolution_short": {"type": ["string", "null"], "maxLength": 500},
+    "raw_response_saved": {"const": false},
+    "secret_redacted": {"const": true}
+  }
+}

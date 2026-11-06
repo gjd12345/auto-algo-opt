@@ -1,0 +1,192 @@
+{
+  "scope": "Existing CI fixture only; no new solver/provider execution",
+  "head": "74a1fb8b3b747a2113426e90315dc170039a0f60",
+  "compile": {
+    "co_python": "3.11",
+    "optics_python": "3.12",
+    "status": "passed"
+  },
+  "rounds": [
+    {
+      "round_id": 1,
+      "origins": {
+        "baseline": 1,
+        "generated": 9
+      },
+      "lineage_status": {
+        "no_parent": 4,
+        "verified": 5
+      },
+      "recorded": {
+        "behavior_comparable_count": 9,
+        "behavior_comparable_coverage": 1.0,
+        "behavior_duplicate_count": 7,
+        "behavior_duplicate_rate": 0.7777777777777778,
+        "behavior_generated_denominator": 9,
+        "behavior_incomplete_or_unavailable_count": 0,
+        "behavior_novel_count": 2,
+        "generation_attempt_count": 9,
+        "incumbent_absolute_gain": null,
+        "incumbent_after_objective": 0.0,
+        "incumbent_before_objective": null,
+        "incumbent_instance_coverage": 0,
+        "incumbent_per_instance_gain": null,
+        "instance_response_diversity_rate": 0.2222222222222222,
+        "instance_response_missing_or_invalid_count": 0,
+        "instance_response_pair_count": 36,
+        "instance_response_pairwise_l1_max": 0.5928571428571429,
+        "instance_response_pairwise_l1_mean": 0.3293650793650794,
+        "instance_response_unique_vector_count": 2,
+        "instance_response_valid_complete_count": 9,
+        "invalid_generation_count": 0,
+        "lineage_concentration": 0.7142857142857143,
+        "lineage_parent_frequency": {
+          "7eb385f28afd80880730a5250bad447e0de700928d0c32e74b9799af379dd6f9": 5,
+          "e80658584a0f8cfd36c11d48d798f8181b7d023d369476598f4e10fe9cbae4b1": 2
+        },
+        "lineage_parent_link_count": 7,
+        "lineage_unknown_or_unverified_count": 4,
+        "lineage_unknown_rate": 0.4444444444444444,
+        "lineage_verified_candidate_count": 5,
+        "novel_behavior_cost_reason": null,
+        "novel_behavior_count": 2,
+        "objective_direction": "minimize",
+        "repair_attempt_count": 0,
+        "repair_source_duplicate_count": 0,
+        "repair_source_duplicate_rate": null,
+        "repair_source_observable": 0,
+        "repair_valid_yield": null,
+        "requests_per_novel_behavior": 5.0,
+        "round_input_tokens": null,
+        "round_output_tokens": null,
+        "round_requests": 10,
+        "round_solver_attempts": 10,
+        "round_wall_seconds": 0.776843,
+        "solver_attempts_per_novel_behavior": 5.0,
+        "source_duplicate_count": 0,
+        "source_duplicate_denominator": 9,
+        "source_duplicate_rate": 0.0,
+        "source_observable_generated": 9,
+        "valid_generation_count": 9,
+        "valid_generation_yield": 1.0
+      },
+      "within_round_comparison_including_baseline_and_seeds": {
+        "duplicates": 8,
+        "novel": 1
+      },
+      "linked_sidecars": [
+        {
+          "type": "execution_delta",
+          "ref": "rounds/round_0001/execution_delta.json",
+          "bundled": false
+        },
+        {
+          "type": "population_snapshot",
+          "ref": "rounds/round_0001/population_snapshot.json",
+          "bundled": true
+        }
+      ]
+    },
+    {
+      "round_id": 2,
+      "origins": {
+        "baseline": 1,
+        "population_seed": 2,
+        "generated": 7
+      },
+      "lineage_status": {
+        "verified": 7
+      },
+      "recorded": {
+        "behavior_comparable_count": 7,
+        "behavior_comparable_coverage": 1.0,
+        "behavior_duplicate_count": 7,
+        "behavior_duplicate_rate": 1.0,
+        "behavior_generated_denominator": 7,
+        "behavior_incomplete_or_unavailable_count": 0,
+        "behavior_novel_count": 0,
+        "generation_attempt_count": 7,
+        "incumbent_absolute_gain": 0.0,
+        "incumbent_after_objective": 0.0,
+        "incumbent_before_objective": 0.0,
+        "incumbent_instance_coverage": 4,
+        "incumbent_per_instance_gain": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "instance_response_diversity_rate": 0.2857142857142857,
+        "instance_response_missing_or_invalid_count": 0,
+        "instance_response_pair_count": 21,
+        "instance_response_pairwise_l1_max": 0.5928571428571429,
+        "instance_response_pairwise_l1_mean": 0.3387755102040816,
+        "instance_response_unique_vector_count": 2,
+        "instance_response_valid_complete_count": 7,
+        "invalid_generation_count": 0,
+        "lineage_concentration": 0.5454545454545454,
+        "lineage_parent_frequency": {
+          "7eb385f28afd80880730a5250bad447e0de700928d0c32e74b9799af379dd6f9": 6,
+          "e80658584a0f8cfd36c11d48d798f8181b7d023d369476598f4e10fe9cbae4b1": 5
+        },
+        "lineage_parent_link_count": 11,
+        "lineage_unknown_or_unverified_count": 0,
+        "lineage_unknown_rate": 0.0,
+        "lineage_verified_candidate_count": 7,
+        "novel_behavior_cost_reason": "no_new_complete_behavior_signature",
+        "novel_behavior_count": 0,
+        "objective_direction": "minimize",
+        "repair_attempt_count": 0,
+        "repair_source_duplicate_count": 0,
+        "repair_source_duplicate_rate": null,
+        "repair_source_observable": 0,
+        "repair_valid_yield": null,
+        "requests_per_novel_behavior": null,
+        "round_input_tokens": null,
+        "round_output_tokens": null,
+        "round_requests": 8,
+        "round_solver_attempts": 10,
+        "round_wall_seconds": 0.535551,
+        "solver_attempts_per_novel_behavior": null,
+        "source_duplicate_count": 0,
+        "source_duplicate_denominator": 7,
+        "source_duplicate_rate": 0.0,
+        "source_observable_generated": 7,
+        "valid_generation_count": 7,
+        "valid_generation_yield": 1.0
+      },
+      "within_round_comparison_including_baseline_and_seeds": {
+        "duplicates": 7,
+        "novel": 0
+      },
+      "linked_sidecars": [
+        {
+          "type": "execution_delta",
+          "ref": "rounds/round_0002/execution_delta.json",
+          "bundled": false
+        },
+        {
+          "type": "population_snapshot",
+          "ref": "rounds/round_0002/population_snapshot.json",
+          "bundled": true
+        }
+      ]
+    }
+  ],
+  "heldout_behavior_locations": [
+    {
+      "json_path": "/test_result/member_results/0/instance_results/0/metrics/behavior_evidence",
+      "status": "complete",
+      "declared_scope": "frozen-training-suite"
+    },
+    {
+      "json_path": "/test_result/member_results/0/instance_results/1/metrics/behavior_evidence",
+      "status": "complete",
+      "declared_scope": "frozen-training-suite"
+    }
+  ],
+  "bundle_hashes": {
+    "count": 22,
+    "all_match": true
+  }
+}

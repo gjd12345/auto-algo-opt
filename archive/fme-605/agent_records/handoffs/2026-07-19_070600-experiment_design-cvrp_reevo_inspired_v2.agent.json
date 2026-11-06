@@ -1,0 +1,63 @@
+{
+  "schema_version": "agent_ad_experiment_design/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-reevo-inspired-v2",
+  "audience": "agent",
+  "created_at": "2026-07-19T07:06:00+08:00",
+  "phase_id": "experiment_design",
+  "actor": "research_agent",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "8f61afb567bed12695dd41789c58783d1ec25196",
+  "required_docs_read": [
+    "01-主线目标与研究问题.md",
+    "04-效果评价与基线对照.md",
+    "05-实验诚信与证据规范.md",
+    "06-自主循环与停止规则.md"
+  ],
+  "status": "frozen_pending_budget_approval",
+  "research_mapping": {
+    "research_questions": ["RQ1", "RQ3"],
+    "effect_axes": ["memory_reuse", "frozen_heldout_objective", "llm_budget"],
+    "causal_question": "At equal generator budget, does ReEvo-inspired reflection memory outperform router-aware feedback alone and avoid single-expert collapse?"
+  },
+  "frozen_assets": [
+    {
+      "kind": "manifest",
+      "path": "eoh_rag_workspace/experiments/manifests/cvrp_router_reevo_inspired_v2.json",
+      "sha256": "d43e1e5f4d457e1c0ddee227cf37421099f3f6183d2f76afaaa30dadeeedfc77"
+    },
+    {
+      "kind": "router_contract",
+      "path": "official_eoh/examples/cvrp_expert_router/router_contract_v2.json",
+      "sha256": "44aac84170f565c80968c72291dba286c0606f6e0328b3465ec74e5b906772c8"
+    },
+    {
+      "kind": "memory_context",
+      "path": "eoh_rag_workspace/experiments/assets/cvrp_router_reevo_inspired_memory_v1.txt",
+      "sha256": "094ba4d327d66a0ac51a1a078256bb6146a8db55c87d084cc45ccfb98163caf8"
+    }
+  ],
+  "cohort": {
+    "arms": ["router_aware_control", "reevo_inspired_memory"],
+    "paired_seeds": [20201, 20202, 20203],
+    "runs": 6,
+    "generations_per_run": 4,
+    "population_size": 4,
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "v1_v2_data_seed_overlap": 0,
+    "confirmation_visible_during_evolution": false
+  },
+  "launch_gate": {
+    "additional_llm_runs_required": 6,
+    "budget_approved": false,
+    "tests_approved": false,
+    "action": "do_not_launch"
+  },
+  "verification": {
+    "test_tier": "skipped",
+    "reason": "User testing policy requires approval before tests or builds.",
+    "static_checks": ["JSON parse", "v1/v2 seed overlap count", "git diff --check"]
+  },
+  "next_action": "obtain explicit six-run budget approval, then perform one provider preflight and launch the frozen cohort without changing scientific coordinates"
+}

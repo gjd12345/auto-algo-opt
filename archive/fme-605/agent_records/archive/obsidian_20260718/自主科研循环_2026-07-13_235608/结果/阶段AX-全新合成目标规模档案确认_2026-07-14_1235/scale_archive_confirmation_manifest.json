@@ -1,0 +1,158 @@
+{
+  "schema_version": "tsp-scale-archive-confirmation/v1",
+  "study_role": "independent_synthetic_target_scale_confirmation",
+  "created_at": "2026-07-14T04:35:31.032146+00:00",
+  "repo_commit": "e366aca263ca2654ab97b29128862bda7a9a6af9",
+  "inputs": {
+    "catalog": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AS-历史池质量规模双档案_2026-07-14_0749\\history_code_catalog.jsonl",
+      "sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+    },
+    "stage_aw_summary": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AW-目标规模合成dev直接探针_2026-07-14_1134\\direct_scale_probe_summary.json",
+      "sha256": "418b3fa55aa7976e7b61caf06bfa5c0826dea678157d1764f1166f0fdb13f9de"
+    },
+    "scale_archive": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AS-历史池质量规模双档案_2026-07-14_0749\\scalability_archive.jsonl",
+      "sha256": "0fc02dc5154957b5b4e22bcc5be1a4a75079278195ecbbf30fa1ead87c371890"
+    },
+    "quality_archive": {
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AS-历史池质量规模双档案_2026-07-14_0749\\quality_archive.jsonl",
+      "sha256": "42453c9c25a234194d91ffb0b1b9f4bf60a3fb81d209ae9439750e73edb07f05"
+    }
+  },
+  "evaluator_sha256": "f2145e7cbde978673ff7f600622fee431411296fad319d054eac849d2e4af76c",
+  "archives": {
+    "aw_scale": [
+      "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+      "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+      "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56"
+    ],
+    "reference_scale": [
+      "db5c420b32fae1e1b9457f32d8089fb2b98ecccbfe9fd80740e08090e21bfedc",
+      "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "8c6f3b75c05802e7f86683db599706b3aba0cfdc512f0f538f3c3412ddbeecfa",
+      "28d1c3ff1421008108fc869b9263ad43862cf8a808fdae38a228cd3732c56826"
+    ],
+    "quality_diagnostic": [
+      "09fdbbc526a0a2db4c794ef5edb137293c1461524a1f8118e04ac2d6904925bb",
+      "ce9f8aff7c796f47915983836ce1a02c9cb42f6001470a0e80b09fa7a6355561"
+    ]
+  },
+  "candidates": [
+    {
+      "code_hash": "28d1c3ff1421008108fc869b9263ad43862cf8a808fdae38a228cd3732c56826",
+      "objective": 6.07672,
+      "original_index": 7,
+      "ast_nodes": 71,
+      "archive_memberships": [
+        "reference_scale"
+      ]
+    },
+    {
+      "code_hash": "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "objective": 6.07672,
+      "original_index": 67,
+      "ast_nodes": 79,
+      "archive_memberships": [
+        "aw_scale",
+        "reference_scale"
+      ]
+    },
+    {
+      "code_hash": "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+      "objective": 6.07672,
+      "original_index": 76,
+      "ast_nodes": 71,
+      "archive_memberships": [
+        "aw_scale"
+      ]
+    },
+    {
+      "code_hash": "ce9f8aff7c796f47915983836ce1a02c9cb42f6001470a0e80b09fa7a6355561",
+      "objective": 6.07352,
+      "original_index": 80,
+      "ast_nodes": 313,
+      "archive_memberships": [
+        "quality_diagnostic"
+      ]
+    },
+    {
+      "code_hash": "09fdbbc526a0a2db4c794ef5edb137293c1461524a1f8118e04ac2d6904925bb",
+      "objective": 6.00393,
+      "original_index": 131,
+      "ast_nodes": 489,
+      "archive_memberships": [
+        "quality_diagnostic"
+      ]
+    },
+    {
+      "code_hash": "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56",
+      "objective": 6.07672,
+      "original_index": 142,
+      "ast_nodes": 142,
+      "archive_memberships": [
+        "aw_scale"
+      ]
+    },
+    {
+      "code_hash": "8c6f3b75c05802e7f86683db599706b3aba0cfdc512f0f538f3c3412ddbeecfa",
+      "objective": 6.07672,
+      "original_index": 145,
+      "ast_nodes": 104,
+      "archive_memberships": [
+        "reference_scale"
+      ]
+    },
+    {
+      "code_hash": "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+      "objective": 6.07672,
+      "original_index": 170,
+      "ast_nodes": 155,
+      "archive_memberships": [
+        "aw_scale"
+      ]
+    },
+    {
+      "code_hash": "db5c420b32fae1e1b9457f32d8089fb2b98ecccbfe9fd80740e08090e21bfedc",
+      "objective": 6.07672,
+      "original_index": 191,
+      "ast_nodes": 84,
+      "archive_memberships": [
+        "reference_scale"
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "name": "synthetic_confirm_1_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_1_3038.tsp",
+      "size": 3038,
+      "seed": 20270001,
+      "sha256": "37e7246831c4a4a3b18e58ee37fb790a245837d6a7e9687eab2bba75a87dc64c"
+    },
+    {
+      "name": "synthetic_confirm_2_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_2_3038.tsp",
+      "size": 3038,
+      "seed": 20270002,
+      "sha256": "5ffe6fef6daadc2532f46cf59d9aae2e6c25063b55a36b24cfa51a375365bf91"
+    },
+    {
+      "name": "synthetic_confirm_3_3038",
+      "path": "C:\\Users\\24294\\Documents\\Obsidian Vault\\毕业论文相关\\大模型进化代码\\agent_ad\\自主科研循环_2026-07-13_235608\\结果\\阶段AX-全新合成目标规模档案确认_2026-07-14_1235\\synthetic_confirm_3_3038.tsp",
+      "size": 3038,
+      "seed": 20270003,
+      "sha256": "e42846312722eecc4be3b32c18bf0e882636181f30dbea7055cfd7bfb6664c36"
+    }
+  ],
+  "timeout_s": 30.0,
+  "expected_coordinates": 27,
+  "gate": {
+    "aw_scale_required_feasible": 12,
+    "median_best_cost_diff_max_pct": 2.0,
+    "quality_diagnostic_affects_gate": false
+  },
+  "comparison": "每个实例分别取 AW 四槽和参考四槽中的最低可行路线成本"
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "agent_ad_calibration/v1",
+  "document_id": "agent_ad:2026-07-23:bp-fme-descriptor-calibration-v1",
+  "audience": "agent",
+  "created_at": "2026-07-23T01:52:03+08:00",
+  "phase_id": "experiment_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "0460b3c",
+  "status": "frozen_offline_calibration",
+  "evidence_refs": [
+    "eoh_rag_workspace/reports/auto_experiment_reports/warm_fixed_gen40_ds/warm_fixed_gen40_bp/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/adaptive_bp_warm_seedfix/adaptive_bp_warm/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/adaptive_bp/adaptive_bp_online/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/bp_m3_pilot/bp_m3_pilot/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/bp_m3_confirm/bp_m3_confirm/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/bp_ablation_preflight/bp_ablation_preflight/run_index.json",
+    "eoh_rag_workspace/reports/auto_experiment_reports/bp_ablation_preflight2/bp_ablation_preflight/run_index.json"
+  ],
+  "calibration": {
+    "source_scope": "checked_in_bp_run_index_only",
+    "completed_rows": 17,
+    "objective_min": 0.00674,
+    "objective_median": 0.0331,
+    "objective_max": 0.03984,
+    "runtime_seconds_min": 79.6,
+    "runtime_seconds_median": 615.8,
+    "runtime_seconds_max": 1968.6,
+    "valid_candidate_count_min": 2,
+    "descriptor_precision_decimals": 6,
+    "behavior_cell_key": "sha256_of_three_distribution_gap_profile_and_counterexample_ids",
+    "development_distributions": [
+      "uniform",
+      "small_item_dense",
+      "large_item_dense"
+    ],
+    "counterexample_candidates_per_run": 12
+  },
+  "constraints": {
+    "historical_rows_are_scalar_only": true,
+    "historical_rows_do_not_estimate_fme_effect": true,
+    "formal_heldout_read": false,
+    "api_runs": 0,
+    "tests_run": false
+  },
+  "next_action": "freeze_and_execute_bp_falsifiable_mechanism_ecology_creation_pilot_v1"
+}

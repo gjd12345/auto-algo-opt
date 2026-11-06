@@ -1,0 +1,11 @@
+{
+  "round_id": 2,
+  "direction": "Use the first round facts to test a distinct size-conditioned ranking",
+  "operations": [{"type": "replace", "target": "priority ranking", "mechanism": "Combine residual capacity with the arriving item size using a bounded nonlinear penalty, while preserving feasibility and stable evaluator tie breaking"}],
+  "preserve": "Frozen online-bin-packing interface, immutable inputs, capability contract, metric and deterministic evaluator",
+  "feedback_basis": {"round_id": 1, "evaluation_ref": "rounds/round_0001/evaluation_facts.json", "suite_hash": "52de3a0385cfad008d67e8392dcddfe38efaeeef03a266ecb85511c249fcd99c"},
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/exported_skill",
+  "hypothesis": "The first valid candidate duplicated best-fit; conditioning residual capacity on item size may produce a distinct policy while preserving the contract, though the mini suite is saturated.",
+  "reasoning_summary": "The trusted facts show valid baseline-equivalent output, no improvement, and a deadline stop. I selected a distinct bounded mechanism for the second round and retained the exact feedback basis."
+}

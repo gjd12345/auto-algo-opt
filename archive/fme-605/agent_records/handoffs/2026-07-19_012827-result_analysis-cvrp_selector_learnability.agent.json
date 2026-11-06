@@ -1,0 +1,91 @@
+{
+  "schema_version": "agent_ad_result_analysis/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-selector-learnability-dev-v1",
+  "audience": "agent",
+  "created_at": "2026-07-19T01:28:27+08:00",
+  "phase_id": "result_analysis",
+  "actor": "codex",
+  "provenance": "external_teacher_diagnostic",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "85cc392cc10618a054dc7c103937389b31a4faba",
+  "status": "exploratory_complete",
+  "data_boundary": {
+    "scope": "development_only",
+    "sample_count": 90,
+    "confirmation_accessed": false,
+    "raw_instances_archived_to_obsidian": false,
+    "dataset_hash": "0e2af1c19042f749b636205c8cd916b28facb0a9f9bf266af8ca0bae9c6cc78f",
+    "contract_hash": "9d62cdd88b4cd06b8b5c99e8a797be81407da4ba999071a8c089b26ffe222ab3"
+  },
+  "diagnostic": {
+    "feature_count": 9,
+    "expert_count": 4,
+    "fallback_cells": 0,
+    "predeclared_primary": "cost_knn_k5",
+    "assessment": "features_show_within_distribution_signal_only",
+    "stratified_5fold": {
+      "mean_improvement_vs_n2_pct": 0.8820214518895888,
+      "mean_regret_to_oracle_pct": 1.6287094138079101,
+      "oracle_cost_match_rate": 0.5333333333333333,
+      "worst_environment_improvement_vs_n2_pct": -0.7194485979674485
+    },
+    "leave_one_environment_out": {
+      "mean_improvement_vs_n2_pct": -0.1896193440807382,
+      "mean_regret_to_oracle_pct": 2.7003502097782373,
+      "oracle_cost_match_rate": 0.3333333333333333,
+      "worst_environment_improvement_vs_n2_pct": -0.5688580322422145
+    },
+    "oracle_report_only_improvement_vs_n2_pct": 2.5107308656974987,
+    "post_hoc_observation": {
+      "method": "cost_knn_k3",
+      "stratified_5fold_mean_improvement_vs_n2_pct": 0.9614799134072408,
+      "stratified_5fold_worst_environment_improvement_vs_n2_pct": -0.4328448598693123,
+      "may_seed_current_formal_cohort": false
+    }
+  },
+  "provider_preflight": {
+    "commit": "d2624be",
+    "frozen_suite": "cvrp_expert_router_proxy_deepseek_fallback_v1",
+    "status": "provider_auth_invalid",
+    "http_status": 401,
+    "formal_seed_directories_created": false,
+    "secret_or_response_body_recorded": false
+  },
+  "evidence_refs": [
+    {
+      "kind": "aggregate_result",
+      "path": "eoh_rag_workspace/reports/formal/cvrp_selector_learnability_dev_v1/learnability.json"
+    },
+    {
+      "kind": "diagnostic_implementation",
+      "commit": "85cc392"
+    },
+    {
+      "kind": "provider_preflight_implementation",
+      "commit": "d2624be"
+    },
+    {
+      "kind": "targeted_test",
+      "command": "python -m pytest tests/test_cvrp_expert_router.py tests/test_cvrp_selector_learnability.py -q",
+      "result": "11 passed"
+    },
+    {
+      "kind": "full_test",
+      "command": "python -m pytest -q",
+      "result": "549 passed, 3 skipped, 4 subtests passed"
+    },
+    {
+      "kind": "human_record",
+      "path": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_012827-result_analysis-CVRP选择器开发集可学习性诊断.md"
+    }
+  ],
+  "scientific_interpretation": {
+    "formal_agent_candidate_established": false,
+    "formal_proxy_gate_applied": false,
+    "confirmation_remains_clean": true,
+    "oracle_is_deployable_performance": false,
+    "current_formal_manifest_may_be_changed": false
+  },
+  "next_action": "restore_valid_provider_credentials_and_rerun_same_frozen_research_agent_coordinates_20101_20102_20103"
+}

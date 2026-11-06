@@ -1,0 +1,35 @@
+{
+  "document_id": "refactor0830_phase1_3_delivery_audit_20260831",
+  "scope": "Read-only phase 1-3 delivery audit; does not certify phase 4-5 or experimental effects",
+  "reviewer": "gpt-5.6-luna subagent delivery_static_audit; root source-integrity check",
+  "branch": "Refactor0830",
+  "audited_head": "0159cd6f2e0e7ab221828ff6b7bd42f95e516fe0",
+  "remote_tracking_at_audit": {"remote": "origin/Refactor0830", "ahead": 0, "behind": 0},
+  "phase_commits": {"phase1": "15f96fe", "phase2": "cae21b6", "phase3": "3e473d9"},
+  "checks": {
+    "branch_and_milestones_pushed": true,
+    "local_env_ignored_and_untracked": true,
+    "single_active_fme_controller": true,
+    "legacy_runners_marked_historical_only": true,
+    "prospective_analysis_and_question_stack_implemented": true,
+    "frozen_cold_start_history_integrity": true,
+    "quality_and_prediction_metrics_implemented": true,
+    "live_v7_frozen_source_hashes_unchanged": true
+  },
+  "evidence_paths": [
+    "agent_records/contracts/refactor0830_execution_contract_v1.json",
+    "agent_records/contracts/refactor0830_opencode_amendment_v2.json",
+    "eoh_rag/fme/mainline.py",
+    "eoh_rag/fme/online_pilot.py",
+    "eoh_rag/fme/analysis.py",
+    "eoh_rag/fme/cold_start.py",
+    "eoh_rag/fme/potential.py",
+    "eoh_rag/experiments/provider.py",
+    ".env.example",
+    ".gitignore",
+    "README.md"
+  ],
+  "history_lf_sha256": "d8def989e587043c7a8c21c10151615fd646bc48c24f4cf82e0aae32c5e3ffe5",
+  "unmet_material_phase1_3_requirements": [],
+  "boundary": "Model Router remains a historical 403 failure; current connectivity is OpenCode Go. No secrets, tests or additional API calls were used in this audit. The real v7 cohort and final report still require terminal verification."
+}

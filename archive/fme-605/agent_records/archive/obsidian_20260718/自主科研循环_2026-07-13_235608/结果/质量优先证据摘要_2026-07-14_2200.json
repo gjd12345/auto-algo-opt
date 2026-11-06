@@ -1,0 +1,107 @@
+{
+  "schema_version": "agent-ad-quality-first-evidence/v1",
+  "created_at": "2026-07-14T22:00:00+08:00",
+  "repository": {
+    "branch": "feat/q3-v2-cross-transfer",
+    "commit": "2fd82346226965160a0460fba3d816a2d9cd446f"
+  },
+  "objective": "maximize_tsp_cost_reduction",
+  "recommended_mainline": [
+    "frozen_12_code_functional_portfolio",
+    "nearest_40_two_opt_until_stop_max_500",
+    "single_node_relocation_until_stop_max_500_with_two_opt_reconvergence"
+  ],
+  "external_confirmation_28": {
+    "baseline": "raw_current_four_code_portfolio",
+    "stages": [
+      {
+        "stage": "BQ",
+        "method": "12_code_portfolio",
+        "mean_improvement_pct": 3.82,
+        "median_improvement_pct": 2.57,
+        "max_improvement_pct": 13.95,
+        "evidence": "confirmed"
+      },
+      {
+        "stage": "BS",
+        "method": "portfolio_plus_100_step_nearest_two_opt",
+        "mean_improvement_pct": 10.43,
+        "median_improvement_pct": 10.50,
+        "max_improvement_pct": 20.32,
+        "evidence": "confirmed"
+      },
+      {
+        "stage": "BX_stage_bv_replay",
+        "method": "portfolio_plus_converged_two_opt_and_single_relocation",
+        "mean_improvement_pct": 12.081897411695548,
+        "median_improvement_pct": 11.922314320989845,
+        "max_improvement_pct": 21.393008683315163,
+        "evidence": "locked_external_replay"
+      },
+      {
+        "stage": "BX",
+        "method": "mainline_plus_or_opt_2",
+        "mean_improvement_pct": 12.249095996953601,
+        "median_improvement_pct": 12.035171623384912,
+        "max_improvement_pct": 21.393008683315163,
+        "marginal_gate": "failed",
+        "evidence": "optional_sparse_gain"
+      },
+      {
+        "stage": "CA",
+        "method": "mainline_plus_or_opt_2_and_or_opt_3",
+        "mean_improvement_pct": 12.2759,
+        "median_improvement_pct": 12.0470,
+        "max_improvement_pct": 21.3930,
+        "marginal_gate": "failed",
+        "evidence": "optional_sparse_gain"
+      },
+      {
+        "stage": "CD",
+        "method": "stage_ca_plus_restricted_three_opt",
+        "mean_improvement_pct": 12.805898004481145,
+        "median_improvement_pct": 12.853357819010553,
+        "max_improvement_pct": 21.393008683315163,
+        "incremental_mean_improvement_pct": 0.6016093083577138,
+        "incremental_median_improvement_pct": 0.3143587301978248,
+        "incremental_gate": "passed",
+        "evidence": "confirmed"
+      }
+    ]
+  },
+  "high_scale_development_3": {
+    "instances": ["fnl4461", "rl5915", "rl5934"],
+    "final_mean_improvement_pct": 13.88930985799076,
+    "final_median_improvement_pct": 14.143562356114822,
+    "final_max_improvement_pct": 15.320808996600121,
+    "evidence": "development_only",
+    "warning": "do_not_pool_with_external_confirmation_28"
+  },
+  "optional_layers": [
+    {
+      "name": "or_opt_2",
+      "safe_acceptance": "strict_cost_decrease_only",
+      "external_median_extra_improvement_pct": 0.032454977350569,
+      "gate": "failed"
+    },
+    {
+      "name": "or_opt_3",
+      "safe_acceptance": "strict_cost_decrease_only",
+      "external_median_extra_improvement_pct": 0.0,
+      "gate": "failed"
+    },
+    {
+      "name": "eight_deterministic_basin_restarts",
+      "safe_acceptance": "strict_cost_decrease_only",
+      "high_scale_median_extra_improvement_pct": 0.06163,
+      "gate": "failed"
+    }
+  ],
+  "next_experiment": {
+    "name": "eoh_search_controller_evolution_proxy",
+    "scope": "eoh_framework",
+    "primary_metric": "held_out_final_cost_improvement_pct",
+    "minimum_effect_pct": 0.2,
+    "fallback": "revise_controller_contract_without_adding_manual_neighborhoods"
+  }
+}

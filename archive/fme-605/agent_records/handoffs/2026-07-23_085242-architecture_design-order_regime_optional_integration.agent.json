@@ -1,0 +1,211 @@
+{
+  "schema_version": "agent_ad_optional_integration_proposal/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-feedback-v1-optional-integration",
+  "audience": "agent",
+  "created_at": "2026-07-23T08:52:42+08:00",
+  "phase_id": "architecture_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "672d73a",
+  "status": "frozen_optional_integration_proposal_unimplemented_unlaunched",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ2_rag_adds_value_on_top_of_feedback",
+      "RQ3_cross_distribution_generalization_and_memory_reuse"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "memory_reuse",
+      "valid_generated_candidate_rate",
+      "evaluation_cost"
+    ],
+    "classification": "optional_research_module",
+    "claim_limit": "The proposal preserves a development-only diagnostic signal. It does not claim quality improvement, transfer, or held-out generalization."
+  },
+  "integration_contract": {
+    "module": "order_regime_feedback_v1",
+    "default_enabled": false,
+    "activation_mode": "controller_requested_two_stage_diagnostic",
+    "candidate_contract_unchanged": "score(item, bins) -> priority_vector",
+    "stage_1": "Run the existing primary development evaluation and freeze candidate IDs, objectives, feasibility, and code hashes.",
+    "stage_2": "Only after the trigger gate passes, evaluate the frozen candidates once on fme_dev_order_regime_feedback_v1 and compile summaries through OrderRegimeFeedbackAdapter.",
+    "allowed_controller_actions": [
+      "compare_on_counterexample",
+      "write_failure_memory",
+      "write_behavior_memory",
+      "continue_with_existing_generator",
+      "stop_this_mechanism"
+    ],
+    "forbidden_direct_effects": [
+      "call an EOH operator",
+      "mutate candidate code",
+      "change primary objective or selection score",
+      "authorize transfer or held-out confirmation",
+      "start or modify a cohort"
+    ]
+  },
+  "trigger_gate": {
+    "all_required": [
+      "The integration flag is explicitly enabled in a future separately frozen manifest.",
+      "At least two and at most four distinct feasible candidate code hashes are frozen at one controller checkpoint.",
+      "Every candidate has a complete primary development EvaluationResult and no timeout or failure_type.",
+      "The same candidate-set hash has not already been diagnosed under the same profile and implementation hashes.",
+      "The controller records a dev-only reason: aggregate-score near tie, suspected order fragility, or pending counterexample comparison.",
+      "The remaining evaluation budget covers every candidate symmetrically; partial candidate sets are rejected."
+    ],
+    "near_tie_definition": "Optional trigger only: absolute primary-objective difference between the best candidate and another frozen candidate is at most 0.01. This threshold does not alter selection or archive admission.",
+    "forbidden_triggers": [
+      "held-out or confirmation result",
+      "candidate source, actor, provider, or prompt identity alone",
+      "post-hoc desire to rescue a losing candidate",
+      "availability of only one valid candidate"
+    ]
+  },
+  "cost_contract": {
+    "instances_per_candidate": 12,
+    "items_per_instance": 2048,
+    "item_placements_per_candidate": 24576,
+    "maximum_candidates_per_checkpoint": 4,
+    "maximum_item_placements_per_checkpoint": 98304,
+    "llm_calls_added": 0,
+    "provider_calls_added": 0,
+    "retries": 0,
+    "parallelism": 1,
+    "cache_key_fields": [
+      "candidate_code_sha256",
+      "order_regime_profile_spec_sha256",
+      "evaluator_sha256",
+      "module_sha256"
+    ],
+    "cache_policy": "An exact successful key may be reused; failures are evidence and may not be silently retried or replaced.",
+    "budget_rule": "Stage 2 is skipped when its full symmetric cost was not reserved before the checkpoint."
+  },
+  "feedback_projection": {
+    "controller_visible_fields": [
+      "candidate_id",
+      "development_suite",
+      "per_regime_relative_gap_pct",
+      "pair_order_sensitivity_pct",
+      "large_item_order_sensitivity_pct",
+      "worst_regime",
+      "worst_pair",
+      "behavior_profile_hash",
+      "ranking_flip_pairs",
+      "invalid_observation_ids"
+    ],
+    "prompt_visible_fields": [
+      "worst_regime",
+      "worst_pair",
+      "large_item_order_sensitivity_pct",
+      "up to_two_distinguishing_counterexample_ids",
+      "ranking_flip_pair_keys",
+      "plain_language_failure_or_robustness_summary"
+    ],
+    "prompt_exclusions": [
+      "raw item sequences",
+      "candidate code",
+      "other candidates' code",
+      "held-out values",
+      "absolute local paths",
+      "provider or secret fields"
+    ]
+  },
+  "rag_memory_projection": {
+    "memory_type": "behavior_or_failure_memory",
+    "required_fields": [
+      "memory_id",
+      "problem",
+      "source_candidate_id",
+      "source_actor",
+      "development_suite",
+      "behavior_profile_hash",
+      "worst_regime",
+      "worst_pair",
+      "ranking_flip_pair_keys",
+      "counterexample_ids",
+      "evidence_record_hash",
+      "evidence_level",
+      "applicability_scope",
+      "created_by_actor",
+      "content_hash"
+    ],
+    "fixed_values": {
+      "problem": "bp_online",
+      "source_actor": "historical_eoh_or_research_agent_as_recorded",
+      "evidence_level": "development_diagnostic_only",
+      "applicability_scope": "online_bin_packing_order_regime_v1"
+    },
+    "retrieval_rule": "Retrieve only for BP order-robustness queries or an explicit abstract strategy query about arrival-order sensitivity. Never retrieve this record as proof of held-out quality.",
+    "deduplication_key": "behavior_profile_hash plus applicability_scope plus evidence_record_hash",
+    "promotion_rule": "Promotion to transferable strategy memory requires a separately frozen confirmation or transfer experiment; this proposal cannot promote it."
+  },
+  "fme_v2_isolation": {
+    "anchor_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "anchor_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "rules": [
+      "Do not modify the FME v2 manifest, profile, controller state, recorder, arm list, seeds, metrics, or held-out fields.",
+      "Do not reinterpret any existing FME v2 candidate or result using order_regime_feedback_v1.",
+      "Do not expose order_regime_feedback_v1 through the current runner CLI or any runnable manifest in this proposal.",
+      "Any future execution requires a new manifest, cohort ID, candidate-set hash, budget reservation, and development-only evidence path.",
+      "The optional adapter must remain behind a disabled configuration seam until a separate implementation milestone is frozen."
+    ]
+  },
+  "exit_conditions": {
+    "reject_implementation_if": [
+      "Integration requires changing the primary candidate score contract, objective, or selection semantics.",
+      "The controller cannot prove symmetric evaluation of the full frozen candidate set.",
+      "Prompt or memory projection requires raw items, candidate code, held-out data, or absolute local paths.",
+      "The implementation cannot enforce exact cache keys and failure retention.",
+      "The FME v2 anchor hash changes before implementation begins."
+    ],
+    "disable_after_future_execution_if": [
+      "Two consecutive separately frozen checkpoints produce no new behavior-profile separation, ranking flip, archive-admissible counterexample, or controller decision change.",
+      "Added stage-2 evaluation cost exceeds its frozen reservation or causes asymmetric missing coordinates.",
+      "The resulting memory is retrieved outside its applicability scope or is treated as held-out evidence.",
+      "Any data leakage, raw-sequence persistence, candidate-contract drift, or FME v2 contamination is detected."
+    ],
+    "success_for_continued_optional_use": "A future separately frozen comparison shows that the diagnostic changes at least one research_agent decision or prevents a repeated order-fragility failure while preserving full coordinates, budget, and isolation."
+  },
+  "implementation_boundary": {
+    "allowed_future_changes": [
+      "Add a disabled integration configuration record.",
+      "Add a controller-side trigger and exact-key diagnostic cache.",
+      "Add a recorder projection from OrderFeedbackSummary to evidence and scoped memory records."
+    ],
+    "not_authorized_by_this_proposal": [
+      "code changes",
+      "tests",
+      "manifest changes",
+      "candidate evaluations",
+      "LLM or provider calls",
+      "cohort launch"
+    ]
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_030041-architecture_design-order_regime_feedback_contract.agent.json",
+      "purpose": "original module and isolation contract"
+    },
+    {
+      "path": "agent_records/handoffs/2026-07-23_083518-result_analysis-order_regime_two_candidate.agent.json",
+      "purpose": "development retention-gate evidence"
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_feedback.py",
+      "sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+      "purpose": "implemented deep module"
+    }
+  ],
+  "constraints": {
+    "api_or_llm_called": false,
+    "tests_executed": false,
+    "test_tier": "skipped_document_only",
+    "held_out_observed": false,
+    "code_or_manifest_modified": false,
+    "cohort_created_or_launched": false,
+    "raw_responses_logs_items_code_or_secrets_persisted": false
+  },
+  "next_action": "perform_a_static_integration_gap_audit_against_this_frozen_proposal_and_name_the_minimal_disabled_by_default_code_seams_without_implementing_or_running_them"
+}

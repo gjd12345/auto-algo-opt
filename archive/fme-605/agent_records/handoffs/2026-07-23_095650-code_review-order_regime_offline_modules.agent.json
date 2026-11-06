@@ -1,0 +1,123 @@
+{
+  "schema_version": "agent_ad_code_review/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-offline-modules-read-only-review",
+  "audience": "agent",
+  "created_at": "2026-07-23T09:56:50+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "3dceabf",
+  "status": "changes_requested_contract_defects_found",
+  "review_scope": {
+    "fixed_point": "2234ed9",
+    "target": "3dceabf",
+    "files": [
+      "eoh_rag/fme/order_regime_integration.py",
+      "eoh_rag/fme/order_regime_memory.py"
+    ],
+    "specification": "agent_records/handoffs/2026-07-23_092311-code_implementation-order_regime_minimal_card.agent.json"
+  },
+  "review_axes": {
+    "standards": {
+      "verdict": "no_validated_blocking_standard_violation",
+      "judgement_smells": [
+        {
+          "severity": "low",
+          "finding": "canonical JSON SHA-256 logic is duplicated across the two modules",
+          "impact": "future canonicalization drift is possible, but the frozen card prohibited editing shared modules in this implementation slice"
+        }
+      ],
+      "rejected_candidates": [
+        "evaluator diagnostic validation errors are intentionally converted into failed coordinates by the frozen card",
+        "source_actor denotes candidate provenance and is not constrained to the top-level execution actor enum",
+        "projected record creator is research_agent while source_actor is preserved separately, as required",
+        "pair identifiers without a single-instance artifact are intentionally excluded from archive artifacts"
+      ]
+    },
+    "specification": {
+      "verdict": "changes_requested",
+      "findings": [
+        {
+          "id": "ORF-001",
+          "severity": "P0",
+          "title": "scientific outcome identity does not bind projected evidence metadata",
+          "evidence": [
+            "eoh_rag/fme/order_regime_integration.py:129",
+            "eoh_rag/fme/order_regime_integration.py:138",
+            "eoh_rag/fme/order_regime_memory.py:197"
+          ],
+          "detail": "The diagnostic identity includes behavior_profile_hash but omits counterexample artifacts, gap and classification fields that the projector later persists. Those fields can change while outcome_sha256 remains unchanged.",
+          "required_correction": "bind a canonical validated complete-summary evidence identity into each diagnostic and the outcome hash"
+        },
+        {
+          "id": "ORF-002",
+          "severity": "P0",
+          "title": "complete summaries are insufficiently validated before becoming feedback and memory evidence",
+          "evidence": [
+            "eoh_rag/fme/order_regime_integration.py:397",
+            "eoh_rag/fme/order_regime_memory.py:197",
+            "eoh_rag/fme/order_regime_memory.py:268"
+          ],
+          "detail": "Validation checks candidate and scope but does not freeze regime and pair keys, hash formats, finite numeric values, counterexample schema, or forbidden raw-looking metadata. Free-form fields are then interpolated into the fixed template and projected records.",
+          "required_correction": "validate the complete frozen summary schema and reject raw-looking, non-finite, unknown-key or malformed evidence before caching or projection"
+        },
+        {
+          "id": "ORF-003",
+          "severity": "P0",
+          "title": "cache hits can inherit a different candidate source_actor",
+          "evidence": [
+            "eoh_rag/fme/order_regime_integration.py:252",
+            "eoh_rag/fme/order_regime_integration.py:405"
+          ],
+          "detail": "The exact cache key excludes source_actor and cache-hit validation does not compare it. Identical code hashes presented with different provenance can reuse the first cached attribution.",
+          "required_correction": "include source_actor in the exact cache identity or deterministically rebind and rehash the returned diagnostic after validating all scientific fields"
+        },
+        {
+          "id": "ORF-004",
+          "severity": "P1",
+          "title": "failed diagnostics may omit the required failure message hash",
+          "evidence": [
+            "eoh_rag/fme/order_regime_integration.py:426"
+          ],
+          "detail": "Failed status requires failure_type but accepts failure_message_hash=null, weakening the frozen failure identity and cache audit trail.",
+          "required_correction": "require a lowercase SHA-256 failure_message_hash for every failed diagnostic"
+        },
+        {
+          "id": "ORF-005",
+          "severity": "P1",
+          "title": "exact objective ties are excluded from the frozen near-tie trigger",
+          "evidence": [
+            "eoh_rag/fme/order_regime_integration.py:355"
+          ],
+          "detail": "The predicate requires a positive difference even though the frozen trigger is an absolute difference at most 0.01 for another non-best candidate.",
+          "required_correction": "identify the best candidate by stable identity and allow zero objective difference for a distinct candidate"
+        }
+      ]
+    }
+  },
+  "confirmed_invariants": [
+    "disabled policy returns before checkpoint, cache, or evaluator access",
+    "full symmetric budget is checked before cache and evaluator access",
+    "complete and failed exact-key entries are cached and cache hits are not retried",
+    "a failed coordinate does not stop later coordinates",
+    "failed coordinates retain candidate, regime and pair coordinates",
+    "projection is development-scoped and uses a bounded fixed sentence structure"
+  ],
+  "evidence_refs": [
+    {"path": "agent_records/handoffs/2026-07-23_092311-code_implementation-order_regime_minimal_card.agent.json", "purpose": "frozen implementation card"},
+    {"path": "agent_records/handoffs/2026-07-23_094248-code_implementation-order_regime_offline_modules.agent.json", "purpose": "implementation record"},
+    {"path": "eoh_rag/fme/order_regime_integration.py", "purpose": "reviewed module"},
+    {"path": "eoh_rag/fme/order_regime_memory.py", "purpose": "reviewed module"}
+  ],
+  "constraints": {
+    "review_only": true,
+    "module_imported_or_executed": false,
+    "tests_type_checks_or_builds_executed": false,
+    "code_modified": false,
+    "api_or_llm_called": false,
+    "cohort_modified_or_launched": false,
+    "unrelated_dirty_worktree_preserved": true
+  },
+  "next_action": "freeze_a_minimal_correction_card_for_ORF_001_through_ORF_005_without_implementing_code_or_changing_any_cohort"
+}

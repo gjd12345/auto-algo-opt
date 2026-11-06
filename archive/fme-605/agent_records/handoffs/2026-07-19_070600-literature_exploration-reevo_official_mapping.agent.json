@@ -1,0 +1,49 @@
+{
+  "schema_version": "agent_ad_literature_exploration/v1",
+  "document_id": "agent_ad:2026-07-19:reevo-official-mapping",
+  "audience": "agent",
+  "created_at": "2026-07-19T07:06:00+08:00",
+  "phase_id": "literature_exploration",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "8f61afb567bed12695dd41789c58783d1ec25196",
+  "sources": [
+    {
+      "kind": "paper",
+      "title": "ReEvo: Large Language Models as Hyper-Heuristics with Reflective Evolution",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/4ced59d480e07d290b6f29fc8798f195-Abstract-Conference.html"
+    },
+    {
+      "kind": "official_code",
+      "url": "https://github.com/ai4co/reevo",
+      "license": "MIT",
+      "inspected_paths": [
+        "reevo.py",
+        "prompts/common/user_reflector_st.txt",
+        "prompts/common/user_reflector_lt.txt",
+        "prompts/common/crossover.txt",
+        "prompts/common/mutation.txt"
+      ]
+    }
+  ],
+  "verified_mechanism": {
+    "short_term_reflection": "compare a worse and better parent before crossover",
+    "long_term_reflection": "compress prior long-term memory with new short reflections",
+    "crossover_input": "worse code, better code, and short reflection",
+    "mutation_input": "elitist code and accumulated long-term reflection",
+    "extra_reflector_calls_required_by_strict_implementation": true
+  },
+  "local_mapping": {
+    "label": "ReEvo-inspired reflection memory",
+    "strict_reproduction": false,
+    "preserved_principles": [
+      "parent comparison must be grounded in development feedback",
+      "memory is a compressed search hint rather than evaluation evidence",
+      "confirmation feedback remains isolated"
+    ],
+    "omitted_component": "independent short-term and long-term reflector LLM calls",
+    "causal_question": "Does reflection-derived memory reduce single-expert collapse at the same generator budget?"
+  },
+  "next_action": "run only after explicit approval of six additional LLM runs"
+}

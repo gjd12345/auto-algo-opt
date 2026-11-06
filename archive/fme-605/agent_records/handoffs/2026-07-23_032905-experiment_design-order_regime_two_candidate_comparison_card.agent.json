@@ -1,0 +1,206 @@
+{
+  "schema_version": "agent_ad_approval_gated_dev_comparison_card/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-feedback-v1-two-candidate-card",
+  "audience": "agent",
+  "created_at": "2026-07-23T03:29:05.2678941+08:00",
+  "phase_id": "experiment_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "3ef687adc024d7d3aa925aee3d0ec53433002a38",
+  "status": "frozen_approval_gated_not_executed",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ3_cross_distribution_generalization"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "valid_generated_candidate_rate",
+      "llm_budget"
+    ],
+    "causal_question": "Can the frozen order-regime descriptor distinguish two pre-existing historical EOH BP candidates on fresh development-only paired orders, and does it yield an archive-admissible counterexample or ranking flip?",
+    "claim_limit": "This is an implementation-validation card, not a formal cohort and not an algorithm-quality claim."
+  },
+  "authorization": {
+    "execution_authorized": false,
+    "required_approval": "explicit_user_approval_after_this_card_is_frozen",
+    "why_not_run_now": [
+      "Project Testing Policy forbids automatic test execution after code changes.",
+      "The comparison evaluates candidate code even though it needs no LLM calls.",
+      "No approval exists to execute the new development profile."
+    ],
+    "approval_scope_if_granted": [
+      "Evaluate exactly the two frozen source codes once each on the declared development profile.",
+      "Instantiate the ranking tracker and an in-memory FME archive only; do not persist raw item sequences, candidate code, or large logs.",
+      "Write one redacted machine summary and one human result note after execution."
+    ],
+    "still_forbidden_if_approved": [
+      "LLM or provider calls",
+      "EOH generation or mutation",
+      "FME v2 manifest, profile, controller, recorder, or cohort changes",
+      "held-out generation, observation, or feedback",
+      "candidate replacement, extra candidates, retries, or threshold changes"
+    ]
+  },
+  "source_candidates": {
+    "asset_path": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json",
+    "asset_sha256": "a1b47700fed79e14cc316d7d930fa2311ed0ac278e76aee13b2ad686d9a90e63",
+    "git_blob": "958078bf2a0555a65bc27505724924774d0d779e",
+    "source_commit": "9afa7681aca782a53c3344384b05019ca828f14d",
+    "actor": "historical_eoh",
+    "origin": "inherited_605_run_bp_online_elites",
+    "selection_rule": "Select source-file indices 0 and 1 because they are the first two distinct code hashes in frozen file order. Do not inspect or select on any order-regime result.",
+    "candidates": [
+      {
+        "candidate_label": "inherited_elite_index_0",
+        "source_index": 0,
+        "code_sha256": "42fa7edc09d9cb88680e39089f236f3b6440029e17912e84b637e038d6424a08",
+        "code_length": 277,
+        "entry_function": "score"
+      },
+      {
+        "candidate_label": "inherited_elite_index_1",
+        "source_index": 1,
+        "code_sha256": "3339ac53854f945e579692d70d9d6424d89da0ee64e0b26ae418f33f187efc13",
+        "code_length": 513,
+        "entry_function": "score"
+      }
+    ],
+    "candidate_set_sha256": "4a5ffe20f95b626ccebc2648e45d2230d2cdadd948149ef65ccdc409150886f8"
+  },
+  "frozen_inputs": {
+    "comparison_input_spec_sha256": "d25e755bfa6ae8ae5fe4c2f8a3bc9ecacc7fb3f3477cd9d45503b424aaabb1fa",
+    "profile_spec_sha256": "784897bb1ae50ddb626fa942ea7002cdee83d6d0c54fb9bec50dc7bc5272d193",
+    "problem": "bp_online",
+    "training_profile": "fme_dev_order_regime_feedback_v1",
+    "capacity": 100,
+    "item_count_per_multiset": 2048,
+    "multisets_per_regime": 2,
+    "order_variants": [
+      "random",
+      "alternating_extremes"
+    ],
+    "regime_seed_ranges": {
+      "small_dominant": "84000-84001",
+      "mixed": "85000-85001",
+      "large_dominant": "86000-86001"
+    },
+    "structured_feedback": true,
+    "report_held_out": false,
+    "held_out_profile": "",
+    "order_regime_contract_sha256": "dfa8983b4a2be75aecaada357aa590617e162f27b943b8175bd60c7a31296b8b",
+    "order_regime_module_sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+    "bp_adapter_sha256": "468e4548d2cb241b7bf65b88eb40e3f89b82bfd86a859e29dd341b5d892cb4d5",
+    "fme_v2_manifest_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5"
+  },
+  "execution_card": {
+    "run_key": "bp_order_regime_feedback_v1:two_historical_eoh_candidates:dev_only:v1",
+    "planned_coordinates": [
+      "inherited_elite_index_0",
+      "inherited_elite_index_1"
+    ],
+    "candidate_evaluations": 2,
+    "development_instances_per_candidate": 12,
+    "new_llm_calls": 0,
+    "provider": "none",
+    "retries": 0,
+    "processes": 1,
+    "execution_flow": [
+      "Verify every frozen input hash and confirm explicit user approval before constructing the profile.",
+      "Evaluate each frozen source code once with BPONLINEBroad structured feedback, report_held_out=false, and the isolated order-regime profile.",
+      "Compile each OrderFeedbackSummary, then feed both summaries to OrderRegimeRankingTracker.",
+      "Use FMEArchives(None) only for an in-memory counterexample-admission precheck; do not create a persistent archive in this validation card.",
+      "Record all two coordinates and a compact comparison verdict without raw code, raw items, population, model response, or large logs."
+    ]
+  },
+  "expected_outputs": {
+    "per_candidate": [
+      "candidate_id",
+      "development_objective",
+      "behavior_profile_hash",
+      "per_regime_relative_gap_pct",
+      "pair_order_sensitivity_pct",
+      "large_item_order_sensitivity_pct",
+      "worst_regime",
+      "worst_pair",
+      "counterexample metadata hashes",
+      "status and failure_type"
+    ],
+    "comparison": [
+      "descriptor_separated boolean",
+      "ranking_flip_pairs",
+      "in_memory_archive_admissible_counterexample_ids",
+      "reject_or_retain_verdict",
+      "input_spec_sha256"
+    ],
+    "prohibited_outputs": [
+      "held-out metrics",
+      "quality or SOTA claim",
+      "raw candidate code",
+      "raw item sequences",
+      "model responses",
+      "provider credentials",
+      "population or large logs"
+    ]
+  },
+  "gates": {
+    "pre_execution_reject": [
+      "user approval absent",
+      "branch or any frozen source, code, contract, module, adapter, or FME v2 manifest hash differs",
+      "profile appears in a runnable manifest or CLI surface",
+      "run would create LLM calls, held-out access, a third candidate, retry, or FME v2 modification"
+    ],
+    "execution_inconclusive": [
+      "either frozen candidate raises an evaluation exception, times out, or is infeasible",
+      "the returned feedback lacks visible_scope=dev_only or the declared development suite",
+      "any pair lacks matching multiset_hash or distinct order_hash"
+    ],
+    "module_reject": [
+      "the two distinct code hashes yield the same behavior_profile_hash and no distinct ranking signature",
+      "no in-memory counterexample is archive-admissible and OrderRegimeRankingTracker returns no ranking flip",
+      "the result needs an after-the-fact seed, candidate, metric, or threshold change to appear informative"
+    ],
+    "optional_retention": "Both coordinates complete without integrity failures, descriptor_separated is true, and at least one archive-admissible counterexample or ranking flip is present. Retention only permits a later separately frozen proposal; it does not authorize a cohort."
+  },
+  "fme_v2_isolation": {
+    "v2_manifest_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "v2_manifest_modified": false,
+    "v2_cohort_started": false,
+    "v2_heldout_access": false,
+    "v2_result_reclassification": false,
+    "separate_run_key_required": true
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_030041-architecture_design-order_regime_feedback_contract.agent.json",
+      "sha256": "dfa8983b4a2be75aecaada357aa590617e162f27b943b8175bd60c7a31296b8b",
+      "purpose": "frozen adapter contract and exit rule"
+    },
+    {
+      "path": "agent_records/handoffs/2026-07-23_032029-code_implementation-order_regime_feedback_v1_offline.agent.json",
+      "purpose": "offline Module implementation and isolation state"
+    },
+    {
+      "path": "official_eoh/examples/bp_online/seeds/bp_inherited_elites_v1.json",
+      "sha256": "a1b47700fed79e14cc316d7d930fa2311ed0ac278e76aee13b2ad686d9a90e63",
+      "purpose": "frozen two-candidate source asset"
+    },
+    {
+      "path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+      "sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+      "purpose": "unchanged FME v2 isolation anchor"
+    }
+  ],
+  "constraints": {
+    "additional_llm_runs_scheduled": 0,
+    "additional_llm_runs_remaining": 0,
+    "api_called_in_this_tick": false,
+    "tests_executed": false,
+    "test_tier": "skipped_by_project_testing_policy",
+    "heldout_observed_in_this_tick": false,
+    "fme_v2_manifest_modified": false,
+    "raw_responses_or_secrets_recorded": false
+  },
+  "next_action": "await_explicit_user_approval_before_running_the_frozen_two_candidate_development_comparison; until_then_only_lightweight_non_mutating_status_checks_are_allowed"
+}

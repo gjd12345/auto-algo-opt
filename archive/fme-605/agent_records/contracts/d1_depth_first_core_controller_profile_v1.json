@@ -1,0 +1,40 @@
+{
+  "schema_version": "agent_ad_controller_profile_amendment/v1",
+  "contract_id": "d1_depth_first_core_controller_profile_v1",
+  "created_at": "2026-07-30T09:03:00+08:00",
+  "status": "active_for_D1_zero_api_replay",
+  "authority": "user_approved_depth_first_mainline_correction",
+  "base_correction": "agent_records/contracts/d1_core_causal_chain_correction_v2.json",
+  "problem": "The legacy controller still contains breadth-stage failure-rate stabilization and repair-and-invent portfolio rules, allowing P22/P24 controls to mask whether accepted counterevidence changes the core scientific action.",
+  "profiles": {
+    "depth_first_core": {
+      "status": "required_for_D1_and_future_D2",
+      "enabled_generation_actions": [
+        "invent_algorithm",
+        "repair_failed_mechanism"
+      ],
+      "disabled_breadth_controls": [
+        "repair_and_invent_portfolio",
+        "failure_rate_stabilization",
+        "portfolio_reliability_cooldown",
+        "transfer_abstract_mechanism_before_D3"
+      ],
+      "counterexample_effect": "a canonical weakened claim makes repair_failed_mechanism the next generation action with reason repair_a_mechanism_broken_by_recorded_counterexample"
+    },
+    "legacy_stacked": {
+      "status": "historical_replay_only",
+      "meaning": "Preserves the exact P21 through P25 scheduling logic and must not be used for new depth-first claims."
+    }
+  },
+  "invariants": [
+    "No action enum or EOH operator is added.",
+    "The controller profile is explicit in formal manifests and run summaries.",
+    "Changing controller profile creates a new incomparable cohort.",
+    "D1 uses no transfer action and no breadth-stage reliability control.",
+    "Heldout and confirmation remain invisible."
+  ],
+  "budget": {
+    "api_calls": 0,
+    "llm_calls": 0
+  }
+}

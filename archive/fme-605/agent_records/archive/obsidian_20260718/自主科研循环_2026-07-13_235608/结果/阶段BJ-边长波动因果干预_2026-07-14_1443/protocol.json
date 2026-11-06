@@ -1,0 +1,61 @@
+{
+  "schema_version": "tsp-edge-variability-intervention-protocol/v1",
+  "frozen_at": "2026-07-14T14:43:00+08:00",
+  "research_role": "pre_intervention_external_mechanism_test",
+  "question": "在不按路线总成本选择移动时，主动降低边长波动是否仍会降低路线成本",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "route_behavior_metrics_sha256": "1aeb05cbd5c75a0533ef255ea5e2a1e516f82444ad1d0beffde83e4d65a50e78",
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "initial_route": {
+    "candidates": ["R2", "R4"],
+    "selection": "选择冻结双槽中路线总成本较低者；相同则按标签字典序",
+    "replay_cost_must_match_stage_bh": true
+  },
+  "move": {
+    "type": "symmetric_2opt",
+    "maximum_steps": 5,
+    "candidate_pairs_per_step": 10000,
+    "candidate_sampling_seed": "sha256(instance_name + ':' + step_index)",
+    "small_instance_rule": "合法2-opt对不超过10000时全部枚举",
+    "stop_when": "当前候选集中没有对应目标的严格改善移动"
+  },
+  "arms": [
+    {
+      "name": "cv_best",
+      "selection": "选择候选中边长变异系数下降最多的移动；排序不读取路线总成本"
+    },
+    {
+      "name": "cv_random_positive",
+      "repetitions": 5,
+      "selection": "在能严格降低边长变异系数的候选中确定性随机选一个"
+    },
+    {
+      "name": "cost_best_positive_control",
+      "selection": "选择候选中路线总成本下降最多的移动，用于确认邻域中确实存在改进"
+    }
+  ],
+  "primary_gate": {
+    "cv_best_cv_reduction_instance_rate_min": 0.8,
+    "cv_best_cost_wins_must_exceed_losses": true,
+    "cv_best_median_cost_delta_pct_max": 0.0,
+    "cv_best_two_sided_sign_test_p_max": 0.05,
+    "cv_best_vs_random_median_cost_delta_pct_max": 0.0,
+    "cv_best_vs_random_wins_must_exceed_losses": true,
+    "positive_control_cost_improvement_instance_rate_min": 0.8,
+    "feasible_rate_min": 1.0
+  },
+  "decision": {
+    "all_primary_checks_pass": "edge_variability_has_actionable_intervention_support",
+    "manipulation_passes_but_cost_checks_fail": "edge_variability_is_predictive_but_not_actionable_under_this_intervention",
+    "manipulation_fails": "intervention_invalid",
+    "rule": "结果后不得修改步数、候选数、随机重复数或门槛"
+  },
+  "evidence_boundary": [
+    "边长变异系数的计算包含边长均值，因此干预并非与路线成本数学独立",
+    "本阶段证明的是固定2-opt邻域中的可干预性，不代表进化过程中的唯一因果机制",
+    "随机对照只控制同类降波动移动的选择强度，不控制所有可能的局部搜索策略"
+  ]
+}

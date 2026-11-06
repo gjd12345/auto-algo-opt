@@ -1,0 +1,38 @@
+{
+  "schema_version": "algorithm-optimization-frozen-selection/v1",
+  "selection_kind": "final_population_set",
+  "members": [
+    {
+      "generation": 3,
+      "member_index": 0,
+      "algorithm": "Deterministic fixture heuristic",
+      "algorithm_text_sha256": "c49a462c444fb7eb97c5fcc26d98d8e9816a88b405b21b1b060918718e924b90",
+      "code": "def priority(item, bins):\n    fixture_revision = 2\n    return -bins",
+      "code_sha256": "7eb385f28afd80880730a5250bad447e0de700928d0c32e74b9799af379dd6f9",
+      "objective": 0.0,
+      "evaluation_id": "0e03d87c8cee4e2fb23610de463872c5",
+      "revision": "original",
+      "origin": "official_eoh",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e"
+    },
+    {
+      "generation": 3,
+      "member_index": 1,
+      "algorithm": "Deterministic fixture heuristic",
+      "algorithm_text_sha256": "c49a462c444fb7eb97c5fcc26d98d8e9816a88b405b21b1b060918718e924b90",
+      "code": "def priority(item, bins):\n    fixture_revision = 3\n    return np.zeros_like(bins)",
+      "code_sha256": "e80658584a0f8cfd36c11d48d798f8181b7d023d369476598f4e10fe9cbae4b1",
+      "objective": 0.14821428571428572,
+      "evaluation_id": "caf6fb7353ca45ad9b628180ff34d537",
+      "revision": "original",
+      "origin": "official_eoh",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e"
+    }
+  ],
+  "training_metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+  "source_ref": "session/rounds/round_0002/population_snapshot.json",
+  "k_requested": null,
+  "locked": true,
+  "test_evaluated": false,
+  "content_hash": "6ca4164c05fc8ed4513c69878c168f72e02a493ce3fc7ab2f7bfb5b16e8c91d6"
+}

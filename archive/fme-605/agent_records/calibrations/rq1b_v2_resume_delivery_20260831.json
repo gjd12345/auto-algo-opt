@@ -1,0 +1,58 @@
+{
+  "document_id": "rq1b-v2-resume-complete-20260831",
+  "actor": "codex",
+  "artifact_role": "audited_research_readout",
+  "status": "completed_with_negative_engineering_gates",
+  "scientific_status": "inconclusive_mechanism_not_established",
+  "contract": "agent_records/contracts/refactor0830_rq1b_v2_resume_v1.json",
+  "scientific_execution_commit": "7b8af95c576c0bfbe9b8392eb2c6fb7c9e776523",
+  "continuation_execution_commit": "f18b5d813be76074e68f2dad41e2cc17ce965ef6",
+  "protocol_hash": "140043168555c6d0234788c8f65d98e9e24f790ba82026d085afc713f577629f",
+  "continuation_manifest_hash": "0e6e79b1bd26b608c2645541605539c042dfcfd393a3955e4b7820fe5eda50f7",
+  "original_run": "outputs/fme_pilot/rq1b_online_20260831_v2",
+  "completed_run": "outputs/fme_pilot/rq1b_online_20260831_v2_resume_v1",
+  "summary_sha256": "441c7f187c14adba7e7e1da7aef14a48bc9b3d792c79ca3f734045706cc4a529",
+  "audit": "agent_records/calibrations/rq1b_online_20260831_v2_resume_v1_audit.json",
+  "audit_sha256": "b3e05c46a74b93f51fdbc3c686734d8340c6cb6f9ec14e9b805d36afbbdab54e",
+  "integrity": {
+    "pre_api_exact_replay_cells": 12,
+    "successful_responses_reused": 333,
+    "pre_api_new_http_and_solver_calls": 0,
+    "original_tree_unchanged": true,
+    "science_source_hashes_matched": 24,
+    "continuation_source_hashes_matched": 3,
+    "all_successful_original_requests_not_resampled": true,
+    "scientific_audit": "evidence_integrity_verified",
+    "continuation_audit": "resume_integrity_verified"
+  },
+  "completion": {"cells": 24, "candidate_slots": 384, "common_code_diagnostics": 36, "heldout_cells": 24, "order": "all_search_complete_then_global_freeze_then_diagnostics_then_heldout"},
+  "budget": {"logical_requests": 804, "logical_requests_cap": 805, "original_http": 337, "new_http": 472, "total_http": 809, "failed_http": 5, "actual_max_http_per_logical": 2, "original_http_cap_per_logical": 9, "known_input_tokens": 1993306, "known_output_tokens": 311062, "requests_missing_usage": 5},
+  "primary_C_minus_B": {
+    "same_code_behavior_accuracy_delta": -0.009259259259259264,
+    "median_potential_auc_delta": 0.012434988085588069,
+    "auc_positive_seed_pairs": 7,
+    "median_heldout_relative_gain": 0.00516482094830503,
+    "valid_candidates_B": 112,
+    "valid_candidates_C": 105,
+    "candidates_per_arm": 128,
+    "median_target_penalized_loss_reduction": -0.19208333333333336,
+    "strict_supported_C_traces": 0
+  },
+  "gates": {"Integrity": true, "Behavior": false, "Target": false, "Search": false, "Chain": false},
+  "conclusion": "C-B shows an exploratory search-AUC signal but not improved same-code behavior prediction or an established mechanism chain; validity loss exceeds the frozen5pp tolerance. No expansion or additional experiments authorized by this result.",
+  "report": {
+    "knowledge_base_relative_directory": "0724/过程文档/2026-08-31/RQ1b-v2-完整续跑实验报告",
+    "files": {
+      "report.html": "8e49c3dfae7c0f9abeabac4ce2f8ce54fd063a759ee47c59985d4e0a3861685e",
+      "results.json": "041ac9cee365a9fbd374c70c79f8755f06bbd7d01fee0b4a7d1ad689067e5f34",
+      "artifact.json": "92c78b9f2ac4e8510c0113ce11657beb31d16fc194048dda4d6ab60d3ce1b59a"
+    },
+    "copy_hashes_verified": true,
+    "old_interrupted_report_unchanged_sha256": "7668e2437d0be511d0ca3bec0e13ef7110e0fdff78c27caaa6828419d1b6447f",
+    "packaging_validation": "passed",
+    "html_verification": "structural_only",
+    "visual_interaction_qa": "not_executed_no_installed_headless_chromium"
+  },
+  "verification_boundary": "Necessary compilation and diff checks, explicitly authorized historical identity gate, one real continuation cohort and final read-only audit; no unit-test suite or extra scientific cohort. Report initially hit Windows console encoding, corrected without changing data or experimental code.",
+  "preservation": "All original v1/v2 evidence, old interruption reports and complete continuation evidence retained. No material deletion in this continuation; prior denied cleanup was not retried. Raw responses, state checkpoints, logs and credentials remain outside Git."
+}

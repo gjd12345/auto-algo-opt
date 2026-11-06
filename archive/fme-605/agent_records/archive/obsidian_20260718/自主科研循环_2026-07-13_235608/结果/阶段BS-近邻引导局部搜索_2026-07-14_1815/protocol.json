@@ -1,0 +1,60 @@
+{
+  "schema_version": "tsp-nearest-neighbor-two-opt-protocol/v1",
+  "frozen_at": "2026-07-14T18:15:00+08:00",
+  "research_role": "locked_discovery_confirmation_quality_postprocessing",
+  "question": "用几何近邻引导2-opt能否补足随机候选局部修复的漏检，并在冻结12槽之上继续扩大路线降幅",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "split_manifest_sha256": "72266d3ea593a1ccd3990f9f0e1b2f928ef0155a38a556b717ca2ec7146a7fb3",
+    "discovery_results_sha256": "a4bc67e7912a231c13befce819d8f1be64e2fc11cd9220835904f8d2b65b9ed9",
+    "confirmation_results_sha256": "b6e14d729f70f14d49a9d5bfaf0d6d9ef0c770d6d60af71260f2a64a7fdb878e",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "repair": {
+    "type": "nearest_neighbor_guided_best_improvement_2opt",
+    "nearest_neighbor_count": 40,
+    "maximum_steps": 100,
+    "neighbor_build_block_size": 128,
+    "accept_when": "路线总成本严格降低",
+    "stop_when": "没有候选交换可严格降低成本或达到100步",
+    "tie_break": "候选边位置按字典序较小者",
+    "same_rule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "discovery_instance_count": 28,
+    "confirmation_instance_count": 28,
+    "routes_per_instance": 2,
+    "raw_route_cost_must_match_stage_bq": true,
+    "checkpoint": "每个实例完成后立即flush"
+  },
+  "discovery_gate": {
+    "valid_route_count_min": 56,
+    "portfolio_repair_improved_instances_min": 20,
+    "portfolio_repair_median_extra_improvement_pct_min": 0.5,
+    "repaired_portfolio_vs_repaired_baseline_wins_min": 18,
+    "repaired_portfolio_vs_repaired_baseline_losses_max": 5,
+    "final_vs_raw_baseline_mean_improvement_pct_min": 4.0
+  },
+  "confirmation_gate": {
+    "valid_route_count_min": 56,
+    "portfolio_repair_improved_instances_min": 20,
+    "portfolio_repair_median_extra_improvement_pct_min": 0.5,
+    "repaired_portfolio_vs_repaired_baseline_wins_min": 18,
+    "repaired_portfolio_vs_repaired_baseline_losses_max": 5,
+    "final_vs_raw_baseline_mean_improvement_pct_min": 4.0
+  },
+  "leakage_controls": [
+    "近邻数、最大步数、接受条件和门槛在任何修复结果前冻结",
+    "发现阶段只打开discovery_code_results.csv",
+    "发现门槛全部通过并冻结摘要SHA-256后才能打开confirmation_code_results.csv",
+    "结果后不得增加近邻数、步数或删除修复收益低的实例"
+  ],
+  "decision": {
+    "discovery_pass": "freeze_repair_discovery_and_run_confirmation_once",
+    "discovery_fail": "end_nearest_repair_branch_without_confirmation",
+    "confirmation_pass": "nearest_guided_repair_supported_on_quality_portfolio",
+    "confirmation_fail": "report_repair_boundary_without_retuning",
+    "default_pool_behavior": "unchanged"
+  }
+}

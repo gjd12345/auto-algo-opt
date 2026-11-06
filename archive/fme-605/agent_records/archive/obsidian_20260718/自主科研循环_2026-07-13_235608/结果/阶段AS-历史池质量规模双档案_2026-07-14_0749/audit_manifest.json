@@ -1,0 +1,110 @@
+{
+  "schema_version": "tsp-history-scalability-audit/v1",
+  "created_at": "2026-07-13T23:48:23.239086+00:00",
+  "repo_commit": "06224a1c2de4487849c3afb93f816375c4cf5772",
+  "history_path": "evidence/final_batch_20260630/shared_pool_snapshot/best_codes_tsp_construct.jsonl",
+  "history_sha256": "27e58dedacc5e069bcef6435fdf68afecfdd4de9358d5d144f3007a035b26f10",
+  "history_row_count": 206,
+  "unique_code_count": 206,
+  "catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+  "registry_sha256": "00a9eb2d3d16c1641c22296e6ccfe71b3b8d50c42dd90c25d4f716bdf4f55642",
+  "evaluator_sha256": "f2145e7cbde978673ff7f600622fee431411296fad319d054eac849d2e4af76c",
+  "ladder": [
+    {
+      "instance": "kroA200",
+      "timeout_s": 5.0
+    },
+    {
+      "instance": "a280",
+      "timeout_s": 10.0
+    },
+    {
+      "instance": "pr1002",
+      "timeout_s": 15.0
+    },
+    {
+      "instance": "pcb3038",
+      "timeout_s": 30.0
+    }
+  ],
+  "archive_size": 6,
+  "quality_archive_rule": "objective asc, original_index asc",
+  "scalability_archive_rule": "pass all ladder stages; objective asc, pcb3038 wall time asc, AST nodes asc, original_index asc",
+  "ladder_entry_selection_uses_evaluation_outcomes": false,
+  "scalability_archive_uses_ladder_outcomes": true,
+  "full_core12_rule": "only the frozen scalability archive; 30 seconds per instance; ladder coordinates are reused",
+  "tsp_instances": [
+    {
+      "problem": "tsp_construct",
+      "instance": "eil51",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/eil51.tsp",
+      "sha256": "66c05ad077ffd64d5778e358bbd16be049f8c8ae880cbd24f034487331d1ccce"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "st70",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/st70.tsp",
+      "sha256": "60c09e8886609bf22d6dc699fe7d7aa1924207d084578aad1a377ec65cf15b1b"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "kroA100",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/kroA100.tsp",
+      "sha256": "e103100c1cf31dfc06be95a9d04011b5a8753bb65a3339594ca34404e574bdf5"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "ch130",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/ch130.tsp",
+      "sha256": "b9304715dff0085925598a51f36c24b7cf390cb991bd8262f061dd7497bd8742"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "kroA200",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/kroA200.tsp",
+      "sha256": "fd1f7640e823286826796bfccd103787c25f0b52e7275fae7eabf286303c0cbe"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "tsp225",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/tsp225.tsp",
+      "sha256": "3d356ab7c1a724cd1e05e0809cf2db11932c3bc8f54f6124e02c2b6c7f5fd901"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "a280",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/a280.tsp",
+      "sha256": "3fb489af4be6d04f2e84e73ec8302c32c65e6d344187b2347685fb311416e7bf"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "pcb442",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/pcb442.tsp",
+      "sha256": "0f58bc2f1aa0023764ebc14b3b0dcb6e765ffe173963fdc1cb8443d969842b51"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "rat575",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/rat575.tsp",
+      "sha256": "7790177e38dba62ddd3823e4ac94aa677fb8b518a8e1e8a70bbe604529fd8619"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "rat783",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/rat783.tsp",
+      "sha256": "b9535dc5e44549f613bf6e34ee8667eed6f7a13e6b74c0b0451de95a480cabde"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "pr1002",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/pr1002.tsp",
+      "sha256": "2211b491e3b8c6ad087d58ead2a8480f9b1bb006fc4b9a245fc594cedd2ee8a7"
+    },
+    {
+      "problem": "tsp_construct",
+      "instance": "pcb3038",
+      "path": "eoh_rag_workspace/held_out/core/tsp_construct/pcb3038.tsp",
+      "sha256": "25081ac540357ec34935a4b366f32e58b0d605565b888f876211769ec972b87a"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "tsp-or-opt-2-external-confirmation-protocol/v1",
+  "frozen_at": "2026-07-14T19:50:00+08:00",
+  "research_role": "locked_external_confirmation_of_incremental_neighborhood_gain",
+  "question": "不再调整任何搜索参数时，Or-opt-2 能否在 28 个未参与其开发的官方实例上稳定改善单节点收敛路线？",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "split_manifest_sha256": "72266d3ea593a1ccd3990f9f0e1b2f928ef0155a38a556b717ca2ec7146a7fb3",
+    "stage_bs_confirmation_sha256": "4a8376c3138b7c015e084152d454351fe9616d520f9bd61dc5a89699c81920b7",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bv_protocol_sha256": "817c6c4c799a8a78c613ed65e462cbe4fb12515e1715b80f3642f93b62f5d255",
+    "stage_bw_protocol_sha256": "6873c7f23ce8123ad82884649ff5f00f175d30a16460e88f20c81863d9fd49d5",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "split": {
+    "name": "confirmation",
+    "instance_count": 28,
+    "source": "Stage BI 预先冻结的 28/28 划分",
+    "research_boundary": "这些实例参与过前序 2-opt 确认，但没有参与 Or-opt-2 定义、参数或门槛选择"
+  },
+  "search": {
+    "stage_bt_schedule": "原样重放 40 近邻、最多 500 步、8 次确定性双桥重启",
+    "stage_bv_schedule": "原样重放单节点移位至无改进或最多 500 次",
+    "stage_bw_schedule": "原样重放连续两节点移位至无改进或最多 100 次，每次后重新收敛 2-opt 与单节点移位",
+    "same_schedule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "instance_count": 28,
+    "archive_role_count": 2,
+    "expected_result_count": 56,
+    "raw_cost_must_match_stage_bs": true,
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 56,
+    "portfolio_nonworse_than_stage_bv_instances_min": 28,
+    "portfolio_strictly_better_than_stage_bv_instances_min": 14,
+    "portfolio_median_extra_improvement_pct_min": 0.05,
+    "portfolio_vs_baseline_wins_min": 0,
+    "portfolio_vs_baseline_losses_max": 28,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 10.5
+  },
+  "leakage_controls": [
+    "28 个实例、赢家代码、全部搜索日程和门槛在运行前冻结",
+    "不读取 discovery 28 的 Or-opt-2 结果，也不并行试验其他片段长度",
+    "确认失败后不得删除小实例、放宽严格改善或更改中位门槛",
+    "本阶段只确认 Or-opt-2 增量，不把前序参数重新宣称为完全未见"
+  ],
+  "decision": {
+    "all_checks_pass": "or_opt_2_external_incremental_gain_confirmed",
+    "otherwise": "or_opt_2_external_confirmation_failed",
+    "default_pool_behavior": "unchanged"
+  }
+}

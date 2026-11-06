@@ -1,0 +1,82 @@
+{
+  "schema_version": "agent_ad_development_comparison_result/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-feedback-v1-two-candidate-result",
+  "audience": "agent",
+  "created_at": "2026-07-23T08:35:18+08:00",
+  "phase_id": "result_analysis",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "8a520d7b",
+  "status": "development_comparison_complete_retention_gate_passed",
+  "run_key": "bp_order_regime_feedback_v1:two_historical_eoh_candidates:dev_only:v1",
+  "authorization": "User explicitly removed the approval wait on 2026-07-23; execution remained within the frozen card.",
+  "result": {
+    "descriptor_separated": true,
+    "candidate_evaluations": 2,
+    "development_instances_per_candidate": 12,
+    "candidates": [
+      {
+        "candidate_label": "inherited_elite_index_0",
+        "candidate_id": "42fa7edc09d9cb88680e39089f236f3b6440029e17912e84b637e038d6424a08",
+        "development_objective": 0.112613871495,
+        "behavior_profile_hash": "bf886b2af614aab0268c025be630a3f7a70f79ce7189ea52ce1aa8f83a1f0e65",
+        "large_item_order_sensitivity_pct": 6.259098,
+        "worst_regime": "large_dominant",
+        "worst_pair": "small_dominant:0",
+        "status": "complete",
+        "failure_type": null
+      },
+      {
+        "candidate_label": "inherited_elite_index_1",
+        "candidate_id": "3339ac53854f945e579692d70d9d6424d89da0ee64e0b26ae418f33f187efc13",
+        "development_objective": 0.106934884994,
+        "behavior_profile_hash": "ca91a0be5eb0607d5ce6bf5e896967404c759bdc657c155b4ebec0172fec1ee8",
+        "large_item_order_sensitivity_pct": 0.800583,
+        "worst_regime": "large_dominant",
+        "worst_pair": "small_dominant:0",
+        "status": "complete",
+        "failure_type": null
+      }
+    ],
+    "ranking_flip_pairs": [
+      "mixed:0",
+      "mixed:1",
+      "small_dominant:0",
+      "small_dominant:1"
+    ],
+    "in_memory_archive_admissible_counterexample_ids": [
+      "bp-dev-order-regime-v1-mixed-0-random",
+      "bp-dev-order-regime-v1-small_dominant-0-alternating_extremes"
+    ],
+    "verdict": "retain_for_separately_frozen_proposal",
+    "claim_limit": "Development-only implementation validation; no algorithm-quality, held-out, or FME v2 cohort claim."
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_032905-experiment_design-order_regime_two_candidate_comparison_card.agent.json",
+      "purpose": "frozen execution card"
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_feedback.py",
+      "sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+      "purpose": "feedback module and ranking tracker"
+    },
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "468e4548d2cb241b7bf65b88eb40e3f89b82bfd86a859e29dd341b5d892cb4d5",
+      "purpose": "isolated development adapter"
+    }
+  ],
+  "constraints": {
+    "new_llm_calls": 0,
+    "provider": "none",
+    "retries": 0,
+    "tests_executed": false,
+    "test_tier": "not_applicable_frozen_development_comparison_only",
+    "held_out_observed": false,
+    "fme_v2_modified_or_launched": false,
+    "raw_items_code_responses_logs_or_secrets_persisted": false
+  },
+  "next_action": "freeze_a_separate_optional_integration_proposal_for_order_regime_feedback_v1_with_explicit_cost_and_exit_conditions_without_launching_fme_v2"
+}

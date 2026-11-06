@@ -1,0 +1,17 @@
+{
+  "contract_id": "refactor0830_rq1b_v2_resume_v1",
+  "status": "explicitly_authorized",
+  "authority": "2026-08-31 explicit user approval: transport-only continuation of original frozen RQ1b-v2; all successful responses reused; no seed, slot, logical or HTTP cap increase; old failures counted; prompt/state/lineage/hash checks before API; any mismatch stops",
+  "accepts_proposal": "agent_records/proposals/rq1b_v2_stream_resume_v1.json",
+  "original_protocol_hash": "140043168555c6d0234788c8f65d98e9e24f790ba82026d085afc713f577629f",
+  "original_run": "outputs/fme_pilot/rq1b_online_20260831_v2",
+  "new_run": "outputs/fme_pilot/rq1b_online_20260831_v2_resume_v1",
+  "scientific_change": "none",
+  "allowed_change": "Retry HTTP200 stream JSONDecodeError only when no complete response was delivered; preserve exact original request specification and original9 HTTP limit",
+  "budget": {"candidate_slots":384,"logical_requests_max":805,"http_attempts_per_logical_request":9,"http_attempts_max":7245,"original_http_attempts":337,"original_successful_responses":333},
+  "pre_api_gate": "Replay every original successful response and hash-bound evaluation receipt through the unchanged frozen cell; compare every original event, prompt, original final checkpoint including state/lineage and complete-cell result. No API or historical solver execution in this gate. Any identity mismatch aborts without normalization.",
+  "original_evidence": "Read only, tree hashes checked before and after; original incomplete remains unchanged",
+  "trace_policy": "Reproduced prefixes retain exact event hashes; separate continuation manifest identifies original source and replayed versus new requests. Interrupted suffixes remain in original evidence; new suffixes start after failed model_request with old failures retained.",
+  "ordering": "Original shuffled coordinate batches, existing completed cells reused; after all24 incumbents frozen, unchanged36 same-code diagnostic coordinates then unchanged heldout24 cells",
+  "forbidden": ["new preflight API", "resample successful outputs", "change analysis", "change EOH", "change Evaluator", "change Potential", "change thresholds", "pool v1", "expand RQ2-RQ4"]
+}

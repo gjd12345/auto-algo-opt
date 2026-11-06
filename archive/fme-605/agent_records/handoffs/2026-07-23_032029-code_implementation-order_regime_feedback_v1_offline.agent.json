@@ -1,0 +1,95 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-feedback-v1-offline-implementation",
+  "audience": "agent",
+  "created_at": "2026-07-23T03:20:29.6243744+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "e02a40fcb3001769ee3bcfbb4dcb480de65e15e0",
+  "status": "offline_module_implemented_unlaunched",
+  "implementation": {
+    "module": "eoh_rag/fme/order_regime_feedback.py",
+    "module_interface": "OrderRegimeFeedbackAdapter.compile(observations) -> OrderFeedbackSummary",
+    "adapter_scope": "fme_dev_order_regime_feedback_v1 only",
+    "candidate_contract_preserved": "score(item, bins) -> priority_vector",
+    "development_profile": {
+      "profile_name": "fme_dev_order_regime_feedback_v1",
+      "regimes": {
+        "small_dominant": "84000-84001, 0.0 large-item fraction",
+        "mixed": "85000-85001, 0.5 large-item fraction",
+        "large_dominant": "86000-86001, 1.0 large-item fraction"
+      },
+      "paired_orders": [
+        "random",
+        "alternating_extremes"
+      ],
+      "item_count_per_multiset": 2048,
+      "multisets_per_regime": 2
+    },
+    "feedback_fields": [
+      "per_regime_relative_gap_pct",
+      "pair_order_variant_gap_pct",
+      "pair_order_sensitivity_pct",
+      "large_item_order_sensitivity_pct",
+      "worst_regime",
+      "worst_pair",
+      "counterexample_gap_pct",
+      "counterexample_artifacts",
+      "behavior_profile_hash"
+    ],
+    "ranking_flip_support": "OrderRegimeRankingTracker is implemented as a recorder-side pure Module but intentionally not wired into FME recorder/controller in this tick, so the frozen FME v2 runtime path is unchanged.",
+    "runner_surface": "The new profile is intentionally absent from eoh_single_runner CLI choices and every manifest."
+  },
+  "isolation": {
+    "fme_v2_manifest_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "fme_v2_manifest_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "fme_v2_manifest_modified": false,
+    "fme_v2_profile_modified": false,
+    "fme_v2_controller_or_recorder_modified": false,
+    "runner_launch_surface_modified": false,
+    "heldout_generated_or_observed": false,
+    "cohort_started": false
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_030041-architecture_design-order_regime_feedback_contract.agent.json",
+      "sha256": "dfa8983b4a2be75aecaada357aa590617e162f27b943b8175bd60c7a31296b8b",
+      "purpose": "frozen implementation contract"
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_feedback.py",
+      "sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+      "purpose": "deep feedback Module and ranking tracker"
+    },
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "468e4548d2cb241b7bf65b88eb40e3f89b82bfd86a859e29dd341b5d892cb4d5",
+      "purpose": "isolated development-profile Adapter"
+    },
+    {
+      "path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+      "sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+      "purpose": "unchanged FME v2 cohort anchor"
+    }
+  ],
+  "constraints": {
+    "additional_llm_runs_scheduled": 0,
+    "additional_llm_runs_remaining": 0,
+    "api_called_in_this_tick": false,
+    "tests_executed": false,
+    "test_tier": "skipped_by_project_testing_policy",
+    "static_checks": [
+      "python_ast_parse_pass",
+      "git_diff_check_pass",
+      "fme_v2_manifest_hash_pass",
+      "runner_launch_surface_absent_pass",
+      "secret_shape_scan_pass"
+    ],
+    "heldout_observed_in_this_tick": false,
+    "external_code_imported": false,
+    "raw_responses_or_secrets_recorded": false
+  },
+  "next_action": "prepare_an_approval_gated_two_existing_candidate_development_comparison_for_order_regime_feedback_v1_without_running_it_or_launching_any_cohort"
+}

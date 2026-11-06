@@ -1,0 +1,328 @@
+{
+  "schema_version": "agent_ad_code_implementation_card/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-minimal-offline-implementation-card",
+  "audience": "agent",
+  "created_at": "2026-07-23T09:23:11+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "7f23585",
+  "status": "frozen_not_implemented",
+  "objective": "Implement two disabled-by-default offline deep Modules that own symmetric order-regime diagnosis and pure evidence projection without creating any launch or persistence surface.",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ2_rag_adds_value_on_top_of_feedback",
+      "RQ3_memory_reuse_and_cross_distribution_generalization"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "memory_reuse",
+      "evaluation_cost",
+      "evidence_integrity"
+    ]
+  },
+  "allowed_file_scope": {
+    "add_only": [
+      "eoh_rag/fme/order_regime_integration.py",
+      "eoh_rag/fme/order_regime_memory.py"
+    ],
+    "modify_existing": [],
+    "rule": "All immutable records, Protocols, errors, and helper functions required by this milestone live in the two new files. Import them by direct module path; do not export them from eoh_rag.fme.__init__ yet."
+  },
+  "forbidden_file_scope": [
+    "eoh_rag/experiments/run_spec.py",
+    "eoh_rag/experiments/batch_runner.py",
+    "eoh_rag/experiments/eoh_single_runner.py",
+    "eoh_rag/experiments/research_contracts.py",
+    "eoh_rag/fme/controller.py",
+    "eoh_rag/fme/recorder.py",
+    "eoh_rag/fme/archives.py",
+    "eoh_rag/rag/**",
+    "eoh_rag/experiments/rag_context_builder.py",
+    "official_eoh/**",
+    "eoh_rag_workspace/experiments/manifests/**"
+  ],
+  "module_1": {
+    "path": "eoh_rag/fme/order_regime_integration.py",
+    "module": "OrderRegimeDiagnosticCoordinator",
+    "interface": {
+      "construction": "OrderRegimeDiagnosticCoordinator(evaluator: OrderRegimeEvaluator, cache: MutableMapping[str, OrderRegimeCandidateDiagnostic] | None = None)",
+      "operation": "diagnose(checkpoint: FrozenCandidateCheckpoint, policy: OrderRegimeDiagnosticPolicy = OrderRegimeDiagnosticPolicy()) -> OrderRegimeDiagnosticOutcome",
+      "methods_exposed": 1,
+      "side_effects": "No file, network, provider, LLM, manifest, controller, archive, or RAG side effects. The only permitted mutation is writing exact-key candidate diagnostics to the injected in-memory cache when policy.enabled is true."
+    },
+    "immutable_records": {
+      "OrderRegimeDiagnosticPolicy": {
+        "fields": {
+          "enabled": "bool=False",
+          "near_tie_threshold": "float=0.01",
+          "minimum_candidates": "int=2",
+          "maximum_candidates": "int=4",
+          "instances_per_candidate": "int=12",
+          "items_per_instance": "int=2048",
+          "retries": "int=0"
+        },
+        "frozen_v1_values": "All fields except enabled are validated against these exact v1 values; callers cannot use this record to tune the frozen experiment."
+      },
+      "FrozenDiagnosticCandidate": {
+        "fields": [
+          "candidate_id",
+          "code_sha256",
+          "primary_objective",
+          "feasible",
+          "failure_type",
+          "primary_evaluation_hash",
+          "source_actor"
+        ],
+        "exclusions": [
+          "candidate code",
+          "prompt text",
+          "raw response",
+          "raw item sequence"
+        ]
+      },
+      "FrozenCandidateCheckpoint": {
+        "fields": [
+          "checkpoint_id",
+          "trigger_reason",
+          "observed_scope",
+          "candidates",
+          "reserved_item_placements",
+          "profile_spec_sha256",
+          "evaluator_sha256",
+          "feedback_module_sha256"
+        ]
+      },
+      "OrderRegimeCandidateDiagnostic": {
+        "fields": [
+          "candidate_id",
+          "cache_key",
+          "status",
+          "summary",
+          "placements_attempted",
+          "runtime_seconds",
+          "failure_type",
+          "failure_message_hash"
+        ],
+        "status_values": [
+          "complete",
+          "failed"
+        ]
+      },
+      "OrderRegimeDiagnosticOutcome": {
+        "fields": [
+          "checkpoint_id",
+          "status",
+          "reason",
+          "candidate_set_sha256",
+          "planned_item_placements",
+          "reserved_item_placements",
+          "candidate_diagnostics",
+          "ranking_flip_pairs",
+          "behavior_profile_hashes",
+          "cache_hits",
+          "cache_misses",
+          "outcome_sha256",
+          "visible_scope"
+        ],
+        "status_values": [
+          "skipped",
+          "complete",
+          "inconclusive"
+        ]
+      }
+    },
+    "adapter_protocol": {
+      "name": "OrderRegimeEvaluator",
+      "operation": "evaluate(candidate: FrozenDiagnosticCandidate, cache_key: str) -> OrderRegimeCandidateDiagnostic",
+      "production_adapter_future": "A separately authorized BP evaluator bound to a frozen code source; not implemented in this milestone.",
+      "verification_adapter_future": "A deterministic in-memory Adapter; tests are not created or run in this milestone."
+    },
+    "input_invariants": [
+      "Policy disabled is valid and returns before reading checkpoint candidates, cache, or evaluator.",
+      "Enabled policy values exactly match the frozen v1 constants; configuration drift is rejected.",
+      "observed_scope equals dev_only and trigger_reason is one of aggregate_near_tie, suspected_order_fragility, or pending_counterexample_comparison.",
+      "Candidate count is 2-4; candidate_id and code_sha256 are identical valid lowercase SHA-256 values and unique within the checkpoint.",
+      "Every candidate is feasible, has no failure_type, has a finite primary_objective, and has a non-empty primary_evaluation_hash.",
+      "aggregate_near_tie requires at least one non-best candidate within absolute objective distance 0.01 of the best.",
+      "profile, evaluator, and feedback-module hashes are valid lowercase SHA-256 values.",
+      "reserved_item_placements is at least candidate_count * 12 * 2048 before any evaluator call."
+    ],
+    "determinism": [
+      "Sort candidates by candidate_id before cache lookup and evaluation.",
+      "candidate_set_sha256 hashes the ordered candidate IDs, primary evaluation hashes, trigger reason, and implementation hashes.",
+      "The exact candidate cache key hashes candidate code, profile, evaluator, and feedback-module hashes only.",
+      "Instantiate one OrderRegimeRankingTracker per diagnose call and record complete summaries in candidate_id order.",
+      "Canonical JSON SHA-256 excludes runtime_seconds and cache hit/miss counters from scientific identity but includes coordinate status and failure hashes."
+    ],
+    "cache_semantics": [
+      "Disabled and rejected/skipped checkpoints never read or write cache entries.",
+      "Both complete and failed exact-key diagnostics are reusable, preventing silent retries of failures.",
+      "A cache entry whose candidate_id or cache_key disagrees with the requested coordinate is a contract error.",
+      "The coordinator never persists the cache and never accepts path configuration."
+    ],
+    "budget_semantics": [
+      "planned_item_placements equals candidate_count * 24576.",
+      "Reserve the entire symmetric plan before the first cache lookup or evaluator call.",
+      "Cache hits do not alter the frozen planned or reserved cost; cache_hits and cache_misses separately describe actual evaluator demand.",
+      "Evaluate every cache miss exactly once even if another candidate fails, preserving all coordinates.",
+      "No retry, replacement candidate, partial success promotion, or threshold adjustment is permitted."
+    ],
+    "error_modes": [
+      {
+        "condition": "policy.enabled is false",
+        "behavior": "Return status=skipped, reason=disabled, zero planned cost, and do not touch dependencies."
+      },
+      {
+        "condition": "full symmetric budget is absent",
+        "behavior": "Return status=skipped, reason=insufficient_reserved_budget, and do not touch cache or evaluator."
+      },
+      {
+        "condition": "checkpoint or policy violates a scientific invariant",
+        "behavior": "Raise OrderRegimeContractError with a stable error_code and no raw payload in the message."
+      },
+      {
+        "condition": "evaluator raises or returns a malformed diagnostic",
+        "behavior": "Convert that coordinate to status=failed with a class-name failure_type and hashed sanitized message, continue remaining coordinates, and return checkpoint status=inconclusive."
+      },
+      {
+        "condition": "any coordinate is failed or a complete summary has wrong candidate or visible scope",
+        "behavior": "Return status=inconclusive; do not emit ranking flips from failed coordinates."
+      }
+    ]
+  },
+  "module_2": {
+    "path": "eoh_rag/fme/order_regime_memory.py",
+    "module": "OrderRegimeEvidenceProjector",
+    "interface": {
+      "construction": "OrderRegimeEvidenceProjector()",
+      "operation": "project(outcome: OrderRegimeDiagnosticOutcome) -> OrderRegimeEvidenceProjection",
+      "methods_exposed": 1,
+      "side_effects": "Pure in-process transformation; no cache, file, archive, controller, prompt, RAG, provider, or network mutation."
+    },
+    "immutable_records": {
+      "ScopedBehaviorMemory": {
+        "fields": [
+          "memory_id",
+          "problem",
+          "source_candidate_id",
+          "source_actor",
+          "development_suite",
+          "behavior_profile_hash",
+          "worst_regime",
+          "worst_pair",
+          "ranking_flip_pair_keys",
+          "counterexample_ids",
+          "evidence_record_hash",
+          "evidence_level",
+          "applicability_scope",
+          "created_by_actor",
+          "content_hash"
+        ]
+      },
+      "BoundedPromptSummary": {
+        "fields": [
+          "candidate_id",
+          "worst_regime",
+          "worst_pair",
+          "large_item_order_sensitivity_pct",
+          "counterexample_ids",
+          "ranking_flip_pair_keys",
+          "summary_text"
+        ],
+        "limits": "At most two lexically sorted counterexample IDs; summary_text at most 600 characters and generated from fixed templates only."
+      },
+      "OrderRegimeEvidenceProjection": {
+        "fields": [
+          "outcome_sha256",
+          "pending_counterexample_comparisons",
+          "archive_candidates",
+          "decision_input_hashes",
+          "scoped_memories",
+          "prompt_summaries",
+          "projection_sha256",
+          "visible_scope"
+        ]
+      }
+    },
+    "input_invariants": [
+      "Accept only complete or inconclusive outcomes with visible_scope=dev_only and a valid outcome_sha256.",
+      "A skipped outcome projects to empty tuples and pending_counterexample_comparisons=0 without inventing evidence.",
+      "Complete candidate diagnostics must contain summaries whose candidate IDs and behavior hashes match the outcome.",
+      "Failed coordinates may be represented in decision input hashes but never produce archive candidates, scoped memories, or prompt summaries."
+    ],
+    "projection_semantics": [
+      "pending_counterexample_comparisons equals the number of distinct ranking-flip pair keys, not the number of candidate pairs.",
+      "Archive candidates are metadata-only records derived from distinguishing counterexamples; no call to FMEArchives occurs.",
+      "ScopedBehaviorMemory uses problem=bp_online, evidence_level=development_diagnostic_only, applicability_scope=online_bin_packing_order_regime_v1, and created_by_actor=research_agent.",
+      "source_actor is copied from the frozen candidate and is never rewritten as research_agent.",
+      "Memory deduplication identity hashes behavior_profile_hash, applicability_scope, and outcome_sha256.",
+      "Prompt summaries use fixed templates and include no candidate code, raw items, paths, provider fields, held-out values, or free-form model text.",
+      "All tuples are lexically ordered and all hashes use canonical JSON."
+    ],
+    "error_modes": [
+      "Raise OrderRegimeProjectionError with a stable error_code for outcome hash mismatch, scope mismatch, candidate mismatch, malformed summary, or forbidden raw-looking field.",
+      "Never partially project a malformed complete diagnostic.",
+      "An inconclusive outcome may project valid completed coordinates plus explicit decision hashes for failures, but pending comparisons are derived only from verified flips."
+    ]
+  },
+  "static_acceptance": [
+    "Only the two allowed new files appear in the code diff.",
+    "Both files parse with Python AST and contain no CLI parser, main block, subprocess, socket, HTTP, provider, environment-variable, pathlib write, open, or persistence call.",
+    "The default policy literal is enabled=False and diagnose returns before evaluator/cache access when disabled.",
+    "No import from batch_runner, eoh_single_runner, recorder, rag_context_builder, provider, or official_eoh is added.",
+    "The implementation imports only existing pure records/Modules needed for summaries and canonical hashing, or implements local canonical hashing without side effects.",
+    "A static secret-shape scan, absolute-path scan, forbidden-import scan, FME v2 anchor hash check, git diff --check, and changed-file inventory pass.",
+    "No tests, type checker, full build, candidate evaluation, profile construction, manifest validation, API/LLM call, or cohort launch occurs in the implementation tick."
+  ],
+  "suggested_future_tests_not_authorized_by_this_card": [
+    "Disabled policy causes zero evaluator and cache calls.",
+    "Insufficient budget skips before dependency access.",
+    "Two-candidate complete checkpoint produces deterministic outcome and projection hashes.",
+    "One evaluator failure still attempts every remaining coordinate and returns inconclusive.",
+    "Failed cache entries are reused without retry.",
+    "Malformed candidate/cache/summary identity raises the stable contract error.",
+    "Projection never includes raw code, items, held-out values, paths, or provider data."
+  ],
+  "exit_conditions": [
+    "Stop before implementation if either new Module cannot be implemented without touching an existing file.",
+    "Stop if a runner, manifest, recorder, controller, archive, generic RAG, official_eoh, or FME v2 change appears necessary.",
+    "Stop if disabled behavior cannot be proven dependency-free by static inspection.",
+    "Stop if evaluator failure cannot be represented without dropping or retrying coordinates.",
+    "Stop if memory scope and evidence level cannot be enforced in typed records before CorpusItem conversion.",
+    "Stop if FME v2 manifest SHA-256 differs from 3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5."
+  ],
+  "fme_v2_isolation": {
+    "anchor_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "anchor_sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "files_modified_by_card": [],
+    "cohort_started": false
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_085242-architecture_design-order_regime_optional_integration.agent.json",
+      "purpose": "frozen optional integration proposal"
+    },
+    {
+      "path": "agent_records/handoffs/2026-07-23_090832-architecture_audit-order_regime_integration_seams.agent.json",
+      "purpose": "static seam audit and P0 gaps"
+    },
+    {
+      "path": "eoh_rag/fme/order_regime_feedback.py",
+      "sha256": "884824b619e75709e9f18b385ef82230f0c76b82d91e36eee40964ff027479fb",
+      "purpose": "existing pure compiler and ranking tracker"
+    }
+  ],
+  "constraints": {
+    "code_implemented": false,
+    "tests_executed": false,
+    "api_or_llm_called": false,
+    "candidate_evaluations": 0,
+    "held_out_observed": false,
+    "manifest_or_cohort_changed": false,
+    "raw_responses_logs_items_code_or_secrets_persisted": false
+  },
+  "next_action": "implement_exactly_the_two_new_offline_modules_under_this_card_then_run_only_static_acceptance_without_tests_or_any_runtime_integration"
+}

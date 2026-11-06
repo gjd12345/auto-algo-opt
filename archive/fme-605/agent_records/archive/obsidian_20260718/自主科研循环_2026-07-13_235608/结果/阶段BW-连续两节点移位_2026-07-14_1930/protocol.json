@@ -1,0 +1,57 @@
+{
+  "schema_version": "tsp-or-opt-2-vnd-protocol/v1",
+  "frozen_at": "2026-07-14T19:30:00+08:00",
+  "research_role": "exploratory_high_scale_new_neighborhood",
+  "question": "在单节点移位与 2-opt 都自然停止后，整体移动两个连续节点能否继续降低高规模路线成本？",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bt_results_sha256": "149eda9c4c09b16a022db246683db41c65c164a625a2160fb89b5c0cd93e6ec3",
+    "stage_bv_protocol_sha256": "817c6c4c799a8a78c613ed65e462cbe4fb12515e1715b80f3642f93b62f5d255",
+    "stage_bv_results_sha256": "4df0d04d99ba7053e9f80ee2daaa5753d2460ae45935f475dce79230b2b17528",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "search": {
+    "nearest_neighbor_count": 40,
+    "neighbor_build_block_size": 128,
+    "maximum_accepted_or_opt_2_moves": 100,
+    "two_opt_maximum_steps_after_each_or_opt_2": 500,
+    "or_opt_2_candidates": "每个不含起点的连续两节点片段，插到片段首尾节点各 40 个近邻之前或之后",
+    "accept_when": "选择全局最佳且严格降低总成本的连续两节点移位",
+    "tie_break": "片段起点和插入边按字典序较小者",
+    "after_each_move": "先让 2-opt 重新收敛，再按 Stage BV 日程让单节点移位重新收敛",
+    "stop_when": "没有严格降成本的连续两节点移位或已接受 100 次",
+    "same_schedule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role_count": 2,
+    "expected_result_count": 6,
+    "stage_bt_and_stage_bv_cost_must_match": true,
+    "research_limit": "三个实例已用于前序邻域开发，本阶段只判断新邻域是否值得外部确认",
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 6,
+    "portfolio_nonworse_than_stage_bv_instances_min": 3,
+    "portfolio_strictly_better_than_stage_bv_instances_min": 1,
+    "portfolio_median_extra_improvement_pct_min": 0.1,
+    "portfolio_vs_baseline_wins_min": 2,
+    "portfolio_vs_baseline_losses_max": 1,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 13.1
+  },
+  "leakage_controls": [
+    "两节点片段定义、100 次上限、40 近邻和门槛在任何结果前冻结",
+    "只移动原顺序连续的两个节点，不反转片段，不临时加入三节点片段",
+    "每次两节点移动后严格重放相同的 2-opt 与单节点收敛日程",
+    "结果后不增加近邻数、移动次数或替换实例",
+    "通过开发门槛后必须使用未参与开发的外部实例确认"
+  ],
+  "decision": {
+    "all_checks_pass": "or_opt_2_supported_for_external_confirmation",
+    "otherwise": "stop_or_opt_2_and_report_current_quality_boundary",
+    "default_pool_behavior": "unchanged"
+  }
+}

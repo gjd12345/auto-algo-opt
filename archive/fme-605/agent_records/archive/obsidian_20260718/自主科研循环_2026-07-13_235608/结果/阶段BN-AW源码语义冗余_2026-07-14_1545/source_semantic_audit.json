@@ -1,0 +1,64 @@
+{
+  "schema_version": "tsp-aw-source-semantic-audit/v1",
+  "created_at": "2026-07-14T15:45:00+08:00",
+  "instances_replayed": 59,
+  "code_summary": {
+    "AW1": {
+      "code_hash": "dfbe93ae8069e20791bb0d71984e91c9fad5e02be9f443645a7653dca8a84f08",
+      "ast_hash": "b5e42762361aabb10c921d3d76f728ba951a12d90bf8be791eca2571d204b446",
+      "core_formula": "argmin(distance_current - 0.5 * distance_destination)"
+    },
+    "AW2": {
+      "code_hash": "b14a8d533ce92840bb06217b39e4f25c848c99dddd7d3194d237bdbf9aa5c028",
+      "ast_hash": "7e713e1d5f7b93f1c500d30d424216c23a09c18c29be18805048dde4a548c38d",
+      "core_formula": "argmin(0.4 * max(dc + dd - d0, 0) - 0.6 * dd)",
+      "simplified_when_detour_nonnegative": "argmin(dc - 0.5 * dd)",
+      "special_branch": "remaining_nodes <= 3 时改用最近邻"
+    },
+    "AW3": {
+      "code_hash": "857798a7b392c16430de781cd49e8f2d0b56a93c279803f9fa4b053564479437",
+      "ast_hash": "360d26f1dd93ab5018897e4053ffae8e84cd4bc9365c7d89920fa83eb27b2277",
+      "core_formula": "argmin(distance_current - 0.5 * distance_destination)",
+      "difference_from_aw1": "变量名、注释和显式int转换；选择公式相同"
+    },
+    "AW4": {
+      "code_hash": "5b977db25c3fd5036e6457444df0105cf0693526968986ce9f74075912e11b56",
+      "ast_hash": "726d3166d230eeaab052d93565ee04812fd9891aa0e13af6dc0d928413bc8382",
+      "core_formula": "argmax(0.6 * dd - 0.4 * abs(dc + dd - d0))",
+      "simplified_when_detour_nonnegative": "argmin(dc - 0.5 * dd)",
+      "special_branch": "remaining_nodes == 1 时直接返回"
+    }
+  },
+  "empirical_equivalence": [
+    {
+      "pair": "AW1/AW3",
+      "identical_routes": 59,
+      "different_routes": 0,
+      "explanation": "主公式完全相同"
+    },
+    {
+      "pair": "AW1/AW2",
+      "identical_routes": 32,
+      "different_routes": 27,
+      "late_fallback_divergences": 8,
+      "base_score_tie_divergences": 18,
+      "other_rounded_boundary_divergences": 1
+    },
+    {
+      "pair": "AW1/AW4",
+      "identical_routes": 40,
+      "different_routes": 19,
+      "base_score_tie_divergences": 18,
+      "other_rounded_boundary_divergences": 1
+    },
+    {
+      "pair": "AW2/AW4",
+      "identical_routes": 44,
+      "different_routes": 15,
+      "late_fallback_divergences": 13,
+      "other_divergences": 2
+    }
+  ],
+  "conclusion": "四个AW槽位的主体选择规则属于同一公式家族，源码hash和AST hash都未识别出这种代数等价",
+  "next_action": "用少量非held-out合成探针构建路线功能签名，并检验其能否预测真实56实例的边集合相似度"
+}

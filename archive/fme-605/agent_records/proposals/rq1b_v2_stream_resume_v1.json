@@ -1,0 +1,35 @@
+{
+  "schema_version": "research-proposal/v1",
+  "document_id": "rq1b-v2-stream-resume-20260831",
+  "status": "pending_user_approval",
+  "created_date": "2026-08-31",
+  "scope": "Transport-only continuation proposal; no API call or resume is authorized by this file.",
+  "original_study": "refactor0830_rq1b_v2",
+  "original_protocol_hash": "140043168555c6d0234788c8f65d98e9e24f790ba82026d085afc713f577629f",
+  "original_execution_commit": "7b8af95c576c0bfbe9b8392eb2c6fb7c9e776523",
+  "evidence": "agent_records/calibrations/rq1b_online_20260831_v2_audit.json",
+  "observed": {
+    "http_requests": 337,
+    "successful_response_checkpoints": 333,
+    "completed_cells": 10,
+    "interrupted_cells": 2,
+    "not_started_cells": 12,
+    "evaluated_slots": 165,
+    "started_slots": 167,
+    "diagnostic_rows": 0,
+    "heldout_evaluations": 0,
+    "stopping_failures": "HTTP200 / JSONDecodeError in stream parsing, classified retryable=false before a complete analysis response was delivered.",
+    "also_preserved": "One HTTP500 and one missing SSE terminal marker were recovered within the original inner retry policy."
+  },
+  "requested_amendment": {
+    "classification": "Treat malformed or incomplete transport-level SSE JSON with no complete delivered response as a bounded transport failure; never retry a complete low-quality model answer.",
+    "unchanged": ["CVRP24", "DeepSeek V4 Flash", "8 seeds x3 arms x16 slots", "36 fixed same-code diagnostics", "all original prompts and request parameters", "data splits", "selection rule", "continuation gates", "maximum9 HTTP attempts per logical request"],
+    "resume_not_resample": "Reuse every successful checkpoint, including the two generated candidates waiting for analysis. Reconstruct exact prompt/spec hashes, original parent descriptions and state before sending any missing request.",
+    "budget": "All prior HTTP attempts count. A previously successful logical request receives zero new API calls; each unresolved request has at most its original9 minus recorded attempts remaining. No new preflight or extra diagnostic cohort.",
+    "preservation": "Do not overwrite the original incomplete summary, journals or frozen protocol. Write a versioned continuation execution receipt with source/protocol mapping and explicit replay events.",
+    "failure_exit": "Stop on any prompt/spec/state mismatch, source drift, permission denial or exhausted per-request budget. Do not manually rewrite missing parent descriptions or choose which successes to retain."
+  },
+  "implementation_status": "Not implemented or executed. Durable checkpoints have been hash-verified, not automatically replayed.",
+  "scientific_claim_allowed": false,
+  "deferred": ["RQ2", "RQ3", "RQ4", "Phase6"]
+}

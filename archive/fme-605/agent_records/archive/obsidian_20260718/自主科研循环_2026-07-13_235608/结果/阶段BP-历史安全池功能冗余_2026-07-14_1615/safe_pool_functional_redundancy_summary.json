@@ -1,0 +1,43 @@
+{
+  "schema_version": "tsp-safe-pool-functional-redundancy-summary/v1",
+  "protocol_sha256": "caef275bbc82fdd8cdfd2787c5f0cb51f4c2fb31597f3d7e384df8529a01348d",
+  "inputs": {
+    "safe_probe_results_sha256": "a7ca6cb4650f419bb5114175868a56f76f001f786f03584980b40febbe501385",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "cheap_probe_protocol_sha256": "50095e40406f61f01e445e57ef11679165029563fffb07f8735172406f33c160",
+    "cheap_probe_manifest_sha256": "39c1b44b5bb3ba33cf67dc61a66debcf2d2e0d4e491e01ee033ff197a6c80560"
+  },
+  "metrics": {
+    "candidate_code_count": 99,
+    "probe_count": 6,
+    "route_coordinate_count": 594,
+    "valid_route_coordinate_count": 594,
+    "complete_code_count": 99,
+    "failed_code_count": 0,
+    "pair_count": 4851,
+    "redundant_pair_count": 209,
+    "component_count": 50,
+    "singleton_component_count": 38,
+    "nontrivial_component_code_count": 61,
+    "largest_component_size": 15,
+    "exact_functional_signature_count": 58,
+    "exact_duplicate_group_count": 13,
+    "code_count_in_exact_duplicate_groups": 54,
+    "exact_duplicate_excess_code_count": 41,
+    "component_reduction_fraction": 0.4949494949494949,
+    "non_clique_component_count": 0,
+    "minimum_nontrivial_component_pair_similarity": 0.9568186197690903,
+    "top20_objective_component_count": 15,
+    "multi_objective_component_count": 8,
+    "ast_signature_count": 99
+  },
+  "checks": {
+    "candidate_count_matches_protocol": true,
+    "all_probe_coordinates_complete": true,
+    "all_codes_complete": true,
+    "pair_count_matches_protocol": true
+  },
+  "interpretation_guard": "连通分量允许相似链，不能理解为簇内任意两条代码都达到阈值。",
+  "default_pool_behavior": "unchanged",
+  "record_deletion": false
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": "agent_ad_literature_note/v1",
+  "document_id": "agent_ad:2026-07-19:paper-satzilla2012-cost-sensitive-fallback",
+  "audience": "agent",
+  "created_at": "2026-07-19T06:36:15+08:00",
+  "phase_id": "literature_exploration",
+  "actor": "codex",
+  "provenance": "external_teacher_diagnostic",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "89778b1bc79445a257b3bb8e9a6e29c3fd683693",
+  "routing": {
+    "required_docs": [
+      {"path": "01-主线目标与研究问题.md", "raw_sha256": "ffc06589985e6a1dd3e5cc0509196eff9888472ca9e1a4d37117bb9237edfcb0"},
+      {"path": "04-效果评价与基线对照.md", "raw_sha256": "3c67b30fe787c1e648008afce1e1a764014a0c264f35cc711f32195a5ff9cf56"},
+      {"path": "09-Codex自由探索空间.md", "raw_sha256": "c2c93ea816f7eec9fe2cac9823cd358eb9fa3249e1fa2014ae6b9ba1528f8691"}
+    ],
+    "conditional_docs": [
+      {"path": "03-系统架构与模块契约.md", "raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6", "trigger": "map fallback routing to a portable selector layer"}
+    ]
+  },
+  "paper": {
+    "title": "SATzilla2012: Improved Algorithm Selection Based on Cost-sensitive Classification Models",
+    "authors": ["Lin Xu", "Frank Hutter", "Jonathan Shen", "Holger H. Hoos", "Kevin Leyton-Brown"],
+    "venue": "SAT Challenge 2012: Solver and Benchmark Descriptions",
+    "year": 2012,
+    "paper_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/SATzilla/SATzilla2012final.pdf",
+    "project_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/SATzilla/",
+    "official_pdf_sha256": "50D15A960C210AC0BB08A1DCF85A5400389D04DEF0CE488D2EEDD8557E660C27",
+    "license": "Unknown"
+  },
+  "method_evidence": {
+    "core_selector": "one cost-sensitive 99-tree decision forest per algorithm pair; pairwise vote chooses final algorithm",
+    "sample_weight": "absolute performance-score difference for the pair",
+    "additional_pipeline": ["feature-cost guard", "presolvers", "validation-selected fixed backup", "second-highest-vote then backup on execution failure"],
+    "paper_evaluation_limits": "the two-page solver description gives data counts and default component-solver seed but no complete result or ablation table"
+  },
+  "project_mapping": {
+    "current_implementation": "PairwiseCostSensitiveSelector already matches the raw weighting, 99-tree, pairwise-vote core",
+    "current_result": "raw cost weighting is development-only do_not_promote; it must not be rerun or activated under a renamed hypothesis",
+    "new_hypothesis": "a separately preregistered abstain-to-fixed-backup layer may reduce worst-environment regret without accessing confirmation",
+    "candidate_contract": "use only fold-visible confidence/margin and a fold-fixed backup; report trigger rate, realized improvement, regret, worst environment, and usage distribution",
+    "frozen_v1_changed": false,
+    "confirmation_accessed": false,
+    "formal_coordinates_created": 0
+  },
+  "provider_probe": {
+    "checked_at": "2026-07-19T06:36:15+08:00",
+    "opencode_go": "provider_auth_missing",
+    "deepseek": "provider_auth_invalid_http_401",
+    "secret_values_recorded": false
+  },
+  "human_record": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_063615-literature_exploration-SATzilla2012代价敏感选择与保底路由深读.md",
+  "human_record_sha256": "7ABD5363969A7DE939405103E4FE9FF395F5798DAFAA2FE12900EDB9919DCA02",
+  "verification": {
+    "official_pdf_pages": 2,
+    "paper_text_extracted": true,
+    "official_project_page_checked": true,
+    "machine_json_parse": "passed",
+    "markdown_required_headings": "passed",
+    "test_tier": "skipped",
+    "test_reason": "literature and evidence-record update only; no execution path changed"
+  },
+  "next_action": "restore valid provider credentials outside the repository, rerun frozen v1 coordinates 20101/20102/20103, and keep the cost-weighted selector inactive"
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "agent-ad-experiment-draft/v1",
+  "draft_revision": 4,
+  "suite": "tsp_inherited_pool_confirmation_v1",
+  "status": "frozen_draft_not_running",
+  "model": "deepseek-v4-flash",
+  "provider": "opencode-go",
+  "problems": ["tsp_construct"],
+  "arms": [
+    {
+      "name": "fresh_start",
+      "runner_arm": "pure_eoh",
+      "inherit_shared_pool": false
+    },
+    {
+      "name": "inherited_top6",
+      "runner_arm": "pure_eoh",
+      "inherit_shared_pool": true
+    }
+  ],
+  "generations": [4],
+  "pop_size": 6,
+  "seed_list": [9101, 9102, 9103, 9104, 9105, 9106, 9107, 9108, 9109, 9110],
+  "max_runs": 20,
+  "run_timeout_s": 5400,
+  "eval_timeout_s": 40,
+  "held_out_timeout_s": 30,
+  "operators": "e1,e2,m1,m2",
+  "n_processes": 1,
+  "broad_training": true,
+  "n_train": 64,
+  "max_concurrent_runs": 6,
+  "held_out": [
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/eil51.tsp", "sha256": "66c05ad077ffd64d5778e358bbd16be049f8c8ae880cbd24f034487331d1ccce"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/st70.tsp", "sha256": "60c09e8886609bf22d6dc699fe7d7aa1924207d084578aad1a377ec65cf15b1b"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/kroA100.tsp", "sha256": "e103100c1cf31dfc06be95a9d04011b5a8753bb65a3339594ca34404e574bdf5"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/ch130.tsp", "sha256": "b9304715dff0085925598a51f36c24b7cf390cb991bd8262f061dd7497bd8742"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/kroA200.tsp", "sha256": "fd1f7640e823286826796bfccd103787c25f0b52e7275fae7eabf286303c0cbe"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/tsp225.tsp", "sha256": "3d356ab7c1a724cd1e05e0809cf2db11932c3bc8f54f6124e02c2b6c7f5fd901"},
+    {"path": "eoh_rag_workspace/held_out/core/tsp_construct/a280.tsp", "sha256": "3fb489af4be6d04f2e84e73ec8302c32c65e6d344187b2347685fb311416e7bf"}
+  ],
+  "shared_pool_snapshot": "evidence/final_batch_20260630/shared_pool_snapshot",
+  "shared_pool_file": "best_codes_tsp_construct.jsonl",
+  "shared_pool_sha256": "27e58dedacc5e069bcef6435fdf68afecfdd4de9358d5d144f3007a035b26f10",
+  "shared_pool_top_k": 6,
+  "pool_policy": "read_only_snapshot",
+  "outcome_policy": "disabled",
+  "prev_run_chain": false,
+  "pass_gate": {
+    "complete_pairs": 10,
+    "inherited_heldout_feasible": 70,
+    "inherited_heldout_total": 70,
+    "median_pair_gain_gt": 0.0,
+    "minimum_pair_wins": 7,
+    "maximum_candidate_valid_rate_drop": 0.10,
+    "a280_failures": 0
+  },
+  "required_usage_fields": [
+    "request_count",
+    "retry_count",
+    "prompt_tokens",
+    "completion_tokens",
+    "total_tokens",
+    "request_latency_ms"
+  ],
+  "required_stage_timings": ["seed_eval_s", "evolution_s", "held_out_s"],
+  "required_code_metrics": ["nonblank_lines", "ast_nodes", "loop_count", "max_loop_depth"],
+  "secondary_probe_selection": {
+    "enabled": true,
+    "changes_primary_result": false,
+    "applies_to_arms": ["fresh_start", "inherited_top6"],
+    "candidate_set": "final_population_top6",
+    "dev_sizes": [120, 160, 200],
+    "coordinate_seed_formula": "20260714+n",
+    "per_dev_instance_timeout_s": 15,
+    "fit": "least_squares_log_runtime_on_log_n",
+    "target_n": 280,
+    "safe_if_predicted_runtime_lt_s": 30,
+    "if_any_dev_timeout": "candidate_is_unsafe",
+    "if_no_safe_candidate": "report_no_safe_candidate_without_fallback",
+    "selection": "lowest_training_objective_among_safe_candidates",
+    "uses_core7_for_selection": false
+  },
+  "raw_output": "eoh_rag_workspace/reports/formal/tsp_inherited_pool_confirmation_v1"
+}

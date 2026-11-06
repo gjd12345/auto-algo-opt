@@ -1,0 +1,1088 @@
+{
+  "manifest": {
+    "schema_version": "algorithm-optimization-experiment-manifest/v1",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "runtime_hash": "f5437c7719415c86f9755739ba4cd65c041c5d3e00a834d5b4d563f249e031ac",
+    "skill_hash": "06ed229843d0037f231c2918aa75a0e56ae99dc0f2ef753d3615022a0098b6a1",
+    "model": "deepseek-flash",
+    "endpoint_identity": "https://api.deepseek.com/v1/chat/completions",
+    "inheritance_mode": "population_seeds",
+    "feedback_mode": "runtime_facts",
+    "agent_guidance": false,
+    "repair_mode": "off",
+    "memory_enabled": false,
+    "evaluation_budget": 100,
+    "population_size": 2,
+    "rounds": 2,
+    "round_budget": 50,
+    "search_seed": 20260908,
+    "extra": {
+      "search_policy_defaults": {
+        "pop_size": 2,
+        "n_pop": 2,
+        "max_sample_nums": 100
+      },
+      "search_policy_limits": {
+        "pop_size": [
+          2,
+          2
+        ],
+        "n_pop": [
+          2,
+          2
+        ],
+        "max_sample_nums": [
+          100,
+          100
+        ]
+      },
+      "generation_contract": {
+        "protocol_version": "openai-path-bridge/v1",
+        "model": "deepseek-flash",
+        "endpoint_identity": "https://api.deepseek.com/v1/chat/completions",
+        "thinking": {
+          "type": "disabled"
+        },
+        "temperature": 1.0,
+        "max_output_tokens": 16384,
+        "request_timeout_seconds": 180,
+        "concurrency": 1,
+        "provider_seed": null,
+        "generation_parameters": {
+          "temperature": 1.0,
+          "max_tokens": 16384,
+          "thinking": {
+            "type": "disabled"
+          }
+        },
+        "repair_parameters": {
+          "temperature": 0.2,
+          "max_tokens": 8192,
+          "thinking": {
+            "type": "disabled"
+          },
+          "response_format": {
+            "type": "json_object"
+          }
+        },
+        "response_policy": "content_only_complete_v1"
+      },
+      "resource_contract": {
+        "request_budget": 160,
+        "round_request_budget": 80,
+        "wall_clock_budget": 1200,
+        "round_wall_clock_budget": 600,
+        "evaluation_budget": 100,
+        "round_evaluation_budget": 50,
+        "solver_timeout_seconds": 20,
+        "repair_request_budget": null
+      },
+      "knowledge_mode": "off",
+      "pilot_schema": "algorithm-optimization-controlled-pilot/v1",
+      "pilot_id": "obp_v1.1_controlled"
+    }
+  },
+  "selection": {
+    "schema_version": "algorithm-optimization-frozen-selection/v1",
+    "selection_kind": "archive_topk",
+    "members": [
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    remaining_after = bins - item\n    utilization = 1.0 - (remaining_after / (remaining_after + item + 1e-12))\n    return -remaining_after + 1e-6 * utilization",
+        "code_sha256": "3e92736fb8fbb920556d455bef3c89b929074c624d1a53cd3db8f96f65d06e5c",
+        "objective": 0.0,
+        "evaluation_id": "8b05932f7ac4448b9d7d14cc541bcff6",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/1",
+        "score_evaluation_ref": "evaluation:8b05932f7ac4448b9d7d14cc541bcff6",
+        "first_evaluation_order": 1
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    return -bins",
+        "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+        "objective": 0.0,
+        "evaluation_id": "8b382d0b16f4420bb638310b8b59d4d9",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/2",
+        "score_evaluation_ref": "evaluation:8b382d0b16f4420bb638310b8b59d4d9",
+        "first_evaluation_order": 2
+      },
+      {
+        "code": "import numpy as np\n\ndef priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    # Primary: prefer the tightest fit (smallest remaining space after placing item).\n    # Secondary: among equal tightness, prefer the bin with less absolute remaining capacity.\n    # This is equivalent to maximizing (-(bins - item)) + small * (-bins), but we use\n    # a direct formula that remains stable and numerically simple.\n    residual_after = bins - item\n    return -residual_after - 1e-6 * bins",
+        "code_sha256": "5c3fa73416124418ba4de415b41bd910525ee2d3184db2a70e924f686a95fe07",
+        "objective": 0.0,
+        "evaluation_id": "107f5a3e1edd4f74ad80e5305281c18c",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/3",
+        "score_evaluation_ref": "evaluation:107f5a3e1edd4f74ad80e5305281c18c",
+        "first_evaluation_order": 3
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    remaining_after = bins - item\n\n    # Target a small but nonzero slack band: too tight harms future flexibility,\n    # too loose wastes capacity.\n    target_slack = 0.15 * item\n    band_score = -np.abs(remaining_after - target_slack)\n\n    # Reward bins where placement meaningfully increases packing density.\n    fill_score = item / (bins + 1e-12)\n\n    # Slightly prefer bins whose remaining capacity after placement is small,\n    # but only within the band logic above.\n    compact_score = -remaining_after\n\n    return band_score + 0.5 * fill_score + 1e-6 * compact_score",
+        "code_sha256": "9f4201ce214a17525033ee8f4cd0d773918671bf2972d9a8e833faa7ab365422",
+        "objective": 0.0,
+        "evaluation_id": "4ca3669ddbab498c81664c4c97511279",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/5",
+        "score_evaluation_ref": "evaluation:4ca3669ddbab498c81664c4c97511279",
+        "first_evaluation_order": 5
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    remaining_after = bins - item\n    target_slack = 0.15 * item + 0.05 * (item ** 0.5)\n    preference = 1.0 / (1.0 + np.abs(remaining_after - target_slack))\n    return -remaining_after + 0.02 * preference",
+        "code_sha256": "88173eee286d520951c7a12c8e7252e39e2cfe7af31b430e50d78cbe2e673c99",
+        "objective": 0.0,
+        "evaluation_id": "32802435066f4be68fadc9bb8317a1e9",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_6",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/6",
+        "score_evaluation_ref": "evaluation:32802435066f4be68fadc9bb8317a1e9",
+        "first_evaluation_order": 6
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    remaining_after = bins - item\n    utilization = item / (bins + 1e-12)\n    return -remaining_after + 1e-4 * utilization",
+        "code_sha256": "9b8e6ede92072779dd9b7490ff50f5bf0bcc5c3665bd3c787743059bbdf3eea4",
+        "objective": 0.0,
+        "evaluation_id": "ca1f8fe916d7479ca3636d15de8de750",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_8",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/8",
+        "score_evaluation_ref": "evaluation:ca1f8fe916d7479ca3636d15de8de750",
+        "first_evaluation_order": 8
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    residual = bins - item\n    total = bins + item\n    frac = residual / (total + 1e-12)\n    return -frac - 1e-9 * residual",
+        "code_sha256": "3b1caf35c2882f70d29d3be88832be06ab006c3e5d7b25aa81314f51aeacaf8e",
+        "objective": 0.0,
+        "evaluation_id": "d0fff88d554947a698a3e774a08e0ed5",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_11",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/11",
+        "score_evaluation_ref": "evaluation:d0fff88d554947a698a3e774a08e0ed5",
+        "first_evaluation_order": 11
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    remaining_after = bins - item\n    tie_break = item / (bins + 1e-12)\n    return -remaining_after + 1e-3 * tie_break",
+        "code_sha256": "1a08f539e4d38a92eaa91034d705f1ba981eaecc752a1eb6f8aa394ede356391",
+        "objective": 0.0,
+        "evaluation_id": "3489fa2e17844e1d9f99bbb861c61041",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_12",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/12",
+        "score_evaluation_ref": "evaluation:3489fa2e17844e1d9f99bbb861c61041",
+        "first_evaluation_order": 12
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    residual = bins - item\n    return -np.sqrt(np.maximum(bins, 0.0) * np.maximum(residual, 0.0) + 1e-12)",
+        "code_sha256": "5f6861c96a0025431711728a1ca55c3cedfb71ac6850ee44c383f4245d80f6ba",
+        "objective": 0.0,
+        "evaluation_id": "5257c377ba594154adf0fc36174363e7",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_13",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/13",
+        "score_evaluation_ref": "evaluation:5257c377ba594154adf0fc36174363e7",
+        "first_evaluation_order": 13
+      },
+      {
+        "code": "def priority(item: float, bins: np.ndarray) -> np.ndarray:\n    \"\"\"Return one priority for each feasible bin.\n\n    ``bins`` contains remaining capacities after filtering bins that cannot\n    hold ``item``.  The evaluator selects the first maximum priority and\n    opens a new bin when the array is empty.\n    \"\"\"\n    residual = bins - item\n    scale = item + 1e-12\n    z = residual / scale\n    sweet = np.exp(-((z - 0.35) ** 2) / 0.08)\n    guard = 1.0 / (1.0 + np.exp(-8.0 * z))\n    spread = 1.0 / (1.0 + z * z)\n    return sweet + 0.25 * guard + 0.1 * spread",
+        "code_sha256": "52b457bb497f09288fb4dffcfad9ac894116e1451e40d647276ecd496454aef1",
+        "objective": 0.0,
+        "evaluation_id": "53e33abe22314d34ba6cb2364b2ca261",
+        "problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+        "data_manifest_hash": "0eca0bb36d858e7591d7a9c9ad99c92a4622f2f46754869652346453a3a5d3ca",
+        "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+        "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+        "origin": "generated",
+        "candidate_id": "candidate_14",
+        "revision": "original",
+        "algorithm": "",
+        "algorithm_text_sha256": "",
+        "discovery_ref": "rounds/round_0001/evaluation_facts.json#candidates/14",
+        "score_evaluation_ref": "evaluation:53e33abe22314d34ba6cb2364b2ca261",
+        "first_evaluation_order": 14
+      }
+    ],
+    "training_metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "source_ref": "archive.json",
+    "k_requested": 10,
+    "locked": true,
+    "test_evaluated": false,
+    "content_hash": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0"
+  },
+  "metrics": {
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "selection_kind": "archive_topk",
+    "best_training_fitness": 0.0,
+    "training": {
+      "rounds": [
+        {
+          "round_id": 1,
+          "generated": 49,
+          "valid_generated": 49,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "code_sha256": "c250c13f31d10d99efa9272e4aa76befe5be339121492ff9e807fc6b33186fe0",
+            "evaluation_id": "2022d0715f0f49ada7e9c2431c404184",
+            "objective": 0.0,
+            "origin": "baseline",
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 1,
+            "novel_candidate_evaluations": 48,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 0,
+            "total_evaluation_attempts": 50
+          },
+          "distinct_valid_code_count": 48
+        },
+        {
+          "round_id": 2,
+          "generated": 47,
+          "valid_generated": 40,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "objective": 0.0,
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 2,
+            "novel_candidate_evaluations": 95,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 2,
+            "total_evaluation_attempts": 100
+          },
+          "distinct_valid_code_count": 40
+        }
+      ],
+      "generated_candidates": 96,
+      "valid_generated_candidates": 89,
+      "invalid_generated_candidates": 7,
+      "generated_valid_rate": 0.9270833333333334,
+      "distinct_valid_generated_code_count": 88,
+      "duplicate_valid_generated_code_count": 1,
+      "best_generated_fitness": 0.0,
+      "invalid_error_counts": {
+        "candidate_error": 3,
+        "forbidden_attribute": 4
+      }
+    },
+    "heldout_aggregate_fitness": 0.0
+  },
+  "budget": {
+    "eoh_max_requests": 160,
+    "eoh_requests_used": 98,
+    "eoh_requests_remaining": 62,
+    "eoh_round_max_requests": 80,
+    "max_solver_calls": 100,
+    "solver_calls_used": 100,
+    "solver_calls_remaining": 0,
+    "round_budget": 50,
+    "round_solver_calls_used": 50,
+    "round_solver_calls_remaining": 0,
+    "engine_wall_seconds": 1200.0,
+    "round_wall_seconds": 600.0,
+    "repair_max_requests": null,
+    "total_evaluation_attempts": 100,
+    "novel_candidate_evaluations": 95,
+    "seed_reevaluation_attempts": 2,
+    "baseline_attempts": 2,
+    "repair_attempts": 0,
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0"
+  },
+  "test_result": {
+    "schema_version": "algorithm-optimization-benchmark-selection-evaluation/v1",
+    "selection_kind": "archive_topk",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+    "selection_locked_before_test": true,
+    "test_benchmark_id": "eohs_v1",
+    "test_profile": "obp_evolution_mini",
+    "test_split": "heldout",
+    "test_benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "test_suite_hash": "9ff2d6ea43b54e94927b45a2bff0c139eec9cd4070b1ba5f3a4fe3525145bb7a",
+    "test_data_manifest_hash": "f5c4f5729ad115286aa1dad2f622a06877f715b99004dac634b316bdfde45ffb",
+    "test_reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "instance_ids": [
+      "obp-evolution-mini-test-0",
+      "obp-evolution-mini-test-1"
+    ],
+    "test_problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "member_results": [
+      {
+        "member_index": 0,
+        "candidate_id": "candidate_1",
+        "code_sha256": "3e92736fb8fbb920556d455bef3c89b929074c624d1a53cd3db8f96f65d06e5c",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "bd336311a8d7770196e8cd7a0158911484ba50da96bb757ddec79ceb7ca37875"
+      },
+      {
+        "member_index": 1,
+        "candidate_id": "candidate_2",
+        "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "a03eeaeb27e4762664f229f9c9d63a18d0876a66a51755489c09746600b01032"
+      },
+      {
+        "member_index": 2,
+        "candidate_id": "candidate_3",
+        "code_sha256": "5c3fa73416124418ba4de415b41bd910525ee2d3184db2a70e924f686a95fe07",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.015000000013969839,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "b445de3a498813e44110d2931a1ae866365d80c813d0c84d2b7a51ba15007139"
+      },
+      {
+        "member_index": 3,
+        "candidate_id": "candidate_5",
+        "code_sha256": "9f4201ce214a17525033ee8f4cd0d773918671bf2972d9a8e833faa7ab365422",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "867c5b4bfcb8a4553f3f210552878f75626043fbc8c42741c84fca2f132657c0"
+      },
+      {
+        "member_index": 4,
+        "candidate_id": "candidate_6",
+        "code_sha256": "88173eee286d520951c7a12c8e7252e39e2cfe7af31b430e50d78cbe2e673c99",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "4c79c733c86e74480aa299389aa923d12b9cf3a8383ee2e2c6083ec185b9f9a8"
+      },
+      {
+        "member_index": 5,
+        "candidate_id": "candidate_8",
+        "code_sha256": "9b8e6ede92072779dd9b7490ff50f5bf0bcc5c3665bd3c787743059bbdf3eea4",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "8bc7800c1fdec397939470bcd5986184c0b7d6f7e593fa95f5d7b0f0c1567a61"
+      },
+      {
+        "member_index": 6,
+        "candidate_id": "candidate_11",
+        "code_sha256": "3b1caf35c2882f70d29d3be88832be06ab006c3e5d7b25aa81314f51aeacaf8e",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "13fc4c14aed8e9c53237dfda9b7d517d56e865d66f597c721af73badd380460d"
+      },
+      {
+        "member_index": 7,
+        "candidate_id": "candidate_12",
+        "code_sha256": "1a08f539e4d38a92eaa91034d705f1ba981eaecc752a1eb6f8aa394ede356391",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "2e26f3882e82a2e5c9b1c6c2dc88a324c95f6087996783d33fa1eb5297e0ec6a"
+      },
+      {
+        "member_index": 8,
+        "candidate_id": "candidate_13",
+        "code_sha256": "5f6861c96a0025431711728a1ca55c3cedfb71ac6850ee44c383f4245d80f6ba",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "7dfba1953a806d69b5c552e773d03e29cf48e31f753ebc926393af654f0b8459"
+      },
+      {
+        "member_index": 9,
+        "candidate_id": "candidate_14",
+        "code_sha256": "52b457bb497f09288fb4dffcfad9ac894116e1451e40d647276ecd496454aef1",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "99f9bc64e467b0533b403ce7d892761b52779b9f4dd0fe09aceda3994f470a95"
+      }
+    ],
+    "per_instance": [
+      {
+        "instance_id": "obp-evolution-mini-test-0",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      },
+      {
+        "instance_id": "obp-evolution-mini-test-1",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      }
+    ],
+    "aggregate_fitness": 0.0,
+    "valid_member_count": 10,
+    "instance_count": 2,
+    "complete_instance_coverage": true,
+    "test_evaluation_attempts": 10,
+    "test_instance_evaluation_attempts": 20,
+    "test_updates_training": false
+  }
+}

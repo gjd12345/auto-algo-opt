@@ -1,0 +1,19 @@
+{
+  "schema_version": "agent_ad_provider_preflight/v1",
+  "document_id": "agent_ad:2026-08-30:model-router-deepseek-v4-flash-preflight",
+  "actor": "codex",
+  "provider": "model-router",
+  "endpoint_host": "model-router.edu-aliyun.com",
+  "protocol": "openai_chat_completions",
+  "requested_model": "deepseek/deepseek-v4-flash",
+  "key_present": true,
+  "secret_recorded": false,
+  "result": {
+    "ok": false,
+    "http_status": 403,
+    "error_type": "invalid_request_error",
+    "error_summary": "model_not_found_or_no_permission"
+  },
+  "interpretation": "The API key reaches the gateway, but the account's exact marketplace symbol or model permission must be confirmed before a formal cohort can start.",
+  "next_action": "Confirm or grant the DeepSeek V4 Flash model identifier in Model Router, then rerun the same redacted preflight."
+}

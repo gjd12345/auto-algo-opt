@@ -12,9 +12,10 @@
 - [c5e2d23 审查记录](review_c5e2d23_20260915.md)：特定提交审查，不替代当前代码复核。
 - `evidence/`：已登记的 compact evidence 保持路径及字节不变，避免破坏 hash 和引用。
 
-## 光学
+## 光学（已归档）
 
-- [P0–P5 验收及恢复修复补充](../extensions/optics/reports/p0_p5_acceptance_20260917.md)。
+- 光学方向已于 2026-11 退出运行主干，代码见 tag `archive/six-mirror`，文档见 `archive/optics/`。
+- [P0–P5 验收及恢复修复补充](../archive/optics/reports/p0_p5_acceptance_20260917.md)。
 - [T1 Luna 500上限实验摘要](optics_t1_luna_20260917.md)：195次实际物理评测、独立 verifier 本机通过。
 - 私有 task bundle、原始响应、SQLite、生成处方留在运行目录，不因整理自动上传。
 

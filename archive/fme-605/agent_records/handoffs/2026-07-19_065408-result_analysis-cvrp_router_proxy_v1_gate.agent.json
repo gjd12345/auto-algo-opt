@@ -1,0 +1,53 @@
+{
+  "schema_version": "agent_ad_result_analysis/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-router-proxy-v1-gate",
+  "audience": "agent",
+  "created_at": "2026-07-19T06:54:08+08:00",
+  "phase_id": "result_analysis",
+  "actor": "research_agent",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "064e1e29b5c264ab395de76dab33235e62dc0fb5",
+  "status": "failed",
+  "evidence_refs": [
+    {"kind": "frozen_manifest", "path": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_v1.json", "sha256": "d3864c5c4b2973bb5894dd10ce5011b8d545f6e2eeb1a02911234693ada56eaf"},
+    {"kind": "proxy_gate_json", "path": "eoh_rag_workspace/reports/formal/cvrp_expert_router_proxy_v1/proxy_gate.json", "sha256": "359268b550c41e0d4c2da86c3327cd5a9598c7b85135600f4dc717caf5665a3c"},
+    {"kind": "proxy_gate_markdown", "path": "eoh_rag_workspace/reports/formal/cvrp_expert_router_proxy_v1/proxy_gate.md"}
+  ],
+  "constraints": {
+    "cohort_coordinates": [20101, 20102, 20103],
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "provider_cohorts_mixed": false,
+    "confirmation_feedback_visible_to_evolution": false,
+    "held_out_visible": false,
+    "failed_coordinates_removed": false,
+    "post_hoc_threshold_changes": false
+  },
+  "metrics": {
+    "completed_runs": 3,
+    "valid_generated_runs": 3,
+    "paired_seed_count": 3,
+    "confirmation_mean_improvement_vs_n2_pct": 0.3938164981530179,
+    "environment_mean_degradation_pct": {"clustered_100": -0.5614288456228723, "rectangular_200": 0.3230154980590482, "uniform_50": -0.9430361468952296},
+    "worst_environment_degradation_pct": 0.3230154980590482,
+    "runs_using_at_least_two_experts": 0,
+    "selector_invalid_outputs": 0,
+    "missing_coordinates": 0,
+    "infeasible_confirmation_runs": 0
+  },
+  "gate_checks": {
+    "completed_runs": true,
+    "valid_generated_runs": true,
+    "paired_seed_count": true,
+    "confirmation_mean_improvement": true,
+    "confirmation_environment_degradation": true,
+    "multi_expert_usage": false,
+    "selector_invalid_outputs": true,
+    "missing_coordinates": true,
+    "feasible_confirmation": true
+  },
+  "decision": "failed",
+  "conclusion": "The frozen CVRP router proxy cohort is a valid negative result: all three generated routers collapse to one expert each, so the required multi-expert usage gate fails despite a positive mean confirmation improvement.",
+  "next_action": "retain_oracle_as_upper_bound_and_switch_to_reevo_reflection_memory"
+}

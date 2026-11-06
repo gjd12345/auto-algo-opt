@@ -1,0 +1,59 @@
+{
+  "schema_version": "agent_ad_knowledge_cleanup/v1",
+  "document_id": "agent_ad:2026-07-18:obsidian-markdown-only-cleanup",
+  "audience": "agent",
+  "created_at": "2026-07-18T23:56:00+08:00",
+  "phase_id": "mainline_audit",
+  "actor": "human_requested_knowledge_cleanup",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "6a48c2465bc0a493da8954932883984e0b152a5e",
+  "status": "completed",
+  "source_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad",
+  "destination_roots": {
+    "machine_records": "agent_records/",
+    "diagrams": "docs/diagrams/",
+    "kami_theme": "docs/kami/",
+    "legacy_raw_archive": "evidence/obsidian_legacy_20260718/"
+  },
+  "moved_counts": {
+    "total_non_markdown": 529,
+    "json": 144,
+    "sha256": 3,
+    "drawio": 58,
+    "raw_archive": 323,
+    "remaining_obsidian_non_markdown": 0,
+    "remaining_obsidian_markdown": 217
+  },
+  "active_machine_paths": {
+    "baseline_contract": "agent_records/contracts/baseline_contract.json",
+    "knowledge_router": "agent_records/knowledge/kb_router_v2.json",
+    "research_state": "agent_records/runtime/research_state.json"
+  },
+  "constraints": [
+    "Obsidian contains human-readable Markdown only.",
+    "Machine-readable contracts and states are stored in the Git worktree under agent_records/.",
+    "Legacy non-document payloads are moved to an ignored evidence archive and are not runtime inputs.",
+    "Historical Markdown is preserved; the root index is the only current mainline entry point.",
+    "No result, seed, population, key, raw model response, or experiment metric was altered during migration."
+  ],
+  "evidence_refs": [
+    {
+      "kind": "human_record",
+      "path": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-18/2026-07-18_235600-knowledge_maintenance-obsidian_cleanup.md"
+    },
+    {
+      "kind": "diagram",
+      "path": "docs/diagrams/agent_ad_document_flow_20260718.drawio"
+    }
+  ],
+  "next_action": {
+    "action": "implement_cvrp_expert_router_adapter_then_offline_smoke",
+    "precondition": "read agent_records/runtime/research_state.json and the frozen contract before code changes",
+    "do_not_do": [
+      "restore non-Markdown files to Obsidian",
+      "use legacy archive as a runtime dependency",
+      "treat archived raw results as new formal evidence"
+    ]
+  }
+}

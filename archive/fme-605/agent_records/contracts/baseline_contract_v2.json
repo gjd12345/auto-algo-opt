@@ -1,0 +1,193 @@
+{
+  "schema_version": "agent_ad_mainline/v2",
+  "created_at": "2026-07-24T12:00:00+08:00",
+  "amended_at": "2026-07-24T13:14:33+08:00",
+  "amendment_authority": "explicit_user_approval_to_modify_0724_in_place_without_creating_R1",
+  "authority": "project_mainline",
+  "status": "active",
+  "supersedes": "agent_records/contracts/baseline_contract.json",
+  "human_baseline_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/0724",
+  "architecture_record": "agent_records/handoffs/2026-07-24_104827-architecture_design-fme_multi_problem_closed_loop.agent.json",
+  "runtime_state_ref": "agent_records/runtime/research_state.json",
+  "research_object": "portable_falsifiable_mechanism_ecology_research_agent_for_combinatorial_optimization",
+  "primary_goal": "Build one cross-problem research agent that uses development-scope behavior profiles, discriminating counterexamples and falsifiable mechanism memory to choose one replayable scientific action per tick, then confirm, transfer or stop under frozen evidence rules.",
+  "core_thesis": {
+    "name": "Falsifiable Mechanism Ecology",
+    "abbreviation": "FME",
+    "required_components": [
+      "algorithm_behavior_archive",
+      "counterexample_archive",
+      "falsifiable_mechanism_memory",
+      "scientific_action_controller"
+    ],
+    "falsification_boundary": "If the four components do not change one another during replayed action selection, the system is not an FME closed loop."
+  },
+  "roles": {
+    "human": "goal_budget_safety_and_final_claim_owner",
+    "codex": "framework_builder_external_explorer_and_auditor",
+    "research_agent": "sole_formal_scientific_action_decider",
+    "eoh": "replaceable_candidate_generation_adapter",
+    "tocc": "diagnostic_adapter_without_control_authority"
+  },
+  "top_level_controller": "FMEResearchLoop",
+  "allowed_scientific_actions": [
+    "invent_algorithm",
+    "repair_failed_mechanism",
+    "generate_counterexample",
+    "compare_on_counterexample",
+    "retest_or_refute_claim",
+    "transfer_abstract_mechanism",
+    "build_or_refine_selector",
+    "stop_branch"
+  ],
+  "research_questions": {
+    "RQ1": "Does active falsification outperform score-only or structured passive feedback under the same total evaluation budget?",
+    "RQ2": "Does evidence-scoped falsifiable mechanism memory outperform ordinary RAG or elite retrieval?",
+    "RQ3": "Can the same controller be re-instantiated across BP, TSP and CVRP using problem adapters and abstract mechanism transfer?",
+    "RQ4": "Does FME improve algorithm quality and research efficiency under comparable budgets?"
+  },
+  "effect_axes": {
+    "algorithm_quality": [
+      "frozen_heldout_objective",
+      "paired_better_same_worse",
+      "feasibility_timeout_and_error_rates",
+      "cross_seed_robustness"
+    ],
+    "research_efficiency_and_falsifiability": [
+      "llm_calls_candidate_count_and_total_evaluations",
+      "valid_candidate_rate_and_repeated_failure_rate",
+      "non_generation_action_effect",
+      "claim_support_weaken_refute_transitions",
+      "counterexample_decision_value",
+      "domain_valid_counterexample_rate",
+      "historical_algorithm_pool_coverage",
+      "evaluation_cost_per_valid_candidate",
+      "evaluation_cost_per_accepted_counterexample"
+    ],
+    "generality_and_transfer": [
+      "cross_scale_and_cross_distribution_generalization",
+      "BP_TSP_CVRP_adapter_reuse",
+      "positive_neutral_and_negative_transfer",
+      "cross_device_replay"
+    ]
+  },
+  "implementation_phases": [
+    {"id": "P0", "name": "evidence_integrity_closure", "gate": "freeze and close ORF-001 through ORF-005 before integration or cohort execution"},
+    {"id": "P1", "name": "deep_fme_research_loop", "gate": "deterministic no-LLM replay executes a non-generation action and stops"},
+    {"id": "P2", "name": "adapter_convergence", "gate": "problem-specific fields do not enter the controller interface and each ProblemAdapter rejects counterexamples outside frozen distance size or structural constraints"},
+    {"id": "P3", "name": "evidence_memory_closed_loop", "gate": "counterevidence changes a claim and the next replayed action"},
+    {"id": "P4", "name": "offline_historical_replay", "gate": "sample top-N random-N and all failed candidates per problem from the 605-run pool; profile the evaluation cascade and demonstrate unconstrained counterexample drift without an API call"},
+    {"id": "P5", "name": "paired_bp_pilot", "gate": "requires a new frozen v3 manifest and explicit remaining LLM budget; both arms use one fixed EOH generator and one fixed model so only FME control differs"},
+    {"id": "P6", "name": "cross_problem_transfer", "gate": "target claims restart as proposed and use independent target evidence"}
+  ],
+  "current_gate": {
+    "phase": "P0",
+    "next_action": "freeze_the_minimal_ORF_001_through_ORF_005_correction_card",
+    "integration_allowed": false,
+    "cohort_launch_allowed": false,
+    "approved_remaining_llm_runs_at_baseline_creation": 0
+  },
+  "counterexample_validity_policy": {
+    "methodological_basis": "RAISE_epsilon_neighborhood",
+    "required_constraint_classes": [
+      "problem_specific_distance_limit",
+      "instance_size_range",
+      "structural_feasibility"
+    ],
+    "constraints_per_problem": "two_or_three_frozen_hard_constraints",
+    "invalid_statuses": ["out_of_domain", "invalid_structure"],
+    "invalid_action": "retain_as_failure_and_exclude_from_accepted_counterexample_archive"
+  },
+  "evaluation_cascade_policy": {
+    "required": true,
+    "ordered_stage_classes": [
+      "syntax_and_interface_contract",
+      "cheap_small_development_suite",
+      "counterexample_or_mechanism_probe",
+      "full_development_suite"
+    ],
+    "budget_rule": "profile_with_P4_history_then_freeze_P5_budget_without_predefined_multiplier",
+    "P4_sampling": "for_each_problem_top_N_plus_random_N_ordinary_plus_all_failed_candidates_from_605_run",
+    "record_each_stage": ["promotion", "rejection_reason", "evaluation_cost"]
+  },
+  "mechanism_task_compatibility_policy": {
+    "required_before_cross_problem_transfer": true,
+    "steps": [
+      "static_target_feature_match",
+      "structured_llm_rationale",
+      "cheap_target_domain_probe"
+    ],
+    "llm_rationale_can_authorize_alone": false,
+    "outcomes": ["accepted", "rejected", "inconclusive", "incompatible_transfer"]
+  },
+  "P5_causal_isolation": {
+    "generator": "one_frozen_EOH_generator_for_both_arms",
+    "model": "one_frozen_model_for_both_arms",
+    "only_treatment_difference": "FME_controller_enabled",
+    "excluded_from_primary_comparison": [
+      "tree_generator",
+      "meta_prompt_evolution",
+      "sparse_evaluation",
+      "fast_slow_model_routing"
+    ],
+    "unconstrained_counterexample_ablation": "offline_P4_demonstration_only"
+  },
+  "post_P5_research_queue": [
+    {
+      "id": "F1",
+      "name": "meta_prompt_evolution",
+      "start_gate": "P5_primary_result_complete_and_baseline_controller_prompt_frozen",
+      "budget": "N_llm_runs_to_be_independently_frozen_and_approved",
+      "exit": "pre_registered_improvement_in_claim_accuracy_or_invalid_action_rate_else_stop"
+    },
+    {
+      "id": "F2",
+      "name": "sparse_evaluation_ablation",
+      "start_gate": "P5_complete_and_sufficient_candidate_evaluation_history_available",
+      "budget": "N_llm_runs_to_be_independently_frozen_and_approved",
+      "exit": "classify_sparse_evaluation_effect_on_mechanism_discovery_as_positive_null_or_negative"
+    },
+    {
+      "id": "F3",
+      "name": "A2DEPT_style_tree_generator",
+      "start_gate": "P5_complete_and_TreeGeneratorAdapter_contract_available",
+      "budget": "N_llm_runs_to_be_independently_frozen_and_approved",
+      "exit": "complete_causal_EOH_vs_tree_generator_comparison_inside_fixed_FME_framework"
+    },
+    {
+      "id": "F4",
+      "name": "fast_slow_action_model_routing",
+      "start_gate": "P5_complete_and_action_level_cost_history_available",
+      "budget": "N_llm_runs_to_be_independently_frozen_and_approved",
+      "exit": "determine_cost_equivalent_effect_on_valid_candidate_rate_and_revert_to_single_model_if_no_gain"
+    }
+  ],
+  "reserved_post_P5_interfaces": {
+    "TreeGeneratorAdapter": "generate(PopulationState)->List[CandidateArtifact] with parent_ids and operator_trace",
+    "EvaluationSamplingPolicy": "select(candidates,budget,seed)->EvaluationSelection",
+    "ActionModelRouter": "route(action,state,cost_budget)->ModelRoute"
+  },
+  "attribution": {
+    "required_actor_values": ["human", "codex", "research_agent"],
+    "codex_discovery_labels": ["external_teacher", "codex_exploration"],
+    "agent_contribution_requirement": "actor=research_agent with a complete replayable decision chain"
+  },
+  "non_negotiable_rules": [
+    "There is exactly one formal top-level scientific controller.",
+    "Each research tick executes one primary scientific action and writes a DecisionRecord.",
+    "Formal held-out evidence never enters ResearchState, prompts, retrieval, mechanism claims or next-action selection.",
+    "Failed, infeasible, timed-out, tied, missing and negative-transfer coordinates remain in evidence.",
+    "Cross-problem transfer carries abstract mechanisms and evidence boundaries, not source executable code or source held-out conclusions.",
+    "Counterexamples outside frozen problem-specific domain constraints remain failure evidence and cannot enter the accepted counterexample archive.",
+    "P5 uses one fixed EOH generator and one fixed model in both arms; the only treatment difference is FME controller activation.",
+    "Unconstrained counterexample generation is an offline P4 risk demonstration, not a P5 formal arm.",
+    "API availability does not imply budget authorization.",
+    "No test suite, full build, API call, LLM run or formal experiment is executed without the applicable explicit authorization.",
+    "Core execution does not depend on Codex, Obsidian, an absolute local path or one operating system."
+  ],
+  "historical_baseline": {
+    "human_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/新一代自动进化Agent基线_2026-07-14_231405",
+    "machine_contract": "agent_records/contracts/baseline_contract.json",
+    "status": "superseded_preserved_read_only"
+  }
+}

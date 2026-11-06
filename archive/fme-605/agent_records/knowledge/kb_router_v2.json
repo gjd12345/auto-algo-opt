@@ -1,0 +1,157 @@
+{
+  "schema_version": "agent_ad_knowledge_router/v2",
+  "created_at": "2026-07-15T00:20:15+08:00",
+  "status": "frozen",
+  "supersedes": "kb_router.json",
+  "canonical_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/新一代自动进化Agent基线_2026-07-14_231405",
+  "process_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档",
+  "always_read": [
+    "baseline_contract.json",
+    "kb_router_v2.json"
+  ],
+  "token_policy": {
+    "default_max_canonical_markdown_docs": 4,
+    "read_selected_docs_completely": true,
+    "read_all_00_to_09_only_for": [
+      "explicit_user_full_audit",
+      "new_baseline_version_review"
+    ]
+  },
+  "phase_detection_priority": [
+    "explicit_user_request",
+    "active_research_state",
+    "current_git_and_process_state",
+    "orientation"
+  ],
+  "integrity_policy": {
+    "check_order": [
+      "accepted_raw_sha256",
+      "content_sha256_without_presentation_metadata"
+    ],
+    "allowed_presentation_metadata": {
+      "exact_yaml_block": "cssclasses:\n  - kami\n",
+      "scope": "yaml_frontmatter_only"
+    },
+    "raw_match_action": "continue",
+    "content_only_match_action": "continue_and_record_presentation_drift",
+    "content_mismatch_action": "stop_and_route_to_mainline_audit"
+  },
+  "documents": {
+    "00": {
+      "path": "00-总览.md",
+      "accepted_raw_sha256": "df955ab5525e12d3426f77d37f8f468c887a042b0767e1ed98ee10513a5d8adb",
+      "content_sha256_without_presentation_metadata": "a51e06d638e2814f57ac956216f580f2f9cbf66cda6ba4926186ff1228519a3c"
+    },
+    "01": {
+      "path": "01-主线目标与研究问题.md",
+      "accepted_raw_sha256": "ffc06589985e6a1dd3e5cc0509196eff9888472ca9e1a4d37117bb9237edfcb0",
+      "content_sha256_without_presentation_metadata": "02e5c346b09c319fc551cc26a07a05bec39ee003a0083ccafc6160697eda3258"
+    },
+    "02": {
+      "path": "02-Codex与科研Agent职责边界.md",
+      "accepted_raw_sha256": "35b3ec8c6f6a6592876a9eaada0e616d83ad7623ecb788ee14db1c525238b1ef",
+      "content_sha256_without_presentation_metadata": "c74e760c65d2ec99fc5c8be251d149db2df010e8e2f241915ef2d60e7d91f253"
+    },
+    "03": {
+      "path": "03-系统架构与模块契约.md",
+      "accepted_raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6",
+      "content_sha256_without_presentation_metadata": "635bbc3963d3c81c5f7e70db0dadba4b109d8a2d4740eab9073fa525138b2e2d"
+    },
+    "04": {
+      "path": "04-效果评价与基线对照.md",
+      "accepted_raw_sha256": "3c67b30fe787c1e648008afce1e1a764014a0c264f35cc711f32195a5ff9cf56",
+      "content_sha256_without_presentation_metadata": "a6ea547b117067897f58c1b7e909f7db5f13bf84d57f77ba5a211492027b29a4"
+    },
+    "05": {
+      "path": "05-实验诚信与证据规范.md",
+      "accepted_raw_sha256": "9ff085867b783965cb6815060029b3f66f650e86e5ef441dc544c13eaae49cb4",
+      "content_sha256_without_presentation_metadata": "757af9c086ce083f0c6f44477de3e581f2cf2705432599c700addd3c7024b714"
+    },
+    "06": {
+      "path": "06-自主循环与停止规则.md",
+      "accepted_raw_sha256": "aca4af719240020c4be4b809970eec318cd974a4d69f3a63c0224e93ae53471d",
+      "content_sha256_without_presentation_metadata": "ecfbdf2b8e70bdeec65796336c534fad02380dcc95cc509f05bf45f62243d6b7"
+    },
+    "07": {
+      "path": "07-当前起点与历史成果归属.md",
+      "accepted_raw_sha256": "ce004ea6eabab72bfe6020e3d70721818e4872a52419a088ada6d67364e029b3",
+      "content_sha256_without_presentation_metadata": "9ee6da0d5d8285aef0a5beb22d09c10243be182841892fb5b7e95d1496164d1f"
+    },
+    "08": {
+      "path": "08-执行前后检查清单.md",
+      "accepted_raw_sha256": "9cab6bc05c1a001c478af7a156b334941b3f06c6cd1ef81e1c61e439aabfbca3",
+      "content_sha256_without_presentation_metadata": "8324cc7ee5188fcc147195f267062a6ce88ab1b6c9e0f4eec0c3cfb837a9bdef"
+    },
+    "09": {
+      "path": "09-Codex自由探索空间.md",
+      "accepted_raw_sha256": "c2c93ea816f7eec9fe2cac9823cd358eb9fa3249e1fa2014ae6b9ba1528f8691",
+      "content_sha256_without_presentation_metadata": "2440a6058969cad2a698c34bc7d7114e06b2a843ef003f1b8d4bb14ff837708a"
+    }
+  },
+  "routes": {
+    "orientation": {
+      "description": "首次进入、暂停对齐或阶段无法判断",
+      "required_docs": ["00", "01", "02"],
+      "conditional_docs": {"需要了解历史起点": ["07"]}
+    },
+    "architecture_design": {
+      "description": "设计 Agent、反馈、RAG、记忆、多种群或接口",
+      "required_docs": ["01", "02", "03", "09"],
+      "conditional_docs": {"同时设计评价": ["04"], "涉及数据诚信": ["05"]}
+    },
+    "code_implementation": {
+      "description": "实现或修改框架代码",
+      "required_docs": ["02", "03", "08"],
+      "conditional_docs": {"修改评测器或数据合同": ["05"], "修改实验入口": ["06"]}
+    },
+    "literature_exploration": {
+      "description": "读取论文、复现外部方法或寻找基线",
+      "required_docs": ["01", "04", "09"],
+      "conditional_docs": {"准备正式比较或SOTA表述": ["05"], "转化为系统模块": ["03"]}
+    },
+    "experiment_design": {
+      "description": "设计实验臂、问题集、预算、门槛和停止规则",
+      "required_docs": ["01", "04", "05", "06"],
+      "conditional_docs": {"准备执行检查": ["08"], "需要历史证据": ["07"]}
+    },
+    "formal_run": {
+      "description": "启动或监控冻结正式 cohort",
+      "required_docs": ["05", "06", "08"],
+      "conditional_docs": {"归属有疑问": ["02"], "解释历史起点": ["07"]}
+    },
+    "loop_tick": {
+      "description": "周期心跳、状态监控和自动选择一个下一动作",
+      "required_docs": ["06", "08"],
+      "conditional_docs": {"当前阶段不清楚": ["00"], "需要历史上下文": ["07"], "准备写正式结论": ["05"]}
+    },
+    "result_analysis": {
+      "description": "分析实验结果、比较实验臂或形成机制解释",
+      "required_docs": ["04", "05", "07"],
+      "conditional_docs": {"需要判断Agent与Codex归属": ["02"], "产生下一实验": ["06"]}
+    },
+    "reporting": {
+      "description": "撰写观察、阶段报告、论文材料或最终结论",
+      "required_docs": ["02", "04", "05", "07"],
+      "conditional_docs": {"报告包含下一步": ["06"], "需要执行交付检查": ["08"]}
+    },
+    "knowledge_maintenance": {
+      "description": "维护外部知识库、路由、索引或过程文档规范",
+      "required_docs": ["00", "02", "08"],
+      "conditional_docs": {"涉及研究主线": ["01"], "涉及自由探索边界": ["09"]},
+      "write_policy": "append_process_docs_only"
+    },
+    "mainline_audit": {
+      "description": "用户要求修改主线、检测冲突或准备新版本基线",
+      "required_docs": ["00", "01", "02", "09"],
+      "conditional_docs": {"审计评价体系": ["04", "05"], "审计执行闭环": ["03", "06", "08"]},
+      "write_policy": "create_process_proposal_only"
+    }
+  },
+  "write_policy": {
+    "canonical_docs": "read_only",
+    "published_routers_and_hash_lists": "read_only",
+    "process_docs": "append_only_new_files",
+    "existing_process_docs": "read_only",
+    "baseline_revision": "new_version_after_explicit_user_approval"
+  }
+}

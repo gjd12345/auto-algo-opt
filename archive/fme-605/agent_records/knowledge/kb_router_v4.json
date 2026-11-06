@@ -1,0 +1,165 @@
+{
+  "schema_version": "agent_ad_knowledge_router/v4",
+  "created_at": "2026-07-30T01:20:00+08:00",
+  "status": "active",
+  "supersedes": "agent_records/knowledge/kb_router_v3.json",
+  "supersession_reason": "v3 hashes predated the user-approved 2026-07-25 depth-first correction to canonical documents 00, 06 and 08",
+  "canonical_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/0724",
+  "historical_canonical_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/新一代自动进化Agent基线_2026-07-14_231405",
+  "process_root": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档",
+  "always_read": [
+    "agent_records/contracts/baseline_contract_v2.json",
+    "agent_records/contracts/depth_first_mainline_amendment_v1.json",
+    "agent_records/knowledge/kb_router_v4.json",
+    "agent_records/runtime/research_state.json"
+  ],
+  "token_policy": {
+    "default_max_canonical_markdown_docs": 4,
+    "read_selected_docs_completely": true,
+    "read_all_00_to_09_only_for": [
+      "explicit_user_full_audit",
+      "new_baseline_version_review"
+    ]
+  },
+  "phase_detection_priority": [
+    "explicit_user_request",
+    "active_research_state",
+    "current_git_and_process_state",
+    "orientation"
+  ],
+  "integrity_policy": {
+    "check_order": [
+      "accepted_raw_sha256",
+      "content_sha256_without_presentation_metadata"
+    ],
+    "allowed_presentation_metadata": {
+      "exact_yaml_block": "cssclasses:\n  - kami\n",
+      "scope": "yaml_frontmatter_only"
+    },
+    "raw_match_action": "continue",
+    "content_only_match_action": "continue_and_record_presentation_drift",
+    "content_mismatch_action": "stop_and_route_to_mainline_audit"
+  },
+  "documents": {
+    "00": {
+      "path": "00-总览.md",
+      "accepted_raw_sha256": "5000d0c425f065f1f121da03b7a20756a02946d103ba0de6a6fb27b0155a81fc",
+      "content_sha256_without_presentation_metadata": "edb0d09c29fa35b094c76839736c3a1cb8fc0064a0bbbf0d9a2b3bde8941a43d"
+    },
+    "01": {
+      "path": "01-主线目标与研究问题.md",
+      "accepted_raw_sha256": "b83a5b6b7818db9622f616ebab987212ebad61dd6b11d2420b63eb2e57989f5d",
+      "content_sha256_without_presentation_metadata": "cd591df2ab46f59b033b9a8861d66377cae1f0ad0d3fdd319dc028c74131d5c5"
+    },
+    "02": {
+      "path": "02-Codex与科研Agent职责边界.md",
+      "accepted_raw_sha256": "c00e548b8b13223971aa70b650cebbdc8ca592c06f49971daad69aa38646b1eb",
+      "content_sha256_without_presentation_metadata": "87ce55ed70e6334d52e629253227e85a9856d4b1563e1dcca49dd2e2e66c892e"
+    },
+    "03": {
+      "path": "03-系统架构与模块契约.md",
+      "accepted_raw_sha256": "aa75336b2ef48a04ceb64b12a02777819ab5abdee87da5f403aac8a1da281b09",
+      "content_sha256_without_presentation_metadata": "0241fb9fd107858b261c5386b0d8e353f55153f650757bff1e7a49b1684d2c63"
+    },
+    "04": {
+      "path": "04-效果评价与基线对照.md",
+      "accepted_raw_sha256": "3855273526de30f4ab4d0275d685f33eaa392c74c4b9f4db4f6e1013f7e40ccc",
+      "content_sha256_without_presentation_metadata": "30e95016d06f571630b84b796006cb6674fb952cc36e5f5907ec888a39acaa72"
+    },
+    "05": {
+      "path": "05-实验诚信与证据规范.md",
+      "accepted_raw_sha256": "8c0d9c51500a06d2de81b3f48f9b843b2d45c87d2a23d4b119d2dd720ce1e7ba",
+      "content_sha256_without_presentation_metadata": "3b7db119f3d26ab1b536e5ea0b7f8ff5fde1f88a3f400ec4cd9463200ba02207"
+    },
+    "06": {
+      "path": "06-自主循环与停止规则.md",
+      "accepted_raw_sha256": "bce2591b1b61259787edcdb47e50b4df792795e103acea6a1ca85ef4b8048c93",
+      "content_sha256_without_presentation_metadata": "4905a4a49ff248797669d50f32eba5a85b1365216520864906af64e67ff50db1"
+    },
+    "07": {
+      "path": "07-当前起点与历史成果归属.md",
+      "accepted_raw_sha256": "aea388276901fde8486f6bf6a150d43129fa1774478957866351fa9ecf395b6f",
+      "content_sha256_without_presentation_metadata": "94bc74045cc46f264b5d9665bfc5677249df04736a1a75edb087314f56d949e1"
+    },
+    "08": {
+      "path": "08-执行前后检查清单.md",
+      "accepted_raw_sha256": "6c86794ca8806f14ef3cbf9a6d1ed9fc8384206a6e15cc755005c0940aee0d88",
+      "content_sha256_without_presentation_metadata": "941bdac863d79fc6375a6f3fd8366d8bb76410b57163097bf732030b3152d393"
+    },
+    "09": {
+      "path": "09-Codex自由探索空间.md",
+      "accepted_raw_sha256": "b94245baaa1262dd9e4eeb281acb2fa80d2b31c5d596587f83351ff6fd4a5ee2",
+      "content_sha256_without_presentation_metadata": "996ba9153d87feb8ba66bf9bf68159fc8d17c682e86e62efe8d55cb2b1dd81da"
+    }
+  },
+  "routes": {
+    "orientation": {
+      "description": "首次进入、暂停对齐或阶段无法判断",
+      "required_docs": ["00", "01", "02"],
+      "conditional_docs": {"需要当前起点": ["07"]}
+    },
+    "architecture_design": {
+      "description": "设计 FME 控制器、动作、记忆、适配器或接口",
+      "required_docs": ["01", "02", "03", "09"],
+      "conditional_docs": {"同时设计评价": ["04"], "涉及数据诚信": ["05"]}
+    },
+    "code_implementation": {
+      "description": "实现或修改框架代码",
+      "required_docs": ["02", "03", "08"],
+      "conditional_docs": {"修改评测器或证据合同": ["05"], "修改科研循环或入口": ["06"]}
+    },
+    "literature_exploration": {
+      "description": "读取论文、官方代码或寻找外部机制",
+      "required_docs": ["01", "04", "09"],
+      "conditional_docs": {"形成正式比较": ["05"], "转化为系统模块": ["03"]}
+    },
+    "experiment_design": {
+      "description": "设计实验臂、预算、问题集、门槛和停止规则",
+      "required_docs": ["01", "04", "05", "06"],
+      "conditional_docs": {"准备执行检查": ["08"], "需要历史证据": ["07"]}
+    },
+    "formal_run": {
+      "description": "启动或监控冻结正式 cohort",
+      "required_docs": ["05", "06", "08"],
+      "conditional_docs": {"归属有疑问": ["02"], "需要当前起点": ["07"]}
+    },
+    "loop_tick": {
+      "description": "自动选择一个下一科研动作",
+      "required_docs": ["06", "08"],
+      "conditional_docs": {"阶段不清楚": ["00"], "需要历史上下文": ["07"], "形成结论": ["05"]}
+    },
+    "result_analysis": {
+      "description": "分析质量、效率、机制或迁移结果",
+      "required_docs": ["04", "05", "07"],
+      "conditional_docs": {"判断成果归属": ["02"], "产生下一动作": ["06"]}
+    },
+    "reporting": {
+      "description": "撰写阶段报告、组会或论文材料",
+      "required_docs": ["02", "04", "05", "07"],
+      "conditional_docs": {"包含下一步": ["06"], "执行交付检查": ["08"]}
+    },
+    "knowledge_maintenance": {
+      "description": "维护知识库、索引、路由或基准",
+      "required_docs": ["00", "02", "08"],
+      "conditional_docs": {"涉及研究主线": ["01"], "涉及探索边界": ["09"]},
+      "write_policy": "append_process_docs_or_create_explicitly_approved_new_baseline"
+    },
+    "mainline_audit": {
+      "description": "用户要求修改主线、检测冲突或准备新版本基线",
+      "required_docs": ["00", "01", "02", "09"],
+      "conditional_docs": {
+        "审计评价体系": ["04", "05"],
+        "审计执行闭环": ["03", "06", "08"],
+        "审计当前起点": ["07"]
+      },
+      "write_policy": "create_process_proposal_or_explicitly_approved_new_version"
+    }
+  },
+  "write_policy": {
+    "canonical_docs": "read_only_after_publication",
+    "published_routers_and_hash_lists": "read_only",
+    "process_docs": "append_only_new_files",
+    "existing_process_docs": "read_only",
+    "baseline_revision": "new_version_after_explicit_user_approval"
+  }
+}

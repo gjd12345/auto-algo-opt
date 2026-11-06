@@ -1,0 +1,57 @@
+{
+  "schema_version": "tsp-or-opt-3-external-confirmation-protocol/v1",
+  "frozen_at": "2026-07-14T20:55:00+08:00",
+  "research_role": "locked_external_confirmation_of_or_opt_3_incremental_gain",
+  "question": "不调整任何参数时，Or-opt-3 能否在 28 个未参与其开发的官方实例上稳定改善 Or-opt-2 停止路线？",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "split_manifest_sha256": "72266d3ea593a1ccd3990f9f0e1b2f928ef0155a38a556b717ca2ec7146a7fb3",
+    "stage_bs_comparison_sha256": "4a8376c3138b7c015e084152d454351fe9616d520f9bd61dc5a89699c81920b7",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bv_protocol_sha256": "817c6c4c799a8a78c613ed65e462cbe4fb12515e1715b80f3642f93b62f5d255",
+    "stage_bw_protocol_sha256": "6873c7f23ce8123ad82884649ff5f00f175d30a16460e88f20c81863d9fd49d5",
+    "stage_bx_results_sha256": "2349776e6bb80cfd34d34edd8dedc0600858e8c60a74129fc0eee8a0144d0fc8",
+    "stage_bz_protocol_sha256": "afd0b8d170b607dc31793dedec835c0e9c19bd455454cf645354bc50c084e3cf",
+    "stage_bz_results_sha256": "b4e0a4f46b7a75cf6b80bcceaa9e72cb34bc7371e58d6ad10a45d15b167d747c",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "split": {
+    "name": "confirmation",
+    "instance_count": 28,
+    "research_boundary": "这些实例没有参与 Or-opt-3 片段长度、上限或门槛选择"
+  },
+  "search": {
+    "segment_length": 3,
+    "nearest_neighbor_count": 40,
+    "maximum_accepted_segment_moves": 50,
+    "two_opt_maximum_steps": 500,
+    "after_each_move": "依次重新收敛 2-opt、单节点移位和 Or-opt-2",
+    "same_as_stage_bz": true
+  },
+  "evaluation": {
+    "instance_count": 28,
+    "archive_role": "portfolio",
+    "expected_result_count": 28,
+    "stage_bx_cost_must_match": true,
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 28,
+    "nonworse_than_stage_bx_instances_min": 28,
+    "strictly_better_than_stage_bx_instances_min": 14,
+    "median_extra_improvement_pct_min": 0.05,
+    "final_vs_raw_baseline_median_improvement_pct_min": 12.0
+  },
+  "leakage_controls": [
+    "28 个实例、赢家、长度 3、50 次上限、40 近邻和门槛在任何本批结果前冻结",
+    "不同时试长度 4/5，不读取 discovery 半区 Or-opt-3 结果",
+    "失败后不删小实例、不改为平均值门槛、不降低 0.05%",
+    "本阶段只确认三节点片段新增收益，不重新解释 Or-opt-2 的失败门槛"
+  ],
+  "decision": {
+    "all_checks_pass": "or_opt_3_external_incremental_gain_confirmed",
+    "otherwise": "or_opt_3_external_confirmation_failed",
+    "default_pool_behavior": "unchanged"
+  }
+}

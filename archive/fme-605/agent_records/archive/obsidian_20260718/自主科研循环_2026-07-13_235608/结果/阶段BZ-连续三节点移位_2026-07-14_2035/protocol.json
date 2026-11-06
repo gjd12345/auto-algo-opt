@@ -1,0 +1,54 @@
+{
+  "schema_version": "tsp-or-opt-3-development-protocol/v1",
+  "frozen_at": "2026-07-14T20:35:00+08:00",
+  "research_role": "exploratory_high_scale_three_node_segment_relocation",
+  "question": "在 Or-opt-2 自然停止后，整体移动连续三个节点能否带来更大的新增质量收益？",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bt_results_sha256": "149eda9c4c09b16a022db246683db41c65c164a625a2160fb89b5c0cd93e6ec3",
+    "stage_bv_protocol_sha256": "817c6c4c799a8a78c613ed65e462cbe4fb12515e1715b80f3642f93b62f5d255",
+    "stage_bv_results_sha256": "4df0d04d99ba7053e9f80ee2daaa5753d2460ae45935f475dce79230b2b17528",
+    "stage_bw_protocol_sha256": "6873c7f23ce8123ad82884649ff5f00f175d30a16460e88f20c81863d9fd49d5",
+    "stage_bw_results_sha256": "607462d2bf9f1b79287fd03e83de5b46f4e1d3e20028d2bcd8c07a3e059d86e7",
+    "stage_by_results_sha256": "233f5b6ea69d98b50cfe85dc2495c79bba9a941400adaac47b98e23e91cfa03a",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "search": {
+    "segment_length": 3,
+    "nearest_neighbor_count": 40,
+    "maximum_accepted_segment_moves": 50,
+    "candidate_rule": "每个不含起点的连续三节点片段，插到片段首尾节点各 40 个近邻之前或之后",
+    "accept_when": "选择全局最佳且严格降低总成本的三节点片段移动",
+    "after_each_move": "依次重新收敛 2-opt、单节点移位和 Or-opt-2",
+    "two_opt_maximum_steps": 500,
+    "stop_when": "没有严格降成本三节点移动或已接受 50 次"
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role": "portfolio",
+    "expected_result_count": 3,
+    "stage_bt_stage_bv_stage_bw_costs_must_match": true,
+    "research_limit": "三个实例用于邻域开发，通过后仍需外部确认"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 3,
+    "nonworse_than_stage_bw_instances_min": 3,
+    "strictly_better_than_stage_bw_instances_min": 2,
+    "median_extra_improvement_pct_min": 0.1,
+    "final_vs_raw_baseline_median_improvement_pct_min": 13.2
+  },
+  "leakage_controls": [
+    "片段长度 3、50 次上限、40 近邻、后续收敛顺序和门槛在任何结果前冻结",
+    "本阶段不同时试长度 4 或 5，不允许从结果中选择最佳片段长度",
+    "三个坐标只使用 12 槽路线，避免在开发阶段重复扩大计算",
+    "失败后停止连续片段分支；通过后才实现正式批量入口"
+  ],
+  "decision": {
+    "all_checks_pass": "or_opt_3_supported_for_external_confirmation",
+    "otherwise": "stop_contiguous_segment_relocation_branch",
+    "default_pool_behavior": "unchanged"
+  }
+}

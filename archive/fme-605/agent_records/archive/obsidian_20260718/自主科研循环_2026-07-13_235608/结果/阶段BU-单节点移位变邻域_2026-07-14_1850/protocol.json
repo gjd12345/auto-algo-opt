@@ -1,0 +1,53 @@
+{
+  "schema_version": "tsp-single-node-relocation-vnd-protocol/v1",
+  "frozen_at": "2026-07-14T18:50:00+08:00",
+  "research_role": "locked_high_scale_variable_neighborhood_search",
+  "question": "在Stage BT迭代2-opt结果上加入单节点移位并重新收敛，能否跨越2-opt局部最优并继续降低高规模路线成本",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "stage_bt_protocol_sha256": "2f9a13165c987514a65cb6489bf35f9d3c787732aa065ff41b145c17a97a7e63",
+    "stage_bt_results_sha256": "149eda9c4c09b16a022db246683db41c65c164a625a2160fb89b5c0cd93e6ec3",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "search": {
+    "reproduce_stage_bt_first": true,
+    "nearest_neighbor_count": 40,
+    "neighbor_build_block_size": 128,
+    "two_opt_maximum_steps_after_each_relocation": 500,
+    "maximum_accepted_relocations": 100,
+    "relocation_candidates": "把每个非起点节点移到其40个近邻之前或之后",
+    "accept_when": "选择全局最佳且严格降低总成本的单节点移位",
+    "tie_break": "原位置和插入边位置按字典序较小者",
+    "stop_when": "没有严格降成本移位或已接受100次",
+    "same_schedule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role_count": 2,
+    "expected_result_count": 6,
+    "stage_bt_cost_must_match": true,
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 6,
+    "portfolio_vnd_nonworse_than_stage_bt_instances_min": 3,
+    "portfolio_vnd_strictly_better_than_stage_bt_instances_min": 1,
+    "portfolio_vnd_median_extra_improvement_pct_min": 0.1,
+    "vnd_portfolio_vs_vnd_baseline_wins_min": 2,
+    "vnd_portfolio_vs_vnd_baseline_losses_max": 1,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 11.3
+  },
+  "leakage_controls": [
+    "移位邻域、100次上限、重新收敛预算和门槛在任何Stage BU结果前冻结",
+    "Stage BT结果只用于校验重放成本，不用于选择移位",
+    "三个高规模实例此前没有运行单节点移位",
+    "结果后不得加入双节点移位、扩大近邻或修改门槛"
+  ],
+  "decision": {
+    "all_checks_pass": "single_node_relocation_vnd_supported_at_high_scale",
+    "otherwise": "report_relocation_boundary_without_retuning",
+    "default_pool_behavior": "unchanged"
+  }
+}

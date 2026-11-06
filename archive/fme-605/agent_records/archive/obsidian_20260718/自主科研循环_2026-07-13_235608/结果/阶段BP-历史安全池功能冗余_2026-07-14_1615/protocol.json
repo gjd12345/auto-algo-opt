@@ -1,0 +1,49 @@
+{
+  "schema_version": "tsp-safe-history-functional-redundancy-protocol/v1",
+  "frozen_at": "2026-07-14T16:15:00+08:00",
+  "research_role": "offline_full_safe_pool_functional_audit",
+  "question": "目标规模安全历史池的99条不同源码实际包含多少路线功能家族",
+  "inputs": {
+    "safe_probe_results_sha256": "a7ca6cb4650f419bb5114175868a56f76f001f786f03584980b40febbe501385",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "cheap_probe_protocol_sha256": "50095e40406f61f01e445e57ef11679165029563fffb07f8735172406f33c160",
+    "cheap_probe_manifest_sha256": "39c1b44b5bb3ba33cf67dc61a66debcf2d2e0d4e491e01ee033ff197a6c80560"
+  },
+  "candidate_selection": {
+    "source": "Stage AW dev_probe_results.csv",
+    "condition": "feasible == True",
+    "expected_code_count": 99,
+    "code_hash_unique_required": true
+  },
+  "functional_signature": {
+    "probe_suite": "完全复用Stage BO的6个生成式探针和坐标hash",
+    "route_representation": "每个探针的无向边集合",
+    "pair_similarity": "六探针边Jaccard均值",
+    "redundancy_threshold": 0.95,
+    "exact_signature": "六个探针route_hash顺序拼接后的SHA-256"
+  },
+  "clustering": {
+    "graph": "代码为节点，相似度不低于0.95时连边",
+    "components": "无向图连通分量",
+    "representative": "簇内objective最高；相同则original_index较小；再相同则code_hash字典序",
+    "warning": "连通分量允许通过相似链合并端点，结果只用于规模审计"
+  },
+  "outputs": [
+    "99×6探针执行状态与功能签名",
+    "完整4851对相似度",
+    "逐代码簇编号、簇大小和代表标记",
+    "逐簇源码数、AST数、objective范围和代表代码",
+    "功能簇数、单例数、最大簇、完全相同签名数、top20 objective覆盖簇数"
+  ],
+  "failure_policy": {
+    "probe_error": "记录失败代码并排除两两聚类，不补换候选",
+    "expected_complete_route_coordinates": 594,
+    "expected_pair_count_if_complete": 4851,
+    "timeout_change_after_results": false
+  },
+  "decision": {
+    "default_pool_behavior": "unchanged",
+    "record_deletion": false,
+    "next_use": "只为后续离线代表选择和新一轮预注册消融提供输入"
+  }
+}

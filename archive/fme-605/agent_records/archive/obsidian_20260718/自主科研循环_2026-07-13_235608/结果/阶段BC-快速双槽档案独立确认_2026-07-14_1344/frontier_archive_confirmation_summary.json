@@ -1,0 +1,66 @@
+{
+  "schema_version": "tsp-frontier-archive-confirmation-summary/v1",
+  "study_role": "independent_synthetic_frontier_confirmation",
+  "completed_at": "2026-07-14T05:45:06.061888+00:00",
+  "manifest_sha256": "dc3e8283a57dfe4dcc8cd46ab1978e1f89780411395d10b63b4c00c2f6300744",
+  "coordinates": 18,
+  "archives": {
+    "selected_frontier": {
+      "archive": "selected_frontier",
+      "codes": 2,
+      "coordinates": 6,
+      "feasible": 6,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 469427.0,
+        "synthetic_frontier_confirm_2_3038": 479553.0,
+        "synthetic_frontier_confirm_3_3038": 470060.0
+      }
+    },
+    "current_aw": {
+      "archive": "current_aw",
+      "codes": 4,
+      "coordinates": 12,
+      "feasible": 12,
+      "best_tour_cost_by_instance": {
+        "synthetic_frontier_confirm_1_3038": 474318.0,
+        "synthetic_frontier_confirm_2_3038": 472255.0,
+        "synthetic_frontier_confirm_3_3038": 476880.0
+      }
+    }
+  },
+  "selected_code_validity": {
+    "d3846ff9b372b1d39e7fa3a82737ef4dcd2b4e5196e367b7a0e4119c4e42ecfb": 3,
+    "23225aeb15945f0834b2c70fde98cbf5d7a40c08289b37735709814b3a6a1fd8": 3
+  },
+  "comparisons": [
+    {
+      "instance": "synthetic_frontier_confirm_1_3038",
+      "selected_best_tour_cost": 469427.0,
+      "current_aw_best_tour_cost": 474318.0,
+      "selected_relative_diff_pct": -1.0311647460142772,
+      "direction": "better"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_2_3038",
+      "selected_best_tour_cost": 479553.0,
+      "current_aw_best_tour_cost": 472255.0,
+      "selected_relative_diff_pct": 1.5453515579506834,
+      "direction": "worse"
+    },
+    {
+      "instance": "synthetic_frontier_confirm_3_3038",
+      "selected_best_tour_cost": 470060.0,
+      "current_aw_best_tour_cost": 476880.0,
+      "selected_relative_diff_pct": -1.4301291729575574,
+      "direction": "better"
+    }
+  ],
+  "direction_counts": {
+    "better": 2,
+    "same": 0,
+    "worse": 1,
+    "missing": 0
+  },
+  "median_selected_relative_diff_pct": -1.0311647460142772,
+  "overall_pass": true
+}

@@ -1,0 +1,106 @@
+{
+  "schema_version": "agent_ad_literature_note/v1",
+  "document_id": "agent_ad:2026-07-19:paper-hydra-mip-cost-sensitive-selection",
+  "audience": "agent",
+  "created_at": "2026-07-19T02:38:33+08:00",
+  "phase_id": "literature_exploration",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "6cd1554952daf10f92b225188899b9641d088a18",
+  "routing": {
+    "required_docs": [
+      {
+        "path": "01-主线目标与研究问题.md",
+        "raw_sha256": "ffc06589985e6a1dd3e5cc0509196eff9888472ca9e1a4d37117bb9237edfcb0"
+      },
+      {
+        "path": "04-效果评价与基线对照.md",
+        "raw_sha256": "3c67b30fe787c1e648008afce1e1a764014a0c264f35cc711f32195a5ff9cf56"
+      },
+      {
+        "path": "09-Codex自由探索空间.md",
+        "raw_sha256": "c2c93ea816f7eec9fe2cac9823cd358eb9fa3249e1fa2014ae6b9ba1528f8691"
+      }
+    ],
+    "conditional_docs": [
+      {
+        "path": "03-系统架构与模块契约.md",
+        "raw_sha256": "9a0dd6a1f33e74b02bc81a1886340f03a6fd7838ea2da4bad26e5709d80025c6",
+        "trigger": "map non-uniform selector loss to a portable future v2 protocol"
+      }
+    ]
+  },
+  "paper": {
+    "title": "Hydra-MIP: Automated Algorithm Configuration and Selection for Mixed Integer Programming",
+    "authors": [
+      "Lin Xu",
+      "Frank Hutter",
+      "Holger H. Hoos",
+      "Kevin Leyton-Brown"
+    ],
+    "venue": "18th RCRA Workshop, in conjunction with IJCAI 2011",
+    "technical_report": "UBC Computer Science TR-2011-01",
+    "publication_date": "2011-04-04",
+    "doi": "Unknown",
+    "report_url": "https://www.cs.ubc.ca/tr/2011/tr-2011-01",
+    "pdf_url": "https://www.cs.ubc.ca/~hoos/Publ/XuEtAl11.pdf",
+    "project_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/Hydra/",
+    "source_archive_url": "https://www.cs.ubc.ca/labs/algorithms/Projects/Hydra/hydra-1.1-development-cae8151.zip",
+    "source_archive_fetch_status": "official endpoint and content length confirmed; resumed local download reached 40438387 bytes but archive integrity validation failed",
+    "license": "Unknown",
+    "pdf_sha256": "E668E70D581B1ADFBCAC762A125055563244B6B9CE0BCCB2AF3E83E4A46C7C08"
+  },
+  "method_evidence": {
+    "selector": "pairwise cost-sensitive decision forests",
+    "pairwise_model_count": "m*(m-1)/2",
+    "pairwise_label": "the better-performing algorithm on the instance",
+    "sample_weight": "absolute performance difference between the two algorithms",
+    "forest_tree_count": 99,
+    "internal_validation": "10-fold cross-validation for solver subset and presolver policy",
+    "candidate_expansion": "HydraDF,k adds k candidates per iteration using configurator internal improvement estimates",
+    "negative_result": "HydraDF,4 was worse than HydraDF,1 on CL+REG+RCW after five iterations",
+    "random_seed_values": "Unknown"
+  },
+  "project_mapping": {
+    "role": "development_only_selector_v2_method_reference",
+    "preserve_full_loss_matrix": true,
+    "selector_arms": [
+      "current cost-predictive kNN",
+      "unweighted pairwise classifier",
+      "cost-weighted pairwise classifier"
+    ],
+    "primary_metric": "realized relative cost on disjoint selector-development coordinates",
+    "required_diagnostics": [
+      "selector regret",
+      "worst-environment regret",
+      "feasibility",
+      "expert usage",
+      "feature and routing cost",
+      "oracle portfolio gain as upper bound only"
+    ],
+    "candidate_expansion_is_separate_axis": true,
+    "candidate_expansion_budget_rule": "compare under equal total generated candidates and equal total evaluation budget",
+    "current_status": "protocol_mapping_only",
+    "frozen_v1_changed": false,
+    "manifest_activated": false
+  },
+  "human_record": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_023833-literature_exploration-Hydra-MIP代价敏感选择器深读.md",
+  "human_record_sha256": "971698FAEEE84363D513BD0CADAD40D68CA9FEED46FF48D910EB542D6191ACEA",
+  "verification": {
+    "official_pdf_pages": 15,
+    "pdf_pages_rendered_and_inspected": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "machine_json_parse": "passed",
+    "markdown_required_headings": "passed",
+    "test_tier": "skipped",
+    "test_reason": "literature and process-record update only; no execution path changed"
+  },
+  "next_action": "restore_valid_provider_credentials_and_rerun_frozen_v1_coordinates_20101_20102_20103_before_any_selector_v2_activation"
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "tsp-functional-route-diversity-plan/v1",
+  "frozen_at": "2026-07-14T15:08:00+08:00",
+  "research_role": "descriptive_external_archive_analysis",
+  "question": "六条源码不同的代码是否真的生成不同路线家族，以及每个槽位对完整档案最优值有多少独有贡献",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "route_behavior_metrics_sha256": "1aeb05cbd5c75a0533ef255ea5e2a1e516f82444ad1d0beffde83e4d65a50e78",
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "route_similarity": {
+    "representation": "每条闭环路线的无向边集合",
+    "metric": "Jaccard交集除以并集",
+    "aggregation": ["mean", "median", "identical_route_count"],
+    "pairs": "六条代码的全部15对"
+  },
+  "slot_contribution": {
+    "unique_best": "该代码是实例上唯一最低成本路线的次数",
+    "leave_one_out": "移除该代码后六代码最优成本的增幅",
+    "shapley": "以六代码最差路线为零基线，对所有子集精确计算平均相对成本改善贡献"
+  },
+  "archive_frontier": {
+    "subset_sizes": [1, 2, 3, 4, 5, 6],
+    "enumeration": "穷举六代码全部非空子集",
+    "ranking": ["lowest_mean_regret_to_six_code_oracle", "lowest_p90_regret", "most_exact_matches", "label_order"],
+    "outputs": ["mean_regret", "median_regret", "p90_regret", "worst_regret", "exact_oracle_matches"]
+  },
+  "interpretation_rules": [
+    "边集合高度重合且留一损失为零的槽位视为功能冗余候选",
+    "边集合低重合但贡献为零表示行为不同却未转化为这批实例上的质量覆盖",
+    "低重合且留一损失大于零表示真实互补",
+    "覆盖前沿是同一56实例上的描述性上界，不作为新档案或泛化结论"
+  ],
+  "prohibited_actions": [
+    "不根据前沿改写当前四槽",
+    "不把全数据最优子集称为独立验证",
+    "不保存原始路线数组或重复候选代码"
+  ]
+}

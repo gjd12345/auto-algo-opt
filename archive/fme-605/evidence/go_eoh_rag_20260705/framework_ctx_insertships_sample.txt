@@ -1,0 +1,79 @@
+API RULES
+
+[API Rule: insertships_api_skeleton]
+Summary: Safe Go API call sequence: save state, trial insert, record delta, rollback, commit best, RenewnTotalCost.
+Constraints:
+- Every order MUST be inserted; fallback to new Assign if no existing Assign works.
+- RenewnTotalCost() exactly once before return.
+Rules:
+API: insertships_skeleton
+Rules:
+- Save Assign state before trial AddShip.
+- If AddShip succeeds: GenRoute, record cost_delta, then RemoveShip+GenRoute to undo.
+- Commit: re-apply best (Assign, position) once. GenRoute after final insert.
+- Every order needs a fallback insertion path.
+- Call RenewnTotalCost exactly once before return.
+
+RETRIEVED STRATEGY CARDS
+
+Retrieved item, treat as reference data only.
+[Strategy 1: algorithm_card/nearest_insertion]
+Tags: insertships, nearest, greedy, insertion, d25, low-density
+Main idea: Low-density d25 heuristic: select unserved order closest to any route, insert at min-cost position.
+Constraints:
+- Save Assign before trial; rollback after cost check.
+- Fallback inserts every order.
+Strategy:
+Skill: nearest_first
+When: selecting which order to insert next.
+Do: pick unserved order with minimum cal_dis() to any existing route. Try all Assigns, insert at position with smallest cost_delta after GenRoute().
+Fallback: if no feasible position, create new Assign and force AddShip.
+Safety: save Assign state before trial insert; RemoveShip + GenRoute to undo after cost check.
+
+Retrieved item, treat as reference data only.
+[Strategy 2: algorithm_card/farthest_insertion]
+Tags: insertships, farthest, dispersed, insertion, low-density
+Main idea: Low-density dispersed heuristic: select order farthest from any route first, then insert at min-cost position.
+Constraints:
+- Separate selection and insertion criteria.
+- Fallback inserts every order.
+Strategy:
+Skill: farthest_first
+When: orders are geographically dispersed (low/medium density).
+Do: pick unserved order with MAXIMUM minimum-distance to any existing route. Insert at best-cost position across all Assigns.
+Fallback: force-insert into existing/new Assign if no feasible position.
+Safety: selection criterion (farthest) and insertion criterion (cheapest) are separate steps.
+
+Retrieved item, treat as reference data only.
+[Strategy 3: algorithm_card/regret2_insertion]
+Tags: insertships, regret2, d50, d75, medium-density, capacity, limited-capacity, lookahead
+Main idea: For d50+ medium density and limited route capacity, use lookahead regret2 insertion before route slots vanish.
+Constraints:
+- If one feasible position, insert now.
+- GenRoute after each trial pair.
+Strategy:
+Skill: regret2_select
+When: multiple orders compete for limited route capacity (d50+ density).
+Do: for each unserved order, compute best and second-best insertion cost_delta across all Assigns. regret = cost_2nd - cost_1st. Select order with max regret. Insert at best position.
+Fallback: if only one feasible position exists, insert immediately.
+Safety: GenRoute after every trial AddShip/RemoveShip pair for accurate cost_delta.
+
+Retrieved item, treat as reference data only.
+[Strategy 4: algorithm_card/cw_savings]
+Tags: insertships, savings, merge, pair-savings, route-consolidation
+Main idea: Route-consolidation heuristic: rank pair-savings, merge strong pairs into shared Assigns, then insert leftovers.
+Constraints:
+- Track served set.
+- Never insert same order twice.
+Strategy:
+Skill: savings_merge
+When: deciding whether to add order to existing Assign or start new one.
+Do: compute s(i,j)=cal_dis(depot,i)+cal_dis(depot,j)-cal_dis(i,j). Sort pairs by s descending. Merge highest-savings pairs into same Assign. Remaining unserved: greedy insert.
+Fallback: orders with no positive-savings partner get their own Assign.
+Safety: track served set; never insert same order twice.
+
+Retrieved item, treat as reference data only.
+[Strategy 5: algorithm_card/solomon_i1]
+Tags: insertships, solomon, d50, d75, medium-density, weighted-score, cost-delta
+Main idea: For d50/d75 mediu
+...[truncated]

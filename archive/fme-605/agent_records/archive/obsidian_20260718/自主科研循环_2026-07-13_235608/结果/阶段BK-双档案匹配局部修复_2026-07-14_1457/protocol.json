@@ -1,0 +1,48 @@
+{
+  "schema_version": "tsp-matched-archive-local-repair-protocol/v1",
+  "frozen_at": "2026-07-14T14:57:00+08:00",
+  "research_role": "pre_repair_external_archive_mechanism_test",
+  "question": "快速双槽与稳健四槽的差异主要来自容易修复的局部缺陷，还是更深的全局访问顺序",
+  "inputs": {
+    "instance_manifest_sha256": "e243adfd82bcfe9ecc629efe8b7997a0a9efbebc435dc02c38f3f5c21cff9f2e",
+    "route_behavior_metrics_sha256": "1aeb05cbd5c75a0533ef255ea5e2a1e516f82444ad1d0beffde83e4d65a50e78",
+    "archive_metadata_sha256": "e37d678fa24221354972f8ec186d64b71e8108aa88aead6a27ed2693cfc6f535",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "archives": {
+    "fast_pair": ["R2", "R4"],
+    "robust_four": ["AW1", "AW2", "AW3", "AW4"],
+    "initial_selection": "每个档案内选择冻结路线成本最低者；相同则按标签字典序",
+    "replay_cost_must_match_stage_bh": true
+  },
+  "repair": {
+    "type": "cost_best_symmetric_2opt",
+    "maximum_steps": 5,
+    "candidate_pairs_per_step": 10000,
+    "candidate_sampling_seed": "sha256(instance_name + ':' + step_index)",
+    "same_candidate_indices_for_both_archives": true,
+    "stop_when": "当前候选集中没有严格降低路线总成本的移动"
+  },
+  "primary_gate": {
+    "median_absolute_archive_gap_reduction_fraction_min": 0.25,
+    "gap_shrink_instances_must_exceed_expand_instances": true,
+    "gap_shrink_two_sided_sign_test_p_max": 0.05,
+    "feasible_rate_min": 1.0
+  },
+  "decision": {
+    "all_primary_checks_pass": "archive_difference_is_substantially_locally_repairable",
+    "otherwise": "archive_difference_persists_beyond_matched_local_repair",
+    "rule": "结果后不得追加修复步数、候选对或更换局部搜索算子"
+  },
+  "secondary_outputs": [
+    "修复前后双槽相对四槽的胜负与成本差中位数",
+    "两个档案各自的修复收益",
+    "逐实例差距收缩、相同和扩张数量",
+    "修复后胜负翻转实例"
+  ],
+  "evidence_boundary": [
+    "只检验固定5步和固定候选预算的2-opt，不代表所有局部搜索",
+    "两个档案共享候选索引但路线不同，因此实际替换的边不同",
+    "本阶段不改变默认四槽，也不把后处理结果回写历史进化池"
+  ]
+}

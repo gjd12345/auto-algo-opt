@@ -1,0 +1,140 @@
+{
+  "requests": [
+    {
+      "request_id": "a6936a83509544129c4bff1c45603a78",
+      "sequence": 1,
+      "round_id": 1,
+      "purpose": "eoh_probe",
+      "state": "complete",
+      "input_tokens": 34,
+      "output_tokens": 43,
+      "elapsed_seconds": 1.7349999999860302,
+      "error_code": null,
+      "finish_reason": "stop"
+    },
+    {
+      "request_id": "5970d761f8cf45d096f4ae3a48e89f4c",
+      "sequence": 2,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "input_tokens": 1006,
+      "output_tokens": 8444,
+      "elapsed_seconds": 101.64100000006147,
+      "error_code": null,
+      "finish_reason": "stop"
+    },
+    {
+      "request_id": "535ab55a2a0e465886ef694991ba4c47",
+      "sequence": 3,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "failed",
+      "input_tokens": null,
+      "output_tokens": null,
+      "elapsed_seconds": 60.32799999997951,
+      "error_code": "http_504",
+      "finish_reason": null
+    },
+    {
+      "request_id": "7ca95a1400934b94bdd1c9143f9afc20",
+      "sequence": 4,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "input_tokens": 1006,
+      "output_tokens": 16384,
+      "elapsed_seconds": 160.9529999999795,
+      "error_code": "generation_truncated",
+      "finish_reason": "length"
+    },
+    {
+      "request_id": "ff4a3353ae224e75865a7b7430bfbe71",
+      "sequence": 5,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "complete",
+      "input_tokens": 1006,
+      "output_tokens": 16384,
+      "elapsed_seconds": 174.34399999992456,
+      "error_code": "generation_truncated",
+      "finish_reason": "length"
+    },
+    {
+      "request_id": "bded5c7a46fe402c806a6baa6244dd3d",
+      "sequence": 6,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "failed",
+      "input_tokens": null,
+      "output_tokens": null,
+      "elapsed_seconds": 60.48499999998603,
+      "error_code": "http_504",
+      "finish_reason": null
+    },
+    {
+      "request_id": "64b5b015a58a48ea926b5ce2e41c58e5",
+      "sequence": 7,
+      "round_id": 1,
+      "purpose": "eoh_generation",
+      "state": "unknown",
+      "input_tokens": null,
+      "output_tokens": null,
+      "elapsed_seconds": null,
+      "error_code": null,
+      "finish_reason": null
+    }
+  ],
+  "solver_calls": [
+    {
+      "solver_call_id": "cfa01661ae20463f8e6cd6ac441d2feb",
+      "run_id": "run_7e1e3664f7bb4bd083615844e273b84a",
+      "round_id": 1,
+      "task_id": "task_4798e9a22e9c479d8862376e9960112d",
+      "candidate_id": "baseline",
+      "revision": "original",
+      "origin": "baseline",
+      "evaluation_id": "0240d1c438644589abc2f9990b2b1a17",
+      "suite_hash": "52de3a0385cfad008d67e8392dcddfe38efaeeef03a266ecb85511c249fcd99c",
+      "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "code_sha256": "c250c13f31d10d99efa9272e4aa76befe5be339121492ff9e807fc6b33186fe0",
+      "state": "complete",
+      "objective": 0.0,
+      "valid": 1,
+      "error_code": null,
+      "started_at_utc": "2026-09-15T07:45:04.590Z",
+      "finished_at_utc": "2026-09-15T07:45:04.770Z"
+    },
+    {
+      "solver_call_id": "ad3f38f03a6d47538e865ea7e366e013",
+      "run_id": "run_7e1e3664f7bb4bd083615844e273b84a",
+      "round_id": 1,
+      "task_id": "task_4798e9a22e9c479d8862376e9960112d",
+      "candidate_id": "candidate_1",
+      "revision": "original",
+      "origin": "generated",
+      "evaluation_id": "de615911d4fa45448a371b7405c20ab0",
+      "suite_hash": "52de3a0385cfad008d67e8392dcddfe38efaeeef03a266ecb85511c249fcd99c",
+      "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+      "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+      "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+      "state": "complete",
+      "objective": 0.0,
+      "valid": 1,
+      "error_code": null,
+      "started_at_utc": "2026-09-15T07:46:48.950Z",
+      "finished_at_utc": "2026-09-15T07:46:49.119Z"
+    }
+  ],
+  "tasks": [
+    {
+      "round_id": 1,
+      "state": "COLLECTED",
+      "external_effect_started": 1,
+      "terminal_reason": "DEADLINE_EXCEEDED"
+    }
+  ],
+  "total_request_reservations": 7,
+  "total_evaluation_attempts": 2
+}

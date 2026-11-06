@@ -1,0 +1,47 @@
+{
+  "schema_version": "fme-execution-proposal/v1",
+  "proposal_id": "rq1b_restart_after_transport_failure_v1",
+  "created_date": "2026-08-31",
+  "status": "pending_user_approval_not_executed",
+  "source_commit": "127bf6e5a5aaf3537e626d70077bb006da652ad1",
+  "original_protocol_hash": "3b13dbed7e492aeafe46aa04691961e0a52f0a25700edb577004980264db0471",
+  "original_evidence": "outputs/fme_pilot/rq1b_online_20260831_v1",
+  "audit_receipt": "agent_records/calibrations/rq1b_online_20260831_v1_audit.json",
+  "observed_failure": {
+    "type": "URLError_before_HTTP_response",
+    "http_failures": 20,
+    "terminal_failed_logical_requests": 4,
+    "frozen_retry_limit_per_logical_request": 2,
+    "locally_complete_cells": 14,
+    "partially_executed_cells": 4,
+    "not_started_cells": 6,
+    "evaluated_candidate_slots": 246,
+    "summary_returned_cells": 12,
+    "diagnostic_rows": 0,
+    "heldout_evaluations": 0
+  },
+  "implementation_findings": [
+    "ThreadPoolExecutor.map collection stops at the first exception; later batch members can finish and remain in local journals without appearing in top-level summary.",
+    "EOH parent prompts include the parsed algorithm description. That description is held in population memory but not journaled. All four interrupted cells currently have a non-baseline parent, preventing exact prompt reconstruction after process exit.",
+    "A generation succeeded at seed812/scalar attempt9, but analysis failed before prospective record. Its saved code must not be mislabeled as a completed evaluation."
+  ],
+  "withdrawn_initial_option": "Resume only missing requests with identical prompts: cannot guarantee lossless continuation from this snapshot.",
+  "proposed_work_after_approval": [
+    "Preserve the original incomplete run and all successful or failed receipts unchanged.",
+    "Implement durable versioned checkpoints for parsed algorithm description, code identity, elite parent, prospective feedback and request stage, in ignored outputs only.",
+    "Collect every submitted cell result or failure independently; never silently lose later completed cells.",
+    "Define a finite transport recovery policy before execution; do not retry on output quality.",
+    "Freeze a new independent version and rerun all 24 coordinates from the initial baseline; keep the CVRP/Flash three-arm design, data, 16-slot budget and gates unchanged.",
+    "Do not pool either outcomes or selected cells from the incomplete and replacement cohorts. Report cumulative cost across both."
+  ],
+  "proposed_replacement_budget": {
+    "candidate_slots": 384,
+    "logical_search_requests_max": 768,
+    "common_code_diagnostic_requests": 36,
+    "preflight_requests": 1,
+    "logical_requests_max": 805,
+    "transport_recovery_http_cap": "Must be explicitly frozen in the approved replacement manifest; no recovery calls authorized by this proposal alone."
+  },
+  "scientific_claim_allowed": false,
+  "RQ2_RQ3_RQ4": "remain_paused"
+}

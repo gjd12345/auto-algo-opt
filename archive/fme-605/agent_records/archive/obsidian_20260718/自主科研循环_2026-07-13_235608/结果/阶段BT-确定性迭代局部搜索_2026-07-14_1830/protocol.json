@@ -1,0 +1,52 @@
+{
+  "schema_version": "tsp-deterministic-iterated-nearest-two-opt-protocol/v1",
+  "frozen_at": "2026-07-14T18:30:00+08:00",
+  "research_role": "locked_high_scale_iterated_local_search",
+  "question": "在高规模路线已经经过近邻2-opt后，确定性双桥扰动与再次收敛能否跳出局部最优并继续扩大绝对降幅",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "stage_br_code_results_sha256": "3558d2ce7c54b7dd8d572241781d2b34af49f704b97b2a22ba9da60e351d2a46",
+    "stage_br_comparison_sha256": "0a00a3831c7e65f04b16a4dd33cc598e040859115c2bc24f1d624696d6d49de9",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d"
+  },
+  "search": {
+    "nearest_neighbor_count": 40,
+    "neighbor_build_block_size": 128,
+    "stage_bs_reference_steps": 100,
+    "local_convergence_maximum_steps": 500,
+    "restart_count": 8,
+    "perturbation": "按四个路段各取一个确定性切点，交换第二和第四段形成双桥扰动",
+    "seed": "sha256(instance + ':' + archive_role + ':' + restart_index)",
+    "accept_restart": "扰动后局部收敛路线严格优于当前最佳才保留",
+    "same_schedule_for_baseline_and_portfolio": true
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "archive_role_count": 2,
+    "expected_result_count": 6,
+    "raw_cost_must_match_stage_br": true,
+    "checkpoint": "每个实例档案坐标完成后立即flush",
+    "runtime_role": "只报告，不参与质量选择"
+  },
+  "primary_gate": {
+    "valid_result_count_min": 6,
+    "portfolio_ils_nonworse_than_nearest100_instances_min": 3,
+    "portfolio_ils_strictly_better_than_nearest100_instances_min": 1,
+    "portfolio_ils_median_extra_improvement_pct_min": 0.1,
+    "ils_portfolio_vs_ils_baseline_wins_min": 2,
+    "ils_portfolio_vs_ils_baseline_losses_max": 1,
+    "final_portfolio_vs_raw_baseline_median_improvement_pct_min": 5.0
+  },
+  "leakage_controls": [
+    "500步、8次重启、切点规则和门槛在任何Stage BT结果前冻结",
+    "三个高规模实例此前只运行过原始组合与弱5步修复，未运行近邻收敛或双桥扰动",
+    "结果后不得增加重启、扩大近邻或修改扰动接受条件",
+    "同时对四槽与12槽使用完全相同搜索预算"
+  ],
+  "decision": {
+    "all_checks_pass": "iterated_nearest_two_opt_supported_at_high_scale",
+    "otherwise": "report_iterated_search_boundary_without_retuning",
+    "default_pool_behavior": "unchanged"
+  }
+}

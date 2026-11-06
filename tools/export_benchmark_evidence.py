@@ -56,8 +56,18 @@ def export_bundle(run, output, report_dir=None):
         config = json.loads(config_bytes)
         files = {"experiment_manifest.json": encoded(config["experiment_manifest"]),
                  "archive.json": encoded(build_archive_from_session(run))}
+        manifest_document = config["experiment_manifest"].get("document", config["experiment_manifest"])
+        extra = manifest_document.get("extra", {})
+        if extra.get("treatment") == "D1":
+            for key in ("controller_identity", "execution_environment", "source_identity"):
+                if not isinstance(extra.get(key), dict) or not extra[key]:
+                    raise ValueError("d1_identity_missing:" + key)
+                # These identities are frozen inside the validated Session
+                # config/manifest, not reconstructed from the export machine.
+                files[key + ".json"] = encoded(extra[key])
         rounds = [dict(row) for row in con.execute("SELECT * FROM rounds ORDER BY round_id")]
         source_hashes = {}
+        controller_rounds = []
         for row in rounds:
             for stem in ("evaluation_facts", "population_snapshot", "seed_selection",
                          "normalized_plan", "submitted_evaluation", "round_context"):
@@ -75,108 +85,35 @@ def export_bundle(run, output, report_dir=None):
                     raise ValueError("source_hash_mismatch:" + ref)
                 files[ref] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
                 source_hashes[ref] = expected
-            prefix = f"rounds/round_{int(row['round_id']):04d}"
-            facts = None
-            if row.get("evaluation_facts_ref") and row["evaluation_facts_ref"] in files:
-                facts = json.loads(files[row["evaluation_facts_ref"]])
-            referenced = {}
-            if isinstance(facts, dict):
-                for key in ("execution_delta", "comparison_packet"):
-                    value = facts.get(key)
-                    if isinstance(value, dict) and isinstance(value.get("ref"), str):
-                        referenced[value["ref"]] = value.get("sha256")
-            for ref in (f"{prefix}/execution_delta.json", f"{prefix}/comparison_packet.json",
-                        f"{prefix}/memory_consumption.json", f"{prefix}/context_manifest.json"):
-                path = (run / ref).resolve()
-                if not path.is_relative_to(run) or not path.is_file():
-                    continue
-                raw = path.read_bytes().decode("utf-8").replace("\r\n", "\n").encode("utf-8")
-                actual_hash = digest(raw)
-                if ref in referenced and referenced[ref] != actual_hash:
-                    raise ValueError("source_hash_mismatch:" + ref)
-                files[ref] = raw
-                source_hashes[ref] = actual_hash
+            plan_ref = row.get("normalized_plan_ref")
+            controller_rounds.append({
+                "round_id": row["round_id"],
+                "feedback_basis": json.loads(files[plan_ref]).get("feedback_basis") if plan_ref in files else None,
+                "normalized_plan": {"ref": plan_ref, "sha256": row.get("normalized_plan_sha256")},
+                "submitted_evaluation": {"ref": row.get("submitted_evaluation_ref"),
+                                         "sha256": row.get("submitted_evaluation_sha256")},
+            })
+        if extra.get("treatment") == "D1":
+            files["controller_rounds.json"] = encoded({
+                "schema_version": "host-agent-round-evidence/v1", "rounds": controller_rounds,
+                "scope": "Public decisions and evidence references; no private chain-of-thought",
+            })
         requests = [dict(row) for row in con.execute(
             "SELECT request_id,sequence,round_id,purpose,state,input_tokens,output_tokens,"
             "elapsed_seconds,error_code,finish_reason FROM requests ORDER BY sequence")]
         solver = [dict(row) for row in con.execute("SELECT * FROM solver_calls ORDER BY rowid")]
         tasks = [dict(row) for row in con.execute(
-            "SELECT round_id,state,external_effect_started,terminal_reason,engine_elapsed_seconds FROM tasks ORDER BY round_id")]
+            "SELECT round_id,state,external_effect_started,terminal_reason FROM tasks ORDER BY round_id")]
         files["budget_receipt.json"] = encoded({
             "requests": requests, "solver_calls": solver, "tasks": tasks,
             "total_request_reservations": len(requests), "total_evaluation_attempts": len(solver)})
         files["generation_diagnostics.json"] = encoded(derive_generation_diagnostics(run, requests))
-        controller_events = []
-        controller_dir = run / "controller_usage"
-        if controller_dir.is_dir():
-            for path in sorted(controller_dir.glob("*.json")):
-                raw = path.read_bytes().decode("utf-8").replace("\r\n", "\n").encode("utf-8")
-                event = json.loads(raw)
-                controller_events.append(event)
-                ref = path.relative_to(run).as_posix()
-                files[ref] = raw
-                source_hashes[ref] = digest(raw)
-
-        def token_summary(items, input_key="input_tokens", output_key="output_tokens"):
-            known_input = sum(item[input_key] for item in items if isinstance(item.get(input_key), int))
-            known_output = sum(item[output_key] for item in items if isinstance(item.get(output_key), int))
-            complete = bool(items) and all(isinstance(item.get(input_key), int) and isinstance(item.get(output_key), int)
-                                           and item.get("availability", "complete") == "complete" for item in items)
-            return {
-                "status": "complete" if complete else "unavailable" if not items else "incomplete",
-                "input_tokens": known_input if complete else None,
-                "output_tokens": known_output if complete else None,
-                "known_input_tokens": known_input,
-                "known_output_tokens": known_output,
-                "event_count": len(items),
-            }
-
-        provider_cost = token_summary(requests)
-        provider_elapsed_complete = bool(requests) and all(
-            isinstance(item.get("elapsed_seconds"), (int, float)) for item in requests)
-        provider_cost.update({
-            "requests": len(requests),
-            "provider_elapsed_seconds": round(sum(float(item["elapsed_seconds"]) for item in requests), 6)
-            if provider_elapsed_complete else None,
-        })
-        controller_cost = token_summary(controller_events)
-        controller_elapsed_complete = bool(controller_events) and all(
-            isinstance(item.get("elapsed_seconds"), (int, float)) for item in controller_events)
-        controller_cost["elapsed_seconds"] = (
-            round(sum(float(item["elapsed_seconds"]) for item in controller_events), 6)
-            if controller_elapsed_complete else None
-        )
-        if not controller_events:
-            controller_cost["reason"] = "controller_usage_not_recorded"
-        files["controller_usage.json"] = encoded({
-            "schema_version": "algorithm-optimization-controller-usage-summary/v1",
-            "events": controller_events, "summary": controller_cost,
-        })
-        files["controller_usage.jsonl"] = b"".join(
-            json.dumps(event, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8") + b"\n"
-            for event in controller_events
-        )
-        files["cost_summary.json"] = encoded({
-            "schema_version": "algorithm-optimization-cost-summary/v1",
-            "solver_calls": len(solver),
-            "engine_wall_seconds": round(sum(float(item["engine_elapsed_seconds"]) for item in tasks), 6)
-            if tasks and all(isinstance(item.get("engine_elapsed_seconds"), (int, float)) for item in tasks)
-            else None,
-            "eoh_provider": provider_cost,
-            "outer_controller": controller_cost,
-            "total_model_tokens": (
-                provider_cost["input_tokens"] + provider_cost["output_tokens"]
-                + controller_cost["input_tokens"] + controller_cost["output_tokens"]
-                if provider_cost["status"] == controller_cost["status"] == "complete" else None
-            ),
-            "total_model_token_status": "complete" if provider_cost["status"] == controller_cost["status"] == "complete" else "incomplete",
-        })
         files["bundle.json"] = encoded({
-            "schema_version": "compact-session-evidence/v2", "run_id": state["run_id"],
+            "schema_version": "compact-session-evidence/v1", "run_id": state["run_id"],
             "run_state": state["state"], "state_version": state["state_version"],
             "experiment_manifest_sha256": state["experiment_manifest_sha256"],
             "source_config_sha256": state["config_sha256"], "source_text_hashes": source_hashes,
-            "scope": "training facts, contrasts, reflection references, Memory consumption, controller/provider costs, population, seed selection, plans and budget; not a resumable Session",
+            "scope": "training facts, population, seed selection, plans and budget; not a resumable Session",
             "omitted": ["provider raw exchanges", "credentials", "SQLite", "heldout results not supplied"],
             "rounds": [{k: row[k] for k in ("round_id", "state", "stop_reason", "decision")} for row in rounds]})
     finally:

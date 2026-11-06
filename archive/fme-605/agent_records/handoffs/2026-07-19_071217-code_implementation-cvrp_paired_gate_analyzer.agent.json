@@ -1,0 +1,32 @@
+{
+  "schema_version": "agent_ad_code_implementation/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-paired-gate-analyzer",
+  "audience": "agent",
+  "created_at": "2026-07-19T07:12:17+08:00",
+  "phase_id": "code_implementation",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit_before_change": "81811a12eaeb66570cf8aa6494263bb4b360582c",
+  "required_docs_read": [
+    "02-Codex与科研Agent职责边界.md",
+    "03-系统架构与模块契约.md",
+    "08-执行前后检查清单.md"
+  ],
+  "status": "implemented_pending_formal_inputs",
+  "implementation": {
+    "path": "eoh_rag/experiments/reports/analyze_cvrp_router_paired_gate.py",
+    "purpose": "Automatically adjudicate the frozen two-arm CVRP reflection-memory cohort without post-hoc threshold changes.",
+    "inputs": ["frozen manifest", "run_index.json", "per-run official_eoh_run_summary.json"],
+    "outputs": ["paired gate JSON", "paired gate Markdown"],
+    "incomplete_coordinates": "inconclusive",
+    "complete_gate_failure": "failed",
+    "complete_gate_pass": "passed"
+  },
+  "verification": {
+    "test_tier": "skipped",
+    "reason": "User Testing Policy requires explicit approval before tests.",
+    "static_checks": ["Python AST parse", "git diff --check"]
+  },
+  "next_action": "merge the completed feature branch into main; do not launch the six-run cohort without explicit budget approval"
+}

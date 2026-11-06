@@ -1,0 +1,85 @@
+{
+  "sha256": "04f3cd7e9916f512976a7aac0945ba1f7b4d1a02cd16d7a8dd42cede21079667",
+  "document": {
+    "schema_version": "algorithm-optimization-experiment-manifest/v1",
+    "benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "runtime_hash": "f5437c7719415c86f9755739ba4cd65c041c5d3e00a834d5b4d563f249e031ac",
+    "skill_hash": "06ed229843d0037f231c2918aa75a0e56ae99dc0f2ef753d3615022a0098b6a1",
+    "model": "deepseek-flash",
+    "endpoint_identity": "https://api.deepseek.com/v1/chat/completions",
+    "inheritance_mode": "population_seeds",
+    "feedback_mode": "runtime_facts",
+    "agent_guidance": true,
+    "repair_mode": "off",
+    "memory_enabled": false,
+    "evaluation_budget": 20,
+    "population_size": 2,
+    "rounds": 2,
+    "round_budget": 10,
+    "search_seed": 20260908,
+    "extra": {
+      "search_policy_defaults": {
+        "pop_size": 2,
+        "max_sample_nums": 20,
+        "n_pop": 2
+      },
+      "search_policy_limits": {
+        "pop_size": [
+          2,
+          2
+        ],
+        "max_sample_nums": [
+          20,
+          20
+        ],
+        "n_pop": [
+          2,
+          2
+        ]
+      },
+      "generation_contract": {
+        "protocol_version": "openai-path-bridge/v1",
+        "model": "deepseek-flash",
+        "endpoint_identity": "https://api.deepseek.com/v1/chat/completions",
+        "thinking": {
+          "type": "disabled"
+        },
+        "temperature": 1.0,
+        "max_output_tokens": 16384,
+        "request_timeout_seconds": 180,
+        "concurrency": 1,
+        "provider_seed": null,
+        "generation_parameters": {
+          "temperature": 1.0,
+          "max_tokens": 16384,
+          "thinking": {
+            "type": "disabled"
+          }
+        },
+        "repair_parameters": {
+          "temperature": 0.2,
+          "max_tokens": 8192,
+          "thinking": {
+            "type": "disabled"
+          },
+          "response_format": {
+            "type": "json_object"
+          }
+        },
+        "response_policy": "content_only_complete_v1"
+      },
+      "resource_contract": {
+        "request_budget": 24,
+        "round_request_budget": 24,
+        "wall_clock_budget": 600,
+        "round_wall_clock_budget": 300,
+        "evaluation_budget": 20,
+        "round_evaluation_budget": 10,
+        "solver_timeout_seconds": 20,
+        "repair_request_budget": null
+      }
+    }
+  }
+}

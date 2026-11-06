@@ -1,0 +1,77 @@
+{
+  "schema_version": "agent_ad_experiment_execution/v1",
+  "document_id": "agent_ad:2026-07-19:cvrp-router-provider-auth-inconclusive",
+  "audience": "agent",
+  "created_at": "2026-07-19T01:08:47+08:00",
+  "phase_id": "experiment_execution",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+  "branch": "feat/q3-v2-cross-transfer",
+  "commit": "0a92107ac637090ee142113d3ee4803e9e612def",
+  "status": "infrastructure_inconclusive",
+  "experiment": {
+    "suite": "cvrp_expert_router_proxy_deepseek_fallback_v1",
+    "manifest": "eoh_rag_workspace/experiments/manifests/cvrp_expert_router_proxy_deepseek_fallback_v1.json",
+    "frozen_seeds": [
+      20101,
+      20102,
+      20103
+    ],
+    "completed_runs": 0,
+    "scientific_gate_applied": false,
+    "failure_class": "provider_auth_invalid",
+    "provider_probe": {
+      "provider": "deepseek",
+      "http_status": 401,
+      "secret_recorded": false
+    }
+  },
+  "evidence_refs": [
+    {
+      "kind": "runtime_index",
+      "path": "eoh_rag_workspace/reports/auto_experiment_reports/cvrp_expert_router_proxy_deepseek_fallback_v1/run_index.json",
+      "historical_status": "three_failed_after_retries"
+    },
+    {
+      "kind": "corrected_gate",
+      "path": "eoh_rag_workspace/reports/formal/cvrp_expert_router_proxy_deepseek_fallback_v1/proxy_gate.json",
+      "status": "inconclusive"
+    },
+    {
+      "kind": "provider_fail_fast_commit",
+      "commit": "845f46b"
+    },
+    {
+      "kind": "three_state_gate_commit",
+      "commit": "0a92107"
+    },
+    {
+      "kind": "test",
+      "command": "python -m pytest -q",
+      "result": "545 passed, 3 skipped, 4 subtests passed"
+    },
+    {
+      "kind": "human_record",
+      "path": "C:/Users/24294/Documents/Obsidian Vault/毕业论文相关/大模型进化代码/agent_ad/Agent外部知识库_2026-07-15_000531/过程文档/2026-07-19/2026-07-19_010847-experiment_execution-CVRP选择器正式代理实验认证阻塞勘误.md"
+    }
+  ],
+  "scientific_interpretation": {
+    "proxy_passed": null,
+    "proxy_failed": null,
+    "oracle_remains_report_only": true,
+    "reevo_branch_authorized": false
+  },
+  "next_action": {
+    "action": "restore_valid_provider_credentials_and_rerun_same_frozen_coordinates",
+    "allowed_changes": [
+      "replace invalid credential with a valid credential for the already declared provider"
+    ],
+    "forbidden_changes": [
+      "change seeds",
+      "change gate thresholds",
+      "mix provider cohorts",
+      "count infrastructure failures as scientific failures",
+      "switch to ReEvo before a complete scientific gate"
+    ]
+  }
+}

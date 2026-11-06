@@ -1,0 +1,50 @@
+{
+  "schema_version": "agent-ad-offline-validation/v1",
+  "suite": "tsp_runtime_probe_validation_v1",
+  "status": "frozen_ready",
+  "discovery_source": {
+    "suite": "inherited_pool_control_v1",
+    "seed": 8101,
+    "candidate_count": 6
+  },
+  "validation_source": {
+    "suite": "inherited_pool_control_v1",
+    "seeds": [8102, 8103],
+    "candidate_ranks": [1, 2, 3, 4, 5, 6],
+    "candidate_count": 12
+  },
+  "dev_probe": {
+    "instance_type": "synthetic_euc_2d",
+    "sizes": [120, 160, 200],
+    "coordinate_seed_formula": "20260714+n",
+    "per_instance_timeout_s": 15,
+    "generator_script_sha256": "6aec14260ed5b7b120f7de8db2a6a109c2a9c9d4473e56c92f275a0a8ea26599"
+  },
+  "prediction_rule": {
+    "fit": "least_squares_log_runtime_on_log_n",
+    "fit_sizes": [120, 160, 200],
+    "target_n": 280,
+    "predicted_feasible_if_runtime_lt_s": 30,
+    "if_any_dev_timeout": "predict_not_feasible_without_fit",
+    "predictions_must_be_persisted_before_actual_evaluation": true
+  },
+  "actual_check": {
+    "instance": "a280",
+    "timeout_s": 30,
+    "use_same_code_and_evaluator": true
+  },
+  "pass_gate": {
+    "maximum_false_safe": 0,
+    "minimum_correct_classifications": 10,
+    "total_classifications": 12
+  },
+  "report": [
+    "confusion_matrix",
+    "per_candidate_prediction",
+    "false_safe_coordinates",
+    "total_probe_runtime_s",
+    "actual_a280_runtime_or_timeout"
+  ],
+  "llm_calls": 0,
+  "changes_formal_experiment": false
+}

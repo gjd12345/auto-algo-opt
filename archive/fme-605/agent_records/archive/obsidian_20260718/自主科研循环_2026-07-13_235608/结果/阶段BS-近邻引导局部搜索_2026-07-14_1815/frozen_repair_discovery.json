@@ -1,0 +1,19 @@
+{
+  "schema_version": "tsp-nearest-two-opt-frozen-discovery/v1",
+  "protocol_sha256": "ca182e52e7007022f6444f05da095cfbf67b010020447cb86563155ee8d258c9",
+  "discovery_summary_sha256": "7e1edd826e6d5425df033c265c267f859ad72e17b959a7e9aea156b175124dbd",
+  "discovery_result_sha256": "ce30682fbc926ed89ee3d3323ff6c0fe04b17fda05dd155ae8c9a973961e5438",
+  "confirmation_results_sha256": "b6e14d729f70f14d49a9d5bfaf0d6d9ef0c770d6d60af71260f2a64a7fdb878e",
+  "discovery_passed": true,
+  "repair": {
+    "type": "nearest_neighbor_guided_best_improvement_2opt",
+    "nearest_neighbor_count": 40,
+    "maximum_steps": 100,
+    "neighbor_build_block_size": 128,
+    "accept_when": "路线总成本严格降低",
+    "stop_when": "没有候选交换可严格降低成本或达到100步",
+    "tie_break": "候选边位置按字典序较小者",
+    "same_rule_for_baseline_and_portfolio": true
+  },
+  "confirmation_results_read": false
+}

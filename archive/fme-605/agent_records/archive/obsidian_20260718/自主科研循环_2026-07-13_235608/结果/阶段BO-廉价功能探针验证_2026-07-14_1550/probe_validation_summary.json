@@ -1,0 +1,43 @@
+{
+  "schema_version": "tsp-cheap-functional-probe-validation/v1",
+  "protocol_sha256": "50095e40406f61f01e445e57ef11679165029563fffb07f8735172406f33c160",
+  "probe_pairwise_similarity_sha256": "f34eb11a946f03874b7fc8bcbc9aefea5746def29800154052b4d8ea9e12b5fa",
+  "real_pairwise_similarity_sha256": "39fc476e2094a9d5dc20cd9163dbb6e06277e0a4f40b6de493da1a6bd4a02053",
+  "metrics": {
+    "pair_count": 15,
+    "spearman_probe_vs_real": 0.9152898656402474,
+    "predicted_redundant_pair_count": 6,
+    "real_redundant_pair_count": 6,
+    "true_positive": 6,
+    "false_positive": 0,
+    "false_negative": 0,
+    "true_negative": 9,
+    "precision": 1.0,
+    "recall": 1.0,
+    "predicted_redundant_pairs": [
+      "AW1/AW2",
+      "AW1/AW3",
+      "AW1/AW4",
+      "AW2/AW3",
+      "AW2/AW4",
+      "AW3/AW4"
+    ],
+    "real_redundant_pairs": [
+      "AW1/AW2",
+      "AW1/AW3",
+      "AW1/AW4",
+      "AW2/AW3",
+      "AW2/AW4",
+      "AW3/AW4"
+    ]
+  },
+  "checks": {
+    "spearman": true,
+    "precision": true,
+    "recall": true,
+    "aw1_aw3_identical": true,
+    "r2_r4_not_redundant": true
+  },
+  "decision": "cheap_functional_signature_supported_for_offline_curation",
+  "default_pool_behavior": "unchanged"
+}

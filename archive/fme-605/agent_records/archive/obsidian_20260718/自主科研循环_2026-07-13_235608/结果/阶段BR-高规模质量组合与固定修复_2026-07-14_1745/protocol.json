@@ -1,0 +1,54 @@
+{
+  "schema_version": "tsp-quality-portfolio-high-scale-repair-protocol/v1",
+  "frozen_at": "2026-07-14T17:45:00+08:00",
+  "research_role": "independent_high_scale_quality_and_fixed_repair_confirmation",
+  "question": "外部56发现的12槽质量组合能否跨到4461至5934节点，并在固定局部修复后继续扩大降幅",
+  "inputs": {
+    "instance_manifest_sha256": "06973a5c4878effaec5b08d3a15b07eca000c69a8a60c3df768fbf05c89d1373",
+    "frozen_portfolio_sha256": "af722553db042198dece739ecf50278041f5f84a29cbb32593a133a976c8a865",
+    "code_catalog_sha256": "1e4dbab63d2cb1be5d29f8bbac7ca79ec1be5e6b8bea5ece6eccf9b30147970d",
+    "stage_bq_confirmation_summary_sha256": "371ffff4b408c4258ca89c799c24969a16cba7bbdd56cd1fbe30b81f7513eb2c"
+  },
+  "archives": {
+    "baseline": "冻结组合中的4条baseline代码",
+    "quality_portfolio": "同4条baseline加8条冻结新增代码",
+    "expected_total_code_count": 12,
+    "selection": "每个实例分别选择档案内路线成本最低者；相同则按code_hash"
+  },
+  "evaluation": {
+    "instance_count": 3,
+    "expected_code_coordinate_count": 36,
+    "instances_not_used_by_stage_bq_selection": true,
+    "runtime_role": "只报告，不作为质量淘汰条件",
+    "checkpoint": "每个代码坐标与每个实例比较完成后立即flush"
+  },
+  "repair": {
+    "type": "cost_best_symmetric_2opt",
+    "maximum_steps": 5,
+    "candidate_pairs_per_step": 10000,
+    "candidate_sampling_seed": "sha256(instance_name + ':' + step_index)",
+    "same_candidate_indices_for_both_archives": true,
+    "stop_when": "当前候选集中没有严格降低路线总成本的移动"
+  },
+  "primary_gate": {
+    "feasible_code_coordinates_min": 36,
+    "raw_portfolio_wins_min": 2,
+    "raw_portfolio_losses_max": 0,
+    "raw_portfolio_median_improvement_pct_min": 0.1,
+    "repaired_portfolio_wins_min": 2,
+    "repaired_portfolio_losses_max": 0,
+    "repaired_portfolio_median_improvement_pct_min": 0.1,
+    "repaired_portfolio_vs_raw_baseline_median_improvement_pct_min": 1.0
+  },
+  "leakage_controls": [
+    "12槽组合及顺序在读取三个高规模实例结果前已冻结",
+    "局部修复预算完全复用Stage BK的5步和每步10000候选对",
+    "结果后不得更换代码、提高修复步数或删除慢实例",
+    "同时报告未修复档案差异和匹配修复后的档案差异"
+  ],
+  "decision": {
+    "all_checks_pass": "quality_portfolio_and_fixed_repair_supported_at_high_scale",
+    "otherwise": "report_high_scale_boundary_without_retuning",
+    "default_pool_behavior": "unchanged"
+  }
+}

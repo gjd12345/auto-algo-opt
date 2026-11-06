@@ -1,0 +1,27 @@
+{
+  "method": "AST node-type unigrams and adjacent bigrams; sublinear TF; smoothed IDF; L2 normalization; exact-code deduplication",
+  "source_snapshot": "evidence/final_batch_20260630/shared_pool_snapshot",
+  "counts": {
+    "bp_online": {"raw": 192, "unique": 192, "parseable": 192},
+    "tsp_construct": {"raw": 206, "unique": 206, "parseable": 206},
+    "cvrp_construct": {"raw": 207, "unique": 207, "parseable": 207}
+  },
+  "centroid_cosine": {
+    "bp_online": {"bp_online": 1.0, "tsp_construct": 0.7312705443, "cvrp_construct": 0.6933231046},
+    "tsp_construct": {"bp_online": 0.7312705443, "tsp_construct": 1.0, "cvrp_construct": 0.9422152991},
+    "cvrp_construct": {"bp_online": 0.6933231046, "tsp_construct": 0.9422152991, "cvrp_construct": 1.0}
+  },
+  "pairwise_median": {
+    "bp_online__bp_online": 0.5263486384,
+    "tsp_construct__tsp_construct": 0.5575579972,
+    "cvrp_construct__cvrp_construct": 0.5536153616,
+    "bp_online__tsp_construct": 0.3949142416,
+    "bp_online__cvrp_construct": 0.3748239324,
+    "tsp_construct__cvrp_construct": 0.5269810615
+  },
+  "decision": {
+    "status": "tentative",
+    "priority_edges": ["tsp_construct->cvrp_construct", "cvrp_construct->tsp_construct"],
+    "interpretation": "TSP and CVRP have a strong structural transfer prior; BP-to-routing edges are useful as distant controls."
+  }
+}

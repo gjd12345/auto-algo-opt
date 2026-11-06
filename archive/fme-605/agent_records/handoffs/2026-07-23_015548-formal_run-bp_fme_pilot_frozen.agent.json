@@ -1,0 +1,48 @@
+{
+  "schema_version": "agent_ad_formal_run_handoff/v1",
+  "document_id": "agent_ad:2026-07-23:bp-fme-pilot-frozen-v1",
+  "audience": "agent",
+  "created_at": "2026-07-23T01:55:48+08:00",
+  "phase_id": "formal_run",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "2c2dd53ea2560ac2c279f3a5c963454834ab76a0",
+  "status": "frozen_ready_to_run",
+  "manifest": {
+    "path": "eoh_rag_workspace/experiments/manifests/bp_falsifiable_mechanism_ecology_creation_pilot_v1.json",
+    "sha256": "4f9002792e87025237c340ae3f62a0f253c5f280de518837e6832c8ad981755d",
+    "suite": "bp_falsifiable_mechanism_ecology_creation_pilot_v1",
+    "run_count": 6,
+    "paired_seeds": [23001, 23002, 23003],
+    "arms": [
+      "scalar_reflection_control",
+      "falsifiable_mechanism_ecology"
+    ]
+  },
+  "implementation": {
+    "contracts_and_archives_commit": "0460b3c",
+    "pilot_integration_commit": "2c2dd53",
+    "analysis_entry": "eoh_rag/experiments/reports/analyze_bp_fme_pilot.py",
+    "calibration_record": "agent_records/calibrations/2026-07-23_015203-experiment_design-bp_fme_descriptor_calibration.agent.json"
+  },
+  "evidence_refs": [
+    "eoh_rag/experiments/research_contracts.py",
+    "eoh_rag/fme/archives.py",
+    "eoh_rag/fme/controller.py",
+    "eoh_rag/fme/recorder.py",
+    "official_eoh/examples/bp_online/prob.py",
+    "eoh_rag_workspace/experiments/manifests/bp_falsifiable_mechanism_ecology_creation_pilot_v1.json"
+  ],
+  "constraints": {
+    "approved_additional_runs": 6,
+    "provider": "opencode-go",
+    "model": "deepseek-v4-flash",
+    "provider_mixing": false,
+    "heldout_visible_during_evolution": false,
+    "secret_persistence": false,
+    "tests_approved": false,
+    "test_tier": "static_inspection_only"
+  },
+  "next_action": "inject_OPENCODE_GO_API_KEY_into_current_process_only_and_execute_the_frozen_manifest_with_six_concurrent_coordinates_then_run_the_frozen_gate_analyzer"
+}

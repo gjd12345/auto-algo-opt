@@ -1,0 +1,262 @@
+{
+  "schema_version": "agent_ad_architecture_contract/v1",
+  "document_id": "agent_ad:2026-07-23:order-regime-feedback-v1-contract",
+  "audience": "agent",
+  "created_at": "2026-07-23T03:00:41.3224254+08:00",
+  "phase_id": "architecture_design",
+  "actor": "codex",
+  "repository": "C:/Users/24294/agent_ad/auto-algo-opt",
+  "branch": "main",
+  "commit": "fe71010438314bcc14c1159c5d41c11624d1756a",
+  "status": "frozen_optional_contract_unlaunched",
+  "research_mapping": {
+    "research_questions": [
+      "RQ1_feedback_improves_automatic_evolution",
+      "RQ3_cross_distribution_generalization"
+    ],
+    "effect_axes": [
+      "cross_distribution_generalization",
+      "valid_generated_candidate_rate",
+      "llm_budget"
+    ],
+    "origin": "external_teacher_concept",
+    "source_id": "albers_khan_ladewig_2020_random_order",
+    "claim_limit": "This contract creates a development-only diagnosis mechanism. It makes no quality or held-out claim."
+  },
+  "module_contract": {
+    "module_name": "order_regime_feedback_v1",
+    "classification": "optional_development_only_feedback_module",
+    "role": "Compile paired online-bin-packing order observations into regime-stratified FME feedback and counterexample metadata without changing the candidate score contract.",
+    "candidate_contract_unchanged": "score(item, bins) -> priority_vector",
+    "external_seam": {
+      "interface_name": "OrderFeedbackAdapter",
+      "operation": "compile(observations: Sequence[OrderPairObservation]) -> OrderFeedbackSummary",
+      "caller_obligations": [
+        "Pass development-only observations for exactly one candidate and one frozen development suite.",
+        "Pass two valid order variants for every declared regime and multiset before requesting paired sensitivity.",
+        "Record capacity and hashes, but do not persist raw item sequences in the feedback artifact."
+      ],
+      "return_invariants": [
+        "visible_scope is exactly dev_only.",
+        "Every paired sensitivity compares identical multiset_hash values with distinct order_variant values.",
+        "The result contains no held-out identifier, future-item feature, provider secret, raw model response, or raw item sequence."
+      ]
+    },
+    "seam_rationale": {
+      "module_depth": "The Module hides regime classification, pair validation, sensitivity aggregation, ranking-flip detection, and archive-ready metadata behind one compile operation.",
+      "leverage": "The evaluator, feedback compiler, controller, and archive consume one summary instead of each reimplementing order pairing rules.",
+      "locality": "Future changes to thresholds, hashes, or pair checks remain in this Module rather than spreading through EOH prompts and archive callers.",
+      "real_seam_condition": "At implementation time, the existing aggregate v2 order summary is wrapped by aggregate_order_feedback_v2_compat and the new order_regime_feedback_v1 becomes a second Adapter that satisfies this Interface. No compatibility Adapter or production code is created by this contract."
+    },
+    "input_record": {
+      "name": "OrderPairObservation",
+      "required_fields": {
+        "candidate_id": "stable candidate code hash",
+        "development_suite": "fme_dev_order_regime_feedback_v1",
+        "regime_id": "small_dominant, mixed, or large_dominant",
+        "multiset_id": "0 or 1 within the regime",
+        "order_variant": "random or alternating_extremes",
+        "capacity": "positive integer captured from the evaluated instance",
+        "item_count": "2048 for this v1 profile",
+        "large_item_count": "count of items satisfying item * 3 > capacity",
+        "large_item_fraction": "large_item_count divided by item_count",
+        "multiset_hash": "SHA-256 of the sorted multiset and capacity",
+        "order_hash": "SHA-256 of the ordered sequence and capacity",
+        "relative_gap_pct": "development lower-bound-relative gap in percent",
+        "valid": "evaluation completed without feasibility or timeout failure"
+      },
+      "forbidden_fields": [
+        "heldout_result",
+        "future_item_frequency",
+        "arrival_index_as_candidate_input",
+        "raw_item_sequence",
+        "provider_key",
+        "raw_model_response"
+      ]
+    },
+    "output_record": {
+      "name": "OrderFeedbackSummary",
+      "required_fields": {
+        "schema_version": "bp_order_regime_feedback/v1",
+        "visible_scope": "dev_only",
+        "candidate_id": "copied from the sole input candidate",
+        "development_suite": "fme_dev_order_regime_feedback_v1",
+        "per_regime_relative_gap_pct": "mean gap by regime",
+        "pair_order_sensitivity_pct": "absolute random-versus-alternating gap for each regime:multiset pair",
+        "large_item_order_sensitivity_pct": "maximum paired sensitivity over large_dominant pairs",
+        "worst_regime": "regime with largest mean gap; lexical tie break",
+        "worst_pair": "regime:multiset with largest paired sensitivity; lexical tie break",
+        "distinguishing_counterexample_ids": "one worst valid order variant per regime plus an order-pair identifier",
+        "counterexample_gap_pct": "per-order-instance gap map",
+        "counterexample_artifacts": "archive-ready metadata only",
+        "behavior_profile_hash": "canonical SHA-256 of the declared summary fields"
+      },
+      "optional_fields": {
+        "ranking_flip_pairs": "development-only records added only after two or more valid candidates share the same pair",
+        "invalid_observation_ids": "invalid observations retained as explicit failure evidence"
+      }
+    }
+  },
+  "development_interval": {
+    "scope": "dev_only",
+    "profile_name": "fme_dev_order_regime_feedback_v1",
+    "capacity_source": "per-instance evaluator capacity; the first BP implementation uses the existing capacity=100 development configuration without embedding 100 in the Adapter",
+    "item_count_per_multiset": 2048,
+    "multisets_per_regime": 2,
+    "order_variants": [
+      "random",
+      "alternating_extremes"
+    ],
+    "pair_rule": "Both order variants are permutations of one sampled multiset, must have equal multiset_hash, and must have different order_hash values.",
+    "large_item_rule": "An item is large exactly when item * 3 > capacity. This is an evaluator descriptor, never a hidden candidate feature.",
+    "regime_classifier": {
+      "small_dominant": "large_item_fraction < 1/3",
+      "mixed": "1/3 <= large_item_fraction <= 2/3",
+      "large_dominant": "large_item_fraction > 2/3"
+    },
+    "regimes": [
+      {
+        "regime_id": "small_dominant",
+        "seed_range": "84000-84001",
+        "sampler": "sample every item uniformly from 1 through floor(capacity / 3)",
+        "required_large_item_fraction": 0.0
+      },
+      {
+        "regime_id": "mixed",
+        "seed_range": "85000-85001",
+        "sampler": "sample 1024 items uniformly from 1 through floor(capacity / 3) and 1024 items uniformly from floor(capacity / 3) + 1 through capacity, then deterministically permute the concatenated multiset",
+        "required_large_item_fraction": 0.5
+      },
+      {
+        "regime_id": "large_dominant",
+        "seed_range": "86000-86001",
+        "sampler": "sample every item uniformly from floor(capacity / 3) + 1 through capacity",
+        "required_large_item_fraction": 1.0
+      }
+    ],
+    "order_generation": {
+      "random": "the deterministic sampled permutation for the seed",
+      "alternating_extremes": "sort the same even-length multiset, then interleave the descending upper half with the ascending lower half",
+      "forbidden_reuse": [
+        "fme_unseen_v1 ascending or descending coordinates",
+        "fme_unseen_v2 coordinates",
+        "any consumed held-out item sequence"
+      ]
+    },
+    "freshness": {
+      "disjoint_from_v1_development": [
+        "61000-61003",
+        "62000-62003",
+        "63000-63003"
+      ],
+      "disjoint_from_v2_development": [
+        "81000-81001",
+        "82000-82001",
+        "83000-83001"
+      ],
+      "disjoint_from_v2_heldout": [
+        "91000-91005",
+        "92000-92003",
+        "93000-93003"
+      ]
+    }
+  },
+  "counterexample_contract": {
+    "artifact_fields": {
+      "counterexample_id": "bp-dev-order-regime-v1-{regime_id}-{multiset_id}-{order_variant}",
+      "source_distribution": "order_regime_{regime_id}",
+      "feature_region": "order_regime_v1:{regime_id}:large_fraction={large_item_fraction}:order={order_variant}:n={item_count}:c={capacity}",
+      "instance_hash": "SHA-256 of the ordered instance, capacity, regime_id, multiset_id, and order_variant",
+      "instance_ref": "runtime://fme/bp/{counterexample_id}",
+      "generation_method": "frozen_order_regime_pair_sampler_v1",
+      "actor": "research_agent",
+      "visible_scope": "dev_only"
+    },
+    "pair_admission_preconditions": [
+      "Both variants are valid and share one multiset_hash.",
+      "The declared regime matches the measured large_item_fraction classifier.",
+      "The order_hash values differ; otherwise the pair is rejected as non-discriminating.",
+      "No observation or artifact refers to a held-out suite."
+    ],
+    "archive_admission_rule": "Call the existing FMEArchives.admit_counterexample without weakening its four frozen checks: no duplicate counterexample ID; at least one valid candidate; a globally strong candidate is worse than the best candidate on that counterexample by more than 1e-12; and the artifact adds a new feature region or candidate ranking signature.",
+    "ranking_flip_rule": "For one regime:multiset pair, record a ranking flip only when at least two valid candidate IDs have strict opposite pairwise order between random and alternating_extremes, using 1e-12 as the tie tolerance. A flip is a controller cue for compare_on_counterexample, not an admission substitute and not a quality claim.",
+    "duplicate_policy": "If a pair adds neither a new feature_region nor a new ranking_signature, retain the observation in the development record but do not admit a new counterexample artifact."
+  },
+  "integration_plan": {
+    "future_implementation_files": [
+      "eoh_rag/fme/order_regime_feedback.py (new deep Module)",
+      "official_eoh/examples/bp_online/prob.py (new separate development profile only)",
+      "eoh_rag/fme/recorder.py (consume the existing archive rule without relaxing it)",
+      "official_eoh/eoh/src/eoh/eoh/eoh.py (surface only the summary fields needed by FMEControllerState)"
+    ],
+    "controller_mapping": "A non-empty ranking_flip_pairs field may increment pending_counterexample_comparisons and cause the existing single-action controller to choose compare_on_counterexample. It must not directly call an EOH operator, modify a candidate, or authorize a transfer.",
+    "implementation_preconditions": [
+      "Implement the new Module before adding a runtime profile reference.",
+      "Preserve the current candidate score contract and all FME v2 profile names.",
+      "Perform only static inspection or approved targeted verification after code changes; do not run tests automatically."
+    ]
+  },
+  "fme_v2_cohort_isolation": {
+    "v2_manifest_path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+    "v2_manifest_sha256_at_contract_freeze": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+    "v2_status_preserved": "frozen_unapproved_proposal",
+    "v2_launch_authorized_preserved": false,
+    "v2_max_runs_preserved": 0,
+    "v2_files_modified_in_this_tick": [],
+    "isolation_rules": [
+      "Do not modify the v2 manifest, its arms, seed lists, gates, profiles, or held-out fields.",
+      "Do not add this Adapter as a v2 arm, metric, prompt field, or post-hoc analysis rule.",
+      "Do not generate or inspect fme_unseen_v1 or fme_unseen_v2 through this Module.",
+      "A future order_regime cohort, if ever proposed, must use a separately frozen manifest, fresh development seeds, separate cohort ID, and newly approved LLM budget.",
+      "No current v2 result, candidate, or held-out observation may be reclassified using this contract."
+    ]
+  },
+  "exit_conditions": {
+    "reject_before_any_llm_cohort_if": [
+      "The implementation cannot prove each pair has matching multiset_hash values and distinct order_hash values.",
+      "Any regime fails its declared large_item_fraction classifier or reuses a prohibited seed range.",
+      "The adapter requires raw future information, a candidate signature change, a held-out value, or a hard-coded capacity constant.",
+      "A development-only comparison of at least two pre-existing distinct candidate code hashes yields no distinct behavior summary and no new ranking signature.",
+      "All otherwise valid pairs duplicate existing feature regions and ranking signatures."
+    ],
+    "halt_and_audit_if": [
+      "The frozen v2 manifest hash changes before a separately authorized baseline revision.",
+      "A proposed implementation attempts to run a cohort, call an LLM provider, or expose held-out data without explicit budget and launch authorization."
+    ],
+    "success_condition_for_optional_retention": "The offline development-only implementation demonstrates a valid regime-separated summary for at least two existing distinct candidates and yields at least one archive-admissible or ranking-flip counterexample under the unchanged archive rule. This permits a separate proposal only; it is not permission to run one."
+  },
+  "evidence_refs": [
+    {
+      "path": "agent_records/handoffs/2026-07-23_024724-literature_exploration-bp_order_robustness.agent.json",
+      "sha256": "recorded_in_commit_fe71010438314bcc14c1159c5d41c11624d1756a",
+      "purpose": "primary-source and official-code mapping"
+    },
+    {
+      "path": "eoh_rag_workspace/experiments/manifests/bp_fme_action_order_v2_proposal.json",
+      "sha256": "3a7b8127c18b32aac2728ba8e80479209517336cd8a3e612d76178becb8346e5",
+      "purpose": "frozen cohort isolation anchor"
+    },
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "1b5f4e66f86c74efc7cbfa76f5a67e9b5252621d4f257ecc0e96061df580d2ec",
+      "purpose": "current BP development evaluator and order-pair generation path"
+    },
+    {
+      "path": "eoh_rag/fme/archives.py",
+      "purpose": "existing frozen counterexample admission rule"
+    }
+  ],
+  "constraints": {
+    "additional_llm_runs_scheduled": 0,
+    "additional_llm_runs_remaining": 0,
+    "api_called_in_this_tick": false,
+    "tests_executed": false,
+    "test_tier": "skipped_by_project_testing_policy",
+    "heldout_observed_in_this_tick": false,
+    "external_code_imported": false,
+    "fme_v2_manifest_modified": false,
+    "candidate_code_modified": false,
+    "raw_responses_or_secrets_recorded": false
+  },
+  "next_action": "implement_order_regime_feedback_v1_offline_behind_this_contract_without_modifying_or_launching_the_fme_v2_cohort"
+}

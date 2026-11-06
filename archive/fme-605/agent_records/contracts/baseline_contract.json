@@ -1,0 +1,68 @@
+{
+  "schema_version": "agent_ad_mainline/v1",
+  "created_at": "2026-07-14T23:14:05+08:00",
+  "authority": "project_mainline",
+  "status": "active",
+  "research_object": "portable_feedback_rag_research_agent_for_combinatorial_optimization",
+  "primary_goal": "Build a cross-platform agent that autonomously generates, evaluates, improves, transfers, and stops algorithm evolution under frozen evidence rules.",
+  "roles": {
+    "codex": "framework_builder_explorer_and_auditor",
+    "research_agent": "formal_autonomous_research_actor",
+    "eoh": "modifiable_candidate_generation_and_evolution_engine",
+    "human": "goal_budget_safety_and_final_claim_owner"
+  },
+  "eoh_policy": {
+    "modifiable": true,
+    "replaceable": true,
+    "composable": true,
+    "allowed_change_areas": [
+      "prompts",
+      "operators",
+      "population",
+      "selection",
+      "feedback",
+      "rag",
+      "memory",
+      "multi_population_coordination",
+      "evaluation_budget",
+      "stopping_rules"
+    ]
+  },
+  "effect_axes": {
+    "generality": [
+      "cross_platform_replay",
+      "cross_scale_generalization",
+      "cross_distribution_generalization",
+      "cross_problem_reuse",
+      "memory_reuse",
+      "multi_population_collaboration"
+    ],
+    "quality": [
+      "frozen_heldout_objective",
+      "feasibility",
+      "runtime",
+      "llm_budget",
+      "comparison_to_verified_eoh_eohs_and_other_baselines"
+    ]
+  },
+  "attribution": {
+    "required_actor_values": ["human", "codex", "research_agent"],
+    "codex_discovery_label": "external_teacher",
+    "agent_contribution_requirement": "actor=research_agent with complete decision records"
+  },
+  "non_negotiable_rules": [
+    "No fabricated or estimated result may be reported as an experiment result.",
+    "Formal held-out feedback must not flow back into evolution.",
+    "Failed coordinates must not be silently removed.",
+    "Incomparable providers, datasets, budgets, or cohorts must not be merged.",
+    "Core execution must not depend on Codex, Obsidian, absolute local paths, or one operating system.",
+    "Later plans must follow this contract unless the user explicitly changes the mainline."
+  ],
+  "current_baseline": {
+    "repository": "C:/Users/24294/agent_ad/worktrees/q3-v2-cross-transfer",
+    "branch": "feat/q3-v2-cross-transfer",
+    "commit": "02e3c2b",
+    "automation_status": "paused",
+    "tsp_teacher_origin": "codex_exploration"
+  }
+}

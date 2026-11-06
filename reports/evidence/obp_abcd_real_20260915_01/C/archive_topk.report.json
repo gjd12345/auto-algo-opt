@@ -1,0 +1,824 @@
+{
+  "schema_version": "algorithm-optimization-benchmark-report/v1",
+  "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+  "selection_kind": "archive_topk",
+  "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+  "result_source": "artifact_reevaluated",
+  "metrics": {
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "selection_kind": "archive_topk",
+    "best_training_fitness": 0.0,
+    "training": {
+      "rounds": [
+        {
+          "round_id": 1,
+          "generated": 49,
+          "valid_generated": 49,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "code_sha256": "c250c13f31d10d99efa9272e4aa76befe5be339121492ff9e807fc6b33186fe0",
+            "evaluation_id": "2022d0715f0f49ada7e9c2431c404184",
+            "objective": 0.0,
+            "origin": "baseline",
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 1,
+            "novel_candidate_evaluations": 48,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 0,
+            "total_evaluation_attempts": 50
+          },
+          "distinct_valid_code_count": 48
+        },
+        {
+          "round_id": 2,
+          "generated": 47,
+          "valid_generated": 40,
+          "best_generated_fitness": 0.0,
+          "incumbent_after": {
+            "objective": 0.0,
+            "ref": "rounds/round_0001/eoh_run/exported_skill"
+          },
+          "dual_budget": {
+            "baseline_attempts": 2,
+            "novel_candidate_evaluations": 95,
+            "repair_attempts": 0,
+            "seed_reevaluation_attempts": 2,
+            "total_evaluation_attempts": 100
+          },
+          "distinct_valid_code_count": 40
+        }
+      ],
+      "generated_candidates": 96,
+      "valid_generated_candidates": 89,
+      "invalid_generated_candidates": 7,
+      "generated_valid_rate": 0.9270833333333334,
+      "distinct_valid_generated_code_count": 88,
+      "duplicate_valid_generated_code_count": 1,
+      "best_generated_fitness": 0.0,
+      "invalid_error_counts": {
+        "candidate_error": 3,
+        "forbidden_attribute": 4
+      }
+    },
+    "heldout_aggregate_fitness": 0.0
+  },
+  "budget": {
+    "eoh_max_requests": 160,
+    "eoh_requests_used": 98,
+    "eoh_requests_remaining": 62,
+    "eoh_round_max_requests": 80,
+    "max_solver_calls": 100,
+    "solver_calls_used": 100,
+    "solver_calls_remaining": 0,
+    "round_budget": 50,
+    "round_solver_calls_used": 50,
+    "round_solver_calls_remaining": 0,
+    "engine_wall_seconds": 1200.0,
+    "round_wall_seconds": 600.0,
+    "repair_max_requests": null,
+    "total_evaluation_attempts": 100,
+    "novel_candidate_evaluations": 95,
+    "seed_reevaluation_attempts": 2,
+    "baseline_attempts": 2,
+    "repair_attempts": 0,
+    "experiment_manifest_sha256": "ec81a9c5cac7867de6e3b46bffa0f236ee29451f7a98d529016f4cbe2182802a",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0"
+  },
+  "test_isolation": {
+    "selection_locked_before_test": true,
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+    "test_result_sha256": "4afb25b2aeae2f90b4db8ef0370b2fc90055c9fe8c7d47e0c3572895b90d9db2",
+    "test_evaluated": true,
+    "test_updates_training": false,
+    "status": "verified"
+  },
+  "test": {
+    "schema_version": "algorithm-optimization-benchmark-selection-evaluation/v1",
+    "selection_kind": "archive_topk",
+    "selection_sha256": "239e45604863cc3914d212c7e3f03b904504f92ddbbd47beb5144d3e6aa6bae0",
+    "selection_locked_before_test": true,
+    "test_benchmark_id": "eohs_v1",
+    "test_profile": "obp_evolution_mini",
+    "test_split": "heldout",
+    "test_benchmark_spec_hash": "257284956e8aa17a62220875858eb6887572d660aa231432e0448f45289476b6",
+    "test_suite_hash": "9ff2d6ea43b54e94927b45a2bff0c139eec9cd4070b1ba5f3a4fe3525145bb7a",
+    "test_data_manifest_hash": "f5c4f5729ad115286aa1dad2f622a06877f715b99004dac634b316bdfde45ffb",
+    "test_reference_manifest_hash": "f4196e51b522c39346331ebb307318f4e721a7e5c3b2da9a2dc5c990ec902406",
+    "instance_ids": [
+      "obp-evolution-mini-test-0",
+      "obp-evolution-mini-test-1"
+    ],
+    "test_problem_spec_hash": "7416d655b6a3e378e3e3adb64a1045151d94285bfbc270ddb8d431a40293dfac",
+    "evaluator_hash": "a6deb2371dd7632277f352b56b50b4f611bebdcbed71e416d6e5685fc43c3b5d",
+    "metric_spec_hash": "08550f7999f0bc40a0c55f06449a60209e693ba7848fbff4b21bddeb829fc53e",
+    "member_results": [
+      {
+        "member_index": 0,
+        "candidate_id": "candidate_1",
+        "code_sha256": "3e92736fb8fbb920556d455bef3c89b929074c624d1a53cd3db8f96f65d06e5c",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "bd336311a8d7770196e8cd7a0158911484ba50da96bb757ddec79ceb7ca37875"
+      },
+      {
+        "member_index": 1,
+        "candidate_id": "candidate_2",
+        "code_sha256": "cb38e163bacfde2c59a06684267d8f5a1210b6b719376ec591ddb808f5bfb963",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "a03eeaeb27e4762664f229f9c9d63a18d0876a66a51755489c09746600b01032"
+      },
+      {
+        "member_index": 2,
+        "candidate_id": "candidate_3",
+        "code_sha256": "5c3fa73416124418ba4de415b41bd910525ee2d3184db2a70e924f686a95fe07",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.015000000013969839,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "b445de3a498813e44110d2931a1ae866365d80c813d0c84d2b7a51ba15007139"
+      },
+      {
+        "member_index": 3,
+        "candidate_id": "candidate_5",
+        "code_sha256": "9f4201ce214a17525033ee8f4cd0d773918671bf2972d9a8e833faa7ab365422",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "867c5b4bfcb8a4553f3f210552878f75626043fbc8c42741c84fca2f132657c0"
+      },
+      {
+        "member_index": 4,
+        "candidate_id": "candidate_6",
+        "code_sha256": "88173eee286d520951c7a12c8e7252e39e2cfe7af31b430e50d78cbe2e673c99",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "4c79c733c86e74480aa299389aa923d12b9cf3a8383ee2e2c6083ec185b9f9a8"
+      },
+      {
+        "member_index": 5,
+        "candidate_id": "candidate_8",
+        "code_sha256": "9b8e6ede92072779dd9b7490ff50f5bf0bcc5c3665bd3c787743059bbdf3eea4",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "8bc7800c1fdec397939470bcd5986184c0b7d6f7e593fa95f5d7b0f0c1567a61"
+      },
+      {
+        "member_index": 6,
+        "candidate_id": "candidate_11",
+        "code_sha256": "3b1caf35c2882f70d29d3be88832be06ab006c3e5d7b25aa81314f51aeacaf8e",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "13fc4c14aed8e9c53237dfda9b7d517d56e865d66f597c721af73badd380460d"
+      },
+      {
+        "member_index": 7,
+        "candidate_id": "candidate_12",
+        "code_sha256": "1a08f539e4d38a92eaa91034d705f1ba981eaecc752a1eb6f8aa394ede356391",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "2e26f3882e82a2e5c9b1c6c2dc88a324c95f6087996783d33fa1eb5297e0ec6a"
+      },
+      {
+        "member_index": 8,
+        "candidate_id": "candidate_13",
+        "code_sha256": "5f6861c96a0025431711728a1ca55c3cedfb71ac6850ee44c383f4245d80f6ba",
+        "valid": true,
+        "objective": 0.0,
+        "instance_objectives": [
+          0.0,
+          0.0
+        ],
+        "raw_objectives": [
+          5.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          5,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 5.0,
+              "reference_objectives": 5.0,
+              "bins_used": 5,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "7dfba1953a806d69b5c552e773d03e29cf48e31f753ebc926393af654f0b8459"
+      },
+      {
+        "member_index": 9,
+        "candidate_id": "candidate_14",
+        "code_sha256": "52b457bb497f09288fb4dffcfad9ac894116e1451e40d647276ecd496454aef1",
+        "valid": true,
+        "objective": 0.1,
+        "instance_objectives": [
+          0.2,
+          0.0
+        ],
+        "raw_objectives": [
+          6.0,
+          4.0
+        ],
+        "reference_objectives": [
+          5.0,
+          4.0
+        ],
+        "bins_used": [
+          6,
+          4
+        ],
+        "instance_results": [
+          {
+            "instance_index": 0,
+            "instance_id": "obp-evolution-mini-test-0",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.2,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 6.0,
+              "reference_objectives": 5.0,
+              "bins_used": 6,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          },
+          {
+            "instance_index": 1,
+            "instance_id": "obp-evolution-mini-test-1",
+            "attempted": true,
+            "valid": true,
+            "objective": 0.0,
+            "error_code": null,
+            "error_detail": null,
+            "elapsed_seconds": 0.0,
+            "metrics": {
+              "raw_objectives": 4.0,
+              "reference_objectives": 4.0,
+              "bins_used": 4,
+              "reference_kind": "known_optimum",
+              "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+            }
+          }
+        ],
+        "instance_errors": [
+          null,
+          null
+        ],
+        "error_code": null,
+        "error_detail": null,
+        "evaluation_identity": "99f9bc64e467b0533b403ce7d892761b52779b9f4dd0fe09aceda3994f470a95"
+      }
+    ],
+    "per_instance": [
+      {
+        "instance_id": "obp-evolution-mini-test-0",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      },
+      {
+        "instance_id": "obp-evolution-mini-test-1",
+        "member_gaps": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "best_gap": 0.0,
+        "valid_member_count": 10
+      }
+    ],
+    "aggregate_fitness": 0.0,
+    "valid_member_count": 10,
+    "instance_count": 2,
+    "complete_instance_coverage": true,
+    "test_evaluation_attempts": 10,
+    "test_instance_evaluation_attempts": 20,
+    "test_updates_training": false
+  }
+}
