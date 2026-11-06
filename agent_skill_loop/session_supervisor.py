@@ -119,7 +119,7 @@ def _startup_preflight_path(root: Path, task) -> Path:
     return root / f"rounds/round_{task['round_id']:04d}/tasks/{task['task_id']}/startup_preflight.json"
 
 
-def run_startup_preflight(root: Path, task, run=None) -> dict:
+def run_startup_preflight(root: Path, task, run=None, *, require_eoh: bool = True) -> dict:
     """Check the EoH/evaluator child-process boundary before paid work.
 
     This deliberately performs no provider request and no solver evaluation.
@@ -184,7 +184,12 @@ def run_startup_preflight(root: Path, task, run=None) -> dict:
                         "eoh_commit": (actual.get("upstream") or {}).get("commit"),
                         "problem_spec_hash": (actual.get("problem") or {}).get("problem_spec_hash"),
                     }
-                    mismatches = [key for key, value in expected.items() if comparisons.get(key) != value]
+                    if not require_eoh:
+                        # A wheel-identity check does not install the pinned EoH
+                        # extra, so the upstream commit is reported but not judged.
+                        comparisons.pop("eoh_commit")
+                    mismatches = [key for key, value in expected.items()
+                                  if key in comparisons and comparisons[key] != value]
                 result["identity"] = {"expected": expected, "actual": actual, "mismatches": mismatches,
                     "domain": {key:run[key] for key in ("suite_hash", "data_manifest_hash", "metric_spec_hash") if run is not None and key in run.keys()} if run is not None else {},
                     "controller": {"host": "unknown", "model": run["eoh_model"] if run is not None else None,

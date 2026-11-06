@@ -55,7 +55,8 @@ assert not any(x.startswith('eoh.') for x in sys.modules)
 con = db._connect(Path('run/session.sqlite3'))
 try:
     frozen_run = db._require_run(con, action='preflight', run_id=None)
-    checked = run_startup_preflight(Path('run').resolve(), {'task_id':'wheel_preflight','round_id':1}, frozen_run)
+    checked = run_startup_preflight(Path('run').resolve(), {'task_id':'wheel_preflight','round_id':1}, frozen_run,
+                                    require_eoh=False)
     assert checked['status'] == 'passed', checked
     assert checked['identity']['actual']['modules']['agent_skill_loop'].startswith(str(prefix))
     assert checked['eval_worker_identity']['module_path'].startswith(str(prefix))

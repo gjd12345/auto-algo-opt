@@ -68,6 +68,23 @@ def export_bundle(run, output, report_dir=None):
         rounds = [dict(row) for row in con.execute("SELECT * FROM rounds ORDER BY round_id")]
         source_hashes = {}
         controller_rounds = []
+
+        def take_source(ref, expected_sha):
+            """Copy one referenced Session text file under its own bundle path."""
+            if not ref:
+                return
+            if Path(ref).is_absolute() or PureWindowsPath(ref).drive or ".." in ref.replace("\\", "/").split("/"):
+                raise ValueError("invalid_source_ref")
+            path = (run / ref).resolve()
+            if not path.is_relative_to(run) or not expected_sha:
+                raise ValueError("invalid_source_ref")
+            body = path.read_bytes()
+            # Session text identities use newline-normalized UTF-8.
+            if digest(body.decode("utf-8").replace("\r\n", "\n").encode()) != expected_sha:
+                raise ValueError("source_hash_mismatch:" + ref)
+            files[ref] = body.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
+            source_hashes[ref] = expected_sha
+
         for row in rounds:
             for stem in ("evaluation_facts", "population_snapshot", "seed_selection",
                          "normalized_plan", "submitted_evaluation", "round_context"):
@@ -85,6 +102,11 @@ def export_bundle(run, output, report_dir=None):
                     raise ValueError("source_hash_mismatch:" + ref)
                 files[ref] = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
                 source_hashes[ref] = expected
+                if stem == "evaluation_facts":
+                    facts_document = json.loads(raw.decode("utf-8"))
+                    for key in ("execution_delta", "comparison_packet"):
+                        descriptor = facts_document.get(key) or {}
+                        take_source(descriptor.get("ref"), descriptor.get("sha256"))
             plan_ref = row.get("normalized_plan_ref")
             controller_rounds.append({
                 "round_id": row["round_id"],
@@ -93,6 +115,10 @@ def export_bundle(run, output, report_dir=None):
                 "submitted_evaluation": {"ref": row.get("submitted_evaluation_ref"),
                                          "sha256": row.get("submitted_evaluation_sha256")},
             })
+        for finished in con.execute(
+                "SELECT receipt_json FROM operations WHERE action='finish-round' AND status='SUCCEEDED'"):
+            receipt = json.loads(finished["receipt_json"] or "{}").get("result") or {}
+            take_source(receipt.get("memory_consumption_ref"), receipt.get("memory_consumption_sha256"))
         if extra.get("treatment") == "D1":
             files["controller_rounds.json"] = encoded({
                 "schema_version": "host-agent-round-evidence/v1", "rounds": controller_rounds,
@@ -104,6 +130,21 @@ def export_bundle(run, output, report_dir=None):
         solver = [dict(row) for row in con.execute("SELECT * FROM solver_calls ORDER BY rowid")]
         tasks = [dict(row) for row in con.execute(
             "SELECT round_id,state,external_effect_started,terminal_reason FROM tasks ORDER BY round_id")]
+        eoh_complete = bool(requests) and all(
+            isinstance(item["input_tokens"], int) and isinstance(item["output_tokens"], int) for item in requests)
+        files["cost_summary.json"] = encoded({
+            "eoh_provider": {
+                "status": "complete" if eoh_complete else ("unavailable" if not requests else "incomplete"),
+                "input_tokens": sum(item["input_tokens"] for item in requests) if eoh_complete else None,
+                "output_tokens": sum(item["output_tokens"] for item in requests) if eoh_complete else None,
+            },
+            "outer_controller": {"status": "unavailable", "input_tokens": None, "output_tokens": None},
+            # The host Coding Agent runs outside the Runtime, so the total can
+            # never be certified from what this Session recorded.
+            "total_model_token_status": "incomplete",
+            "total_model_tokens": None,
+            "scope": "EoH provider usage from the Runtime request ledger; host controller usage is not observable here",
+        })
         files["budget_receipt.json"] = encoded({
             "requests": requests, "solver_calls": solver, "tasks": tasks,
             "total_request_reservations": len(requests), "total_evaluation_attempts": len(solver)})

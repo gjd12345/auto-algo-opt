@@ -38,13 +38,26 @@ def adapter_source_hash() -> str:
     return digest.hexdigest()
 
 
+def _optional_eoh():
+    """Return the official EoH package, or None when the extra is not installed.
+
+    The kernel wheel must stay importable without the pinned EoH extra; only
+    Sessions that actually ask for official EoH require the distribution.
+    """
+    try:
+        import eoh
+    except ModuleNotFoundError:
+        return None
+    return eoh
+
+
 def loaded_identity(problem: str | None = None) -> dict:
     """Describe the code and policy resources actually loaded by this process."""
     from agent_skill_loop import session_runtime as runtime
     from agent_skill_loop.evaluator import evaluator_source_hash
     from agent_skill_loop.problems.base import get_problem
     import agent_skill_loop
-    import eoh
+    eoh = _optional_eoh()
 
     resource_root = Path(runtime.__file__).resolve().parents[1] / "skills" / "algorithm-optimization"
     skill_module = None
@@ -72,6 +85,12 @@ def loaded_identity(problem: str | None = None) -> dict:
         release_version = None
         installation = "source_checkout"
 
+    if eoh is None:
+        upstream = {"status": "not_installed", "commit": None,
+                    "reason": "official EoH distribution is not installed in this interpreter"}
+    else:
+        upstream = dict(verify_upstream(), status="verified")
+
     return {
         "schema_version": "algorithm-optimization-loaded-identity/v1",
         "python": {"executable": str(Path(sys.executable).resolve()), "version": sys.version.split()[0]},
@@ -87,7 +106,7 @@ def loaded_identity(problem: str | None = None) -> dict:
         "optimization_skill_sha256": runtime._skill_content_hash(),
         "evaluator_sha256": evaluator_source_hash(),
         "adapter_source_sha256": adapter_source_hash(),
-        "upstream": verify_upstream(),
+        "upstream": upstream,
         "problem": {
             "problem_id": spec.problem_id,
             "problem_spec_hash": spec.content_hash,

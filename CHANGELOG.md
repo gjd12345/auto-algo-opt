@@ -1,3 +1,18 @@
+## v1.2.1 —— 2026-11-06 · 发布门修复版
+
+主题：修掉 v1.2.0 在远程 CI 上的两处发布门失败。v1.2.0 的 tag 保留在 `c98b184`（CI 红），本版只做最小修复，不改变研究结论。
+
+### Fixed
+
+- **wheel 外部安装不再要求官方 EoH**：`eoh_frozen/identity.py` 的 `loaded_identity()` 把 `import eoh` 改为可选；未安装 extra 时 `upstream` 报 `{"status": "not_installed", "commit": null}`，不再抛 `ModuleNotFoundError`。`agent_skill_loop/session_supervisor.py` 的 `run_startup_preflight()` 新增 `require_eoh` 开关：真实 Session 仍要求官方 EoH（缺包必失败），只有 `tools/verify_release_install.py` 的 wheel 身份检查传 `require_eoh=False`。
+- **compact evidence 补齐轮级边车**：`tools/export_benchmark_evidence.py` 现在按 `evaluation_facts` 里的描述符导出 `rounds/round_NNNN/execution_delta.json`、`comparison_packet.json`，并按 `finish-round` receipt 导出 `memory_consumption.json`；同时新增 `cost_summary.json`（`outer_controller.status = "unavailable"`、`total_model_tokens = null`、`total_model_token_status = "incomplete"`），明确"宿主 Agent 的 token 不在 Runtime 可观测范围内"，避免 R05 式的静默低报。这同时关闭了独立评审 R08 的"导出未含 execution_delta/memory_consumption"部分。
+
+### Verified（本地，Windows · Python 3.11.9）
+
+- `pytest tests/kernel tests/knowledge` → **255 passed, 2 skipped**。
+- `EOH_REQUIRED=1 pytest tests/eoh_frozen`（已装官方 EoH `47254578`）→ **45 passed**。
+- `python tools/verify_release_install.py`（干净的 3.11 venv：只有 numpy、无 eoh）→ `{"wheel_install": "passed", ...}`。
+- **未验证**：Linux runner；远程 CI 见本提交触发的 run。
 # Changelog
 
 本文件记录对外可引用的版本。每条都标注证据强度：**已提交且可复算** / **限条件** / **未执行**。
