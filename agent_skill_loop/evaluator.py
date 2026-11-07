@@ -476,8 +476,16 @@ def _distance_matrix(points: list[list[float]]):
     return np.sqrt(np.sum(delta * delta, axis=2))
 
 
-def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], None]:
+def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any] | None]:
     objectives = []
+    raw_objectives: list[float] = []
+    reference_objectives: list[float] = []
+    reference_kinds: list[str] = []
+    frozen = [instance.get("reference_objective") is not None for instance in instances]
+    if any(frozen) and not all(frozen):
+        # A frozen benchmark suite is either entirely reference-bearing or not at
+        # all; mixing would make the fitness definition depend on instance order.
+        raise ValueError("mixed_reference_kinds")
     for instance in instances:
         depot, customers, demands, capacity = (instance.get(key) for key in ("depot", "customer_coordinates", "demands", "capacity"))
         if not isinstance(depot, list) or not isinstance(customers, list) or not isinstance(demands, list) or len(customers) != len(demands) or not customers or not isinstance(capacity, (int, float)) or not finite_float(capacity) or capacity <= 0:
@@ -524,8 +532,32 @@ def _evaluate_cvrp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tup
         cost = float(sum(matrix[a, b] for a, b in zip(route, route[1:])))
         if not math.isfinite(cost):
             raise ValueError("nonfinite_objective")
-        objectives.append(cost)
-    return objectives, None
+        reference = instance.get("reference_objective")
+        if reference is None:
+            objectives.append(cost)
+            continue
+        if (
+            isinstance(reference, bool)
+            or not isinstance(reference, (int, float))
+            or not finite_float(reference)
+            or float(reference) <= 0
+        ):
+            raise ValueError("invalid_instance")
+        reference_value = float(reference)
+        # Frozen benchmark suites score the relative gap to their reference,
+        # matching the metric contract; raw distances stay available as metrics.
+        objectives.append((cost - reference_value) / reference_value)
+        raw_objectives.append(cost)
+        reference_objectives.append(reference_value)
+        reference_kinds.append(str(instance.get("reference_kind")))
+    if not reference_objectives:
+        return objectives, None
+    return objectives, {
+        "raw_objectives": raw_objectives,
+        "reference_objectives": reference_objectives,
+        "reference_kind": reference_kinds,
+        "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)",
+    }
 
 
 def _evaluate_tsp_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], None]:

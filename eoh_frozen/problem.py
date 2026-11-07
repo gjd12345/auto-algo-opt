@@ -22,6 +22,11 @@ from agent_skill_loop.session_contracts import MAX_ROUND_CONTEXT_CHARS
 from agent_skill_loop.evaluator import SubprocessEvaluator, evaluator_source_hash
 from agent_skill_loop.problems.base import ProblemSpec
 
+# Origins that describe a parent handed to the engine rather than a candidate
+# the engine generated.  Byte-identical members of these origins are evaluated
+# once per task.
+_SEED_ORIGINS = frozenset({"explicit_parent", "population_seed"})
+
 
 class FrozenProblem(BaseProblem):
     """Official EoH adapter for any registered ProblemSpec.
@@ -65,6 +70,11 @@ class FrozenProblem(BaseProblem):
         self.data_manifest_hash = data_manifest_hash
         self.problem_spec_hash = problem_spec_hash
         self._seed_bindings_by_code: dict[str, dict[str, Any]] = {}
+        # Upstream EoH samples seed parents with replacement, so one parent can
+        # occupy several population slots.  Every slot used to spend a second
+        # solver call on byte-identical code; reuse the first result instead and
+        # record the reuse explicitly.
+        self._seed_evaluation_cache: dict[str, EvaluationResult] = {}
         if seed_bindings is not None:
             if not isinstance(seed_bindings, Mapping):
                 raise ValueError("seed_bindings_invalid")
@@ -98,11 +108,14 @@ class FrozenProblem(BaseProblem):
         """Keep the problem picklable for EoH's spawn-based eval workers."""
         state = self.__dict__.copy()
         state.pop("_log_lock", None)
+        # In-process reuse cache only; a spawned worker re-evaluates on demand.
+        state.pop("_seed_evaluation_cache", None)
         return state
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
         self._log_lock = threading.Lock()
+        self._seed_evaluation_cache = {}
 
     @property
     def template_program(self) -> str:
@@ -127,6 +140,14 @@ class FrozenProblem(BaseProblem):
 
     def evaluate_result(self, code_string: str) -> EvaluationResult:
         """Evaluate and retain the full per-instance evidence record."""
+        code_hash = hashlib.sha256(str(code_string).encode("utf-8")).hexdigest()
+        context = self._context_for_code(code_string)
+        seed_origin = str(context.get("origin") or self.origin or "")
+        if seed_origin in _SEED_ORIGINS:
+            cached = self._seed_evaluation_cache.get(code_hash)
+            if cached is not None:
+                self._record_seed_reuse(code_string, cached, context=context)
+                return cached
         if os.getpid() != self.owner_pid and not getattr(self, "_owner_watch_started", False):
             from agent_skill_loop.eval_worker import _watch_parent
             threading.Thread(target=_watch_parent, args=(self.owner_pid,), daemon=True).start()
@@ -146,7 +167,53 @@ class FrozenProblem(BaseProblem):
         self._record_evaluation(code_string, result, evaluation_id=evaluation_id)
         if not result.valid or result.objective is None:
             self._record_failure(code_string, result)
+        elif seed_origin in _SEED_ORIGINS:
+            self._seed_evaluation_cache[code_hash] = result
         return result
+
+    def _record_seed_reuse(
+        self,
+        code: str,
+        result: EvaluationResult,
+        *,
+        context: Mapping[str, Any],
+    ) -> None:
+        """Record that a duplicate seed slot reused an earlier evaluation.
+
+        The engine keeps its population slot (upstream samples with replacement),
+        but no second solver call is spent, and the ledger says why.
+        """
+        if not self.evaluation_log:
+            return
+        payload = {
+            "code": code,
+            "code_sha256": hashlib.sha256(str(code).encode("utf-8")).hexdigest(),
+            "problem": self.spec.problem_id,
+            "entrypoint": self.spec.entrypoint,
+            "evaluator_hash": evaluator_source_hash(),
+            "origin": str(context.get("origin") or self.origin or ""),
+            "pid": os.getpid(),
+            "suite_hash": self.suite.get("content_hash"),
+            "evaluation_id": uuid.uuid4().hex,
+            "metric_spec_hash": self.metric_spec_hash,
+            "data_manifest_hash": self.data_manifest_hash,
+            "problem_spec_hash": self.problem_spec_hash,
+            "evaluation": result.as_dict(),
+            "reused": True,
+            "reuse_reason": "byte_identical_seed_slot",
+        }
+        if context:
+            payload.update({key: value for key, value in context.items() if key not in payload})
+        if self.session and not payload.get("candidate_id"):
+            payload["candidate_id"] = payload.get("origin")
+            payload["revision"] = "original"
+        path = Path(self.evaluation_log)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with self._log_lock:
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload, ensure_ascii=False, allow_nan=False) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
 
     def set_evaluation_context(self, context: dict[str, Any] | None) -> None:
         """Attach explicit candidate-revision provenance to the next evaluation."""

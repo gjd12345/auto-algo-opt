@@ -162,6 +162,47 @@
         "reported historical source commit is unavailable in the local Git object store; task semantics and archived streams were restored from evidence",
         "no independent heldout is registered; test split is an explicit lock sentinel"
       ]
+    },
+    {
+      "benchmark_id": "eohs_v1",
+      "profile": "cvrp_construct_mini",
+      "problem_id": "cvrp_construct",
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "57ac1ddfd9d5dd0964aff81947335e90c598c250",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "constructive_cvrp_interface",
+      "paper_protocol_profile": "regenerated_dev_train_four_instances",
+      "heldout_policy": "locked_no_access_diagnostic",
+      "manifest_paths": {
+        "dev_train": "manifests/cvrp_construct_mini_train.json",
+        "train": "manifests/cvrp_construct_mini_train.json",
+        "heldout": "manifests/cvrp_construct_mini_heldout_locked.json",
+        "test": "manifests/cvrp_construct_mini_heldout_locked.json",
+        "reference": "manifests/cvrp_construct_mini_references.json"
+      },
+      "manifests": {
+        "train_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+        "test_hash": "d609c2d420383750e2b3cd51816a655d07f7f27fa63e9f9b1bc4c93caa2b7fdb",
+        "reference_hash": "938eb8e332f5589b95ac11980e3132b00bc940a66f927d6ec0e5ec484c624441"
+      },
+      "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "938eb8e332f5589b95ac11980e3132b00bc940a66f927d6ec0e5ec484c624441",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective"
+        }
+      },
+      "deviations": [
+        "regenerated four-instance dev split; not the upstream EoH-S CVRP asset",
+        "reference values are the frozen nearest-neighbour baseline, not optima; a candidate better than the baseline scores a negative gap",
+        "no independent heldout is registered; test split is an explicit lock recording the heldout generator seed"
+      ]
     }
   ]
 }

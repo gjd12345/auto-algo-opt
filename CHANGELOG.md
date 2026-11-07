@@ -1,3 +1,23 @@
+## v1.2.3 · 冻结 CVRP 档位与 seed 槽去重
+
+### Added
+- `benchmarks/eohs_v1/manifests/cvrp_construct_mini_{train,references,heldout_locked}.json` 与 `registry.json` 条目:
+  4 个 size-50 实例、`solver_reference` 参考、held-out 锁哨兵（`locked_no_access_diagnostic`）。
+- `tests/kernel/test_cvrp_benchmark_profile.py`：档位可载入、锁生效、baseline 恰为 0 gap、劣解为正 gap。
+- `tests/eoh_frozen/test_seed_slot_reuse.py`：重复 seed 槽复用首次评测、生成候选永不复用。
+
+### Changed
+- `agent_skill_loop/evaluator.py`：CVRP 实例带 `reference_objective` 时按 metric 契约返回相对 gap，
+  并把 `raw_objectives` / `reference_objectives` 放进 metrics；无参考的套件行为不变（仍返回原始距离）。
+
+### Fixed
+- `incumbent_only` 继承下，官方 EoH 按 `pop_size` 有放回采样会让同一份 incumbent 代码占多个 seed 槽，
+  之前每个槽都重新求解一次。现在改为复用首次评测并追加 `reused: true` 记录，**不占 solver 预算**。
+
+### Verified
+- 本地：`pytest tests/kernel tests/knowledge tests/eoh_frozen` = 317 passed, 2 skipped。
+- 远程 CI：见本提交的 workflow run。
+
 ## v1.2.2 —— 2026-11-07 · benchmark 注册表修复版
 
 主题：修掉 `island605_bp` 档位"注册即不可用"的问题，并把「registry 声明哈希 = 磁盘字节哈希」做成 CI 门。

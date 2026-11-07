@@ -32,7 +32,7 @@ from agent_skill_loop.problems.base import get_problem
 
 SCHEMA_VERSION = "algorithm-optimization-session/v1.1"
 CONFIG_SCHEMA = "algorithm-optimization-session-config/v1.1"
-RUNTIME_VERSION = "1.2.2"
+RUNTIME_VERSION = "1.2.3"
 OPTIMIZATION_SKILL_ID = "algorithm-optimization"
 OPTIMIZATION_SKILL_VERSION = "v1.1"
 MEMORY_POLICY_ID = "markdown-memory"
