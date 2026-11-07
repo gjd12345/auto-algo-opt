@@ -1,0 +1,21 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Both explicit-start candidates were valid but worse than 11.56280. Candidate 1 used a farthest-depot anchor and also increased demand weights, so the effect of the anchor alone is unresolved. Its instance 0 rose to 13.05925 from 10.19858.",
+      "evidence_refs": [
+        "evaluation:36900298a79f4afaad0ebf9c6de814ba",
+        "rounds/round_0002/execution_delta.json",
+        "rounds/round_0002/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Test capacity pressure while retaining the incumbent route-start behavior."
+  },
+  "memory_action": {
+    "kind": "none",
+    "reason": "The start effect is confounded by a simultaneous change in demand weights."
+  }
+}

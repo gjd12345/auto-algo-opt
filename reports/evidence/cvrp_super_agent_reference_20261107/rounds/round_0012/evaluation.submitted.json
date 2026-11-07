@@ -1,0 +1,21 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 1 was rejected on a disallowed attribute. Candidate 2 used a dimensionless detour correction but fell back to nearest-current distance as its base, scoring 12.09879; five instance scores exactly matched nearest neighbor. This leaves the intended near-tie modification to adaptive savings unverified.",
+      "evidence_refs": [
+        "evaluation:e49fc03fb9ea44a881727f9d1cafba42",
+        "rounds/round_0012/execution_delta.json",
+        "rounds/round_0012/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Explore scale-normalized savings directly rather than reverting to nearest neighbor."
+  },
+  "memory_action": {
+    "kind": "none",
+    "reason": "The result is round-specific or repeats an existing insight."
+  }
+}

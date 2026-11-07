@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "The valid blended distance and residual-fill score regressed to 12.73959. Candidate 2 used local-frontier scoring plus a depot-return gate and failed invalid_route. The run does not isolate fill from other changes.",
+      "evidence_refs": [
+        "evaluation:032756e34fb9479dace86cd63bc02669",
+        "evaluation:e02accbb6f50484d94631c774c75e2ec",
+        "rounds/round_0003/execution_delta.json",
+        "rounds/round_0003/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Recover a clean ranking comparison after the invalid route."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "feasible-customer-progress",
+    "description": "Preserve feasible-customer progress when testing CVRP ranking",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** A candidate combining a local frontier with a capacity-based return-to-depot gate failed invalid_route on the development suite. The gate was an additional structural change in a scoring experiment.\n\n**How to apply:** For ranking-only experiments select a feasible customer whenever one exists. Treat discretionary route closure as its own mechanism and validate it explicitly.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:032756e34fb9479dace86cd63bc02669"
+  }
+}

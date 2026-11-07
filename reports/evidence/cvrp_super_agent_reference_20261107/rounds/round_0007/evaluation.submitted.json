@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "The cosine-alignment savings variant reduced the incumbent to 11.29829. It improved instances 1, 3 and 4 and regressed on 0, 2 and 5. It also lowered the demand bonus, so the gain cannot be assigned to angle alone.",
+      "evidence_refs": [
+        "evaluation:5647a0f8f20b429f8667081491401e62",
+        "rounds/round_0007/execution_delta.json",
+        "rounds/round_0007/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Explore adaptive directional strength while preserving the new savings skeleton."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "directional-savings",
+    "description": "CVRP angular alignment in a savings-based constructor",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Round 7 candidate 1 used savings times a cosine-law factor and a weaker demand bonus. Mean distance fell to 11.29829, with mixed per-instance effects.\n\n**How to apply:** Keep this candidate family as a reference. Tune alignment cautiously and inspect instance effects; angle alone was not isolated.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:5647a0f8f20b429f8667081491401e62"
+  }
+}
