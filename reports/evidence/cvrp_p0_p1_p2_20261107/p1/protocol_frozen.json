@@ -1,0 +1,30 @@
+{
+  "evaluator_sha256": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "cohorts": {
+    "50": 40,
+    "100": 40,
+    "200": 40
+  },
+  "data_seed": "64-bit SHA256 prefix of cvrp-p1-mechanism-v1/<size>/<index>",
+  "versions": {
+    "V0": {
+      "sha256": "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+      "definition": "Base score plus original tiny demand tie break; no capacity penalty"
+    },
+    "V1": {
+      "sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+      "definition": "Original C6; penalize mask members and rank all feasible candidates"
+    },
+    "V2": {
+      "sha256": "1f433221ea9ec88aa88ae26b25a274d03365e2cc22c8eb0e45b082ef3f0e643e",
+      "definition": "Same penalty and trigger; strictly rank only mask members when triggered"
+    },
+    "V3": {
+      "sha256": "54edd1a23a0607d0753b6a8b5ee4f04fb71ede67c65a36e5273c584002c67b84",
+      "definition": "Same trigger and penalty formula; apply to all feasible candidates and rank all"
+    }
+  },
+  "fixed": "0.60 radial weight, 0.01 penalty coefficient, original demand tie break, band and activation trigger",
+  "tracing": "Wrap the exact evaluator decision callback and replay every fixture with identical frozen code; verify all distances equal the evaluator results",
+  "primary": "Paired mean distance difference versus V0; paired percentile bootstrap (20,000 draws, seed 2026110711)"
+}

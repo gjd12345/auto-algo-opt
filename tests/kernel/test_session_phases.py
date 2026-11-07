@@ -20,6 +20,43 @@ def plan(root, memory_refs=(), search_policy=None):
                 search_policy=search_policy)
 
 
+def test_obp_research_activity_is_persisted_without_changing_search_guidance(tmp_path):
+    records = {
+        "unrecorded": None,
+        "used": {
+            "mode": "used",
+            "trigger": "cold_start",
+            "question": "What does the current priority interface observe?",
+            "finding_summary": "Only the current item and feasible capacities are available.",
+            "finding_status": "proved_under_assumptions",
+            "decision": "modify",
+            "decision_summary": "Base the candidate on observable state.",
+            "evidence_refs": ["dev_suite.json"],
+        },
+        "not-used": {"mode": "not_used", "decision_summary": "Explore directly."},
+    }
+    contexts = set()
+    for name, activity in records.items():
+        root = tmp_path / name
+        init(root, problem="obp_online", memory_enabled=False)
+        payload = plan(root)
+        if activity is not None:
+            payload["research_activity"] = activity
+        file = tmp_path / f"{name}.json"
+        file.write_text(json.dumps(payload), encoding="utf-8")
+        accepted = actions.submit_plan(run=root, operation_id="plan", expected_state_version=1, file=file)
+        assert accepted["state"] == "READY_TO_EXECUTE"
+        round_dir = root / "rounds" / "round_0001"
+        saved_plan = json.loads((round_dir / "plan.json").read_text(encoding="utf-8"))
+        if activity is None:
+            assert "research_activity" not in saved_plan
+        else:
+            assert saved_plan["research_activity"] == activity
+        contexts.add((round_dir / "round_context.txt").read_text(encoding="utf-8"))
+
+    assert len(contexts) == 1
+
+
 def test_atomic_init_and_concurrent_stop(tmp_path,monkeypatch):
     root=tmp_path/"run"
     original=db._create_schema

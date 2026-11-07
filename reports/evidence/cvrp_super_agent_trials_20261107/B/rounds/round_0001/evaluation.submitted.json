@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 6 beat the nearest-neighbor baseline at 11.59109. Its formula reduces algebraically to distance minus 0.20 times demand fill times depot distance when the radial maximum is positive. The selected code contains no angular term.",
+      "evidence_refs": [
+        "evaluation:2f5f87d0e00c4495a1228bfc90f7f008",
+        "rounds/round_0001/execution_delta.json",
+        "rounds/round_0001/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Use the simplified incumbent as the reference and add a small directional signal."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "simplified-depot-demand-correction",
+    "description": "Simplify CVRP depot-demand correction",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Candidate 6 improved the mean to 11.59109. The fixed depot coefficients cancel, leaving only current distance minus a fill-weighted radial reward.\n\n**How to apply:** Treat fill-weighted radial reward as the actual incumbent structure. Preserve it when testing a small orthogonal signal.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:2f5f87d0e00c4495a1228bfc90f7f008"
+  }
+}

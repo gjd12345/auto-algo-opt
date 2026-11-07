@@ -9,6 +9,7 @@
 
 ## 设计与计划
 
+- [OBP 自主数学分析接入计划](obp-autonomous-math-plan.md)（M1–M3）。
 - [CO 架构及 v1.1 benchmark 计划](algorithm_optimization_skill_architecture_plan.md)：包含分日期的设计、验收记录；不是全部阶段已完成的声明。
 - [OBP evolution mini](obp_evolution_mini.md)：小型接线/校准数据，不是完整 EoH-S 复现。
 

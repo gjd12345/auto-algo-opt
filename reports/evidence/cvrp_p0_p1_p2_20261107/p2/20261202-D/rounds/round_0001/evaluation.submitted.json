@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 5/6. Incumbent 12.72671 to 11.59758. The best starts with the farthest feasible customer, using demand only as a tie break, and adds normalized fill in the route.",
+      "evidence_refs": [
+        "evaluation:dc758519a143481684e73957608e232b",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A distance-scaled fill contribution may preserve geography across states.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:dc758519a143481684e73957608e232b",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Hold the farthest start fixed while revising fill scaling."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "farthest-start-savings",
+    "description": "Preserve the validated start and savings backbone",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** The best starts with the farthest feasible customer, using demand only as a tie break, and adds normalized fill in the route.\n\n**How to apply:** Use the observed farthest start and keep its demand tie-break when refining the in-route capacity term.\n\n**Limitations:** One seed and one development suite.",
+    "evidence_ref": "evaluation:dc758519a143481684e73957608e232b"
+  }
+}

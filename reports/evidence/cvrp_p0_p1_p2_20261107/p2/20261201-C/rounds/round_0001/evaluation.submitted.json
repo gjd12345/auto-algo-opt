@@ -1,0 +1,28 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 5/6. Incumbent 12.20898 to 11.09028. The best selects a far anchor with a demand penalty at the depot, then minimizes current distance minus half the savings and a fill reward.",
+      "evidence_refs": [
+        "evaluation:33969e4f35f2411b98f1be031cee431d",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A bounded fill adjustment may reduce route distance without disrupting the geometric preference.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:33969e4f35f2411b98f1be031cee431d",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Separate route start and route continuation."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

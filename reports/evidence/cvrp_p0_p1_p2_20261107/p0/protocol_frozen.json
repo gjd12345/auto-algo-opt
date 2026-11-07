@@ -1,0 +1,54 @@
+{
+  "stage": "P0 independent heldout",
+  "source_commit": "f0cd00fd71cfe366fe4a3eb338b32139874ca4e4",
+  "problem": "cvrp_construct",
+  "problem_spec_sha256": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "evaluator_sha256": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "training_suite_sha256": "0b6b5cedb1c2e053ccbc4968827f02b0d7b50c50e6a868c7fde37aa576e7797e",
+  "cohorts": [
+    {
+      "customers": 50,
+      "instances": 40
+    },
+    {
+      "customers": 100,
+      "instances": 40
+    },
+    {
+      "customers": 200,
+      "instances": 40
+    }
+  ],
+  "seed_rule": "First 8 bytes, big-endian, of SHA256(cvrp-p0-holdout-v1/<customers>/<index>), index 0..39",
+  "split": "heldout",
+  "objective": "Mean total Euclidean route distance, without reference normalization in the evaluator",
+  "paired_relative_improvement": "(mean(reference) - mean(candidate)) / mean(reference)",
+  "paired_win_tie_loss_tolerance": 1e-09,
+  "bootstrap": {
+    "samples": 20000,
+    "seed": 2026110701,
+    "interval": "95% percentile, paired per cohort"
+  },
+  "candidate_identities": {
+    "NN": {
+      "ref": "frozen_code/NN.py",
+      "source": "cvrp_construct ProblemSpec.baseline_code",
+      "sha256": "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+    },
+    "A": {
+      "ref": "frozen_code/A.py",
+      "source": "reports/evidence/cvrp_super_agent_reference_20261107/best_code.py",
+      "sha256": "ccdab29f7d08ab162145ae7e468e47a5488b696d9a644bb7e793ab5c2665a866"
+    },
+    "B": {
+      "ref": "frozen_code/B.py",
+      "source": "reports/evidence/cvrp_super_agent_trials_20261107/B/best_code.py",
+      "sha256": "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727"
+    },
+    "C": {
+      "ref": "frozen_code/C.py",
+      "source": "reports/evidence/cvrp_super_agent_trials_20261107/C/best_code.py",
+      "sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627"
+    }
+  }
+}

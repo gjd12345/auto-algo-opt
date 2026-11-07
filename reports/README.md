@@ -4,6 +4,9 @@
 
 ## CO / benchmark
 
+- [CVRP Super Agent 搜索复盘](cvrp_super_agent_search_20261107.md)：三场真实运行，逐轮对照 Plan、EoH 实现、评测与 Memory。
+- [CVRP 后续验证 P0–P2](evidence/cvrp_p0_p1_p2_20261107/README.md)：独立留出、C6 机制消融与 Memory × 数学指导因子试跑。
+
 - [研究闭环 v2 基线清单](research_loop_v2_baseline_20260920.md)：隔离基线、原工作区修改处置和历史证据分级。
 - [研究闭环 v2 Router 预检](research_loop_v2_router_preflight_20260920.md)：单请求 EoH probe 的认证失败证据与阶段四门禁。
 - [v1.0 验收](v1.0-acceptance.md)：历史发布门槛。

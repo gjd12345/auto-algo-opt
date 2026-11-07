@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 1 improved to 11.06980 and beat nearest neighbor on all six instances. It replaced the intended two-stage near-tie adjustment with a global product of normalized savings, quadratic fill and radial preference.",
+      "evidence_refs": [
+        "evaluation:ed0b11bb4c4f439ba7a52c068d11cd82",
+        "rounds/round_0005/execution_delta.json",
+        "rounds/round_0005/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Treat the global product winner as the reference for a small refinement."
+  },
+  "memory_action": {
+    "kind": "solution",
+    "name": "normalized-savings-product",
+    "description": "CVRP product of normalized savings, fill pressure and radial preference",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "## Execution\nUse the verified round-5 skill, which maximizes (1 + normalized savings) times a quadratic fill bonus times a radial bonus.\n\n**Why:** Mean distance 11.06980 versus 12.11504, improving all six training instances.\n\n**How to apply:** Preserve the actual product as the reference and change one factor at a time if refining.\n\n**Reusable Experience:** The winner departed from the Plan's near-tie constraint. Candidate code and training scores are the evidence.",
+    "source_skill_ref": "rounds/round_0005/eoh_run/skills/candidate_1",
+    "evidence_ref": "evaluation:ed0b11bb4c4f439ba7a52c068d11cd82"
+  }
+}

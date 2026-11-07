@@ -20,7 +20,7 @@ PLAN_KEYS = frozenset({
     "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
     "search_intent", "reflection_basis",
 })
-PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary"})
+PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary", "research_activity"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
 OPERATION_NON_AUTHORITY_METADATA_KEYS = frozenset({"mechanism_note"})
 FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
@@ -40,6 +40,14 @@ FORBIDDEN_PLAN_KEYS = frozenset({
     "code", "budget", "model", "operators", "operator", "evaluator",
     "stop", "stop_reason", "objective", "valid", "instance_objectives",
 })
+RESEARCH_ACTIVITY_CHOICES = {
+    "mode": {"used", "not_used"},
+    "trigger": {"cold_start", "stagnation", "badcase", "design_uncertainty", "other", "not_applicable"},
+    "finding_status": {"proved_under_assumptions", "empirical_observation", "hypothesis", "inconclusive", "not_applicable"},
+    "decision": {"modify", "retain", "abandon", "no_change", "not_applicable"},
+}
+RESEARCH_ACTIVITY_TEXT_KEYS = ("question", "finding_summary", "decision_summary")
+RESEARCH_ACTIVITY_KEYS = frozenset((*RESEARCH_ACTIVITY_CHOICES, *RESEARCH_ACTIVITY_TEXT_KEYS, "evidence_refs"))
 
 
 def _strict_keys(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
@@ -63,6 +71,26 @@ def _integer(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"{label}_must_be_integer")
     return value
+
+
+def _parse_research_activity(raw: Mapping[str, Any]) -> dict[str, Any]:
+    _strict_keys(raw, RESEARCH_ACTIVITY_KEYS, "research_activity")
+    activity: dict[str, Any] = {}
+    for key, choices in RESEARCH_ACTIVITY_CHOICES.items():
+        if key == "mode" or key in raw:
+            value = _text(raw.get(key), f"research_activity_{key}")
+            if value not in choices:
+                raise ValueError(f"research_activity_{key}_not_allowed")
+            activity[key] = value
+    for key in RESEARCH_ACTIVITY_TEXT_KEYS:
+        if key in raw:
+            activity[key] = _text(raw[key], f"research_activity_{key}", max_chars=2048)
+    if "evidence_refs" in raw:
+        refs = raw["evidence_refs"]
+        if not isinstance(refs, list):
+            raise ValueError("research_activity_evidence_refs_must_be_list")
+        activity["evidence_refs"] = [_text(ref, "research_activity_evidence_ref", max_chars=512) for ref in refs]
+    return activity
 
 
 @dataclass(frozen=True)
@@ -166,6 +194,7 @@ class PlanDocument:
     # Runtime never treats it as execution authority and does not inject it
     # into the upstream EoH prompt.
     reasoning_summary: str | None = None
+    research_activity: dict[str, Any] | None = None
 
     @classmethod
     def from_dict(
@@ -194,6 +223,7 @@ class PlanDocument:
         reasoning_summary = None
         if "reasoning_summary" in raw:
             reasoning_summary = _text(raw["reasoning_summary"], "reasoning_summary", max_chars=2048)
+        research_activity = _parse_research_activity(raw["research_activity"]) if "research_activity" in raw else None
         round_id = _integer(raw.get("round_id"), "round_id")
         if round_id != expected_round_id:
             raise ValueError("round_id_mismatch")
@@ -275,6 +305,7 @@ class PlanDocument:
             intent,
             reflection,
             reasoning_summary,
+            research_activity,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -294,6 +325,8 @@ class PlanDocument:
         result["reflection_basis"] = self.reflection_basis.as_dict() if self.reflection_basis else None
         if self.reasoning_summary is not None:
             result["reasoning_summary"] = self.reasoning_summary
+        if self.research_activity is not None:
+            result["research_activity"] = dict(self.research_activity)
         return result
 
 

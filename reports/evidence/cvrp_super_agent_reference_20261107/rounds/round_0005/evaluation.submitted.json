@@ -1,0 +1,25 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Both generated candidates attempted a continuation heuristic but were rejected before scoring: candidate 1 used forbidden np.empty and candidate 2 used forbidden np.linspace. There is no distance evidence against lookahead itself.",
+      "evidence_refs": [
+        "evaluation:111900c40e984275a44c8762e7cf370b",
+        "evaluation:5b4b60c94f1740f09374ecc85b25f382"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Make the one-step continuation hypothesis evaluable."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "lookahead-capability-contract",
+    "description": "Use allowed primitives for CVRP lookahead",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** The two lookahead proposals in round 5 were rejected on np.empty and np.linspace before route scoring.\n\n**How to apply:** Use a small shortlist, ordinary loops or list append, boolean indexing and np.min instead of allocating scratch arrays with np.empty or computing weights with np.linspace.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:111900c40e984275a44c8762e7cf370b"
+  }
+}
