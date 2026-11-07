@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "The valid candidate uses d_current - 0.60*d_depot with a tiny demand tie-break. It improved all six instances versus the nearest-neighbor baseline and averaged 11.08588. The other candidate was rejected for count_nonzero.",
+      "evidence_refs": [
+        "evaluation:5532356f2dde481d96dc430ffa54f272",
+        "rounds/round_0003/execution_delta.json",
+        "rounds/round_0003/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Refine the radial attraction while keeping the simple winning score."
+  },
+  "memory_action": {
+    "kind": "solution",
+    "name": "negative-depot-distance",
+    "description": "CVRP weighted depot attraction after positive closure-cost attempts",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "## Execution\nUse the verified round-3 skill: minimize current distance minus 0.60 times depot distance, with a tiny demand tie-break.\n\n**Why:** It scored 11.08588 versus 12.11504, improving all six fixed training instances.\n\n**How to apply:** Preserve the score as a reference and test only a small additional change per Plan. Keep feasible-customer progress.\n\n**Reusable Experience:** The sign of the depot term matters for the observed search path. These scores are from one development suite.",
+    "source_skill_ref": "rounds/round_0003/eoh_run/skills/candidate_2",
+    "evidence_ref": "evaluation:5532356f2dde481d96dc430ffa54f272"
+  }
+}
