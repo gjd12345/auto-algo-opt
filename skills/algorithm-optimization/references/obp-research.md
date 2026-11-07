@@ -11,7 +11,7 @@
   run's `config_frozen.json` and `dev_suite.json` identify its settings and
   development data. Benchmark and metric identities are in the Session state
   for benchmark runs. Historical evaluation evidence may be unavailable.
-- After collection, use `session read-evaluation --run RUN_DIR --round-id N`
+- After collection, use `session read-evaluation --run RUN_DIR --round N`
   for verified candidate code, per-instance objectives and available metrics.
   Add `--candidate` to focus on a candidate, or `--include-diff` for a diff
   against the baseline. Follow the returned references to `execution_delta`
