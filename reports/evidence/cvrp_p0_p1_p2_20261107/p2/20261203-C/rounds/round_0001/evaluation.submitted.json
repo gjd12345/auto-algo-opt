@@ -1,0 +1,28 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 5/6. Incumbent 12.28140 to 11.45280. The best maximizes savings minus a distance cost that increases with demand fraction, while using a nearest depot start.",
+      "evidence_refs": [
+        "evaluation:75d7bf7ea3b2469da26bf8048d000b3e",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "An alternative capacity weighting may improve the current geometry and packing balance.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:75d7bf7ea3b2469da26bf8048d000b3e",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Test a bounded change to the demand-dependent distance cost."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

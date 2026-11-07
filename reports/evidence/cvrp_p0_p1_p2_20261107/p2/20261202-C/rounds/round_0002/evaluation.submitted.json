@@ -1,0 +1,28 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 1/2. Incumbent 11.89749 to 11.89749. The valid variant preserved the farthest start and raised the savings intercept from 0.25 to 0.35, with a small regression. Another candidate was rejected for fill_diagonal.",
+      "evidence_refs": [
+        "evaluation:99bcfe60ee934296a66c1dc6cde689de",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The round-2 step suggests a higher intercept was not useful in that implementation.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:99bcfe60ee934296a66c1dc6cde689de",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Explore a smaller savings intercept while holding route start constant."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

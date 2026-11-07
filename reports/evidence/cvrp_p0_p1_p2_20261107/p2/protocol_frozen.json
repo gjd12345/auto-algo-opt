@@ -1,0 +1,40 @@
+{
+  "rounds": 3,
+  "paired_seeds": [
+    20261201,
+    20261202,
+    20261203
+  ],
+  "arms": {
+    "A": {
+      "memory": false,
+      "explicit_outer_math": false
+    },
+    "B": {
+      "memory": true,
+      "explicit_outer_math": false
+    },
+    "C": {
+      "memory": false,
+      "explicit_outer_math": true
+    },
+    "D": {
+      "memory": true,
+      "explicit_outer_math": true
+    }
+  },
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "training": "6 independent generated CVRP size-50 instances per seed; same suite within the four arms",
+  "outer_controller": "One Codex operator, Plan decisions restricted to own arm evidence, common ranking task, on arms use explicit mathematical hypotheses and analysis; off arms use performance feedback and direct code exploration",
+  "memory": "Independent cold Markdown stores; write bounded evidence-bound entries only for novel actionable findings",
+  "per_run_limits": {
+    "requests": 33,
+    "solver_attempts": 30,
+    "rounds": 3
+  },
+  "sources": "Unchanged evaluator, incumbent-only inheritance, provider thinking disabled and repair off",
+  "primary": "Final mean training distance relative to nearest-neighbor on the same paired seed",
+  "secondary": "Valid generated fraction, incumbents by round, delivered memory, request/solver cost, recorded Plan alignment and hypothesis disposition",
+  "causal_scope": "Small factorial pilot; same outer controller and possibly differing prompt content; not a general estimate of model math ability"
+}
