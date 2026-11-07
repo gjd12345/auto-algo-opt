@@ -28,6 +28,11 @@ Required fields:
 Agent's explanation. It is saved with the submitted Plan but is not a source
 of Runtime facts and is not injected into the official EoH context.
 
+`research_activity` is optional host-Agent metadata for an analysis decision
+and its evidence references. It is saved in the normalized Plan and does not
+enter Round Context. See the [research activity fields](obp-research.md#record-the-decision)
+for the shape and how to follow the record to candidate outcomes.
+
 Allowed operation types are `add`, `remove`, `replace`, and `preserve`. Each operation has only `type`, `target`, and `mechanism` (an optional `mechanism_note` is non-authoritative). Do not include code, objective, validity, budget, provider, evaluator, operator, or stop fields.
 
 For round 2 and later, copy `state.feedback_basis` exactly, including the previous round number, exact evaluation reference, and suite hash. `state.feedback_ref` is the legacy path-only field, not an object. The basis must point to the immediately previous round. Use `reference_skill_ref` only for the exact incumbent skill reference supplied by the Runtime. A selected Memory reference must be an exact, completely-read reference; submit at most two.
