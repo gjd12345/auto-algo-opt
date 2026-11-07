@@ -2,6 +2,6 @@
 
 from agent_skill_loop.contracts import EvaluationResult, SkillVersion
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 __all__ = ["EvaluationResult", "SkillVersion", "__version__"]

@@ -1,3 +1,25 @@
+## v1.2.2 —— 2026-11-07 · benchmark 注册表修复版
+
+主题：修掉 `island605_bp` 档位"注册即不可用"的问题，并把「registry 声明哈希 = 磁盘字节哈希」做成 CI 门。
+
+### Fixed
+
+- **`island605_bp` 的 manifest 哈希是草稿值**：`benchmarks/eohs_v1/registry.json` 声明的 `train_hash=f900b345…`、`test_hash=1fe78d40…`、`reference_hash=1d171a0f…` 与已提交文件的实际字节哈希（`7101b734…` / `13c7edd6…` / `c3e87a55…`）全部不符，且从引入提交 `d876c791` 起就不符（8 种规范化序列化都复现不出旧值，属陈旧哈希）。后果是 `catalog.load_profile_suite()` 在字节校验处直接抛 `data_manifest_hash_mismatch`，该档位对任何走 registry 的调用方都不可达——605 当年是绕过 registry 直接调 problem 模块才跑通的。
+- **哈希链同步重算**：`metric_spec.reference_manifest_hash` 同样携带旧值，改动它会使 `MetricSpec.content_hash` 变化，因此 `metric_spec_hash` 一并从 `fd1c3f2f…` 更新为 `9a30d2ec…`。
+
+### Changed（证据身份，必须注意）
+
+- `island605_bp` 的 `benchmark_spec_hash` / `metric_spec_hash` 与 v1.2.1 及更早版本不同。凡此前记录过该档位身份值的地方，都应按本版重算；其余三个 `eohs_v1` 档位未受影响（哈希本来就对）。
+
+### Added
+
+- `tests/kernel/test_benchmark_registry_hashes.py`（9 条）：每个档位声明的 train/test/reference 哈希必须等于磁盘字节；`metric_spec_hash` 必须等于 `MetricSpec(**metric_spec).content_hash`；metric 的 reference hash 必须等于 `manifests.reference_hash`；四档都能 `load_profile_suite(dev_train)`；`island605_bp` 的 `test` split 必须抛 `heldout_locked_no_access`；baseline 目标 `0.03984304255961364` 与 5 条实例向量固定。
+
+### Verified（本地，Windows · Python 3.11.9）
+
+- `pytest tests/kernel tests/knowledge` → **264 passed, 2 skipped**。
+- `island605_bp` 经 registry 载入后 baseline = `0.039843042560`，与绕过 registry 的实测值逐位一致。
+
 ## v1.2.1 —— 2026-11-06 · 发布门修复版
 
 主题：修掉 v1.2.0 在远程 CI 上的两处发布门失败。v1.2.0 的 tag 保留在 `c98b184`（CI 红），本版只做最小修复，不改变研究结论。
