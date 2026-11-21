@@ -43,6 +43,7 @@ import hashlib
 import json
 import random
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -56,10 +57,19 @@ from agent_skill_loop.problems.cvrp import suite_hash  # noqa: E402
 OUT = REPO / "experiments/cvrp_midterm/selection"
 SPLIT = "dev_train"
 
-# The frozen high-performing rule from the earlier PoC.  Read, never edited: the
-# SHA-256 below pins the exact bytes that produced the reported objective.
-FROZEN_C_PATH = REPO / "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py"
-FROZEN_C_SHA256 = "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627"
+# The frozen high-performing rules from the earlier PoC.  Read, never edited: the
+# SHA-256 values below pin the exact bytes that produced the reported objectives.
+# A and B are the rules that generalised across problem sizes in that PoC; C is the
+# strongest rule on the six-instance shared suite but the weakest across the
+# factorial bed, so all three belong in the pool instead of C alone.
+FROZEN_DIR = REPO / "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code"
+FROZEN_SHA256 = {
+    "a": "ccdab29f7d08ab162145ae7e468e47a5488b696d9a644bb7e793ab5c2665a866",
+    "b": "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+    "c": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+}
+FROZEN_C_PATH = FROZEN_DIR / "C.py"
+FROZEN_C_SHA256 = FROZEN_SHA256["c"]
 
 ALGORITHMS = {
     "nn": """
@@ -126,11 +136,17 @@ CORE = ("nn", "savings", "dd_load", "radial")
 EXTENDED = ("nn", "savings", "dd_load", "radial", "isolate", "load_fill")
 WITH_C = CORE + ("c",)
 EXTENDED_C = EXTENDED + ("c",)
+# The PoC produced three frozen rules, not one.  Selection has to see all of them:
+# A and B are the two that generalised, C the one that over-fitted the small suite.
+CORE_ABC = CORE + ("a", "b", "c")
+FULL_POOL = EXTENDED + ("a", "b", "c")
 PORTFOLIOS = {
     "core": CORE,
     "with_c": WITH_C,
     "extended": EXTENDED,
     "extended_c": EXTENDED_C,
+    "core_abc": CORE_ABC,
+    "full_pool": FULL_POOL,
 }
 
 FEATURE_NAMES = (
@@ -147,19 +163,35 @@ CAPACITY_LEVELS = {"loose": 45, "tight": 28}
 DEMAND_RANGE = (1, 9)
 
 
-def frozen_c_source() -> str:
-    """Return rule C exactly as frozen, refusing to run if the bytes moved."""
-    raw = FROZEN_C_PATH.read_bytes()
+def frozen_source(name: str) -> str:
+    """Return a frozen rule exactly as archived, refusing to run if the bytes moved."""
+    path = FROZEN_DIR / f"{name.upper()}.py"
+    raw = path.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
-    if digest != FROZEN_C_SHA256:
-        raise SystemExit(
-            f"frozen C artefact changed: {digest} != {FROZEN_C_SHA256} "
-            f"({FROZEN_C_PATH})"
-        )
+    expected = FROZEN_SHA256[name]
+    if digest != expected:
+        raise SystemExit(f"frozen {name.upper()} artefact changed: {digest} != {expected} ({path})")
     return raw.decode("utf-8")
 
 
-ALGORITHMS["c"] = frozen_c_source()
+def frozen_c_source() -> str:
+    return frozen_source("c")
+
+
+for _frozen in ("a", "b", "c"):
+    ALGORITHMS[_frozen] = frozen_source(_frozen)
+
+
+def check_frozen_rules() -> dict:
+    return {
+        name: {
+            "path": str((FROZEN_DIR / f"{name.upper()}.py").relative_to(REPO)).replace("\\", "/"),
+            "sha256": FROZEN_SHA256[name],
+            "bytes": len(ALGORITHMS[name].encode("utf-8")),
+            "edited_here": False,
+        }
+        for name in ("a", "b", "c")
+    }
 
 
 def check_frozen_c() -> dict:
@@ -256,10 +288,19 @@ def features(instance: dict) -> dict[str, float]:
 def evaluate(name: str, instance: dict) -> dict:
     suite = {"problem": "cvrp_construct", "split": SPLIT, "instances": [instance]}
     suite["content_hash"] = suite_hash("cvrp_construct", SPLIT, suite["instances"])
+    started = time.perf_counter()
     result = evaluator.evaluate_candidate_request(
         {"problem": "cvrp_construct", "suite": suite, "code": ALGORITHMS[name]}
     )
-    return {"valid": result["valid"], "objective": result.get("objective"), "error_code": result.get("error_code")}
+    elapsed = time.perf_counter() - started
+    return {
+        "valid": result["valid"],
+        "objective": result.get("objective"),
+        "error_code": result.get("error_code"),
+        # Wall clock of one candidate evaluation inside the frozen evaluator, suite
+        # construction included; comparable across rules, not an absolute speed-up.
+        "runtime_s": elapsed,
+    }
 
 
 def check_savings_rule() -> dict:
@@ -333,12 +374,19 @@ def main() -> int:
         for name in ALGORITHMS:
             res = evaluate(name, inst)
             row[name] = res["objective"]
+            row[f"{name}_s"] = round(float(res["runtime_s"]), 6)
             if not res["valid"]:
                 row[name] = None
                 row[f"{name}_error"] = res["error_code"]
         winners = [n for n in ALGORITHMS if row[n] is not None]
         row["oracle_all"] = min(winners, key=lambda n: (row[n], n))
         row["vbs_all"] = row[row["oracle_all"]]
+        # Per-instance ranks over the measured rules: 1 = best.  Selection results
+        # are unreadable without them, and they cost nothing once the matrix exists.
+        for name in winners:
+            row[f"{name}_rank"] = 1 + sum(
+                1 for other in winners if row[other] < row[name] - 1e-12
+            )
         rows.append(row)
 
     (OUT / "matrix.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
@@ -422,10 +470,17 @@ def main() -> int:
             "cells": list(CELLS),
             "portfolios": {k: list(v) for k, v in PORTFOLIOS.items()},
             "frozen_member": check_frozen_c(),
+            "frozen_rules": check_frozen_rules(),
         },
         "instances": len(rows),
         "portfolio_mean": {
             n: round(float(np.mean([r[n] for r in rows])), 6) for n in names
+        },
+        "mean_runtime_s": {
+            n: round(float(np.mean([r[f"{n}_s"] for r in rows])), 6) for n in names
+        },
+        "mean_rank": {
+            n: round(float(np.mean([r[f"{n}_rank"] for r in rows])), 4) for n in names
         },
         "portfolios": portfolios,
         "per_cell": per_cell,
@@ -434,6 +489,9 @@ def main() -> int:
             "c_vs_savings": pairwise_stats(rows, "c", "savings"),
             "c_vs_nn": pairwise_stats(rows, "c", "nn"),
             "c_vs_dd_load": pairwise_stats(rows, "c", "dd_load"),
+            "a_vs_savings": pairwise_stats(rows, "a", "savings"),
+            "b_vs_savings": pairwise_stats(rows, "b", "savings"),
+            "a_vs_b": pairwise_stats(rows, "a", "b"),
         },
         "rule_check": rule_check,
     }

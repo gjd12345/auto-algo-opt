@@ -39,6 +39,9 @@ PORTFOLIOS = {
     "core": ("nn", "savings", "dd_load", "radial"),
     "with_c": ("nn", "savings", "dd_load", "radial", "c"),
     "extended_c": ("nn", "savings", "dd_load", "radial", "isolate", "load_fill", "c"),
+    "core_abc": ("nn", "savings", "dd_load", "radial", "a", "b", "c"),
+    "full_pool": ("nn", "savings", "dd_load", "radial", "isolate", "load_fill",
+                  "a", "b", "c"),
 }
 FEATURES = ("mean_demand", "cv_demand", "capacity_ratio", "cluster_tendency",
             "radial_std", "depot_eccentricity", "x_spread", "y_spread")
@@ -60,11 +63,21 @@ def standardize(train_x: np.ndarray, apply_x: np.ndarray):
     return (train_x - mu) / sd, (apply_x - mu) / sd
 
 
-def ridge_fit(x: np.ndarray, y: np.ndarray, lam: float = 1.0) -> np.ndarray:
+def ridge_fit(x: np.ndarray, y: np.ndarray, lam: float = 1.0,
+              weight: np.ndarray | None = None) -> np.ndarray:
+    """Ridge on standardised features; the intercept is never penalised.
+
+    ``weight`` turns this into weighted least squares, which is what makes the
+    pairwise models cost-sensitive: a pair that differs by 3.0 counts three
+    times as much as a pair that differs by 1.0.
+    """
     xb = np.hstack([np.ones((x.shape[0], 1)), x])
     reg = lam * np.eye(xb.shape[1])
     reg[0, 0] = 0.0
-    return np.linalg.solve(xb.T @ xb + reg, xb.T @ y)
+    if weight is None:
+        return np.linalg.solve(xb.T @ xb + reg, xb.T @ y)
+    w = np.asarray(weight, dtype=float).ravel()
+    return np.linalg.solve(xb.T @ (xb * w[:, None]) + reg, xb.T @ (y * w))
 
 
 def ridge_predict(w: np.ndarray, x: np.ndarray) -> np.ndarray:
@@ -73,21 +86,32 @@ def ridge_predict(w: np.ndarray, x: np.ndarray) -> np.ndarray:
 
 
 def pairwise_pick(train_x: np.ndarray, train_y: np.ndarray, test_x: np.ndarray,
-                  fallback: np.ndarray) -> int:
+                  fallback: np.ndarray, weighted: bool = True) -> int:
     """Vote among rules by pairwise win models; predicted objective breaks ties.
 
     ``train_y`` is (n_train, k) objective values (lower is better), ``fallback``
     is the predicted objective row used only to break a vote tie.
+
+    The default model is cost-sensitive: each pairwise observation is weighted
+    by ``|c_a - c_b|``, so a pair that differs by 3.0 counts three times as much
+    as a pair that differs by 1.0.  ``weighted=False`` keeps the plain sign fit
+    measured in revision 3, so the two can be compared on the same folds.
     """
     k = train_y.shape[1]
     votes = np.zeros(k)
     for a, b in itertools.combinations(range(k), 2):
+        diff = train_y[:, a] - train_y[:, b]
         # +1 means rule ``a`` is better (lower objective) on that instance.
-        target = np.where(train_y[:, a] < train_y[:, b], 1.0, -1.0)
+        target = np.where(diff < 0.0, 1.0, -1.0)
+        weight = None
+        if weighted:
+            gap = np.abs(diff)
+            mean_gap = float(gap.mean())
+            weight = gap / mean_gap if mean_gap > 1e-12 else None
         if np.all(target == 1.0) or np.all(target == -1.0):
             votes[a if target[0] > 0 else b] += 1
             continue
-        w = ridge_fit(train_x, target)
+        w = ridge_fit(train_x, target, weight=weight)
         if float(ridge_predict(w, test_x)[0]) > 0.0:
             votes[a] += 1
         else:
@@ -142,7 +166,7 @@ def run(portfolio: str) -> dict:
 
     folds = list(range(n))
 
-    picks_nn, picks_ridge, picks_pair = [], [], []
+    picks_nn, picks_ridge, picks_pair, picks_pair_plain = [], [], [], []
     for i in folds:
         mask = np.arange(n) != i
         train_x, test_x = standardize(X[mask], X[i:i + 1])
@@ -153,16 +177,21 @@ def run(portfolio: str) -> dict:
         pred = ridge_predict(w, test_x)[0]
         picks_ridge.append(int(pred.argmin()))
         picks_pair.append(pairwise_pick(train_x, Y[mask], test_x, pred))
+        picks_pair_plain.append(
+            pairwise_pick(train_x, Y[mask], test_x, pred, weighted=False)
+        )
 
     results.append(summarize("knn1_loo", picks_nn, Y, names, cells, fixed_total,
                              {"design": "1-nearest-neighbour on pre-solve features"}))
     results.append(summarize("ridge_loo", picks_ridge, Y, names, cells, fixed_total,
                              {"design": "one ridge per rule, argmin of predictions"}))
     results.append(summarize("pairwise_loo", picks_pair, Y, names, cells, fixed_total,
-                             {"design": "one ridge per pair on the win sign, vote by pairwise wins"}))
+                             {"design": "one cost-sensitive ridge per pair (weight |c_a - c_b|) on the win sign, vote by pairwise wins"}))
+    results.append(summarize("pairwise_loo_unweighted", picks_pair_plain, Y, names, cells, fixed_total,
+                             {"design": "same pairwise vote with unweighted signs (revision 3 recipe), for the cost-sensitivity ablation"}))
 
-    loro_picks = {"ridge": [0] * n, "pairwise": [0] * n}
-    loro_cells = {"ridge": {}, "pairwise": {}}
+    loro_picks = {"ridge": [0] * n, "pairwise": [0] * n, "pairwise_plain": [0] * n}
+    loro_cells = {"ridge": {}, "pairwise": {}, "pairwise_plain": {}}
     for cell in sorted(set(cells)):
         test_idx = [i for i, c in enumerate(cells) if c == cell]
         train_idx = [i for i, c in enumerate(cells) if c != cell]
@@ -174,12 +203,20 @@ def run(portfolio: str) -> dict:
             pairwise_pick(train_x, Y[train_idx], test_x[j:j + 1], pred[j])
             for j in range(len(test_idx))
         ]
+        picks_pair_plain_cell = [
+            pairwise_pick(train_x, Y[train_idx], test_x[j:j + 1], pred[j], weighted=False)
+            for j in range(len(test_idx))
+        ]
         for i, p in zip(test_idx, picks_ridge_cell):
             loro_picks["ridge"][i] = p
         for i, p in zip(test_idx, picks_pair_cell):
             loro_picks["pairwise"][i] = p
+        for i, p in zip(test_idx, picks_pair_plain_cell):
+            loro_picks["pairwise_plain"][i] = p
         sub_oracle = Y[test_idx].min(axis=1).sum()
-        for label, picks in (("ridge", picks_ridge_cell), ("pairwise", picks_pair_cell)):
+        for label, picks in (("ridge", picks_ridge_cell),
+                             ("pairwise", picks_pair_cell),
+                             ("pairwise_plain", picks_pair_plain_cell)):
             sub_chosen = sum(Y[i, p] for i, p in zip(test_idx, picks))
             loro_cells[label][cell] = {
                 "instances": len(test_idx),
@@ -191,8 +228,12 @@ def run(portfolio: str) -> dict:
                              {"design": "ridge trained on seven cells, scored on the eighth",
                               "per_held_out_cell": loro_cells["ridge"]}))
     results.append(summarize("pairwise_loro", loro_picks["pairwise"], Y, names, cells, fixed_total,
-                             {"design": "pairwise votes trained on seven cells, scored on the eighth",
+                             {"design": "cost-sensitive pairwise votes trained on seven cells, scored on the eighth",
                               "per_held_out_cell": loro_cells["pairwise"]}))
+    results.append(summarize("pairwise_loro_unweighted", loro_picks["pairwise_plain"], Y,
+                             names, cells, fixed_total,
+                             {"design": "unweighted pairwise votes trained on seven cells, scored on the eighth",
+                              "per_held_out_cell": loro_cells["pairwise_plain"]}))
 
     per_cell = {}
     for cell in sorted(set(cells)):

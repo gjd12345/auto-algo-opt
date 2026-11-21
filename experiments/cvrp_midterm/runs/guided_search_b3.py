@@ -80,6 +80,14 @@ FINDING = {
     ),
     "finding_status": "empirical_observation",
     "decision": "modify",
+    "decision_summary": (
+        "Keep the two terms coupled. A candidate that only cancels the absolute "
+        "width is rejected by the numbers above: it must be measured at nominal "
+        "scale before it is submitted, and the nominal objective must stay within "
+        "about 1% while the scale spread shrinks. Prefer a rule whose score is "
+        "invariant to coordinate scale and whose nominal behaviour does not "
+        "regress, instead of either half of the change on its own."
+    ),
     "evidence_refs": [
         "experiments/cvrp_midterm/analysis/band_hypothesis.json",
         "experiments/cvrp_midterm/analysis/p0_probe.json",

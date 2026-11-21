@@ -59,15 +59,27 @@ def test_obp_research_activity_is_persisted_without_changing_search_guidance(tmp
     # smuggle execution authority (interface, budget, operators, code) into the
     # round context.
     assert len(contexts) == 2, "a used research activity must change the round context"
+    allowed = {
+        "question",
+        "measured_finding",
+        "hypothesis_status",
+        "decision",
+        # The bare `decision` is an enum ("modify"); without the summary the
+        # generator learns nothing actionable from it.
+        "decision_summary",
+        # Only present when a bound actually clipped a field.
+        "truncated_fields",
+    }
     for text in contexts:
         payload = json.loads(text.split("\n", 1)[1])
         finding = payload.get("research_finding")
         if finding is not None:
-            assert set(finding) <= {"question", "measured_finding", "hypothesis_status", "decision"}
+            assert set(finding) <= allowed
             assert "budget" not in text and "operators" not in text and "def " not in text
             assert finding["measured_finding"] == (
                 "Only the current item and feasible capacities are available."
             )
+            assert finding["decision_summary"] == "Base the candidate on observable state."
 
 
 def test_atomic_init_and_concurrent_stop(tmp_path,monkeypatch):

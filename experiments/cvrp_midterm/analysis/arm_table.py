@@ -131,7 +131,7 @@ def suite(batch: str, arm: str) -> dict:
 def table(batches: list[str]) -> str:
     head = (
         "| batch | arm | rounds | improving | requests | input tok | output tok "
-        "| solver s | run best (vs NN) | suite total | vs frozen C |\n"
+        "| solver s | run best (vs NN) | suite mean | vs frozen C |\n"
         "|---|---|---|---|---|---|---|---|---|---|---|\n"
     )
     body = []

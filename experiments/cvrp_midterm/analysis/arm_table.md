@@ -1,6 +1,6 @@
 # 2x2 arm comparison (shared suite, frozen C = 10.9197)
 
-| batch | arm | rounds | improving | requests | input tok | output tok | solver s | run best (vs NN) | suite total | vs frozen C |
+| batch | arm | rounds | improving | requests | input tok | output tok | solver s | run best (vs NN) | suite mean | vs frozen C |
 |---|---|---|---|---|---|---|---|---|---|---|
 | a5 | Control | 4 | 2 | 24 | 64135 | 9443 | 8.0 | -7.52% | 11.204 | +2.60% |
 | a5 | Finding-only | 4 | 1 | 24 | 70483 | 10498 | 7.7 | -9.01% | 11.024 | +0.95% |

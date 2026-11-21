@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from agent_skill_loop.session_contracts import (
@@ -193,3 +195,68 @@ def test_feedback_compacts_search_progress_without_losing_full_evidence():
     )
     context = compile_round_context(plan, feedback_summary=summary)
     assert len(context) < 12_000
+
+
+def _context_payload(context: str) -> dict:
+    prefix = "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n"
+    assert context.startswith(prefix)
+    return json.loads(context[len(prefix):])
+
+
+def _plan_with_finding(finding: str, decision_summary: str | None = None):
+    payload = plan_payload()
+    payload["research_activity"] = {
+        "mode": "used",
+        "trigger": "badcase",
+        "finding_status": "empirical_observation",
+        "decision": "modify",
+        "finding_summary": finding,
+    }
+    if decision_summary is not None:
+        payload["research_activity"]["decision_summary"] = decision_summary
+    return PlanDocument.from_dict(
+        payload,
+        expected_round_id=1,
+        suite_hash="suite-1",
+        available_feedback_refs={"rounds/round_0000/evaluation_facts.json"},
+        allowed_targets={"tie_break"},
+    )
+
+
+def test_research_finding_is_word_bounded_and_truncation_is_reported():
+    """A finding must not be cut mid-word without the cut being visible.
+
+    Revision 3 clipped the finding at exactly 800 characters and the generator
+    received "A candidate that o", i.e. the counter-example the experiment was
+    built around was silently deleted.  The clip is now word-bounded, marked, and
+    reported in ``truncated_fields`` plus a top-level flag.
+    """
+    # The plan parser accepts up to 2048 characters; the compiler must clip below
+    # that rather than hand the generator a sentence that stops mid-word.
+    long_finding = " ".join(["observation"] * 170)  # 1870 characters
+    context = compile_round_context(_plan_with_finding(long_finding))
+    payload = _context_payload(context)
+    finding = payload["research_finding"]
+    text = finding["measured_finding"]
+    assert text.endswith("[truncated]")
+    assert len(text) <= 1600 + len(" [truncated]")
+    assert text[:-len(" [truncated]")].endswith("observation")
+    assert finding["truncated_fields"] == ["measured_finding"]
+    assert payload["research_finding_truncated"] == ["measured_finding"]
+    assert len(context) < 12_000
+
+
+def test_short_research_finding_passes_through_unmarked():
+    finding = (
+        "Re-expressing the same instance at 1e-2 and 1e-3 raises the share of steps "
+        "entering the near-tie window from 1.3% to 64% and 83%, and degrades the "
+        "scale-normalised objective from 10.92 to 16.20 and 33.52. A rule that only "
+        "replaces the width therefore loses at the nominal scale; the trade-off, not "
+        "either half alone, is the payment."
+    )
+    context = compile_round_context(_plan_with_finding(finding, decision_summary="keep the two terms coupled"))
+    payload = _context_payload(context)
+    assert payload["research_finding"]["measured_finding"] == finding
+    assert "truncated_fields" not in payload["research_finding"]
+    assert "research_finding_truncated" not in payload
+    assert payload["research_finding"]["decision_summary"] == "keep the two terms coupled"

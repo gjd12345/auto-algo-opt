@@ -53,8 +53,9 @@ class _Capture:
         self.events: list[dict[str, Any]] = []
         self._enabled = False
 
-    def install(self) -> tuple[Callable, Callable]:
+    def install(self) -> tuple[Callable, Callable, Callable]:
         original_argmin, original_argmax = np.argmin, np.argmax
+        original_argsort = np.argsort
 
         def argmin(a, *args, **kwargs):
             out = original_argmin(a, *args, **kwargs)
@@ -68,8 +69,20 @@ class _Capture:
                 self.events.append({"array": np.asarray(a, dtype=float).ravel().copy(), "mode": "max", "position": int(out)})
             return out
 
-        np.argmin, np.argmax = argmin, argmax
-        return original_argmin, original_argmax
+        def argsort(a, *args, **kwargs):
+            out = original_argsort(a, *args, **kwargs)
+            if self._enabled:
+                flat = np.asarray(a, dtype=float).ravel()
+                order = np.asarray(out).ravel()
+                # ``argsort`` is a ranking, so the rule keeps ``order[0]`` as the
+                # head of the ranking: treat that as a max-reduction over the
+                # sorted array (-savings / score) and index it back.
+                if order.size:
+                    self.events.append({"array": flat, "mode": "max", "position": int(order[0])})
+            return out
+
+        np.argmin, np.argmax, np.argsort = argmin, argmax, argsort
+        return original_argmin, original_argmax, original_argsort
 
     def enable(self) -> None:
         self.events = []
@@ -156,17 +169,25 @@ def simulate(fn: Callable[..., int], instance: Mapping[str, Any], *,
             raise ValueError("invalid_route")
         step = Step(current=current, remaining=remaining, feasible=feasible, chosen=result)
         if capture is not None and capture.events:
-            ev = capture.events[-1]
-            array = ev["array"]
-            position = ev.get("position")
-            # Only trust the capture when the reduction it intercepted actually
-            # produced the node the rule returned; otherwise it is some helper
-            # call inside the rule and the "score" is unrelated to the decision.
-            if position is not None and 0 <= position < len(feasible) and feasible[position] == result:
+            # Walk back from the last event: rules such as frozen A rank with
+            # ``argsort`` first and break ties on a sub-array afterwards, so the
+            # final event is not always the one that produced the returned node.
+            for ev in reversed(capture.events):
+                array = ev["array"]
+                position = ev.get("position")
+                # Only trust the capture when the reduction it intercepted actually
+                # produced the node the rule returned; otherwise it is some helper
+                # call inside the rule and the "score" is unrelated to the decision.
+                if position is None or not (0 <= position < len(feasible)):
+                    continue
+                if feasible[position] != result:
+                    continue
                 if array.shape == (len(feasible),):
                     step.scores, step.mode = array, ev["mode"]
-                elif array.shape == (total,):
+                    break
+                if array.shape == (total,):
                     step.scores, step.mode = array[np.asarray(feasible, dtype=int)], ev["mode"]
+                    break
         steps.append(step)
         route.append(result)
         unvisited.discard(result)
@@ -326,7 +347,7 @@ def analyze_code(path: Path, instances: list[Mapping[str, Any]], *, margin_limit
                 "linear": linear_fit(instance, matrix, run.steps),
             })
     finally:
-        np.argmin, np.argmax = original
+        np.argmin, np.argmax, np.argsort = original
 
     def collect(key: str) -> list[float]:
         return [row["margin"][key] for row in per_instance if row["margin"].get(key) is not None]
