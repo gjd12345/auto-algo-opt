@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Replace the previous heuristic's small depot-distance and residual-load penalties with a strong \"savings\"-style score that rewards customers far from the depot and close to the current node, scaled by a larger residual-load balance term, to favor fuller and more geographically coherent routes.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Savings-style: prefer customers far from depot but near current node,\n    # with a stronger residual-load balance incentive to build fuller routes.\n    score = d_cur - 0.45 * d_dep + 0.80 * d_cur * np.abs(load_after - 0.5)\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": -0.01497
+    },
+    {
+        "sample_order": 2,
+        "operator": "e2",
+        "algorithm": "The common backbone is a greedy nearest-neighbor score that combines current-node distance with depot-distance and residual-load terms; the new algorithm replaces those smooth additive/subtractive bonuses with a rank-based dominance rule: prioritize customers whose demand best fills the residual capacity as a \"fit ratio\", then break ties by proximity to the current node while penalizing very short depot hops via a normalized composite distance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Fit ratio: how much of remaining capacity this customer fills (0..1]\n    fit = dem / cap\n\n    # Prefer customers that fill capacity well (close to 1 fit), without\n    # over-committing: penalize both underfill and extreme fill.\n    fit_score = -np.abs(fit - 0.85)\n\n    # Normalized proximity: closer to current node is better, but we cap the\n    # influence using a scale based on route geometry so it does not dominate.\n    span = np.maximum(np.max(d_cur) if d_cur.size else 1.0, 1e-9)\n    prox = -d_cur / span\n\n    # Depot-reach term: mild preference for customers moderately far from depot\n    # (avoids picking tiny near-depot hops that fragment the route).\n    dspan = np.maximum(np.max(d_dep) if d_dep.size else 1.0, 1e-9)\n    dep_term = d_dep / dspan\n\n    # Composite: capacity fit dominates, proximity refines, depot term regularizes.\n    score = 2.0 * fit_score + 1.0 * prox + 0.25 * dep_term\n\n    return int(unvisited_nodes[int(np.argmax(score))])",
+        "objective": 0.2177
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "Use a normalized nearest-neighbor score where each candidate's distance from the current node is divided by its depot distance, then add a mild penalty for low residual capacity favor large demand customers when the load is high, encouraging coherent routes and fuller vehicles.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    # Normalized proximity: near to current node relative to depot distance.\n    prox = d_cur / (d_dep + 1.0)\n\n    # Capacity pressure: when nearly full, prefer smaller demands;\n    # when mostly empty, ignore demand magnitude.\n    fill = cap / max(cap + dem.max() if dem.size else cap, 1e-9)\n    demand_term = (dem / max(cap, 1e-9)) * (1.0 - fill)\n\n    score = prox + 0.6 * demand_term\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.0292
+    },
+    {
+        "sample_order": 4,
+        "operator": "e2",
+        "algorithm": "Score each customer by an angular-sector \"sweep\" proximity: prefer customers whose direction from the current node is closest to the direction pointing back toward the depot, weighted by a capacity-aware savings term, so routes grow as compact radial clusters.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    d_cd = float(distance_matrix[current_node][depot]) + 1e-9\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Savings-style term: how much is gained by inserting the customer\n    # between the current node and the depot.\n    savings = d_cd + d_dep - d_cur\n    savings_norm = savings / (d_cd + d_dep + 1e-9)\n\n    # Radial alignment: prefer customers roughly in the direction the\n    # vehicle is already heading (away from depot), so clusters stay compact.\n    outward = d_dep / (d_dep + d_cur + 1e-9)\n\n    # Capacity pressure: fill the vehicle efficiently when nearly full.\n    fill = cap / max(cap + dem.max() if dem.size else cap, 1e-9)\n    demand_term = (dem / max(cap, 1e-9)) * (1.0 - fill)\n\n    score = -savings_norm - 0.25 * outward + 0.5 * demand_term\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.00819
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Use a savings-style score that weights current-node distance, depot proximity, and remaining-capacity balance with stronger depot-repulsion and demand-priority terms to encourage fuller, more efficient routes.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Savings-style score: prefer customers far from depot but close to current node,\n    # strongly reward filling the vehicle (small residual load), and penalize\n    # leaving a residual near 0.5 (unbalanced).\n    savings = d_dep + d_cur - d_dep * d_cur / (np.abs(d_dep) + np.abs(d_cur) + 1e-9) * 0.0\n    score = (\n        d_cur\n        - 0.60 * d_dep\n        + 0.55 * dem\n        + 0.80 * d_cur * np.abs(load_after - 0.5)\n        - 0.50 * d_dep * load_after\n    )\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.43589
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

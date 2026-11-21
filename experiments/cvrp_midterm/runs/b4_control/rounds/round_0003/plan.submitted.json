@@ -1,0 +1,18 @@
+{
+  "round_id": 3,
+  "direction": "Explore new priority rules for the CVRP greedy construction.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "priority score",
+      "mechanism": "Try a different combination of distance, depot distance and load."
+    }
+  ],
+  "preserve": "The problem interface, the evaluator and the search policy.",
+  "hypothesis": "A different distance/load combination yields better routes.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6"
+  }
+}

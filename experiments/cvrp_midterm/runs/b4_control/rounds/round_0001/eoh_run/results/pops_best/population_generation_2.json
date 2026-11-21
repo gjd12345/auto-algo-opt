@@ -1,0 +1,9 @@
+{
+    "algorithm": "Use a weighted score combining the distance from the current node with a small penalty for depot proximity and a load-shaping factor to prioritize customers that leave a better remaining capacity balance.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Explore a different distance/load combination:\n    # prioritize near customers, slightly prefer those farther from depot,\n    # and softly favor customers whose removal leaves a balanced residual load.\n    score = d_cur - 0.15 * d_dep - 0.35 * d_cur * np.abs(load_after - 0.5)\n    return int(unvisited_nodes[np.argmin(score)])",
+    "objective": -0.0186,
+    "other_inf": null,
+    "candidate_id": "candidate_2",
+    "revision": "original",
+    "evaluation_id": "0cb592c85f3545678413bec196ff125d"
+}
