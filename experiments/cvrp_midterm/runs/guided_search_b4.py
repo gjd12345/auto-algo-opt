@@ -122,14 +122,22 @@ ARMS = {
 
 
 def load_key() -> str:
+    # Prefer repo-local gitignored key first (shell env may hold a stale/revoked key).
+    repo_key = KEY_CANDIDATES[0]
+    if repo_key.is_file():
+        key = repo_key.read_text(encoding="utf-8").strip()
+        if key:
+            return key
     key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
     if key:
         return key
-    for path in KEY_CANDIDATES:
+    for path in KEY_CANDIDATES[1:]:
         if path.is_file():
-            return path.read_text(encoding="utf-8").strip()
+            key = path.read_text(encoding="utf-8").strip()
+            if key:
+                return key
     raise SystemExit(
-        "no provider key: set DEEPSEEK_API_KEY or write .secrets/deepseek.key"
+        "no provider key: write .secrets/deepseek.key or set DEEPSEEK_API_KEY"
     )
 
 
