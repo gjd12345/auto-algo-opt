@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Replace the reference detour*(1-0.35*load)-0.20*depot_pull score with a nearer-neighbour primary weighted by distance to depot, and use a wider 12% relative band with a savings-based (d_cur+d_dep-d_curdepot) tie-break scaled by load fraction to favour efficient backhauls.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = dem / cap\n\n    # Primary: nearest-neighbour distance, mildly discounted when the node is\n    # low-demand (so it can be cheaply packed) and slightly pulled toward depot.\n    primary = (d_cur / scale) * (1.0 - 0.10 * (1.0 - load_frac)) + 0.08 * (d_dep / scale)\n\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.12 + 1e-9\n    in_band = primary <= best + band\n\n    # Secondary inside band: savings-style backhaul efficiency; prefer nodes\n    # whose insertion saves more relative to a depot trip, boosted by load.\n    detour_savings = (d_cur + d_dep - distance_matrix[current_node][depot]) / scale\n    secondary = np.where(in_band, detour_savings - 0.30 * load_frac, np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": 0.04921
+    },
+    {
+        "sample_order": 2,
+        "operator": "e2",
+        "algorithm": "Common backbone: both build routes by a scaled nearest-neighbour primary score that is nudged by load/depot terms, then resolve near-ties within a relative band using a savings-style backhaul tie-break. My new algorithm replaces this scalar scoring with a Pareto front over two opposing normalized objectives (proximity and backhaul savings), breaking conflicts by the angle between the candidate's polar direction and the depot-return direction.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = np.clip(dem / cap, 0.0, 1.0)\n\n    # Two normalized, opposing objectives.\n    prox = d_cur / scale                                 # smaller = nearer\n    backhaul = (d_cur + d_dep - distance_matrix[current_node][depot]) / scale\n\n    # Pareto front: candidates not dominated on (prox, backhaul).\n    n = prox.size\n    keep = np.ones(n, dtype=bool)\n    for i in range(n):\n        if not keep[i]:\n            continue\n        dominated = (prox <= prox[i]) & (backhaul <= backhaul[i])\n        strictly = (prox < prox[i]) | (backhaul < backhaul[i])\n        if np.any(dominated & strictly):\n            keep[i] = False\n    front = np.nonzero(keep)[0]\n    if front.size == 0:\n        front = np.arange(n)\n\n    # Geometric conflict resolution: prefer front points whose direction from\n    # the current node trends toward the depot (keeps the return leg short),\n    # with a mild reward for high remaining load being picked up.\n    cx = distance_matrix[current_node][depot] + 1e-9\n    alignment = d_dep[front] / cx            # smaller = more inward\n    score = prox[front] + 0.15 * alignment - 0.25 * load_frac[front]\n\n    best_local = int(np.argmin(score))\n    return int(unvisited_nodes[front[best_local]])",
+        "objective": 0.08162
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "Replace the reference detour score with a radial-projection primary (distance minus an angular/depot-alignment term weighted by load fraction) evaluated first on the nearest neighbour and then broadened to a relative band whose tie-break is a load-weighted savings ratio, so the vehicle packs efficient backhauls instead of pure nearest hops.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = np.clip(dem / cap, 0.0, 1.0)\n\n    cur_pos = distance_matrix[current_node][depot]\n    d_curdepot_savings = (d_cur + d_dep - cur_pos) / scale\n\n    # Primary: nearest-neighbour distance, with a load-weighted radial pull\n    # that encourages serving customers closer to the depot sooner so that\n    # remaining far customers are paired into efficient backhaul trips.\n    primary = (d_cur / scale) - 0.15 * load_frac * (d_dep / scale) \\\n              + 0.10 * (1.0 - load_frac) * (d_cur / scale)\n\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.10 + 1e-9\n\n    # Inside the band, prefer the node with the best load-weighted savings\n    # ratio (savings per unit distance), so nearly equivalent hops favour\n    # the one that packs more demand into the route.\n    ratio = d_curdepot_savings / (d_cur / scale + 1e-9)\n    secondary = np.where(primary <= best + band,\n                         -(ratio * (0.5 + 0.5 * load_frac)),\n                         np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": -0.02961
+    },
+    {
+        "sample_order": 4,
+        "operator": "e2",
+        "algorithm": "Rank candidates by a Clarke\u2013Wright *savings* value (d_cur + d_dep \u2212 savings against the depot) rather than by raw proximity, then inside a relative band pick the node that most improves expected route-closing cost via a combined savings-times-load and outward/return balance term, so the rule is savings-driven rather than nearest-neighbour-driven.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = dem / cap\n\n    d_cur_dep = distance_matrix[current_node][depot]\n\n    # Primary: Clarke-Wright savings of inserting node between current and depot.\n    savings = (d_cur + d_dep - d_cur_dep) / scale\n    # Prefer large savings (long shared edges), mildly weighted by how much of\n    # the remaining capacity the node consumes so the van fills efficiently.\n    primary = savings * (1.0 + 0.20 * load_frac)\n\n    best = float(np.max(primary))\n    band = max(abs(best), 1e-9) * 0.10 + 1e-9\n    in_band = primary >= best - band\n\n    # Secondary: among near-best savings, pick the node whose geometric\n    # position best balances \"close to current\" and \"heading toward depot\",\n    # rewarding high load to close out the route efficiently.\n    outward = d_cur / (d_cur + d_dep + 1e-9)\n    balance = outward - 0.35 * load_frac - 0.25 * (d_dep / scale)\n    secondary = np.where(in_band, balance, np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": 1.94059
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Use a normalized savings/cost primary score with a stronger load-fill term, a larger relative band, and an inward-plus-depot-proximity tie-break to alter the distance/load balance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = dem / cap\n\n    detour = 2.0 * (d_cur / scale)\n    depot_pull = d_dep / scale\n\n    # Stronger load-fill and depot-pull weighting than the parent.\n    primary = detour * (1.0 - 0.55 * load_frac) - 0.35 * depot_pull\n\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.08 + 1e-9\n    in_band = primary <= best + band\n\n    # Tie-break: favor nodes close to depot plus high remaining demand.\n    secondary = np.where(in_band, depot_pull - 0.9 * load_frac, np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": -0.03069
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

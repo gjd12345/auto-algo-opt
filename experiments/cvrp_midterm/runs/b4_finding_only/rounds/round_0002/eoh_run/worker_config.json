@@ -1,0 +1,143 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "719e6960f95cd21d9b56576eeb22cb9a01381ccbacbb97d431f243c4c8118f77",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.712526,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260909,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "65fb94090b4bed509b9150244597862426f28c225f62ecf664f82fb185a3824d",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.219,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "parent_skill": {
+    "version_id": "candidate_5",
+    "code_sha256": "1a983cd2775b19da834351006923908b39c89908da6f4d65869141f9193c5b9c",
+    "original_suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "evaluation": {
+      "valid": true,
+      "objective": -0.005965688445765537,
+      "instance_objectives": [
+        -0.06086997696943296,
+        0.1017312252718531,
+        -0.04121473446778769,
+        -0.0235092676176946
+      ],
+      "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+      "error_code": null,
+      "error_detail": null,
+      "elapsed_seconds": 0.203,
+      "metrics": {
+        "raw_objectives": [
+          11.126972552200748,
+          11.592861118068477,
+          11.896347635976854,
+          12.192667828628093
+        ],
+        "reference_objectives": [
+          11.84817041232914,
+          10.522404060217072,
+          12.407728887420175,
+          12.486209468554943
+        ],
+        "reference_kind": [
+          "solver_reference",
+          "solver_reference",
+          "solver_reference",
+          "solver_reference"
+        ],
+        "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+      }
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 585692.837526,
+  "local_url": "http://127.0.0.1:59781/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\b4_finding_only",
+    "task_id": "task_a9464d988409413d9e837d77e3fb8b56"
+  },
+  "supervisor_pid": 38064,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":2,\"direction\":\"Explore new priority rules for the CVRP greedy construction.\",\"operations\":[{\"type\":\"replace\",\"target\":\"priority score\",\"mechanism\":\"Try a different combination of distance, depot distance and load.\"}],\"preserve\":\"The problem interface, the evaluator and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"A different distance/load combination yields better routes.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Round 2: which measured candidate behaviour should the next rule keep, and which refuted shape must it avoid?\",\"measured_finding\":\"Round 1: 6 of 6 distinct candidates feasible. Best nominal 12.0292 (+10.16% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +0.00%. 6 candidate(s) held the spread under 1%, 0 reproduced the refuted pure-width swap (spread >= 5%). First measured round; 5 distinct code hash(es).\",\"hypothesis_status\":\"empirical_observation\",\"decision\":\"modify\",\"decision_summary\":\"Invariance alone keeps losing at nominal scale (cheapest invariant 12.0292 vs 10.9197). Change the mechanism that chooses the tie-break value, not only the width: keep the nominal score within 1% of the reference and let the second stage act only where primary scores fall inside a relative band.\"},\"feedback_summary\":{\"source\":{\"round_id\":1,\"evaluation_ref\":\"rounds/round_0001/evaluation_facts.json\",\"evaluation_facts_sha256\":\"daa2e27e569a69a476d694492c26a2f8f7488dbf407f3be65bef60fe67f5c9dc\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0001/eoh_run/exported_skill\",\"code_sha256\":\"1a983cd2775b19da834351006923908b39c89908da6f4d65869141f9193c5b9c\",\"objective\":-0.005965688445765537,\"origin\":\"generated\",\"evaluation_id\":\"d04492248090459cb54b5f853dd614fa\",\"instance_objectives\":[-0.06086997696943296,0.1017312252718531,-0.04121473446778769,-0.0235092676176946]},\"incumbent_candidate_match\":{\"status\":\"resolved\",\"reason\":null,\"evaluation_id\":\"d04492248090459cb54b5f853dd614fa\",\"code_sha256\":\"1a983cd2775b19da834351006923908b39c89908da6f4d65869141f9193c5b9c\"},\"best_generated_candidate\":{\"candidate_id\":\"candidate_5\",\"revision\":\"original\",\"origin\":\"generated\",\"evaluation_id\":\"d04492248090459cb54b5f853dd614fa\",\"code_sha256\":\"1a983cd2775b19da834351006923908b39c89908da6f4d65869141f9193c5b9c\",\"objective\":-0.005965688445765537,\"instance_objectives\":[-0.06086997696943296,0.1017312252718531,-0.04121473446778769,-0.0235092676176946],\"valid\":true},\"objective_delta\":0.0,\"improvement_vs_incumbent\":0.0,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[-0.06086997696943296,0.1017312252718531,-0.04121473446778769,-0.0235092676176946],\"best_generated\":[-0.06086997696943296,0.1017312252718531,-0.04121473446778769,-0.0235092676176946]},\"generated_candidate_counts\":{\"total\":5,\"valid\":5,\"invalid\":0},\"major_errors\":[],\"evidence_refs\":[\"evaluation:7f755715da3f4096b59d26d8469b9243\",\"evaluation:606f19dd127a4e9090b1000256f6289c\",\"evaluation:3c419406086e4262b61e54c2843ce19d\",\"evaluation:d07162c62e87406c88c1afe35f3a1110\",\"evaluation:9456ca21a5504ab891b1a997715406bd\",\"evaluation:d04492248090459cb54b5f853dd614fa\",\"rounds/round_0001/execution_delta.json\",\"rounds/round_0001/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0001/execution_delta.json\",\"sha256\":\"8348c0672374d2dc49ba1f726243938997c4b51e0132380fa44aab96105d9c3e\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":1,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":null,\"incumbent_after_objective\":-0.005965688445765537,\"incumbent_absolute_gain\":null,\"incumbent_instance_coverage\":0,\"incumbent_per_instance_gain\":null,\"generation_attempt_count\":5,\"valid_generation_count\":5,\"invalid_generation_count\":0,\"valid_generation_yield\":1.0,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":0,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":1.0,\"lineage_concentration\":null,\"instance_response_valid_complete_count\":5,\"instance_response_unique_vector_count\":5,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":3.2225264740847903,\"instance_response_pairwise_l1_max\":7.8643418015656765,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":6,\"round_input_tokens\":7208,\"round_output_tokens\":1927,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.077,\"round_wall_seconds\":16.077},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":null,\"incumbent_after_objective\":-0.005965688445765537,\"incumbent_absolute_gain\":null,\"incumbent_instance_coverage\":0,\"incumbent_per_instance_gain\":null,\"generation_attempt_count\":5,\"valid_generation_count\":5,\"invalid_generation_count\":0,\"valid_generation_yield\":1.0,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":0,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":1.0,\"lineage_concentration\":null,\"instance_response_valid_complete_count\":5,\"instance_response_unique_vector_count\":5,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":3.2225264740847903,\"instance_response_pairwise_l1_max\":7.8643418015656765,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":6,\"round_input_tokens\":7208,\"round_output_tokens\":1927,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.077,\"round_wall_seconds\":16.077},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"pop_size\":4,\"n_pop\":2,\"max_sample_nums\":8},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\b4_finding_only\\rounds\\round_0002\\eoh_run\\seeds\\parent_skill.json",
+  "population_seed_count": 0,
+  "request_timeout": 600.0
+}

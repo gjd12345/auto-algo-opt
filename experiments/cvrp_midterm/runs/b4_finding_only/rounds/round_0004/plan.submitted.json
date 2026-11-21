@@ -1,0 +1,32 @@
+{
+  "round_id": 4,
+  "direction": "Explore new priority rules for the CVRP greedy construction.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "priority score",
+      "mechanism": "Try a different combination of distance, depot distance and load."
+    }
+  ],
+  "preserve": "The problem interface, the evaluator and the search policy.",
+  "hypothesis": "A different distance/load combination yields better routes.",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "badcase",
+    "question": "Round 4: which measured candidate behaviour should the next rule keep, and which refuted shape must it avoid?",
+    "finding_summary": "Round 3: 7 of 7 distinct candidates feasible. Best nominal 11.5050 (+5.36% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +0.00%. 7 candidate(s) held the spread under 1%, 0 reproduced the refuted pure-width swap (spread >= 5%). New best (previous round 11.6784); 5 new code hash(es), 2 reused.",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Invariance alone keeps losing at nominal scale (cheapest invariant 11.5050 vs 10.9197). Change the mechanism that chooses the tie-break value, not only the width: keep the nominal score within 1% of the reference and let the second stage act only where primary scores fall inside a relative band.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/_reference.json",
+      "hypotheses_state.json#round-3",
+      "rounds/round_0003/evaluation_facts.json"
+    ]
+  },
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6"
+  }
+}

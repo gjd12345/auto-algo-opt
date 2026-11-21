@@ -100,3 +100,21 @@ The absolute-gate shape appears only in the a1 arms whose finding text carried t
 - The finding only has a chance to matter if it is not a patch: numbers and the trade-off, no formula. `a5` shows the effect is small even then.
 - Neither `a4` nor `a5` puts an arm below the frozen C rule, and the four arms change order between batches (a2/a3: operations-only best; a5: finding-only best). A single seed therefore cannot attribute either factor: the between-arm spread is smaller than the between-batch spread, so the guidance channel is not the binding constraint.
 - What is missing is a mechanism that turns an evaluation into a new hypothesis: every round of every arm receives a byte-identical instruction, so the search cannot react to its own failures except by resampling.
+
+## Post-script: the `b4` batch supplies that mechanism
+
+Everything above describes `a1–a5`. A sixth batch (`b4`, see [`ROUND_ACTIVITY.md`](ROUND_ACTIVITY.md)) replaces the two constants this diagnosis blamed:
+
+- the static `FINDING` string is gone; each round's `research_activity` is compiled from a re-measurement of that round's candidates (nominal objective at `s=1`, the same at `s=1e-3`, and the resulting spread), plus the round's own movement (`stagnant_rounds`, `new_shas`, `repeated_shas`);
+- `evaluation.hypotheses` is no longer empty: three hypotheses (`H-SCALE-FREE`, `H-NO-REPEAT`, `H-BEAT-REF`) carry accumulated evidence and are re-emitted every round as claims.
+
+Two of the four findings above change as a direct result, and two survive:
+
+| Finding | `a1–a5` | `b4_finding_only` |
+|---|---|---|
+| Rounds receive byte-identical guidance | yes, `ask` variants = 1 per batch | **no** — four distinct `context_sha256` (`bbdf2b90`, `65fb9409`, `a579ebca`, `a813742d`) |
+| `hypotheses` always empty | yes | **no** — three claims per round |
+| Later rounds produce no progress | yes, batches 2–4 flat | **partly fixed** — `12.0292 → 11.6784 → 11.5050 → 11.4718` (3 improving rounds, then flat) |
+| Re-proposing the refuted absolute-width patch | yes in `a1`, `a4`; gone in `a5` | **no** — zero re-proposals, zero candidates with `spread ≥ 5%` |
+
+The honest reading is the uncomfortable one: the mechanism produces exactly the behavioural change the diagnosis predicted (varied guidance, monotone improvement, no re-proposed dead ends), and still ends at `11.4718`, worse than `a5`'s static-finding arm (`11.0238`) and `a5`'s control (`11.2041`). The missing piece is not "react to the evaluation" — it is *what* the reaction targets: `b4`'s feedback reports the spread and the plateau but never states the one scalar the agent should minimise, so the search optimises the half of the trade-off that is easy to measure (`spread = 0`) and leaves the nominal cost at `+5.06%`. Any next batch should keep this mechanism and change the payload to that scalar, then compare against a matched `b4_control` at the same 24-request budget.

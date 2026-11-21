@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Replace the reference's cubic load-pressure bonus and 3% secondary band with a stronger normalized-distance-plus-depot term and a relative-width tie-break band driven by a squared load-pressure term, yielding a distinct distance/depot/load priority mix.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_pressure = dem / cap\n\n    # Primary score: NN distance plus depot distance plus squared load bonus.\n    primary = (d_cur / scale) + 0.35 * (d_dep / scale) - 0.55 * (load_pressure ** 2)\n\n    # Wider relative band re-ranks near-best candidates.\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.05 + 1e-6\n    in_band = primary <= best + band\n\n    # Within band, prefer high load and short current travel.\n    secondary = np.where(in_band, -0.7 * load_pressure + 0.10 * (d_cur / scale), np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": 0.0667
+    },
+    {
+        "sample_order": 2,
+        "operator": "e1",
+        "algorithm": "The new algorithm uses a two-stage savings-based priority: primary score ranks candidates by the \"savings\" of inserting them now (depot-cost minus detour-cost weighted by load), and if a candidate returns strongly toward the depot direction it gets a mild boost, breaking away from the distance+depot+load quadratic mix of the incumbents.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    load_frac = dem / cap\n\n    # Savings-style primary: how much going via this node \"costs\" relative to\n    # the shortcut depot->node it replaces. Smaller detour = better.\n    detour = (d_cur / scale) + (d_cur + d_dep - d_dep) / scale  # = 2*d_cur/scale\n    detour = 2.0 * (d_cur / scale)\n    depot_pull = d_dep / scale\n\n    # Encourage filling the vehicle near end: distance * (1 - load_frac) trick\n    # rewards high-load nodes when far, but keeps cost dominant up front.\n    primary = detour * (1.0 - 0.35 * load_frac) - 0.20 * depot_pull\n\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.04 + 1e-9\n    in_band = primary <= best + band\n\n    # Directional tie-break: prefer nodes that head back toward the depot\n    # (reduces the eventual return leg), combined with residual load fill.\n    inward = d_dep / (d_cur + 1e-9)\n    secondary = np.where(in_band, inward - 0.5 * load_frac, np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": -0.05702
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "Replace the squared-load bonus and banded secondary rule with a multiplicative savings-style score combining current distance, depot proximity, and a saturating load-fill factor, followed by a narrow absolute relative band whose tie-break prefers high demand and short detour, yielding a distinct distance/depot/load priority mix.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    fill = dem / cap\n    # saturating fill factor in (0,1]\n    fill_factor = fill / (1.0 + fill)\n\n    # Multiplicative savings-style primary score.\n    primary = (d_cur / scale) * (1.0 + 0.45 * (d_dep / scale)) * (1.0 - 0.5 * fill_factor)\n\n    best = float(np.min(primary))\n    band = abs(best) * 0.03 + 1e-6\n    in_band = primary <= best + band\n\n    # Narrow tie-break: prefer larger demand and slightly shorter detour.\n    secondary = np.where(in_band, -0.85 * fill_factor + 0.08 * (d_cur / scale), np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": -0.01947
+    },
+    {
+        "sample_order": 4,
+        "operator": "e1",
+        "algorithm": "The heuristic scores each candidate by an angular penalty (measuring how much the detour via that node deviates from the straight ray pointing away from the depot) combined with a demand-fill reward, then applies a local-density tie-break preferring nodes clustered with other unvisited customers, so routes sweep angularly outward while packing nearby customers together.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n\n    # Angular deviation: how far off the \"continue outward\" ray this node sits.\n    # Using the law of cosines avoids constructing explicit vectors.\n    # cos(angle at current between (depot->current) and (current->node))\n    d_dep_cur = float(distance_matrix[depot][current_node])\n    if d_dep_cur < 1e-12:\n        # At depot: geometry is unbounded; fall back to plain nearest-with-load.\n        cos_ang = np.zeros_like(d_cur)\n    else:\n        # angle between (depot - current) direction and (node - current)\n        denom = 2.0 * d_dep_cur * d_cur + 1e-12\n        cos_ang = (d_cur * d_cur + d_dep_cur * d_dep_cur - d_dep * d_dep) / denom\n    cos_ang = np.clip(cos_ang, -1.0, 1.0)\n    # Penalize turning back toward the depot (cos>0 means pointing away from depot\n    # along the radial direction is preferred; we reward outward continuation).\n    angular_penalty = 1.0 - cos_ang  # 0 = straight outward, 2 = straight back\n\n    norm_dist = d_cur / scale\n    load_frac = dem / cap\n\n    # Primary: sweep outward with mild distance and demand-fill influence.\n    primary = 0.5 * norm_dist + 0.6 * angular_penalty - 0.25 * load_frac\n\n    best = float(np.min(primary))\n    band = max(abs(best), 1e-9) * 0.05 + 1e-9\n    in_band = primary <= best + band\n\n    # Local-density tie-break: prefer nodes whose neighbors are also unvisited\n    # (encourages customers to be served while the truck is in their cluster).\n    sub = distance_matrix[np.ix_(unvisited_nodes, unvisited_nodes)]\n    # Count of other unvisited nodes within a small radius scaled by mean demand.\n    radius = 0.25 * scale\n    neighbors = np.sum((sub < radius).astype(float), axis=1) - 1.0\n    density = np.maximum(neighbors, 0.0) / max(float(unvisited_nodes.size), 1.0)\n\n    secondary = np.where(in_band, -density - 0.15 * load_frac, np.inf)\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": null
+    },
+    {
+        "sample_order": 5,
+        "operator": "m1",
+        "algorithm": "Replace the multiplicative savings score with an additive normalized score summing weighted current distance, depot distance, and a saturating remainder-deficit term, then apply a narrow relative band tie-break preferring high demand and near-depot customers.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    scale = float(np.max(distance_matrix[depot])) if distance_matrix.size else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n\n    # Saturating remainder-after-service deficit: prefers customers leaving\n    # a small but nonzero remainder (good packing behavior).\n    rem = cap - dem\n    rem_pos = np.where(rem >= 0.0, rem, 0.0)\n    pack = 1.0 - rem_pos / cap  # in (0,1]; near 1 = well-packed\n    pack_factor = pack / (1.0 + pack)\n\n    # Additive normalized primary score: current distance dominates,\n    # depot proximity moderates, packing pulls toward fuller loads.\n    primary = (d_cur / scale) * 1.0 + 0.30 * (d_dep / scale) - 0.55 * pack_factor\n\n    best = float(np.min(primary))\n    band = abs(best) * 0.025 + 1e-6\n    in_band = primary <= best + band\n\n    # Narrow tie-break within band: larger demand, shorter detour, near depot.\n    secondary = np.where(\n        in_band,\n        -0.90 * pack_factor + 0.10 * (d_cur / scale) + 0.05 * (d_dep / scale),\n        np.inf,\n    )\n\n    return int(unvisited_nodes[np.argmin(secondary)])",
+        "objective": 0.02663
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]
