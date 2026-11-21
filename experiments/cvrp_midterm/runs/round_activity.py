@@ -47,6 +47,8 @@ INVARIANT_MAX_SPREAD_PCT = 1.0
 NOMINAL_TOLERANCE_PCT = 1.0
 REFUTED_SPREAD_PCT = 5.0
 REFERENCE_CACHE = HERE.parent / "_reference.json"
+MEASUREMENT_SPEC = "cvrp_construct_shared_nominal_1e-3_v2"
+SEED_ORIGINS = frozenset({"baseline", "explicit_parent", "population_seed"})
 
 HYPOTHESES = {
     "H-SCALE-FREE": (
@@ -69,15 +71,55 @@ def _instances() -> list[dict]:
     return list(suite["instances"])
 
 
+def load_session_dev_instances(run_root: Path) -> list[dict]:
+    """Load the 4-instance session search suite (explicitly distinct from shared 6-inst suite)."""
+    dev_path = run_root / "dev_suite.json"
+    suite = json.loads(dev_path.read_text(encoding="utf-8"))
+    return list(suite["instances"])
+
+
+def _canonical_instance_payload(instance: dict) -> dict:
+    return {
+        "depot": [float(x) for x in instance["depot"]],
+        "customer_coordinates": [
+            [float(x), float(y)] for x, y in instance["customer_coordinates"]
+        ],
+        "demands": [float(d) for d in instance["demands"]],
+        "capacity": float(instance["capacity"]),
+    }
+
+
+def suite_content_hash(instances: list[dict]) -> str:
+    payload = [_canonical_instance_payload(inst) for inst in instances]
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _c_source_hash(reference_code: str | None = None) -> str:
+    if reference_code is None:
+        reference_code = (FROZEN_DIR / "C.py").read_text(encoding="utf-8")
+    return hashlib.sha256(reference_code.encode("utf-8")).hexdigest()
+
+
 def _score_source(code: str, instances: list[dict], scales: tuple[float, ...]) -> dict:
     """Replay one candidate at the requested scales; report normalised objectives."""
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "candidate.py"
         path.write_text(code, encoding="utf-8")
-        fn = load_candidate(path)
+        try:
+            fn = load_candidate(path)
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "feasible": False,
+                "scale": None,
+                "reason": f"{type(exc).__name__}: {exc}",
+            }
         rows: dict[str, float] = {}
+        early_returns_by_scale: dict[str, int] = {}
+        per_instance_nominal: list[float] = []
         for scale in scales:
             objectives = []
+            early_returns = 0
             for instance in instances:
                 shifted_instance = scaled(instance, scale)
                 try:
@@ -86,7 +128,7 @@ def _score_source(code: str, instances: list[dict], scales: tuple[float, ...]) -
                         shifted_instance,
                         matrix=build_matrix(shifted_instance),
                     )
-                except (ValueError, RuntimeError, IndexError) as exc:
+                except (ValueError, RuntimeError, IndexError, TypeError, ZeroDivisionError, FloatingPointError) as exc:
                     return {
                         "feasible": False,
                         "scale": scale,
@@ -98,40 +140,93 @@ def _score_source(code: str, instances: list[dict], scales: tuple[float, ...]) -
                     return {
                         "feasible": False,
                         "scale": scale,
+                        "reason": f"incomplete_route: served={len(served)} expected={expected}",
                         "served": len(served),
                         "expected": expected,
                     }
-                objectives.append(float(result.objective) / scale)
+                norm_obj = float(result.objective) / scale
+                objectives.append(norm_obj)
+                early_returns += int(result.early_returns)
+                if scale == NOMINAL_SCALE:
+                    per_instance_nominal.append(norm_obj)
             rows[f"{scale:g}"] = float(np.mean(objectives))
-    return {"feasible": True, "objectives": rows}
+            early_returns_by_scale[f"{scale:g}"] = early_returns
+    return {
+        "feasible": True,
+        "objectives": rows,
+        "per_instance_nominal": per_instance_nominal,
+        "early_returns": early_returns_by_scale,
+    }
 
 
-def reference_nominal(instances: list[dict] | None = None, force: bool = False) -> float:
-    """Nominal objective of frozen C on the shared suite (cached, deterministic)."""
-    if REFERENCE_CACHE.is_file() and not force:
-        cached = json.loads(REFERENCE_CACHE.read_text(encoding="utf-8"))
-        return float(cached["c_nominal"])
-    instances = instances or _instances()
-    refreshed = measure_reference(instances)
-    try:
-        suite = SUITE.resolve().relative_to(REPO).as_posix()
-    except ValueError:
-        suite = str(SUITE)
-    REFERENCE_CACHE.write_text(
-        json.dumps(
-            {
-                "c_nominal": refreshed["nominal"],
-                "c_scaled": refreshed["scaled"],
-                "c_spread_pct": refreshed["spread_pct"],
-                "suite": suite,
-                "instances": len(instances),
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+def reference_nominal(
+    instances: list[dict] | None = None,
+    force: bool = False,
+    *,
+    cache_path: Path | None = REFERENCE_CACHE,
+    reference_code: str | None = None,
+    measurement_spec: str = MEASUREMENT_SPEC,
+    suite_role: str | None = None,
+    write_cache: bool | None = None,
+) -> float:
+    """Nominal objective of frozen C on the specified suite (identity-keyed cache)."""
+    using_default_suite = instances is None
+    active_instances = _instances() if instances is None else list(instances)
+    if not active_instances:
+        raise ValueError("instances must be non-empty")
+    content_hash = suite_content_hash(active_instances)
+    c_hash = _c_source_hash(reference_code)
+    role = suite_role or ("shared_diagnostic_6" if using_default_suite else "custom_suite")
+
+    if cache_path is not None and cache_path.is_file() and not force:
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            cached = {}
+        # Legacy caches without identity fields are recognized and treated as stale
+        # so callers with a different suite/reference/spec always recompute cleanly.
+        if (
+            isinstance(cached, dict)
+            and cached.get("suite_content_hash") == content_hash
+            and cached.get("c_source_sha256") == c_hash
+            and cached.get("measurement_spec") == measurement_spec
+            and isinstance(cached.get("c_nominal"), (int, float))
+        ):
+            return float(cached["c_nominal"])
+
+    refreshed = measure_reference(active_instances, reference_code=reference_code)
+    should_write = (
+        write_cache
+        if write_cache is not None
+        else (cache_path is not None and (using_default_suite or cache_path != REFERENCE_CACHE))
     )
+    if should_write and cache_path is not None:
+        if using_default_suite:
+            try:
+                suite_str = SUITE.resolve().relative_to(REPO).as_posix()
+            except ValueError:
+                suite_str = str(SUITE)
+        else:
+            suite_str = role
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "c_nominal": refreshed["nominal"],
+                    "c_scaled": refreshed["scaled"],
+                    "c_spread_pct": refreshed["spread_pct"],
+                    "suite": suite_str,
+                    "suite_role": role,
+                    "instances": len(active_instances),
+                    "suite_content_hash": content_hash,
+                    "c_source_sha256": c_hash,
+                    "measurement_spec": measurement_spec,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     return float(refreshed["nominal"])
 
 
@@ -149,19 +244,30 @@ def _spread(candidate: dict) -> float:
     return float(value)
 
 
-def measure_reference(instances: list[dict] | None = None) -> dict:
+def measure_reference(
+    instances: list[dict] | None = None,
+    *,
+    reference_code: str | None = None,
+) -> dict:
     """Score frozen C at both scales: the measurement available before round 1."""
-    instances = instances or _instances()
-    code = (FROZEN_DIR / "C.py").read_text(encoding="utf-8")
-    measured = _score_source(code, instances, (NOMINAL_SCALE, SCALED_SCALE))
+    active_instances = _instances() if instances is None else list(instances)
+    code = (
+        reference_code
+        if reference_code is not None
+        else (FROZEN_DIR / "C.py").read_text(encoding="utf-8")
+    )
+    measured = _score_source(code, active_instances, (NOMINAL_SCALE, SCALED_SCALE))
     if not measured["feasible"]:
-        raise SystemExit(f"frozen C is infeasible on the shared suite: {measured}")
+        raise SystemExit(f"frozen C is infeasible on the target suite: {measured}")
     nominal = measured["objectives"][f"{NOMINAL_SCALE:g}"]
     scaled_value = measured["objectives"][f"{SCALED_SCALE:g}"]
     return {
         "nominal": nominal,
         "scaled": scaled_value,
         "spread_pct": (scaled_value - nominal) / nominal * 100.0,
+        "suite_content_hash": suite_content_hash(active_instances),
+        "c_source_sha256": _c_source_hash(code),
+        "instances": len(active_instances),
     }
 
 
@@ -201,11 +307,41 @@ def _sha(code: str) -> str:
     return hashlib.sha256(code.encode("utf-8")).hexdigest()
 
 
-def measure_round(round_dir: Path, instances: list[dict] | None = None,
-                  reference: float | None = None) -> dict:
-    """Score every distinct valid candidate of one round on the shared suite."""
-    instances = instances or _instances()
-    reference = reference if reference is not None else reference_nominal(instances)
+def measure_round(
+    round_dir: Path,
+    instances: list[dict] | None = None,
+    reference: float | None = None,
+    *,
+    suite_role: str | None = None,
+    use_session_dev_suite: bool = False,
+) -> dict:
+    """Score every officially valid distinct candidate of one round on the target suite.
+
+    Separately tracks:
+    - ``official_valid`` (from ``evaluation_facts.json``),
+    - ``probe_feasible`` (from ``_score_source`` at nominal + 1e-3 scales),
+    - ``included = official_valid and probe_feasible``.
+
+    Only ``included`` candidates participate in best-objective, spread, and
+    feasibility statistics; officially rejected candidates are never executed in
+    the probe and keep their official rejection error code/detail for auditing.
+    """
+    using_default_suite = instances is None and not use_session_dev_suite
+    if use_session_dev_suite:
+        active_instances = load_session_dev_instances(round_dir.parents[1])
+        role = suite_role or "session_dev_4"
+    elif instances is None:
+        active_instances = _instances()
+        role = suite_role or "shared_diagnostic_6"
+    else:
+        active_instances = list(instances)
+        role = suite_role or "custom_suite"
+
+    if reference is None:
+        reference = reference_nominal(
+            None if using_default_suite else active_instances,
+            suite_role=role,
+        )
     facts_path = round_dir / "evaluation_facts.json"
     if not facts_path.is_file():
         raise SystemExit(f"no evaluation facts: {facts_path}")
@@ -221,41 +357,102 @@ def measure_round(round_dir: Path, instances: list[dict] | None = None,
             skipped.append(str(candidate.get("candidate_id")))
             continue
         sha = _sha(code)
+        origin = str(candidate.get("origin") or "unknown")
+        # Default True only for legacy/synthetic dicts that omit 'valid'
+        cand_official_valid = bool(candidate.get("valid", True))
         if sha in seen:
-            seen[sha]["appearances"] += 1
+            rec = seen[sha]
+            rec["appearances"] += 1
+            if origin not in rec["origins"]:
+                rec["origins"].append(origin)
+            if cand_official_valid and not rec["official_valid"]:
+                rec["official_valid"] = True
+                rec["official_error_code"] = None
+                rec["official_error_detail"] = None
             continue
-        measured = _score_source(code, instances, (NOMINAL_SCALE, SCALED_SCALE))
-        record = {
+        seen[sha] = {
             "sha": sha,
+            "code": code,
             "candidate_id": candidate.get("candidate_id"),
             "reported_objective": candidate.get("objective"),
             "appearances": 1,
-            "feasible": measured["feasible"],
+            "origins": [origin],
+            "official_valid": cand_official_valid,
+            "official_error_code": None if cand_official_valid else candidate.get("error_code"),
+            "official_error_detail": None if cand_official_valid else candidate.get("error_detail"),
         }
-        if measured["feasible"]:
+
+    candidates: list[dict] = []
+    official_rejected: list[dict] = []
+    probe_failed: list[dict] = []
+    for rec in seen.values():
+        code = rec.pop("code")
+        rec["origins"] = sorted(rec["origins"])
+        if not rec["official_valid"]:
+            rec.update({
+                "probe_feasible": None,
+                "probe_reason": "skipped_official_invalid",
+                "included": False,
+                "feasible": False,
+            })
+            official_rejected.append({
+                "sha": rec["sha"],
+                "candidate_id": rec["candidate_id"],
+                "origins": rec["origins"],
+                "error_code": rec["official_error_code"],
+                "error_detail": rec["official_error_detail"],
+            })
+            candidates.append(rec)
+            continue
+
+        measured = _score_source(code, active_instances, (NOMINAL_SCALE, SCALED_SCALE))
+        probe_ok = bool(measured["feasible"])
+        rec["probe_feasible"] = probe_ok
+        rec["probe_reason"] = None if probe_ok else measured.get("reason")
+        rec["included"] = probe_ok
+        rec["feasible"] = probe_ok
+        if probe_ok:
             nominal = measured["objectives"][f"{NOMINAL_SCALE:g}"]
             scaled_value = measured["objectives"][f"{SCALED_SCALE:g}"]
-            record.update({
+            rec.update({
                 "nominal": nominal,
                 "scaled": scaled_value,
                 "spread_pct": (scaled_value - nominal) / nominal * 100.0,
                 "delta_vs_reference_pct": (nominal - reference) / reference * 100.0,
+                "early_returns": measured.get("early_returns"),
             })
-        seen[sha] = record
+        else:
+            probe_failed.append({
+                "sha": rec["sha"],
+                "candidate_id": rec["candidate_id"],
+                "origins": rec["origins"],
+                "reason": rec["probe_reason"],
+            })
+        candidates.append(rec)
 
-    candidates = list(seen.values())
-    feasible = [c for c in candidates if c["feasible"]]
-    best = min(feasible, key=lambda c: c["nominal"]) if feasible else None
+    included = [c for c in candidates if c["included"]]
+    best = min(included, key=lambda c: c["nominal"]) if included else None
     return {
         "round_dir": str(round_dir),
         "round_id": int(facts.get("round_id") or -1),
+        "suite_role": role,
+        "suite_instance_count": len(active_instances),
+        "suite_content_hash": suite_content_hash(active_instances),
+        "measurement_spec": MEASUREMENT_SPEC,
         "reference": reference,
         "baseline_code_sha256": facts.get("baseline_code_sha256"),
         "candidate_count": len(candidates),
+        "official_valid_count": sum(1 for c in candidates if c["official_valid"]),
+        "official_rejected_count": len(official_rejected),
+        "probe_failed_count": len(probe_failed),
+        "included_count": len(included),
+        "official_rejected": official_rejected,
+        "probe_failed": probe_failed,
         "skipped_candidates": skipped,
         "candidates": candidates,
         "best": best,
         "distinct_shas": [c["sha"] for c in candidates],
+        "included_shas": [c["sha"] for c in included],
     }
 
 
@@ -264,7 +461,7 @@ def measure_round(round_dir: Path, instances: list[dict] | None = None,
 
 def empty_state() -> dict:
     return {
-        "version": 1,
+        "version": 2,
         "rounds": [],
         "hypotheses": {
             key: {"status": "open", "transitions": []} for key in HYPOTHESES
@@ -284,11 +481,34 @@ def _transition(state: dict, key: str, status: str, round_id: int, evidence: str
     )
 
 
+def _is_eligible(candidate: dict) -> bool:
+    if "included" in candidate:
+        return bool(candidate["included"])
+    if "official_valid" in candidate and not candidate["official_valid"]:
+        return False
+    return bool(candidate.get("feasible"))
+
+
+def _is_generated(candidate: dict) -> bool:
+    origins = candidate.get("origins")
+    if isinstance(origins, list) and origins:
+        return "generated" in origins
+    # Fallback for synthetic unit-test payloads without origin metadata
+    return True
+
+
+def _is_seed_only(candidate: dict) -> bool:
+    origins = candidate.get("origins")
+    if isinstance(origins, list) and origins:
+        return "generated" not in origins and bool(set(origins) & SEED_ORIGINS)
+    return False
+
+
 def update_state(state: dict, measure: dict, *, prior_shas: set[str]) -> dict:
     """Fold one round's measurement into the hypothesis ledger."""
     round_id = measure["round_id"]
     reference = measure["reference"]
-    feasible = [c for c in measure["candidates"] if c["feasible"]]
+    feasible = [c for c in measure["candidates"] if _is_eligible(c)]
 
     invariant = [c for c in feasible if abs(_spread(c)) <= INVARIANT_MAX_SPREAD_PCT]
     invariant_ok = [
@@ -316,32 +536,38 @@ def update_state(state: dict, measure: dict, *, prior_shas: set[str]) -> dict:
         _transition(
             state, "H-SCALE-FREE", "open", round_id,
             f"no candidate reached a spread <= {INVARIANT_MAX_SPREAD_PCT:.0f}% "
-            f"({len(feasible)} feasible candidates measured)",
+            f"({len(feasible)} eligible candidates measured)",
         )
 
     previous = state["rounds"][-1] if state["rounds"] else None
-    # The search engine always re-evaluates the seed and the current incumbent,
-    # so carrying those two forward is elitism, not a re-proposal. Only code the
-    # generator itself proposed in an earlier round counts as a repeat.
-    carried = {measure.get("baseline_code_sha256") or ""}
-    carried.add((previous or {}).get("best_sha") or "")
-    carried.discard("")
+    # Distinguish freshly generated candidates from inherited seeds/elites by
+    # origin metadata AND prior hashes so inherited seeds are never counted as
+    # new or repeated proposals.
+    carried_ids = {measure.get("baseline_code_sha256") or ""}
+    carried_ids.add((previous or {}).get("best_sha") or "")
+    carried_ids.discard("")
+
+    seed_only_shas = {c["sha"] for c in measure["candidates"] if _is_seed_only(c)}
+    carried = carried_ids | seed_only_shas
+    generated_shas = {c["sha"] for c in measure["candidates"] if _is_generated(c)}
+
     repeats = [
-        c for c in feasible if c["sha"] in prior_shas and c["sha"] not in carried
+        c for c in feasible
+        if _is_generated(c) and c["sha"] in prior_shas and c["sha"] not in carried_ids
     ]
     refuted_shape = [c for c in feasible if _spread(c) >= REFUTED_SPREAD_PCT]
     if repeats or refuted_shape:
         _transition(
             state, "H-NO-REPEAT", "refuted", round_id,
-            f"{len(repeats)} re-proposed sha(s) from earlier rounds "
-            f"(carried-forward seed/incumbent excluded), "
-            f"{len(refuted_shape)} candidate(s) reproduced the swap with spread >= "
+            f"{len(repeats)} re-proposed generated sha(s) from earlier rounds "
+            f"(inherited seeds/incumbent excluded), "
+            f"{len(refuted_shape)} candidate(s) reproduced spread >= "
             f"{REFUTED_SPREAD_PCT:.0f}%",
         )
     elif feasible:
         _transition(
             state, "H-NO-REPEAT", "supported", round_id,
-            f"{len(feasible)} distinct candidate(s), none repeated and none with "
+            f"{len(feasible)} eligible candidate(s), none repeated and none with "
             f"spread >= {REFUTED_SPREAD_PCT:.0f}%",
         )
 
@@ -360,25 +586,36 @@ def update_state(state: dict, measure: dict, *, prior_shas: set[str]) -> dict:
             )
 
     row_shas = set(measure["distinct_shas"])
-    best_value = (measure["best"] or {}).get("nominal")
+    best_obj = measure.get("best") or (min(feasible, key=lambda c: c["nominal"]) if feasible else None)
+    best_value = (best_obj or {}).get("nominal")
+    prev_best = (previous or {}).get("best_nominal")
     stagnant_rounds = 0
-    if previous and best_value is not None and previous.get("best_nominal") is not None:
-        if abs(best_value - previous["best_nominal"]) <= 1e-9 * max(1.0, abs(best_value)):
+    if previous and best_value is not None and prev_best is not None:
+        if abs(best_value - prev_best) <= 1e-9 * max(1.0, abs(best_value), abs(prev_best)):
             stagnant_rounds = int(previous.get("stagnant_rounds") or 0) + 1
+    new_shas = sorted(generated_shas - prior_shas - carried_ids)
+    repeated_shas = sorted((generated_shas & prior_shas) - carried_ids)
+    carried_shas = sorted(row_shas & carried)
     state["rounds"].append({
         "round_id": round_id,
+        "suite_role": measure.get("suite_role"),
+        "suite_content_hash": measure.get("suite_content_hash"),
         "candidate_count": measure["candidate_count"],
+        "official_valid_count": measure.get("official_valid_count", measure["candidate_count"]),
+        "official_rejected_count": measure.get("official_rejected_count", 0),
+        "probe_failed_count": measure.get("probe_failed_count", 0),
+        "included_count": len(feasible),
         "feasible_count": len(feasible),
         "best_nominal": best_value,
-        "best_sha": (measure["best"] or {}).get("sha"),
-        "best_spread_pct": (measure["best"] or {}).get("spread_pct"),
-        "best_delta_vs_reference_pct": (measure["best"] or {}).get("delta_vs_reference_pct"),
+        "best_sha": (best_obj or {}).get("sha"),
+        "best_spread_pct": (best_obj or {}).get("spread_pct"),
+        "best_delta_vs_reference_pct": (best_obj or {}).get("delta_vs_reference_pct"),
         "distinct_shas": measure["distinct_shas"],
-        "new_shas": sorted(row_shas - prior_shas - carried),
-        "repeated_shas": sorted((row_shas & prior_shas) - carried),
-        "carried_shas": sorted(row_shas & carried),
+        "new_shas": new_shas,
+        "repeated_shas": repeated_shas,
+        "carried_shas": carried_shas,
         "stagnant_rounds": stagnant_rounds,
-        "previous_best": (previous or {}).get("best_nominal"),
+        "previous_best": prev_best,
     })
     return state
 

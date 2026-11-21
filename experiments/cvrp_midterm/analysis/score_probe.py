@@ -134,9 +134,26 @@ class RouteRun:
     route: list[int] = field(default_factory=list)
     steps: list[Step] = field(default_factory=list)
     objective: float = 0.0
+    early_returns: int = 0
 
 
 # ---------------------------------------------------------------- simulate
+
+def _as_index(value: Any, allowed: set[int]) -> int | None:
+    """Match agent_skill_loop/evaluator.py::_as_index action validation semantics."""
+    if isinstance(value, (bool, np.bool_)):
+        return None
+    if isinstance(value, np.ndarray) and value.ndim != 0:
+        return None
+    try:
+        numeric = float(value)
+        integer = int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(numeric) or numeric != integer or integer not in allowed:
+        return None
+    return integer
+
 
 def simulate(fn: Callable[..., int], instance: Mapping[str, Any], *,
              matrix: np.ndarray | None = None, capture: _Capture | None = None) -> RouteRun:
@@ -148,10 +165,12 @@ def simulate(fn: Callable[..., int], instance: Mapping[str, Any], *,
     route = [0]
     current, remaining = 0, capacity
     steps: list[Step] = []
-    guard = total * total
+    early_returns = 0
+    step_count = 0
+    max_steps = total * total
     while unvisited:
-        guard -= 1
-        if guard < 0:
+        step_count += 1
+        if step_count > max_steps:
             raise ValueError("invalid_route")
         feasible = sorted(node for node in unvisited if demands[node] <= remaining + 1e-12)
         if not feasible:
@@ -159,13 +178,26 @@ def simulate(fn: Callable[..., int], instance: Mapping[str, Any], *,
             current, remaining = 0, capacity
             continue
         nodes = np.asarray(feasible, dtype=int)
+        cand_nodes, cand_demands, cand_matrix = nodes.copy(), demands.copy(), matrix.copy()
         if capture is not None:
             capture.enable()
-        result = int(fn(current, 0, nodes.copy(), remaining, demands.copy(), matrix.copy()))
+        raw_result = fn(current, 0, cand_nodes, remaining, cand_demands, cand_matrix)
         if capture is not None:
             capture.disable()
-        if result not in feasible:
-            raise ValueError("invalid_route")
+        if (not np.array_equal(cand_nodes, nodes)
+                or not np.array_equal(cand_demands, demands)
+                or not np.array_equal(cand_matrix, matrix)):
+            raise ValueError("candidate_mutated_input")
+        result = _as_index(raw_result, set(feasible) | {0})
+        if result is None:
+            raise ValueError("invalid_return")
+        if result == 0:
+            # Voluntary early depot return: legal in official evaluator, excluded
+            # from customer-ranking regression steps.
+            route.append(0)
+            current, remaining = 0, capacity
+            early_returns += 1
+            continue
         step = Step(current=current, remaining=remaining, feasible=feasible, chosen=result)
         if capture is not None and capture.events:
             # Walk back from the last event: rules such as frozen A rank with
@@ -194,8 +226,14 @@ def simulate(fn: Callable[..., int], instance: Mapping[str, Any], *,
         current = result
     if route[-1] != 0:
         route.append(0)
+    if (set(route) - set(range(total))
+            or set(range(1, total)) - set(route)
+            or any(route.count(node) != 1 for node in range(1, total))):
+        raise ValueError("invalid_route")
     objective = float(sum(matrix[a, b] for a, b in zip(route, route[1:])))
-    return RouteRun(route=route, steps=steps, objective=objective)
+    if not math.isfinite(objective):
+        raise ValueError("nonfinite_objective")
+    return RouteRun(route=route, steps=steps, objective=objective, early_returns=early_returns)
 
 
 # ---------------------------------------------------------------- margin
@@ -213,12 +251,14 @@ def flip_margin(fn: Callable[..., int], instance: Mapping[str, Any], step: Step,
         return None
     demands = np.asarray([0.0] + [float(d) for d in instance["demands"]], dtype=float)
     nodes = np.asarray(step.feasible, dtype=int)
+    allowed = set(step.feasible) | {0}
 
-    def decide(delta: float) -> int:
+    def decide(delta: float) -> int | None:
         probe = matrix.copy()
         probe[step.current, step.chosen] *= (1.0 + delta)
         probe[step.chosen, step.current] *= (1.0 + delta)
-        return int(fn(step.current, 0, nodes.copy(), step.remaining, demands.copy(), probe))
+        raw = fn(step.current, 0, nodes.copy(), step.remaining, demands.copy(), probe)
+        return _as_index(raw, allowed)
 
     if decide(0.0) != step.chosen:
         return 0.0
