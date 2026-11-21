@@ -1,0 +1,103 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "dae86a9a40e21ca04301f75f3fe60d01237c4f399d317ddd900bb8a3890ab315",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.723823,
+  "solver_timeout": 20.0,
+  "initialization_samples": 8,
+  "evolution_samples": 8,
+  "search_seed": 20260908,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "26bbb361b65e78af0c80c668a8b138100542607eb25112d4bcb010657007af35",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.235,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 569349.7548229999,
+  "local_url": "http://127.0.0.1:55934/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a2_guided",
+    "task_id": "task_5dae49e0ecc0409e9eef833208cc8cd6"
+  },
+  "supervisor_pid": 3016,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":1,\"direction\":\"Explore new priority rules for the CVRP greedy construction by changing one score term at a time.\",\"operations\":[{\"type\":\"replace\",\"target\":\"one term of the priority score\",\"mechanism\":\"Replace exactly one of the three terms (distance to the current node, distance to the depot, remaining capacity) with a different functional form and leave the other two unchanged, so the effect of the change is readable in the next round's numbers.\"},{\"type\":\"add\",\"target\":\"a second ordering stage\",\"mechanism\":\"After the primary score, order the candidates whose primary scores are closest together by a secondary criterion; the stage has to stay cheap enough to fit the solver budget.\"},{\"type\":\"preserve\",\"target\":\"feasibility and the problem interface\",\"mechanism\":\"Keep the capacity filter, the construction order and the sign convention of the objective unchanged.\"}],\"preserve\":\"The problem interface, the evaluator and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"Replacing one score term per round and adding a cheap second ordering stage yields better routes than rewriting the whole score at once.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Are the priority scores this search writes invariant to the numerical scale at which the same instance is expressed?\",\"measured_finding\":\"Measured on the dev suite. The near-tie gate written in the previous batch is not invariant to coordinate scale: re-expressing the same instances at 1e-2 and 1e-3 of nominal size raises the share of steps entering the gate from 1.3% to 64% and 83%, and degrades the scale-normalised objective from 10.92 to 16.20 and 33.52 (+48%, +207%). At nominal scale the gate fires on only 1.3% of steps, so it is nearly dead where the suite lives: too wide when the instance shrinks, too narrow at nominal. The width adds an absolute length to a span-proportional term. Keeping only the span-proportional part removes the scale dependence (spread 0.39% over four scales) but gives back 1.92% at nominal, so invariance is not a win on its own: the nominal regression has to stay near zero too.\",\"hypothesis_status\":\"empirical_observation\",\"decision\":\"modify\"},\"feedback_summary\":null,\"search_policy\":{\"pop_size\":4,\"n_pop\":2,\"max_sample_nums\":8},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": false,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a2_guided\\rounds\\round_0001\\eoh_run\\seeds\\parent_skill.json",
+  "population_seed_count": 0,
+  "request_timeout": 600.0
+}

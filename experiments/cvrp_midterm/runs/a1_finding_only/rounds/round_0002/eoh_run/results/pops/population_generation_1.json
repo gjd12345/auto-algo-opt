@@ -1,0 +1,26 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Scale-aware combination: pull toward close customers that are also near depot.\n    # Use span-normalised score so behaviour is invariant to coordinate scale.\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    norm = span + 1e-12\n\n    # Weight depot-distance term; sign favours smaller d_dep (closer to depot).\n    alpha = 0.6\n    score = (d_cur - alpha * d_dep) / norm\n\n    # Small deterministic tie-breaker: prefer higher demand served now (better packing).\n    # Added at relative magnitude well below score resolution.\n    dem = demands[unvisited_nodes].astype(float)\n    dem_max = float(np.max(dem)) if dem.size > 0 else 1.0\n    dem_norm = dem / (dem_max + 1e-12)\n    score = score - 1e-9 * dem_norm\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.0835,
+        "other_inf": null
+    },
+    {
+        "algorithm": "Scale-normalised savings score that balances distance from the current node and distance from the depot, weighted by the fraction of capacity consumed, to favour customers that save the most return-distance while packing the truck fuller.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    total = 0.0\n    for v in unvisited_nodes:\n        total += distance_matrix[depot][v]\n    total = total if total > 0 else 1.0\n\n    # Savings: how much return distance is avoided by visiting this customer now.\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0.0, 1e-12, denom)\n    savings = (d_dep) / denom  # in [0,1], larger when customer is close but far from depot\n    # Actually use classic savings-like ratio: (d_dep) / (d_cur + d_dep)\n    score = savings\n\n    # Load-aware bonus: prefer customers that fill the truck (reduces number of routes).\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    dem_frac = dem / cap\n    score = score + 0.35 * dem_frac\n\n    # Prefer customers closer to depot (route-cluster cohesion) at small weight.\n    dep_norm = d_dep / (float(np.max(d_dep)) + 1e-12)\n    score = score - 0.25 * dep_norm\n\n    # Deterministic tie-break: nearer customer.\n    score = score - 1e-9 * (d_cur / (float(np.max(d_cur)) + 1e-12))\n\n    idx = int(np.argmax(score))\n    return int(unvisited_nodes[idx])",
+        "objective": 0.03356,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "0a1bc6bca134476f9ac93b040f9c4317"
+    },
+    {
+        "algorithm": "Scale-normalised savings score with a stronger load-fill bonus and a milder depot-return penalty, breaking ties by farthest-from-depot to spread clusters more evenly.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0.0, 1e-12, denom)\n    savings = d_dep / denom\n\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    dem_frac = dem / cap\n\n    score = savings + 0.55 * dem_frac\n\n    dep_norm = d_dep / (float(np.max(d_dep)) + 1e-12)\n    score = score - 0.40 * dep_norm\n\n    score = score - 1e-9 * (d_cur / (float(np.max(d_cur)) + 1e-12))\n\n    idx = int(np.argmax(score))\n    return int(unvisited_nodes[idx])",
+        "objective": 0.0462,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "7a1c6d1519b44dd3bd5c4748925a2ce1"
+    }
+]

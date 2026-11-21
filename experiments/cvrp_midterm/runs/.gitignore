@@ -1,3 +1,22 @@
 __pycache__/
 _aborted/
 *.log
+
+# Engine-internal per-request traces for the a2/a3 batches.  They are regenerable
+# from the run and make the batch ~2x heavier, so the committed evidence is the
+# parts a reader needs to re-check a claim: round prompts (request_inputs), the
+# candidate sources (skills/*/code.py), the per-instance scores
+# (evaluation_facts.json, evaluations.jsonl) and the failure log
+# (eval_failures.jsonl).  a1 was committed in full before this rule existed.
+a2_*/locks/
+a3_*/locks/
+a2_*/rounds/*/eoh_run/results/exchanges/
+a3_*/rounds/*/eoh_run/results/exchanges/
+a2_*/rounds/*/eoh_run/results/pops/
+a3_*/rounds/*/eoh_run/results/pops/
+a2_*/rounds/*/eoh_run/results/pops_best/
+a3_*/rounds/*/eoh_run/results/pops_best/
+a2_*/rounds/*/eoh_run/results/samples/
+a3_*/rounds/*/eoh_run/results/samples/
+a2_*/rounds/*/eoh_run/results/evaluation_starts/
+a3_*/rounds/*/eoh_run/results/evaluation_starts/

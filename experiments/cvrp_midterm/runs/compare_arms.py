@@ -1,8 +1,8 @@
-"""Compare the guided and control arms of the task-A pilot.
+"""Compare the arms of the task-A 2x2.
 
 For every round it reports the candidate objectives, the incumbent trajectory,
-and a structural probe of the best candidate, so the comparison covers both
-``what the search found`` and ``what kind of rule it wrote``.
+and the best candidate, so the comparison covers both ``what the search found``
+and which round it found it in.
 """
 
 from __future__ import annotations
@@ -14,17 +14,18 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
 
-import numpy as np  # noqa: E402
-
 import agent_skill_loop.evaluator as evaluator  # noqa: E402
-from experiments.cvrp_midterm.analysis import score_probe  # noqa: E402
 
 RUNS = REPO / "experiments/cvrp_midterm/runs"
 DEV_SUITE = REPO / "reports/evidence/cvrp_super_agent_reference_20261107/dev_suite.json"
+ARMS = ("control", "finding_only", "operations_only", "guided")
+
+
+BATCH = "a1"
 
 
 def round_dir(arm: str, round_id: int) -> Path:
-    return RUNS / f"a1_{arm}" / "rounds" / f"round_{round_id:04d}"
+    return RUNS / f"{BATCH}_{arm}" / "rounds" / f"round_{round_id:04d}"
 
 
 def candidates(arm: str, round_id: int) -> list[dict]:
@@ -64,11 +65,14 @@ def evaluate_objective(code_path: Path, instances: list[dict]) -> float | None:
 
 
 def main() -> int:
+    global BATCH
+    if len(sys.argv) > 1:
+        BATCH = sys.argv[1]
     dev = json.loads(DEV_SUITE.read_text(encoding="utf-8"))
     instances = dev["instances"]
 
     report = {}
-    for arm in ("guided", "control"):
+    for arm in ARMS:
         rounds = []
         for round_id in (1, 2, 3, 4):
             facts_path = round_dir(arm, round_id) / "evaluation_facts.json"
@@ -87,9 +91,6 @@ def main() -> int:
             scored = [c for c in scored if c["objective"] is not None]
             scored.sort(key=lambda c: c["objective"])
             best = scored[0] if scored else None
-            probe = None
-            if best is not None:
-                analysis = score_probe.analyze_code(best_name := Path(best["name"]), instances[:2], margin_limit=40) if False else None
             rounds.append({
                 "round": round_id,
                 "terminal_reason": facts.get("terminal_reason"),
@@ -100,7 +101,7 @@ def main() -> int:
             })
         report[arm] = rounds
 
-    (RUNS / "guided_vs_control.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    (RUNS / f"compare_{BATCH}.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     for arm, rounds in report.items():
         print(arm)
         for item in rounds:

@@ -1,0 +1,114 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "i1",
+        "algorithm": "Order candidates by the base score d(cur,n)-0.6*d(depot,n), then if the best two base scores are within a scale-free relative band of 1e-3 times the score span, refine among near-tied candidates by preferring the one that best fits remaining capacity (largest demand not exceeding rest_capacity, tie-broken by lower travel cost).",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur_dep = distance_matrix[current_node][depot]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n\n    base = d_cur - 0.6 * d_dep\n\n    order = np.argsort(base)\n    best_idx = int(order[0])\n\n    if order.size > 1:\n        best_score = base[best_idx]\n        second_score = base[int(order[1])]\n        span = float(np.max(base) - np.min(base))\n        if span <= 0.0:\n            span = 1.0\n        rel_band = 1e-3 * span\n        if abs(second_score - best_score) <= rel_band:\n            near_mask = np.abs(base - best_score) <= rel_band\n            near_idx = np.nonzero(near_mask)[0]\n            if near_idx.size > 1:\n                cand_nodes = unvisited_nodes[near_idx]\n                cand_demands = demands[cand_nodes]\n                fits = cand_demands <= rest_capacity\n                if np.any(fits):\n                    cand_idx = near_idx[fits.astype(bool)]\n                    if cand_idx.size == 1:\n                        return int(unvisited_nodes[int(cand_idx[0])])\n                    sub_nodes = unvisited_nodes[cand_idx]\n                    sub_demands = demands[sub_nodes]\n                    sub_dist = distance_matrix[current_node][sub_nodes]\n                    # Prefer largest demand, then smallest distance, then best base score\n                    max_dem = float(np.max(sub_demands))\n                    dem_mask = np.isclose(sub_demands, max_dem)\n                    if np.sum(dem_mask) == 1:\n                        chosen = int(np.nonzero(dem_mask)[0][0])\n                        return int(sub_nodes[chosen])\n                    sub2_nodes = sub_nodes[dem_mask]\n                    sub2_dist = sub_dist[dem_mask]\n                    min_dist = float(np.min(sub2_dist))\n                    dist_mask = np.isclose(sub2_dist, min_dist)\n                    if np.sum(dist_mask) == 1:\n                        chosen = int(np.nonzero(dist_mask)[0][0])\n                        return int(sub2_nodes[chosen])\n                    # Last tie-break: best base score among remaining\n                    sub2_base = base[cand_idx[dem_mask]]\n                    final_local = int(np.argmin(sub2_base))\n                    return int(sub2_nodes[final_local])\n\n    return int(unvisited_nodes[best_idx])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 2,
+        "operator": "i1",
+        "algorithm": "The heuristic ranks remaining customers by base score d_cur - 0.6\u00b7d_dep, then applies a scale-free near-tie gate (relative band 1e-3 of the score span) to refine within near-ties by capacity fit, selecting the customer that best matches remaining capacity before returning to the depot when no feasible customer remains.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    base = d_cur - 0.6 * d_dep\n\n    span = float(np.max(base) - np.min(base))\n    band = 1e-3 * span if span > 0.0 else 0.0\n\n    best_idx = int(np.argmin(base))\n    best_score = base[best_idx]\n    near_tie_mask = base <= best_score + band\n\n    if np.count_nonzero(near_tie_mask) <= 1 or rest_capacity <= 0.0:\n        return int(unvisited_nodes[best_idx])\n\n    candidate_idx = np.nonzero(near_tie_mask)[0]\n    cand_demands = demands[unvisited_nodes[candidate_idx]]\n\n    # Capacity-fit refinement: prefer demand closest to (but not exceeding) rest_capacity,\n    # scaled so that filling the vehicle more fully is rewarded.\n    fit = np.abs(rest_capacity - cand_demands)\n    refine_idx = int(candidate_idx[int(np.argmin(fit))])\n    return int(unvisited_nodes[refine_idx])",
+        "objective": null
+    },
+    {
+        "sample_order": 3,
+        "operator": "i1",
+        "algorithm": "The heuristic orders candidates by base score d_cur \u2212 0.6\u00b7d_depot, then applies a scale-free near-tie gate (relative band of 1e-3\u00b7span) to fire a capacity-fit refinement that prefers higher-demand customers among near ties, falling back to the base ordering otherwise.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return 0\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    base = d_cur - 0.6 * d_dep\n    order = np.argsort(base)\n    sorted_base = base[order]\n    span = float(sorted_base[-1] - sorted_base[0]) if sorted_base.size > 1 else 0.0\n    band = 1e-3 * span\n    best = sorted_base[0]\n    # near-tie candidates\n    tie_mask = sorted_base <= best + band\n    tie_idx = order[tie_mask]\n    if tie_idx.size > 1:\n        cand_nodes = unvisited_nodes[tie_idx]\n        cand_demands = demands[cand_nodes]\n        # capacity-fit refinement: prefer higher demand, tie-break by base score then distance\n        cand_base = base[tie_idx]\n        # sort by (-demand, base)\n        ref_order = np.argsort(np.column_stack((-cand_demands, cand_base)), axis=0)\n        # np.column_stack + argsort along axis 0 doesn't lexicographically sort rows directly;\n        # do manual lexicographic via stable sorts\n        idx = np.arange(tie_idx.size)\n        # primary: base ascending (stable)\n        idx = idx[np.argsort(cand_base, kind='stable')]\n        # secondary: demand descending (stable)\n        idx = idx[np.argsort(-cand_demands[idx], kind='stable')]\n        chosen = cand_nodes[idx[0]]\n        return int(chosen)\n    return int(unvisited_nodes[order[0]])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 4,
+        "operator": "i1",
+        "algorithm": "Use the base score d_cur \u2212 0.6\u00b7d_dep to rank feasible customers, then within a scale-free relative near-tie band (1e-3 times the score span across candidates) refine by preferring the customer whose demand best fits the remaining capacity, yielding the selected next node.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    nodes = np.asarray(unvisited_nodes, dtype=np.int64)\n    if nodes.size == 0:\n        return int(depot)\n\n    d_cur = distance_matrix[current_node][nodes].astype(np.float64)\n    d_dep = distance_matrix[depot][nodes].astype(np.float64)\n    base = d_cur - 0.6 * d_dep\n\n    order = np.argsort(base)\n    best_idx = int(order[0])\n\n    span = float(base.max() - base.min())\n    if span <= 0.0:\n        span = 1.0\n    band = 1e-3 * span\n    best_score = float(base[best_idx])\n\n    tie_mask = base <= best_score + band\n    if int(tie_mask.sum()) > 1:\n        cand = nodes[tie_mask]\n        cand_base = base[tie_mask]\n        cand_dem = demands[cand].astype(np.float64)\n        # Prefer demand that fits remaining capacity closely (higher is better fit,\n        # but do not exceed capacity). Small penalty keeps base ordering as tiebreak.\n        denom = max(rest_capacity, 1e-9)\n        fit = cand_dem / denom\n        # Slight preference for larger fill, and among those, lower base score.\n        refined = fit - 1e-6 * cand_base\n        pick = int(np.argmax(refined))\n        return int(cand[pick])\n\n    return int(nodes[best_idx])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 5,
+        "operator": "i1",
+        "algorithm": "The heuristic ranks feasible customers by a base score `d_cur - 0.6*d_dep`, and when the top candidates fall within a scale-free relative band (`1e-3 * span` of base scores) it refines among them by preferring the customer that best fills remaining capacity.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur_dist = distance_matrix[current_node][unvisited_nodes]\n    dep_dist = distance_matrix[depot][unvisited_nodes]\n    base = cur_dist - 0.6 * dep_dist\n\n    span = float(np.max(base) - np.min(base))\n    band = 1e-3 * span\n\n    best_val = float(np.min(base))\n    if band > 0.0:\n        mask = base <= best_val + band\n    else:\n        mask = base <= best_val\n\n    candidates = unvisited_nodes[mask]\n    if candidates.size == 1:\n        return int(candidates[0])\n\n    cand_demands = demands[candidates]\n    slack = rest_capacity - cand_demands\n    # Prefer filling the vehicle: smaller slack is better.\n    order = np.argsort(slack)\n    return int(candidates[order[0]])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 6,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 9,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 10,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 11,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 12,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 13,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 14,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 15,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 16,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

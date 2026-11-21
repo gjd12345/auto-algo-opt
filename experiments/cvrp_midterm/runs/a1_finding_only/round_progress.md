@@ -1,0 +1,8 @@
+# Round Progress
+
+| Round | Plan input / mechanism | EoH requests Δ / Σ; solver | Valid / generated | Generated candidate objectives | Incumbent before → after / Δ | Memory | Status |
+|---:|---|---:|---:|---|---|---|---|
+| 1 | Explore new priority rules for the CVRP greedy construction. | 6 / 6; 6 / 6 | 4 / 5 | candidate_1=-0.08350306412147887, candidate_2=0.0, candidate_3:invalid:forbidden_attribute, candidate_4=0.05534282919342481, candidate_5=-0.08350306412147887 | — → -0.08350306412147887 / — | selected=—; publication=disabled | budget-limited |
+| 2 | Explore new priority rules for the CVRP greedy construction. | 6 / 12; 8 / 14 | 3 / 5 | candidate_1:invalid:invalid_code, candidate_2=0.033557465051190165, candidate_3:invalid:forbidden_attribute, candidate_4=0.04620286074576655, candidate_5=0.047748388944157526 | -0.08350306412147887 → -0.08350306412147887 / 0.0 | selected=—; publication=disabled | budget-limited |
+| 3 | Explore new priority rules for the CVRP greedy construction. | 6 / 18; 8 / 22 | 4 / 5 | candidate_1=-0.0672197612361734, candidate_2=0.054350808650514996, candidate_3=0.054350808650514996, candidate_4:invalid:forbidden_attribute, candidate_5=-0.07460518556249691 | -0.08350306412147887 → -0.08350306412147887 / 0.0 | selected=—; publication=disabled | budget-limited |
+| 4 | Explore new priority rules for the CVRP greedy construction. | 6 / 24; 8 / 30 | 5 / 5 | candidate_1=-0.03223229378258931, candidate_2=-0.01044593572102976, candidate_3=-0.03849569946276993, candidate_4=0.20102599510884187, candidate_5=-0.019123991329065452 | -0.08350306412147887 → -0.08350306412147887 / 0.0 | selected=—; publication=disabled | budget-limited |

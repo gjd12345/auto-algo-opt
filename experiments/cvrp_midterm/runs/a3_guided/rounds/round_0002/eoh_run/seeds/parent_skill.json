@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Explicit parent",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    to_depot = distance_matrix[unvisited_nodes, depot]\n    stem = distance_matrix[current_node, depot]\n    # Savings gained by inserting node before returning, relative to the leg it replaces.\n    savings = stem + to_depot - cur\n    score = savings / (cur + 1e-12)\n    return int(unvisited_nodes[np.argmax(score)])"
+  }
+]

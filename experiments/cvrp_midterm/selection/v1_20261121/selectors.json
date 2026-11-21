@@ -1,0 +1,83 @@
+{
+  "instances": 36,
+  "algorithms": [
+    "nn",
+    "savings",
+    "dd_load",
+    "radial"
+  ],
+  "vbs_total": 474.7977,
+  "sbs_total": 494.8612,
+  "sbs_gap_to_vbs": 0.042257,
+  "selectors": [
+    {
+      "selector": "fixed_best_sbs",
+      "total_objective": 494.8612,
+      "gap_to_vbs": 0.042257,
+      "picks": {
+        "nn": 0,
+        "savings": 0,
+        "dd_load": 0,
+        "radial": 36
+      },
+      "algorithm": "radial"
+    },
+    {
+      "selector": "knn1_loo",
+      "total_objective": 499.0434,
+      "gap_to_vbs": 0.051065,
+      "picks": {
+        "nn": 5,
+        "savings": 9,
+        "dd_load": 17,
+        "radial": 5
+      }
+    },
+    {
+      "selector": "ridge_loo",
+      "total_objective": 489.3908,
+      "gap_to_vbs": 0.030735,
+      "picks": {
+        "nn": 4,
+        "savings": 12,
+        "dd_load": 11,
+        "radial": 9
+      }
+    },
+    {
+      "selector": "ridge_loro",
+      "total_objective": 505.9866,
+      "gap_to_vbs": 0.065689,
+      "picks": {
+        "nn": 10,
+        "savings": 12,
+        "dd_load": 13,
+        "radial": 1
+      }
+    }
+  ],
+  "per_regime": {
+    "clustered": {
+      "instances": 12,
+      "vbs": 92.8706,
+      "sbs": 97.8357,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.053463
+    },
+    "eccentric": {
+      "instances": 12,
+      "vbs": 237.8978,
+      "sbs": 242.9717,
+      "sbs_algorithm": "radial",
+      "sbs_gap_to_vbs": 0.021328
+    },
+    "uniform": {
+      "instances": 12,
+      "vbs": 144.0293,
+      "sbs": 149.6123,
+      "sbs_algorithm": "dd_load",
+      "sbs_gap_to_vbs": 0.038763
+    }
+  },
+  "selection_cost_note": "every selector needs the full matrix on its training instances: 4 algorithm evaluations per instance, no provider calls"
+}

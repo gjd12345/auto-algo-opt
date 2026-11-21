@@ -1,0 +1,18 @@
+{
+  "round_id": 1,
+  "direction": "Explore new priority rules for the CVRP greedy construction, guided by the measured scale-dependence of the near-tie refinement branch.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "near-tie refinement gate",
+      "mechanism": "Replace the absolute epsilon band with a scale-free gate: relative band 1e-3*span, or a widened relative band, or a gate on the ratio between the best and second-best base score."
+    },
+    {
+      "type": "preserve",
+      "target": "base ordering",
+      "mechanism": "Keep base = d_cur - 0.6*d_dep as the primary ordering signal."
+    }
+  ],
+  "preserve": "The problem interface, the evaluator and the search policy.",
+  "hypothesis": "A scale-free near-tie gate that fires more often improves the capacity-fit refinement of the base ordering."
+}

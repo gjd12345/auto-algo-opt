@@ -104,6 +104,19 @@ CONTROL_OPERATIONS = [
     }
 ]
 
+# 2x2 attribution design.  The two factors are exactly:
+#   operations -> the (direction, operations) pair; neutral text vs the guided pair
+#   finding    -> presence of the research_activity block, which the runtime
+#                 compiles into the prompt as an advisory research_finding
+# `guided` and `control` are the arms that already ran; the other two split the
+# two factors apart.  Budget, model, instances and seed are identical in all four.
+ARMS = {
+    "control": {"operations": False, "finding": False},
+    "finding_only": {"operations": False, "finding": True},
+    "operations_only": {"operations": True, "finding": False},
+    "guided": {"operations": True, "finding": True},
+}
+
 
 def load_key() -> str:
     key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
@@ -143,9 +156,10 @@ def _best_score(facts: dict) -> float | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--arm", choices=("guided", "control"), required=True)
+    parser.add_argument("--arm", choices=tuple(ARMS), required=True)
     parser.add_argument("--root", default=str(REPO / "experiments/cvrp_midterm/runs"))
     args = parser.parse_args()
+    design = ARMS[args.arm]
 
     os.environ["DEEPSEEK_API_KEY"] = load_key()
     for name in ("NO_PROXY", "no_proxy"):
@@ -178,17 +192,17 @@ def main() -> int:
         state = db.read_state(run=root)
         plan = {
             "round_id": round_id,
-            "direction": GUIDED_DIRECTION if args.arm == "guided" else CONTROL_DIRECTION,
-            "operations": GUIDED_OPERATIONS if args.arm == "guided" else CONTROL_OPERATIONS,
+            "direction": GUIDED_DIRECTION if design["operations"] else CONTROL_DIRECTION,
+            "operations": GUIDED_OPERATIONS if design["operations"] else CONTROL_OPERATIONS,
             "preserve": "The problem interface, the evaluator and the search policy.",
             "hypothesis": (
                 "A scale-free near-tie gate that fires more often improves the "
                 "capacity-fit refinement of the base ordering."
-                if args.arm == "guided"
+                if design["operations"]
                 else "A different distance/load combination yields better routes."
             ),
         }
-        if args.arm == "guided":
+        if design["finding"]:
             plan["research_activity"] = FINDING
         if round_id > 1:
             prev_file = Path(str(root) + f"/rounds/round_{round_id - 1:04d}/evaluation_facts.json")
@@ -228,7 +242,7 @@ def main() -> int:
                 "evidence_refs": [evidence[0]],
             })
         evaluation = {
-            "plan_alignment": "aligned" if args.arm == "guided" else "unknown",
+            "plan_alignment": "aligned" if design["finding"] else "unknown",
             "observations": observations,
             "hypotheses": [],
             "next_search_advice": {"direction": "continue within the remaining budget"},
