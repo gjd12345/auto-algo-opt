@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Round 4 validated H-006 on generalization: candidate_1 achieved sh6=10.2078 (-6.52% below Frozen_C) and ana72=18.1072 (n200=29.084, -1.66 shorter than Round 3 c3) with dev4=-0.14202, and candidate_5 achieved dev4=-0.13633, sh6=10.3781, ana72=18.1116, both with exact scale invariance (1.00000).",
+      "evidence_refs": [
+        "rounds/round_0004/execution_delta.json",
+        "rounds/round_0004/comparison_packet.json"
+      ]
+    },
+    {
+      "claim": "Incumbent remained Round 3 candidate_3 (-0.15762 on dev4), while Round 4's constant alpha=0.75 kept pushing vehicles outward even when near-full.",
+      "evidence_refs": [
+        "rounds/round_0004/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-007: Replacing constant mid-route alpha with a state-only capacity-phase decaying pull alpha_eff(pressure) = alpha_0 - alpha_1 * min(1, mean_dem/rest_cap) (identical across all candidates j so it avoids H-004a's anti-heavy bias) creates an outside-in spiral that sweeps the outer ring early and harvests inner nodes on the return leg.",
+      "evidence_refs": [
+        "rounds/round_0004/execution_delta.json",
+        "rounds/round_0004/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Upgrade Round 4's scale-free two-phase + cos(theta_0) + elongation + adaptive early-return architecture with state-only decaying depot pull alpha_eff(pressure) = alpha_0 - alpha_1 * pressure."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

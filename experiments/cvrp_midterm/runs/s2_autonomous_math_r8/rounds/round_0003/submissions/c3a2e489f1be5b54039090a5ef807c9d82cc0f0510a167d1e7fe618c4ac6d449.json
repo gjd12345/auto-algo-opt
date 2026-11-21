@@ -1,0 +1,41 @@
+{
+  "round_id": 3,
+  "direction": "Combine linear scale-free radial pull with Round 2's elongation ratio rho(i,j) and upgrade voluntary early return to a tighter or capacity-adaptive threshold (tighter when remaining capacity is low).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "mid-route scoring objective",
+      "mechanism": "Blend dimensionless linear radial pull (d_cur - alpha*d_dep)/scale (alpha around 0.65-0.90) with elongation ratio rho = d_cur / max(d0i + d0j, 1e-12) and mild capacity-fill reward (-beta*fill with beta in 0.05-0.16), ensuring demand is normalized ONLY by rest_capacity (never by distance scale)."
+    },
+    {
+      "type": "replace",
+      "target": "voluntary early-return threshold tau",
+      "mechanism": "Test tighter early-return thresholds (sigma = 1 - rho < tau with tau in [0.28, 0.48], or rho > 0.52-0.72), especially a scale-free capacity-adaptive threshold that rises as the vehicle gets fuller (measured by mean_unvisited_demand / rest_capacity or best_demand / rest_capacity) so near-full trucks return early instead of bridging across the depot."
+    },
+    {
+      "type": "preserve",
+      "target": "strict coordinate scale invariance and non-depot guard on early return",
+      "mechanism": "Normalize all distances exclusively by distance scales and all demands exclusively by rest_capacity or demand scales; return depot early only when current_node != depot."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, feasibility, strict scale invariance across scales 0.001 to 1000, and beating Round 2 incumbent (-0.10961).",
+  "hypothesis": "H-005: Blending linear radial pull with elongation ratio rho(i,j) and a tighter or capacity-adaptive early-return threshold improves both dev4 (target < -0.125) and multi-scale generalization (ana72 < 18.30).",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "design_uncertainty",
+    "question": "How do Round 2's elongation ratio rho(i,j), linear radial pull, and early-return threshold interact across dev4 and multi-scale CVRP?",
+    "finding_summary": "Round 2 validated H-004: candidate_3 beat incumbent Frozen_C (-0.10961 vs -0.10890) with exact scale invariance using rho=d_cur/(d0i+d0j) and early return rho>0.72, while candidate_4 achieved sh6=10.7523 (-1.53% below C). Diagnostic ablations showed: (1) tightening early return from tau_sigma=0.20 to 0.35 (rho>0.65) monotonically improves BOTH dev4 and 72 multi-scale instances (r2c3 hits -0.1347 on dev4 at tau_rho=0.65; hybrid linear+rho hits sh6=10.717 and ana72=18.296, beating A/B/savings by 3.2-4.1%); (2) candidate_4 divided demand by distance scale (dem/scale), breaking invariance at s=1000; (3) early return is cheapest when remaining capacity is small (high mean_dem/rest_cap) and costly when empty.",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Keep all terms strictly dimensionless (never divide demand by distance). Combine normalized linear radial pull (d_cur - alpha*d_dep)/scale with elongation ratio rho = d_cur/(d0i+d0j) and calibrated fill weight (0.05-0.16). Raise early-return sensitivity (sigma < tau with tau in 0.30-0.45, or adaptive tau increasing with mean_dem/rest_cap) and compare outside-in heavy-far vs compact depot-start seeds.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0002/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  },
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6"
+  }
+}

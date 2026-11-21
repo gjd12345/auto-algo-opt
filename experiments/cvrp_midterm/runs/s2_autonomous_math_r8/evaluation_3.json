@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Round 3 achieved a major breakthrough under H-005: 3/5 generated candidates beat Frozen_C (-0.10890), with candidate_3 reaching dev4=-0.15762 (-4.87pp) and sh6=10.3051 (-5.63% vs C, exact s001/s1=1.00000), and candidate_2 reaching dev4=-0.15461 and sh6=10.6080.",
+      "evidence_refs": [
+        "rounds/round_0003/execution_delta.json",
+        "rounds/round_0003/comparison_packet.json"
+      ]
+    },
+    {
+      "claim": "Code inspection showed candidate_3 dropped the explicit depot-start branch (causing inside-out starts and weaker n200=30.74 on ana72=18.95), whereas adding a remaining-fleet indicator rem_routes=sum(q)/rest_cap cut n200 to 29.17 and steeper adaptive early return + cos(theta_0) cut ana72 to 17.93.",
+      "evidence_refs": [
+        "rounds/round_0003/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-006: Augmenting Round 3's scale-free linear+rho+fill core with Law-of-Cosines depot-ray angular coherence cos(theta_0), steeper capacity-adaptive early-return slope, and remaining-fleet-aware depot-start (rem_routes=sum(q)/rest_cap) will improve both dev4 and multi-scale generalization.",
+      "evidence_refs": [
+        "rounds/round_0003/execution_delta.json",
+        "rounds/round_0003/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Add Law-of-Cosines angular coherence cos(theta_0), steeper capacity-adaptive early-return slope, and a two-phase rem_routes=sum(q)/rest_cap depot-start rule while keeping strict scale invariance."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

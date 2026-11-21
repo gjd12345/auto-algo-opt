@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Round 5 validated H-007 on multi-scale generalization: candidate_2 (state-only alpha_eff = 1.02 - 0.85*pressure) cut ana72 to 18.0007 and n200 to 28.925 (first live rule below 29.0 at n=200) with sh6=10.2714, dev4=-0.13610, and exact scale invariance (1.00000); 4/5 candidates beat Frozen_C (-0.10890).",
+      "evidence_refs": [
+        "rounds/round_0005/execution_delta.json",
+        "rounds/round_0005/comparison_packet.json"
+      ]
+    },
+    {
+      "claim": "Code inspection found candidate_2/3/5 still blocked early return behind `best_dem > 0.55*rest_capacity`, preventing early return on cross-depot jumps when rest_cap is moderate; offline tests falsified discrete exact-fit bin-packing (H-008a) but confirmed isolation urgency (-w_iso * min_{k!=j} d(j,k)/scale) improves multi-scale and clustered scores.",
+      "evidence_refs": [
+        "rounds/round_0005/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-008: Removing the hard best_dem>0.55*rest_cap early-return blocker in favor of continuous adaptive early return (1-rho < tau_0 + tau_1*pressure) and adding scale-free nearest-neighbor isolation urgency (-w_iso * min_{k!=j} d(j,k)/scale, w_iso in 0.15-0.35) on the state-only inward-spiral backbone will improve both dev4 and multi-scale/clustered routing.",
+      "evidence_refs": [
+        "rounds/round_0005/execution_delta.json",
+        "rounds/round_0005/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Remove the hard best_dem>0.55*rest_cap blocker on early return, add scale-free isolation urgency (-w_iso * min_{k!=j} d(j,k)/scale), keep state-only inward spiral alpha_eff(pressure) + cos(theta_0) + rho, and avoid discrete exact-fit bin-packing terms."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

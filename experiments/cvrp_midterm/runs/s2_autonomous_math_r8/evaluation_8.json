@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Round 8 produced 2/5 valid candidates (-0.06947 and -0.06652; 3/5 rejected for forbidden_attribute ix_/searchsorted), showing diminishing returns after Rounds 3-7 already established strong dev4 (-0.15762 in R3, -0.15268 in R7) and multi-scale (sh6=10.2078 in R4, ana72=18.0007/n200=28.925 in R5) champions.",
+      "evidence_refs": [
+        "rounds/round_0008/execution_delta.json",
+        "rounds/round_0008/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Across all 8 rounds (48 requests), autonomous inter-round mathematical analysis produced 14+ valid rules beating Frozen_C (-0.10890), with exact coordinate scale invariance (1.00000) and multi-scale breakthroughs across Rounds 2-7, whereas the paired 48-request neutral control produced 0/33 rules beating Frozen_C.",
+      "evidence_refs": [
+        "rounds/round_0008/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Complete the 8-round run at exact budget parity (48/48 requests) and evaluate dev4-selected and ana72-selected champions on the 120 unseen multi-scale P0 held-out instances."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

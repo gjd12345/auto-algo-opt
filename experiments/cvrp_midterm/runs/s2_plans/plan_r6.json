@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Add scale-free nearest-unvisited isolation urgency and remove the hard capacity blocker on voluntary early return while retaining the state-only inward-spiral backbone.",
+  "operations": [
+    {
+      "type": "add",
+      "target": "scale-free isolation urgency term at mid-route (current_node != depot)",
+      "mechanism": "When len(unvisited_nodes) >= 2, compute each candidate's distance to its nearest other feasible unvisited customer: d_nn(j) = min_{k != j} d(j, k) / scale. Subtract w_iso * d_nn(j) (w_iso in [0.15, 0.35], NEGATIVE sign so isolated nodes are harvested while passing nearby instead of stranded as singleton routes)."
+    },
+    {
+      "type": "replace",
+      "target": "voluntary early-return trigger condition",
+      "mechanism": "Remove the rigid `best_dem > 0.55 * rest_capacity` gate that blocked early returns on cross-depot jumps at moderate remaining capacity; instead apply continuous capacity-adaptive early return directly: return depot when (1 - rho[best]) < tau_0 + tau_1 * pressure (tau_0 in 0.22-0.30, tau_1 in 0.35-0.55), optionally guarding against aborting very short hops."
+    },
+    {
+      "type": "preserve",
+      "target": "state-only inward-spiral depot pull, angular coherence cos(theta_0), elongation rho, two-phase depot-start, and strict scale invariance",
+      "mechanism": "Keep alpha_eff = alpha_0 - alpha_1 * pressure (state-only), elongation rho, Law-of-Cosines cos(theta_0), smooth calibrated -beta*fill (0.08-0.13), and two-phase rem_routes depot start. Do NOT add discrete exact-fit bin-packing bonuses or stranded-slack penalties."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, feasibility, fast O(n^2) vectorized numpy execution, strict scale invariance (s001/s1 = 1.00000), and strong dev4 + multi-scale performance.",
+  "hypothesis": "H-008: Unblocking continuous adaptive early return and adding isolation urgency (-w_iso * d_nn/scale) eliminates stranded outlier trips and pushes past both Round 3 (-0.1576 dev4) and Round 5 (ana72=18.00, n200=28.93).",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "stagnation",
+    "question": "Can nearest-neighbor isolation urgency and unblocked continuous adaptive early return break past both the dev4 (-0.1576) and multi-scale (18.00) plateaus?",
+    "finding_summary": "Round 5 validated H-007: candidate_2's state-only inward spiral (alpha_eff=1.02-0.85*pressure) broke 29.0 on n=200 (ana72=18.0007, n200=28.925, sh6=10.2714, dev4=-0.1361, exact scale invariance 1.00000), with 4/5 candidates beating Frozen_C. Code inspection showed candidate_2/3/5 still blocked early return behind `best_dem > 0.55*rest_cap`, preventing early return on cross-depot bridges when rest_cap is moderate. Offline diagnostics falsified discrete exact-fit bin-packing bonuses (H-008a: ana72 worsened monotonically 17.88 -> 18.10) but confirmed nearest-unvisited isolation urgency with negative sign (-w_iso * min_{k!=j} d(j,k)/scale) improves multi-scale routing (w=-0.30: ana72=17.852, clustered=16.19, n200=28.67 vs positive cluster-attraction 17.968).",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Retain Round 5's state-only inward spiral (alpha_eff=alpha_0-alpha_1*pressure), rho, cos(theta_0), two-phase rem_routes start, and exact scale invariance. Remove the hard best_dem>0.55*rest_cap blocker so continuous adaptive early return (1-rho < tau_0+tau_1*pressure) catches cross-depot bridges at any load, and add negative-sign isolation urgency (-w_iso*min_{k!=j} d(j,k)/scale, w_iso in 0.15-0.35). Avoid discrete exact-fit bin-packing terms.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0005/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  }
+}

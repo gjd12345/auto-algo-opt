@@ -1,0 +1,36 @@
+{
+  "round_id": 8,
+  "direction": "Final consolidation: keep Round 7 candidate_2's winning AST-safe isolation + angular + elongation + two-phase architecture and fix mid-route capacity pressure to exact mean(dem)/rest_capacity so the inward spiral and adaptive early return work together cleanly.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "mid-route vehicle capacity pressure calculation",
+      "mechanism": "At current_node != depot, compute `pressure = min(1.0, float(np.mean(dem)) / max(float(rest_capacity), 1e-12))` — NEVER hardcode pressure=0.0 (which disabled the inward spiral in Round 7 c2) and NEVER use np.sum(dem)/rest_capacity (which saturated at 1.0 in Round 7 c1). Drive BOTH `alpha_eff = alpha_0 - alpha_1 * pressure` (alpha_0 in 0.95-1.08, alpha_1 in 0.60-0.95) and early-return threshold `tau = tau_0 + tau_1 * pressure` (tau_0 in 0.24-0.30, tau_1 in 0.35-0.50) from this single clean state variable."
+    },
+    {
+      "type": "preserve",
+      "target": "Round 7 candidate_2's AST-safe isolation urgency, Law-of-Cosines cos(theta_0), elongation rho, calibrated fill bonus, and two-phase rem_routes depot start",
+      "mechanism": "Keep `d_nn = np.min(np.where(np.eye(n) > 0.5, np.inf, sub), axis=1) / scale` (with -w_iso*d_nn, w_iso in 0.18-0.30), elongation +gamma*rho (0.30-0.42), angular coherence -w_cos*cos(theta_0) (0.18-0.25), fill bonus -beta*fill (0.09-0.12), and two-phase rem_routes = np.sum(dem)/rest_capacity depot start (rem_routes > 7: outside-in far+isolated; <= 7: compact radial-load)."
+    },
+    {
+      "type": "preserve",
+      "target": "strict AST compliance and coordinate scale invariance",
+      "mechanism": "Use ONLY AST-whitelisted numpy operations (never np.fill_diagonal or np.ix_) and ensure every term is strictly dimensionless under 0.001x to 1000x coordinate scaling."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, AST whitelist compliance, exact scale invariance (s001/s1 = 1.00000), and strong dev4 + multi-scale performance.",
+  "hypothesis": "H-009: Repairing the mid-route pressure wiring bug (mean(dem)/rest_cap instead of 0.0 or sum(dem)/rest_cap) in Round 7 candidate_2's architecture unlocks both the inward spiral and clean adaptive early return, achieving new best combined dev4 and multi-scale performance.",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "badcase",
+    "question": "What exact wiring bugs held back Round 7's otherwise strong AST-safe isolation + spiral candidates, and what happens when pressure = min(1, mean(dem)/rest_cap) is wired cleanly?",
+    "finding_summary": "Round 7 recovered 5/5 AST validity using np.where(np.eye(n)>0.5, np.inf, sub) and yielded candidate_2 with dev4=-0.15268 (balanced [-0.165, -0.168, -0.121, -0.156]), sh6=10.2595 (-6.05% vs C), ana72=18.181, and exact scale invariance. Code audit caught two exact bugs: (1) candidate_2 set pressure=0.0 whenever current_node!=depot, turning off alpha_eff=1.00-0.85*pressure completely; (2) candidate_1/5 used sum(dem)/rest_cap (which is >1 almost everywhere), pinning pressure=1.0 and causing 48-69 premature early returns. Using the exact state-only mean ratio `pressure = min(1.0, mean(dem)/rest_capacity)` fixes both bugs simultaneously and combines Round 5 c2's multi-scale inward spiral (ana72=18.00, n200=28.93) with Round 7 c2's balanced dev4 (-0.1527) and isolation urgency.",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Take Round 7 candidate_2 as the exact template, fix mid-route `pressure = min(1.0, float(np.mean(dem)) / max(float(rest_capacity), 1e-12))` (never 0.0 and never sum/rest_cap), and feed that pressure into both alpha_eff = alpha_0 - alpha_1*pressure and tau = tau_0 + tau_1*pressure. Keep np.where(np.eye(n)>0.5, np.inf, sub) isolation, cos(theta_0), rho, and two-phase rem_routes depot start.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0007/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  }
+}

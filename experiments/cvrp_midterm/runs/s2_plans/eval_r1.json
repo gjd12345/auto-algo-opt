@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "All 5 generated candidates adopted decoupled depot-start and dimensionless scoring, but best generated (-0.0615) trailed incumbent Frozen_C (-0.1089) because candidates 1/2/4/5 used oversized beta_fill=0.30-0.40 against d_cur/scale~0.10 while candidate 2/3 inverted signs.",
+      "evidence_refs": [
+        "rounds/round_0001/execution_delta.json",
+        "rounds/round_0001/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-004: Calibrating mid-route beta_fill to 0.05-0.18 and adding a scale-invariant voluntary early-return gate (return depot when normalized saving sigma(i,j)=(d0i+d0j-dij)/(d0i+d0j)<tau) eliminates cross-depot deadhead bridges and beats incumbent C (-0.1089) while staying scale-invariant across n=50/100/200.",
+      "evidence_refs": [
+        "rounds/round_0001/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Tighten beta_fill to 0.05-0.18, keep decoupled depot-start and strict scale invariance, and introduce voluntary early-return to depot via normalized saving threshold tau in [0.15, 0.35]."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "719e6960f95cd21d9b56576eeb22cb9a01381ccbacbb97d431f243c4c8118f77",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 48,
+  "wall_seconds": 599.740698,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260914,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "7e7917bd1cfeae092b212a09727aab948ffab27a4dfbf7445b7c1597aa791a29",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.204,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 587100.255698,
+  "local_url": "http://127.0.0.1:64382/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_autonomous_math_r8",
+    "task_id": "task_d37abc00c2db4c5487271e7f0cbb6863"
+  },
+  "supervisor_pid": 428,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":7,\"direction\":\"Re-test H-008 (nearest-unvisited isolation urgency + unblocked continuous adaptive early return + state-only inward spiral) using strictly AST-whitelisted numpy operations (no np.fill_diagonal, no np.ix_).\",\"operations\":[{\"type\":\"replace\",\"target\":\"diagonal masking in nearest-unvisited isolation computation\",\"mechanism\":\"Do NOT call np.fill_diagonal or np.ix_ (rejected by the evaluator AST sandbox in 5/5 Round 6 candidates). Instead slice `sub = distance_matrix[nodes][:, nodes].astype(float)` and compute `d_nn = np.min(sub + np.eye(nodes.size) * 1e12, axis=1) / scale` (when nodes.size >= 2, else zeros). Subtract w_iso * d_nn (w_iso in 0.15-0.35) mid-route so isolated nodes are harvested while nearby.\"},{\"type\":\"replace\",\"target\":\"voluntary early-return gate\",\"mechanism\":\"Drop the hard `best_dem > 0.55 * rest_capacity` blocker from Round 5 and apply continuous capacity-adaptive early return directly: return depot when current_node != depot and (1 - rho[best]) < tau_0 + tau_1 * pressure (tau_0 in 0.22-0.30, tau_1 in 0.35-0.55).\"},{\"type\":\"preserve\",\"target\":\"state-only inward spiral, Law-of-Cosines cos(theta_0), elongation rho, two-phase depot-start, and strict scale invariance\",\"mechanism\":\"Keep alpha_eff = alpha_0 - alpha_1 * pressure (alpha_0 in 0.90-1.10, alpha_1 in 0.65-1.10), elongation rho, -w_cos*cos(theta_0), calibrated -beta*fill (0.08-0.13), and two-phase rem_routes depot start (optionally adding mild positive +0.25*d_nn isolation preference for far outer seeds).\"}],\"preserve\":\"Exact select_next_node signature, strictly AST-whitelisted numpy calls (np.asarray, np.eye, np.min, np.max, np.mean, np.sum, np.argmin, np.argmax, np.clip, np.maximum, np.minimum, np.where; NEVER np.fill_diagonal or np.ix_), strict scale invariance (s001/s1 = 1.00000), and strong dev4 + multi-scale performance.\",\"reference_skill_ref\":null,\"hypothesis\":\"H-008 (AST-safe retry): Fixing the np.fill_diagonal sandbox failure allows EoH to synthesize isolation urgency + unblocked adaptive early return + state-only inward spiral, improving both dev4 and multi-scale routing (ana72 < 17.90, n200 < 28.75).\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Why did 5/5 Round 6 candidates fail validation, and does H-008 succeed once the diagonal mask uses AST-safe numpy ops?\",\"measured_finding\":\"Audit of Round 6 evaluation_facts proved all 5/5 candidates were rejected for the single AST sandbox violation `forbidden_attribute: fill_diagonal` — NOT because of a mathematical flaw in H-008. Using `sub = distance_matrix[nodes][:, nodes].astype(float)` and adding `np.eye(n) * 1e12` before `np.min(..., axis=1)` is 100% AST-whitelisted and strictly scale-invariant (for scale-free diagonal masking, use `np.eye(n) * (scale * 1e6 + 1e12)` or `np.where(np.eye(n) > 0.5, np.inf, sub)`). Offline checks also confirmed that positive isolation bias at outside-in depot start (+0.25 to +0.50 * d_nn) further improves dev4 (-0.107 -> -0.118), sh6 (10.56 -> 10.49), and clustered routing (16.22 -> 16.18).\",\"hypothesis_status\":\"empirical_observation\",\"decision\":\"modify\",\"decision_summary\":\"Never call np.fill_diagonal or np.ix_. Compute scale-free isolation via `sub = distance_matrix[nodes][:, nodes].astype(float); d_nn = np.min(np.where(np.eye(n) > 0.5, np.inf, sub), axis=1) / scale` (strictly scale-invariant across 0.001x to 1000x!). Keep Round 5's state-only inward spiral, cos(theta_0), rho, two-phase rem_routes start, and unblocked continuous adaptive early return.\"},\"feedback_summary\":{\"source\":{\"round_id\":6,\"evaluation_ref\":\"rounds/round_0006/evaluation_facts.json\",\"evaluation_facts_sha256\":\"39ded8d0635f0de562a8c4ca55297dde1b8171f73e4037195308f7e5dd7c817e\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0003/eoh_run/exported_skill\",\"code_sha256\":\"ee1d756a0326d4f3ca1a3eed2efabd7f177f8d222462293849171e853bbb51be\",\"objective\":-0.15762421818408598,\"origin\":\"generated\"},\"incumbent_candidate_match\":{\"status\":\"identity_unresolved\",\"reason\":\"exact_evaluation_id_and_code_sha256_not_found\",\"evaluation_id\":null,\"code_sha256\":\"ee1d756a0326d4f3ca1a3eed2efabd7f177f8d222462293849171e853bbb51be\"},\"best_generated_candidate\":null,\"objective_delta\":null,\"improvement_vs_incumbent\":null,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[],\"best_generated\":[]},\"generated_candidate_counts\":{\"total\":5,\"valid\":0,\"invalid\":5},\"major_errors\":[{\"error_code\":\"forbidden_attribute\",\"count\":5,\"evidence_refs\":[\"evaluation:195927ed789c48a7822124aadb3b0731\",\"evaluation:bbeb2b5635fe4a1d953a2100b14b74fc\",\"evaluation:d886fcb53126404dae908e2b3449ecd6\",\"evaluation:50c918da4cc748a79b97d4fe2d1b84f1\",\"evaluation:af89a768441b44bf979443d744966953\"],\"details\":[\"fill_diagonal\"]}],\"evidence_refs\":[\"evaluation:a8cc86d587f649398177f4bd7acdd87b\",\"evaluation:ac74c6b6ff2d40da8668a88d303cbf22\",\"evaluation:ea63c51e81274f1db2a7938fc653dbae\",\"evaluation:52be1d31c5614687bc39b32c8cdbf82f\",\"evaluation:c594eab3d85646a1ad46540cbd128bea\",\"evaluation:195927ed789c48a7822124aadb3b0731\",\"evaluation:bbeb2b5635fe4a1d953a2100b14b74fc\",\"evaluation:d886fcb53126404dae908e2b3449ecd6\",\"evaluation:50c918da4cc748a79b97d4fe2d1b84f1\",\"evaluation:af89a768441b44bf979443d744966953\",\"rounds/round_0006/execution_delta.json\",\"rounds/round_0006/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0006/execution_delta.json\",\"sha256\":\"88dbddbc6563f600104de4d95425b3591ce330fde0f4d3f99035f134515a2120\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":6,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.15762421818408598,\"incumbent_after_objective\":-0.15762421818408598,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":5,\"valid_generation_count\":0,\"invalid_generation_count\":5,\"valid_generation_yield\":0.0,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":5,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.3,\"instance_response_valid_complete_count\":0,\"instance_response_unique_vector_count\":0,\"instance_response_diversity_rate\":null,\"instance_response_pairwise_l1_mean\":null,\"instance_response_pairwise_l1_max\":null,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":10,\"round_input_tokens\":28409,\"round_output_tokens\":6095,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":34.5,\"round_wall_seconds\":34.5},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.15762421818408598,\"incumbent_after_objective\":-0.15762421818408598,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":30,\"valid_generation_count\":25,\"invalid_generation_count\":5,\"valid_generation_yield\":0.8333333333333334,\"source_duplicate_count\":8,\"source_duplicate_denominator\":30,\"source_duplicate_rate\":0.26666666666666666,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":30,\"lineage_verified_candidate_count\":30,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.2,\"instance_response_valid_complete_count\":25,\"instance_response_unique_vector_count\":24,\"instance_response_diversity_rate\":0.96,\"instance_response_pairwise_l1_mean\":0.5810970139542825,\"instance_response_pairwise_l1_max\":2.558837110804296,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":36,\"round_solver_attempts\":60,\"round_input_tokens\":144678,\"round_output_tokens\":26771,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":34.5,\"round_wall_seconds\":158.814},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"pop_size\":4,\"max_sample_nums\":8,\"n_pop\":2},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_autonomous_math_r8\\rounds\\round_0007\\eoh_run\\seeds\\population_seeds.json",
+  "population_seed_count": 4,
+  "request_timeout": 600.0
+}

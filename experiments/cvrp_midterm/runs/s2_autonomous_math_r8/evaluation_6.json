@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Round 6 produced 0/5 valid candidates because all 5 candidates failed AST validation with the identical error `forbidden_attribute: fill_diagonal` when computing nearest-unvisited distances min_{k!=j} d(j,k); thus H-008 itself has not yet been tested empirically in live search.",
+      "evidence_refs": [
+        "rounds/round_0006/execution_delta.json",
+        "rounds/round_0006/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-008 (revised implementation): Replacing forbidden np.fill_diagonal with whitelisted `sub = distance_matrix[nodes][:, nodes]; sub = sub + np.eye(n) * 1e12; d_nn = np.min(sub, axis=1)` will restore 100% AST validity and test isolation urgency + unblocked continuous adaptive early return + state-only inward spiral cleanly in Round 7.",
+      "evidence_refs": [
+        "rounds/round_0006/execution_delta.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Re-test H-008 without np.fill_diagonal or np.ix_: mask the submatrix diagonal using `sub = distance_matrix[nodes][:, nodes].astype(float); d_nn = np.min(sub + np.eye(n) * 1e12, axis=1)`."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

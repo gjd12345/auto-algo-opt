@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "H-004 succeeded in Round 2: candidate_3 beat incumbent Frozen_C (-0.10961 vs -0.10890) with exact scale invariance (s001/s1=1.00000) using elongation ratio rho=d_cur/(d0i+d0j) and voluntary early return (rho>0.72), while candidate_4 reached sh6=10.7523 (-1.53% below C).",
+      "evidence_refs": [
+        "rounds/round_0002/execution_delta.json",
+        "rounds/round_0002/comparison_packet.json"
+      ]
+    },
+    {
+      "claim": "Code inspection found two correctable defects: candidate_3 kept an inside-out depot-start (+rel_dist, hurting multi-scale ana72=19.39), and candidate_4 divided demand by distance scale (dem/scale) and used positive +beta_fill.",
+      "evidence_refs": [
+        "rounds/round_0002/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-005: Combining linear scale-free radial pull (d_cur-alpha*d_dep)/scale with elongation ratio rho=d_cur/(d0i+d0j), outside-in/radial-load depot-start, and a stronger or capacity-adaptive early-return threshold (sigma<tau, tau increasing with mean_dem/rest_cap) will outperform both Round 2 incumbent (-0.10961) and all frozen rules across scales.",
+      "evidence_refs": [
+        "rounds/round_0002/execution_delta.json",
+        "rounds/round_0002/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Synthesize a scale-free hybrid of linear radial pull and elongation ratio rho(i,j), repair candidate_4's dem/scale unit bug, and explore stronger or capacity-adaptive voluntary early-return thresholds (tau in [0.28, 0.50])."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}
