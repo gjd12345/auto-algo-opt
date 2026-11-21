@@ -1,0 +1,40 @@
+{
+  "type": "method",
+  "title": "Nearest feasible customer construct",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "nearest-neighbor",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "Official CVRP template: among capacity-feasible unvisited customers, pick the nearest; 0 returns to depot.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node with rest_capacity",
+    "objective": "mean route length"
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "sources": [],
+    "implementations": [
+      "impl-cvrp-official-construct"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/cvrp_construct/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/cvrp_construct/prob.py",
+      "sha256": "aa8954d02d05949ab6425c592b073e834b7d46fe6a1111cbfa5ac8cad1ca81b7"
+    }
+  ],
+  "id": "method-cvrp-nearest-feasible-construct",
+  "content_sha256": "131ffc88cf8b4e88126ee2056f9b4244a7315a208a79a0995bb3738f60934fc3"
+}

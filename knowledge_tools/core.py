@@ -1263,7 +1263,7 @@ def _previous_release(store: Path, current_release_id: str) -> Path | None:
     current = store / "current"
     if current.exists() or os.path.lexists(current):
         try:
-            pointed = current.resolve()
+            pointed = _release_input(current)
         except OSError:
             pointed = None
         if (
@@ -1372,6 +1372,17 @@ def _atomic_pointer(store: Path, release_dir: Path) -> str:
         pointer = store / "current.path"
         temp_file = store / f".current-path-{uuid.uuid4().hex}"
         if current.exists() or os.path.lexists(current):
+            # Git with core.symlinks=false materializes a tracked symlink as a
+            # plain text file pointing to releases/<id>; update it atomically
+            # without changing its tracked symlink payload format.
+            if current.is_file() and not current.is_symlink():
+                existing_target = current.read_text(encoding="utf-8", errors="ignore").strip()
+                if existing_target.startswith("releases/"):
+                    temp_file.write_text(f"releases/{release_dir.name}", encoding="utf-8", newline="")
+                    os.replace(temp_file, current)
+                    if pointer.exists():
+                        pointer.unlink()
+                    return "git_symlink_text"
             raise OSError(
                 "cannot create knowledge_store/current symlink on this platform; "
                 "existing current was left untouched; use the explicit release path"
@@ -1684,7 +1695,25 @@ _TERM_ALIASES = {
     "旅行商": ["tsp", "travelingsalesman"],
     "背包": ["knapsack"],
     "车辆路径": ["cvrp", "vehiclerouting"],
+    "节约量": ["savings"],
+    "节约": ["savings"],
+    "并行合并": ["merge", "parallel", "merging"],
+    "并行": ["parallel"],
+    "合并": ["merge", "merging"],
+    "扫描": ["sweep"],
+    "禁忌": ["tabu"],
+    "粒度": ["granular"],
+    "局部搜索": ["localsearch", "local", "2opt", "relocate"],
+    "插入": ["insertion"],
+    "相变": ["phasetransition", "phase", "alpha", "depotstart"],
+    "早返仓": ["earlyreturn", "return0"],
+    "螺旋": ["spiral"],
+    "孤立": ["isolation", "isolated"],
 }
+
+_EXACT_ID_PREFIX_RE = re.compile(
+    r"^(?:problem|method|impl|implementation|evidence|framework|literature|pending|source)-[a-z0-9][a-z0-9._-]*$"
+)
 
 
 def _norm_alias(text: str) -> str:
@@ -1737,43 +1766,199 @@ def _flatten_mapping(value: Any) -> str:
     return " ".join(parts)
 
 
-def search_release(release: Path, query: str, limit: int = 10) -> dict[str, Any]:
+def _entry_matches_filters(
+    entry: Mapping[str, Any],
+    *,
+    problem_family: str | None = None,
+    entry_type: str | None = None,
+    interface: str | None = None,
+    eoh_status: str | None = None,
+) -> bool:
+    if problem_family:
+        if str(entry.get("problem_family") or "").casefold() != problem_family.casefold():
+            return False
+    if entry_type:
+        if str(entry.get("type") or "").casefold() != entry_type.casefold():
+            return False
+    attrs = entry.get("attributes") if isinstance(entry.get("attributes"), Mapping) else {}
+    if interface:
+        iface_norm = _norm_alias(interface)
+        eoh_map = attrs.get("eoh_map") if isinstance(attrs.get("eoh_map"), Mapping) else {}
+        iface_haystack = _norm_alias(
+            " ".join([
+                str(attrs.get("interface") or ""),
+                str(eoh_map.get("entrypoint") or ""),
+                str(eoh_map.get("adapter_kind") or ""),
+            ])
+        )
+        if iface_norm not in iface_haystack:
+            return False
+    if eoh_status:
+        eoh_map = attrs.get("eoh_map") if isinstance(attrs.get("eoh_map"), Mapping) else {}
+        if str(eoh_map.get("status") or "").casefold() != eoh_status.casefold():
+            return False
+    return True
+
+
+def _format_search_hit(entry: Mapping[str, Any], index: Mapping[str, Any], path: Path, score: float) -> dict[str, Any]:
+    return {
+        "id": entry.get("id"),
+        "title": entry.get("title"),
+        "summary": entry.get("summary", ""),
+        "category": entry.get("category"),
+        "problem_family": entry.get("problem_family", "unknown"),
+        "type": entry.get("type"),
+        "version": index.get("release_id"),
+        "release": str(path),
+        "content_sha256": entry.get("content_sha256"),
+        "score": score,
+    }
+
+
+def search_release(
+    release: Path,
+    query: str,
+    limit: int = 10,
+    *,
+    problem_family: str | None = None,
+    entry_type: str | None = None,
+    interface: str | None = None,
+    eoh_status: str | None = None,
+) -> dict[str, Any]:
     path, index = _load_release_index(release)
-    raw_terms = re.findall(r"\w+(?:[-_]\w+)*", query.casefold())
-    terms: list[str] = []
+    alias_map = _search_alias_map(path)
+    norm_family_filter: str | None = None
+    if problem_family:
+        key = _norm_alias(problem_family)
+        norm_family_filter = alias_map.get(key, problem_family.strip().casefold())
+
+    q_strip = str(query or "").strip()
+    if not q_strip:
+        raise ValueError("query must contain at least one non-space term")
+    limit = max(0, int(limit))
+
+    entries = list(index.get("entries", []))
+    by_id = {str(e.get("id")): e for e in entries if e.get("id")}
+
+    # 1. Exact unambiguous entry ID lookup
+    if q_strip in by_id:
+        exact_entry = by_id[q_strip]
+        matched = (
+            [_format_search_hit(exact_entry, index, path, 100.0)]
+            if _entry_matches_filters(
+                exact_entry,
+                problem_family=norm_family_filter,
+                entry_type=entry_type,
+                interface=interface,
+                eoh_status=eoh_status,
+            )
+            else []
+        )
+        return {
+            "query": query,
+            "release_id": index.get("release_id"),
+            "release": str(path),
+            "exact_id_lookup": True,
+            "exact_id_found": bool(matched),
+            "weak_match_only": False,
+            "filters": {
+                "problem_family": norm_family_filter,
+                "entry_type": entry_type,
+                "interface": interface,
+                "eoh_status": eoh_status,
+            },
+            "total": len(matched),
+            "count": min(len(matched), limit),
+            "results": matched[:limit],
+        }
+    if _EXACT_ID_PREFIX_RE.match(q_strip.casefold()):
+        return {
+            "query": query,
+            "release_id": index.get("release_id"),
+            "release": str(path),
+            "exact_id_lookup": True,
+            "exact_id_found": False,
+            "weak_match_only": False,
+            "message": f"no entry with exact id {q_strip!r}",
+            "filters": {
+                "problem_family": norm_family_filter,
+                "entry_type": entry_type,
+                "interface": interface,
+                "eoh_status": eoh_status,
+            },
+            "total": 0,
+            "count": 0,
+            "results": [],
+        }
+
+    # 2. Tokenize ASCII and CJK runs separately so mixed queries like "CVRP节约量" split cleanly
+    raw_terms = re.findall(r"[a-z0-9]+(?:[-_][a-z0-9]+)*|[\u4e00-\u9fff]+", q_strip.casefold())
+    base_terms: list[str] = []
     for raw in raw_terms:
         term = re.sub(r"[-_]", "", raw)
         if len(term) == 1 and term.isascii():
             continue
-        if term not in terms:
-            terms.append(term)
-    alias_map = _search_alias_map(path)
-    expanded: list[str] = []
-    for i, term in enumerate(terms):
-        expanded.append(term)
-        for extra in _TERM_ALIASES.get(term, []):
-            expanded.append(_norm_alias(extra))
-        if term in alias_map:
-            family = alias_map[term]
-            expanded.append(_norm_alias(family))
-            for alias in FAMILY_INFO.get(family, {}).get("aliases") or []:
-                expanded.append(_norm_alias(alias))
-        if i + 1 < len(terms):
-            joined = terms[i] + terms[i + 1]
-            if joined in alias_map:
-                family = alias_map[joined]
-                expanded.append(_norm_alias(family))
-                for alias in FAMILY_INFO.get(family, {}).get("aliases") or []:
-                    expanded.append(_norm_alias(alias))
-    terms = []
-    for term in expanded:
-        if term not in terms:
-            terms.append(term)
-    if not terms:
+        if term not in base_terms:
+            base_terms.append(term)
+    if not base_terms:
         raise ValueError("query must contain at least one non-space term")
-    limit = max(0, int(limit))
+
+    # 3. Partition into family-context groups vs content/method concept groups
+    family_groups: list[set[str]] = []
+    content_groups: list[set[str]] = []
+    consumed: set[int] = set()
+    for i, term in enumerate(base_terms):
+        if i in consumed:
+            continue
+        if i + 1 < len(base_terms):
+            joined = term + base_terms[i + 1]
+            if joined in alias_map:
+                fam = alias_map[joined]
+                fam_syns = {_norm_alias(fam), term, base_terms[i + 1], joined}
+                for a in FAMILY_INFO.get(fam, {}).get("aliases") or []:
+                    fam_syns.add(_norm_alias(a))
+                family_groups.append({s for s in fam_syns if s})
+                consumed.add(i)
+                consumed.add(i + 1)
+                continue
+        if term in alias_map:
+            fam = alias_map[term]
+            fam_syns = {_norm_alias(fam), term}
+            for a in FAMILY_INFO.get(fam, {}).get("aliases") or []:
+                fam_syns.add(_norm_alias(a))
+            for extra in _TERM_ALIASES.get(term, []):
+                fam_syns.add(_norm_alias(extra))
+            family_groups.append({s for s in fam_syns if s})
+            consumed.add(i)
+            continue
+        # Content / method concept group (expand exact or substring Chinese aliases)
+        syns = {term}
+        if term in _TERM_ALIASES:
+            for extra in _TERM_ALIASES[term]:
+                syns.add(_norm_alias(extra))
+        elif not term.isascii():
+            for alias_k, alias_vals in _TERM_ALIASES.items():
+                if not alias_k.isascii() and alias_k in term:
+                    syns.add(alias_k)
+                    for extra in alias_vals:
+                        syns.add(_norm_alias(extra))
+        content_groups.append({s for s in syns if s})
+        consumed.add(i)
+
+    all_groups = family_groups + content_groups
+    has_family_and_content = bool(family_groups) and bool(content_groups)
+
     results = []
-    for entry in index.get("entries", []):
+    weak_family_hits = 0
+    for entry in entries:
+        if not _entry_matches_filters(
+            entry,
+            problem_family=norm_family_filter,
+            entry_type=entry_type,
+            interface=interface,
+            eoh_status=eoh_status,
+        ):
+            continue
         field_texts: dict[str, str] = {}
         for key in _SEARCH_FIELD_WEIGHTS:
             value = entry.get(key)
@@ -1787,45 +1972,65 @@ def search_release(release: Path, query: str, limit: int = 10) -> dict[str, Any]
             else:
                 value = str(value or "")
             field_texts[key] = re.sub(r"[-_]", "", value.casefold())
+
+        matched_family_groups = 0
+        matched_content_groups = 0
         field_hits = 0.0
-        matched_terms: set[str] = set()
-        for key, weight in _SEARCH_FIELD_WEIGHTS.items():
-            hits = sum(1 for term in terms if term in field_texts[key])
-            if hits:
-                field_hits += weight * hits
-                for term in terms:
-                    if term in field_texts[key]:
-                        matched_terms.add(term)
-        if not matched_terms:
+        for g_idx, group in enumerate(all_groups):
+            group_matched = False
+            for key, weight in _SEARCH_FIELD_WEIGHTS.items():
+                txt = field_texts[key]
+                if any(syn in txt for syn in group):
+                    field_hits += weight
+                    group_matched = True
+            if group_matched:
+                if g_idx < len(family_groups):
+                    matched_family_groups += 1
+                else:
+                    matched_content_groups += 1
+
+        matched_total = matched_family_groups + matched_content_groups
+        if matched_total == 0:
             continue
-        coverage = len(matched_terms) / len(terms)
+        if has_family_and_content and matched_content_groups == 0:
+            weak_family_hits += 1
+            continue
+
+        coverage = matched_total / len(all_groups)
+        # Boost entries that match content terms in title/id/tags over body-only mentions
         score = round(
             coverage
-            * (1 + field_hits / (len(terms) * sum(_SEARCH_FIELD_WEIGHTS.values())))
+            * (1 + field_hits / (len(all_groups) * sum(_SEARCH_FIELD_WEIGHTS.values())))
             * _TYPE_WEIGHT.get(str(entry.get("type") or ""), 1.0),
             4,
         )
-        results.append({
-            "id": entry.get("id"),
-            "title": entry.get("title"),
-            "summary": entry.get("summary", ""),
-            "category": entry.get("category"),
-            "problem_family": entry.get("problem_family", "unknown"),
-            "type": entry.get("type"),
-            "version": index.get("release_id"),
-            "release": str(path),
-            "content_sha256": entry.get("content_sha256"),
-            "score": score,
-        })
+        results.append(_format_search_hit(entry, index, path, score))
+
     results.sort(key=lambda item: (-item["score"], item["title"] or item["id"] or ""))
-    return {
+    weak_only = (not results) and weak_family_hits > 0
+    payload: dict[str, Any] = {
         "query": query,
         "release_id": index.get("release_id"),
         "release": str(path),
+        "exact_id_lookup": False,
+        "weak_match_only": weak_only,
+        "filters": {
+            "problem_family": norm_family_filter,
+            "entry_type": entry_type,
+            "interface": interface,
+            "eoh_status": eoh_status,
+        },
         "total": len(results),
         "count": min(len(results), limit),
         "results": results[:limit],
     }
+    if weak_only:
+        payload["weak_match_count"] = weak_family_hits
+        payload["message"] = (
+            "only problem-family context matched; no method/content terms matched "
+            f"({weak_family_hits} family-only entries suppressed)"
+        )
+    return payload
 
 
 def read_entry(release: Path, entry_id: str) -> dict[str, Any]:

@@ -4,7 +4,7 @@
 
 | 路线 | 入口 | 规范 |
 |---|---|---|
-| CO / 官方 EoH | [algorithm-optimization Skill](../skills/algorithm-optimization/SKILL.md) | [CLI](cli-contract.md)、[协议](protocol.md)、[SQLite](sqlite-schema.md) |
+| CO / 官方 EoH | [algorithm-optimization Skill](../skills/algorithm-optimization/SKILL.md) | [CLI](cli-contract.md)、[协议](protocol.md)、[SQLite](sqlite-schema.md)、[基准与问题目录](benchmarks_and_problems.md) |
 | 离线知识库 | [知识库说明](knowledge_base.md) | [实现说明](kb_construct_implementation.md) |
 
 ## 设计与计划

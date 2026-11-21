@@ -1,0 +1,76 @@
+{
+  "id": "method-cvrp-s2-r5-spiral",
+  "type": "method",
+  "title": "CVRP state-only inward spiral with angular coherence and adaptive early return (R5 / s2_r5_spiral)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "r5",
+    "s2-r5-spiral",
+    "construct",
+    "early-return",
+    "spiral",
+    "scale-invariant",
+    "select_next_node"
+  ],
+  "status": "reviewed",
+  "summary": "Strictly scale-invariant CVRP select_next_node heuristic combining two-phase depot start, state-only inward spiral alpha_eff, elongation rho, cos(theta_0), and adaptive early depot return; selected on ana72, reducing P0-120 total tour length by 4.92% [4.22%, 5.67%] (109/120 wins) vs paired control.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean route length",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "selection_protocol": "ana72 offline selection (zero P0 peeking)",
+    "experimental_conditions": {
+      "run_dir": "experiments/cvrp_midterm/runs/s2_autonomous_math_r8",
+      "round": 5,
+      "candidate_id": "candidate_2",
+      "code_sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587",
+      "eoh_requests_per_arm": 48,
+      "token_overhead_vs_control_pct": 35.0,
+      "external_analysis_cost": "separate external Coding Agent round analysis",
+      "p0_120_mean": 19.6092,
+      "p0_120_vs_control_total_red_pct": 4.92,
+      "p0_120_vs_control_ci95_pct": [
+        4.22,
+        5.67
+      ],
+      "p0_120_vs_control_mean_per_instance_rel_red_pct": 5.66,
+      "p0_120_wins_vs_control": 109,
+      "shared6_mean": 10.2714,
+      "shared6_early_returns": 17,
+      "scale_spread_pct": 0.0,
+      "hetero_288_total": 7211.13,
+      "p0_vs_cw_merge_pct_over_cw": 12.98,
+      "hetero_288_vs_cw_merge_pct_over_cw": 9.1
+    },
+    "artifact_refs": [
+      {
+        "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r5_spiral.py",
+        "sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121"
+  ],
+  "evidence_refs": [
+    "evaluation:evidence-cvrp-depot-start-phase-h003;suite=P0-120+hetero-288;metric=total_tour_length;budget=48_requests_8_rounds"
+  ],
+  "code_refs": [],
+  "content_sha256": "b35382c0f8e9e1d3d1a7108ac37598758a24644b763bee1958f1854c4297e6eb"
+}

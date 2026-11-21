@@ -22,7 +22,9 @@ skills/algorithm-optimization/**/*.yaml text eol=lf
 # Frozen benchmark manifests are hashed as LF bytes on every platform.
 benchmarks/eohs_v1/**/*.json text eol=lf
 
-# Immutable KB releases retain their hashed bytes; exported JSON evidence is
-# normalized as LF text so its checked-in representation is stable everywhere.
+# Immutable KB releases retain their hashed bytes; workspace entries and exported
+# JSON evidence are normalized as LF text so content_sha256 is stable everywhere.
+knowledge_workspace/entries/*.md text eol=lf
+knowledge_workspace/entries/*.json text eol=lf
 knowledge_store/releases/** -text
 reports/evidence/** text eol=lf

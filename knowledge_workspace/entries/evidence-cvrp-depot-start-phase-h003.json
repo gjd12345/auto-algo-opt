@@ -1,0 +1,70 @@
+{
+  "id": "evidence-cvrp-depot-start-phase-h003",
+  "type": "evidence",
+  "title": "CVRP depot-start alpha=1 ranking switch and counterfactual swap (H-003)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "h-003",
+    "depot-start",
+    "alpha-switch",
+    "counterfactual",
+    "p0-120",
+    "ana72"
+  ],
+  "status": "reviewed",
+  "summary": "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; swapping only V0's depot-start step reduces P0-120 total tour length by 7.96% (95% paired Bootstrap CI [6.88%, 8.98%], 94/120 wins).",
+  "attributes": {
+    "hypothesis_id": "H-003",
+    "interface": "select_next_node",
+    "suites": {
+      "ana72": {
+        "seed": 20261123,
+        "instances": 72,
+        "sweep_0.99_to_1.01": [
+          20.3165,
+          18.9302
+        ]
+      },
+      "P0-120": {
+        "instances": 120,
+        "v0_native_mean": 22.391,
+        "v0_decoupled_mean": 20.6081,
+        "total_length_reduction_pct": 7.96,
+        "bootstrap_ci95_pct": [
+          6.88,
+          8.98
+        ],
+        "wins": 94
+      }
+    },
+    "artifact_refs": [
+      {
+        "path": "experiments/cvrp_midterm/analysis/boundary_analysis.py"
+      },
+      {
+        "path": "experiments/cvrp_midterm/analysis/boundary_analysis.json"
+      },
+      {
+        "path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md;suite=P0-120+ana72;metric=total_tour_length;budget=offline_counterfactual"
+  ],
+  "code_refs": [],
+  "content_sha256": "d53db40595181da1d7266ebbcded3062e0e27b610e6554a199967e81669c42f1"
+}

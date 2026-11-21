@@ -64,8 +64,8 @@ def render_alpha_boundary() -> Path:
 
     w, h = 980, 400
     body: list[str] = [
-        '<text x="24" y="28" class="title">H-003: Depot-Start Phase Transition (alpha=1) &amp; Counterfactual Depot-Start Swaps (72 multi-scale instances)</text>',
-        '<text x="24" y="45" class="sub">Left: s_alpha(i,j) = d(i,j) - alpha*d(0,j) flips sign at i=0 (alpha=1), dropping route length -6.82% discontinuously. Right: swapping ONLY i=0 on frozen rules.</text>',
+        '<text x="24" y="28" class="title">H-003: Depot-Start Ranking Switch (alpha=1) &amp; Counterfactual Depot-Start Swaps (ana72, 72 instances)</text>',
+        '<text x="24" y="45" class="sub">Left: s_alpha(0,j)=(1-alpha)*d(0,j) switches ranking at alpha=1 (ana72 pure-distance sweep: 20.32 -&gt; 18.93). Right: swapping ONLY i=0.</text>',
     ]
 
     # Left panel: alpha sweep curve
@@ -290,8 +290,8 @@ def render_multiscale_complementarity() -> Path:
 
     w, h = 980, 390
     body: list[str] = [
-        '<text x="24" y="28" class="title">Stage 2 Track B: Multi-Scale Complementarity Contraction &amp; Gap to Clarke-Wright Merge (288 instances)</text>',
-        '<text x="24" y="45" class="sub">Left: VBS-SBS complementarity gap shrinks strongly with problem size n=50-&gt;100-&gt;200. Right: % gap above parallel Clarke-Wright merge.</text>',
+        '<text x="24" y="28" class="title">Stage 2 Track B: Multi-Scale Complementarity Gap Narrowing &amp; Gap to Clarke-Wright Merge (hetero-288)</text>',
+        '<text x="24" y="45" class="sub">Left: in tested distributions &amp; pools, VBS-SBS gap narrows across n=50-&gt;100-&gt;200. Right: % length above parallel CW merge (CW denom).</text>',
     ]
 
     # Left panel: VBS-SBS gap (%) by scale

@@ -297,3 +297,142 @@ def test_search_2opt_normalization(tmp_path: Path) -> None:
     ])
     result = search_release(fixture["release"], "2opt", 2)
     assert result["results"][0]["id"] == "neighbor-2opt"
+
+
+def test_search_exact_id_and_unknown_id_lookup(tmp_path: Path) -> None:
+    fixture = _search_fixture(tmp_path, [
+        {
+            "id": "method-lit-cvrp-local-granular-tabu-search",
+            "title": "Granular Tabu Search",
+            "type": "method",
+            "category": "method",
+            "problem_family": "cvrp",
+            "tags": ["cvrp", "granular", "tabu"],
+            "summary": "Toth and Vigo GTS.",
+            "search_text": "granular tabu",
+            "content_sha256": "a" * 64,
+        },
+    ])
+    hit = search_release(fixture["release"], "method-lit-cvrp-local-granular-tabu-search", 5)
+    assert hit["exact_id_lookup"] is True
+    assert hit["exact_id_found"] is True
+    assert [r["id"] for r in hit["results"]] == ["method-lit-cvrp-local-granular-tabu-search"]
+
+    miss = search_release(fixture["release"], "method-cvrp-granular-tabu", 5)
+    assert miss["exact_id_lookup"] is True
+    assert miss["exact_id_found"] is False
+    assert miss["total"] == 0
+    assert miss["results"] == []
+
+
+def test_search_family_context_weak_match_and_filters(tmp_path: Path) -> None:
+    fixture = _search_fixture(tmp_path, [
+        {
+            "id": "method-lit-cvrp-construct-clarke-wright-savings-merge",
+            "title": "Clarke-Wright savings merge",
+            "type": "method",
+            "category": "method",
+            "problem_family": "cvrp",
+            "tags": ["cvrp", "literature"],
+            "summary": "Original savings procedure: merge singleton depot routes by ranked savings.",
+            "search_text": "Parallel Clarke-Wright savings merge.",
+            "attributes": {"eoh_map": {"status": "not_mappable", "adapter_kind": "not_mappable"}},
+            "content_sha256": "a" * 64,
+        },
+        {
+            "id": "method-cvrp-savings-next-node",
+            "title": "Savings formula used as a next-node score",
+            "type": "method",
+            "category": "method",
+            "problem_family": "cvrp",
+            "tags": ["cvrp", "savings", "construct"],
+            "summary": "Greedy next-node savings score.",
+            "search_text": "The formula is Clarke-Wright savings, not full merge.",
+            "attributes": {"interface": "select_next_node", "eoh_map": {"status": "possible"}},
+            "content_sha256": "b" * 64,
+        },
+    ])
+    cw = search_release(fixture["release"], "Clarke–Wright 并行合并", 5)
+    assert cw["results"][0]["id"] == "method-lit-cvrp-construct-clarke-wright-savings-merge"
+
+    weak = search_release(fixture["release"], "CVRP 量子退火不存在方法", 5)
+    assert weak["total"] == 0
+    assert weak["results"] == []
+    assert weak["weak_match_only"] is True
+
+    filtered = search_release(
+        fixture["release"],
+        "节约量",
+        5,
+        problem_family="CVRP",
+        entry_type="method",
+        interface="select_next_node",
+    )
+    assert [r["id"] for r in filtered["results"]] == ["method-cvrp-savings-next-node"]
+
+    # Negative mention in body/not_the_original must NOT satisfy --interface filter
+    neg_dir = tmp_path / "neg"
+    neg_dir.mkdir()
+    cw_only_body = _search_fixture(neg_dir, [
+        {
+            "id": "method-lit-cw",
+            "title": "Clarke-Wright savings merge",
+            "type": "method",
+            "category": "method",
+            "problem_family": "cvrp",
+            "tags": ["cvrp", "savings"],
+            "summary": "Not select_next_node.",
+            "search_text": "Full CW merge is not select_next_node.",
+            "attributes": {
+                "not_the_original": "Full CW merge is not select_next_node.",
+                "eoh_map": {"status": "not_mappable", "adapter_kind": "not_mappable"},
+            },
+            "content_sha256": "c" * 64,
+        },
+    ])
+    neg_res = search_release(cw_only_body["release"], "节约量", 5, interface="select_next_node")
+    assert neg_res["total"] == 0
+
+
+def test_repo_workspace_and_published_releases_audit_contracts() -> None:
+    import hashlib
+    import subprocess
+    from knowledge_tools.core import read_entry, validate_release, validate_workspace
+
+    repo = Path(__file__).resolve().parents[2]
+    ws = validate_workspace(repo / "knowledge_workspace")
+    assert ws["ok"] is True, ws["errors"][:10]
+
+    v0 = validate_release(repo / "knowledge_store/releases/20260914-main-d6433549-kb-v0")
+    assert v0["ok"] is True, v0["errors"][:10]
+
+    cur = validate_release(repo / "knowledge_store/current")
+    assert cur["ok"] is True, cur["errors"][:10]
+
+    # Exact lookup of H-003, R5, and fixed granular-tabu ID
+    for eid in (
+        "method-lit-cvrp-local-granular-tabu-search",
+        "evidence-cvrp-depot-start-phase-h003",
+        "method-cvrp-s2-r5-spiral",
+    ):
+        item = read_entry(repo / "knowledge_store/current", eid)
+        assert item["id"] == eid
+
+    cw = search_release(repo / "knowledge_store/current", "Clarke–Wright 并行合并", 3)
+    assert cw["results"][0]["id"] == "method-lit-cvrp-construct-clarke-wright-savings-merge"
+
+    unknown_id = search_release(repo / "knowledge_store/current", "evidence-unknown-study-999", 3)
+    assert unknown_id["total"] == 0
+    assert unknown_id["results"] == []
+
+    # Verify all 7 CVRP historical implementation code_refs resolve at pinned commit d6433549
+    verified = 0
+    for meta_path in sorted((repo / "knowledge_workspace/entries").glob("impl-cvrp-*.json")):
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        for ref in meta.get("code_refs", []):
+            blob = subprocess.check_output(
+                ["git", "-C", str(repo), "show", f"d6433549dea055aa3a6ef460686198b3d1888234:{ref['path']}"]
+            )
+            assert hashlib.sha256(blob).hexdigest() == ref["sha256"]
+            verified += 1
+    assert verified == 7

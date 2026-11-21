@@ -54,6 +54,10 @@ def _parser() -> argparse.ArgumentParser:
     search.add_argument("--release", type=Path, required=True)
     search.add_argument("--query", required=True)
     search.add_argument("--limit", type=int, default=10)
+    search.add_argument("--family", help="filter by problem family (e.g. cvrp, tsp, obp)")
+    search.add_argument("--type", dest="entry_type", help="filter by entry type (e.g. method, implementation, evidence)")
+    search.add_argument("--interface", help="filter by interface string (e.g. select_next_node)")
+    search.add_argument("--eoh-status", help="filter by attributes.eoh_map.status (e.g. possible, not_mappable)")
 
     read = sub.add_parser("read", help="read one entry from a fixed release")
     read.add_argument("--release", type=Path, required=True)
@@ -140,7 +144,15 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "build":
             result = build_release(args.workspace, args.store, args.release_id)
         elif args.command == "search":
-            result = search_release(args.release, args.query, args.limit)
+            result = search_release(
+                args.release,
+                args.query,
+                args.limit,
+                problem_family=args.family,
+                entry_type=args.entry_type,
+                interface=args.interface,
+                eoh_status=args.eoh_status,
+            )
         elif args.command == "read":
             result = read_entry(args.release, args.id)
         elif args.command == "validate-release":
