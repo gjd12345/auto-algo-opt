@@ -48,6 +48,7 @@ def check(path: Path) -> list[str]:
 def numbers_match() -> list[str]:
     problems: list[str] = []
     summary = json.loads((SELECTION / "summary.json").read_text(encoding="utf-8"))
+    selectors = json.loads((SELECTION / "selectors.json").read_text(encoding="utf-8"))
     audit = json.loads(AUDIT.read_text(encoding="utf-8"))
 
     svg = (FIG / "portfolio_vbs_sbs.svg").read_text(encoding="utf-8")
@@ -58,17 +59,27 @@ def numbers_match() -> list[str]:
             if value not in labels:
                 problems.append(f"portfolio_vbs_sbs.svg: {pool}.{key}={value} not rendered")
 
+    svg = (FIG / "selector_gain.svg").read_text(encoding="utf-8")
+    for pool in ("core", "extended_c", "full_pool"):
+        if pool not in selectors["portfolios"]:
+            continue
+        for item in selectors["portfolios"][pool]["selectors"]:
+            value = f"{100.0 * item['gain_vs_fixed']:+.2f}"
+            if value not in svg:
+                problems.append(f"selector_gain.svg: {pool}.{item['selector']}={value} missing")
+
     svg = (FIG / "scale_term_growth.svg").read_text(encoding="utf-8")
-    for key in ("band_total_vs_base", "demand_term_vs_base", "cap_term_vs_base"):
+    for key in ("band_total_vs_base", "demand_term_vs_base", "cap_term_when_gated_vs_base"):
         value = f"{audit['exponents'][key]:+.2f}"
         if value not in svg:
             problems.append(f"scale_term_growth.svg: exponent {key}={value} not in subtitle")
 
     svg = (FIG / "rule_mean_runtime.svg").read_text(encoding="utf-8")
-    for rule, value in summary["mean_runtime_s"].items():
+    solve_t = summary.get("mean_solve_s") or summary["mean_runtime_s"]
+    for rule, value in solve_t.items():
         text = f"{value*1000:.2f} ms"
         if text not in svg:
-            problems.append(f"rule_mean_runtime.svg: {rule} runtime {text} missing")
+            problems.append(f"rule_mean_runtime.svg: {rule} solve time {text} missing")
     return problems
 
 

@@ -229,31 +229,34 @@ def main() -> int:
 
     scales = [float(k) for k in audit["pooled_by_scale"]]
     keys = [f"{s:g}" for s in scales]
+    gate_text = " -> ".join(f"{100*audit['pooled_by_scale'][k]['gate_rate']:.1f}%" for k in keys)
     log_line_chart(
         OUT / "scale_term_growth.svg",
-        "How fast each non-equivariant term grows as the instance shrinks",
-        "ratio of term magnitude to the base score it competes with, double-log axes",
+        "Scale-breaking terms in frozen C (gate x payload, 300 steps)",
+        f"ratio to median |base| on double-log axes; gate rate (mask>=2 & cur!=0): {gate_text}",
         scales,
         [("band (relative + absolute)", [audit["pooled_by_scale"][k]["band_total_vs_base_median"] for k in keys]),
          ("-1e-6 * demand", [audit["pooled_by_scale"][k]["demand_term_vs_base_median"] for k in keys]),
-         ("cap_term (capacity gap / distance)", [audit["pooled_by_scale"][k]["cap_term_vs_base_median"] for k in keys])],
+         ("cap_term (when gated)", [audit["pooled_by_scale"][k]["cap_term_when_gated_vs_base_median"] for k in keys])],
         "term magnitude / median |base|  (fitted exponents "
         f"band {audit['exponents']['band_total_vs_base']:+.2f}, "
         f"demand {audit['exponents']['demand_term_vs_base']:+.2f}, "
-        f"cap {audit['exponents']['cap_term_vs_base']:+.2f})")
+        f"cap {audit['exponents']['cap_term_when_gated_vs_base']:+.2f})",
+        floor=1e-9)
 
     rules = sorted(summary["portfolio_mean"], key=lambda r: summary["portfolio_mean"][r])
-    runtime = summary["mean_runtime_s"]
+    solve_t = summary.get("mean_solve_s") or summary["mean_runtime_s"]
+    full_t = summary["mean_runtime_s"]
     bar_chart(
         OUT / "rule_mean_runtime.svg",
-        "Mean objective and mean evaluation cost per rule",
-        "bars = mean objective over 96 instances (lower is better); the second line under each rule is its mean seconds per evaluation",
-        [f"{rule}\n{runtime[rule]*1000:.2f} ms" for rule in rules],
+        "Mean objective and pure solve time per rule (96 instances)",
+        "bars = mean objective (lower is better); second line = pre-compiled pure solve ms (excludes AST/compile)",
+        [f"{rule}\n{solve_t[rule]*1000:.2f} ms" for rule in rules],
         [("mean objective", [summary["portfolio_mean"][r] for r in rules])],
         "mean objective", fmt="{:.2f}",
         footnotes=[
-            "Frozen rules: a (2.22 ms), b (2.33 ms), c (2.62 ms) -- C is the slowest and only 6th on objective.",
-            "Runtime is the wall clock of one frozen evaluation call, suite construction included.",
+            f"Pure solve ms: a={solve_t['a']*1000:.2f}, b={solve_t['b']*1000:.2f}, c={solve_t['c']*1000:.2f}, savings={solve_t['savings']*1000:.2f} (full eval incl. AST: c={full_t['c']*1000:.2f} ms).",
+            "C is 6th on mean objective; B is slightly faster on objective than savings, while pure solve speed is ~1.1 ms for both B and C.",
         ])
 
     index = OUT / "index.html"

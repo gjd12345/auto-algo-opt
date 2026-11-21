@@ -37,10 +37,12 @@ PAIR_LABEL = {
 }
 SELECTOR_ORDER = (
     "fixed_best_sbs",
+    "cluster_stump_loo",
     "knn1_loo",
     "ridge_loo",
     "pairwise_loo",
     "pairwise_loo_unweighted",
+    "cluster_stump_loro",
     "ridge_loro",
     "pairwise_loro",
     "pairwise_loro_unweighted",
@@ -117,18 +119,21 @@ def main() -> int:
     blocks.append(markdown_table(["rule", "source", "sha256", "bytes"], rows) + "\n")
 
     blocks.append("## Rule portfolio: objective, rank and cost\n")
+    solve_ms = summary.get("mean_solve_s") or summary["mean_runtime_s"]
     rows = [[name, f"{value:.4f}", f"{summary['mean_rank'][name]:.4f}",
+             f"{solve_ms[name] * 1000:.3f} ms",
              f"{summary['mean_runtime_s'][name] * 1000:.2f} ms",
              str(portfolios[best_pool]["oracle_counts"].get(name, 0))]
             for name, value in sorted(summary["portfolio_mean"].items(), key=lambda kv: kv[1])]
     blocks.append(markdown_table(
-        ["rule", "mean objective", "mean rank", "mean evaluation cost", f"oracle wins ({best_pool})"],
+        ["rule", "mean objective", "mean rank", "pure solve time", "full eval cost", f"oracle wins ({best_pool})"],
         rows) + "\n")
     blocks.append(
         "Mean rank is the average position of a rule inside an instance, so it is insensitive "
-        "to the scale of the objective.  `mean evaluation cost` is the wall clock of one frozen "
-        "evaluation call, suite construction included: it compares rules against each other, it "
-        "is not an absolute speed.\n"
+        "to the scale of the objective.  `pure solve time` measures the pre-compiled rule inside "
+        "the CVRP evaluator loop (best of 3 repeats per instance, excluding AST parse/compile/hash); "
+        "`full eval cost` includes single-instance AST validation and suite hashing (which accounts "
+        "for ~45–53% of the larger frozen rules' full-call wall time).\n"
     )
 
     blocks.append("## Portfolio: complementarity after adding the frozen rules\n")
@@ -184,21 +189,29 @@ def main() -> int:
             item = picked.get(name)
             if item is None:
                 continue
+            ci = item.get("gain_ci95")
+            ci_str = f"[{signed_pct(ci[0])}, {signed_pct(ci[1])}]" if ci else "-"
+            p_str = f"{item['p_boot_one_sided']:.4f}" if "p_boot_one_sided" in item else "-"
+            wtl = item.get("wtl_vs_fixed")
+            wtl_str = f"{wtl['wins']}/{wtl['ties']}/{wtl['losses']}" if wtl else "-"
             rows.append([PORTFOLIO_LABEL.get(pool, pool), name, f"{item['total_objective']:.4f}",
                          pct(item["gap_to_vbs"]), signed_pct(item["gain_vs_fixed"]),
+                         ci_str, p_str, wtl_str,
                          pct(item["mean_regret"]), pct(item["worst_regret"]), picks(item)])
     blocks.append(markdown_table(
         ["portfolio", "selector", "total objective", "gap to VBS", "gain vs fixed",
-         "mean regret", "worst regret", "picks"], rows) + "\n")
+         "95% CI", "p_boot", "W/T/L", "mean regret", "worst regret", "picks"], rows) + "\n")
     best_block = by_selector(sel_portfolios[best_pool])
     best_learned = max((item for name, item in best_block.items() if name != "fixed_best_sbs"),
                        key=lambda item: item["gain_vs_fixed"])
     blocks.append(
         f"`gain vs fixed` is the objective saved against committing to the single best rule of "
-        f"that portfolio.  In the A/B/C pool the best learned selector is "
-        f"**{best_learned['selector']}** at {signed_pct(best_learned['gain_vs_fixed'])}, while "
-        "every selector in the older C-only pool still loses.  The result therefore depends on "
-        "the pool being broad enough for the pairwise signal to have something to separate.\n"
+        f"that portfolio (10,000-draw paired bootstrap 95% CI and one-sided p-value).  In the "
+        f"A/B/C pool the highest point estimate is **{best_learned['selector']}** at "
+        f"{signed_pct(best_learned['gain_vs_fixed'])}, while every selector in the older C-only "
+        "pool still loses.  Crucially, the 1-feature `cluster_stump` matches or beats all 8-feature "
+        "learners because the dominant complementarity is spatial (`uniform -> A`, `clustered -> B`), "
+        "and the 8-feature learners' 95% CIs still cross zero.\n"
     )
     blocks.append(
         "The cost-sensitive variant (`pairwise_loo`) weights each pairwise observation by "
@@ -252,7 +265,7 @@ def main() -> int:
         ("rule_mean_runtime.svg", "mean objective with the measured evaluation cost"),
         ("scale_term_growth.svg", "scale sensitivity of rule C's three additive terms"),
     ):
-        blocks.append(f"- `{FIGURES.relative_to(OUT.parent.parent.parent)}/{name}` — {caption}")
+        blocks.append(f"- `{FIGURES.relative_to(OUT.parent.parent.parent).as_posix()}/{name}` — {caption}")
     blocks.append("")
 
     if (V2 / "summary.json").exists():
@@ -273,10 +286,10 @@ def main() -> int:
         blocks.append(markdown_table(
             ["variant", "VBS", "SBS", "SBS rule", "gap or gain"], rows) + "\n")
         blocks.append(
-            f"The v2 numbers came from the double-counted savings formula; the v2 ridge gain "
-            f"({signed_pct(v2_ridge)}) was measured against a pool in which the "
-            "learned selector could only lose, because the fixed rule already was the best rule "
-            "on almost every instance.\n"
+            f"Note: the double-counted savings bug belonged to **revision 1** (archived in `v1_20261121/`); "
+            f"**revision 2** already used the corrected savings formula. The v2 ridge gain "
+            f"({signed_pct(v2_ridge)}) was negative because `savings` dominated all 8 cells in the "
+            "4-rule pool, leaving no regime complementarity for a learner to exploit.\n"
         )
 
     check = summary["rule_check"]
@@ -287,8 +300,9 @@ def main() -> int:
     blocks.append(f"Rule definition: `{check['rule']}`.\n")
 
     text = "\n".join(blocks) + "\n"
+    (OUT / "RESULTS_v4.md").write_text(text, encoding="utf-8", newline="\n")
     (OUT / "RESULTS_v3.md").write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote {OUT / 'RESULTS_v3.md'} ({len(text)} chars)")
+    print(f"wrote {OUT / 'RESULTS_v4.md'} and synced RESULTS_v3.md ({len(text)} chars)")
     return 0
 
 

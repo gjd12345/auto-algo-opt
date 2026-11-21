@@ -122,7 +122,63 @@ def pairwise_pick(train_x: np.ndarray, train_y: np.ndarray, test_x: np.ndarray,
     return int(best[int(np.argmin(fallback[best]))])
 
 
+def cluster_stump_pick(train_x: np.ndarray, train_y: np.ndarray, test_x: np.ndarray,
+                       feature_index: int = 3) -> int:
+    """Interpretable 1-feature decision stump on ``cluster_tendency`` (index 3).
+
+    Finds the single threshold t minimizing total training objective when picking
+    the best left rule (x <= t) and best right rule (x > t), strictly inside the
+    training fold (zero leakage).
+    """
+    vals = train_x[:, feature_index]
+    order = np.argsort(vals)
+    s_vals = vals[order]
+    s_y = train_y[order]
+    n_tr = s_y.shape[0]
+    cum_left = np.cumsum(s_y, axis=0)
+    total = cum_left[-1]
+    best_obj = float("inf")
+    best_t = float(np.median(vals))
+    best_left = int(total.argmin())
+    best_right = best_left
+    for split in range(4, n_tr - 4):
+        if s_vals[split] == s_vals[split - 1]:
+            continue
+        left_tot = cum_left[split - 1]
+        right_tot = total - left_tot
+        li = int(left_tot.argmin())
+        ri = int(right_tot.argmin())
+        cand = float(left_tot[li] + right_tot[ri])
+        if cand < best_obj:
+            best_obj = cand
+            best_t = 0.5 * float(s_vals[split - 1] + s_vals[split])
+            best_left, best_right = li, ri
+    return best_left if float(test_x[0, feature_index]) <= best_t else best_right
+
+
+def _paired_bootstrap(chosen: np.ndarray, fixed: np.ndarray, draws: int = 10000,
+                      seed: int = 42) -> dict:
+    n = chosen.shape[0]
+    diff = fixed - chosen  # positive = selector beats fixed SBS
+    wins = int(np.sum(diff > 1e-12))
+    ties = int(np.sum(np.abs(diff) <= 1e-12))
+    losses = int(np.sum(diff < -1e-12))
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, n, size=(draws, n))
+    boot_fixed = fixed[idx].sum(axis=1)
+    boot_chosen = chosen[idx].sum(axis=1)
+    boot_gains = (boot_fixed - boot_chosen) / boot_fixed
+    lo, hi = np.percentile(boot_gains, [2.5, 97.5])
+    p_one_sided = float(np.mean(boot_gains <= 0.0))
+    return {
+        "gain_ci95": [round(float(lo), 6), round(float(hi), 6)],
+        "p_boot_one_sided": round(p_one_sided, 4),
+        "wtl_vs_fixed": {"wins": wins, "ties": ties, "losses": losses},
+    }
+
+
 def summarize(name: str, picks, Y, names, cells: list[str], fixed_total: float,
+              fixed_vec: np.ndarray | None = None,
               extra: dict | None = None) -> dict:
     chosen = np.array([Y[i, j] for i, j in enumerate(picks)], dtype=float)
     oracle = Y.min(axis=1)
@@ -147,6 +203,8 @@ def summarize(name: str, picks, Y, names, cells: list[str], fixed_total: float,
             for cell in sorted(set(cells))
         },
     }
+    if fixed_vec is not None and name != "fixed_best_sbs":
+        out.update(_paired_bootstrap(chosen, fixed_vec))
     if extra:
         out.update(extra)
     return out
@@ -158,15 +216,17 @@ def run(portfolio: str) -> dict:
     k = len(names)
     vbs = float(Y.min(axis=1).sum())
     sbs_pick = int(Y.sum(axis=0).argmin())
-    fixed_total = float(Y[:, sbs_pick].sum())
+    fixed_vec = Y[:, sbs_pick].copy()
+    fixed_total = float(fixed_vec.sum())
     results = [
         summarize("fixed_best_sbs", [sbs_pick] * n, Y, names, cells, fixed_total,
-                  {"algorithm": names[sbs_pick], "design": "none"})
+                  fixed_vec=fixed_vec,
+                  extra={"algorithm": names[sbs_pick], "design": "none"})
     ]
 
     folds = list(range(n))
 
-    picks_nn, picks_ridge, picks_pair, picks_pair_plain = [], [], [], []
+    picks_nn, picks_ridge, picks_pair, picks_pair_plain, picks_stump = [], [], [], [], []
     for i in folds:
         mask = np.arange(n) != i
         train_x, test_x = standardize(X[mask], X[i:i + 1])
@@ -180,24 +240,36 @@ def run(portfolio: str) -> dict:
         picks_pair_plain.append(
             pairwise_pick(train_x, Y[mask], test_x, pred, weighted=False)
         )
+        picks_stump.append(cluster_stump_pick(X[mask], Y[mask], X[i:i + 1]))
 
+    results.append(summarize("cluster_stump_loo", picks_stump, Y, names, cells, fixed_total,
+                             fixed_vec=fixed_vec,
+                             extra={"design": "1-feature threshold split on cluster_tendency fit inside fold"}))
     results.append(summarize("knn1_loo", picks_nn, Y, names, cells, fixed_total,
-                             {"design": "1-nearest-neighbour on pre-solve features"}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "1-nearest-neighbour on pre-solve features"}))
     results.append(summarize("ridge_loo", picks_ridge, Y, names, cells, fixed_total,
-                             {"design": "one ridge per rule, argmin of predictions"}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "one ridge per rule, argmin of predictions"}))
     results.append(summarize("pairwise_loo", picks_pair, Y, names, cells, fixed_total,
-                             {"design": "one cost-sensitive ridge per pair (weight |c_a - c_b|) on the win sign, vote by pairwise wins"}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "one cost-sensitive ridge per pair (weight |c_a - c_b|) on the win sign, vote by pairwise wins"}))
     results.append(summarize("pairwise_loo_unweighted", picks_pair_plain, Y, names, cells, fixed_total,
-                             {"design": "same pairwise vote with unweighted signs (revision 3 recipe), for the cost-sensitivity ablation"}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "same pairwise vote with unweighted signs (revision 3 recipe), for the cost-sensitivity ablation"}))
 
-    loro_picks = {"ridge": [0] * n, "pairwise": [0] * n, "pairwise_plain": [0] * n}
-    loro_cells = {"ridge": {}, "pairwise": {}, "pairwise_plain": {}}
+    loro_picks = {"stump": [0] * n, "ridge": [0] * n, "pairwise": [0] * n, "pairwise_plain": [0] * n}
+    loro_cells = {"stump": {}, "ridge": {}, "pairwise": {}, "pairwise_plain": {}}
     for cell in sorted(set(cells)):
         test_idx = [i for i, c in enumerate(cells) if c == cell]
         train_idx = [i for i, c in enumerate(cells) if c != cell]
         train_x, test_x = standardize(X[train_idx], X[test_idx])
         w = ridge_fit(train_x, Y[train_idx])
         pred = ridge_predict(w, test_x)
+        picks_stump_cell = [
+            cluster_stump_pick(X[train_idx], Y[train_idx], X[i:i + 1])
+            for i in test_idx
+        ]
         picks_ridge_cell = [int(p.argmin()) for p in pred]
         picks_pair_cell = [
             pairwise_pick(train_x, Y[train_idx], test_x[j:j + 1], pred[j])
@@ -207,6 +279,8 @@ def run(portfolio: str) -> dict:
             pairwise_pick(train_x, Y[train_idx], test_x[j:j + 1], pred[j], weighted=False)
             for j in range(len(test_idx))
         ]
+        for i, p in zip(test_idx, picks_stump_cell):
+            loro_picks["stump"][i] = p
         for i, p in zip(test_idx, picks_ridge_cell):
             loro_picks["ridge"][i] = p
         for i, p in zip(test_idx, picks_pair_cell):
@@ -214,7 +288,8 @@ def run(portfolio: str) -> dict:
         for i, p in zip(test_idx, picks_pair_plain_cell):
             loro_picks["pairwise_plain"][i] = p
         sub_oracle = Y[test_idx].min(axis=1).sum()
-        for label, picks in (("ridge", picks_ridge_cell),
+        for label, picks in (("stump", picks_stump_cell),
+                             ("ridge", picks_ridge_cell),
                              ("pairwise", picks_pair_cell),
                              ("pairwise_plain", picks_pair_plain_cell)):
             sub_chosen = sum(Y[i, p] for i, p in zip(test_idx, picks))
@@ -224,16 +299,23 @@ def run(portfolio: str) -> dict:
                 "picks": {names[j]: int(sum(1 for p in picks if p == j)) for j in range(k)},
             }
 
+    results.append(summarize("cluster_stump_loro", loro_picks["stump"], Y, names, cells, fixed_total,
+                             fixed_vec=fixed_vec,
+                             extra={"design": "1-feature cluster_tendency stump trained on seven cells, scored on the eighth",
+                                    "per_held_out_cell": loro_cells["stump"]}))
     results.append(summarize("ridge_loro", loro_picks["ridge"], Y, names, cells, fixed_total,
-                             {"design": "ridge trained on seven cells, scored on the eighth",
-                              "per_held_out_cell": loro_cells["ridge"]}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "ridge trained on seven cells, scored on the eighth",
+                                    "per_held_out_cell": loro_cells["ridge"]}))
     results.append(summarize("pairwise_loro", loro_picks["pairwise"], Y, names, cells, fixed_total,
-                             {"design": "cost-sensitive pairwise votes trained on seven cells, scored on the eighth",
-                              "per_held_out_cell": loro_cells["pairwise"]}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "cost-sensitive pairwise votes trained on seven cells, scored on the eighth",
+                                    "per_held_out_cell": loro_cells["pairwise"]}))
     results.append(summarize("pairwise_loro_unweighted", loro_picks["pairwise_plain"], Y,
                              names, cells, fixed_total,
-                             {"design": "unweighted pairwise votes trained on seven cells, scored on the eighth",
-                              "per_held_out_cell": loro_cells["pairwise_plain"]}))
+                             fixed_vec=fixed_vec,
+                             extra={"design": "unweighted pairwise votes trained on seven cells, scored on the eighth",
+                                    "per_held_out_cell": loro_cells["pairwise_plain"]}))
 
     per_cell = {}
     for cell in sorted(set(cells)):

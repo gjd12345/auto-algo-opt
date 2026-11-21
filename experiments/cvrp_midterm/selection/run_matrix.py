@@ -285,6 +285,30 @@ def features(instance: dict) -> dict[str, float]:
     }
 
 
+def compile_algorithm(name: str):
+    ns = {"np": np, "numpy": np, "math": __import__("math")}
+    exec(compile(ALGORITHMS[name], f"rule_{name}", "exec"), ns)  # noqa: S102
+    return ns["select_next_node"]
+
+
+def measure_pure_solve(name: str, instances: list[dict], repeats: int = 3) -> list[float]:
+    """Measure pre-compiled pure solving time per instance (excludes AST/compile/hash)."""
+    fn = compile_algorithm(name)
+    # Warm-up one call to avoid first-call import/cache jitter
+    evaluator._evaluate_cvrp_instances(fn, [instances[0]])
+    times: list[float] = []
+    for inst in instances:
+        best = float("inf")
+        for _ in range(repeats):
+            t0 = time.perf_counter()
+            evaluator._evaluate_cvrp_instances(fn, [inst])
+            dt = time.perf_counter() - t0
+            if dt < best:
+                best = dt
+        times.append(best)
+    return times
+
+
 def evaluate(name: str, instance: dict) -> dict:
     suite = {"problem": "cvrp_construct", "split": SPLIT, "instances": [instance]}
     suite["content_hash"] = suite_hash("cvrp_construct", SPLIT, suite["instances"])
@@ -297,8 +321,7 @@ def evaluate(name: str, instance: dict) -> dict:
         "valid": result["valid"],
         "objective": result.get("objective"),
         "error_code": result.get("error_code"),
-        # Wall clock of one candidate evaluation inside the frozen evaluator, suite
-        # construction included; comparable across rules, not an absolute speed-up.
+        # Wall clock of one full frozen evaluator call (includes AST parse/compile/hash).
         "runtime_s": elapsed,
     }
 
@@ -359,8 +382,9 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     rule_check = check_savings_rule()
     instances = build_instances()
+    pure_times = {name: measure_pure_solve(name, instances) for name in ALGORITHMS}
     rows = []
-    for inst in instances:
+    for idx_inst, inst in enumerate(instances):
         row = {
             "instance_id": inst["instance_id"],
             "cell": inst["cell"],
@@ -375,6 +399,7 @@ def main() -> int:
             res = evaluate(name, inst)
             row[name] = res["objective"]
             row[f"{name}_s"] = round(float(res["runtime_s"]), 6)
+            row[f"{name}_solve_s"] = round(float(pure_times[name][idx_inst]), 6)
             if not res["valid"]:
                 row[name] = None
                 row[f"{name}_error"] = res["error_code"]
@@ -478,6 +503,9 @@ def main() -> int:
         },
         "mean_runtime_s": {
             n: round(float(np.mean([r[f"{n}_s"] for r in rows])), 6) for n in names
+        },
+        "mean_solve_s": {
+            n: round(float(np.mean([r[f"{n}_solve_s"] for r in rows])), 6) for n in names
         },
         "mean_rank": {
             n: round(float(np.mean([r[f"{n}_rank"] for r in rows])), 4) for n in names

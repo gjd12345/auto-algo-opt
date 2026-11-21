@@ -20,20 +20,20 @@ The three frozen pointwise rules are added verbatim and the builder refuses to r
 
 ## Rule portfolio: objective, rank and cost
 
-| rule | mean objective | mean rank | mean evaluation cost | oracle wins (full_pool) |
-|---|---|---|---|---|
-| b | 13.2690 | 2.6875 | 2.33 ms | 18 |
-| savings | 13.2721 | 2.7604 | 1.33 ms | 28 |
-| a | 13.3804 | 2.9167 | 2.22 ms | 30 |
-| radial | 13.8571 | 4.5521 | 1.10 ms | 2 |
-| dd_load | 14.2026 | 4.8229 | 1.31 ms | 9 |
-| c | 14.2940 | 5.0104 | 2.62 ms | 4 |
-| nn | 14.3962 | 5.2708 | 0.95 ms | 5 |
-| isolate | 18.4507 | 8.2083 | 1.74 ms | 0 |
-| load_fill | 19.8927 | 8.7708 | 1.23 ms | 0 |
-| farthest | 38.0059 | 10.0000 | 0.87 ms | 0 |
+| rule | mean objective | mean rank | pure solve time | full eval cost | oracle wins (full_pool) |
+|---|---|---|---|---|---|
+| b | 13.2690 | 2.6875 | 1.089 ms | 2.02 ms | 18 |
+| savings | 13.2721 | 2.7604 | 0.724 ms | 1.15 ms | 28 |
+| a | 13.3804 | 2.9167 | 0.869 ms | 1.93 ms | 30 |
+| radial | 13.8571 | 4.5521 | 0.679 ms | 0.99 ms | 2 |
+| dd_load | 14.2026 | 4.8229 | 0.755 ms | 1.15 ms | 9 |
+| c | 14.2940 | 5.0104 | 1.016 ms | 2.26 ms | 4 |
+| nn | 14.3962 | 5.2708 | 0.590 ms | 0.83 ms | 5 |
+| isolate | 18.4507 | 8.2083 | 0.994 ms | 1.55 ms | 0 |
+| load_fill | 19.8927 | 8.7708 | 0.715 ms | 1.09 ms | 0 |
+| farthest | 38.0059 | 10.0000 | 0.584 ms | 0.80 ms | 0 |
 
-Mean rank is the average position of a rule inside an instance, so it is insensitive to the scale of the objective.  `mean evaluation cost` is the wall clock of one frozen evaluation call, suite construction included: it compares rules against each other, it is not an absolute speed.
+Mean rank is the average position of a rule inside an instance, so it is insensitive to the scale of the objective.  `pure solve time` measures the pre-compiled rule inside the CVRP evaluator loop (best of 3 repeats per instance, excluding AST parse/compile/hash); `full eval cost` includes single-instance AST validation and suite hashing (which accounts for ~45–53% of the larger frozen rules' full-call wall time).
 
 ## Portfolio: complementarity after adding the frozen rules
 
@@ -76,34 +76,40 @@ A positive delta means the first rule is worse.  C wins only where its capacity 
 
 ## Selectors
 
-| portfolio | selector | total objective | gap to VBS | gain vs fixed | mean regret | worst regret | picks |
-|---|---|---|---|---|---|---|---|
-| core (4 rules) | fixed_best_sbs | 1274.1252 | 1.63% | +0.00% | 1.77% | 13.97% | savings:96 |
-| core (4 rules) | knn1_loo | 1293.2543 | 3.15% | -1.50% | 3.40% | 24.19% | dd_load:20, nn:12, radial:10, savings:54 |
-| core (4 rules) | ridge_loo | 1277.0346 | 1.86% | -0.23% | 2.05% | 22.52% | dd_load:8, nn:2, radial:2, savings:84 |
-| core (4 rules) | pairwise_loo | 1276.3401 | 1.80% | -0.17% | 2.01% | 22.52% | dd_load:1, savings:95 |
-| core (4 rules) | pairwise_loo_unweighted | 1279.0215 | 2.02% | -0.38% | 2.23% | 22.52% | dd_load:17, savings:79 |
-| core (4 rules) | ridge_loro | 1280.8231 | 2.16% | -0.53% | 2.35% | 22.52% | dd_load:15, nn:2, radial:3, savings:76 |
-| core (4 rules) | pairwise_loro | 1276.6147 | 1.82% | -0.20% | 2.02% | 22.52% | dd_load:1, radial:1, savings:94 |
-| core (4 rules) | pairwise_loro_unweighted | 1282.1584 | 2.27% | -0.63% | 2.58% | 22.52% | dd_load:20, radial:1, savings:75 |
-| extended + C | fixed_best_sbs | 1274.1252 | 2.05% | +0.00% | 2.27% | 13.97% | savings:96 |
-| extended + C | knn1_loo | 1296.2423 | 3.82% | -1.74% | 4.15% | 24.19% | c:7, dd_load:17, nn:11, radial:10, savings:51 |
-| extended + C | ridge_loo | 1278.6321 | 2.41% | -0.35% | 2.77% | 20.03% | c:8, dd_load:6, nn:1, radial:2, savings:79 |
-| extended + C | pairwise_loo | 1274.5190 | 2.08% | -0.03% | 2.31% | 13.97% | c:1, savings:95 |
-| extended + C | pairwise_loo_unweighted | 1280.4938 | 2.56% | -0.50% | 2.93% | 22.52% | c:5, dd_load:8, savings:83 |
-| extended + C | ridge_loro | 1281.9779 | 2.68% | -0.62% | 3.13% | 27.06% | c:7, dd_load:13, nn:2, radial:3, savings:71 |
-| extended + C | pairwise_loro | 1274.7936 | 2.10% | -0.05% | 2.33% | 13.97% | c:1, radial:1, savings:94 |
-| extended + C | pairwise_loro_unweighted | 1281.4924 | 2.64% | -0.58% | 3.04% | 22.25% | c:6, dd_load:13, radial:1, savings:76 |
-| extended + A/B/C | fixed_best_sbs | 1273.8205 | 4.09% | +0.00% | 4.34% | 17.62% | b:96 |
-| extended + A/B/C | knn1_loo | 1281.4199 | 4.71% | -0.60% | 5.02% | 24.19% | a:35, b:19, c:1, dd_load:9, nn:5, savings:27 |
-| extended + A/B/C | ridge_loo | 1263.4756 | 3.24% | +0.81% | 3.53% | 25.66% | a:31, b:29, dd_load:3, nn:1, savings:32 |
-| extended + A/B/C | pairwise_loo | 1264.5991 | 3.33% | +0.72% | 3.59% | 25.66% | a:34, b:30, savings:32 |
-| extended + A/B/C | pairwise_loo_unweighted | 1261.7952 | 3.10% | +0.94% | 3.53% | 25.66% | a:38, b:23, dd_load:1, savings:34 |
-| extended + A/B/C | ridge_loro | 1267.8732 | 3.60% | +0.47% | 3.97% | 25.66% | a:33, b:26, c:3, dd_load:4, nn:2, radial:1, savings:27 |
-| extended + A/B/C | pairwise_loro | 1267.6675 | 3.58% | +0.48% | 3.91% | 25.66% | a:42, b:27, savings:27 |
-| extended + A/B/C | pairwise_loro_unweighted | 1265.1889 | 3.38% | +0.68% | 3.84% | 25.66% | a:42, b:20, savings:34 |
+| portfolio | selector | total objective | gap to VBS | gain vs fixed | 95% CI | p_boot | W/T/L | mean regret | worst regret | picks |
+|---|---|---|---|---|---|---|---|---|---|---|
+| core (4 rules) | fixed_best_sbs | 1274.1252 | 1.63% | +0.00% | - | - | - | 1.77% | 13.97% | savings:96 |
+| core (4 rules) | cluster_stump_loo | 1274.1252 | 1.63% | +0.00% | [+0.00%, +0.00%] | 1.0000 | 0/96/0 | 1.77% | 13.97% | savings:96 |
+| core (4 rules) | knn1_loo | 1293.2543 | 3.15% | -1.50% | [-2.61%, -0.53%] | 0.9991 | 17/54/25 | 3.40% | 24.19% | dd_load:20, nn:12, radial:10, savings:54 |
+| core (4 rules) | ridge_loo | 1277.0346 | 1.86% | -0.23% | [-0.75%, +0.18%] | 0.8376 | 4/84/8 | 2.05% | 22.52% | dd_load:8, nn:2, radial:2, savings:84 |
+| core (4 rules) | pairwise_loo | 1276.3401 | 1.80% | -0.17% | [-0.54%, +0.00%] | 1.0000 | 0/95/1 | 2.01% | 22.52% | dd_load:1, savings:95 |
+| core (4 rules) | pairwise_loo_unweighted | 1279.0215 | 2.02% | -0.38% | [-1.07%, +0.22%] | 0.8842 | 9/79/8 | 2.23% | 22.52% | dd_load:17, savings:79 |
+| core (4 rules) | cluster_stump_loro | 1274.1252 | 1.63% | +0.00% | [+0.00%, +0.00%] | 1.0000 | 0/96/0 | 1.77% | 13.97% | savings:96 |
+| core (4 rules) | ridge_loro | 1280.8231 | 2.16% | -0.53% | [-1.16%, +0.04%] | 0.9636 | 7/76/13 | 2.35% | 22.52% | dd_load:15, nn:2, radial:3, savings:76 |
+| core (4 rules) | pairwise_loro | 1276.6147 | 1.82% | -0.20% | [-0.58%, +0.00%] | 1.0000 | 0/94/2 | 2.02% | 22.52% | dd_load:1, radial:1, savings:94 |
+| core (4 rules) | pairwise_loro_unweighted | 1282.1584 | 2.27% | -0.63% | [-1.34%, +0.00%] | 0.9735 | 8/75/13 | 2.58% | 22.52% | dd_load:20, radial:1, savings:75 |
+| extended + C | fixed_best_sbs | 1274.1252 | 2.05% | +0.00% | - | - | - | 2.27% | 13.97% | savings:96 |
+| extended + C | cluster_stump_loo | 1274.1252 | 2.05% | +0.00% | [+0.00%, +0.00%] | 1.0000 | 0/96/0 | 2.27% | 13.97% | savings:96 |
+| extended + C | knn1_loo | 1296.2423 | 3.82% | -1.74% | [-2.88%, -0.70%] | 0.9996 | 17/51/28 | 4.15% | 24.19% | c:7, dd_load:17, nn:11, radial:10, savings:51 |
+| extended + C | ridge_loo | 1278.6321 | 2.41% | -0.35% | [-0.80%, +0.05%] | 0.9563 | 4/79/13 | 2.77% | 20.03% | c:8, dd_load:6, nn:1, radial:2, savings:79 |
+| extended + C | pairwise_loo | 1274.5190 | 2.08% | -0.03% | [-0.10%, +0.00%] | 1.0000 | 0/95/1 | 2.31% | 13.97% | c:1, savings:95 |
+| extended + C | pairwise_loo_unweighted | 1280.4938 | 2.56% | -0.50% | [-1.07%, -0.03%] | 0.9810 | 4/83/9 | 2.93% | 22.52% | c:5, dd_load:8, savings:83 |
+| extended + C | cluster_stump_loro | 1274.1252 | 2.05% | +0.00% | [+0.00%, +0.00%] | 1.0000 | 0/96/0 | 2.27% | 13.97% | savings:96 |
+| extended + C | ridge_loro | 1281.9779 | 2.68% | -0.62% | [-1.26%, -0.01%] | 0.9776 | 9/71/16 | 3.13% | 27.06% | c:7, dd_load:13, nn:2, radial:3, savings:71 |
+| extended + C | pairwise_loro | 1274.7936 | 2.10% | -0.05% | [-0.14%, +0.00%] | 1.0000 | 0/94/2 | 2.33% | 13.97% | c:1, radial:1, savings:94 |
+| extended + C | pairwise_loro_unweighted | 1281.4924 | 2.64% | -0.58% | [-1.16%, -0.04%] | 0.9820 | 6/76/14 | 3.04% | 22.25% | c:6, dd_load:13, radial:1, savings:76 |
+| extended + A/B/C | fixed_best_sbs | 1273.8205 | 4.09% | +0.00% | - | - | - | 4.34% | 17.62% | b:96 |
+| extended + A/B/C | cluster_stump_loo | 1261.9719 | 3.12% | +0.93% | [+0.07%, +1.81%] | 0.0163 | 25/55/16 | 3.15% | 17.62% | a:41, b:55 |
+| extended + A/B/C | knn1_loo | 1281.4199 | 4.71% | -0.60% | [-1.94%, +0.66%] | 0.8179 | 37/19/40 | 5.02% | 24.19% | a:35, b:19, c:1, dd_load:9, nn:5, savings:27 |
+| extended + A/B/C | ridge_loo | 1263.4756 | 3.24% | +0.81% | [-0.06%, +1.68%] | 0.0339 | 41/29/26 | 3.53% | 25.66% | a:31, b:29, dd_load:3, nn:1, savings:32 |
+| extended + A/B/C | pairwise_loo | 1264.5991 | 3.33% | +0.72% | [-0.14%, +1.59%] | 0.0510 | 39/30/27 | 3.59% | 25.66% | a:34, b:30, savings:32 |
+| extended + A/B/C | pairwise_loo_unweighted | 1261.7952 | 3.10% | +0.94% | [-0.08%, +1.92%] | 0.0362 | 45/23/28 | 3.53% | 25.66% | a:38, b:23, dd_load:1, savings:34 |
+| extended + A/B/C | cluster_stump_loro | 1271.9140 | 3.93% | +0.15% | [-0.57%, +0.85%] | 0.3310 | 26/52/18 | 4.04% | 17.26% | a:20, b:52, savings:24 |
+| extended + A/B/C | ridge_loro | 1267.8732 | 3.60% | +0.47% | [-0.48%, +1.40%] | 0.1653 | 39/26/31 | 3.97% | 25.66% | a:33, b:26, c:3, dd_load:4, nn:2, radial:1, savings:27 |
+| extended + A/B/C | pairwise_loro | 1267.6675 | 3.58% | +0.48% | [-0.45%, +1.41%] | 0.1583 | 40/27/29 | 3.91% | 25.66% | a:42, b:27, savings:27 |
+| extended + A/B/C | pairwise_loro_unweighted | 1265.1889 | 3.38% | +0.68% | [-0.28%, +1.62%] | 0.0832 | 45/20/31 | 3.84% | 25.66% | a:42, b:20, savings:34 |
 
-`gain vs fixed` is the objective saved against committing to the single best rule of that portfolio.  In the A/B/C pool the best learned selector is **pairwise_loo_unweighted** at +0.94%, while every selector in the older C-only pool still loses.  The result therefore depends on the pool being broad enough for the pairwise signal to have something to separate.
+`gain vs fixed` is the objective saved against committing to the single best rule of that portfolio (10,000-draw paired bootstrap 95% CI and one-sided p-value).  In the A/B/C pool the highest point estimate is **pairwise_loo_unweighted** at +0.94%, while every selector in the older C-only pool still loses.  Crucially, the 1-feature `cluster_stump` matches or beats all 8-feature learners because the dominant complementarity is spatial (`uniform -> A`, `clustered -> B`), and the 8-feature learners' 95% CIs still cross zero.
 
 The cost-sensitive variant (`pairwise_loo`) weights each pairwise observation by `|c_a - c_b| / mean|c_a - c_b|`; `pairwise_loo_unweighted` is the revision-3 recipe that only fits the sign.  Both are reported because neither dominates: the weighted version is better in the narrow pools, the unweighted one is better in the A/B/C pool.
 
@@ -135,10 +141,10 @@ The cost-sensitive variant (`pairwise_loo`) weights each pairwise observation by
 
 Rendered by `analysis/figures.py` and structurally verified by `analysis/check_figures.py`:
 
-- `experiments\cvrp_midterm\analysis\figures/portfolio_vbs_sbs.svg` — VBS and SBS per portfolio
-- `experiments\cvrp_midterm\analysis\figures/selector_gain.svg` — gain over the best fixed rule, per selector and pool
-- `experiments\cvrp_midterm\analysis\figures/rule_mean_runtime.svg` — mean objective with the measured evaluation cost
-- `experiments\cvrp_midterm\analysis\figures/scale_term_growth.svg` — scale sensitivity of rule C's three additive terms
+- `experiments/cvrp_midterm/analysis/figures/portfolio_vbs_sbs.svg` — VBS and SBS per portfolio
+- `experiments/cvrp_midterm/analysis/figures/selector_gain.svg` — gain over the best fixed rule, per selector and pool
+- `experiments/cvrp_midterm/analysis/figures/rule_mean_runtime.svg` — mean objective with the measured evaluation cost
+- `experiments/cvrp_midterm/analysis/figures/scale_term_growth.svg` — scale sensitivity of rule C's three additive terms
 
 ## Revision 2 to 4
 
@@ -149,7 +155,7 @@ Rendered by `analysis/figures.py` and structurally verified by `analysis/check_f
 | v4 extended + A/B/C | 1223.8026 | 1273.8205 | b | 4.09% |
 | v4 ridge_loo gain vs fixed | - | - | - | +0.81% |
 
-The v2 numbers came from the double-counted savings formula; the v2 ridge gain (-0.23%) was measured against a pool in which the learned selector could only lose, because the fixed rule already was the best rule on almost every instance.
+Note: the double-counted savings bug belonged to **revision 1** (archived in `v1_20261121/`); **revision 2** already used the corrected savings formula. The v2 ridge gain (-0.23%) was negative because `savings` dominated all 8 cells in the 4-rule pool, leaving no regime complementarity for a learner to exploit.
 
 ## Rule self-check
 

@@ -74,11 +74,10 @@ class _Capture:
             if self._enabled:
                 flat = np.asarray(a, dtype=float).ravel()
                 order = np.asarray(out).ravel()
-                # ``argsort`` is a ranking, so the rule keeps ``order[0]`` as the
-                # head of the ranking: treat that as a max-reduction over the
-                # sorted array (-savings / score) and index it back.
+                # ``np.argsort`` sorts ascending, so ``order[0]`` is the
+                # minimum entry of ``a`` (e.g. ``-savings`` in rule A).
                 if order.size:
-                    self.events.append({"array": flat, "mode": "max", "position": int(order[0])})
+                    self.events.append({"array": flat, "mode": "min", "position": int(order[0])})
             return out
 
         np.argmin, np.argmax, np.argsort = argmin, argmax, argsort
@@ -301,11 +300,19 @@ def features(instance: Mapping[str, Any], matrix: np.ndarray, step: Step) -> np.
 
 def linear_fit(instance: Mapping[str, Any], matrix: np.ndarray, steps: list[Step]) -> dict[str, Any]:
     xs, ys = [], []
+    xs_dm, ys_dm = [], []
     for step in steps:
         if step.scores is None or len(step.feasible) != step.scores.size:
             continue
-        xs.append(features(instance, matrix, step))
+        f_mat = features(instance, matrix, step)
+        xs.append(f_mat)
         ys.append(step.scores)
+        if f_mat.shape[0] >= 2:
+            # Step-demeaned (fixed-effect) regression removes step-level offsets
+            # such as d(0, current) in savings = d(0, cur) + d(0, j) - d(cur, j),
+            # isolating true within-step linearity of candidate ranking.
+            xs_dm.append(f_mat[:, 1:] - f_mat[:, 1:].mean(axis=0, keepdims=True))
+            ys_dm.append(step.scores - step.scores.mean())
     if not xs:
         return {"captured_steps": 0}
     X, y = np.vstack(xs), np.concatenate(ys)
@@ -318,13 +325,26 @@ def linear_fit(instance: Mapping[str, Any], matrix: np.ndarray, steps: list[Step
     ss_res = float(np.sum(residual ** 2))
     ss_tot = float(np.sum((y - y.mean()) ** 2)) or 1.0
     scale = float(np.max(np.abs(y))) or 1.0
-    return {
+    out: dict[str, Any] = {
         "captured_steps": int(len(xs)),
         "rows": int(X.shape[0]),
         "r2": round(1.0 - ss_res / ss_tot, 6),
         "rmse_rel": round(math.sqrt(ss_res / max(len(y), 1)) / scale, 6),
         "coef": {name: round(float(value), 6) for name, value in zip(FEATURES, coef)},
     }
+    if xs_dm:
+        X_dm, y_dm = np.vstack(xs_dm), np.concatenate(ys_dm)
+        keep_dm = np.isfinite(X_dm).all(axis=1) & np.isfinite(y_dm)
+        X_dm, y_dm = X_dm[keep_dm], y_dm[keep_dm]
+        if X_dm.shape[0] >= X_dm.shape[1] + 2:
+            coef_dm, *_ = np.linalg.lstsq(X_dm, y_dm, rcond=None)
+            res_dm = y_dm - X_dm @ coef_dm
+            tot_dm = float(np.sum(y_dm ** 2)) or 1.0
+            out["r2_within_step"] = round(1.0 - float(np.sum(res_dm ** 2)) / tot_dm, 6)
+            out["coef_within_step"] = {
+                name: round(float(value), 6) for name, value in zip(FEATURES[1:], coef_dm)
+            }
+    return out
 
 
 # ---------------------------------------------------------------- driver
@@ -353,7 +373,9 @@ def analyze_code(path: Path, instances: list[Mapping[str, Any]], *, margin_limit
         return [row["margin"][key] for row in per_instance if row["margin"].get(key) is not None]
 
     r2 = [row["linear"]["r2"] for row in per_instance if "r2" in row["linear"]]
+    r2_ws = [row["linear"]["r2_within_step"] for row in per_instance if "r2_within_step" in row["linear"]]
     coefs = [row["linear"]["coef"] for row in per_instance if "coef" in row["linear"]]
+    coefs_ws = [row["linear"]["coef_within_step"] for row in per_instance if "coef_within_step" in row["linear"]]
     return {
         "candidate": Path(path).name,
         "path": Path(path).as_posix(),
@@ -371,9 +393,13 @@ def analyze_code(path: Path, instances: list[Mapping[str, Any]], *, margin_limit
             "ratio_scaled_invariant": all(row["invariance"].get("demand_capacity_ratio_scaled_route_identical") for row in per_instance),
             "depot_shift_routes_changed": sum(1 for row in per_instance if not row["invariance"].get("depot_shift_route_identical")),
             "linear_r2_median": round(float(np.median(r2)), 6) if r2 else None,
+            "linear_r2_within_step_median": round(float(np.median(r2_ws)), 6) if r2_ws else None,
             "linear_coef_median": {
                 name: round(float(np.median([coef[name] for coef in coefs])), 6) for name in FEATURES
             } if coefs else None,
+            "linear_coef_within_step_median": {
+                name: round(float(np.median([coef[name] for coef in coefs_ws])), 6) for name in FEATURES[1:]
+            } if coefs_ws else None,
         },
     }
 

@@ -144,3 +144,15 @@ $py = "C:\Users\24294\Projects\aao-venv311\Scripts\python.exe"
 1. 用**完整 prompt** 重跑 a4/a5 的两个 finding 臂（每臂 24 请求），给出干净读数。
 2. 实现"按轮注入上一轮实测增量"的 finding 编译（P0-2 的机制部分），再谈 Agent 自主分析。
 3. 长程 8–12 轮与多 seed 扩展——仍按 m03494 暂缓。
+
+---
+
+## 复核二次校验补充（revision 4.1）
+
+对 `d6b9cb50` 全部新增代码和产出执行独立二次复盘后，发现并修复了 5 处残留精度问题（全部重新运行并通过 `check_figures.py` 与 `pytest 24 passed`）：
+
+1. **`scale_term_audit.py` 索引偏移与门控遗漏**：原脚本漏掉 depot `0.0` 导致需求错位 1 位、丢弃第 50 号客户（294 步而非 300 步），且未复现 `C.py:35` 的 `mask.sum() >= 2 and current != 0` 门控（误报标称有效中位 `4.90×`，实际有效中位为 **`0.0`**、仅在 5/300 门控步中位 **`5.69×`**），同时 `round(..., 6)` 将 `s=1000` 需求项截为 0。已重写并补齐 **6 组三项直接消融**（`C_full 206.99%` / `C_no_cap 0.18%` / `C_rel_band 0.40%` / `C_no_dem 205.89%` / `C_no_cap_no_dem 0.00%`），确证 **band 门控 × cap_term（O(1/s²)）串联机制**。
+2. **`score_probe.py` 步内固定效应回归与 `argsort` 方向**：原脚本将 `argsort` 标为 `"max"`（实为 `"min"`），且汇总 `r²=0.56353` 混淆了不同步的截距 `d(0, current)`。补入步内去均值回归后，**`A.py` 的 `r²_within_step_median = 0.999883`**（`d_cur +0.9999, d_dep −0.9998`），精确证实其步内线性结构。
+3. **`run_matrix.py` 剥离 AST 编译开销**：原单实例计时把 AST 解析/编译/哈希算进耗时（占大规则 ~45–53%）。已新增预编译 `measure_pure_solve()` 并列报告：`nn 0.590ms / savings 0.724ms / a 0.869ms / c 1.016ms / b 1.089ms`。
+4. **`select.py` Bootstrap 95% 区间与单特征基线**：新增 10,000 次配对 Bootstrap CI / `p_boot` / W-T-L 及严格折内拟合的 1 特征 `cluster_stump`。结果显示 **`cluster_stump_loo` 达 +0.93%（95% CI `[+0.07%, +1.81%]`, `p=0.0163`）**，而 8 特征学习器在 LOO/LORO 下区间均跨 0。
+5. **文档与图表同步**：修正 `report_tables.py` 笔误（双算 savings 属 v1 非 v2）、写出 `RESULTS_v4.md`、更新 `REPORT_20261121.md` 与 `hypotheses.jsonl`（H-001 rev 3 / H-002 rev 4），并在 `check_figures.py` 补全 `selector_gain.svg` 数值校验。
