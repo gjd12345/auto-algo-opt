@@ -1,0 +1,91 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "dae86a9a40e21ca04301f75f3fe60d01237c4f399d317ddd900bb8a3890ab315",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.604181,
+  "solver_timeout": 20.0,
+  "initialization_samples": 8,
+  "evolution_samples": 8,
+  "search_seed": 20260908,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "764de07d27b7b8806fb641add8ebcb3c1f5b8e0d3db63b8ac710c7128140c85b",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.266,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "thinking": "disabled"
+}

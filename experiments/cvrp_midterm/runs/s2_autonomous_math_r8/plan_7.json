@@ -1,0 +1,41 @@
+{
+  "round_id": 7,
+  "direction": "Re-test H-008 (nearest-unvisited isolation urgency + unblocked continuous adaptive early return + state-only inward spiral) using strictly AST-whitelisted numpy operations (no np.fill_diagonal, no np.ix_).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "diagonal masking in nearest-unvisited isolation computation",
+      "mechanism": "Do NOT call np.fill_diagonal or np.ix_ (rejected by the evaluator AST sandbox in 5/5 Round 6 candidates). Instead slice `sub = distance_matrix[nodes][:, nodes].astype(float)` and compute `d_nn = np.min(sub + np.eye(nodes.size) * 1e12, axis=1) / scale` (when nodes.size >= 2, else zeros). Subtract w_iso * d_nn (w_iso in 0.15-0.35) mid-route so isolated nodes are harvested while nearby."
+    },
+    {
+      "type": "replace",
+      "target": "voluntary early-return gate",
+      "mechanism": "Drop the hard `best_dem > 0.55 * rest_capacity` blocker from Round 5 and apply continuous capacity-adaptive early return directly: return depot when current_node != depot and (1 - rho[best]) < tau_0 + tau_1 * pressure (tau_0 in 0.22-0.30, tau_1 in 0.35-0.55)."
+    },
+    {
+      "type": "preserve",
+      "target": "state-only inward spiral, Law-of-Cosines cos(theta_0), elongation rho, two-phase depot-start, and strict scale invariance",
+      "mechanism": "Keep alpha_eff = alpha_0 - alpha_1 * pressure (alpha_0 in 0.90-1.10, alpha_1 in 0.65-1.10), elongation rho, -w_cos*cos(theta_0), calibrated -beta*fill (0.08-0.13), and two-phase rem_routes depot start (optionally adding mild positive +0.25*d_nn isolation preference for far outer seeds)."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, strictly AST-whitelisted numpy calls (np.asarray, np.eye, np.min, np.max, np.mean, np.sum, np.argmin, np.argmax, np.clip, np.maximum, np.minimum, np.where; NEVER np.fill_diagonal or np.ix_), strict scale invariance (s001/s1 = 1.00000), and strong dev4 + multi-scale performance.",
+  "hypothesis": "H-008 (AST-safe retry): Fixing the np.fill_diagonal sandbox failure allows EoH to synthesize isolation urgency + unblocked adaptive early return + state-only inward spiral, improving both dev4 and multi-scale routing (ana72 < 17.90, n200 < 28.75).",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "badcase",
+    "question": "Why did 5/5 Round 6 candidates fail validation, and does H-008 succeed once the diagonal mask uses AST-safe numpy ops?",
+    "finding_summary": "Audit of Round 6 evaluation_facts proved all 5/5 candidates were rejected for the single AST sandbox violation `forbidden_attribute: fill_diagonal` — NOT because of a mathematical flaw in H-008. Using `sub = distance_matrix[nodes][:, nodes].astype(float)` and adding `np.eye(n) * 1e12` before `np.min(..., axis=1)` is 100% AST-whitelisted and strictly scale-invariant (for scale-free diagonal masking, use `np.eye(n) * (scale * 1e6 + 1e12)` or `np.where(np.eye(n) > 0.5, np.inf, sub)`). Offline checks also confirmed that positive isolation bias at outside-in depot start (+0.25 to +0.50 * d_nn) further improves dev4 (-0.107 -> -0.118), sh6 (10.56 -> 10.49), and clustered routing (16.22 -> 16.18).",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Never call np.fill_diagonal or np.ix_. Compute scale-free isolation via `sub = distance_matrix[nodes][:, nodes].astype(float); d_nn = np.min(np.where(np.eye(n) > 0.5, np.inf, sub), axis=1) / scale` (strictly scale-invariant across 0.001x to 1000x!). Keep Round 5's state-only inward spiral, cos(theta_0), rho, two-phase rem_routes start, and unblocked continuous adaptive early return.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0006/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  },
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6"
+  }
+}

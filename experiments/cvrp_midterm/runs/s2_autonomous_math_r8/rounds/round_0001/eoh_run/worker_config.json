@@ -1,0 +1,103 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "719e6960f95cd21d9b56576eeb22cb9a01381ccbacbb97d431f243c4c8118f77",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 48,
+  "wall_seconds": 599.73017,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260908,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "b02769d07216be55f8dec0c9d383523d3e73cae6c1d301044c6bee2368ae7df7",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.219,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 576974.01117,
+  "local_url": "http://127.0.0.1:50098/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_autonomous_math_r8",
+    "task_id": "task_82c5f072db77440a88079b0d600603fb"
+  },
+  "supervisor_pid": 32864,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":1,\"direction\":\"Decouple depot-start boundary selection (current_node == depot) from mid-route scoring (current_node != depot) using strictly scale-invariant (dimensionless) terms.\",\"operations\":[{\"type\":\"add\",\"target\":\"explicit depot-start branch (current_node == depot)\",\"mechanism\":\"When starting a new route from the depot, evaluate candidates using a scale-free outside-in / radial-load seed rule instead of letting linear d_cur - alpha*d_dep (alpha<1) pick the nearest customer or letting savings=0 degenerate to an arbitrary tie-break.\"},{\"type\":\"replace\",\"target\":\"mid-route score (current_node != depot)\",\"mechanism\":\"Keep moderate depot pull (alpha_mid around 0.5-0.8, or dimensionless ratio d_cur / scale - alpha * d_dep / scale) combined with scale-free capacity-fill terms (demand / rest_capacity) that stay invariant when coordinates are scaled by 0.01 or 1000.\"},{\"type\":\"remove\",\"target\":\"mixed-unit constants and raw demand/distance ratios\",\"mechanism\":\"Eliminate absolute length constants like +1.0 in near-tie bands and unit-mixing ratios like |rest_capacity - dem| / d_cur that diverge as O(1/s^2) under coordinate rescaling.\"}],\"preserve\":\"Exact select_next_node signature, feasibility, numpy-only fast execution, and strong nominal performance without regressing below the best explicit seed.\",\"reference_skill_ref\":null,\"hypothesis\":\"H-003: Decoupling the depot-start boundary from moderate mid-route depot pull (alpha_mid ~ 0.6) removes the +8% inside-out deadhead trap of C/V0 while preserving scale invariance and beating all four explicit seeds (A, B, C, V0).\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Why do C and V0 (alpha=0.6) lose ~8% across scales while A and B generalize, and what happens if we decouple the depot-start boundary?\",\"measured_finding\":\"Boundary analysis across 72 multi-scale CVRP instances (n=50/100/200) proved an exact depot-start phase transition at alpha=1 for s(i,j)=d(i,j)-alpha*d(0,j): at i=0, s(0,j)=(1-alpha)*d(0,j), so alpha<1 (C, V0 with 0.6) always starts inside-out (nearest customer, dist percentile 0.006), inflating return-leg deadhead from 23.7% to 33.6%. Crossing alpha=0.99->1.01 drops route length discontinuously by -6.82%. Counterfactual swaps changing ONLY i=0 to far or heavy-far drop V0 from 20.30 to 18.61 (-8.29%), beating A (18.90), B (19.08), and savings (18.91). Also, A degenerates at i=0 to min-demand (dist percentile 0.484), and C's cap_term=|rest_cap-dem|/d_cur blows up as O(1/s^2) under rescaling.\",\"hypothesis_status\":\"proved_under_assumptions\",\"decision\":\"modify\",\"decision_summary\":\"Split select_next_node cleanly at current_node == depot: use a scale-free far or radial-plus-load depot-start rule, and at current_node != depot combine moderate depot pull (alpha_mid ~ 0.5-0.8) with strictly dimensionless capacity-fill modulation (functions of demand/rest_capacity and distance ratios). Avoid any absolute length offset (+1.0) or raw demand/distance division.\"},\"feedback_summary\":null,\"search_policy\":{\"n_pop\":2,\"pop_size\":4,\"max_sample_nums\":8},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_autonomous_math_r8\\rounds\\round_0001\\eoh_run\\seeds\\population_seeds.json",
+  "population_seed_count": 4,
+  "request_timeout": 600.0
+}

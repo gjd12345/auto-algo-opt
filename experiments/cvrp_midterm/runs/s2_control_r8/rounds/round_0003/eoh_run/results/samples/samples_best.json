@@ -1,0 +1,7 @@
+{
+    "sample_order": 1,
+    "operator": "m2",
+    "algorithm": "New algorithm: a pure nearest-neighbor rule with a depot-distance penalty (w=0.9) and a demand-based tiebreaker, dropping the near-tie capacity-fit adjustment entirely.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return 0\n\n    w = 0.9\n    nodes = np.asarray(unvisited_nodes)\n\n    d_cur = distance_matrix[current_node][nodes].astype(float)\n    d_dep = distance_matrix[depot][nodes].astype(float)\n    dem = demands[nodes].astype(float)\n\n    score = d_cur - w * d_dep - 1e-4 * dem\n\n    return int(nodes[int(np.argmin(score))])",
+    "objective": -0.04572
+}

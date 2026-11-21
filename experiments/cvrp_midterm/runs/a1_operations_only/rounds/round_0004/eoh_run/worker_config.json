@@ -1,0 +1,143 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "dae86a9a40e21ca04301f75f3fe60d01237c4f399d317ddd900bb8a3890ab315",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.653144,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260911,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "ca3ba0d9c45017fe1386c8d7745c3eb5fee709e8e3befef398f025cbc553032a",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.25,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "parent_skill": {
+    "version_id": "candidate_5",
+    "code_sha256": "8de981cfae6f6ee6adb9e34edbbb8bd8af6df39f6988acccbbb1a8b32eeca473",
+    "original_suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "evaluation": {
+      "valid": true,
+      "objective": -0.08789213302779297,
+      "instance_objectives": [
+        -0.09082955016139195,
+        -0.09757038801244293,
+        -0.1325917595524955,
+        -0.03057683438484151
+      ],
+      "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+      "error_code": null,
+      "error_detail": null,
+      "elapsed_seconds": 0.266,
+      "metrics": {
+        "raw_objectives": [
+          10.77200642354177,
+          9.495729013237987,
+          10.762566282186807,
+          12.104420709540499
+        ],
+        "reference_objectives": [
+          11.84817041232914,
+          10.522404060217072,
+          12.407728887420175,
+          12.486209468554943
+        ],
+        "reference_kind": [
+          "solver_reference",
+          "solver_reference",
+          "solver_reference",
+          "solver_reference"
+        ],
+        "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+      }
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 568673.840144,
+  "local_url": "http://127.0.0.1:60550/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a1_operations_only",
+    "task_id": "task_927e4b6a864c41878c2bcb7fae7c59f2"
+  },
+  "supervisor_pid": 25264,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":4,\"direction\":\"Explore new priority rules for the CVRP greedy construction, guided by the measured scale-dependence of the near-tie refinement branch.\",\"operations\":[{\"type\":\"replace\",\"target\":\"near-tie refinement gate\",\"mechanism\":\"Replace the absolute epsilon band with a scale-free gate: relative band 1e-3*span, or a widened relative band, or a gate on the ratio between the best and second-best base score.\"},{\"type\":\"preserve\",\"target\":\"base ordering\",\"mechanism\":\"Keep base = d_cur - 0.6*d_dep as the primary ordering signal.\"}],\"preserve\":\"The problem interface, the evaluator and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"A scale-free near-tie gate that fires more often improves the capacity-fit refinement of the base ordering.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"feedback_summary\":{\"source\":{\"round_id\":3,\"evaluation_ref\":\"rounds/round_0003/evaluation_facts.json\",\"evaluation_facts_sha256\":\"a49c80eedf7d0ff41b3331bf3136208f158676384d82296f1d67c60511fb0173\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0002/eoh_run/exported_skill\",\"code_sha256\":\"8de981cfae6f6ee6adb9e34edbbb8bd8af6df39f6988acccbbb1a8b32eeca473\",\"objective\":-0.08789213302779297,\"origin\":\"generated\"},\"incumbent_candidate_match\":{\"status\":\"identity_unresolved\",\"reason\":\"exact_evaluation_id_and_code_sha256_not_found\",\"evaluation_id\":null,\"code_sha256\":\"8de981cfae6f6ee6adb9e34edbbb8bd8af6df39f6988acccbbb1a8b32eeca473\"},\"best_generated_candidate\":{\"candidate_id\":\"candidate_1\",\"revision\":\"original\",\"origin\":\"generated\",\"evaluation_id\":\"df1206efc16f4f28916205cb52a8acb6\",\"code_sha256\":\"80a3a7a321c3fcc271f268e08444c0dc7cc2e083063c178121742023459bc2f9\",\"objective\":-0.08350306412147887,\"instance_objectives\":[-0.07483430192061301,-0.10745995457127756,-0.06234242745639311,-0.08937557253763181],\"valid\":true},\"objective_delta\":0.004389068906314103,\"improvement_vs_incumbent\":-0.004389068906314103,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[],\"best_generated\":[-0.07483430192061301,-0.10745995457127756,-0.06234242745639311,-0.08937557253763181]},\"generated_candidate_counts\":{\"total\":5,\"valid\":5,\"invalid\":0},\"major_errors\":[],\"evidence_refs\":[\"evaluation:9ec0805191564387893cf5caa8942543\",\"evaluation:2b55396564aa44489695d7e42233f184\",\"evaluation:c6d14a7720054c1b82ba37d22fa4414f\",\"evaluation:df1206efc16f4f28916205cb52a8acb6\",\"evaluation:204716ce4cab485ca0fe4aca51c4593c\",\"evaluation:a6ac6a08993840f3bb40473f56cb6b3c\",\"evaluation:032045f983254c28bd19b02fb94935e5\",\"evaluation:0ab4007967ea466f904f6786e495acb1\",\"rounds/round_0003/execution_delta.json\",\"rounds/round_0003/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0003/execution_delta.json\",\"sha256\":\"2b357b5a3943110c960c3322aa7bd8ce743e35dc5950f375e5aa8c6ef8caf185\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":3,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.08789213302779297,\"incumbent_after_objective\":-0.08789213302779297,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":5,\"valid_generation_count\":5,\"invalid_generation_count\":0,\"valid_generation_yield\":1.0,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":5,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.42857142857142855,\"instance_response_valid_complete_count\":5,\"instance_response_unique_vector_count\":4,\"instance_response_diversity_rate\":0.8,\"instance_response_pairwise_l1_mean\":0.2536171321006174,\"instance_response_pairwise_l1_max\":0.44116786640262884,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":8,\"round_input_tokens\":20994,\"round_output_tokens\":2625,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.687,\"round_wall_seconds\":16.687},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.08789213302779297,\"incumbent_after_objective\":-0.08789213302779297,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":15,\"valid_generation_count\":14,\"invalid_generation_count\":1,\"valid_generation_yield\":0.9333333333333333,\"source_duplicate_count\":2,\"source_duplicate_denominator\":15,\"source_duplicate_rate\":0.13333333333333333,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":15,\"lineage_verified_candidate_count\":10,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":0.3333333333333333,\"lineage_concentration\":0.2857142857142857,\"instance_response_valid_complete_count\":14,\"instance_response_unique_vector_count\":8,\"instance_response_diversity_rate\":0.5714285714285714,\"instance_response_pairwise_l1_mean\":0.3560719481716334,\"instance_response_pairwise_l1_max\":1.4283231151638993,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":18,\"round_solver_attempts\":22,\"round_input_tokens\":48237,\"round_output_tokens\":8146,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.687,\"round_wall_seconds\":50.203},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"max_sample_nums\":8,\"n_pop\":2,\"pop_size\":4},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a1_operations_only\\rounds\\round_0004\\eoh_run\\seeds\\parent_skill.json",
+  "population_seed_count": 0,
+  "request_timeout": 600.0
+}

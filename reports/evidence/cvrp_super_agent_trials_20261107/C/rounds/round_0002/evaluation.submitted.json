@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 1 retained a positive depot term and scored 12.54102. Candidate 2 failed invalid_route. Across two rounds the valid positive-return-leg variants have not beaten nearest neighbor.",
+      "evidence_refs": [
+        "evaluation:44cabf094e694976a1dafba80d34a11e",
+        "evaluation:3bdc60b095254cf3b81bff4c0ceb7a61",
+        "rounds/round_0002/execution_delta.json",
+        "rounds/round_0002/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Pivot from positive return-leg costs to a depot savings signal."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "route-progress",
+    "description": "CVRP progress when investigating depot terms",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Round 2 candidate 2 failed invalid_route. The other variant was valid but worsened mean distance.\n\n**How to apply:** Keep customer selection feasible and advancing when a feasible customer exists; evaluate geometric ranking separately from route closure.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:3bdc60b095254cf3b81bff4c0ceb7a61"
+  }
+}

@@ -1,0 +1,20 @@
+[
+    {
+        "algorithm": "Replace the distance-to-depot term with a squared distance-to-depot penalty added to the current-node distance score, then break near-ties via depot-distance as a secondary ordering stage.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Primary score: current distance + squared depot distance term (replaces the depot term)\n    score = d_cur + (d_dep * d_dep) / (rest_capacity + 1.0)\n    order = np.argsort(score)\n    best_idx = order[0]\n    best_score = score[best_idx]\n    # Secondary ordering stage: among near-ties, prefer the node farthest from depot\n    # (to leave closer nodes for later, cheap return)\n    tie_mask = np.abs(score - best_score) <= 1e-9 + 0.05 * abs(best_score)\n    candidates = unvisited_nodes[tie_mask]\n    if candidates.size > 1:\n        cand_dep = distance_matrix[depot][candidates]\n        return int(candidates[np.argmax(cand_dep)])\n    return int(unvisited_nodes[best_idx])",
+        "objective": 0.00613,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "d38a96ba84a249d2891466e951d918d0"
+    },
+    {
+        "algorithm": "Replace the simple distance-to-current-node term with a regret-based score that weighs insertion cost against the saving of serving a customer now versus returning to the depot later, keeping feasibility and the greedy construction unchanged.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Saving of serving the customer now rather than leaving it for a future route\n    # (approximated by the detour it would cause from depot).\n    savings = d_cur + d_dep - distance_matrix[current_node][depot]\n    # Prefer customers that are close now but whose inclusion is \"saved\" (large saving).\n    score = d_cur - savings\n    best_idx = int(np.argmin(score))\n    return int(unvisited_nodes[best_idx])",
+        "objective": 1.09408,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "1cdb1d75b35d438a9aa9f792ad9d5c9c"
+    }
+]

@@ -1,0 +1,25 @@
+{
+  "round_id": 1,
+  "direction": "Explore new priority rules for the CVRP greedy construction.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "priority score",
+      "mechanism": "Try a different combination of distance, depot distance and load."
+    }
+  ],
+  "preserve": "The problem interface, the evaluator and the search policy.",
+  "hypothesis": "A different distance/load combination yields better routes.",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "badcase",
+    "question": "Are the priority scores this search writes invariant to the numerical scale at which the same instance is expressed?",
+    "finding_summary": "Measured on the dev suite. The near-tie gate written in the previous batch is not invariant to coordinate scale: re-expressing the same instances at 1e-2 and 1e-3 of nominal size raises the share of steps entering the gate from 1.3% to 64% and 83%, and degrades the scale-normalised objective from 10.92 to 16.20 and 33.52 (+48%, +207%). At nominal scale the gate fires on only 1.3% of steps, so it is nearly dead where the suite lives: too wide when the instance shrinks, too narrow at nominal. The width adds an absolute length to a span-proportional term. Keeping only the span-proportional part removes the scale dependence (spread 0.39% over four scales) but gives back 1.92% at nominal, so invariance is not a win on its own: the nominal regression has to stay near zero too.",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/analysis/band_hypothesis.json",
+      "experiments/cvrp_midterm/analysis/p0_probe.json"
+    ]
+  }
+}

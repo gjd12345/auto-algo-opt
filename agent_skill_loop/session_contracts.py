@@ -20,7 +20,7 @@ PLAN_KEYS = frozenset({
     "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
     "search_intent", "reflection_basis",
 })
-PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary"})
+PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary", "research_activity"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
 OPERATION_NON_AUTHORITY_METADATA_KEYS = frozenset({"mechanism_note"})
 FEEDBACK_KEYS = frozenset({"round_id", "evaluation_ref", "suite_hash"})
@@ -40,6 +40,14 @@ FORBIDDEN_PLAN_KEYS = frozenset({
     "code", "budget", "model", "operators", "operator", "evaluator",
     "stop", "stop_reason", "objective", "valid", "instance_objectives",
 })
+RESEARCH_ACTIVITY_CHOICES = {
+    "mode": {"used", "not_used"},
+    "trigger": {"cold_start", "stagnation", "badcase", "design_uncertainty", "other", "not_applicable"},
+    "finding_status": {"proved_under_assumptions", "empirical_observation", "hypothesis", "inconclusive", "not_applicable"},
+    "decision": {"modify", "retain", "abandon", "no_change", "not_applicable"},
+}
+RESEARCH_ACTIVITY_TEXT_KEYS = ("question", "finding_summary", "decision_summary")
+RESEARCH_ACTIVITY_KEYS = frozenset((*RESEARCH_ACTIVITY_CHOICES, *RESEARCH_ACTIVITY_TEXT_KEYS, "evidence_refs"))
 
 
 def _strict_keys(value: Mapping[str, Any], allowed: frozenset[str], label: str) -> None:
@@ -63,6 +71,26 @@ def _integer(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"{label}_must_be_integer")
     return value
+
+
+def _parse_research_activity(raw: Mapping[str, Any]) -> dict[str, Any]:
+    _strict_keys(raw, RESEARCH_ACTIVITY_KEYS, "research_activity")
+    activity: dict[str, Any] = {}
+    for key, choices in RESEARCH_ACTIVITY_CHOICES.items():
+        if key == "mode" or key in raw:
+            value = _text(raw.get(key), f"research_activity_{key}")
+            if value not in choices:
+                raise ValueError(f"research_activity_{key}_not_allowed")
+            activity[key] = value
+    for key in RESEARCH_ACTIVITY_TEXT_KEYS:
+        if key in raw:
+            activity[key] = _text(raw[key], f"research_activity_{key}", max_chars=2048)
+    if "evidence_refs" in raw:
+        refs = raw["evidence_refs"]
+        if not isinstance(refs, list):
+            raise ValueError("research_activity_evidence_refs_must_be_list")
+        activity["evidence_refs"] = [_text(ref, "research_activity_evidence_ref", max_chars=512) for ref in refs]
+    return activity
 
 
 @dataclass(frozen=True)
@@ -166,6 +194,7 @@ class PlanDocument:
     # Runtime never treats it as execution authority and does not inject it
     # into the upstream EoH prompt.
     reasoning_summary: str | None = None
+    research_activity: dict[str, Any] | None = None
 
     @classmethod
     def from_dict(
@@ -194,6 +223,7 @@ class PlanDocument:
         reasoning_summary = None
         if "reasoning_summary" in raw:
             reasoning_summary = _text(raw["reasoning_summary"], "reasoning_summary", max_chars=2048)
+        research_activity = _parse_research_activity(raw["research_activity"]) if "research_activity" in raw else None
         round_id = _integer(raw.get("round_id"), "round_id")
         if round_id != expected_round_id:
             raise ValueError("round_id_mismatch")
@@ -275,6 +305,7 @@ class PlanDocument:
             intent,
             reflection,
             reasoning_summary,
+            research_activity,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -294,6 +325,8 @@ class PlanDocument:
         result["reflection_basis"] = self.reflection_basis.as_dict() if self.reflection_basis else None
         if self.reasoning_summary is not None:
             result["reasoning_summary"] = self.reasoning_summary
+        if self.research_activity is not None:
+            result["research_activity"] = dict(self.research_activity)
         return result
 
 
@@ -597,6 +630,64 @@ def build_feedback_summary(
     return summary
 
 
+def _round_context_finding(activity: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """Shrink a research activity record to the part a generator can act on.
+
+    The record stays advisory metadata, never execution authority: it carries the
+    question, the measured finding, the decision taken about the hypothesis, the
+    next thing to try, and the summary of that decision.  Each field is bounded so
+    a long note cannot crowd out the interface contract or the feedback summary.
+
+    A bound must never silently rewrite a finding.  Revision 3 truncated the
+    finding at exactly 800 characters, which cut the sentence carrying the
+    counter-example ("a rule that only replaces the width loses at the nominal
+    scale") at the word "o".  The generator therefore never saw the trade-off the
+    experiment was meant to test, and the batch looked like a null result about
+    the agent rather than about the prompt compiler.  Clipping is now
+    word-bounded, marked in the text, and reported field by field in
+    ``truncated_fields`` so a caller can fail loudly instead of guessing.
+    """
+    if not isinstance(activity, Mapping):
+        return None
+
+    # ``mode == "not_used"`` records the decision *not* to lean on research for
+    # this round.  That is bookkeeping, not evidence: it must stay invisible to
+    # the generator, otherwise "we did not use a finding" would still steer the
+    # search and the control arm could never be a control.
+    if activity.get("mode") != "used":
+        return None
+
+    truncated: list[str] = []
+
+    def clip(value: Any, limit: int, field: str) -> str | None:
+        if not isinstance(value, str):
+            return None
+        text = " ".join(value.split())
+        if not text:
+            return None
+        if len(text) <= limit:
+            return text
+        cut = text[:limit]
+        if " " in cut:
+            cut = cut[: cut.rfind(" ")]
+        truncated.append(field)
+        return cut.rstrip(" ,;:") + " [truncated]"
+
+    finding = {
+        "question": clip(activity.get("question"), 400, "question"),
+        "measured_finding": clip(activity.get("finding_summary"), 1600, "measured_finding"),
+        "hypothesis_status": clip(activity.get("finding_status"), 64, "hypothesis_status"),
+        "decision": clip(activity.get("decision"), 400, "decision"),
+        "decision_summary": clip(activity.get("decision_summary"), 600, "decision_summary"),
+    }
+    payload = {key: value for key, value in finding.items() if value is not None}
+    if not payload:
+        return None
+    if truncated:
+        payload["truncated_fields"] = truncated
+    return payload
+
+
 def compile_round_context(
     plan: PlanDocument,
     *,
@@ -627,6 +718,18 @@ def compile_round_context(
             "search_intent": plan.search_intent,
             "guidance_mode": "agent",
         }
+        # A research finding is only useful if it reaches the generator.  Before
+        # this, plan.research_activity was persisted to plan.json and never
+        # compiled into the round context, so a mathematical conclusion could not
+        # influence the next round's candidates.
+        finding = _round_context_finding(plan.research_activity)
+        if finding is not None:
+            guidance["research_finding"] = finding
+            # A clipped finding is a defect in the pipeline, not a property of the
+            # experiment: surface it where a caller or a report can see it instead
+            # of shipping half a sentence to the generator.
+            if "truncated_fields" in finding:
+                guidance["research_finding_truncated"] = list(finding["truncated_fields"])
     else:
         # Controlled benchmark groups A/B/C must not accidentally receive a
         # host-Agent strategy under a neutral manifest.  The fixed text is

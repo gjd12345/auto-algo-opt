@@ -1,0 +1,7 @@
+{
+    "sample_order": 1,
+    "operator": "m2",
+    "algorithm": "Replace the previous heuristic's small depot-distance and residual-load penalties with a strong \"savings\"-style score that rewards customers far from the depot and close to the current node, scaled by a larger residual-load balance term, to favor fuller and more geographically coherent routes.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Savings-style: prefer customers far from depot but near current node,\n    # with a stronger residual-load balance incentive to build fuller routes.\n    score = d_cur - 0.45 * d_dep + 0.80 * d_cur * np.abs(load_after - 0.5)\n    return int(unvisited_nodes[np.argmin(score)])",
+    "objective": -0.01497
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Candidate 2 softened cosine alignment using the feasible-set size and capacity pressure. Its mean improved to 11.11117, chiefly through instances 0 and 5, while instances 3 and 4 regressed. Candidate 1 regressed to 12.20259.",
+      "evidence_refs": [
+        "evaluation:2323bce4bd1944778efafce6c15fe527",
+        "rounds/round_0008/execution_delta.json",
+        "rounds/round_0008/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Revisit the degenerate depot start without reverting the improved in-route policy."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "adaptive-angular-cohesion",
+    "description": "State-adaptive angular weight in CVRP savings",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Round 8 candidate 2 improved the mean to 11.11117 while preserving savings and using a bounded cosine weight modulated by feasible-set size and capacity pressure.\n\n**How to apply:** When retaining this family, keep the verified angular and demand formulas as a reference, and inspect per-instance tradeoffs before replacing it.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:2323bce4bd1944778efafce6c15fe527"
+  }
+}

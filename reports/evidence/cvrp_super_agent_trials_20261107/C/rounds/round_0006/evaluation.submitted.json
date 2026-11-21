@@ -1,0 +1,21 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 1 improved to 10.91967. It retained the 0.60 radial term, added a residual-capacity penalty divided by current distance when near ties existed, and then compared every candidate. A node outside the mask can therefore win. The main gain is on instance 2; instances 4 and 5 regressed.",
+      "evidence_refs": [
+        "evaluation:68fe8c1082d1496f98f6d7cb8653f29a",
+        "rounds/round_0006/execution_delta.json",
+        "rounds/round_0006/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Test a capacity tie-break with a strict shortlist boundary."
+  },
+  "memory_action": {
+    "kind": "none",
+    "reason": "The result is round-specific or repeats an existing insight."
+  }
+}

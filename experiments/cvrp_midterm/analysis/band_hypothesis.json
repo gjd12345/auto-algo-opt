@@ -1,0 +1,74 @@
+{
+  "hypothesis": "H1: C's near-tie band mixes relative (span) and absolute (1.0) length units",
+  "suite": "reports\\evidence\\cvrp_super_agent_reference_20261107\\dev_suite.json",
+  "instances": 6,
+  "rows": [
+    {
+      "scale": 1.0,
+      "normalised_objective_C": 10.919671295412352,
+      "normalised_objective_C_rel": 11.129736064560168,
+      "branch_rate_C": 0.013333333333333334,
+      "branch_rate_C_rel": 0.006666666666666667
+    },
+    {
+      "scale": 0.01,
+      "normalised_objective_C": 16.19909417116656,
+      "normalised_objective_C_rel": 11.129736064560163,
+      "branch_rate_C": 0.6433333333333334,
+      "branch_rate_C_rel": 0.006666666666666667
+    },
+    {
+      "scale": 0.001,
+      "normalised_objective_C": 33.52210010100758,
+      "normalised_objective_C_rel": 11.089710055737271,
+      "branch_rate_C": 0.8266666666666667,
+      "branch_rate_C_rel": 0.02
+    },
+    {
+      "scale": 1000.0,
+      "normalised_objective_C": 11.085876752536876,
+      "normalised_objective_C_rel": 11.085876752536876,
+      "branch_rate_C": 0.0,
+      "branch_rate_C_rel": 0.0
+    }
+  ],
+  "checks": {
+    "P1_normalised_objective_under_scaling": {
+      "C": {
+        "1.0": 0.0,
+        "0.01": 5.279422875754209,
+        "0.001": 22.60242880559523,
+        "1000.0": 0.1662054571245246
+      },
+      "C_rel": {
+        "1.0": 0.0,
+        "0.01": -5.329070518200751e-15,
+        "0.001": -0.0400260088228972,
+        "1000.0": -0.04385931202329196
+      }
+    },
+    "P2_branch_rate_under_scaling": {
+      "C": {
+        "1.0": 0.013333333333333334,
+        "0.01": 0.6433333333333334,
+        "0.001": 0.8266666666666667,
+        "1000.0": 0.0
+      },
+      "C_rel": {
+        "1.0": 0.006666666666666667,
+        "0.01": 0.006666666666666667,
+        "0.001": 0.02,
+        "1000.0": 0.0
+      }
+    },
+    "P3_relative_band_is_scale_flat": {
+      "branch_rate_spread_C_rel": 0.02,
+      "normalised_objective_spread_C_rel_relative": 0.003940732445843964,
+      "normalised_objective_spread_C_relative": 2.0698817935198397
+    },
+    "P4_remedy_costs_on_nominal_scale": {
+      "C_rel_vs_C_relative_gap": 0.0192372795357009
+    },
+    "decision_agreement_C_nominal_vs_shrunk": 0.03333333333333333
+  }
+}

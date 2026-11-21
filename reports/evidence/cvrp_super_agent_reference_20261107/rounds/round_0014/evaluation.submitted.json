@@ -1,0 +1,27 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 2 improved to 11.06360. It used raw savings to shortlist within 2% of the leader and then normalized savings minus a demand penalty, dropping angular alignment. Instances 1, 2 and 5 improved while 0, 3 and 4 regressed. This is a useful deviation from the submitted Plan.",
+      "evidence_refs": [
+        "evaluation:b3c6846ec5f84713b4ea76805843e2dc",
+        "rounds/round_0014/execution_delta.json",
+        "rounds/round_0014/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Refine the verified two-stage savings shortlist."
+  },
+  "memory_action": {
+    "kind": "solution",
+    "name": "near-tie-savings-cvrp",
+    "description": "Validated CVRP savings shortlist and normalized tie-break",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "## Execution\nUse the verified skill from round 14. Rank by raw depot savings; within 2% of the maximum rerank by normalized savings minus a capacity-scaled demand penalty.\n\n**Why:** It scored 11.06360 versus 12.11504 for the nearest-neighbor baseline and 11.11117 for the previous incumbent on this six-instance development suite.\n\n**How to apply:** Preserve the primary absolute savings and use the secondary score only within the shortlist. Check the depot case, where raw savings all tie.\n\n**Reusable Experience:** A bounded shortlist can expose more useful ranking changes than replacing the primary score wholesale. Improvements were mixed across instances and are not verified on heldout data.",
+    "source_skill_ref": "rounds/round_0014/eoh_run/skills/candidate_2",
+    "evidence_ref": "evaluation:b3c6846ec5f84713b4ea76805843e2dc"
+  }
+}

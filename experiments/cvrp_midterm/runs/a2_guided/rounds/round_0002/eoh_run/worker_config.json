@@ -1,0 +1,143 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "dae86a9a40e21ca04301f75f3fe60d01237c4f399d317ddd900bb8a3890ab315",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.733134,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260909,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "6920c46a6b77ee7d79555bb3e6e488b7db357de604ebf256fc3dc8612c9ec4f2",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.204,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "parent_skill": {
+    "version_id": "candidate_4",
+    "code_sha256": "12a76beea1b7f1b0dc07b346873a5277ab644609e933131fca67e58b8ab07a0a",
+    "original_suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "evaluation": {
+      "valid": true,
+      "objective": -0.002504016480793885,
+      "instance_objectives": [
+        -0.01465469962714208,
+        -0.0277741248004607,
+        -0.03549991722785388,
+        0.06791267573228112
+      ],
+      "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+      "error_code": null,
+      "error_detail": null,
+      "elapsed_seconds": 0.219,
+      "metrics": {
+        "raw_objectives": [
+          11.674539033805264,
+          10.230153496647729,
+          11.967255538931107,
+          13.334181363318253
+        ],
+        "reference_objectives": [
+          11.84817041232914,
+          10.522404060217072,
+          12.407728887420175,
+          12.486209468554943
+        ],
+        "reference_kind": [
+          "solver_reference",
+          "solver_reference",
+          "solver_reference",
+          "solver_reference"
+        ],
+        "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+      }
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 569376.748134,
+  "local_url": "http://127.0.0.1:55571/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a2_guided",
+    "task_id": "task_cefc3fe2b7f344d590922f9cfb7bf0ae"
+  },
+  "supervisor_pid": 27504,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":2,\"direction\":\"Explore new priority rules for the CVRP greedy construction by changing one score term at a time.\",\"operations\":[{\"type\":\"replace\",\"target\":\"one term of the priority score\",\"mechanism\":\"Replace exactly one of the three terms (distance to the current node, distance to the depot, remaining capacity) with a different functional form and leave the other two unchanged, so the effect of the change is readable in the next round's numbers.\"},{\"type\":\"add\",\"target\":\"a second ordering stage\",\"mechanism\":\"After the primary score, order the candidates whose primary scores are closest together by a secondary criterion; the stage has to stay cheap enough to fit the solver budget.\"},{\"type\":\"preserve\",\"target\":\"feasibility and the problem interface\",\"mechanism\":\"Keep the capacity filter, the construction order and the sign convention of the objective unchanged.\"}],\"preserve\":\"The problem interface, the evaluator and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"Replacing one score term per round and adding a cheap second ordering stage yields better routes than rewriting the whole score at once.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Are the priority scores this search writes invariant to the numerical scale at which the same instance is expressed?\",\"measured_finding\":\"Measured on the dev suite. The near-tie gate written in the previous batch is not invariant to coordinate scale: re-expressing the same instances at 1e-2 and 1e-3 of nominal size raises the share of steps entering the gate from 1.3% to 64% and 83%, and degrades the scale-normalised objective from 10.92 to 16.20 and 33.52 (+48%, +207%). At nominal scale the gate fires on only 1.3% of steps, so it is nearly dead where the suite lives: too wide when the instance shrinks, too narrow at nominal. The width adds an absolute length to a span-proportional term. Keeping only the span-proportional part removes the scale dependence (spread 0.39% over four scales) but gives back 1.92% at nominal, so invariance is not a win on its own: the nominal regression has to stay near zero too.\",\"hypothesis_status\":\"empirical_observation\",\"decision\":\"modify\"},\"feedback_summary\":{\"source\":{\"round_id\":1,\"evaluation_ref\":\"rounds/round_0001/evaluation_facts.json\",\"evaluation_facts_sha256\":\"c5bd310a99e77882330d07d2c74341d849ff6011113cb60ee75ba1ca8aafd642\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0001/eoh_run/exported_skill\",\"code_sha256\":\"12a76beea1b7f1b0dc07b346873a5277ab644609e933131fca67e58b8ab07a0a\",\"objective\":-0.002504016480793885,\"origin\":\"generated\",\"evaluation_id\":\"e709d5e3b0ff4beca743a90e2747655a\",\"instance_objectives\":[-0.01465469962714208,-0.0277741248004607,-0.03549991722785388,0.06791267573228112]},\"incumbent_candidate_match\":{\"status\":\"resolved\",\"reason\":null,\"evaluation_id\":\"e709d5e3b0ff4beca743a90e2747655a\",\"code_sha256\":\"12a76beea1b7f1b0dc07b346873a5277ab644609e933131fca67e58b8ab07a0a\"},\"best_generated_candidate\":{\"candidate_id\":\"candidate_4\",\"revision\":\"original\",\"origin\":\"generated\",\"evaluation_id\":\"e709d5e3b0ff4beca743a90e2747655a\",\"code_sha256\":\"12a76beea1b7f1b0dc07b346873a5277ab644609e933131fca67e58b8ab07a0a\",\"objective\":-0.002504016480793885,\"instance_objectives\":[-0.01465469962714208,-0.0277741248004607,-0.03549991722785388,0.06791267573228112],\"valid\":true},\"objective_delta\":0.0,\"improvement_vs_incumbent\":0.0,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[-0.01465469962714208,-0.0277741248004607,-0.03549991722785388,0.06791267573228112],\"best_generated\":[-0.01465469962714208,-0.0277741248004607,-0.03549991722785388,0.06791267573228112]},\"generated_candidate_counts\":{\"total\":5,\"valid\":4,\"invalid\":1},\"major_errors\":[{\"error_code\":\"forbidden_syntax\",\"count\":1,\"evidence_refs\":[\"evaluation:349a6d9748b54b8d8b4d795d7f903482\"],\"details\":[]}],\"evidence_refs\":[\"evaluation:7d459cb507814d03bcba75dd57b36b76\",\"evaluation:aebfba2261024e05b35d7467b489cf94\",\"evaluation:349a6d9748b54b8d8b4d795d7f903482\",\"evaluation:feb061f4423d40ce95c7cb9abe19e950\",\"evaluation:e709d5e3b0ff4beca743a90e2747655a\",\"evaluation:6281608d91bc403aa4ee802c76ac74fc\",\"rounds/round_0001/execution_delta.json\",\"rounds/round_0001/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0001/execution_delta.json\",\"sha256\":\"f388d3973d96ecd14839e64857bc5256f5e7e320cbeee7e78cecd3d35d79ef75\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":1,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":null,\"incumbent_after_objective\":-0.002504016480793885,\"incumbent_absolute_gain\":null,\"incumbent_instance_coverage\":0,\"incumbent_per_instance_gain\":null,\"generation_attempt_count\":5,\"valid_generation_count\":4,\"invalid_generation_count\":1,\"valid_generation_yield\":0.8,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":0,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":1.0,\"lineage_concentration\":null,\"instance_response_valid_complete_count\":4,\"instance_response_unique_vector_count\":4,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.6690639313500902,\"instance_response_pairwise_l1_max\":1.218887979051403,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":6,\"round_input_tokens\":8178,\"round_output_tokens\":1964,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.64,\"round_wall_seconds\":16.64},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":null,\"incumbent_after_objective\":-0.002504016480793885,\"incumbent_absolute_gain\":null,\"incumbent_instance_coverage\":0,\"incumbent_per_instance_gain\":null,\"generation_attempt_count\":5,\"valid_generation_count\":4,\"invalid_generation_count\":1,\"valid_generation_yield\":0.8,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":0,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":1.0,\"lineage_concentration\":null,\"instance_response_valid_complete_count\":4,\"instance_response_unique_vector_count\":4,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.6690639313500902,\"instance_response_pairwise_l1_max\":1.218887979051403,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":6,\"round_input_tokens\":8178,\"round_output_tokens\":1964,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.64,\"round_wall_seconds\":16.64},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"pop_size\":4,\"n_pop\":2,\"max_sample_nums\":8},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a2_guided\\rounds\\round_0002\\eoh_run\\seeds\\parent_skill.json",
+  "population_seed_count": 0,
+  "request_timeout": 600.0
+}

@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "misaligned",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 2/2. Incumbent 11.46486 to 11.46486. Both proposals scored. The best replaced savings with route-closure detour, reintroducing a positive depot distance term, and regressed.",
+      "evidence_refs": [
+        "evaluation:ec203ae67ceb4d59a34c3ca37bb81244",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Keeping radial preference from the validated candidate may avoid the regression of the closure-cost rewrite.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:ec203ae67ceb4d59a34c3ca37bb81244",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Preserve the sign of depot savings in the adaptive formula."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "keep-savings-sign",
+    "description": "Preserve the ranking direction when refining adaptive savings",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Both proposals scored. The best replaced savings with route-closure detour, reintroducing a positive depot distance term, and regressed.\n\n**How to apply:** Use the incumbent's subtraction of positive savings; avoid replacing it with detour cost when testing a coefficient change.\n\n**Limitations:** One seed and one development suite.",
+    "evidence_ref": "evaluation:ec203ae67ceb4d59a34c3ca37bb81244"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "plan_alignment": "unknown",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 5/6. Incumbent 12.28140 to 12.10486. Candidate 2 led, and one candidate failed on lexsort.",
+      "evidence_refs": [
+        "evaluation:71f3c244bd5c41b1a75865dd363efc50",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Use the valid incumbent and avoid unsupported sorting."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "allowed-tie-order",
+    "description": "Avoid lexsort in generated CVRP candidates",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Candidate 2 led, and one candidate failed on lexsort.\n\n**How to apply:** Use the supported single-score argmin or an explicit comparison loop.\n\n**Limitations:** One seed and one development suite.",
+    "evidence_ref": "evaluation:71f3c244bd5c41b1a75865dd363efc50"
+  }
+}

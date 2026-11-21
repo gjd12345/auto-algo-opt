@@ -1,0 +1,114 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "i1",
+        "algorithm": "The algorithm scores each feasible unvisited customer by a scale-aware combination of travel distance from the current node and distance back to the depot, preferring nearby customers that also lie closer to the depot, with score = d_cur - \u03b1\u00b7d_dep normalized by the candidate span and no absolute-length tie band.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Scale-aware combination: pull toward close customers that are also near depot.\n    # Use span-normalised score so behaviour is invariant to coordinate scale.\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    norm = span + 1e-12\n\n    # Weight depot-distance term; sign favours smaller d_dep (closer to depot).\n    alpha = 0.6\n    score = (d_cur - alpha * d_dep) / norm\n\n    # Small deterministic tie-breaker: prefer higher demand served now (better packing).\n    # Added at relative magnitude well below score resolution.\n    dem = demands[unvisited_nodes].astype(float)\n    dem_max = float(np.max(dem)) if dem.size > 0 else 1.0\n    dem_norm = dem / (dem_max + 1e-12)\n    score = score - 1e-9 * dem_norm\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 2,
+        "operator": "i1",
+        "algorithm": "Use a pure distance-to-current-node priority to recover the nominal unit-square performance lost by the scale-sensitive near-tie refinement.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    return int(unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])])",
+        "objective": 0.0
+    },
+    {
+        "sample_order": 3,
+        "operator": "i1",
+        "algorithm": "Use a scale-homogeneous priority that blends current-edge distance, depot-return distance, and load: rank by d_cur + \u03b1\u00b7d_dep - \u03b2\u00b7(demand/rest_capacity)\u00b7d_dep with a span-normalized near-tie refinement band.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 1:\n        return int(unvisited_nodes[0])\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Normalised load fraction: prefer high-demand customers while capacity allows\n    load_frac = dem / max(float(rest_capacity), 1e-12)\n\n    # Base priority: distance now + a scaled depot pull, reduced for heavy loads\n    alpha = 0.6\n    beta = 0.35\n    base = d_cur + alpha * d_dep - beta * load_frac * d_dep\n\n    # Scale-homogeneous near-tie refinement band\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    span_dep = float(np.max(d_dep) - np.min(d_dep)) if d_dep.size > 1 else 0.0\n    scale = span + span_dep\n    band = 1e-3 * scale + 1e-12\n\n    base_min = float(np.min(base))\n    near = base <= base_min + band\n\n    if np.count_nonzero(near) <= 1:\n        return int(unvisited_nodes[np.argmin(base)])\n\n    # Refinement inside the near-tie band: prefer the true nearest next hop,\n    # with a slight bias toward higher-demand nodes and lower depot distance.\n    idx = np.nonzero(near)[0]\n    refine = d_cur[idx] - 0.25 * load_frac[idx] * d_dep[idx]\n    return int(unvisited_nodes[idx[np.argmin(refine)]])",
+        "objective": null
+    },
+    {
+        "sample_order": 4,
+        "operator": "i1",
+        "algorithm": "Select the feasible unvisited node maximizing a score that blends proximity to the current node, promise of cheap depot return, and load efficiency, using scale-free terms so behavior is coordinate-scale invariant.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # span of distances among candidates and depot, scale-free normalization\n    all_d = np.concatenate((d_cur, d_dep, distance_matrix[current_node][[depot]]))\n    span = float(all_d.max() - all_d.min())\n    if span <= 0.0:\n        span = 1.0\n    # normalized terms\n    cur_n = d_cur / span\n    dep_n = d_dep / span\n    dem = demands[unvisited_nodes]\n    cap = max(rest_capacity, 1e-12)\n    # load pressure: high when remaining capacity after this customer is small relative to its demand\n    load_n = dem / cap  # in [0,1]\n    # Score: prefer close to current, close to depot (cheap return), and filling capacity\n    score = -1.0 * cur_n - 0.45 * dep_n + 0.35 * load_n\n    return int(unvisited_nodes[np.argmax(score)])",
+        "objective": 0.05534
+    },
+    {
+        "sample_order": 5,
+        "operator": "i1",
+        "algorithm": "The heuristic selects the feasible customer minimizing a scale-free priority score that blends current distance and depot savings (d_cur - 0.6*d_dep), refined within a relative near-tie band proportional to the distance span, so the choice is invariant to coordinate scale.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    base = d_cur - 0.6 * d_dep\n    span = float(d_cur.max() - d_cur.min()) if d_cur.size > 1 else 0.0\n    band = 1e-3 * span + 1e-12\n    bmin = base.min()\n    near = np.where(base <= bmin + band)[0]\n    if near.size == 1:\n        return int(unvisited_nodes[near[0]])\n    # refine inside near-tie band: prefer closest to depot then closest to current\n    cand = near\n    return int(unvisited_nodes[cand[np.argmin(d_dep[cand])]])",
+        "objective": -0.0835
+    },
+    {
+        "sample_order": 6,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 9,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 10,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 11,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 12,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 13,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 14,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 15,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 16,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

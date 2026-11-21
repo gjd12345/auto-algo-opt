@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Calibrate the mid-route capacity-fill weight to avoid spatial teleportation and introduce a scale-invariant voluntary early-return-to-depot gate (returning depot when normalized Clarke-Wright saving is too small).",
+  "operations": [
+    {
+      "type": "add",
+      "target": "voluntary early return gate (return depot when current_node != depot)",
+      "mechanism": "After selecting the best mid-route candidate j, compute its dimensionless normalized Clarke-Wright saving sigma(i,j) = (d(0,i) + d(0,j) - d(i,j)) / max(d(0,i) + d(0,j), 1e-12). If sigma(i,j) falls below a threshold tau (around 0.15 to 0.35), return depot early instead of crossing the depot with a partially depleted vehicle."
+    },
+    {
+      "type": "replace",
+      "target": "mid-route capacity-fill weight and depot pull",
+      "mechanism": "Reduce the linear demand/rest_capacity weight from 0.30-0.40 (which overwhelmed d_cur/scale ~ 0.10 in Round 1) to a moderate range (0.05-0.18) or quadratic/modulated form, paired with moderate-to-strong depot pull (alpha_mid around 0.70-0.95) and verified sign convention (smaller score = better, larger radial/saving = better)."
+    },
+    {
+      "type": "preserve",
+      "target": "explicit depot-start branch and strict coordinate scale invariance",
+      "mechanism": "Keep the decoupled current_node == depot branch (heavy-far / radial-load seed) and strictly dimensionless ratios so objective/scale is invariant across scales 0.01 to 1000."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, voluntary early return only when current_node != depot (never return depot when already at depot), feasibility, and strict scale invariance.",
+  "hypothesis": "H-004: Calibrating beta_fill <= 0.18 fixes Round 1's spatial teleportation regression, and adding a scale-invariant early-return gate on normalized saving sigma(i,j) < tau breaks the cross-depot bridge bottleneck and beats incumbent Frozen_C (-0.1089) across both dev and larger scales.",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "badcase",
+    "question": "Why did Round 1's scale-free decoupled candidates (-0.0615 best) lose to incumbent C (-0.1089), and can voluntary early return (return 0) break the ceiling?",
+    "finding_summary": "Code audit of Round 1 candidates revealed two concrete bugs: (1) candidates 1/2/4/5 used beta_fill=0.30-0.40 on fill=dem/rest_cap against d_cur/scale~0.08-0.12, causing 3x spatial teleportation when rest_cap drops; (2) candidate 2 inverted its depot-start sign and candidate 3 flipped the saving sign (+d_dep). Offline diagnostics also falsified naive terminal-stop +w_ret*d_dep penalties and 2-step lookahead (both hurt heavy stops). By contrast, a scale-free voluntary early-return rule returning depot when normalized saving sigma(i,j)=(d0i+d0j-dij)/(d0i+d0j)<tau (never used by A/B/C/V0) improved monotonically from tau=0 (-0.0939 dev, 18.80 multi-scale) to tau=0.25 (-0.1200 dev, beating C -0.1089 on all 4 instances, and 18.535 across 72 multi-scale instances).",
+    "finding_status": "proved_under_assumptions",
+    "decision": "modify",
+    "decision_summary": "Keep the decoupled depot-start and strict scale invariance, tighten the mid-route fill weight to 0.05-0.18 with alpha_mid in 0.70-0.95, and add a scale-invariant early-return check (return depot only when current_node != depot and normalized saving sigma(i,j) < tau in [0.15, 0.35], possibly conditioned on partial vehicle fill). Do not add +d_dep penalties on terminal stops.",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0001/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  }
+}

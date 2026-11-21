@@ -1,0 +1,25 @@
+{
+  "plan_alignment": "unknown",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 6/6. Incumbent 12.72671 to 12.14012. All proposals were valid and candidate 2 was best.",
+      "evidence_refs": [
+        "evaluation:af0fa36eafc64a4b9c0eec148204c984",
+        "rounds/round_0001/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Refine the best valid route constructor."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "validated-parent",
+    "description": "Start refinement from the verified best candidate",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** All proposals were valid and candidate 2 was best.\n\n**How to apply:** Retain its validated scoring behavior as the reference and make a small identifiable edit.\n\n**Limitations:** One seed and one development suite.",
+    "evidence_ref": "evaluation:af0fa36eafc64a4b9c0eec148204c984"
+  }
+}

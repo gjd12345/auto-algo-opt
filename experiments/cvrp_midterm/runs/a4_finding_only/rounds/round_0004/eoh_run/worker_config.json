@@ -1,0 +1,143 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "dae86a9a40e21ca04301f75f3fe60d01237c4f399d317ddd900bb8a3890ab315",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 24,
+  "wall_seconds": 599.733392,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260911,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "ce026ecc508b922ac683b677aea7824510dba691b1cb267bd4fe3a37d4bffc28",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.234,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "parent_skill": {
+    "version_id": "candidate_5",
+    "code_sha256": "c2fa0a34c6e2fd18104e2edc8fcddb8ee4172caa1732db5bf98f0f05a4ff54de",
+    "original_suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "evaluation": {
+      "valid": true,
+      "objective": -0.06670252945060517,
+      "instance_objectives": [
+        -0.045350920709276175,
+        -0.08181080640288606,
+        -0.012706969966253728,
+        -0.12694142072400474
+      ],
+      "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+      "error_code": null,
+      "error_detail": null,
+      "elapsed_seconds": 0.219,
+      "metrics": {
+        "raw_objectives": [
+          11.310844975409609,
+          9.661557698753711,
+          12.250064249098308,
+          10.901192299159058
+        ],
+        "reference_objectives": [
+          11.84817041232914,
+          10.522404060217072,
+          12.407728887420175,
+          12.486209468554943
+        ],
+        "reference_kind": [
+          "solver_reference",
+          "solver_reference",
+          "solver_reference",
+          "solver_reference"
+        ],
+        "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+      }
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 571701.748392,
+  "local_url": "http://127.0.0.1:49695/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a4_finding_only",
+    "task_id": "task_169e7842820844afae3f6471fac86009"
+  },
+  "supervisor_pid": 30316,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":4,\"direction\":\"Explore new priority rules for the CVRP greedy construction.\",\"operations\":[{\"type\":\"replace\",\"target\":\"priority score\",\"mechanism\":\"Try a different combination of distance, depot distance and load.\"}],\"preserve\":\"The problem interface, the evaluator and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"A different distance/load combination yields better routes.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"research_finding\":{\"question\":\"Are the priority scores this search writes invariant to the numerical scale at which the same instance is expressed?\",\"measured_finding\":\"Measured on the dev suite. The near-tie gate written in the previous batch is not invariant to coordinate scale: re-expressing the same instances at 1e-2 and 1e-3 of nominal size raises the share of steps entering the gate from 1.3% to 64% and 83%, and degrades the scale-normalised objective from 10.92 to 16.20 and 33.52 (+48%, +207%). At nominal scale the gate fires on only 1.3% of steps, so it is nearly dead where the suite lives: too wide when the instance shrinks, too narrow at nominal. The width adds an absolute length to a span-proportional term. Keeping only the span-proportional part removes the scale dependence (spread 0.39% over four scales) but gives back 1.92% at nominal, so invariance is not a win on its own: the nominal regression has to stay near zero too. A candidate that o\",\"hypothesis_status\":\"empirical_observation\",\"decision\":\"modify\"},\"feedback_summary\":{\"source\":{\"round_id\":3,\"evaluation_ref\":\"rounds/round_0003/evaluation_facts.json\",\"evaluation_facts_sha256\":\"49dfb3d06ae2ad5fe5d7101962b4b239e9b99854eb739b6aa4793cdfd55a4d35\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0001/eoh_run/exported_skill\",\"code_sha256\":\"c2fa0a34c6e2fd18104e2edc8fcddb8ee4172caa1732db5bf98f0f05a4ff54de\",\"objective\":-0.06670252945060517,\"origin\":\"generated\"},\"incumbent_candidate_match\":{\"status\":\"identity_unresolved\",\"reason\":\"exact_evaluation_id_and_code_sha256_not_found\",\"evaluation_id\":null,\"code_sha256\":\"c2fa0a34c6e2fd18104e2edc8fcddb8ee4172caa1732db5bf98f0f05a4ff54de\"},\"best_generated_candidate\":{\"candidate_id\":\"candidate_3\",\"revision\":\"original\",\"origin\":\"generated\",\"evaluation_id\":\"12f785686180438a9d8990caac1fb0bc\",\"code_sha256\":\"9369000567ec3bd8b604b3457c92d55cc100a46ff05f66221505029cd5b81966\",\"objective\":-0.028738724996467374,\"instance_objectives\":[-0.022864811476354555,-0.03276482569979954,0.006652228334569608,-0.065977491144285],\"valid\":true},\"objective_delta\":0.0379638044541378,\"improvement_vs_incumbent\":-0.0379638044541378,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[],\"best_generated\":[-0.022864811476354555,-0.03276482569979954,0.006652228334569608,-0.065977491144285]},\"generated_candidate_counts\":{\"total\":5,\"valid\":4,\"invalid\":1},\"major_errors\":[{\"error_code\":\"candidate_error\",\"count\":1,\"evidence_refs\":[\"evaluation:db27087af2204f56b8e1826b6ede260d\"],\"details\":[]}],\"evidence_refs\":[\"evaluation:1657078c7e134cfaaec159f32603662a\",\"evaluation:b743e430d0e34cf591e199a516354579\",\"evaluation:19a6654717ed4e6e88e1ec5b7db9be4a\",\"evaluation:7a61901152a54b5baed11b8ae5f0b86f\",\"evaluation:89f8ac8bdb604bd58cf33099b36fc74f\",\"evaluation:12f785686180438a9d8990caac1fb0bc\",\"evaluation:b943e4ffb42d4263950489dce2bdbdee\",\"evaluation:db27087af2204f56b8e1826b6ede260d\",\"rounds/round_0003/execution_delta.json\",\"rounds/round_0003/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0003/execution_delta.json\",\"sha256\":\"c10061e956b04f5ed68ff30f41e82eda0c82ca081e728fc42c5bd2a123e524b7\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":3,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.06670252945060517,\"incumbent_after_objective\":-0.06670252945060517,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":5,\"valid_generation_count\":4,\"invalid_generation_count\":1,\"valid_generation_yield\":0.8,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":5,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.42857142857142855,\"instance_response_valid_complete_count\":4,\"instance_response_unique_vector_count\":4,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.24622540939892412,\"instance_response_pairwise_l1_max\":0.29983119772360267,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":8,\"round_input_tokens\":19933,\"round_output_tokens\":2199,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.811,\"round_wall_seconds\":16.811},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.06670252945060517,\"incumbent_after_objective\":-0.06670252945060517,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":15,\"valid_generation_count\":13,\"invalid_generation_count\":2,\"valid_generation_yield\":0.8666666666666667,\"source_duplicate_count\":1,\"source_duplicate_denominator\":15,\"source_duplicate_rate\":0.06666666666666667,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":15,\"lineage_verified_candidate_count\":10,\"lineage_unknown_or_unverified_count\":5,\"lineage_unknown_rate\":0.3333333333333333,\"lineage_concentration\":0.5,\"instance_response_valid_complete_count\":13,\"instance_response_unique_vector_count\":13,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.37363304147725934,\"instance_response_pairwise_l1_max\":0.7461384082781187,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":18,\"round_solver_attempts\":22,\"round_input_tokens\":47730,\"round_output_tokens\":7116,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":16.811,\"round_wall_seconds\":51.33},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"max_sample_nums\":8,\"pop_size\":4,\"n_pop\":2},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\a4_finding_only\\rounds\\round_0004\\eoh_run\\seeds\\parent_skill.json",
+  "population_seed_count": 0,
+  "request_timeout": 600.0
+}

@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Round 7 achieved 100% AST recovery (5/5 valid, up from 0/5 in Round 6) using np.where(np.eye(n)>0.5, np.inf, sub). Candidate_2 achieved dev4=-0.15268 (balanced [-0.1652, -0.1684, -0.1213, -0.1558]), sh6=10.2595 (-6.05% vs Frozen_C), ana72=18.1811, and exact scale invariance (1.00000); 3/5 candidates beat Frozen_C.",
+      "evidence_refs": [
+        "rounds/round_0007/execution_delta.json",
+        "rounds/round_0007/comparison_packet.json"
+      ]
+    },
+    {
+      "claim": "Code inspection revealed two exact wiring bugs: candidate_2 hardcoded pressure=0.0 at current_node!=depot (disabling the inward spiral alpha_eff=1.00-0.85*pressure), while candidate_1/5 computed pressure=sum(dem)/rest_cap instead of mean(dem)/rest_cap (saturating at 1.0 and triggering 48-69 premature early returns).",
+      "evidence_refs": [
+        "rounds/round_0007/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-009: Fixing mid-route vehicle pressure to strictly `pressure = min(1.0, mean(dem)/rest_capacity)` inside Round 7 candidate_2's AST-safe isolation + angular + elongation + two-phase architecture will activate the inward spiral properly and deliver our best combined dev4 and multi-scale rule in Round 8.",
+      "evidence_refs": [
+        "rounds/round_0007/execution_delta.json",
+        "rounds/round_0007/comparison_packet.json"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Consolidate Round 7 candidate_2 in Round 8 with exact mid-route `pressure = min(1.0, float(np.mean(dem)) / max(float(rest_capacity), 1e-12))` driving both alpha_eff = alpha_0 - alpha_1*pressure and tau = tau_0 + tau_1*pressure."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

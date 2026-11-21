@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "e1",
+        "algorithm": "Replace the fixed near-tie width with a demand-density priority: score each feasible customer by the ratio of its capacity utilisation (demand relative to remaining capacity) to its scale-free proximity, then pick the maximum, breaking exact ties by the smallest raw distance to the current node.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n    if rest_capacity <= 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0, 1.0, denom)\n    proximity = d_cur / denom  # scale-free, in [0, 1]\n\n    dem = demands[unvisited_nodes].astype(float)\n    util = dem / rest_capacity  # capacity utilisation of this candidate\n\n    # Priority: high utilisation and high proximity are both good for\n    # packing the vehicle efficiently without wandering far.\n    eps = 1e-9\n    score = util / (proximity + eps)\n\n    order = np.argsort(-score)\n    best = order[0]\n    best_score = score[best]\n\n    # Break exact/near-exact ties (relative to best score) by raw distance.\n    rel_window = 1e-6 * (abs(best_score) + 1.0)\n    chosen = best\n    best_d = d_cur[best]\n    for idx in order[1:]:\n        if best_score - score[idx] > rel_window:\n            break\n        if d_cur[idx] < best_d:\n            best_d = d_cur[idx]\n            chosen = idx\n\n    return unvisited_nodes[chosen]",
+        "objective": 0.16881
+    },
+    {
+        "sample_order": 2,
+        "operator": "m1",
+        "algorithm": "Replace the scale-free distance ratio with a scale-free savings-style term (d_cur + d_dep - d_cur_depot_pair approximated by d_dep only relative to d_cur) using a relative margin around the depot-return distance, keeping the demand-based near-tie secondary stage.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Primary: relative proximity that also rewards being far from depot\n    # (i.e., customers that would be expensive to leave behind). Scale-free.\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0, 1.0, denom)\n    score = d_cur / denom\n    # Secondary: among near-ties (relative to local spread), prefer larger demand.\n    order = np.argsort(score)\n    best = order[0]\n    best_score = score[best]\n    spread = score[order[-1]] - best_score\n    if spread <= 0:\n        spread = 1.0\n    window = 0.10 * spread\n    chosen = best\n    best_demand = demands[unvisited_nodes[best]]\n    for idx in order[1:]:\n        if score[idx] - best_score > window:\n            break\n        dem = demands[unvisited_nodes[idx]]\n        if dem > best_demand:\n            best_demand = dem\n            chosen = idx\n    return unvisited_nodes[chosen]",
+        "objective": -0.03086
+    },
+    {
+        "sample_order": 3,
+        "operator": "e2",
+        "algorithm": "The common backbone is a scale-free primary proximity score with a secondary demand-based near-tie breaker; the new algorithm replaces both with a single composite score that blends normalized proximity, depot-return cost, and residual-capacity fill pressure into one continuous term.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n\n    # Scale-free normalisers over the candidate set.\n    dc_sum = np.sum(d_cur)\n    if dc_sum <= 0:\n        dc_sum = 1.0\n    dd_sum = np.sum(d_dep)\n    if dd_sum <= 0:\n        dd_sum = 1.0\n\n    prox = d_cur / dc_sum                 # prefer near candidates\n    dep = d_dep / dd_sum                  # prefer customers far from depot (hard to leave)\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n    fill = dem / cap                      # prefer filling the vehicle\n    fill = np.clip(fill, 0.0, 1.0)\n\n    # Single composite score: proximity dominates, depot-return and fill act as\n    # continuous modifiers instead of a discrete near-tie window.\n    score = prox - 0.35 * dep - 0.25 * fill\n    return unvisited_nodes[np.argmin(score)]",
+        "objective": 0.25605
+    },
+    {
+        "sample_order": 4,
+        "operator": "m2",
+        "algorithm": "Replace the exact near-tie window and the utilization/proximity ratio with a smooth, scale-free exponential priority score that blends proximity, depot pull, and capacity utilization via fixed exponent weights, then break near-ties (relative window) by raw distance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n    if rest_capacity <= 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0.0, 1.0, denom)\n    proximity = d_cur / denom            # scale-free, in [0, 1]\n\n    dep_ratio = d_dep / denom            # scale-free, in [0, 1]\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n    util = np.clip(dem / cap, 0.0, 1.0)\n\n    # Fixed exponent weights: emphasize utilization moderately, proximity\n    # strongly, and give depot pull a mild influence for return-cost awareness.\n    w_prox = 2.5\n    w_util = 1.5\n    w_dep = 1.0\n    eps = 1e-6\n\n    score = (np.power(1.0 - proximity + eps, w_prox)\n             * np.power(util + eps, w_util)\n             * np.power(dep_ratio + eps, w_dep))\n\n    order = np.argsort(-score)\n    best = order[0]\n    best_score = score[best]\n\n    # Near-tie window in absolute score space, scaled by magnitude.\n    rel_window = 1e-4 * (abs(float(best_score)) + 1.0)\n    chosen = best\n    best_d = d_cur[best]\n    for idx in order[1:]:\n        if best_score - score[idx] > rel_window:\n            break\n        if d_cur[idx] < best_d:\n            best_d = d_cur[idx]\n            chosen = idx\n\n    return unvisited_nodes[chosen]",
+        "objective": 0.07114
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Replace the pure distance-to-current term with the classic Clarke-Wright savings score, s = d(depot,current) + d(depot,cand) - d(current,cand), normalized by the two depot legs, and add a scale-free secondary window that prefers candidates with higher demand-to-detour ratio to exploit capacity.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_cur_dep = distance_matrix[current_node][depot]\n    # Clarke-Wright style savings, scale-normalised by the two depot legs.\n    savings = d_cur_dep + d_dep - d_cur\n    scale = d_cur_dep + d_dep\n    scale = scale if scale > 0 else 1.0\n    savings_rel = savings / scale\n    # Primary: maximise relative savings -> minimise negative savings.\n    score = -savings_rel\n    order = np.argsort(score)\n    best = order[0]\n    best_score = score[best]\n    # Relative near-tie window (scale-free in score space)\n    spread = score[order[-1]] - best_score\n    window = 0.05 * spread if spread > 0 else 0.0\n    cand = unvisited_nodes\n    dem = demands[cand]\n    # Secondary: prefer higher demand per unit detour (fills vehicle efficiently).\n    denom_det = np.where(d_cur > 0, d_cur, 1.0)\n    eff = dem / denom_det\n    chosen = best\n    best_eff = eff[best]\n    for idx in order[1:]:\n        if score[idx] - best_score > window:\n            break\n        if eff[idx] > best_eff:\n            best_eff = eff[idx]\n            chosen = idx\n    return unvisited_nodes[chosen]",
+        "objective": null
+    },
+    {
+        "sample_order": 6,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

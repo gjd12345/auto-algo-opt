@@ -1,0 +1,7 @@
+{
+    "sample_order": 2,
+    "operator": "i1",
+    "algorithm": "Replace the distance-to-depot term with a squared distance-to-depot penalty added to the current-node distance score, then break near-ties via depot-distance as a secondary ordering stage.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Primary score: current distance + squared depot distance term (replaces the depot term)\n    score = d_cur + (d_dep * d_dep) / (rest_capacity + 1.0)\n    order = np.argsort(score)\n    best_idx = order[0]\n    best_score = score[best_idx]\n    # Secondary ordering stage: among near-ties, prefer the node farthest from depot\n    # (to leave closer nodes for later, cheap return)\n    tie_mask = np.abs(score - best_score) <= 1e-9 + 0.05 * abs(best_score)\n    candidates = unvisited_nodes[tie_mask]\n    if candidates.size > 1:\n        cand_dep = distance_matrix[depot][candidates]\n        return int(candidates[np.argmax(cand_dep)])\n    return int(unvisited_nodes[best_idx])",
+    "objective": 0.00613
+}

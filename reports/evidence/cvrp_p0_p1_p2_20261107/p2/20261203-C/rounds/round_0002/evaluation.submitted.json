@@ -1,0 +1,28 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 2/2. Incumbent 11.45280 to 11.31618. The winner improved to 11.31618. Its in-route divisor is the current node's depot distance, common to all candidates, so it cancels in the ranking; the effective changes are the distance and demand coefficients.",
+      "evidence_refs": [
+        "evaluation:2a18aeae5a7a4632a4943604bc18bc53",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Adjusting a term that actually changes ranking is more informative than changing a positive common divisor.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:2a18aeae5a7a4632a4943604bc18bc53",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Modify one effective coefficient without changing common scaling."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

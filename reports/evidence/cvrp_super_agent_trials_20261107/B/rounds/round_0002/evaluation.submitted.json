@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 2 reached 11.41894 but did not implement angle. Away from the depot its ordering is equivalent to minimizing d_current - 0.85*d_depot + 0.10*dmax*fill. Four instances improved versus the round-1 incumbent and two regressed.",
+      "evidence_refs": [
+        "evaluation:dc1135d6c6f94e7597a2d5bd4b923c01",
+        "rounds/round_0002/execution_delta.json",
+        "rounds/round_0002/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Keep the normalized-savings primary ranking and test a near-tie correction."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "normalized-savings-actual",
+    "description": "Preserve actual normalized-savings ranking",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Round 2 candidate 2 improved to 11.41894 using normalized savings and a positive fill penalty, without the planned angle term.\n\n**How to apply:** Use the measured ranking as the reference. Compare actual code to the Plan before attributing gains.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:dc1135d6c6f94e7597a2d5bd4b923c01"
+  }
+}

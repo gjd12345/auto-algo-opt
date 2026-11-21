@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Build on Round 3's breakthrough (-0.1576) by adding Law-of-Cosines depot-ray angular coherence cos(theta_0), steeper capacity-adaptive voluntary early return, and a two-phase remaining-fleet depot-start policy.",
+  "operations": [
+    {
+      "type": "add",
+      "target": "Law-of-Cosines depot-ray angular coherence term at current_node != depot",
+      "mechanism": "Compute scale-free cos(theta_0) = clip((d0i^2 + d0j^2 - dij^2) / max(2*d0i*d0j, 1e-12), -1, 1) from distance_matrix alone and reward candidates aligned on the same radial petal (subtract w_cos * cos(theta_0), w_cos in 0.10-0.30) alongside linear radial pull (d_cur - alpha*d_dep)/scale and elongation rho."
+    },
+    {
+      "type": "replace",
+      "target": "depot-start boundary (current_node == depot) and adaptive early-return threshold",
+      "mechanism": "At current_node == depot, use remaining-fleet estimate rem_routes = sum(demands[unvisited]) / rest_capacity: prefer outside-in heavy-far clearing when many routes remain (rem_routes > 6-8) and compact radial-load seed when few routes remain. Mid-route, test a steeper adaptive early-return slope tau = tau_0 + tau_1 * min(1, mean_dem / rest_capacity) (tau_0 in 0.22-0.32, tau_1 in 0.25-0.50) returning depot when 1 - rho < tau."
+    },
+    {
+      "type": "preserve",
+      "target": "strict coordinate scale invariance and Round 3's linear+rho+fill balance",
+      "mechanism": "Keep every term strictly dimensionless (no raw demand/distance division or +1.0 length offsets) and verify early return triggers only when current_node != depot."
+    }
+  ],
+  "preserve": "Exact select_next_node signature, feasibility, strict scale invariance (s001/s1 = 1.00000), and strong performance across both dev4 (target < -0.160) and larger problem sizes.",
+  "hypothesis": "H-006: Angular petal coherence cos(theta_0) plus two-phase remaining-fleet depot-start and steeper capacity-adaptive early return resolves the dev-vs-large-scale trade-off while pushing below -0.160 on dev4.",
+  "research_activity": {
+    "mode": "used",
+    "trigger": "design_uncertainty",
+    "question": "Can we push past Round 3's -0.1576 incumbent while simultaneously closing its large-scale (n=200) depot-start gap?",
+    "finding_summary": "Round 3 delivered a major leap: candidate_3 reached dev4=-0.15762 (-4.87pp over Frozen_C) and sh6=10.3051 (-5.63% vs C) with exact scale invariance (1.00000) via lin+0.35*rho-0.10*fill and adaptive early return. Code audit exposed why its n=200 score lagged (ana72=18.95, n200=30.74): it omitted the depot-start branch and defaulted to inside-out starts. Offline tests proved two scale-free upgrades: (1) switching depot-start via rem_routes=sum(q)/rest_cap (outside-in when rem_routes>6-8, compact otherwise) preserves dev4=-0.1576 and sh6=10.3051 while cutting n200 from 30.74 to 29.17; (2) adding Law-of-Cosines depot-ray angle cos(theta_0) and steeper early-return slope tau=0.25+0.50*mean_dem/rest_cap cuts ana72 down to 17.93 (-5.2% vs A/savings, -12.2% vs C).",
+    "finding_status": "empirical_observation",
+    "decision": "modify",
+    "decision_summary": "Keep Round 3's winning linear+rho+fill backbone and exact scale invariance. Add Law-of-Cosines depot-ray angular coherence cos(theta_0) with weight 0.10-0.30, steeper adaptive early-return threshold tau = tau_0 + tau_1*min(1, mean_dem/rest_cap), and a two-phase rem_routes = sum(q)/rest_cap depot-start branch (outside-in for large remaining fleet, compact for final routes).",
+    "evidence_refs": [
+      "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0003/evaluation_facts.json",
+      "experiments/cvrp_midterm/ledger/hypotheses.jsonl"
+    ]
+  }
+}

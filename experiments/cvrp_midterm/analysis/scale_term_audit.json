@@ -1,0 +1,459 @@
+{
+  "script": "experiments/cvrp_midterm/analysis/scale_term_audit.py",
+  "rule": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py",
+  "suite": "reports/evidence/cvrp_super_agent_reference_20261107/dev_suite.json",
+  "instances": 6,
+  "customers_per_instance": 50,
+  "scales": [
+    1.0,
+    0.01,
+    0.001,
+    1000.0
+  ],
+  "pooled_by_scale": {
+    "1": {
+      "steps": 300,
+      "gated_steps": 5,
+      "gate_rate": 0.016667,
+      "band_total_vs_base_median": 0.006307022860070292,
+      "demand_term_vs_base_median": 3.379428151327329e-05,
+      "cap_term_effective_vs_base_median": 0.0,
+      "cap_term_when_gated_vs_base_median": 5.687622961640823,
+      "cap_term_when_gated_vs_base_max": 10.718821379253487,
+      "cap_term_unconditional_vs_base_median": 5.266946846340759,
+      "near_tie_share": 0.045569
+    },
+    "0.01": {
+      "steps": 300,
+      "gated_steps": 203,
+      "gate_rate": 0.676667,
+      "band_total_vs_base_median": 0.4072811266370757,
+      "demand_term_vs_base_median": 0.0034119486955153646,
+      "cap_term_effective_vs_base_median": 17090.840835328912,
+      "cap_term_when_gated_vs_base_median": 51929.30799621996,
+      "cap_term_when_gated_vs_base_max": 1140228.1673124756,
+      "cap_term_unconditional_vs_base_median": 54306.053870474,
+      "near_tie_share": 0.204818
+    },
+    "0.001": {
+      "steps": 300,
+      "gated_steps": 253,
+      "gate_rate": 0.843333,
+      "band_total_vs_base_median": 3.4875498416251727,
+      "demand_term_vs_base_median": 0.022800269999579778,
+      "cap_term_effective_vs_base_median": 3871801.0954112145,
+      "cap_term_when_gated_vs_base_median": 5129667.568119276,
+      "cap_term_when_gated_vs_base_max": 160392948.9842436,
+      "cap_term_unconditional_vs_base_median": 7025677.501629418,
+      "near_tie_share": 0.985438
+    },
+    "1000": {
+      "steps": 300,
+      "gated_steps": 2,
+      "gate_rate": 0.006667,
+      "band_total_vs_base_median": 0.00192150786330575,
+      "demand_term_vs_base_median": 3.4071813813462476e-08,
+      "cap_term_effective_vs_base_median": 0.0,
+      "cap_term_when_gated_vs_base_median": 5.516667769319693e-06,
+      "cap_term_when_gated_vs_base_max": 5.687622961640819e-06,
+      "cap_term_unconditional_vs_base_median": 5.132572673525604e-06,
+      "near_tie_share": 0.044914
+    }
+  },
+  "exponents": {
+    "band_total_vs_base": -0.5418,
+    "cap_term_when_gated_vs_base": -1.994,
+    "cap_term_unconditional_vs_base": -2.0177,
+    "demand_term_vs_base": -0.9794
+  },
+  "ablation_normalized_objective": {
+    "C_full": {
+      "1": 10.919671,
+      "0.01": 16.199094,
+      "0.001": 33.5221,
+      "1000": 11.085877
+    },
+    "C_rel_band": {
+      "1": 11.129736,
+      "0.01": 11.129736,
+      "0.001": 11.08971,
+      "1000": 11.085877
+    },
+    "C_no_cap": {
+      "1": 11.085877,
+      "0.01": 11.079778,
+      "0.001": 11.066131,
+      "1000": 11.085877
+    },
+    "C_no_dem": {
+      "1": 10.919671,
+      "0.01": 16.285299,
+      "0.001": 33.402512,
+      "1000": 11.085877
+    },
+    "C_no_cap_no_dem": {
+      "1": 11.085877,
+      "0.01": 11.085877,
+      "0.001": 11.085877,
+      "1000": 11.085877
+    },
+    "C_rel_band_no_cap": {
+      "1": 11.085877,
+      "0.01": 11.079778,
+      "0.001": 11.066131,
+      "1000": 11.085877
+    }
+  },
+  "ablation_scale_spread": {
+    "C_full": 2.069882,
+    "C_rel_band": 0.003956,
+    "C_no_cap": 0.001784,
+    "C_no_dem": 2.05893,
+    "C_no_cap_no_dem": 0.0,
+    "C_rel_band_no_cap": 0.001784
+  },
+  "per_instance": {
+    "dev_train-0": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.0061111732520333275,
+          "demand_term_vs_base_median": 3.6707820265034714e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 5.5187404153507345,
+          "near_tie_share": 0.04460303300624442
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 34,
+          "gate_rate": 0.68,
+          "band_total_vs_base_median": 0.424884010846616,
+          "demand_term_vs_base_median": 0.0036779123187235152,
+          "cap_term_effective_vs_base_median": 25222.217198293718,
+          "cap_term_when_gated_vs_base_median": 74376.09354411028,
+          "cap_term_when_gated_vs_base_max": 577568.841038966,
+          "cap_term_unconditional_vs_base_median": 63311.732081483584,
+          "near_tie_share": 0.18204911092294665
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 42,
+          "gate_rate": 0.84,
+          "band_total_vs_base_median": 2.848515999408021,
+          "demand_term_vs_base_median": 0.021255981327151143,
+          "cap_term_effective_vs_base_median": 3248420.5507985214,
+          "cap_term_when_gated_vs_base_median": 4059576.645447104,
+          "cap_term_when_gated_vs_base_max": 57756884.103896484,
+          "cap_term_unconditional_vs_base_median": 4540755.527369637,
+          "near_tie_share": 0.9967051070840197
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.002107319903376416,
+          "demand_term_vs_base_median": 3.670782026503471e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 5.518740415350732e-06,
+          "near_tie_share": 0.04460303300624442
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5263,
+        "cap_term_when_gated_vs_base": -1.737,
+        "demand_term_vs_base": -0.9718
+      }
+    },
+    "dev_train-1": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.007647634957393736,
+          "demand_term_vs_base_median": 4.413515309421863e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 6.627333267319511,
+          "near_tie_share": 0.04574565416285453
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 33,
+          "gate_rate": 0.66,
+          "band_total_vs_base_median": 0.45077208571497507,
+          "demand_term_vs_base_median": 0.0036709244134636347,
+          "cap_term_effective_vs_base_median": 21932.69826379571,
+          "cap_term_when_gated_vs_base_median": 91000.76754711973,
+          "cap_term_when_gated_vs_base_max": 1140228.1673124756,
+          "cap_term_unconditional_vs_base_median": 90576.87016285883,
+          "near_tie_share": 0.2282793867120954
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 43,
+          "gate_rate": 0.86,
+          "band_total_vs_base_median": 3.556235791082889,
+          "demand_term_vs_base_median": 0.02307994210251567,
+          "cap_term_effective_vs_base_median": 5220174.15761963,
+          "cap_term_when_gated_vs_base_median": 7632328.0576861985,
+          "cap_term_when_gated_vs_base_max": 151562203.72576237,
+          "cap_term_unconditional_vs_base_median": 8238776.471516749,
+          "near_tie_share": 0.9854604200323102
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.002102768011901143,
+          "demand_term_vs_base_median": 4.4135153094218615e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 6.627333267319502e-06,
+          "near_tie_share": 0.04574565416285453
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5375,
+        "cap_term_when_gated_vs_base": -1.9236,
+        "demand_term_vs_base": -0.9608
+      }
+    },
+    "dev_train-2": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 3,
+          "gate_rate": 0.06,
+          "band_total_vs_base_median": 0.005731616180801065,
+          "demand_term_vs_base_median": 2.7881355696304312e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 7.000489718742028,
+          "cap_term_when_gated_vs_base_max": 10.718821379253487,
+          "cap_term_unconditional_vs_base_median": 6.253562307183892,
+          "near_tie_share": 0.04591836734693878
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 35,
+          "gate_rate": 0.7,
+          "band_total_vs_base_median": 0.43175704602727805,
+          "demand_term_vs_base_median": 0.0030250221037984564,
+          "cap_term_effective_vs_base_median": 18107.542783859175,
+          "cap_term_when_gated_vs_base_median": 55517.072845279035,
+          "cap_term_when_gated_vs_base_max": 445111.1926257379,
+          "cap_term_unconditional_vs_base_median": 68541.67092395457,
+          "near_tie_share": 0.2361466325660699
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 42,
+          "gate_rate": 0.84,
+          "band_total_vs_base_median": 3.5076799953736346,
+          "demand_term_vs_base_median": 0.0210466277291345,
+          "cap_term_effective_vs_base_median": 4012137.280734716,
+          "cap_term_when_gated_vs_base_median": 5176007.011021189,
+          "cap_term_when_gated_vs_base_max": 48569862.99156173,
+          "cap_term_unconditional_vs_base_median": 6041787.216785656,
+          "near_tie_share": 1.0
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.0019971720070792254,
+          "demand_term_vs_base_median": 2.8116000708672132e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 5.205381851721426e-06,
+          "near_tie_share": 0.043782837127845885
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5421,
+        "cap_term_when_gated_vs_base": -1.9553,
+        "demand_term_vs_base": -0.9874
+      }
+    },
+    "dev_train-3": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.005496820619028902,
+          "demand_term_vs_base_median": 2.9882703816500885e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 4.451292594396289,
+          "near_tie_share": 0.044463818657367045
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 36,
+          "gate_rate": 0.72,
+          "band_total_vs_base_median": 0.34333414865175615,
+          "demand_term_vs_base_median": 0.0030095114728420605,
+          "cap_term_effective_vs_base_median": 18799.13661102748,
+          "cap_term_when_gated_vs_base_median": 33142.00032279243,
+          "cap_term_when_gated_vs_base_max": 201371.0841148584,
+          "cap_term_unconditional_vs_base_median": 42534.495053884726,
+          "near_tie_share": 0.21292460646230324
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 42,
+          "gate_rate": 0.84,
+          "band_total_vs_base_median": 3.1556068817887253,
+          "demand_term_vs_base_median": 0.02127017154945273,
+          "cap_term_effective_vs_base_median": 3774432.9225843027,
+          "cap_term_when_gated_vs_base_median": 4545806.224159581,
+          "cap_term_when_gated_vs_base_max": 90136479.99226223,
+          "cap_term_unconditional_vs_base_median": 4918937.318643034,
+          "near_tie_share": 0.9801980198019802
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 0,
+          "gate_rate": 0.0,
+          "band_total_vs_base_median": 0.0017705108433419586,
+          "demand_term_vs_base_median": 2.988270381650088e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_max": 0.0,
+          "cap_term_unconditional_vs_base_median": 4.4512925943962895e-06,
+          "near_tie_share": 0.043591979075850044
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5387,
+        "cap_term_when_gated_vs_base": -2.1372,
+        "demand_term_vs_base": -0.9826
+      }
+    },
+    "dev_train-4": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 1,
+          "gate_rate": 0.02,
+          "band_total_vs_base_median": 0.006572197813526209,
+          "demand_term_vs_base_median": 4.238381114486484e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 5.34571257699857,
+          "cap_term_when_gated_vs_base_max": 5.34571257699857,
+          "cap_term_unconditional_vs_base_median": 5.155362745049711,
+          "near_tie_share": 0.04597701149425287
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 35,
+          "gate_rate": 0.7,
+          "band_total_vs_base_median": 0.4395263155836432,
+          "demand_term_vs_base_median": 0.003605302664531562,
+          "cap_term_effective_vs_base_median": 22508.944382733192,
+          "cap_term_when_gated_vs_base_median": 54888.39654745983,
+          "cap_term_when_gated_vs_base_max": 499606.50125156087,
+          "cap_term_unconditional_vs_base_median": 52340.06518410226,
+          "near_tie_share": 0.18564356435643564
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 41,
+          "gate_rate": 0.82,
+          "band_total_vs_base_median": 4.902491946765121,
+          "demand_term_vs_base_median": 0.03852564973399478,
+          "cap_term_effective_vs_base_median": 3845541.2329266337,
+          "cap_term_when_gated_vs_base_median": 7017079.519722077,
+          "cap_term_when_gated_vs_base_max": 98994725.65677518,
+          "cap_term_unconditional_vs_base_median": 8272441.15567479,
+          "near_tie_share": 0.9930495221546481
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 1,
+          "gate_rate": 0.02,
+          "band_total_vs_base_median": 0.0017137351100479552,
+          "demand_term_vs_base_median": 4.4859808199881536e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 5.345712576998567e-06,
+          "cap_term_when_gated_vs_base_max": 5.345712576998567e-06,
+          "cap_term_unconditional_vs_base_median": 4.976785514516155e-06,
+          "near_tie_share": 0.04513274336283186
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5697,
+        "cap_term_when_gated_vs_base": -2.0149,
+        "demand_term_vs_base": -0.9859
+      }
+    },
+    "dev_train-5": {
+      "by_scale": {
+        "1": {
+          "steps": 50,
+          "gated_steps": 1,
+          "gate_rate": 0.02,
+          "band_total_vs_base_median": 0.006340412305923741,
+          "demand_term_vs_base_median": 3.0405165606915515e-05,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 5.687622961640823,
+          "cap_term_when_gated_vs_base_max": 5.687622961640823,
+          "cap_term_unconditional_vs_base_median": 4.5839537023418515,
+          "near_tie_share": 0.04674610449129239
+        },
+        "0.01": {
+          "steps": 50,
+          "gated_steps": 30,
+          "gate_rate": 0.6,
+          "band_total_vs_base_median": 0.3453591620511841,
+          "demand_term_vs_base_median": 0.002767133244117442,
+          "cap_term_effective_vs_base_median": 8363.820303371962,
+          "cap_term_when_gated_vs_base_median": 52227.24219569584,
+          "cap_term_when_gated_vs_base_max": 465911.0300622727,
+          "cap_term_unconditional_vs_base_median": 44312.5760198833,
+          "near_tie_share": 0.1840277777777778
+        },
+        "0.001": {
+          "steps": 50,
+          "gated_steps": 43,
+          "gate_rate": 0.86,
+          "band_total_vs_base_median": 3.267707516090181,
+          "demand_term_vs_base_median": 0.02166215191204091,
+          "cap_term_effective_vs_base_median": 4174632.9307048647,
+          "cap_term_when_gated_vs_base_median": 6211809.789074816,
+          "cap_term_when_gated_vs_base_max": 160392948.9842436,
+          "cap_term_unconditional_vs_base_median": 8581131.35942379,
+          "near_tie_share": 0.9574816026165167
+        },
+        "1000": {
+          "steps": 50,
+          "gated_steps": 1,
+          "gate_rate": 0.02,
+          "band_total_vs_base_median": 0.0019012728240313246,
+          "demand_term_vs_base_median": 3.040516560691552e-08,
+          "cap_term_effective_vs_base_median": 0.0,
+          "cap_term_when_gated_vs_base_median": 5.687622961640819e-06,
+          "cap_term_when_gated_vs_base_max": 5.687622961640819e-06,
+          "cap_term_unconditional_vs_base_median": 4.583953702341853e-06,
+          "near_tie_share": 0.04674610449129239
+        }
+      },
+      "exponents": {
+        "band_total_vs_base": -0.5341,
+        "cap_term_when_gated_vs_base": -2.0019,
+        "demand_term_vs_base": -0.9795
+      }
+    }
+  }
+}

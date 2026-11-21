@@ -1,0 +1,7 @@
+{
+    "sample_order": 5,
+    "operator": "m2",
+    "algorithm": "Use a distance-first score with heavy nearest-neighbor weight, moderate radial-to-depot bias, and a demand-fit bonus that rewards minimizing leftover capacity slack.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return 0\n\n    cur_d = distance_matrix[current_node][unvisited_nodes]\n    depot_d = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n\n    max_cur = float(np.max(cur_d)) if cur_d.size > 0 else 0.0\n    max_depot = float(np.max(depot_d)) if depot_d.size > 0 else 0.0\n    denom_cur = max_cur if max_cur > 1e-9 else 1.0\n    denom_depot = max_depot if max_depot > 1e-9 else 1.0\n    denom_cap = rest_capacity if rest_capacity > 1e-9 else 1.0\n\n    prox = cur_d / denom_cur\n    radial = depot_d / denom_depot\n    load_term = dem / denom_cap\n    slack = np.maximum(rest_capacity - dem, 0.0) / denom_cap\n\n    score = 0.70 * prox + 0.20 * radial + 0.05 * slack - 0.35 * load_term\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+    "objective": 0.01831
+}

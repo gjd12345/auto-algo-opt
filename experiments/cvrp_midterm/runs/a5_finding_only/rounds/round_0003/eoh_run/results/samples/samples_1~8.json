@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Weight the next-customer choice primarily by proximity, then reward continuing straight away from the depot and pack high-demand customers early, using tuned coefficients that differ from the parent's mix.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    cur_to_dep = float(distance_matrix[current_node][depot])\n    a = d_cur\n    b = cur_to_dep\n    c = d_dep\n    denom = 2.0 * a * b + 1e-12\n    cos_angle = (a * a + b * b - c * c) / denom\n    cos_angle = np.clip(cos_angle, -1.0, 1.0)\n    continuation = -cos_angle\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n    load_frac = dem / cap\n\n    mean_dcur = float(np.mean(d_cur)) if len(d_cur) > 0 else 1.0\n    if mean_dcur <= 0:\n        mean_dcur = 1.0\n    near = d_cur / mean_dcur\n\n    pack = load_frac * (1.0 + 0.25 * load_frac)\n\n    score = 1.35 * near - 0.25 * continuation - 0.60 * pack\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.05054
+    },
+    {
+        "sample_order": 2,
+        "operator": "e1",
+        "algorithm": "For each candidate I form a savings-like score that discounts the direct current\u2192candidate distance by the candidate's proximity to the depot and by its slack fit to remaining capacity, then pick the customer whose discounted distance is smallest, so the rule combines a Clarke-Wright-style \"how much would a depot detour cost\" term with a capacity-fill term instead of using a normalized per-step blend of proximity, angle continuation and demand packing.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n    load_frac = dem / cap\n\n    # savings-like term: how much cheaper is depot->c over current->c\n    savings = d_dep - d_cur\n\n    # slack: prefer filling the vehicle well (1 means it just fits)\n    slack = load_frac\n\n    # combined discounted distance: candidates that save more and fit better win\n    score = d_cur - 0.5 * savings + 0.8 * d_cur * (1.0 - slack)\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.03072
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "The new rule ranks each candidate by a scale-invariant ratio combining its distance from the current node discounted by the Clarke-Wright savings relative to current\u2192depot distance, then multiplied by a capacity-fill factor that is normalized by the candidate's own demand slack ratio, so the score is dimensionless and independent of the instance's numeric scale.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-12\n    load_frac = np.clip(dem / cap, 0.0, 1.0)\n\n    # Scale-invariant savings ratio: how much of a detour current->c saves vs depot->c\n    # savings_ratio in (-inf, 1], 1 means c lies on the depot->current ray extension\n    denom = np.maximum(d_cur + d_dep, 1e-12)\n    savings_ratio = (d_dep - d_cur) / denom  # in [-1, 1]\n\n    # Capacity fill factor: prefer candidates whose demand nearly fills remaining cap.\n    # Use (1 - load_frac) so a full-fit candidate (load_frac ~ 1) drives factor toward 0.\n    fill = 1.0 - load_frac  # in [0, 1]\n\n    # Dimensionless score: base unit-distance (divide out by d_cur + d_dep),\n    # then discount by savings_ratio and penalize by fill factor.\n    # score = normalized distance * (1 - savings_ratio) * (1 + fill)\n    # All terms dimensionless -> invariant to instance scale.\n    base = d_cur / denom  # in [0, 1]\n    score = base * (1.0 - savings_ratio) * (1.0 + fill)\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": 0.00966
+    },
+    {
+        "sample_order": 4,
+        "operator": "e1",
+        "algorithm": "Prioritize candidates by a depot-return lookahead: score each candidate by the immediate insertion cost plus the cost of the best return-to-depot afterwards, weighted by a load-aware term that favors filling the vehicle when capacity is tight, avoiding any angle/continuation geometry.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_to_depot = distance_matrix[unvisited_nodes, depot].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity) + 1e-9\n    cap_scale = cap if cap > 1e-6 else 1.0\n\n    # Lookahead: insertion cost now + best possible return cost afterwards.\n    # After serving candidate i, remaining = cap - dem[i]; the return cost is\n    # approximated by the depot distance from i (tour continues then returns).\n    insertion = d_cur + d_to_depot\n\n    # Load-aware urgency: when remaining capacity is tight relative to the\n    # average demand, prefer candidates that use capacity efficiently.\n    total_dem = float(np.sum(dem)) if len(dem) > 0 else 0.0\n    mean_dem = total_dem / max(len(dem), 1)\n    if mean_dem > 1e-9:\n        fill_ratio = dem / mean_dem\n    else:\n        fill_ratio = np.ones_like(dem)\n    tightness = max(0.0, 1.0 - cap_scale / max(total_dem, 1e-9))\n\n    # Scale-invariant proximity term.\n    mean_ins = float(np.mean(insertion)) if len(insertion) > 0 else 1.0\n    if mean_ins <= 1e-12:\n        mean_ins = 1.0\n    ins_norm = insertion / mean_ins\n\n    # Reward candidates whose depot distance is small relative to their\n    # insertion cost (i.e. cheap to close the loop) and pack well when tight.\n    loop_balance = d_to_depot / (insertion + 1e-12)\n\n    score = ins_norm + 0.35 * loop_balance - (0.25 + 0.35 * tightness) * fill_ratio\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": 0.34281
+    },
+    {
+        "sample_order": 5,
+        "operator": "m1",
+        "algorithm": "The new algorithm ranks candidates by a weighted sum of current-leg distance, depot radial cost, and a normalized capacity-slack term, all expressed in relative units (fractions of candidate distances and of remaining capacity) so the priority is invariant to coordinate scale, then keeps the vehicle filling well by penalizing candidates that leave a large residual capacity relative to their own demand.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n\n    # relative quantities (scale-invariant)\n    scale = d_cur + d_dep + 1e-9\n    near_frac = d_cur / scale          # how close to current node (0..1)\n    depot_frac = d_dep / scale         # how close to depot (0..1)\n\n    # capacity fill: prefer candidates whose demand fits snugly (low residual after serving)\n    residual_frac = np.clip((cap - dem) / cap, 0.0, 1.0)\n\n    # combine: prioritize proximity to current node, moderately penalize depot pull,\n    # and penalize leaving a large relative residual capacity\n    score = 1.0 * near_frac + 0.35 * depot_frac + 0.9 * residual_frac\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": 0.18606
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

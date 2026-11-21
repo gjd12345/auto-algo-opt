@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "e1",
+        "algorithm": "This heuristic scores each unvisited customer using a scale-free angular sweep rule: it ranks candidates by the cosine of the angle formed at the current node between the depot direction and the candidate direction, preferring customers that continue smoothly in the current travel direction while penalizing sharp turns back toward the depot, combined with a capacity-aware term that favors high-demand customers early in the route so the route packs well before returning.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    # Direction vectors in the metric (distance matrix) sense:\n    # \"depot direction\" seen from current node vs candidate direction.\n    # Approximate cos of angle at current node using distances.\n    cur_to_dep = distance_matrix[current_node][depot]\n    # Law of cosines: cos(angle at current between depot and candidate)\n    # side a = d_cur (current->cand), side b = cur_to_dep (current->depot)\n    # side c = d_dep (depot->cand)\n    a = d_cur\n    b = float(cur_to_dep)\n    c = d_dep\n    denom = 2.0 * a * b + 1e-12\n    cos_angle = (a * a + b * b - c * c) / denom\n    cos_angle = np.clip(cos_angle, -1.0, 1.0)\n\n    # Prefer continuing away from depot (cos close to -1 means straight away\n    # from depot direction). Map to a \"continuation\" reward in [-1, 1].\n    continuation = -cos_angle  # +1 straight away from depot, -1 back to depot\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n    load_frac = dem / cap\n\n    # Scale-invariant score: mix of proximity, continuation, and packing.\n    # Normalize d_cur by its mean to keep scale invariance.\n    mean_dcur = float(np.mean(d_cur)) if len(d_cur) > 0 else 1.0\n    if mean_dcur <= 0:\n        mean_dcur = 1.0\n    near = d_cur / mean_dcur\n\n    # Reward high demand early while capacity is plentiful, mild penalty otherwise.\n    pack = load_frac * (1.0 + 0.5 * load_frac)\n\n    score = 1.0 * near - 0.6 * continuation - 0.35 * pack\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.05849
+    },
+    {
+        "sample_order": 2,
+        "operator": "m1",
+        "algorithm": "The new algorithm ranks candidates by a savings-style score that blends the direct distance from the current node with the depot round-trip insertion cost and a re-scaled demand-density term, using rank-based normalization so the comparison is invariant to instance scale.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    unv = np.asarray(unvisited_nodes)\n    d_cur = distance_matrix[current_node][unv].astype(float)\n    d_dep = distance_matrix[depot][unv].astype(float)\n    dem = demands[unv].astype(float)\n    cap = float(rest_capacity) + 1e-9\n\n    # Savings form: how much we save by chaining current->cand->depot\n    # instead of current->depot->cand (classic Clarke-Wright saving).\n    d_cur_dep = float(distance_matrix[current_node][depot])\n    saving = d_cur_dep + d_dep - d_cur\n\n    # Rank-based normalization (scale-free, robust to coordinate scale).\n    n = len(unv)\n    order_cur = np.argsort(np.argsort(d_cur)).astype(float)\n    order_sav = np.argsort(np.argsort(-saving)).astype(float)  # higher saving -> smaller rank\n    order_dem = np.argsort(np.argsort(-dem)).astype(float)     # higher demand -> smaller rank\n    rank_norm = 1.0 / max(float(n - 1), 1.0)\n\n    r_cur = order_cur * rank_norm      # 0 = closest\n    r_sav = order_sav * rank_norm      # 0 = best saving\n    r_dem = order_dem * rank_norm      # 0 = highest demand\n\n    load_frac = np.clip(dem / cap, 0.0, 1.0)\n    # Favor high-demand items early when capacity is plentiful.\n    fill = (1.0 - r_dem) * (1.0 - 0.5 * load_frac)\n\n    score = 0.55 * r_sav + 0.30 * r_cur - 0.40 * fill\n    idx = int(np.argmin(score))\n    return int(unv[idx])",
+        "objective": 0.06739
+    },
+    {
+        "sample_order": 3,
+        "operator": "e2",
+        "algorithm": "Score each candidate by its incremental cost of insertion as a \"detour\" arc measured against the direct depot-return chord, penalising routes that would strand far customers by inflating their future depot distance, and reward demand packing \u2014 a route-elongation/regret hybrid rather than a direction-following greedy.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    d_cur_dep = float(distance_matrix[current_node][depot])\n\n    # Route-elongation view: extra cost of inserting the candidate on the\n    # current arc (depot -> ... -> current -> cand) rather than closing the\n    # tour directly back to the depot.\n    detour = d_cur + d_dep - d_cur_dep\n\n    # Regret / future-accessibility: customers far from the depot would be\n    # expensive to serve on a later route; give them mild priority now.\n    mean_dep = float(np.mean(d_dep)) if len(d_dep) > 0 else 1.0\n    if mean_dep <= 0:\n        mean_dep = 1.0\n    far_pull = d_dep / mean_dep\n\n    # Load packing: favour larger demands while capacity remains, so routes\n    # fill rather than leaving fragments for extra trips.\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n    load_frac = dem / cap\n\n    # Normalise detour by its own mean so the score is scale-free.\n    mean_det = float(np.mean(detour)) if len(detour) > 0 else 1.0\n    if mean_det <= 0:\n        mean_det = 1.0\n    elong = detour / mean_det\n\n    score = elong - 0.30 * far_pull - 0.40 * load_frac\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.05511
+    },
+    {
+        "sample_order": 4,
+        "operator": "m2",
+        "algorithm": "Replace the detour/regret hybrid with a nearest-neighbour score that adds a strong capacity-utilisation reward and a modest depot-distance pull, using an angle-free, per-candidate-only formula.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    d_cur_dep = float(distance_matrix[current_node][depot])\n\n    # Relative insertion cost normalised by the direct return chord.\n    # Keeps only the relative part -> scale-invariant.\n    denom = d_cur_dep if d_cur_dep > 1e-12 else 1.0\n    elong = (d_cur + d_dep) / denom - 1.0\n\n    # Depot pull: normalise by row scale so it stays relative.\n    scale = float(np.mean(d_dep)) if len(d_dep) > 0 else 1.0\n    if scale <= 1e-12:\n        scale = 1.0\n    far_pull = d_dep / scale\n\n    # Capacity packing reward: relative demand fraction of remaining capacity.\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) + 1e-9\n    load_frac = dem / cap\n\n    score = elong - 0.55 * far_pull - 0.85 * load_frac\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.08568
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Change the priority score to a nearest-neighbor rule modulated by a relative depot-distance bonus and a load-ratio penalty, using new coefficients (alpha for depot-farness reward, beta for load), to explore a different distance/load trade-off.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n    mean_dep = float(np.mean(d_dep)) if len(d_dep) > 0 else 1.0\n    if mean_dep <= 0:\n        mean_dep = 1.0\n    rel_dep = d_dep / mean_dep\n    load_frac = dem / (float(rest_capacity) + 1e-9)\n    score = d_cur - 0.25 * d_dep + 0.6 * mean_dep * load_frac * rel_dep\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": -0.02439
+    },
+    {
+        "sample_order": 6,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

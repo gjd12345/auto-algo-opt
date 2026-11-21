@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "e1",
+        "algorithm": "The new algorithm uses a normalized convex combination of three route-aware factors\u2014distance from the current node, demand urgency (demand divided by remaining capacity), and depot proximity\u2014scored via a weighted geometric mean to balance route compactness, capacity utilization, and return distance, choosing the minimum combined score.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return 0\n\n    nodes = np.asarray(unvisited_nodes)\n    d_cur = distance_matrix[current_node][nodes].astype(float)\n    d_dep = distance_matrix[depot][nodes].astype(float)\n    dem = demands[nodes].astype(float)\n\n    eps = 1e-9\n    max_cur = float(np.max(d_cur)) if d_cur.size > 0 else 1.0\n    max_dep = float(np.max(d_dep)) if d_dep.size > 0 else 1.0\n    cap = float(rest_capacity) if rest_capacity > eps else eps\n\n    f_dist = (d_cur + eps) / (max_cur + eps)\n    f_dep = (d_dep + eps) / (max_dep + eps)\n    f_dem = np.clip(dem / cap, 0.0, 1.0)\n\n    # Weighted geometric mean: balance compactness, depot return, and demand fill\n    w_dist, w_dep, w_dem = 0.55, 0.25, 0.20\n    score = np.power(f_dist + eps, w_dist) \\\n          * np.power(f_dep + eps, w_dep) \\\n          * np.power(1.0 - 0.5 * f_dem + eps, w_dem)\n\n    # Diversify: among near-tied top candidates pick the one with largest demand\n    best_val = float(np.min(score))\n    span = float(np.max(score) - best_val)\n    band = 1e-3 * (span + 1.0)\n    mask = score <= (best_val + band)\n    if mask.sum() > 1:\n        candidates = np.where(mask)[0]\n        pick = candidates[np.argmax(dem[candidates])]\n        return int(nodes[pick])\n\n    return int(nodes[np.argmin(score)])",
+        "objective": -0.01451
+    },
+    {
+        "sample_order": 2,
+        "operator": "m1",
+        "algorithm": "Score each feasible customer by a weighted sum of current distance, depot return savings, demand pressure, and capacity utilization, then pick the minimum after normalizing each component.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return 0\n\n    nodes = np.asarray(unvisited_nodes)\n    d_cur = distance_matrix[current_node][nodes].astype(float)\n    d_dep = distance_matrix[depot][nodes].astype(float)\n    dem = demands[nodes].astype(float)\n\n    def _norm(v):\n        lo = float(np.min(v))\n        hi = float(np.max(v))\n        rng = hi - lo\n        if rng < 1e-12:\n            return np.zeros_like(v)\n        return (v - lo) / rng\n\n    n_cur = _norm(d_cur)\n    n_dep = _norm(d_dep)\n    n_dem = _norm(dem)\n\n    cap = max(float(rest_capacity), 1e-12)\n    fill = np.clip(dem / cap, 0.0, 1.0)\n\n    score = 1.0 * n_cur - 0.55 * n_dep + 0.35 * n_dem - 0.25 * fill\n\n    best = int(np.argmin(score))\n    return int(nodes[best])",
+        "objective": 0.07247
+    },
+    {
+        "sample_order": 3,
+        "operator": "e1",
+        "algorithm": "Use a polar-angle sweep around the depot as the primary signal\u2014select the unvisited feasible customer whose angular position continues the current sweep direction, breaking ties by proximity to the current node and a capacity-fill urgency bonus\u2014so routes are built as spatially coherent sectors rather than by pairwise-savings or linear distance-depot scores.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return 0\n    if unvisited_nodes.size == 1:\n        return int(unvisited_nodes[0])\n\n    nodes = np.asarray(unvisited_nodes)\n    dep = int(depot)\n    cur = int(current_node)\n\n    # Angular position of each candidate around the depot (from distance matrix\n    # alone we approximate geometry via the law of cosines using depot distances\n    # and inter-node distances).  Fall back to distance-based ordering if the\n    # geometry is degenerate.\n    d_dep = distance_matrix[dep][nodes].astype(float)\n    d_cur = distance_matrix[cur][nodes].astype(float)\n\n    # We build a \"sweep progress\" measure: prefer nodes roughly at 60-120 deg\n    # turn from the current heading.  Without coordinates, use the triangle\n    # relation cos(theta) = (d_cur_dep^2 + d_dep^2 - d_cur^2) / (2*d_cur_dep*d_dep)\n    # where theta is the angle at the depot between current node and candidate.\n    d_cur_dep = float(distance_matrix[cur][dep])\n    eps = 1e-9\n    denom = 2.0 * d_cur_dep * d_dep + eps\n    cos_theta = (d_cur_dep * d_cur_dep + d_dep * d_dep - d_cur * d_cur) / denom\n    cos_theta = np.clip(cos_theta, -1.0, 1.0)\n    theta = np.arccos(cos_theta)  # angle at depot between cur and candidate\n\n    # Sweep preference: continue forward but with a moderate turn (avoid going\n    # straight back and avoid sharp reversals).  Peak preference near 1.0 rad.\n    sweep_score = 1.0 - np.abs(theta - 1.0)\n\n    # Proximity to current node (concave advantage so nearby nodes dominate).\n    prox = -np.log(d_cur + 1.0)\n\n    # Capacity-fill urgency: if remaining capacity is tight relative to demands,\n    # prefer larger demands to fill the load; otherwise mild preference for\n    # smaller demands to keep options open.\n    dem = demands[nodes].astype(float)\n    cap = max(float(rest_capacity), eps)\n    fill_ratio = dem / cap\n    slack = cap - np.sum(dem)\n    if slack < 0.35 * cap:\n        cap_score = fill_ratio  # tight: prefer big demands\n    else:\n        cap_score = -0.3 * fill_ratio  # loose: mild preference for small\n\n    score = 1.0 * sweep_score + 0.5 * prox + 0.4 * cap_score\n\n    best_local = int(np.argmax(score))\n    return int(nodes[best_local])",
+        "objective": 0.712
+    },
+    {
+        "sample_order": 4,
+        "operator": "m2",
+        "algorithm": "The new algorithm uses a weighted scoring rule combining current-to-customer distance, depot-to-customer distance, and demand, with adjusted weights (w_dep=0.4, w_demand=1e-4) and a capacity-aware bias favoring customers that fill the vehicle efficiently.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return 0\n\n    w_dep = 0.4\n    w_dem = 1e-4\n\n    nodes = np.asarray(unvisited_nodes)\n    d_cur = distance_matrix[current_node][nodes].astype(float)\n    d_dep = distance_matrix[depot][nodes].astype(float)\n    dem = demands[nodes].astype(float)\n\n    # Capacity-aware bias: prefer customers that fill remaining capacity well\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    fill = dem / cap  # fraction of remaining capacity consumed\n\n    score = d_cur - w_dep * d_dep - w_dem * dem + 0.05 * (1.0 - fill)\n\n    return int(nodes[int(np.argmin(score))])",
+        "objective": -0.06791
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 6,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

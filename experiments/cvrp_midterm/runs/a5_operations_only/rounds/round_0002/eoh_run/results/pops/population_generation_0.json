@@ -1,0 +1,8 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    return unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])]\n",
+        "objective": 0.0,
+        "other_inf": null
+    }
+]

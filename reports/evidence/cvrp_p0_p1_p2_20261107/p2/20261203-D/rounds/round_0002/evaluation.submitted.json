@@ -1,0 +1,34 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Valid generated candidates 1/2. Incumbent 11.24990 to 11.24990. The valid candidate altered both the distance and capacity weights as well as the threshold, and did not improve. The other used forbidden empty.",
+      "evidence_refs": [
+        "evaluation:41a4e90b87834871b158bdbeb746d334",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A threshold-only variant can probe when the demand term should activate.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:41a4e90b87834871b158bdbeb746d334",
+        "rounds/round_0002/execution_delta.json"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Retain the original score and use simple arithmetic for a threshold-only edit."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "capacity-threshold-scope",
+    "description": "Keep a threshold experiment local to the capacity trigger",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** The valid candidate altered both the distance and capacity weights as well as the threshold, and did not improve. The other used forbidden empty.\n\n**How to apply:** Retain the verified parent coefficients and use simple permitted arithmetic.\n\n**Limitations:** One seed and one development suite.",
+    "evidence_ref": "evaluation:41a4e90b87834871b158bdbeb746d334"
+  }
+}

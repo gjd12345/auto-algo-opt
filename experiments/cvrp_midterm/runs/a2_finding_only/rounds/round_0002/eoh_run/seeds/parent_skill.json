@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Explicit parent",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    dm = distance_matrix\n    idx = unvisited_nodes\n    # span-proportional scale to keep the rule invariant to instance rescaling\n    span = float(np.max(dm))\n    if not np.isfinite(span) or span <= 0.0:\n        span = 1.0\n\n    d_cur = dm[current_node][idx]\n    d_dep = dm[depot][idx]\n    dem = demands[idx]\n\n    # Normalised terms; d_dep/span is small for near-depot customers\n    # (which are cheaper to defer to the end of a route).\n    travel = d_cur / span\n    depot_term = d_dep / span\n\n    cap = float(rest_capacity)\n    if cap > 0.0:\n        load_fill = dem / cap\n    else:\n        load_fill = np.zeros_like(dem, dtype=np.float64)\n\n    # Lower priority = chosen. Reward near-depot deferral via depot_term,\n    # mildly favour larger demands to pack the route.\n    score = travel + 0.30 * depot_term - 0.10 * load_fill\n\n    return int(idx[np.argmin(score)])"
+  }
+]

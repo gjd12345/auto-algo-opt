@@ -1,0 +1,9 @@
+{
+    "algorithm": "Replace the near-tie gate's absolute width 0.15*span with a scale-invariant relative tolerance so the gate fires at a consistent rate regardless of instance scale, keeping the d_dep/d_cur primary score and the cand_dep/(rest_capacity-cand_demands+1) secondary ordering unchanged.",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    eps = 1e-9\n    score = d_dep / (d_cur + eps)\n\n    s_min = np.min(score)\n    s_max = np.max(score)\n    span = s_max - s_min\n    # Scale-invariant relative gate: tolerance proportional to |score| magnitude.\n    tol = 0.15 * (abs(s_max) + eps)\n    if span > 0 and tol > span:\n        tol = span\n    near = score >= (s_max - tol)\n    candidates = unvisited_nodes[near]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_dep = distance_matrix[depot][candidates]\n    capacity_factor = rest_capacity - cand_demands\n    secondary = cand_dep / (capacity_factor + 1.0)\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+    "objective": -0.05889,
+    "other_inf": null,
+    "candidate_id": "candidate_5",
+    "revision": "original",
+    "evaluation_id": "9c0bd74b20184bdb9893a1a532a43f75"
+}

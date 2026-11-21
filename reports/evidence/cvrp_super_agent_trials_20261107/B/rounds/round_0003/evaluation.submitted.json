@@ -1,0 +1,25 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Both near-tie candidates were rejected for np.count_nonzero. This round did not measure whether near-tie angular guidance helps.",
+      "evidence_refs": [
+        "evaluation:5503f65fcf174141812b0d32d61173e6",
+        "evaluation:8cb88d1f341a4d8aa408fa29c0f4faf9"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Make the near-tie mechanism evaluable."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "boolean-mask-cardinality",
+    "description": "Use Boolean-mask cardinality with supported NumPy",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Both round-3 proposals used disallowed np.count_nonzero.\n\n**How to apply:** Use mask.sum() or direct masked indexing. Retain the same scoring idea when repairing its expression in the next Plan.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:5503f65fcf174141812b0d32d61173e6"
+  }
+}

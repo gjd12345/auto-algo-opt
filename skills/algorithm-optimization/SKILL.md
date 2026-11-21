@@ -37,6 +37,7 @@ Use this skill when the user asks to improve a registered combinatorial-optimiza
 
 1. Read `session state` and use its current `state_version` for the next mutation.
 2. In `WAITING_FOR_PLAN`, when Memory is enabled, search the current problem and read at most two relevant complete entries. If deliberately skipping search or adopting no result, explain why in `reasoning_summary`; do not force irrelevant memories into a Plan. For rounds after the first, copy `state.feedback_basis` into the Plan. `feedback_ref` alone is only a path string, not that object. Check the returned injection manifest: adopted but omitted is not consumed by EoH.
+   For OBP research, use the [research evidence and optional analysis guide](references/obp-research.md) to locate the relevant evidence and decide whether analysis would help the next design choice. Direct exploration remains available. Put any adopted design advice in the existing Plan fields and use optional `research_activity` to record the public decision.
 3. Write a strict `plan.json` and submit it with `session submit-plan`.
 4. Call `session execute` once. Poll `session state` until the task is terminal, then call `session collect`. A `STARTUP_FAILED` or `EVIDENCE_STORAGE_FAILED` terminal reason is an infrastructure failure, not an algorithm result; preserve the evidence and start a new Session after the environment is fixed.
 5. Call `session read-evaluation` and reason only from its deterministic facts. The incumbent has already been selected by the Runtime before this step.

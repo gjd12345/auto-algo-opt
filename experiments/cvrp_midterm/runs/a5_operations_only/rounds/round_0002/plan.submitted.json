@@ -1,0 +1,28 @@
+{
+  "round_id": 2,
+  "direction": "Explore new priority rules for the CVRP greedy construction by changing one score term at a time.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "one term of the priority score",
+      "mechanism": "Replace exactly one of the three terms (distance to the current node, distance to the depot, remaining capacity) with a different functional form and leave the other two unchanged, so the effect of the change is readable in the next round's numbers."
+    },
+    {
+      "type": "add",
+      "target": "a second ordering stage",
+      "mechanism": "After the primary score, order the candidates whose primary scores are closest together by a secondary criterion; the stage has to stay cheap enough to fit the solver budget."
+    },
+    {
+      "type": "preserve",
+      "target": "feasibility and the problem interface",
+      "mechanism": "Keep the capacity filter, the construction order and the sign convention of the objective unchanged."
+    }
+  ],
+  "preserve": "The problem interface, the evaluator and the search policy.",
+  "hypothesis": "Replacing one score term per round and adding a cheap second ordering stage yields better routes than rewriting the whole score at once.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6"
+  }
+}

@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "\"I will change the depot-distance penalty weight from 0.5 to 0.75 and replace the max-normalization with a mean-normalization to explore a stronger depot-avoidance term while keeping the same primary/secondary structure.\"",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    mean_dep = float(np.mean(dep)) if dep.size > 0 else 1.0\n    if mean_dep <= 0:\n        mean_dep = 1.0\n    # Primary: closest current distance with stronger depot-distance penalty\n    scores = cur - 0.75 * (dep / mean_dep)\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    cap = max(rest_capacity, 1e-9)\n    tie_nodes = unvisited_nodes[tied]\n    ratio = demands[tie_nodes] / cap\n    best_ratio_idx = int(np.argmax(ratio))\n    candidates = tie_nodes[ratio >= ratio[best_ratio_idx] - 1e-12]\n    dists = distance_matrix[current_node][candidates]\n    return int(candidates[np.argmin(dists)])",
+        "objective": 0.05281
+    },
+    {
+        "sample_order": 2,
+        "operator": "e1",
+        "algorithm": "The new algorithm uses a regret-based lookahead score that combines the saving of serving a customer now versus the extra distance incurred by postponing it, weighted by a capacity-utilization bonus and a normalized depot-proximity tie-break to encourage fuller routes before returning to the depot.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur_to = distance_matrix[current_node][unvisited_nodes]\n    dep_to = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n\n    cap = max(rest_capacity, 1e-9)\n    mean_dep = float(np.mean(dep_to)) if dep_to.size > 0 else 1.0\n    if mean_dep <= 0:\n        mean_dep = 1.0\n    mean_cur = float(np.mean(cur_to)) if cur_to.size > 0 else 1.0\n    if mean_cur <= 0:\n        mean_cur = 1.0\n\n    # Regret-style: savings from not needing a separate depot trip,\n    # plus a capacity-utilization bonus, minus immediate travel cost.\n    utilization = dem / cap\n    savings = dep_to / mean_dep\n    immediate = cur_to / mean_cur\n    scores = 1.2 * savings + 1.0 * utilization - 0.6 * immediate\n\n    order = np.argsort(-scores)\n    best = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best) + 1.0)\n    tied = order[scores[order] >= best - tol]\n\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n\n    # Secondary: prefer the candidate whose return trip to depot is cheapest\n    # relative to its demand, so routes fill up while staying cheap to close.\n    tie_nodes = unvisited_nodes[tied]\n    tie_dep = distance_matrix[depot][tie_nodes]\n    tie_dem = demands[tie_nodes]\n    tie_cap = max(rest_capacity, 1e-9)\n    closeness = tie_dep * (1.0 + tie_dem / tie_cap)\n    return int(tie_nodes[np.argmin(closeness)])",
+        "objective": 0.15729
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "The new algorithm replaces the capacity-utilization term with a demand-aware depot-detour ratio (extra distance of inserting the customer into the current route versus a direct depot return), keeping the distance-to-current and distance-to-depot terms, plus a cheap density-based tie-break that prefers customers with high demand per unit detour.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur_to = distance_matrix[current_node][unvisited_nodes]\n    dep_to = distance_matrix[depot][unvisited_nodes]\n    root_dep = distance_matrix[depot][current_node]\n    dem = demands[unvisited_nodes]\n\n    cap = max(rest_capacity, 1e-9)\n    mean_dep = float(np.mean(dep_to)) if dep_to.size > 0 else 1.0\n    if mean_dep <= 0:\n        mean_dep = 1.0\n    mean_cur = float(np.mean(cur_to)) if cur_to.size > 0 else 1.0\n    if mean_cur <= 0:\n        mean_cur = 1.0\n\n    # Detour term: extra distance incurred by inserting the customer now\n    # instead of returning straight to the depot from the current node.\n    detour = cur_to + dep_to - root_dep\n    mean_detour = float(np.mean(detour)) if detour.size > 0 else 1.0\n    if mean_detour <= 0:\n        mean_detour = 1.0\n\n    savings = dep_to / mean_dep\n    immediate = cur_to / mean_cur\n    detour_norm = detour / mean_detour\n\n    scores = 1.2 * savings - 0.6 * immediate - 1.0 * detour_norm\n\n    order = np.argsort(-scores)\n    best = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best) + 1.0)\n    tied = order[scores[order] >= best - tol]\n\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n\n    # Secondary: among near-ties, prefer high demand per unit detour\n    # (density), breaking remaining ties by the cheapest depot return.\n    tie_nodes = unvisited_nodes[tied]\n    tie_detour = (distance_matrix[current_node][tie_nodes]\n                  + distance_matrix[depot][tie_nodes]\n                  - root_dep)\n    tie_detour = np.maximum(tie_detour, 1e-9)\n    tie_dem = demands[tie_nodes]\n    density = tie_dem / tie_detour\n    tie_dep = distance_matrix[depot][tie_nodes]\n    key = -density + 1e-6 * tie_dep\n    return int(tie_nodes[np.argmin(key)])",
+        "objective": -0.03193
+    },
+    {
+        "sample_order": 4,
+        "operator": "e1",
+        "algorithm": "Replace the linear distance-minus-depot score with a Clarke-Wright-style savings ratio: for each candidate compute savings = d(depot,current) + d(current,node) - d(depot,node) times a capacity-utilization factor, then break near-ties by nearest-neighbor distance to current node.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep_from_depot = distance_matrix[depot][unvisited_nodes]\n    d_cur_depot = distance_matrix[current_node][depot]\n    # Classic Clarke-Wright savings: how much we save by linking current->node\n    # instead of going back to depot from current and out to node.\n    savings = d_cur_depot + dep_from_depot - cur\n    cap = max(rest_capacity, 1e-9)\n    util = demands[unvisited_nodes] / cap\n    # Primary score: maximize savings, boosted slightly by capacity utilization\n    scores = -(savings + 0.5 * util * (d_cur_depot + float(np.max(dep_from_depot)) + 1e-12))\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    # Secondary: among near-ties, pick the node closest to current node\n    tie_nodes = unvisited_nodes[tied]\n    dists = distance_matrix[current_node][tie_nodes]\n    return int(tie_nodes[np.argmin(dists)])",
+        "objective": 0.01719
+    },
+    {
+        "sample_order": 5,
+        "operator": "m1",
+        "algorithm": "Replace the capacity-utilization boost with a relative demand term (demand normalized by the max demand among candidates) added to the Clarke-Wright savings, then break near-ties by preferring the node with the smallest depot distance ratio to current distance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep_from_depot = distance_matrix[depot][unvisited_nodes]\n    d_cur_depot = distance_matrix[current_node][depot]\n    # Clarke-Wright savings: linking current->node versus returning to depot.\n    savings = d_cur_depot + dep_from_depot - cur\n    # Replace capacity-utilization factor with a relative-demand term.\n    dem = demands[unvisited_nodes]\n    dem_max = float(np.max(dem)) if dem.size > 0 else 1.0\n    rel_dem = dem / max(dem_max, 1e-9)\n    scale = d_cur_depot + float(np.max(dep_from_depot)) + 1e-12\n    # Primary score: maximize savings plus relative demand contribution.\n    scores = -(savings + 0.5 * rel_dem * scale)\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    # Secondary: among near-ties, prefer smallest depot-distance-to-current ratio.\n    tie_nodes = unvisited_nodes[tied]\n    cur_d = distance_matrix[current_node][tie_nodes]\n    dep_d = distance_matrix[depot][tie_nodes]\n    ratio = dep_d / (cur_d + 1e-9)\n    return int(tie_nodes[np.argmin(ratio)])",
+        "objective": 0.06509
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

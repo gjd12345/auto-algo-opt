@@ -1,0 +1,35 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Scale-aware combination: pull toward close customers that are also near depot.\n    # Use span-normalised score so behaviour is invariant to coordinate scale.\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    norm = span + 1e-12\n\n    # Weight depot-distance term; sign favours smaller d_dep (closer to depot).\n    alpha = 0.6\n    score = (d_cur - alpha * d_dep) / norm\n\n    # Small deterministic tie-breaker: prefer higher demand served now (better packing).\n    # Added at relative magnitude well below score resolution.\n    dem = demands[unvisited_nodes].astype(float)\n    dem_max = float(np.max(dem)) if dem.size > 0 else 1.0\n    dem_norm = dem / (dem_max + 1e-12)\n    score = score - 1e-9 * dem_norm\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.0835,
+        "other_inf": null
+    },
+    {
+        "algorithm": "Replace the linear distance-weighted score with a greedy score combining saving (depot distance minus current distance), proximity, and a demand-aware fill term normalised by local scale, then pick the minimum.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    # Local scale from both distance sets to keep score scale-homogeneous.\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    span_d = float(np.max(d_dep) - np.min(d_dep)) if d_dep.size > 1 else 0.0\n    scale = span + span_d + 1e-12\n\n    # Saving-style term: prefer nodes that are close now but far from depot.\n    saving = (d_dep - d_cur) / scale\n\n    # Proximity term normalised similarly.\n    prox = d_cur / scale\n\n    # Capacity-aware: fraction of remaining capacity this customer fills.\n    rc = float(rest_capacity) + 1e-12\n    dem = demands[unvisited_nodes].astype(float)\n    fill = dem / rc\n\n    # Combine: reward savings, penalise distance, mildly reward fill.\n    w_fill = 0.08 * (dem / (dem + 1e-12))  # value demand magnitudes\n    score = -0.55 * saving + 0.75 * prox - w_fill * fill\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.0385,
+        "other_inf": null,
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "evaluation_id": "4b4601f3de654f66b6ee4d0611fb8afd"
+    },
+    {
+        "algorithm": "Replace the pure nearest-neighbour baseline with a scale-normalised combined score that strongly weights proximity to the current node, moderately penalises distance from the depot, and adds a capacity-pressure term so fuller vehicles prefer filling remaining capacity with nearby, high-demand customers.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    norm = span + 1e-12\n\n    # Stronger weight on current-node proximity, weaker depot pull than the parent.\n    alpha = 0.35\n    base = (d_cur - alpha * d_dep) / norm\n\n    # Capacity pressure: when little capacity remains, bias toward filling it fully.\n    cap_frac = rest_capacity / (rest_capacity + 1e-12)\n    dem = demands[unvisited_nodes].astype(float)\n    fill = dem / (rest_capacity + 1e-12)\n    load_term = 1e-3 * (fill - cap_frac)\n\n    score = base - load_term\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.03223,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "71d5a5f8c6f74cd699f7b91aa7874915"
+    },
+    {
+        "algorithm": "This variant replaces the additive depot-distance weighting with a multiplicative savings-style score that penalizes distance-to-current more strongly when the customer is far from the depot, plus a fill-aware demand bonus scaled by remaining capacity.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n\n    # Scale-normalised components using current-leg span for invariance.\n    span = float(np.max(d_cur) - np.min(d_cur)) if d_cur.size > 1 else 0.0\n    norm = span + 1e-12\n\n    dep_span = float(np.max(d_dep) - np.min(d_dep)) if d_dep.size > 1 else 0.0\n    dep_norm = dep_span + 1e-12\n\n    d_cur_n = d_cur / norm\n    d_dep_n = d_dep / dep_norm\n\n    # Multiplicative savings-style penalty: near customers that are also near\n    # the depot are strongly preferred; far-from-depot customers are penalised\n    # super-linearly through the product term.\n    beta = 0.35\n    score = d_cur_n * (1.0 + beta * d_dep_n)\n\n    # Fill-aware demand bonus: reward large demand that fits snugly into the\n    # remaining capacity, encouraging better vehicle packing.\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1.0\n    fill = np.clip(dem / cap, 0.0, 1.0)\n    score = score - 1e-6 * fill\n\n    idx = int(np.argmin(score))\n    return int(unvisited_nodes[idx])",
+        "objective": -0.01912,
+        "other_inf": null,
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "evaluation_id": "a4593f962dd644da8e0154fc66d696ef"
+    }
+]

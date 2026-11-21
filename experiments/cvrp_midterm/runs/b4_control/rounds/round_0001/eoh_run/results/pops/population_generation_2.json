@@ -1,0 +1,38 @@
+[
+    {
+        "algorithm": "Use a weighted score combining the distance from the current node with a small penalty for depot proximity and a load-shaping factor to prioritize customers that leave a better remaining capacity balance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Explore a different distance/load combination:\n    # prioritize near customers, slightly prefer those farther from depot,\n    # and softly favor customers whose removal leaves a balanced residual load.\n    score = d_cur - 0.15 * d_dep - 0.35 * d_cur * np.abs(load_after - 0.5)\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": -0.0186,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "0cb592c85f3545678413bec196ff125d"
+    },
+    {
+        "algorithm": "Use a savings-style priority that combines proximity to current node, closeness to depot, and demand size to balance route compactness and capacity utilization.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n    # Normalize components\n    max_d_cur = np.max(d_cur) if len(d_cur) > 0 else 1.0\n    max_d_dep = np.max(d_dep) if len(d_dep) > 0 else 1.0\n    max_dem = np.max(dem) if len(dem) > 0 else 1.0\n    if max_d_cur == 0: max_d_cur = 1.0\n    if max_d_dep == 0: max_d_dep = 1.0\n    if max_dem == 0: max_dem = 1.0\n    # Score: prefer close to current, far from depot (to avoid returning), and high demand utilization\n    score = (d_cur / max_d_cur) * 0.6 + (d_dep / max_d_dep) * 0.2 - (dem / max_dem) * 0.2\n    return unvisited_nodes[np.argmin(score)]",
+        "objective": 0.11717,
+        "other_inf": null,
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "evaluation_id": "ed061f0b82de4b2680d62b1e765386a3"
+    },
+    {
+        "algorithm": "Use a weighted priority that combines distance from the current node, distance back to the depot, and remaining-capacity pressure, choosing the feasible customer with the smallest score.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur_dist = distance_matrix[current_node][unvisited_nodes]\n    depot_dist = distance_matrix[depot][unvisited_nodes]\n    node_demands = demands[unvisited_nodes]\n\n    # Capacity pressure: prefer customers that leave less wasted capacity\n    cap_denom = rest_capacity if rest_capacity > 1e-9 else 1e-9\n    load_ratio = node_demands / cap_denom\n\n    # Weighted combination: nearest, not too far from depot, good capacity fit\n    scores = cur_dist + 0.35 * depot_dist + 0.5 * load_ratio\n\n    return int(unvisited_nodes[np.argmin(scores)])",
+        "objective": 0.1478,
+        "other_inf": null,
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "evaluation_id": "a7058ddaa6584765a8fd69b76d9e7520"
+    },
+    {
+        "algorithm": "Use a weighted score combining distance from current node, distance back to depot, and remaining capacity slack to balance route compactness and load utilization.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    # Distance from current node to each candidate\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    # Distance from each candidate back to the depot\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Demand of each candidate\n    dem = demands[unvisited_nodes]\n\n    # Score: prefer close nodes, but also prefer nodes that are far from depot\n    # (so we don't leave far-away nodes for later, which increases distance),\n    # and prefer nodes that use up more capacity when capacity is tight.\n    # Normalize demand component by current remaining capacity.\n    cap = max(rest_capacity, 1e-9)\n    demand_ratio = dem / cap\n\n    # Weighted combination (tuned for balance)\n    score = d_cur - 0.3 * d_dep + 5.0 * demand_ratio\n\n    # Return candidate with minimum score\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": 0.34665,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "85f2ad67370a41b1b5792a5386bdffa9"
+    }
+]

@@ -1,0 +1,114 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "i1",
+        "algorithm": "Replace the simple distance-to-current-node term with a regret-based score that weighs insertion cost against the saving of serving a customer now versus returning to the depot later, keeping feasibility and the greedy construction unchanged.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Saving of serving the customer now rather than leaving it for a future route\n    # (approximated by the detour it would cause from depot).\n    savings = d_cur + d_dep - distance_matrix[current_node][depot]\n    # Prefer customers that are close now but whose inclusion is \"saved\" (large saving).\n    score = d_cur - savings\n    best_idx = int(np.argmin(score))\n    return int(unvisited_nodes[best_idx])",
+        "objective": 1.09408
+    },
+    {
+        "sample_order": 2,
+        "operator": "i1",
+        "algorithm": "Replace the distance-to-depot term with a squared distance-to-depot penalty added to the current-node distance score, then break near-ties via depot-distance as a secondary ordering stage.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Primary score: current distance + squared depot distance term (replaces the depot term)\n    score = d_cur + (d_dep * d_dep) / (rest_capacity + 1.0)\n    order = np.argsort(score)\n    best_idx = order[0]\n    best_score = score[best_idx]\n    # Secondary ordering stage: among near-ties, prefer the node farthest from depot\n    # (to leave closer nodes for later, cheap return)\n    tie_mask = np.abs(score - best_score) <= 1e-9 + 0.05 * abs(best_score)\n    candidates = unvisited_nodes[tie_mask]\n    if candidates.size > 1:\n        cand_dep = distance_matrix[depot][candidates]\n        return int(candidates[np.argmax(cand_dep)])\n    return int(unvisited_nodes[best_idx])",
+        "objective": 0.00613
+    },
+    {
+        "sample_order": 3,
+        "operator": "i1",
+        "algorithm": "Replace the nearest-neighbor distance term with a distance-minus-depot-return savings term (d(current,i)+d(i,depot)-d(current,depot)), scaled by a capacity-utilization-aware factor, and add a cheapest-insertion secondary tie-break among near-tied candidates.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return 0\n\n    cur_to_depot = distance_matrix[current_node][depot]\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[unvisited_nodes][depot]\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Savings-style marginal detour relative to returning toward depot.\n    savings = d_cur + d_dep - cur_to_depot\n    # Prefer customers that fill remaining capacity moderately well.\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    utilization = np.clip(dem / cap, 0.0, 1.0)\n    # Primary score: lower detour, higher utilization when distances tie.\n    primary = savings - 0.15 * utilization * (d_cur + 1.0)\n\n    order = np.argsort(primary)\n    best_idx = order[0]\n\n    # Secondary stage: among candidates within a small band of the best primary score,\n    # pick the one with the smallest pure detour; break remaining ties by distance.\n    best_primary = primary[best_idx]\n    span = 1e-9 + 0.05 * (np.max(primary) - np.min(primary) + 1e-9)\n    close = order[primary[order] <= best_primary + span]\n    if close.size > 1:\n        # Cheapest detour among close candidates.\n        detour = savings[close]\n        best_idx = close[np.argmin(detour)]\n\n    return int(unvisited_nodes[best_idx])",
+        "objective": null
+    },
+    {
+        "sample_order": 4,
+        "operator": "i1",
+        "algorithm": "Replace the nearest-neighbour distance term with a two-part score combining distance to current node plus a capacity-weighted depot pull, and add a cheap secondary tie-break that prefers higher-demand nodes among near-tied candidates.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Capacity-weighted depot pull: as capacity runs low, returning becomes cheaper.\n    # Scale the depot distance term by the fraction of capacity already used.\n    total_cap_hint = rest_capacity + float(np.sum(dem))\n    if total_cap_hint <= 0:\n        cap_ratio = 0.0\n    else:\n        cap_ratio = max(0.0, min(1.0, (total_cap_hint - rest_capacity) / total_cap_hint))\n\n    # Primary score: nearest-neighbour distance plus a pull toward depot\n    # that grows as the vehicle gets full. The distance-to-current term keeps\n    # its original meaning; the depot term is the single replaced term.\n    scores = d_cur + cap_ratio * d_dep\n\n    # Secondary ordering stage: among near-tied candidates (within a small\n    # relative tolerance of the best score), prefer higher demand to pack\n    # more service per route, breaking final ties by distance.\n    best = float(np.min(scores))\n    tol = 1e-9 + 0.05 * abs(best)\n    near = np.where(scores <= best + tol)[0]\n    if near.size > 1:\n        # Higher demand first, then shorter distance to current node.\n        order = sorted(near.tolist(), key=lambda i: (-dem[i], d_cur[i], i))\n        pick = order[0]\n    else:\n        pick = int(np.argmin(scores))\n\n    return int(unvisited_nodes[pick])",
+        "objective": null
+    },
+    {
+        "sample_order": 5,
+        "operator": "i1",
+        "algorithm": "Replace the raw distance-to-depot term with a capacity-utilization-scaled distance-to-depot term (d_depot * (1 + demand/rest_capacity)), keeping the distance-to-current-node term and a cheap secondary tie-break ordering among near-equal primary scores, to favor customers that fill the vehicle when far from the depot.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    # Modified term: distance to depot scaled by capacity utilization pressure\n    depot_term = d_dep * (1.0 + dem / cap)\n\n    primary = d_cur + depot_term\n\n    # Cheap secondary ordering: among candidates within a small band of the best, prefer larger demand\n    best = np.min(primary)\n    band = best * 1.05 + 1e-9\n    mask = primary <= band\n    idxs = np.where(mask)[0]\n\n    if idxs.size > 1:\n        # secondary: higher demand first, tie-break by smaller primary score\n        order = idxs[np.lexsort((primary[idxs], -dem[idxs]))]\n        best_idx = order[0]\n    else:\n        best_idx = idxs[0] if idxs.size == 1 else int(np.argmin(primary))\n\n    return int(unvisited_nodes[best_idx])",
+        "objective": null
+    },
+    {
+        "sample_order": 6,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "i1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 9,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 10,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 11,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 12,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 13,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 14,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 15,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 16,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

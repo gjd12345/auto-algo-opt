@@ -1,0 +1,1134 @@
+{
+  "runs": {
+    "20261201-A": {
+      "seed": 20261201,
+      "arm": "A",
+      "train_nn": 12.20898078816318,
+      "train_final": 11.0864622525459,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.20898078816318,
+          "after": 11.592529745864793,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.592529745864793,
+          "after": 11.343635583499372,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 11.343635583499372,
+          "after": 11.0864622525459,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 33.86,
+        "engine_wall_seconds": 59.74900000001071,
+        "input_tokens": 24597,
+        "output_tokens": 4279,
+        "provider_elapsed_seconds": 33.86,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 9.194203472787681,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.663270487378913,
+      "holdout_improvement_pct": 6.403503848866342
+    },
+    "20261201-B": {
+      "seed": 20261201,
+      "arm": "B",
+      "train_nn": 12.20898078816318,
+      "train_final": 11.595073610166125,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.20898078816318,
+          "after": 11.595073610166125,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "forbidden_syntax": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.595073610166125,
+          "after": 11.595073610166125,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_legal-ranking-refinement@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 11.595073610166125,
+          "after": 11.595073610166125,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_legal-ranking-refinement@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 32.371,
+        "engine_wall_seconds": 57.98300000000745,
+        "input_tokens": 25268,
+        "output_tokens": 4067,
+        "provider_elapsed_seconds": 32.371,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 5.028324547715305,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.577611955508505,
+      "holdout_improvement_pct": 7.0909043903522075
+    },
+    "20261201-C": {
+      "seed": 20261201,
+      "arm": "C",
+      "train_nn": 12.20898078816318,
+      "train_final": 11.077319003972312,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.20898078816318,
+          "after": 11.090283215317896,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "candidate_error": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.090283215317896,
+          "after": 11.086331927330194,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "aligned",
+          "hypothesis": "A bounded fill adjustment may reduce route distance without disrupting the geometric preference.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 11.086331927330194,
+          "after": 11.077319003972312,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "partial",
+          "hypothesis": "A coefficient adjustment could improve route continuation more than further expanding the weak fill adjustment.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 36.953,
+        "engine_wall_seconds": 62.98400000005495,
+        "input_tokens": 26066,
+        "output_tokens": 5165,
+        "provider_elapsed_seconds": 36.953,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 9.269093004782462,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.55479156693218,
+      "holdout_improvement_pct": 7.274035563882204
+    },
+    "20261201-D": {
+      "seed": 20261201,
+      "arm": "D",
+      "train_nn": 12.20898078816318,
+      "train_final": 11.46486250526582,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.20898078816318,
+          "after": 11.46486250526582,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 3,
+          "failures": {
+            "forbidden_attribute": 3
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.46486250526582,
+          "after": 11.46486250526582,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "misaligned",
+          "hypothesis": "A valid implementation can refine radial preference without changing the start rule.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_lexsort-contract@v0001"
+          ],
+          "memory_published": true,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 11.46486250526582,
+          "after": 11.46486250526582,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "partial",
+          "hypothesis": "Keeping radial preference from the validated candidate may avoid the regression of the closure-cost rewrite.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_lexsort-contract@v0001",
+            "cvrp_construct/insight_keep-savings-sign@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 38.532,
+        "engine_wall_seconds": 64.4989999999525,
+        "input_tokens": 27327,
+        "output_tokens": 5061,
+        "provider_elapsed_seconds": 38.532,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 6.094843589391139,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.872361879811262,
+      "holdout_improvement_pct": 4.725567824986343
+    },
+    "20261202-A": {
+      "seed": 20261202,
+      "arm": "A",
+      "train_nn": 12.726712136337726,
+      "train_final": 12.259745618480984,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.726712136337726,
+          "after": 12.259745618480984,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 12.259745618480984,
+          "after": 12.259745618480984,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 1,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 12.259745618480984,
+          "after": 12.259745618480984,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 32.063,
+        "engine_wall_seconds": 57.76600000006147,
+        "input_tokens": 24632,
+        "output_tokens": 4254,
+        "provider_elapsed_seconds": 32.063,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 3.6691842547726337,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 12.232015797421736,
+      "holdout_improvement_pct": 1.8393836666239265
+    },
+    "20261202-B": {
+      "seed": 20261202,
+      "arm": "B",
+      "train_nn": 12.726712136337726,
+      "train_final": 12.012577342105445,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.726712136337726,
+          "after": 12.140124318569114,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 6,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 12.140124318569114,
+          "after": 12.140124318569114,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_validated-parent@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 12.140124318569114,
+          "after": 12.012577342105445,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_validated-parent@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 33.829,
+        "engine_wall_seconds": 59.76500000001397,
+        "input_tokens": 24671,
+        "output_tokens": 4412,
+        "provider_elapsed_seconds": 33.829,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 5.611306255550954,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.751022793373334,
+      "holdout_improvement_pct": 5.6993009943455855
+    },
+    "20261202-C": {
+      "seed": 20261202,
+      "arm": "C",
+      "train_nn": 12.726712136337726,
+      "train_final": 11.724845159787085,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.726712136337726,
+          "after": 11.897492475902993,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.897492475902993,
+          "after": 11.897492475902993,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 1,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "A small change in route continuation preference may improve mean distance.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 11.897492475902993,
+          "after": 11.724845159787085,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "misaligned",
+          "hypothesis": "The round-2 step suggests a higher intercept was not useful in that implementation.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 33.485,
+        "engine_wall_seconds": 57.89000000001397,
+        "input_tokens": 24342,
+        "output_tokens": 4329,
+        "provider_elapsed_seconds": 33.485,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 7.872158699104048,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.857921683441374,
+      "holdout_improvement_pct": 4.841448853846847
+    },
+    "20261202-D": {
+      "seed": 20261202,
+      "arm": "D",
+      "train_nn": 12.726712136337726,
+      "train_final": 11.59758406835406,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.726712136337726,
+          "after": 11.59758406835406,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "candidate_error": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.59758406835406,
+          "after": 11.59758406835406,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "aligned",
+          "hypothesis": "A distance-scaled fill contribution may preserve geography across states.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_farthest-start-savings@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 11.59758406835406,
+          "after": 11.59758406835406,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "partial",
+          "hypothesis": "A smaller capacity contribution may keep the useful geographic ordering.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_farthest-start-savings@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 36.986,
+        "engine_wall_seconds": 62.32799999997951,
+        "input_tokens": 28338,
+        "output_tokens": 5770,
+        "provider_elapsed_seconds": 36.986,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 8.87211131899293,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.775895234983512,
+      "holdout_improvement_pct": 5.499702315059577
+    },
+    "20261203-A": {
+      "seed": 20261203,
+      "arm": "A",
+      "train_nn": 12.2814035335604,
+      "train_final": 11.67495002986569,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.2814035335604,
+          "after": 11.778191205660988,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 6,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.778191205660988,
+          "after": 11.778191205660988,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 1,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 11.778191205660988,
+          "after": 11.67495002986569,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 32.249,
+        "engine_wall_seconds": 57.89100000000326,
+        "input_tokens": 23950,
+        "output_tokens": 4131,
+        "provider_elapsed_seconds": 32.249,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 4.937982064000295,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.806627160591784,
+      "holdout_improvement_pct": 5.253081904427397
+    },
+    "20261203-B": {
+      "seed": 20261203,
+      "arm": "B",
+      "train_nn": 12.2814035335604,
+      "train_final": 11.827485006339638,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.2814035335604,
+          "after": 12.104860094770741,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 12.104860094770741,
+          "after": 12.104860094770741,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_allowed-tie-order@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 12.104860094770741,
+          "after": 11.827485006339638,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "unknown",
+          "hypothesis": null,
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_allowed-tie-order@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 27.312,
+        "engine_wall_seconds": 52.46799999999348,
+        "input_tokens": 23862,
+        "output_tokens": 3426,
+        "provider_elapsed_seconds": 27.312,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 3.6959825151936125,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.89338242579488,
+      "holdout_improvement_pct": 4.556880195442005
+    },
+    "20261203-C": {
+      "seed": 20261203,
+      "arm": "C",
+      "train_nn": 12.2814035335604,
+      "train_final": 11.099665089664072,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.2814035335604,
+          "after": 11.45280162991609,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "candidate_error": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.45280162991609,
+          "after": 11.316182611508978,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "partial",
+          "hypothesis": "An alternative capacity weighting may improve the current geometry and packing balance.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        },
+        {
+          "round": 3,
+          "before": 11.316182611508978,
+          "after": 11.099665089664072,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "partial",
+          "hypothesis": "Adjusting a term that actually changes ranking is more informative than changing a positive common divisor.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [],
+          "memory_published": false,
+          "memory_delivered": 0
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 32.45,
+        "engine_wall_seconds": 56.93699999997625,
+        "input_tokens": 24479,
+        "output_tokens": 4188,
+        "provider_elapsed_seconds": 32.45,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 9.622177470735226,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 12.01978343585495,
+      "holdout_improvement_pct": 3.542525631309317
+    },
+    "20261203-D": {
+      "seed": 20261203,
+      "arm": "D",
+      "train_nn": 12.2814035335604,
+      "train_final": 11.249899119944267,
+      "request_status": [
+        [
+          "complete",
+          200,
+          13
+        ]
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "before": 12.2814035335604,
+          "after": 11.249899119944267,
+          "terminal": "SUCCEEDED",
+          "generated": 6,
+          "valid": 5,
+          "failures": {
+            "candidate_error": 1
+          },
+          "alignment": "aligned",
+          "hypothesis": "The difference between route-closure increment and depot savings may alter radial preference and improve route distance.",
+          "context_matched": 6,
+          "candidate_requests": 6,
+          "requests": 7,
+          "solver": 7,
+          "memory_selected": [],
+          "memory_published": true,
+          "memory_delivered": 0
+        },
+        {
+          "round": 2,
+          "before": 11.249899119944267,
+          "after": 11.249899119944267,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 1,
+          "failures": {
+            "forbidden_attribute": 1
+          },
+          "alignment": "partial",
+          "hypothesis": "A slightly different threshold may improve packing without overriding the savings rule.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_tight-capacity-savings@v0001"
+          ],
+          "memory_published": true,
+          "memory_delivered": 2
+        },
+        {
+          "round": 3,
+          "before": 11.249899119944267,
+          "after": 11.249899119944267,
+          "terminal": "SUCCEEDED",
+          "generated": 2,
+          "valid": 2,
+          "failures": {},
+          "alignment": "aligned",
+          "hypothesis": "A threshold-only variant can probe when the demand term should activate.",
+          "context_matched": 2,
+          "candidate_requests": 2,
+          "requests": 3,
+          "solver": 5,
+          "memory_selected": [
+            "cvrp_construct/insight_tight-capacity-savings@v0001",
+            "cvrp_construct/insight_capacity-threshold-scope@v0001"
+          ],
+          "memory_published": false,
+          "memory_delivered": 2
+        }
+      ],
+      "tokens": {
+        "elapsed_seconds": 38.405,
+        "engine_wall_seconds": 62.49999999994179,
+        "input_tokens": 27109,
+        "output_tokens": 5800,
+        "provider_elapsed_seconds": 38.405,
+        "requests": 13,
+        "solver_attempts": 17,
+        "tokens_complete": true,
+        "unknown_token_requests": 0
+      },
+      "train_improvement_pct": 8.398913127456682,
+      "holdout_valid": true,
+      "holdout_nn": 12.461225544753093,
+      "holdout_final": 11.667999285562924,
+      "holdout_improvement_pct": 6.3655557500454965
+    }
+  },
+  "contrasts": {
+    "train": {
+      "blocks": [
+        {
+          "seed": 20261201,
+          "memory": -3.67006417023185,
+          "math": 0.5707042868353076,
+          "interaction": 0.9916295096810526
+        },
+        {
+          "seed": 20261202,
+          "memory": 1.471037310333601,
+          "math": 3.7318897538866955,
+          "interaction": -0.942169380889438
+        },
+        {
+          "seed": 20261203,
+          "memory": -1.232631946042613,
+          "math": 4.693563009499,
+          "interaction": 0.01873520552813801
+        }
+      ],
+      "mean": {
+        "memory": -1.143886268646954,
+        "math": 2.9987190167403344,
+        "interaction": 0.022731778106584184
+      }
+    },
+    "holdout": {
+      "blocks": [
+        {
+          "seed": 20261201,
+          "memory": -0.9305335987049976,
+          "math": -0.7474024251750016,
+          "interaction": -3.235868280381726
+        },
+        {
+          "seed": 20261202,
+          "memory": 2.2590853944671943,
+          "math": 1.401233253968456,
+          "interaction": -3.2016638665089294
+        },
+        {
+          "seed": 20261203,
+          "memory": 1.0634142048753938,
+          "math": 0.049059640742705746,
+          "interaction": 3.519231827721571
+        }
+      ],
+      "mean": {
+        "memory": 0.7973220002125302,
+        "math": 0.23429682317872005,
+        "interaction": -0.9727667730563615
+      }
+    }
+  }
+}

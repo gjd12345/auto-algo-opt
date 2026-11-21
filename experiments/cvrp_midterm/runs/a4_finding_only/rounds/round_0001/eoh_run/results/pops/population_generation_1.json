@@ -1,0 +1,38 @@
+[
+    {
+        "algorithm": "Use a scale-invariant priority score combining normalized distance-to-current, distance-to-depot savings, and load utilization to pick the next customer.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Scale normalization: use a representative length scale of the instance.\n    dm = distance_matrix\n    n = dm.shape[0]\n    # max distance among customer-depot distances as scale reference (invariant to uniform scaling)\n    scale = np.max(d_dep) if np.max(d_dep) > 0 else 1.0\n    # also consider max pairwise to be safe; but keep cheap and scale-consistent\n    # use max over depot distance is fine since it scales linearly.\n\n    d_cur_n = d_cur / scale\n    d_dep_n = d_dep / scale\n\n    # savings: how much going via current node saves vs depot roundtrip\n    savings_n = d_dep_n - d_cur_n  # positive means current->node is closer than depot->node\n\n    # load utilization contribution\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    # remaining capacity after visiting (utilization is how much this fills)\n    util = dem / cap  # between 0 and 1 per feasible node\n\n    # Priority: prefer near, prefer high savings, prefer filling capacity\n    # Weights chosen to be modest; all components scale-invariant.\n    score = 1.0 * d_cur_n - 0.5 * savings_n - 0.3 * util\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.0667,
+        "other_inf": null,
+        "candidate_id": "candidate_5",
+        "revision": "original",
+        "evaluation_id": "7f5e6d40439348a2b0a6301acc3614fc"
+    },
+    {
+        "algorithm": "Use a scale-invariant priority that subtracts a span-normalised detour penalty from the distance to the depot, so the next customer is the feasible one minimising d(cur,n)+d(n,depot)\u2212\u03bb\u00b7(d(cur,n)+d(n,depot)\u2212d(cur,depot)) with \u03bb tied to remaining load fraction.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return 0\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_cd = distance_matrix[current_node][depot]\n\n    dem = demands[unvisited_nodes]\n    dem0 = float(np.sum(demands)) if demands.size else 1.0\n    if rest_capacity > 0:\n        load_frac = rest_capacity / (rest_capacity + 1e-12 + float(np.sum(dem)))\n    else:\n        load_frac = 0.0\n\n    # Load-aware weight: more detour penalty when capacity is tight.\n    lam = 0.5 + 0.3 * (1.0 - load_frac)\n\n    # Detour relative to going straight back to depot (span-normalised by d_cd).\n    detour = (d_cur + d_dep - d_cd)\n    span = d_cd + 1e-9\n\n    priority = d_cur + 0.5 * d_dep - lam * detour\n\n    # Prefer larger demands when distances tie (helps pack routes).\n    priority = priority - 1e-6 * dem\n\n    return int(unvisited_nodes[np.argmin(priority)])",
+        "objective": -0.05843,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "aa9000be0c454426aea908f72483ac62"
+    },
+    {
+        "algorithm": "The heuristic scores each feasible customer as the sum of its distance from the current node, its distance from the depot, and a load-utilization penalty that discourages serving a customer whose demand fills little of the remaining capacity, then selects the minimum-score customer.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur = distance_matrix[current_node, unvisited_nodes]\n    dep = distance_matrix[depot, unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Load-utilization penalty: prefer customers that consume a good share of\n    # remaining capacity (encourages fuller routes before returning).\n    cap = max(float(rest_capacity), 1e-12)\n    util = dem / cap\n    load_penalty = (1.0 - util)\n\n    # Scale-normalise using the largest pairwise distance among candidates so\n    # the score is invariant to coordinate scale.\n    span = float(np.max(cur) + np.max(dep))\n    if span <= 0:\n        span = 1.0\n\n    score = (cur + dep) / span + 0.3 * load_penalty\n    return int(unvisited_nodes[int(np.argmin(score))])",
+        "objective": 0.07965,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "86d129f630314bc6bf83317c1ede9266"
+    },
+    {
+        "algorithm": "Try a scale-invariant priority score combining normalized distance to the current node, normalized distance to the depot, and load pressure so that nearer-but-heavy and farther-but-light customers are balanced without absolute-length thresholds.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n\n    max_d = float(np.max(d_cur)) if d_cur.size else 0.0\n    max_dd = float(np.max(d_dep)) if d_dep.size else 0.0\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    dc = d_cur / max_d if max_d > 0.0 else np.zeros_like(d_cur)\n    dd = d_dep / max_dd if max_dd > 0.0 else np.zeros_like(d_dep)\n\n    load = np.clip(dem / cap, 0.0, 1.0)\n\n    score = 0.55 * dc + 0.30 * dd - 0.15 * load\n    return int(unvisited_nodes[int(np.argmin(score))])",
+        "objective": 0.1034,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "ebcdd9fa83274d8a93d905778567546b"
+    }
+]

@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Replace the distance-to-current term with a squared-distance form while keeping the savings and fill terms, and use a nearest-to-current secondary tie-breaker among near-equal primary scores.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = distance_matrix[current_node][depot] + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n    fill = dem / cap\n\n    primary = 1.2 * (d_cur ** 2) / (cap + 1e-6) - 0.7 * savings - 0.4 * fill\n\n    best_val = primary.min()\n    tol = 1e-6 * (abs(best_val) + 1.0)\n    close = np.where(primary <= best_val + tol)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = distance_matrix[current_node][candidates] - 0.5 * demands[candidates] / cap\n        return int(candidates[np.argmin(secondary)])\n\n    return int(unvisited_nodes[int(np.argmin(primary))])",
+        "objective": 0.00884
+    },
+    {
+        "sample_order": 2,
+        "operator": "e2",
+        "algorithm": "Replace the additive distance\u2011minus\u2011savings score with a multiplicative \"route-progress \u00d7 depot-return-risk\" ranking: score = (d_cur^2 / (savings + \u03b5)) \u00b7 (d_dep / (cap\u00b7dem + \u03b5))^\u03b1, so customers that are close, generate large savings, and are small relative to remaining capacity are preferred, with a nearest-savings tie-breaker.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_back = distance_matrix[current_node][depot]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = d_back + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n    fill = dem / cap\n\n    # Multiplicative \"promise\" score: strong when close, high savings, small demand.\n    eps = 1e-6\n    progress = (d_cur ** 2) / (savings + eps + 1.0)\n    risk = (d_dep + eps) / (cap * (dem + eps) + 1.0)\n    primary = progress * (1.0 + 0.6 * fill) * (risk ** 0.5)\n\n    best_val = primary.min()\n    tol = 1e-6 * (abs(best_val) + 1.0)\n    close = np.where(primary <= best_val + tol)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = (distance_matrix[current_node][candidates]\n                     - 0.5 * savings[close]\n                     + 0.3 * demands[candidates] / cap)\n        return int(candidates[int(np.argmin(secondary))])\n\n    return int(unvisited_nodes[int(np.argmin(primary))])",
+        "objective": 0.01236
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "Replace the squared distance-to-current term with a deposit-aware depot-return estimate (d_cur + d_dep) normalized by capacity, keep the savings and fill terms, and use a farthest-fill secondary tie-breaker among near-equal primary scores.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = distance_matrix[current_node][depot] + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n    fill = dem / cap\n\n    # Replaced term: squared distance-to-current -> round-trip estimate per unit capacity\n    trip = (d_cur + d_dep) / (cap + 1e-6)\n\n    primary = 1.1 * trip - 0.8 * savings - 0.5 * fill\n\n    best_val = primary.min()\n    tol = 1e-6 * (abs(best_val) + 1.0)\n    close = np.where(primary <= best_val + tol)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = -0.6 * demands[candidates] / cap + distance_matrix[current_node][candidates] / (cap + 1e-6)\n        return int(candidates[np.argmin(secondary)])\n\n    return int(unvisited_nodes[int(np.argmin(primary))])",
+        "objective": 0.02116
+    },
+    {
+        "sample_order": 4,
+        "operator": "e2",
+        "algorithm": "Score each candidate by a rank-sum over three terms (nearest-first rank of d_cur, savings rank, and small-demand rank) instead of any additive or multiplicative formula, then break ties by a small perturbation of the savings term.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_back = distance_matrix[current_node][depot]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = d_back + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n\n    # Ordinal (rank) combination: robust to scale, structurally different\n    # from additive or multiplicative scoring.\n    r_close = np.argsort(np.argsort(d_cur))\n    r_save = np.argsort(np.argsort(-savings))\n    r_small = np.argsort(np.argsort(dem))\n\n    rank_score = 1.0 * r_close + 0.8 * r_save + 0.5 * r_small\n\n    best_val = rank_score.min()\n    close = np.where(rank_score == best_val)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = (-savings[close]\n                     + 1e-6 * distance_matrix[current_node][candidates])\n        return int(candidates[int(np.argmin(secondary))])\n\n    return int(unvisited_nodes[int(np.argmin(rank_score))])",
+        "objective": 0.11108
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Replace the linear distance-to-current term with a squared distance term (making closer customers exponentially more attractive) while keeping the savings and fill terms and the secondary capacity-first tie-break unchanged.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = distance_matrix[current_node][depot] + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n    fill = dem / cap\n\n    # Replace linear distance term with squared distance term\n    primary = 1.0 * (d_cur * d_cur) - 0.5 * savings - 0.3 * fill\n\n    best_val = primary.min()\n    tol = 1e-9\n    close = np.where(primary <= best_val + tol)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = -demands[candidates] / cap + 1e-6 * distance_matrix[current_node][candidates]\n        return int(candidates[np.argmin(secondary)])\n\n    return int(unvisited_nodes[int(np.argmin(primary))])",
+        "objective": 0.00696
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "m2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "m1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

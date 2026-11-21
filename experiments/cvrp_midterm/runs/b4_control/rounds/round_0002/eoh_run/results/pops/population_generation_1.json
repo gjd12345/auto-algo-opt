@@ -1,0 +1,35 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    load_after = (cap - dem) / cap\n\n    # Explore a different distance/load combination:\n    # prioritize near customers, slightly prefer those farther from depot,\n    # and softly favor customers whose removal leaves a balanced residual load.\n    score = d_cur - 0.15 * d_dep - 0.35 * d_cur * np.abs(load_after - 0.5)\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": -0.0186,
+        "other_inf": null
+    },
+    {
+        "algorithm": "Use a radial-first rule: score each candidate by a weighted mix of closeness to the current node, depot radius continuity, angular sweep consistency around the depot, and capacity-fill preference with retuned weights (higher distance weight, stronger radial penalty, moderate load term).",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    r_cur = float(distance_matrix[depot][current_node])\n    max_d = float(np.max(distance_matrix))\n    if max_d <= 0.0:\n        max_d = 1.0\n\n    # Normalised proximity to current node (higher = closer)\n    prox = 1.0 - d_cur / max_d\n\n    # Angular consistency via law of cosines\n    d_cd = float(distance_matrix[current_node][depot])\n    denom = 2.0 * max(d_cd, 1e-9) * np.maximum(d_dep, 1e-9)\n    cos_theta = (d_cd * d_cd + d_dep * d_dep - d_cur * d_cur) / denom\n    cos_theta = np.clip(cos_theta, -1.0, 1.0)\n\n    # Radial continuity: prefer staying near current depot radius\n    radial_gap = np.abs(d_dep - r_cur) / (r_cur + 1e-9)\n\n    # Load fill preference\n    load_frac = (cap - dem) / cap\n\n    score = 0.50 * prox + 0.25 * cos_theta - 0.20 * radial_gap + 0.15 * load_frac\n    return int(unvisited_nodes[np.argmax(score)])",
+        "objective": -0.00237,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "6d0dea5a92c64577a241bad5a096f3fa"
+    },
+    {
+        "algorithm": "Compute for each candidate a Clarke\u2011Wright-style savings value relative to the depot and current node, then rank candidates by a weighted combination of that saving, the return-to-depot cost, and the fill ratio, choosing the highest score.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_cd = float(distance_matrix[current_node][depot])\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Clarke-Wright savings of inserting candidate between current node and depot\n    savings = d_cd + d_dep - d_cur\n\n    # Fill ratio after serving the candidate\n    fill = (cap - dem) / cap\n\n    # Prefer high savings, low remaining return cost, and good packing\n    score = savings - 0.25 * d_dep + 0.5 * fill\n    return int(unvisited_nodes[np.argmax(score)])",
+        "objective": 0.02431,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "24ea8fbfd97c40d1a82c7a486bfb7563"
+    },
+    {
+        "algorithm": "Instead of scoring candidates by an additive distance-plus-load formula, evaluate each candidate by the *angle it subtends at the depot* and pick the one that keeps the route sweeping around the depot in a consistent rotational direction while penalizing large jumps in radius \u2014 an angular-sweep-with-radial-tiebreak rule.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cap = float(rest_capacity)\n    if cap <= 0.0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Geometric proxy for angular position: use squared distances to build a\n    # cosine-like quantity via the law of cosines with the depot as origin.\n    d_cd = float(distance_matrix[current_node][depot])\n    denom = 2.0 * max(d_cd, 1e-9) * np.maximum(d_dep, 1e-9)\n    cos_theta = (d_cd * d_cd + d_dep * d_dep - d_cur * d_cur) / denom\n    cos_theta = np.clip(cos_theta, -1.0, 1.0)\n\n    # Prefer continuing in the current rotational sense: choose direction that\n    # reduces angular deviation (i.e. larger cosine means more \"ahead\").\n    angular_score = cos_theta\n\n    # Radial continuity: prefer candidates whose depot-distance is close to the\n    # current node's depot distance (keeps the route sweeping, not zig-zagging).\n    r_cur = float(distance_matrix[depot][current_node])\n    radial_gap = np.abs(d_dep - r_cur) / (r_cur + 1e-9)\n\n    # Light load term: mildly favor filling the vehicle.\n    load_frac = (cap - dem) / cap\n\n    score = angular_score - 0.35 * radial_gap + 0.10 * load_frac\n    return int(unvisited_nodes[np.argmax(score)])",
+        "objective": 0.05615,
+        "other_inf": null,
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "evaluation_id": "bb34cfdf208e415eb2af459cc619c63b"
+    }
+]

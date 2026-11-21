@@ -1,0 +1,39 @@
+[2026-11-21 12:33:04] LLM: local @ http://127.0.0.1:61685/completions
+[2026-11-21 12:33:06] LLM connection verified.
+[2026-11-21 12:33:06] ======================================================
+[2026-11-21 12:33:06]   EoH
+[2026-11-21 12:33:06]   LLM      : None @ None
+[2026-11-21 12:33:06]   EC       : gen=2  pop=4  ops=[e1 e2 m1 m2]
+[2026-11-21 12:33:06]   Sampling : init=8 (2×pop)  evo_budget=8
+[2026-11-21 12:33:06]   Pipeline : samplers=1  evaluators=1 (async)
+[2026-11-21 12:33:06]   Timeout  : llm=605.0s  eval=20.0s
+[2026-11-21 12:33:06] ======================================================
+[2026-11-21 12:33:06] Seeds: 1/1 valid.
+[2026-11-21 12:33:06] 
+[Evolve]  budget=8 samples  samplers=1  evaluators=1
+[2026-11-21 12:33:12]   #1    [e1]  0.02217           best=0.02217  *
+[2026-11-21 12:33:16]   #2    [m1]  -0.03608          best=-0.03608  *
+[2026-11-21 12:33:21]   #3    [e2]  -0.0835           best=-0.0835  *
+[2026-11-21 12:33:24]   #4    [m2]  0.26919           best=-0.0835
+[2026-11-21 12:33:24]   --- ~gen 1/2  pop=4  best=-0.0835  samples=4  elapsed=0.3m
+[2026-11-21 12:33:28]   #5    [m2]  -0.08789          best=-0.08789  *
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28]   #6    [e1]  None (generation failed)  best=-0.08789
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28]   #7    [e2]  None (generation failed)  best=-0.08789
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:28] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:29] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:29] Local LLM call failed after 5 attempts (url=http://127.0.0.1:61685/completions).
+[2026-11-21 12:33:29]   #8    [e2]  None (generation failed)  best=-0.08789
+[2026-11-21 12:33:29]   --- ~gen 2/2  pop=4  best=-0.08789  samples=8  elapsed=0.4m
+[2026-11-21 12:33:29] ======================================================
+[2026-11-21 12:33:29]   Evolution finished.  best=-0.08789  samples=8  time=0.4m
+[2026-11-21 12:33:29] ======================================================
+

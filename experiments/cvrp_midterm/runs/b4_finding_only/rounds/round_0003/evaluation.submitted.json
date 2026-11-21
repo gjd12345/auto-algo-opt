@@ -1,0 +1,40 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "baseline=0.0 best_generated=-0.05701641301827596 terminal=REQUEST_BUDGET_EXHAUSTED",
+      "evidence_refs": [
+        "evaluation:4c4d9642c4df438ea4aa1456e22d96dc"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-SCALE-FREE is refuted after round 3: A candidate can hold its 1e-3 spread under 1% while staying within 1% of the frozen reference at the nominal scale. — all 7 invariant candidates paid at nominal scale (cheapest 11.5050, +5.36% vs 10.9197).",
+      "confidence": "high",
+      "evidence_refs": [
+        "evaluation:4c4d9642c4df438ea4aa1456e22d96dc"
+      ]
+    },
+    {
+      "claim": "H-NO-REPEAT is refuted after round 3: The generator stops resubmitting code it already produced and stops reproducing the refuted pure-width swap. — 2 resubmitted sha(s) of earlier rounds or the seed, 0 candidate(s) reproduced the swap with spread >= 5%.",
+      "confidence": "high",
+      "evidence_refs": [
+        "evaluation:4c4d9642c4df438ea4aa1456e22d96dc"
+      ]
+    },
+    {
+      "claim": "H-BEAT-REF is open after round 3: Some generated rule beats the frozen reference on the shared suite. — best 11.5050 is +5.36% vs reference 10.9197.",
+      "confidence": "low",
+      "evidence_refs": [
+        "evaluation:4c4d9642c4df438ea4aa1456e22d96dc"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "continue within the remaining budget"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

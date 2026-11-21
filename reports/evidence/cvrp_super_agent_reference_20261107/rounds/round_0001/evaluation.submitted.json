@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "partial",
+  "observations": [
+    {
+      "claim": "Candidate 5 was best at 11.56280 versus 12.11504 for nearest neighbor. It maximizes a savings score with a demand multiplier. The direct closure-cost variants in this round were worse, and its savings are all zero at the depot.",
+      "evidence_refs": [
+        "evaluation:833b0d5097c34b01bdeeb784be6bc588",
+        "rounds/round_0001/execution_delta.json",
+        "rounds/round_0001/comparison_packet.json"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "next_search_advice": {
+    "direction": "Separate route start from in-route savings."
+  },
+  "memory_action": {
+    "kind": "insight",
+    "name": "depot-savings-route-start",
+    "description": "CVRP depot savings and degenerate route starts",
+    "project": "cvrp_construct",
+    "scene": "select_next_node",
+    "body": "**Why:** Round 1 candidate 5 improved the mean from 12.11504 to 11.56280 with demand-weighted savings. At the depot its savings formula is identically zero in exact arithmetic.\n\n**How to apply:** Preserve savings during a route as a useful candidate family. Give route starts an explicit comparator and check per-instance distance rather than assuming the start policy helps.\n\n**Limitations:** Frozen six-instance CVRP development suite and current evaluator only.",
+    "evidence_ref": "evaluation:833b0d5097c34b01bdeeb784be6bc588"
+  }
+}

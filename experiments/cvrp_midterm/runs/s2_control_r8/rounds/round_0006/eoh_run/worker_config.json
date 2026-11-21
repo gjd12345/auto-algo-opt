@@ -1,0 +1,103 @@
+{
+  "problem": "cvrp_construct",
+  "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "evaluator_hash": "89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234",
+  "search_policy": {
+    "id": "official_eoh",
+    "version": "472545785c936dcfc863d2bc0d6109cf23c7ce62"
+  },
+  "purpose": "suite_preparation",
+  "seed": 20260908,
+  "count": 3,
+  "size": 20,
+  "search": "official_eoh",
+  "integration_mode": "official_only",
+  "repair_mode": "off",
+  "repair_policy_version": null,
+  "max_repairs_per_candidate": 1,
+  "max_repair_requests_total": null,
+  "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+  "upstream": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "verified_python_files": 14,
+    "source": "https://github.com/FeiLiu36/EoH.git"
+  },
+  "adapter_source_hash": "719e6960f95cd21d9b56576eeb22cb9a01381ccbacbb97d431f243c4c8118f77",
+  "execution_mode": "live",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1/chat/completions",
+  "objective_direction": "minimize",
+  "pop_size": 4,
+  "n_pop": 2,
+  "operators": [
+    "e1",
+    "e2",
+    "m1",
+    "m2"
+  ],
+  "max_sample_nums": 8,
+  "request_budget": 48,
+  "wall_seconds": 599.728069,
+  "solver_timeout": 20.0,
+  "initialization_samples": 0,
+  "evolution_samples": 8,
+  "search_seed": 20260913,
+  "probe_requests": 1,
+  "num_samplers": 1,
+  "num_evaluators": 1,
+  "metric_spec_hash": "27846f7fd9af7dfe4d07d19b46c2bf9ccc9f003b186b1f5f1abc983e85515790",
+  "data_manifest_hash": "4972cd1d8feec2981d73f825cb4b300cc1397133fbb628e16638b82001c8e551",
+  "problem_spec_hash": "899399ac4ff4fcbab372b16a98a6c9257c8144adbcf5f2741bca2c189e2a2b9e",
+  "context_mode": "round",
+  "round_context_sha256": "87944ee7609e3f12bdb630d4cce3c1368f5a0ae5bc5e9482c565e98c6ca620e4",
+  "baseline": {
+    "valid": true,
+    "objective": 0.0,
+    "instance_objectives": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "suite_hash": "3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6",
+    "error_code": null,
+    "error_detail": null,
+    "elapsed_seconds": 0.219,
+    "metrics": {
+      "raw_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_objectives": [
+        11.84817041232914,
+        10.522404060217072,
+        12.407728887420175,
+        12.486209468554943
+      ],
+      "reference_kind": [
+        "solver_reference",
+        "solver_reference",
+        "solver_reference",
+        "solver_reference"
+      ],
+      "fitness_definition": "mean((raw_objective-reference_objective)/reference_objective)"
+    }
+  },
+  "thinking": "disabled",
+  "deadline": 577107.853069,
+  "local_url": "http://127.0.0.1:64557/completions",
+  "session": {
+    "root": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_control_r8",
+    "task_id": "task_05bbbaf3fef74d38a9b7a5820c072564"
+  },
+  "supervisor_pid": 19408,
+  "round_context": "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n{\"round\":6,\"direction\":\"Explore improved priority rules for CVRP greedy construction.\",\"operations\":[{\"type\":\"replace\",\"target\":\"priority score\",\"mechanism\":\"Try alternative combinations of distance, depot distance, demand, and remaining capacity.\"}],\"preserve\":\"The problem interface, the evaluator, and the search policy.\",\"reference_skill_ref\":null,\"hypothesis\":\"Alternative combinations of distance, depot distance, and load yield shorter CVRP routes.\",\"search_intent\":null,\"guidance_mode\":\"agent\",\"feedback_summary\":{\"source\":{\"round_id\":5,\"evaluation_ref\":\"rounds/round_0005/evaluation_facts.json\",\"evaluation_facts_sha256\":\"a8b25c80dab393ed18073aa1f40a7228d0bf7a32d6af10413c8f1833137be8cb\",\"suite_hash\":\"3735556bcd35e48a2980433e0430fbf0a299984320a011ef95af9c549dd5d8d6\",\"evaluator_hash\":\"89ab003b4671c329cc023908f327c29c05a355e16aa989267b8cdea13f849234\"},\"incumbent\":{\"ref\":\"rounds/round_0001/eoh_run/exported_skill\",\"code_sha256\":\"141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627\",\"objective\":-0.10889829612410487,\"origin\":\"population_seed\"},\"incumbent_candidate_match\":{\"status\":\"identity_unresolved\",\"reason\":\"exact_evaluation_id_and_code_sha256_not_found\",\"evaluation_id\":null,\"code_sha256\":\"141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627\"},\"best_generated_candidate\":{\"candidate_id\":\"candidate_3\",\"revision\":\"original\",\"origin\":\"generated\",\"evaluation_id\":\"9545870539ff421487dfbecd6feb4f60\",\"code_sha256\":\"a3755233913a3f3e82c7171d51b376c60de069dc3477d1c8e37a18923c38babd\",\"objective\":-0.07575369470795669,\"instance_objectives\":[-0.04061146296259253,-0.09434228309203986,-0.10750295527245508,-0.060558077504739315],\"valid\":true},\"objective_delta\":0.03314460141614818,\"improvement_vs_incumbent\":-0.03314460141614818,\"per_instance\":{\"baseline\":[0.0,0.0,0.0,0.0],\"incumbent\":[],\"best_generated\":[-0.04061146296259253,-0.09434228309203986,-0.10750295527245508,-0.060558077504739315]},\"generated_candidate_counts\":{\"total\":5,\"valid\":4,\"invalid\":1},\"major_errors\":[{\"error_code\":\"candidate_error\",\"count\":1,\"evidence_refs\":[\"evaluation:ece463b515274dc5aeedd1dd6157a6f6\"],\"details\":[]}],\"evidence_refs\":[\"evaluation:70b7c9f521234e2da931ff9a1b31bdee\",\"evaluation:e7d76d98454f431b9ca8bb0ec8107230\",\"evaluation:ce415ab629964795a765791a668b9e63\",\"evaluation:1ad33ca9aedc4a2a8eace93cd73917de\",\"evaluation:2a74f84a41444c16a8383c6d8f6c5546\",\"evaluation:7f88f92e6e394d97a55da8c47d66a2ff\",\"evaluation:ece463b515274dc5aeedd1dd6157a6f6\",\"evaluation:9545870539ff421487dfbecd6feb4f60\",\"evaluation:944c373725dd4f0ca562b1c6127dc0e9\",\"evaluation:c83824d53b654d9eb5698ced868b20d4\",\"rounds/round_0005/execution_delta.json\",\"rounds/round_0005/comparison_packet.json\"],\"execution_delta\":{\"ref\":\"rounds/round_0005/execution_delta.json\",\"sha256\":\"0b36006c02d0ab21dd64b28795cfc552382f6ce92c9a545fc561dd60e1dcf8d6\",\"generated_count\":5},\"search_progress\":{\"schema_version\":\"algorithm-optimization-search-progress/v1\",\"round_id\":5,\"window\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.10889829612410487,\"incumbent_after_objective\":-0.10889829612410487,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":5,\"valid_generation_count\":4,\"invalid_generation_count\":1,\"valid_generation_yield\":0.8,\"source_duplicate_count\":0,\"source_duplicate_denominator\":5,\"source_duplicate_rate\":0.0,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":5,\"lineage_verified_candidate_count\":5,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.42857142857142855,\"instance_response_valid_complete_count\":4,\"instance_response_unique_vector_count\":4,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.4466606710499664,\"instance_response_pairwise_l1_max\":0.756427202343001,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":6,\"round_solver_attempts\":10,\"round_input_tokens\":19740,\"round_output_tokens\":2922,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":19.266,\"round_wall_seconds\":19.266},\"cumulative\":{\"objective_direction\":\"minimize\",\"incumbent_before_objective\":-0.10889829612410487,\"incumbent_after_objective\":-0.10889829612410487,\"incumbent_absolute_gain\":0.0,\"incumbent_instance_coverage\":4,\"incumbent_per_instance_gain\":[0.0,0.0,0.0,0.0],\"generation_attempt_count\":24,\"valid_generation_count\":20,\"invalid_generation_count\":4,\"valid_generation_yield\":0.8333333333333334,\"source_duplicate_count\":3,\"source_duplicate_denominator\":24,\"source_duplicate_rate\":0.125,\"behavior_comparable_count\":0,\"behavior_comparable_coverage\":0.0,\"behavior_duplicate_count\":0,\"behavior_duplicate_rate\":null,\"behavior_novel_count\":0,\"behavior_incomplete_or_unavailable_count\":24,\"lineage_verified_candidate_count\":24,\"lineage_unknown_or_unverified_count\":0,\"lineage_unknown_rate\":0.0,\"lineage_concentration\":0.3235294117647059,\"instance_response_valid_complete_count\":20,\"instance_response_unique_vector_count\":20,\"instance_response_diversity_rate\":1.0,\"instance_response_pairwise_l1_mean\":0.784693146478615,\"instance_response_pairwise_l1_max\":3.1789564130046895,\"novel_behavior_count\":0,\"requests_per_novel_behavior\":null,\"solver_attempts_per_novel_behavior\":null,\"round_requests\":30,\"round_solver_attempts\":49,\"round_input_tokens\":90121,\"round_output_tokens\":13486,\"round_token_status\":\"complete\",\"round_provider_elapsed_seconds\":19.266,\"round_wall_seconds\":93.701},\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"stagnation\":{\"policy\":{\"enabled\":false,\"enforce_subbudgets\":false,\"min_absolute_gain\":0.0,\"min_behavior_coverage\":0.0,\"min_relative_gain\":0.0,\"phase_budgets\":{},\"phase_schedule\":[],\"schema_version\":\"algorithm-optimization-search-progress-policy/v1\",\"window_evaluations\":40},\"reason\":\"policy_disabled\",\"status\":\"disabled\"}}},\"search_policy\":{\"n_pop\":2,\"max_sample_nums\":8,\"pop_size\":4},\"memory\":[],\"omitted_memory_refs\":[]}",
+  "use_seed": true,
+  "seed_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\cvrp_midterm\\runs\\s2_control_r8\\rounds\\round_0006\\eoh_run\\seeds\\population_seeds.json",
+  "population_seed_count": 4,
+  "request_timeout": 600.0
+}
