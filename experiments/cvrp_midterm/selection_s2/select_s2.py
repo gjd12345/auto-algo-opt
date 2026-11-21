@@ -28,7 +28,9 @@ and permutation feature importance.
 from __future__ import annotations
 
 import json
+import platform
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -222,19 +224,30 @@ def fit_predict_rf_reg(
     min_leaf: int = 6,
     max_features: int = 4,
     seed: int = 20261122,
-) -> tuple[np.ndarray, list[RegTree]]:
+    return_infer_ms: bool = False,
+):
     rng = np.random.default_rng(seed)
     regret_tr = relative_regret_matrix(y_tr)
     n, k = regret_tr.shape
-    preds = np.zeros((x_te.shape[0], k), dtype=float)
     trees: list[RegTree] = []
     for _ in range(n_trees):
         bag = rng.integers(0, n, size=n)
         tree = RegTree(max_depth=max_depth, min_leaf=min_leaf, max_features=max_features)
         tree.fit(x_tr[bag], regret_tr[bag], rng)
-        preds += tree.predict(x_te)
         trees.append(tree)
-    return preds / n_trees, trees
+    preds = np.zeros((x_te.shape[0], k), dtype=float)
+    infer_ms = np.zeros(x_te.shape[0], dtype=float)
+    for i in range(x_te.shape[0]):
+        xi = x_te[i : i + 1]
+        t0 = time.perf_counter()
+        acc = np.zeros((1, k), dtype=float)
+        for tree in trees:
+            acc += tree.predict(xi)
+        preds[i] = acc[0] / n_trees
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    if return_infer_ms:
+        return preds, trees, infer_ms
+    return preds, trees
 
 
 def fit_predict_rf_pairwise_cs(
@@ -247,14 +260,14 @@ def fit_predict_rf_pairwise_cs(
     min_leaf: int = 8,
     max_features: int = 4,
     seed: int = 20261122,
-) -> np.ndarray:
+    return_infer_ms: bool = False,
+):
     """Cost-sensitive pairwise RF predicting expected relative pairwise regret."""
     rng = np.random.default_rng(seed)
     n, k = y_tr.shape
     n_te = x_te.shape[0]
     row_min = np.maximum(y_tr.min(axis=1), 1e-12)
-    # Expected regret matrix: lower total predicted excess over rivals is better
-    expected_loss = np.zeros((n_te, k), dtype=float)
+    pair_models: list[tuple[int, int, list[RegTree]]] = []
     for a in range(k):
         for b in range(a + 1, k):
             diff = (y_tr[:, a] - y_tr[:, b]) / row_min  # >0 means b is better than a
@@ -263,17 +276,31 @@ def fit_predict_rf_pairwise_cs(
             if wm < 1e-12:
                 continue
             w = w / wm + 0.05  # smooth floor so informative ties keep tiny weight
-            pred_ab = np.zeros(n_te, dtype=float)
+            trees: list[RegTree] = []
             for _ in range(n_trees):
                 bag = rng.integers(0, n, size=n)
                 tree = RegTree(max_depth=max_depth, min_leaf=min_leaf, max_features=max_features)
                 tree.fit(x_tr[bag], diff[bag], rng, w=w[bag])
-                pred_ab += tree.predict(x_te)[:, 0]
-            pred_ab /= n_trees
-            # Positive pred_ab penalizes a; negative pred_ab penalizes b
-            expected_loss[:, a] += np.maximum(0.0, pred_ab)
-            expected_loss[:, b] += np.maximum(0.0, -pred_ab)
-    return np.argmin(expected_loss, axis=1)
+                trees.append(tree)
+            pair_models.append((a, b, trees))
+    expected_loss = np.zeros((n_te, k), dtype=float)
+    infer_ms = np.zeros(n_te, dtype=float)
+    for i in range(n_te):
+        xi = x_te[i : i + 1]
+        t0 = time.perf_counter()
+        loss_i = np.zeros(k, dtype=float)
+        for a, b, trees in pair_models:
+            pred_ab = sum(float(tree.predict(xi)[0, 0]) for tree in trees) / n_trees
+            if pred_ab > 0.0:
+                loss_i[a] += pred_ab
+            else:
+                loss_i[b] += -pred_ab
+        expected_loss[i] = loss_i
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    picks = np.argmin(expected_loss, axis=1)
+    if return_infer_ms:
+        return picks, infer_ms
+    return picks
 
 
 # ---------- Other Selectors ----------
@@ -283,7 +310,14 @@ def pick_fixed_sbs(y_tr: np.ndarray, n_te: int) -> np.ndarray:
     return np.full(n_te, best, dtype=int)
 
 
-def pick_stump_1d(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, min_leaf: int = 12) -> tuple[np.ndarray, dict]:
+def pick_stump_1d(
+    x_tr: np.ndarray,
+    y_tr: np.ndarray,
+    x_te: np.ndarray,
+    min_leaf: int = 12,
+    *,
+    return_infer_ms: bool = False,
+):
     """Depth-1 interpretable decision stump choosing 1 feature + threshold minimizing relative regret."""
     regret_tr = relative_regret_matrix(y_tr)
     n, p = x_tr.shape
@@ -314,25 +348,45 @@ def pick_stump_1d(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, min_leaf
                     "left": li,
                     "right": ri,
                 }
-    if best_spec["feat"] < 0:
-        return np.full(x_te.shape[0], best_spec["left"], dtype=int), best_spec
-    picks = np.where(x_te[:, best_spec["feat"]] <= best_spec["thr"], best_spec["left"], best_spec["right"])
-    return picks.astype(int), best_spec
+    picks = np.empty(x_te.shape[0], dtype=int)
+    infer_ms = np.zeros(x_te.shape[0], dtype=float)
+    for i in range(x_te.shape[0]):
+        t0 = time.perf_counter()
+        if best_spec["feat"] < 0:
+            picks[i] = best_spec["left"]
+        else:
+            picks[i] = best_spec["left"] if x_te[i, best_spec["feat"]] <= best_spec["thr"] else best_spec["right"]
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    if return_infer_ms:
+        return picks, best_spec, infer_ms
+    return picks, best_spec
 
 
-def pick_knn5(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, k_nn: int = 5) -> np.ndarray:
-    xs_tr, xs_te = standardize(x_tr, x_te)
+def pick_knn5(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, k_nn: int = 5, *, return_infer_ms: bool = False):
+    mu = x_tr.mean(axis=0)
+    sd = x_tr.std(axis=0)
+    sd[sd < 1e-12] = 1.0
+    xs_tr = (x_tr - mu) / sd
     regret_tr = relative_regret_matrix(y_tr)
-    d = np.linalg.norm(xs_te[:, None, :] - xs_tr[None, :, :], axis=2)
-    nn_idx = np.argsort(d, axis=1)[:, :k_nn]
-    nn_d = np.take_along_axis(d, nn_idx, axis=1)
-    w = 1.0 / (nn_d + 1e-6)
-    w = w / w.sum(axis=1, keepdims=True)
-    pred = np.einsum("ij,ijk->ik", w, regret_tr[nn_idx])
-    return np.argmin(pred, axis=1)
+    picks = np.empty(x_te.shape[0], dtype=int)
+    infer_ms = np.zeros(x_te.shape[0], dtype=float)
+    for i in range(x_te.shape[0]):
+        t0 = time.perf_counter()
+        xi = (x_te[i] - mu) / sd
+        d = np.linalg.norm(xs_tr - xi[None, :], axis=1)
+        nn_idx = np.argsort(d)[:k_nn]
+        nn_d = d[nn_idx]
+        w = 1.0 / (nn_d + 1e-6)
+        w = w / w.sum()
+        pred = w @ regret_tr[nn_idx]
+        picks[i] = int(np.argmin(pred))
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    if return_infer_ms:
+        return picks, infer_ms
+    return picks
 
 
-def pick_ridge_cv(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray) -> np.ndarray:
+def pick_ridge_cv(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, *, return_infer_ms: bool = False):
     """Multi-output ridge on relative regret with inside-fold 5-fold lambda selection."""
     regret_tr = relative_regret_matrix(y_tr)
     lambdas = (0.1, 1.0, 10.0, 50.0)
@@ -353,16 +407,39 @@ def pick_ridge_cv(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray) -> np.nd
         if loss < best_loss:
             best_loss = loss
             best_lam = lam
-    xs_tr, xs_te = standardize(x_tr, x_te)
+    mu = x_tr.mean(axis=0)
+    sd = x_tr.std(axis=0)
+    sd[sd < 1e-12] = 1.0
+    xs_tr = (x_tr - mu) / sd
     beta = ridge_fit(xs_tr, regret_tr, lam=best_lam)
-    return np.argmin(ridge_predict(beta, xs_te), axis=1)
+    picks = np.empty(x_te.shape[0], dtype=int)
+    infer_ms = np.zeros(x_te.shape[0], dtype=float)
+    for i in range(x_te.shape[0]):
+        t0 = time.perf_counter()
+        xi = (x_te[i : i + 1] - mu) / sd
+        picks[i] = int(np.argmin(ridge_predict(beta, xi)[0]))
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    if return_infer_ms:
+        return picks, infer_ms
+    return picks
 
 
-def pick_pairwise(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, *, weighted: bool, lam: float = 10.0) -> np.ndarray:
-    xs_tr, xs_te = standardize(x_tr, x_te)
+def pick_pairwise(
+    x_tr: np.ndarray,
+    y_tr: np.ndarray,
+    x_te: np.ndarray,
+    *,
+    weighted: bool,
+    lam: float = 10.0,
+    return_infer_ms: bool = False,
+):
+    mu = x_tr.mean(axis=0)
+    sd = x_tr.std(axis=0)
+    sd[sd < 1e-12] = 1.0
+    xs_tr = (x_tr - mu) / sd
     row_min = np.maximum(y_tr.min(axis=1), 1e-12)
     k = y_tr.shape[1]
-    scores = np.zeros((x_te.shape[0], k), dtype=float)
+    betas: list[tuple[int, int, np.ndarray]] = []
     for a in range(k):
         for b in range(a + 1, k):
             rel_diff = (y_tr[:, b] - y_tr[:, a]) / row_min  # >0 means a beats b
@@ -374,10 +451,22 @@ def pick_pairwise(x_tr: np.ndarray, y_tr: np.ndarray, x_te: np.ndarray, *, weigh
                 beta = ridge_fit(xs_tr, target[:, None], lam=lam, weights=w)
             else:
                 beta = ridge_fit(xs_tr, target[:, None], lam=lam)
-            margin = ridge_predict(beta, xs_te)[:, 0]
-            scores[:, a] += margin
-            scores[:, b] -= margin
-    return np.argmax(scores, axis=1)
+            betas.append((a, b, beta))
+    picks = np.empty(x_te.shape[0], dtype=int)
+    infer_ms = np.zeros(x_te.shape[0], dtype=float)
+    for i in range(x_te.shape[0]):
+        t0 = time.perf_counter()
+        xi = (x_te[i : i + 1] - mu) / sd
+        sc = np.zeros(k, dtype=float)
+        for a, b, beta in betas:
+            margin = float(ridge_predict(beta, xi)[0, 0])
+            sc[a] += margin
+            sc[b] -= margin
+        picks[i] = int(np.argmax(sc))
+        infer_ms[i] = (time.perf_counter() - t0) * 1000.0
+    if return_infer_ms:
+        return picks, infer_ms
+    return picks
 
 
 # ---------- Evaluation & Bootstrap ----------
@@ -424,6 +513,8 @@ def summarize_picks(
     picks: np.ndarray,
     sbs_costs: np.ndarray,
     *,
+    infer_ms: np.ndarray | None = None,
+    uses_features: bool = True,
     n_boot: int = 10000,
 ) -> dict:
     n = y.shape[0]
@@ -448,8 +539,20 @@ def summarize_picks(
     losses = int(np.sum(chosen > sbs_costs + 1e-12))
     ties = n - wins - losses
 
-    # Net runtime: feature extraction + chosen rule solve time
-    feat_ms = np.array([float(r["feat_s"]) * 1000.0 for r in rows])
+    # Separated timing components:
+    # - Fixed SBS runs NO feature extraction and NO selector inference.
+    # - Feature-based selectors separate feature extraction, single-instance
+    #   selector inference, and chosen algorithm evaluation time.
+    feat_ms = (
+        np.array([float(r["feat_s"]) * 1000.0 for r in rows])
+        if uses_features
+        else np.zeros(n, dtype=float)
+    )
+    inf_ms = (
+        np.asarray(infer_ms, dtype=float)
+        if (uses_features and infer_ms is not None)
+        else np.zeros(n, dtype=float)
+    )
     chosen_solve_ms = np.array([float(rows[i][f"{members[picks[i]]}_solve_s"]) * 1000.0 for i in range(n)])
     pick_counts = {members[k]: int(np.sum(picks == k)) for k in range(len(members)) if int(np.sum(picks == k)) > 0}
 
@@ -472,6 +575,9 @@ def summarize_picks(
             },
         }
 
+    mean_feat = float(np.mean(feat_ms))
+    mean_inf = float(np.mean(inf_ms))
+    mean_solve = float(np.mean(chosen_solve_ms))
     return {
         "total": round(total_chosen, 4),
         "vbs_total": round(total_vbs, 4),
@@ -483,8 +589,11 @@ def summarize_picks(
         "wtl_vs_fixed": {"wins": wins, "ties": ties, "losses": losses},
         "mean_regret": round(float(regrets.mean()), 6),
         "worst_regret": round(float(regrets.max()), 6),
-        "mean_net_ms": round(float(np.mean(feat_ms + chosen_solve_ms)), 3),
-        "mean_solve_only_ms": round(float(np.mean(chosen_solve_ms)), 3),
+        "mean_feat_ms": round(mean_feat, 3),
+        "mean_infer_ms": round(mean_inf, 4),
+        "mean_solve_only_ms": round(mean_solve, 3),
+        "mean_feat_plus_solve_ms": round(mean_feat + mean_solve, 3),
+        "mean_total_ms": round(mean_feat + mean_inf + mean_solve, 3),
         "picks": pick_counts,
         "by_scale": by_scale,
     }
@@ -549,11 +658,13 @@ def run_portfolio(rows: list[dict], members: list[str]) -> dict:
             "rf_reg": np.empty(n, dtype=int),
             "rf_pairwise_cs": np.empty(n, dtype=int),
         }
+        infer_map = {k: np.zeros(n, dtype=float) for k in picks_map}
         stump_log = []
         for f_i, (tr, te) in enumerate(folds):
             picks_map["fixed_best_sbs"][te] = pick_fixed_sbs(y[tr], te.size)
-            st_p, st_spec = pick_stump_1d(x[tr], y[tr], x[te])
+            st_p, st_spec, st_inf = pick_stump_1d(x[tr], y[tr], x[te], return_infer_ms=True)
             picks_map["stump_1d"][te] = st_p
+            infer_map["stump_1d"][te] = st_inf
             stump_log.append({
                 "fold": f_i,
                 "feature": FEATURE_NAMES[st_spec["feat"]] if st_spec["feat"] >= 0 else "none",
@@ -561,18 +672,42 @@ def run_portfolio(rows: list[dict], members: list[str]) -> dict:
                 "left": members[st_spec["left"]],
                 "right": members[st_spec["right"]],
             })
-            picks_map["knn5"][te] = pick_knn5(x[tr], y[tr], x[te])
-            picks_map["ridge"][te] = pick_ridge_cv(x[tr], y[tr], x[te])
-            picks_map["pairwise_cs"][te] = pick_pairwise(x[tr], y[tr], x[te], weighted=True)
-            picks_map["pairwise_plain"][te] = pick_pairwise(x[tr], y[tr], x[te], weighted=False)
-            rf_pred, _ = fit_predict_rf_reg(x[tr], y[tr], x[te], seed=20261122 + f_i)
+            p_knn, inf_knn = pick_knn5(x[tr], y[tr], x[te], return_infer_ms=True)
+            picks_map["knn5"][te] = p_knn
+            infer_map["knn5"][te] = inf_knn
+
+            p_ridge, inf_ridge = pick_ridge_cv(x[tr], y[tr], x[te], return_infer_ms=True)
+            picks_map["ridge"][te] = p_ridge
+            infer_map["ridge"][te] = inf_ridge
+
+            p_pw_cs, inf_pw_cs = pick_pairwise(x[tr], y[tr], x[te], weighted=True, return_infer_ms=True)
+            picks_map["pairwise_cs"][te] = p_pw_cs
+            infer_map["pairwise_cs"][te] = inf_pw_cs
+
+            p_pw_pl, inf_pw_pl = pick_pairwise(x[tr], y[tr], x[te], weighted=False, return_infer_ms=True)
+            picks_map["pairwise_plain"][te] = p_pw_pl
+            infer_map["pairwise_plain"][te] = inf_pw_pl
+
+            rf_pred, _, inf_rf = fit_predict_rf_reg(x[tr], y[tr], x[te], seed=20261122 + f_i, return_infer_ms=True)
             picks_map["rf_reg"][te] = np.argmin(rf_pred, axis=1)
-            picks_map["rf_pairwise_cs"][te] = fit_predict_rf_pairwise_cs(x[tr], y[tr], x[te], seed=20261122 + f_i)
+            infer_map["rf_reg"][te] = inf_rf
+
+            p_rf_pw, inf_rf_pw = fit_predict_rf_pairwise_cs(x[tr], y[tr], x[te], seed=20261122 + f_i, return_infer_ms=True)
+            picks_map["rf_pairwise_cs"][te] = p_rf_pw
+            infer_map["rf_pairwise_cs"][te] = inf_rf_pw
 
         # Reference SBS cost for Bootstrap CI: in-fold fixed_best_sbs (avoids peeking!)
         infold_sbs_costs = y[np.arange(n), picks_map["fixed_best_sbs"]]
         protocols_out[proto] = {
-            sel: summarize_picks(rows, members, y, picks, infold_sbs_costs)
+            sel: summarize_picks(
+                rows,
+                members,
+                y,
+                picks,
+                infold_sbs_costs,
+                infer_ms=infer_map[sel],
+                uses_features=(sel != "fixed_best_sbs"),
+            )
             for sel, picks in picks_map.items()
         }
         stump_rules[proto] = stump_log
@@ -603,6 +738,16 @@ def main() -> int:
         "script": "experiments/cvrp_midterm/selection_s2/select_s2.py",
         "instances": len(rows),
         "features": list(FEATURE_NAMES),
+        "timing_notes": {
+            "fixed_best_sbs": "Only records chosen algorithm evaluation time (feat_ms = 0, infer_ms = 0).",
+            "selectors": "Separates pre-solve feature extraction (mean_feat_ms), single-instance selector inference (mean_infer_ms), and chosen algorithm evaluation time (mean_solve_only_ms).",
+            "pointwise_eval_wrapper": "Recorded {rule}_solve_s in matrix_s2.json comes from evaluator._evaluate_cvrp_instances, which copies and checks immutability of distance_matrix/demands/nodes at every step; do not equate directly to raw cw_merge wall time without re-timing under an identical boundary.",
+            "environment": {
+                "python": sys.version.split()[0],
+                "platform": platform.platform(),
+                "sample_count": len(rows),
+            },
+        },
         "portfolios": {
             "pointwise_base": run_portfolio(rows, base_members),
         },
@@ -623,7 +768,9 @@ def main() -> int:
                 print(
                     f"    {sel:16s} | gap={m['gap_to_vbs']*100:5.2f}% | gain={m['gain_vs_fixed']*100:+6.2f}% "
                     f"[{lo*100:+5.2f}%, {hi*100:+5.2f}%] p={m['p_boot_one_sided']:.4f} | "
-                    f"W/T/L={wtl['wins']}/{wtl['ties']}/{wtl['losses']} | net={m['mean_net_ms']:.2f}ms"
+                    f"W/T/L={wtl['wins']}/{wtl['ties']}/{wtl['losses']} | "
+                    f"feat={m['mean_feat_ms']:.3f} infer={m['mean_infer_ms']:.3f} "
+                    f"solve={m['mean_solve_only_ms']:.3f} total={m['mean_total_ms']:.3f}ms"
                 )
         print("  Top permutation importance (cv12 rf_reg):", list(pdata["rf_permutation_importance_cv12"].items())[:6])
     return 0

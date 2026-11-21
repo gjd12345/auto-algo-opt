@@ -1,0 +1,690 @@
+{
+  "run": "s2_control_r8",
+  "discovered": {
+    "complete_rounds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "incomplete_rounds": [],
+    "missing_round_ids": []
+  },
+  "rounds": [
+    {
+      "round_id": 1,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 9,
+      "official_valid_count": 9,
+      "official_rejected_count": 0,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "first_round",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 3,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 1: 9 of 9 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 6 candidate(s) held the spread under 1%, 3 reproduced the refuted pure-width swap (spread >= 5%). First measured round (round best 10.9197); 4 distinct generated code hash(es).",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 2,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "b39644518aafccf04bad8f31e8fbd93fff4ce4f5dcfa85c3083f3a296f969912",
+          "candidate_id": "candidate_1",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "forbidden_attribute",
+          "error_detail": "fill_diagonal"
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 4,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 2: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 5 candidate(s) held the spread under 1%, 4 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 2 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 3,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "c9c17bc687c0e2b86f4869e2f4ba224b7a7f73f93d0c7e7f71fa02171ac0b2a8",
+          "candidate_id": "candidate_2",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "forbidden_attribute",
+          "error_detail": "empty"
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 3,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 3: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 6 candidate(s) held the spread under 1%, 3 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 3 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 4,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "e164efd45865507114da981676aadb3605ffebdda8916c26821123f287bb192e",
+          "candidate_id": "candidate_4",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "forbidden_attribute",
+          "error_detail": "fill_diagonal"
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 4,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 4: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 5 candidate(s) held the spread under 1%, 4 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 4 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 5,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "4940bb9fcd749f39d4961b87fd963c8f81492b4858fe2b49eeeec9dd199d5ea8",
+          "candidate_id": "candidate_2",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "candidate_error",
+          "error_detail": null
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 1,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 5: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 8 candidate(s) held the spread under 1%, 1 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 5 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 6,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "69c99e0245e1cfeac22b917711d1736c7cfbb98538262d81a73da372b4d4cfbd",
+          "candidate_id": "candidate_3",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "forbidden_attribute",
+          "error_detail": "empty"
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 1,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 6: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 7 candidate(s) held the spread under 1%, 1 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 6 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 7,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 10,
+      "official_rejected_count": 0,
+      "probe_failed_count": 0,
+      "included_count": 10,
+      "official_rejected": [],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 2,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 7: 10 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 8 candidate(s) held the spread under 1%, 2 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 7 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    },
+    {
+      "round_id": 8,
+      "suite_role": "shared_diagnostic_6",
+      "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+      "candidate_count": 10,
+      "official_valid_count": 9,
+      "official_rejected_count": 1,
+      "probe_failed_count": 0,
+      "included_count": 9,
+      "official_rejected": [
+        {
+          "sha": "16fc334ce55e8ba139ba0e5294bcb62637dbf6067d52263e06d3ab27d9d38ad8",
+          "candidate_id": "candidate_1",
+          "origins": [
+            "generated"
+          ],
+          "error_code": "forbidden_attribute",
+          "error_detail": "flatnonzero"
+        }
+      ],
+      "probe_failed": [],
+      "best_nominal": 10.919671295412352,
+      "best_spread_pct": 206.98817935198397,
+      "progress_status": "stagnant",
+      "exact_code_repeat_count": 0,
+      "mechanism_repeat_count": 2,
+      "status_bits": [
+        "H-SCALE-FREE=refuted",
+        "H-NO-REPEAT=refuted",
+        "H-BEAT-REF=supported"
+      ],
+      "finding_summary": "Round 8: 9 of 10 distinct candidates feasible. Best nominal 10.9197 (+0.00% vs frozen reference 10.9197); re-expressing the same instances at 1e-3 moves it by +206.99%. 7 candidate(s) held the spread under 1%, 2 reproduced the refuted pure-width swap (spread >= 5%). Stagnant vs previous round best (10.9197) for 8 consecutive round(s); historical incumbent 10.9197; 5 new generated code hash(es), 0 repeated.",
+      "decision_summary": "The best candidate already matches or beats the reference at nominal scale (spread +206.99%). Keep its mechanism, and make the next round remove the remaining scale sensitivity without giving back the nominal gain."
+    }
+  ],
+  "state": {
+    "version": 2,
+    "rounds": [
+      {
+        "round_id": 1,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 9,
+        "official_valid_count": 9,
+        "official_rejected_count": 0,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "ccdab29f7d08ab162145ae7e468e47a5488b696d9a644bb7e793ab5c2665a866",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "acccdf6ba24171ce1cf11dac53a0b4344188fe47adafb46027bd76d092e67071",
+          "6e4d7d2a3a7d78322679272aa58d5a34a9fe3ca2f65bce903390c92e26226192",
+          "d31f6ed585f8da523515e460f49e85c20713397318e4eac5792a9a31ae0ca63a",
+          "4f8dfae0c637e0bf1a680b643f0fe5dc86dc6ca934e5504e09ace8d2353905ed"
+        ],
+        "new_shas": [
+          "4f8dfae0c637e0bf1a680b643f0fe5dc86dc6ca934e5504e09ace8d2353905ed",
+          "6e4d7d2a3a7d78322679272aa58d5a34a9fe3ca2f65bce903390c92e26226192",
+          "acccdf6ba24171ce1cf11dac53a0b4344188fe47adafb46027bd76d092e67071",
+          "d31f6ed585f8da523515e460f49e85c20713397318e4eac5792a9a31ae0ca63a"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "ccdab29f7d08ab162145ae7e468e47a5488b696d9a644bb7e793ab5c2665a866"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 3,
+        "stagnant_rounds": 0,
+        "progress_status": "first_round",
+        "previous_best": null,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 2,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "4f8dfae0c637e0bf1a680b643f0fe5dc86dc6ca934e5504e09ace8d2353905ed",
+          "b39644518aafccf04bad8f31e8fbd93fff4ce4f5dcfa85c3083f3a296f969912",
+          "96ac47267cf442fbbcad03fc3d4f19fba232092a2fd27df5241b986d6aef25fd",
+          "f25f180d2b53675fa5c24c5dc67e02fb242274424bc688b92ab890e411a5a621",
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "3a140de38ddf4098990b360822872e07b8b166ecbcc20ee8068dd1b7d6051fb6"
+        ],
+        "new_shas": [
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "3a140de38ddf4098990b360822872e07b8b166ecbcc20ee8068dd1b7d6051fb6",
+          "96ac47267cf442fbbcad03fc3d4f19fba232092a2fd27df5241b986d6aef25fd",
+          "b39644518aafccf04bad8f31e8fbd93fff4ce4f5dcfa85c3083f3a296f969912",
+          "f25f180d2b53675fa5c24c5dc67e02fb242274424bc688b92ab890e411a5a621"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "4f8dfae0c637e0bf1a680b643f0fe5dc86dc6ca934e5504e09ace8d2353905ed",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 4,
+        "stagnant_rounds": 1,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 3,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "0ff7f18bbf62b8556e76abf68ef649b078fbe86bf96d7d2c0a78b078cd889ebd",
+          "c9c17bc687c0e2b86f4869e2f4ba224b7a7f73f93d0c7e7f71fa02171ac0b2a8",
+          "2c291f17ac09a2ff0279886bba57aefd1b5d427fa14bfdaccc8c196057ebf2b4",
+          "b5ea0c7bfbd8c798f969395b3a925e12f4534634d344b5123f997b1df1ebd30a",
+          "3e73eed4145741872a17b8d2d5fb82758f39a5dcf8374f90c866c1931c560edd"
+        ],
+        "new_shas": [
+          "0ff7f18bbf62b8556e76abf68ef649b078fbe86bf96d7d2c0a78b078cd889ebd",
+          "2c291f17ac09a2ff0279886bba57aefd1b5d427fa14bfdaccc8c196057ebf2b4",
+          "3e73eed4145741872a17b8d2d5fb82758f39a5dcf8374f90c866c1931c560edd",
+          "b5ea0c7bfbd8c798f969395b3a925e12f4534634d344b5123f997b1df1ebd30a",
+          "c9c17bc687c0e2b86f4869e2f4ba224b7a7f73f93d0c7e7f71fa02171ac0b2a8"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 3,
+        "stagnant_rounds": 2,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 4,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "c4270a3d3cdd7e7605fcac98b1e01866f9fc05a1cedc03a06e3a284dcbe2212f",
+          "54f8e4efbef3a9d44722ada7b4719c7d773dfce8337283cdcb13cabce126d523",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "e164efd45865507114da981676aadb3605ffebdda8916c26821123f287bb192e",
+          "0fc6863a6191a40ce578c74abb6011183462024c4a9f0daf7aa485243d3142cd"
+        ],
+        "new_shas": [
+          "0fc6863a6191a40ce578c74abb6011183462024c4a9f0daf7aa485243d3142cd",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "54f8e4efbef3a9d44722ada7b4719c7d773dfce8337283cdcb13cabce126d523",
+          "c4270a3d3cdd7e7605fcac98b1e01866f9fc05a1cedc03a06e3a284dcbe2212f",
+          "e164efd45865507114da981676aadb3605ffebdda8916c26821123f287bb192e"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "1769604a84470737673f9ad4db0838846e664a3aab1230a1d0c2d359f368a861",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 4,
+        "stagnant_rounds": 3,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 5,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "6cd56aeb08e45c9ddf36eecec896718a67cfdb2de4587cd9c4850e9b70d09960",
+          "4940bb9fcd749f39d4961b87fd963c8f81492b4858fe2b49eeeec9dd199d5ea8",
+          "a3755233913a3f3e82c7171d51b376c60de069dc3477d1c8e37a18923c38babd",
+          "992e4fd402f96945f5372b3d622f6ce937b38e2fc00c506179d000ea447a614d",
+          "2e32b50ef08652b99ea22270d9a0805d5dca2734d632806b5355f00e358f33d2"
+        ],
+        "new_shas": [
+          "2e32b50ef08652b99ea22270d9a0805d5dca2734d632806b5355f00e358f33d2",
+          "4940bb9fcd749f39d4961b87fd963c8f81492b4858fe2b49eeeec9dd199d5ea8",
+          "6cd56aeb08e45c9ddf36eecec896718a67cfdb2de4587cd9c4850e9b70d09960",
+          "992e4fd402f96945f5372b3d622f6ce937b38e2fc00c506179d000ea447a614d",
+          "a3755233913a3f3e82c7171d51b376c60de069dc3477d1c8e37a18923c38babd"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 1,
+        "stagnant_rounds": 4,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 6,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "6456b7563f03136c1361273dc75869b29c9e91cab6f76d117f6ce95be3c60020",
+          "5629d2776cb936d69f79c81d62e47eed2f21b15a5378ebbcdfd69c5e67e155b7",
+          "69c99e0245e1cfeac22b917711d1736c7cfbb98538262d81a73da372b4d4cfbd",
+          "f4ce15938e0cfe65f62e4603758615a6c9f2169a5436542a04770305656e927d",
+          "ebb0ae468814bb1f033373bab3b1176ea01bbd819e77122e8aecc27350620526"
+        ],
+        "new_shas": [
+          "5629d2776cb936d69f79c81d62e47eed2f21b15a5378ebbcdfd69c5e67e155b7",
+          "6456b7563f03136c1361273dc75869b29c9e91cab6f76d117f6ce95be3c60020",
+          "69c99e0245e1cfeac22b917711d1736c7cfbb98538262d81a73da372b4d4cfbd",
+          "ebb0ae468814bb1f033373bab3b1176ea01bbd819e77122e8aecc27350620526",
+          "f4ce15938e0cfe65f62e4603758615a6c9f2169a5436542a04770305656e927d"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 1,
+        "stagnant_rounds": 5,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 7,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 10,
+        "official_rejected_count": 0,
+        "probe_failed_count": 0,
+        "included_count": 10,
+        "feasible_count": 10,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "0e5aa18059d21f61d463e34ffc537d7bf53f3e0677178640a83336750d4dd999",
+          "6a6795fc1038ff708ee109ef377edb140dde10989128205f0e7dc48c8f6b76dd",
+          "04fc7102da7ab63bd6c3add05ba01997cb888e47142e6166bee1825ba41fa57f",
+          "c8be0c3258e8a7d3827c8df44769e561152dca46b56bb0146a619d65c8ddde64",
+          "589df74b22aab227d76bc69e67fb1f9ed99a184c7105c102eae2619f13903af0"
+        ],
+        "new_shas": [
+          "04fc7102da7ab63bd6c3add05ba01997cb888e47142e6166bee1825ba41fa57f",
+          "0e5aa18059d21f61d463e34ffc537d7bf53f3e0677178640a83336750d4dd999",
+          "589df74b22aab227d76bc69e67fb1f9ed99a184c7105c102eae2619f13903af0",
+          "6a6795fc1038ff708ee109ef377edb140dde10989128205f0e7dc48c8f6b76dd",
+          "c8be0c3258e8a7d3827c8df44769e561152dca46b56bb0146a619d65c8ddde64"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "68cd510af3df75d8f1b45182b248f07d7e38cedc4bfc1d74f5669a6b9ad81727",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 2,
+        "stagnant_rounds": 6,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      },
+      {
+        "round_id": 8,
+        "suite_role": "shared_diagnostic_6",
+        "suite_content_hash": "fa4c95663d5a8ed7a7b03fdac6780f7d62fd23dfbffece45954c41e9c091168a",
+        "candidate_count": 10,
+        "official_valid_count": 9,
+        "official_rejected_count": 1,
+        "probe_failed_count": 0,
+        "included_count": 9,
+        "feasible_count": 9,
+        "best_nominal": 10.919671295412352,
+        "best_sha": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+        "best_spread_pct": 206.98817935198397,
+        "best_delta_vs_reference_pct": 0.0,
+        "distinct_shas": [
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "c8be0c3258e8a7d3827c8df44769e561152dca46b56bb0146a619d65c8ddde64",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "16fc334ce55e8ba139ba0e5294bcb62637dbf6067d52263e06d3ab27d9d38ad8",
+          "c4b2d8608aad7ab33c6ac5bd2d990831965245b74119f8d99bddb891784d70a6",
+          "535efd539d10b97c4f9042cd15443d0e46eb86759c6c8f948f37822b2c5778b2",
+          "4239b2cae263ca5b0a0cb0e1867a59029ddcc01ffcb1c43b0a9096cad6b6f0da",
+          "03a0b8a76af014de7911932d22a40d85cb270f162918ec07d22c2b77a4613355"
+        ],
+        "new_shas": [
+          "03a0b8a76af014de7911932d22a40d85cb270f162918ec07d22c2b77a4613355",
+          "16fc334ce55e8ba139ba0e5294bcb62637dbf6067d52263e06d3ab27d9d38ad8",
+          "4239b2cae263ca5b0a0cb0e1867a59029ddcc01ffcb1c43b0a9096cad6b6f0da",
+          "535efd539d10b97c4f9042cd15443d0e46eb86759c6c8f948f37822b2c5778b2",
+          "c4b2d8608aad7ab33c6ac5bd2d990831965245b74119f8d99bddb891784d70a6"
+        ],
+        "repeated_shas": [],
+        "carried_shas": [
+          "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+          "3b334854c01d7e48e268d103064484637e038e4e04a0a74b51dc8905569b522f",
+          "79d4ff2ea1d7eee815dffb13498912d9610c6ffabe2eb42915148f02d1b37415",
+          "90b233618b839fa519829c738023b8ba29fc267cfa38b52569eda4df0572c992",
+          "c8be0c3258e8a7d3827c8df44769e561152dca46b56bb0146a619d65c8ddde64"
+        ],
+        "exact_code_repeat_count": 0,
+        "mechanism_repeat_count": 2,
+        "stagnant_rounds": 7,
+        "progress_status": "stagnant",
+        "previous_best": 10.919671295412352,
+        "incumbent_best_nominal": 10.919671295412352
+      }
+    ],
+    "hypotheses": {
+      "H-SCALE-FREE": {
+        "status": "refuted",
+        "transitions": [
+          {
+            "round": 8,
+            "status": "refuted",
+            "evidence": "all 7 invariant candidates paid at nominal scale (cheapest 11.0859, +1.52% vs 10.9197)"
+          }
+        ]
+      },
+      "H-NO-REPEAT": {
+        "status": "refuted",
+        "transitions": [
+          {
+            "round": 8,
+            "status": "refuted",
+            "evidence": "0 re-proposed generated sha(s) from earlier rounds (inherited seeds/incumbent excluded), 2 candidate(s) reproduced spread >= 5%"
+          }
+        ]
+      },
+      "H-BEAT-REF": {
+        "status": "supported",
+        "transitions": [
+          {
+            "round": 8,
+            "status": "supported",
+            "evidence": "best 10.9197 <= reference 10.9197"
+          }
+        ]
+      }
+    }
+  }
+}

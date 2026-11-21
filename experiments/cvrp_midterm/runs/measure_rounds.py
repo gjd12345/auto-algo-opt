@@ -22,37 +22,51 @@ HERE = Path(__file__).resolve().parent
 import round_activity as ra  # noqa: E402
 
 
-def replay(run_dir: Path, max_rounds: int = 12) -> dict:
+def replay(run_dir: Path, max_rounds: int | None = None) -> dict:
+    discovered = ra.discover_rounds(run_dir)
     state = ra.empty_state()
     rows = []
-    for round_id in range(1, max_rounds + 1):
+    prior: set[str] = set()
+    complete_ids = discovered["complete_rounds"]
+    if max_rounds is not None:
+        complete_ids = [rid for rid in complete_ids if rid <= max_rounds]
+    for round_id in complete_ids:
         round_dir = run_dir / "rounds" / f"round_{round_id:04d}"
-        if not (round_dir / "evaluation_facts.json").is_file():
-            break
         measure = ra.measure_round(round_dir)
-        prior: set[str] = set()
-        for row in state["rounds"]:
-            prior.update(row["distinct_shas"])
         if measure["baseline_code_sha256"]:
             prior.add(str(measure["baseline_code_sha256"]))
-        state = ra.update_state(state, measure, prior_shas=prior)
+        state = ra.update_state(state, measure, prior_shas=set(prior))
+        for cand in measure["candidates"]:
+            if cand.get("included") and "generated" in (cand.get("origins") or []):
+                prior.add(cand["sha"])
         rendered = ra.render_activity(state, measure, round_id=round_id + 1)
         best = measure["best"] or {}
+        row_state = state["rounds"][-1]
         rows.append(
             {
                 "round": round_id,
                 "candidates": measure["candidate_count"],
+                "official_valid": measure["official_valid_count"],
+                "official_rejected": measure["official_rejected_count"],
+                "probe_failed": measure["probe_failed_count"],
+                "included": measure["included_count"],
                 "best_nominal": None if not best else round(best.get("nominal", 0.0), 4),
                 "best_spread_pct": None if not best else round(best.get("spread_pct", 0.0), 3),
                 "best_delta_pct": None
                 if not best
                 else round(best.get("delta_vs_reference_pct", 0.0), 3),
+                "progress_status": row_state.get("progress_status"),
                 "status": rendered["status_bits"],
                 "finding_summary": rendered["activity"]["finding_summary"],
                 "decision_summary": rendered["activity"]["decision_summary"],
             }
         )
-    return {"run": run_dir.name, "rows": rows, "state": state}
+    return {
+        "run": run_dir.name,
+        "discovered_rounds": discovered,
+        "rows": rows,
+        "state": state,
+    }
 
 
 def main() -> None:

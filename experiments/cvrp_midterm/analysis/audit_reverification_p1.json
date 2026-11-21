@@ -1,0 +1,1918 @@
+{
+  "code_version": "984a141",
+  "reverification_dir": "experiments/cvrp_midterm/analysis/reverification",
+  "runs": {
+    "a5_control": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_20ae168334fd4525957335f84461b179"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 64135,
+          "recorded_output_tokens": 9443,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_08740a88113a4a4b9fb294868e717435"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 6198,
+            "recorded_output_tokens": 1699,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_d9b9ad09abc148d088ea435165a8f2b0"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 18565,
+            "recorded_output_tokens": 2622,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_6f96e11fafcc44f7968fc4b63221fb71"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19256,
+            "recorded_output_tokens": 2566,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_e2d550972dc14a18ba420f9f58f6df80"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20116,
+            "recorded_output_tokens": 2556,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 0,
+        "distinct_measured_finding_raw": 0,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 6,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.652667,
+            "best_spread_pct": -0.0,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 7,
+            "official_valid_count": 6,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.712928,
+            "best_spread_pct": 0.0,
+            "progress_status": "regressed",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.586006,
+            "best_spread_pct": -0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.204117,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "supported",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "a5_finding_only": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_115664b863c34daf89b4aa0524c211d5"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 70483,
+          "recorded_output_tokens": 10498,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_fb5d46e5a5ea4487ab7f0f9fbe16b4c7"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 7408,
+            "recorded_output_tokens": 2132,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_02e0ce2e90234949a353109e57e89cc1"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20363,
+            "recorded_output_tokens": 2710,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_f4724ff2c06e4dd1952ab5812bbb36b7"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 21238,
+            "recorded_output_tokens": 2443,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_29dc46b242ac4881b0823a82496815b0"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 21474,
+            "recorded_output_tokens": 3213,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 4,
+        "distinct_measured_finding_raw": 1,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 6,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.371759,
+            "best_spread_pct": 0.0,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.023848,
+            "best_spread_pct": -0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.023848,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.023848,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "supported",
+          "H-NO-REPEAT": "supported",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "a5_operations_only": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_ba34816941d1454280d5c4cdd5fb6e5d"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 64972,
+          "recorded_output_tokens": 9160,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_de7f5243a1344257a840b1632f5222ea"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 6933,
+            "recorded_output_tokens": 2179,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_f4e549c730214d3bb792a5018379bb93"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 18005,
+            "recorded_output_tokens": 1847,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_c9d4cbd7bebd468e8e925750f7bde96c"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20734,
+            "recorded_output_tokens": 3005,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_148f6e64084c489a87840d8a42df59db"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19300,
+            "recorded_output_tokens": 2129,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 0,
+        "distinct_measured_finding_raw": 0,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 3,
+            "official_rejected_count": 3,
+            "probe_failed_count": 0,
+            "included_count": 3,
+            "best_nominal": 11.990507,
+            "best_spread_pct": 1.4667,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 6,
+            "official_valid_count": 6,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.596707,
+            "best_spread_pct": 57.4391,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 2
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.596707,
+            "best_spread_pct": 57.4391,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 3
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.596707,
+            "best_spread_pct": 57.4391,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 5
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "refuted",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "a5_full_guidance": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_ef3064aaf4704d84a5ec89da18bf88bc"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 70345,
+          "recorded_output_tokens": 10304,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_8f135063cbb84d6497ac862c9f98c0d5"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 8143,
+            "recorded_output_tokens": 2442,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_03d928d65ccc42518d8ef60e3ab16691"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20350,
+            "recorded_output_tokens": 2476,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_4cf88710915f483585fc37f23bf3156f"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 21615,
+            "recorded_output_tokens": 2398,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_0a1cd7a89e5d47a4a3713a7f9363f468"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20237,
+            "recorded_output_tokens": 2988,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 4,
+        "distinct_measured_finding_raw": 1,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": true,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 5,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 5,
+            "best_nominal": 11.777926,
+            "best_spread_pct": -0.0,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 7,
+            "official_valid_count": 6,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.398199,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.398199,
+            "best_spread_pct": 0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.398199,
+            "best_spread_pct": 0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "supported",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "b4_control": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_fbd2689e8eef4e55b7cb750a55da0150"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 59426,
+          "recorded_output_tokens": 7960,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_fc7dcd77383c44858b1b5bdba13f63a8"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 6198,
+            "recorded_output_tokens": 1607,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_52d5bf58d39841a6bda1b025b0193a3c"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 17886,
+            "recorded_output_tokens": 2237,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_73aae2d5141a47028452d1fbbd44acef"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 17788,
+            "recorded_output_tokens": 2022,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_da960b05fe294b4c8aae33e0c3e3acff"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 17554,
+            "recorded_output_tokens": 2094,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 0,
+        "distinct_measured_finding_raw": 0,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 6,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.805501,
+            "best_spread_pct": -0.0,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 3
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.805501,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.805501,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.805501,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "refuted",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "b4_finding_only": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_4907d08cb7854fdb863fd66c7eff68b2"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 4,
+          "tasks_total": 4,
+          "reserved_quota": 24,
+          "completed": 24,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 68793,
+          "recorded_output_tokens": 9736,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_677f98a7b79c49b28edaeff27eea59dd"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 7208,
+            "recorded_output_tokens": 1927,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_a9464d988409413d9e837d77e3fb8b56"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19384,
+            "recorded_output_tokens": 2344,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_fe43ef0b22174c689c292bc51b508ffb"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20895,
+            "recorded_output_tokens": 2766,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_9c28dbf1b05d4433abcb734a723698d9"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 21306,
+            "recorded_output_tokens": 2699,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 4,
+        "rounds_with_research_finding": 4,
+        "distinct_measured_finding_raw": 4,
+        "distinct_decision_summary_raw": 4,
+        "distinct_decision_summary_template": 2,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Write a rule that is explicit about where its secondary term acts: an absolute length added to a relative comparison will inherit the <NUM> re-expression gap. Measure the candidate on both scales, and keep the nominal objective within <NUM> of the reference before claiming an improvement."
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Invariance alone keeps losing at nominal scale (cheapest invariant <NUM> vs <NUM>). Change the mechanism that chooses the tie-break value, not only the width: keep the nominal score within <NUM> of the reference and let the second stage act only where primary scores fall inside a relative band."
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": "Invariance alone keeps losing at nominal scale (cheapest invariant <NUM> vs <NUM>). Change the mechanism that chooses the tie-break value, not only the width: keep the nominal score within <NUM> of the reference and let the second stage act only where primary scores fall inside a relative band."
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": "Invariance alone keeps losing at nominal scale (cheapest invariant <NUM> vs <NUM>). Change the mechanism that chooses the tie-break value, not only the width: keep the nominal score within <NUM> of the reference and let the second stage act only where primary scores fall inside a relative band."
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 6,
+            "official_valid_count": 6,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 12.029221,
+            "best_spread_pct": 0.0,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 7,
+            "official_valid_count": 6,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.678389,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 7,
+            "official_valid_count": 6,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 6,
+            "best_nominal": 11.505043,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 7,
+            "official_valid_count": 7,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 11.471779,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "supported",
+          "H-BEAT-REF": "open"
+        }
+      }
+    },
+    "s2_control_r8": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_f9e05eda44b94619b07f87f4d88a8f31"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 8,
+          "tasks_total": 8,
+          "reserved_quota": 48,
+          "completed": 48,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 152311,
+          "recorded_output_tokens": 23364,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_9391642e9b944f0cadfa750a44ab7a5e"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 10102,
+            "recorded_output_tokens": 2437,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_42f3123c8d614d7aa5560d9dc74bb118"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19961,
+            "recorded_output_tokens": 2553,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_8789513c91224b9f9351a79e16ec4fe1"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20440,
+            "recorded_output_tokens": 2439,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_7e668fd0ccc14edcacc7fc51d4329dd9"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19878,
+            "recorded_output_tokens": 3135,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 5,
+            "task_count": 1,
+            "task_ids": [
+              "task_c0e840bd7d924a44ab96c1f83052c8ce"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19740,
+            "recorded_output_tokens": 2922,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 6,
+            "task_count": 1,
+            "task_ids": [
+              "task_05bbbaf3fef74d38a9b7a5820c072564"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 21851,
+            "recorded_output_tokens": 3317,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 7,
+            "task_count": 1,
+            "task_ids": [
+              "task_4d4968783087499888eda9da7e1d468a"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 19450,
+            "recorded_output_tokens": 3139,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 8,
+            "task_count": 1,
+            "task_ids": [
+              "task_d60db27a296e4f928a24c94e64038166"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 20889,
+            "recorded_output_tokens": 3422,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 8,
+        "rounds_with_research_finding": 0,
+        "distinct_measured_finding_raw": 0,
+        "distinct_decision_summary_raw": 0,
+        "distinct_decision_summary_template": 0,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 5,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 6,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 7,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          },
+          {
+            "round_id": 8,
+            "research_finding_present": false,
+            "measurement_changed_raw": false,
+            "measurement_changed_template": false,
+            "decision_summary_changed_raw": false,
+            "decision_summary_changed_template": false,
+            "truncated_fields": [],
+            "decision_summary_template": ""
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 9,
+            "official_valid_count": 9,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 3
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 4
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 3
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 4
+          },
+          {
+            "round_id": 5,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 6,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 7,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 2
+          },
+          {
+            "round_id": 8,
+            "candidate_count": 10,
+            "official_valid_count": 9,
+            "official_rejected_count": 1,
+            "probe_failed_count": 0,
+            "included_count": 9,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 2
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "refuted",
+          "H-NO-REPEAT": "refuted",
+          "H-BEAT-REF": "supported"
+        }
+      }
+    },
+    "s2_autonomous_math_r8": {
+      "discovered": {
+        "complete_rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "incomplete_rounds": [],
+        "missing_round_ids": []
+      },
+      "sqlite_requests": {
+        "present": true,
+        "run_ids": [
+          "run_efd3fb8945e2467a964b60e73b1162b4"
+        ],
+        "run_states": [
+          "COMPLETED"
+        ],
+        "totals": {
+          "rounds_with_tasks": 8,
+          "tasks_total": 8,
+          "reserved_quota": 48,
+          "completed": 48,
+          "failed": 0,
+          "unknown": 0,
+          "recorded_input_tokens": 198368,
+          "recorded_output_tokens": 38869,
+          "usage_unknown_requests": 0
+        },
+        "rounds": [
+          {
+            "round_id": 1,
+            "task_count": 1,
+            "task_ids": [
+              "task_82c5f072db77440a88079b0d600603fb"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 14336,
+            "recorded_output_tokens": 3386,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 2,
+            "task_count": 1,
+            "task_ids": [
+              "task_a9aa86d9e0f543988a9ae9ab6a72c0b7"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 24689,
+            "recorded_output_tokens": 3728,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 3,
+            "task_count": 1,
+            "task_ids": [
+              "task_d237d969a29d40fcbce12a0fffa40226"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 25422,
+            "recorded_output_tokens": 4185,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 4,
+            "task_count": 1,
+            "task_ids": [
+              "task_59f3015415054d6b80f04435898367e8"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 26221,
+            "recorded_output_tokens": 4982,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 5,
+            "task_count": 1,
+            "task_ids": [
+              "task_c46fb6fed8c1415297e39a4c74e4bc9e"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 25601,
+            "recorded_output_tokens": 4395,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 6,
+            "task_count": 1,
+            "task_ids": [
+              "task_2df7ef4ba68c4976b323d7e7323ab53c"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 28409,
+            "recorded_output_tokens": 6095,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 7,
+            "task_count": 1,
+            "task_ids": [
+              "task_d37abc00c2db4c5487271e7f0cbb6863"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 25305,
+            "recorded_output_tokens": 5574,
+            "usage_unknown_requests": 0
+          },
+          {
+            "round_id": 8,
+            "task_count": 1,
+            "task_ids": [
+              "task_9eb40fadbb404394bbd87456eb1aad4c"
+            ],
+            "reserved_quota": 6,
+            "completed": 6,
+            "failed": 0,
+            "unknown": 0,
+            "recorded_input_tokens": 28385,
+            "recorded_output_tokens": 6524,
+            "usage_unknown_requests": 0
+          }
+        ]
+      },
+      "prompt_audit": {
+        "rounds_audited": 8,
+        "rounds_with_research_finding": 8,
+        "distinct_measured_finding_raw": 8,
+        "distinct_decision_summary_raw": 8,
+        "distinct_decision_summary_template": 8,
+        "truncated_rounds": 0,
+        "rounds": [
+          {
+            "round_id": 1,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Split select_next_node cleanly at current_node == depot: use a scale-free far or radial-plus-load depot-start rule, and at current_node != depot combine moderate depot pull (alpha_mid ~ <NUM><NUM>) with strictly dimensionless capacity-fill modulation (functions of demand/rest_capacity and distance ratios). Avoid any absolute length offset (<NUM>) or raw demand/distance division."
+          },
+          {
+            "round_id": 2,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Keep the decoupled depot-start and strict scale invariance, tighten the mid-route fill weight to <NUM><NUM> with alpha_mid in <NUM><NUM>, and add a scale-invariant early-return check (return depot only when current_node != depot and normalized saving sigma(i,j) < tau in [<NUM>, <NUM>], possibly conditioned on partial vehicle fill). Do not add +d_dep penalties on terminal stops."
+          },
+          {
+            "round_id": 3,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Keep all terms strictly dimensionless (never divide demand by distance). Combine normalized linear radial pull (d_cur - alpha*d_dep)/scale with elongation ratio rho = d_cur/(d<NUM>i+d<NUM>j) and calibrated fill weight (<NUM><NUM>). Raise early-return sensitivity (sigma < tau with tau in <NUM><NUM>, or adaptive tau increasing with mean_dem/rest_cap) and compare outside-in heavy-far vs compact depot-start seeds."
+          },
+          {
+            "round_id": 4,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Keep Round <NUM>'s winning linear+rho+fill backbone and exact scale invariance. Add Law-of-Cosines depot-ray angular coherence cos(theta_<NUM>) with weight <NUM><NUM>, steeper adaptive early-return threshold tau = tau_<NUM> + tau_<NUM>*min(<NUM>, mean_dem/rest_cap), and a two-phase rem_routes = sum(q)/rest_cap depot-start branch (outside-in for large remaining fleet, compact for final routes)."
+          },
+          {
+            "round_id": 5,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Keep Round <NUM>'s exact scale-free backbone (two-phase rem_routes depot start, elongation rho, Law-of-Cosines cos(theta_<NUM>), calibrated fill bonus, adaptive early return) and replace constant alpha with state-only alpha_eff = alpha_<NUM> - alpha_<NUM> * min(<NUM>, mean_dem/rest_cap) (alpha_<NUM> in <NUM><NUM>, alpha_<NUM> in <NUM><NUM>). Avoid per-candidate terminal penalties."
+          },
+          {
+            "round_id": 6,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Retain Round <NUM>'s state-only inward spiral (alpha_eff=alpha_<NUM>-alpha_<NUM>*pressure), rho, cos(theta_<NUM>), two-phase rem_routes start, and exact scale invariance. Remove the hard best_dem><NUM>*rest_cap blocker so continuous adaptive early return (<NUM>-rho < tau_<NUM>+tau_<NUM>*pressure) catches cross-depot bridges at any load, and add negative-sign isolation urgency (-w_iso*min_{k!=j} d(j,k)/scale, w_iso in <NUM><NUM>). Avoid discrete exact-fit bin-packing terms."
+          },
+          {
+            "round_id": 7,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Never call np.fill_diagonal or np.ix_. Compute scale-free isolation via `sub = distance_matrix[nodes][:, nodes].astype(float); d_nn = np.min(np.where(np.eye(n) > <NUM>, np.inf, sub), axis=<NUM>) / scale` (strictly scale-invariant across <NUM>x to <NUM>x!). Keep Round <NUM>'s state-only inward spiral, cos(theta_<NUM>), rho, two-phase rem_routes start, and unblocked continuous adaptive early return."
+          },
+          {
+            "round_id": 8,
+            "research_finding_present": true,
+            "measurement_changed_raw": true,
+            "measurement_changed_template": true,
+            "decision_summary_changed_raw": true,
+            "decision_summary_changed_template": true,
+            "truncated_fields": [],
+            "decision_summary_template": "Take Round <NUM> candidate_<NUM> as the exact template, fix mid-route `pressure = min(<NUM>, float(np.mean(dem)) / max(float(rest_capacity), <NUM>e<NUM>))` (never <NUM> and never sum/rest_cap), and feed that pressure into both alpha_eff = alpha_<NUM> - alpha_<NUM>*pressure and tau = tau_<NUM> + tau_<NUM>*pressure. Keep np.where(np.eye(n)><NUM>, np.inf, sub) isolation, cos(theta_<NUM>), rho, and two-phase rem_routes depot start."
+          }
+        ]
+      },
+      "replay_summary": {
+        "rounds": [
+          {
+            "round_id": 1,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.919671,
+            "best_spread_pct": 206.9882,
+            "progress_status": "first_round",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 2,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.752289,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 3,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.305119,
+            "best_spread_pct": 0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 1
+          },
+          {
+            "round_id": 4,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.207753,
+            "best_spread_pct": -0.0,
+            "progress_status": "improved",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 5,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.207753,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 6,
+            "candidate_count": 10,
+            "official_valid_count": 5,
+            "official_rejected_count": 5,
+            "probe_failed_count": 0,
+            "included_count": 5,
+            "best_nominal": 10.207753,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 7,
+            "candidate_count": 10,
+            "official_valid_count": 10,
+            "official_rejected_count": 0,
+            "probe_failed_count": 0,
+            "included_count": 10,
+            "best_nominal": 10.207753,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          },
+          {
+            "round_id": 8,
+            "candidate_count": 10,
+            "official_valid_count": 7,
+            "official_rejected_count": 3,
+            "probe_failed_count": 0,
+            "included_count": 7,
+            "best_nominal": 10.207753,
+            "best_spread_pct": -0.0,
+            "progress_status": "stagnant",
+            "exact_code_repeat_count": 0,
+            "mechanism_repeat_count": 0
+          }
+        ],
+        "final_hypotheses": {
+          "H-SCALE-FREE": "supported",
+          "H-NO-REPEAT": "supported",
+          "H-BEAT-REF": "supported"
+        }
+      }
+    }
+  }
+}

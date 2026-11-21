@@ -589,10 +589,31 @@ def update_state(state: dict, measure: dict, *, prior_shas: set[str]) -> dict:
     best_obj = measure.get("best") or (min(feasible, key=lambda c: c["nominal"]) if feasible else None)
     best_value = (best_obj or {}).get("nominal")
     prev_best = (previous or {}).get("best_nominal")
-    stagnant_rounds = 0
-    if previous and best_value is not None and prev_best is not None:
-        if abs(best_value - prev_best) <= 1e-9 * max(1.0, abs(best_value), abs(prev_best)):
+    prev_incumbent = (previous or {}).get("incumbent_best_nominal")
+    if prev_incumbent is None and prev_best is not None:
+        prev_incumbent = prev_best
+
+    if best_value is None:
+        progress_status = "no_valid_candidate"
+        stagnant_rounds = int((previous or {}).get("stagnant_rounds") or 0) + (1 if previous else 0)
+        incumbent_best = prev_incumbent
+    elif prev_best is None:
+        progress_status = "first_round"
+        stagnant_rounds = 0
+        incumbent_best = best_value
+    else:
+        tol = 1e-9 * max(1.0, abs(best_value), abs(prev_best))
+        if best_value < prev_best - tol:
+            progress_status = "improved"
+            stagnant_rounds = 0
+        elif abs(best_value - prev_best) <= tol:
+            progress_status = "stagnant"
             stagnant_rounds = int(previous.get("stagnant_rounds") or 0) + 1
+        else:
+            progress_status = "regressed"
+            stagnant_rounds = int(previous.get("stagnant_rounds") or 0) + 1
+        incumbent_best = min(best_value, prev_incumbent) if prev_incumbent is not None else best_value
+
     new_shas = sorted(generated_shas - prior_shas - carried_ids)
     repeated_shas = sorted((generated_shas & prior_shas) - carried_ids)
     carried_shas = sorted(row_shas & carried)
@@ -614,8 +635,12 @@ def update_state(state: dict, measure: dict, *, prior_shas: set[str]) -> dict:
         "new_shas": new_shas,
         "repeated_shas": repeated_shas,
         "carried_shas": carried_shas,
+        "exact_code_repeat_count": len(repeated_shas),
+        "mechanism_repeat_count": len(refuted_shape),
         "stagnant_rounds": stagnant_rounds,
+        "progress_status": progress_status,
         "previous_best": prev_best,
+        "incumbent_best_nominal": incumbent_best,
     })
     return state
 
@@ -639,21 +664,41 @@ def _row_for(state: dict, round_id: int) -> dict:
 
 
 def _progress_sentence(row: dict) -> str:
-    """Round-specific progress note; this is what makes each round's text differ."""
+    """Round-specific progress note comparing adjacent round bests and historical incumbent."""
     new = len(row.get("new_shas") or [])
     repeated = len(row.get("repeated_shas") or [])
     stagnant = int(row.get("stagnant_rounds") or 0)
+    current = row.get("best_nominal")
     previous = row.get("previous_best")
-    if stagnant == 0 and previous is not None:
+    incumbent = row.get("incumbent_best_nominal")
+    inc_note = f"; historical incumbent {incumbent:.4f}" if incumbent is not None else ""
+
+    if current is None:
+        prev_note = f" (previous round best {previous:.4f}{inc_note})" if previous is not None else ""
         return (
-            f"New best (previous round {previous:.4f}); {new} new code hash(es), "
-            f"{repeated} reused."
+            f"No valid candidate measured in this round{prev_note}; "
+            f"{new} new generated code hash(es), {repeated} repeated."
         )
-    if stagnant == 0:
-        return f"First measured round; {new} distinct code hash(es)."
+    if previous is None:
+        return (
+            f"First measured round (round best {current:.4f}); "
+            f"{new} distinct generated code hash(es)."
+        )
+    tol = 1e-9 * max(1.0, abs(current), abs(previous))
+    if current < previous - tol:
+        return (
+            f"Improved vs previous round best ({previous:.4f} -> {current:.4f}{inc_note}); "
+            f"{new} new generated code hash(es), {repeated} repeated."
+        )
+    if abs(current - previous) <= tol:
+        return (
+            f"Stagnant vs previous round best ({current:.4f}) for {stagnant + 1} "
+            f"consecutive round(s){inc_note}; {new} new generated code hash(es), "
+            f"{repeated} repeated."
+        )
     return (
-        f"Best unchanged for the {stagnant + 1} consecutive round(s); {new} new code "
-        f"hash(es), {repeated} reused from earlier rounds or the seed."
+        f"Regressed vs previous round best ({previous:.4f} -> {current:.4f}{inc_note}); "
+        f"{new} new generated code hash(es), {repeated} repeated."
     )
 
 
@@ -819,9 +864,111 @@ def advance(run_root: Path, round_id: int) -> dict:
     }
 
 
+def discover_rounds(run_root: Path) -> dict:
+    """Discover saved round directories under ``rounds/round_*`` sorted by round_id."""
+    rounds_dir = run_root / "rounds"
+    complete: list[int] = []
+    incomplete: list[int] = []
+    if rounds_dir.is_dir():
+        found: list[tuple[int, Path]] = []
+        for entry in rounds_dir.iterdir():
+            if not entry.is_dir() or not entry.name.startswith("round_"):
+                continue
+            suffix = entry.name[len("round_"):]
+            if suffix.isdigit():
+                found.append((int(suffix), entry))
+        found.sort(key=lambda pair: pair[0])
+        for rid, path in found:
+            if (path / "evaluation_facts.json").is_file():
+                complete.append(rid)
+            else:
+                incomplete.append(rid)
+    all_seen = sorted(set(complete) | set(incomplete))
+    missing: list[int] = []
+    if all_seen:
+        expected = set(range(1, max(all_seen) + 1))
+        missing = sorted(expected - set(all_seen))
+    return {
+        "complete_rounds": complete,
+        "incomplete_rounds": incomplete,
+        "missing_round_ids": missing,
+    }
+
+
+def replay_run(
+    run_root: Path,
+    *,
+    out_dir: Path | None = None,
+    instances: list[dict] | None = None,
+    use_session_dev_suite: bool = False,
+) -> dict:
+    """Deterministically replay a finished or interrupted run from empty state.
+
+    Never overwrites historical ``hypotheses_state.json`` inside ``run_root``.
+    When ``out_dir`` is given, writes ``<out_dir>/<run_name>_replay.json``.
+    """
+    discovered = discover_rounds(run_root)
+    state = empty_state()
+    prior: set[str] = set()
+    rounds_summary: list[dict] = []
+
+    for round_id in discovered["complete_rounds"]:
+        round_dir = run_root / "rounds" / f"round_{round_id:04d}"
+        measure = measure_round(
+            round_dir,
+            instances=instances,
+            use_session_dev_suite=use_session_dev_suite,
+        )
+        if measure["baseline_code_sha256"]:
+            prior.add(str(measure["baseline_code_sha256"]))
+        state = update_state(state, measure, prior_shas=set(prior))
+        for cand in measure["candidates"]:
+            if cand.get("included") and "generated" in (cand.get("origins") or []):
+                prior.add(cand["sha"])
+        rendered = render_activity(state, measure, round_id=round_id + 1)
+        row_state = state["rounds"][-1]
+        rounds_summary.append({
+            "round_id": round_id,
+            "suite_role": measure["suite_role"],
+            "suite_content_hash": measure["suite_content_hash"],
+            "candidate_count": measure["candidate_count"],
+            "official_valid_count": measure["official_valid_count"],
+            "official_rejected_count": measure["official_rejected_count"],
+            "probe_failed_count": measure["probe_failed_count"],
+            "included_count": measure["included_count"],
+            "official_rejected": measure["official_rejected"],
+            "probe_failed": measure["probe_failed"],
+            "best_nominal": (measure["best"] or {}).get("nominal"),
+            "best_spread_pct": (measure["best"] or {}).get("spread_pct"),
+            "progress_status": row_state["progress_status"],
+            "exact_code_repeat_count": row_state["exact_code_repeat_count"],
+            "mechanism_repeat_count": row_state["mechanism_repeat_count"],
+            "status_bits": rendered["status_bits"],
+            "finding_summary": rendered["activity"]["finding_summary"],
+            "decision_summary": rendered["activity"]["decision_summary"],
+        })
+
+    payload = {
+        "run": run_root.name,
+        "discovered": discovered,
+        "rounds": rounds_summary,
+        "state": state,
+    }
+    if out_dir is not None:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / f"{run_root.name}_replay.json"
+        out_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+    return payload
+
+
 def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run", help="run directory to replay (all four rounds)")
+    parser.add_argument("--run", help="run directory to replay (auto-discovers all saved rounds)")
+    parser.add_argument("--out-dir", type=Path, help="optional directory for deterministic replay JSON")
     parser.add_argument("--selftest", action="store_true")
     args = parser.parse_args(argv)
 
@@ -833,22 +980,28 @@ def _main(argv: list[str] | None = None) -> int:
     run_root = Path(args.run)
     if not run_root.is_absolute():
         run_root = (HERE / run_root).resolve()
-    for round_id in range(1, 5):
-        round_dir = run_root / "rounds" / f"round_{round_id:04d}"
-        if not (round_dir / "evaluation_facts.json").is_file():
-            break
-        result = advance(run_root, round_id)
-        print(json.dumps({
-            "round": round_id,
-            "best_nominal": (result["measure"]["best"] or {}).get("nominal"),
-            "status": result["status_bits"],
-            "activity": result["activity"],
-        }, ensure_ascii=False, indent=2))
+    result = replay_run(run_root, out_dir=args.out_dir)
+    print(json.dumps({
+        "run": result["run"],
+        "discovered": result["discovered"],
+        "rounds": [
+            {
+                "round_id": r["round_id"],
+                "best_nominal": r["best_nominal"],
+                "progress_status": r["progress_status"],
+                "official_rejected_count": r["official_rejected_count"],
+                "probe_failed_count": r["probe_failed_count"],
+                "included_count": r["included_count"],
+                "status_bits": r["status_bits"],
+            }
+            for r in result["rounds"]
+        ],
+    }, ensure_ascii=False, indent=2))
     return 0
 
 
 def _selftest() -> int:
-    """Offline check of the state machine on synthetic measurements."""
+    """Offline check of the state machine and progress sentences on synthetic measurements."""
     state = empty_state()
     invariant_but_costly = {
         "round_id": 1,
@@ -864,6 +1017,7 @@ def _selftest() -> int:
     state = update_state(state, invariant_but_costly, prior_shas=set())
     assert status_of(state, "H-SCALE-FREE") == "refuted", status_of(state, "H-SCALE-FREE")
     assert status_of(state, "H-NO-REPEAT") == "refuted"
+    assert state["rounds"][-1]["progress_status"] == "first_round"
 
     free = {
         "round_id": 2,
@@ -879,6 +1033,8 @@ def _selftest() -> int:
     assert status_of(state, "H-SCALE-FREE") == "supported"
     assert status_of(state, "H-BEAT-REF") == "supported"
     assert status_of(state, "H-NO-REPEAT") == "supported"
+    assert state["rounds"][-1]["progress_status"] == "improved"
+    assert "Improved" in _progress_sentence(state["rounds"][-1])
 
     repeated = dict(free)
     repeated["round_id"] = 3
@@ -887,6 +1043,26 @@ def _selftest() -> int:
     ]
     state = update_state(state, repeated, prior_shas={"a", "b", "c"})
     assert status_of(state, "H-NO-REPEAT") == "refuted"
+    assert state["rounds"][-1]["progress_status"] == "stagnant"
+    assert "Stagnant" in _progress_sentence(state["rounds"][-1])
+
+    regressed = dict(free)
+    regressed["round_id"] = 4
+    regressed["candidates"] = [
+        {"sha": "d", "feasible": True, "nominal": 11.0, "spread_pct": 0.1},
+    ]
+    state = update_state(state, regressed, prior_shas={"a", "b", "c"})
+    assert state["rounds"][-1]["progress_status"] == "regressed"
+    sent_reg = _progress_sentence(state["rounds"][-1])
+    assert "Regressed" in sent_reg and "New best" not in sent_reg
+
+    missing = dict(free)
+    missing["round_id"] = 5
+    missing["candidate_count"] = 1
+    missing["candidates"] = [{"sha": "e", "feasible": False}]
+    state = update_state(state, missing, prior_shas={"a", "b", "c", "d"})
+    assert state["rounds"][-1]["progress_status"] == "no_valid_candidate"
+    assert "No valid candidate" in _progress_sentence(state["rounds"][-1])
 
     rendered = render_activity(state, invariant_but_costly, round_id=5)
     assert rendered["activity"]["decision"] == "modify"
