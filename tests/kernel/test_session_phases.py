@@ -54,7 +54,20 @@ def test_obp_research_activity_is_persisted_without_changing_search_guidance(tmp
             assert saved_plan["research_activity"] == activity
         contexts.add((round_dir / "round_context.txt").read_text(encoding="utf-8"))
 
-    assert len(contexts) == 1
+    # A recorded research finding is advisory text: it must reach the generator,
+    # but only through the bounded `research_finding` field, and it must never
+    # smuggle execution authority (interface, budget, operators, code) into the
+    # round context.
+    assert len(contexts) == 2, "a used research activity must change the round context"
+    for text in contexts:
+        payload = json.loads(text.split("\n", 1)[1])
+        finding = payload.get("research_finding")
+        if finding is not None:
+            assert set(finding) <= {"question", "measured_finding", "hypothesis_status", "decision"}
+            assert "budget" not in text and "operators" not in text and "def " not in text
+            assert finding["measured_finding"] == (
+                "Only the current item and feasible capacities are available."
+            )
 
 
 def test_atomic_init_and_concurrent_stop(tmp_path,monkeypatch):

@@ -630,6 +630,32 @@ def build_feedback_summary(
     return summary
 
 
+def _round_context_finding(activity: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """Shrink a research activity record to the part a generator can act on.
+
+    The record stays advisory metadata, never execution authority: it carries the
+    question, the measured finding, the decision taken about the hypothesis, and
+    the next thing to try.  Each field is bounded so a long note cannot crowd out
+    the interface contract or the feedback summary.
+    """
+    if not isinstance(activity, Mapping):
+        return None
+
+    def clip(value: Any, limit: int) -> str | None:
+        if not isinstance(value, str):
+            return None
+        text = " ".join(value.split())
+        return text[:limit] if text else None
+
+    finding = {
+        "question": clip(activity.get("question"), 400),
+        "measured_finding": clip(activity.get("finding_summary"), 800),
+        "hypothesis_status": clip(activity.get("finding_status"), 64),
+        "decision": clip(activity.get("decision"), 400),
+    }
+    return {key: value for key, value in finding.items() if value is not None} or None
+
+
 def compile_round_context(
     plan: PlanDocument,
     *,
@@ -660,6 +686,13 @@ def compile_round_context(
             "search_intent": plan.search_intent,
             "guidance_mode": "agent",
         }
+        # A research finding is only useful if it reaches the generator.  Before
+        # this, plan.research_activity was persisted to plan.json and never
+        # compiled into the round context, so a mathematical conclusion could not
+        # influence the next round's candidates.
+        finding = _round_context_finding(plan.research_activity)
+        if finding is not None:
+            guidance["research_finding"] = finding
     else:
         # Controlled benchmark groups A/B/C must not accidentally receive a
         # host-Agent strategy under a neutral manifest.  The fixed text is
