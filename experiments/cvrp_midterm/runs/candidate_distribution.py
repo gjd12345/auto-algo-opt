@@ -38,15 +38,57 @@ sys.path.insert(0, str(HERE))
 from score_probe import build_matrix, load_candidate, simulate  # noqa: E402
 from tradeoff_probe import FROZEN_DIR, SUITE, band_shape  # noqa: E402
 
-ARMS = ("control", "finding_only", "operations_only", "guided")
+ARM_ORDER = ("control", "finding_only", "operations_only")
+FULL_ALIASES = ("full_guidance", "guided")
 CONTRASTS = {
     "finding_at_ops_off": lambda m: m["finding_only"] - m["control"],
-    "finding_at_ops_on": lambda m: m["guided"] - m["operations_only"],
+    "finding_at_ops_on": lambda m: m["full"] - m["operations_only"],
     "ops_at_finding_off": lambda m: m["operations_only"] - m["control"],
-    "ops_at_finding_on": lambda m: m["guided"] - m["finding_only"],
-    "interaction": lambda m: (m["guided"] - m["finding_only"])
+    "ops_at_finding_on": lambda m: m["full"] - m["finding_only"],
+    "interaction": lambda m: (m["full"] - m["finding_only"])
     - (m["operations_only"] - m["control"]),
 }
+
+
+def discover_arms(tag: str) -> tuple[str, ...]:
+    """Arms on disk for this batch, in 2x2 order.
+
+    Batches 1-3 name the fourth arm ``guided``, batch 4+ names it
+    ``full_guidance``; hardcoding either one drops an arm from every table.
+    """
+    found = [p.name[len(tag) + 1:] for p in HERE.glob(f"{tag}_*")
+             if p.is_dir() and not p.name.startswith("_")]
+    ordered = [a for a in ARM_ORDER if a in found]
+    for alias in FULL_ALIASES:
+        if alias in found:
+            ordered.append(alias)
+            break
+    return tuple(ordered) + tuple(sorted(a for a in found if a not in ordered))
+
+
+def role_arms(arms) -> dict:
+    """Map each 2x2 role onto *all* arm names that implement it.
+
+    A pooled run spans batches whose fourth arm is named ``guided`` (a2/a3) or
+    ``full_guidance`` (a4/a5).  Taking only the first alias silently drops the
+    other half of the "full" cell and turns every contrast that touches it into
+    ``nan``, so a role maps to a list and the median is taken over the union.
+    """
+    names = list(arms)
+    out = {a: [a] for a in ARM_ORDER if a in names}
+    full = [alias for alias in FULL_ALIASES if alias in names]
+    if full:
+        out["full"] = full
+    return out
+
+
+def role_median(values: dict[str, list[float]], roster: dict) -> dict[str, float]:
+    """Median objective per 2x2 role, pooling every arm that fills that role."""
+    out = {}
+    for role, names in roster.items():
+        pooled = [v for name in names for v in values.get(name, [])]
+        out[role] = float(np.median(pooled)) if pooled else float("nan")
+    return out
 ROUNDS = (1, 2, 3, 4)
 
 
@@ -101,17 +143,31 @@ def summarise(rows: list[dict], frozen_objective: float, seed_objective: float) 
     return entry
 
 
-def contrast(arms: dict) -> dict:
-    def med(name: str) -> float:
-        return arms[name].get("median", float("nan"))
+def scores_of(arms: dict) -> dict[str, list[float]]:
+    """Per-arm objective lists, rebuilt from the scored candidate rows."""
+    out = {}
+    for arm, entry in arms.items():
+        if not isinstance(entry, dict) or "candidates" not in entry:
+            continue
+        out[arm] = [c["objective"] for c in entry["candidates"]
+                    if c.get("objective") is not None]
+    return out
+
+
+def contrast(scores: dict[str, list[float]]) -> dict:
+    roster = role_arms(scores)
+    med = role_median(scores, roster)
+
+    def m(role: str) -> float:
+        return med.get(role, float("nan"))
 
     return {
-        "finding_at_ops_off": med("finding_only") - med("control"),
-        "finding_at_ops_on": med("guided") - med("operations_only"),
-        "ops_at_finding_off": med("operations_only") - med("control"),
-        "ops_at_finding_on": med("guided") - med("finding_only"),
-        "interaction": (med("guided") - med("finding_only"))
-        - (med("operations_only") - med("control")),
+        "finding_at_ops_off": m("finding_only") - m("control"),
+        "finding_at_ops_on": m("full") - m("operations_only"),
+        "ops_at_finding_off": m("operations_only") - m("control"),
+        "ops_at_finding_on": m("full") - m("finding_only"),
+        "interaction": (m("full") - m("finding_only"))
+        - (m("operations_only") - m("control")),
     }
 
 
@@ -125,10 +181,12 @@ def bootstrap_contrast(scores: dict[str, list[float]], reps: int = 4000,
     not paired across arms) and it keeps the observed spread.
     """
     rng = random.Random(seed)
+    roster = role_arms(scores)
     draws: dict[str, list[float]] = {k: [] for k in CONTRASTS}
     for _ in range(reps):
-        med = {arm: float(np.median(rng.choices(vals, k=len(vals))))
-               for arm, vals in scores.items()}
+        resampled = {arm: list(rng.choices(vals, k=len(vals)))
+                     for arm, vals in scores.items() if vals}
+        med = role_median(resampled, roster)
         for name, fn in CONTRASTS.items():
             draws[name].append(fn(med))
     out = {}
@@ -161,10 +219,16 @@ def main() -> int:
         out["frozen_C"] = {"objective": frozen_objective, "band_shape": band_shape(frozen_src)}
         out["search_seed"] = {"objective": seed_objective, "source": "p0/frozen_code/NN.py"}
 
-        pooled_rows: dict[str, list[dict]] = {arm: [] for arm in ARMS}
+        roster = {tag: discover_arms(tag) for tag in tags}
+        all_arms: list[str] = []
+        for tag in tags:
+            for arm in roster[tag]:
+                if arm not in all_arms:
+                    all_arms.append(arm)
+        pooled_rows: dict[str, list[dict]] = {arm: [] for arm in all_arms}
         for tag in tags:
             tag_out: dict = {}
-            for arm in ARMS:
+            for arm in roster[tag]:
                 seen: dict[str, dict] = {}
                 for round_id, name, code_path in iter_candidates(tag, arm):
                     src = code_path.read_text(encoding="utf-8")
@@ -198,17 +262,17 @@ def main() -> int:
                 tag_out[arm]["candidates"] = sorted(
                     rows, key=lambda r: (r["objective"] is None, r["objective"] or 0.0))
                 pooled_rows[arm].extend(rows)
-            tag_out["comparison"] = contrast(tag_out)
+            tag_out["comparison"] = contrast(scores_of(tag_out))
             out["per_tag"][tag] = tag_out
 
-        for arm in ARMS:
+        for arm in all_arms:
             out["pooled"][arm] = summarise(pooled_rows[arm], frozen_objective, seed_objective)
             out["pooled"][arm]["candidates"] = sorted(
                 pooled_rows[arm],
                 key=lambda r: (r["objective"] is None, r["objective"] or 0.0))
-        out["pooled"]["comparison"] = contrast(out["pooled"])
         scores = {arm: [r["objective"] for r in pooled_rows[arm] if r["objective"] is not None]
-                  for arm in ARMS}
+                  for arm in all_arms}
+        out["pooled"]["comparison"] = contrast(scores)
         out["pooled"]["bootstrap"] = bootstrap_contrast(scores)
 
     (HERE / "candidate_distribution.json").write_text(

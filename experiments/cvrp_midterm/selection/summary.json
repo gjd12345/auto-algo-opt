@@ -41,6 +41,13 @@
         "dd_load",
         "radial"
       ],
+      "with_c": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "c"
+      ],
       "extended": [
         "nn",
         "savings",
@@ -48,7 +55,23 @@
         "radial",
         "isolate",
         "load_fill"
+      ],
+      "extended_c": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill",
+        "c"
       ]
+    },
+    "frozen_member": {
+      "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py",
+      "sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+      "bytes": 2479,
+      "edited_here": false,
+      "provenance": "PoC frozen rule C; objective 10.9197 on the shared 6-instance suite"
     }
   },
   "instances": 96,
@@ -59,7 +82,8 @@
     "radial": 13.857131,
     "farthest": 38.005881,
     "isolate": 18.450718,
-    "load_fill": 19.892657
+    "load_fill": 19.892657,
+    "c": 14.294004
   },
   "portfolios": {
     "core": {
@@ -74,11 +98,35 @@
       "sbs": 1274.1252,
       "sbs_algorithm": "savings",
       "sbs_gap_to_vbs": 0.016261,
+      "headroom": 20.3868,
       "oracle_counts": {
         "nn": 10,
         "savings": 59,
         "dd_load": 17,
         "radial": 10
+      },
+      "mean_capacity_ratio": 7.2341
+    },
+    "with_c": {
+      "instances": 96,
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "c"
+      ],
+      "vbs": 1248.5157,
+      "sbs": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.020512,
+      "headroom": 25.6095,
+      "oracle_counts": {
+        "nn": 9,
+        "savings": 52,
+        "dd_load": 14,
+        "radial": 9,
+        "c": 12
       },
       "mean_capacity_ratio": 7.2341
     },
@@ -96,11 +144,37 @@
       "sbs": 1274.1252,
       "sbs_algorithm": "savings",
       "sbs_gap_to_vbs": 0.016261,
+      "headroom": 20.3868,
       "oracle_counts": {
         "nn": 10,
         "savings": 59,
         "dd_load": 17,
         "radial": 10
+      },
+      "mean_capacity_ratio": 7.2341
+    },
+    "extended_c": {
+      "instances": 96,
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill",
+        "c"
+      ],
+      "vbs": 1248.5157,
+      "sbs": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.020512,
+      "headroom": 25.6095,
+      "oracle_counts": {
+        "nn": 9,
+        "savings": 52,
+        "dd_load": 14,
+        "radial": 9,
+        "c": 12
       },
       "mean_capacity_ratio": 7.2341
     }
@@ -119,10 +193,33 @@
         "sbs": 134.4089,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.025611,
+        "headroom": 3.3564,
         "oracle_counts": {
           "nn": 3,
           "savings": 5,
           "dd_load": 4
+        },
+        "mean_capacity_ratio": 5.4481
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 128.2954,
+        "sbs": 133.4194,
+        "sbs_algorithm": "c",
+        "sbs_gap_to_vbs": 0.039939,
+        "headroom": 5.124,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 2,
+          "dd_load": 4,
+          "c": 4
         },
         "mean_capacity_ratio": 5.4481
       },
@@ -140,10 +237,35 @@
         "sbs": 134.4089,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.025611,
+        "headroom": 3.3564,
         "oracle_counts": {
           "nn": 3,
           "savings": 5,
           "dd_load": 4
+        },
+        "mean_capacity_ratio": 5.4481
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 128.2954,
+        "sbs": 133.4194,
+        "sbs_algorithm": "c",
+        "sbs_gap_to_vbs": 0.039939,
+        "headroom": 5.124,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 2,
+          "dd_load": 4,
+          "c": 4
         },
         "mean_capacity_ratio": 5.4481
       }
@@ -161,11 +283,35 @@
         "sbs": 164.7959,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.011658,
+        "headroom": 1.8991,
         "oracle_counts": {
           "nn": 2,
           "savings": 8,
           "dd_load": 1,
           "radial": 1
+        },
+        "mean_capacity_ratio": 9.125
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 162.5763,
+        "sbs": 164.7959,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.013652,
+        "headroom": 2.2196,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 6,
+          "dd_load": 1,
+          "radial": 1,
+          "c": 2
         },
         "mean_capacity_ratio": 9.125
       },
@@ -183,11 +329,37 @@
         "sbs": 164.7959,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.011658,
+        "headroom": 1.8991,
         "oracle_counts": {
           "nn": 2,
           "savings": 8,
           "dd_load": 1,
           "radial": 1
+        },
+        "mean_capacity_ratio": 9.125
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 162.5763,
+        "sbs": 164.7959,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.013652,
+        "headroom": 2.2196,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 6,
+          "dd_load": 1,
+          "radial": 1,
+          "c": 2
         },
         "mean_capacity_ratio": 9.125
       }
@@ -205,10 +377,33 @@
         "sbs": 171.6025,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.022865,
+        "headroom": 3.836,
         "oracle_counts": {
           "savings": 4,
           "dd_load": 6,
           "radial": 2
+        },
+        "mean_capacity_ratio": 5.5463
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 166.6951,
+        "sbs": 171.6025,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.029439,
+        "headroom": 4.9074,
+        "oracle_counts": {
+          "savings": 4,
+          "dd_load": 4,
+          "radial": 1,
+          "c": 3
         },
         "mean_capacity_ratio": 5.5463
       },
@@ -226,10 +421,35 @@
         "sbs": 171.6025,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.022865,
+        "headroom": 3.836,
         "oracle_counts": {
           "savings": 4,
           "dd_load": 6,
           "radial": 2
+        },
+        "mean_capacity_ratio": 5.5463
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 166.6951,
+        "sbs": 171.6025,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.029439,
+        "headroom": 4.9074,
+        "oracle_counts": {
+          "savings": 4,
+          "dd_load": 4,
+          "radial": 1,
+          "c": 3
         },
         "mean_capacity_ratio": 5.5463
       }
@@ -247,6 +467,27 @@
         "sbs": 228.4204,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.003222,
+        "headroom": 0.7336,
+        "oracle_counts": {
+          "savings": 9,
+          "radial": 3
+        },
+        "mean_capacity_ratio": 8.7202
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 227.6869,
+        "sbs": 228.4204,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.003222,
+        "headroom": 0.7336,
         "oracle_counts": {
           "savings": 9,
           "radial": 3
@@ -267,6 +508,29 @@
         "sbs": 228.4204,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.003222,
+        "headroom": 0.7336,
+        "oracle_counts": {
+          "savings": 9,
+          "radial": 3
+        },
+        "mean_capacity_ratio": 8.7202
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 227.6869,
+        "sbs": 228.4204,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.003222,
+        "headroom": 0.7336,
         "oracle_counts": {
           "savings": 9,
           "radial": 3
@@ -287,10 +551,33 @@
         "sbs": 93.3384,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.028245,
+        "headroom": 2.5639,
         "oracle_counts": {
           "nn": 1,
           "savings": 9,
           "dd_load": 2
+        },
+        "mean_capacity_ratio": 5.5093
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 89.8713,
+        "sbs": 93.3384,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.03858,
+        "headroom": 3.4672,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "c": 2
         },
         "mean_capacity_ratio": 5.5093
       },
@@ -308,10 +595,35 @@
         "sbs": 93.3384,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.028245,
+        "headroom": 2.5639,
         "oracle_counts": {
           "nn": 1,
           "savings": 9,
           "dd_load": 2
+        },
+        "mean_capacity_ratio": 5.5093
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 89.8713,
+        "sbs": 93.3384,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.03858,
+        "headroom": 3.4672,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "c": 2
         },
         "mean_capacity_ratio": 5.5093
       }
@@ -329,6 +641,29 @@
         "sbs": 136.2132,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.016163,
+        "headroom": 2.1666,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.0982
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 134.0466,
+        "sbs": 136.2132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.016163,
+        "headroom": 2.1666,
         "oracle_counts": {
           "nn": 1,
           "savings": 9,
@@ -351,6 +686,31 @@
         "sbs": 136.2132,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.016163,
+        "headroom": 2.1666,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.0982
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 134.0466,
+        "sbs": 136.2132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.016163,
+        "headroom": 2.1666,
         "oracle_counts": {
           "nn": 1,
           "savings": 9,
@@ -373,6 +733,29 @@
         "sbs": 150.3326,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.02735,
+        "headroom": 4.0021,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.6519
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 146.3305,
+        "sbs": 150.3326,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.02735,
+        "headroom": 4.0021,
         "oracle_counts": {
           "nn": 1,
           "savings": 7,
@@ -395,6 +778,31 @@
         "sbs": 150.3326,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.02735,
+        "headroom": 4.0021,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.6519
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 146.3305,
+        "sbs": 150.3326,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.02735,
+        "headroom": 4.0021,
         "oracle_counts": {
           "nn": 1,
           "savings": 7,
@@ -417,11 +825,34 @@
         "sbs": 195.0132,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.009469,
+        "headroom": 1.8292,
         "oracle_counts": {
           "nn": 2,
           "savings": 8,
           "dd_load": 1,
           "radial": 1
+        },
+        "mean_capacity_ratio": 8.7738
+      },
+      "with_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "c"
+        ],
+        "vbs": 193.0135,
+        "sbs": 195.0132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.01036,
+        "headroom": 1.9997,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "radial": 1,
+          "c": 1
         },
         "mean_capacity_ratio": 8.7738
       },
@@ -439,11 +870,36 @@
         "sbs": 195.0132,
         "sbs_algorithm": "savings",
         "sbs_gap_to_vbs": 0.009469,
+        "headroom": 1.8292,
         "oracle_counts": {
           "nn": 2,
           "savings": 8,
           "dd_load": 1,
           "radial": 1
+        },
+        "mean_capacity_ratio": 8.7738
+      },
+      "extended_c": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill",
+          "c"
+        ],
+        "vbs": 193.0135,
+        "sbs": 195.0132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.01036,
+        "headroom": 1.9997,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "radial": 1,
+          "c": 1
         },
         "mean_capacity_ratio": 8.7738
       }
@@ -460,15 +916,20 @@
           "radial": 15.3147,
           "farthest": 40.7489,
           "isolate": 21.2752,
-          "load_fill": 22.0759
+          "load_fill": 22.0759,
+          "c": 15.5866
         },
         "vbs": {
           "core": 689.4027,
-          "extended": 689.4027
+          "with_c": 685.2538,
+          "extended": 689.4027,
+          "extended_c": 685.2538
         },
         "sbs": {
           "core": 699.2278,
-          "extended": 699.2278
+          "with_c": 699.2278,
+          "extended": 699.2278,
+          "extended_c": 699.2278
         }
       },
       "clustered": {
@@ -480,15 +941,20 @@
           "radial": 12.3996,
           "farthest": 35.2629,
           "isolate": 15.6262,
-          "load_fill": 17.7094
+          "load_fill": 17.7094,
+          "c": 13.0014
         },
         "vbs": {
           "core": 564.3357,
-          "extended": 564.3357
+          "with_c": 563.2619,
+          "extended": 564.3357,
+          "extended_c": 563.2619
         },
         "sbs": {
           "core": 574.8975,
-          "extended": 574.8975
+          "with_c": 574.8975,
+          "extended": 574.8975,
+          "extended_c": 574.8975
         }
       }
     },
@@ -502,15 +968,20 @@
           "radial": 11.6929,
           "farthest": 34.4379,
           "isolate": 15.7916,
-          "load_fill": 17.7428
+          "load_fill": 17.7428,
+          "c": 11.7528
         },
         "vbs": {
           "core": 518.7704,
-          "extended": 518.7704
+          "with_c": 514.7896,
+          "extended": 518.7704,
+          "extended_c": 514.7896
         },
         "sbs": {
           "core": 528.7564,
-          "extended": 528.7564
+          "with_c": 528.7564,
+          "extended": 528.7564,
+          "extended_c": 528.7564
         }
       },
       "eccentric": {
@@ -522,15 +993,20 @@
           "radial": 16.0214,
           "farthest": 41.5739,
           "isolate": 21.1099,
-          "load_fill": 22.0425
+          "load_fill": 22.0425,
+          "c": 16.8352
         },
         "vbs": {
           "core": 734.968,
-          "extended": 734.968
+          "with_c": 733.7261,
+          "extended": 734.968,
+          "extended_c": 733.7261
         },
         "sbs": {
           "core": 745.3688,
-          "extended": 745.3688
+          "with_c": 745.3688,
+          "extended": 745.3688,
+          "extended_c": 745.3688
         }
       }
     },
@@ -544,15 +1020,20 @@
           "radial": 12.1097,
           "farthest": 36.864,
           "isolate": 16.1849,
-          "load_fill": 18.6833
+          "load_fill": 18.6833,
+          "c": 11.9493
         },
         "vbs": {
           "core": 535.9241,
-          "extended": 535.9241
+          "with_c": 531.1924,
+          "extended": 535.9241,
+          "extended_c": 531.1924
         },
         "sbs": {
           "core": 549.6825,
-          "extended": 549.6825
+          "with_c": 549.6825,
+          "extended": 549.6825,
+          "extended_c": 549.6825
         }
       },
       "tight": {
@@ -564,17 +1045,51 @@
           "radial": 15.6045,
           "farthest": 39.1478,
           "isolate": 20.7165,
-          "load_fill": 21.102
+          "load_fill": 21.102,
+          "c": 16.6387
         },
         "vbs": {
           "core": 717.8143,
-          "extended": 717.8143
+          "with_c": 717.3233,
+          "extended": 717.8143,
+          "extended_c": 717.3233
         },
         "sbs": {
           "core": 724.4427,
-          "extended": 724.4427
+          "with_c": 724.4427,
+          "extended": 724.4427,
+          "extended_c": 724.4427
         }
       }
+    }
+  },
+  "pairwise": {
+    "c_vs_savings": {
+      "a": "c",
+      "b": "savings",
+      "a_better": 19,
+      "equal": 0,
+      "b_better": 77,
+      "mean_relative_delta": 0.077997,
+      "median_relative_delta": 0.065726
+    },
+    "c_vs_nn": {
+      "a": "c",
+      "b": "nn",
+      "a_better": 53,
+      "equal": 0,
+      "b_better": 43,
+      "mean_relative_delta": -0.003386,
+      "median_relative_delta": -0.009828
+    },
+    "c_vs_dd_load": {
+      "a": "c",
+      "b": "dd_load",
+      "a_better": 46,
+      "equal": 0,
+      "b_better": 50,
+      "mean_relative_delta": 0.012395,
+      "median_relative_delta": 0.004837
     }
   },
   "rule_check": {

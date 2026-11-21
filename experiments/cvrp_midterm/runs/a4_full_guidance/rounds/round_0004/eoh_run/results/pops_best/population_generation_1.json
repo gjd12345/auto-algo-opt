@@ -1,0 +1,6 @@
+{
+    "algorithm": "Explicit parent",
+    "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    eps = 1e-9\n    score = d_dep / (d_cur + eps)\n\n    s_min = np.min(score)\n    s_max = np.max(score)\n    span = s_max - s_min\n    tol = 0.15 * span\n    near = score >= (s_max - tol)\n    candidates = unvisited_nodes[near]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_dep = distance_matrix[depot][candidates]\n    capacity_factor = rest_capacity - cand_demands\n    secondary = cand_dep / (capacity_factor + 1.0)\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+    "objective": -0.05284,
+    "other_inf": null
+}

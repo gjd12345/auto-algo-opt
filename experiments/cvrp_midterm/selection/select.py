@@ -1,4 +1,4 @@
-"""Instance-level algorithm selection on the factorial regime matrix (v2).
+"""Instance-level algorithm selection on the factorial regime matrix (v3).
 
 Question set (task B):
   1. Is there complementarity?  Compare the best single algorithm (SBS) with the
@@ -6,18 +6,25 @@ Question set (task B):
   2. Is the oracle predictable from pre-solve features?  Leave-one-instance-out
      within the pool, then leave-one-cell-out (8 cells) across pools.
   3. Does a selector beat the fixed choice after its own overhead?  Report total
-     distance, mean per-instance regret against VBS, and the training cost in
-     evaluator calls.
+     distance, gain against the fixed choice, mean per-instance regret against
+     VBS, and the training cost in evaluator calls.
 
-Every question is answered for two portfolios.  ``core`` is the four rules that
-define the original experiment; ``extended`` adds two structurally different
-rules (isolation-first, load-fill-first).  ``farthest`` is measured but never
-admitted: it is dominated in every cell, and letting it into VBS would only
-flatter the oracle.
+Revision 3 adds the frozen rule C to the pool (``with_c``, ``extended_c``) and a
+fourth selector family: pairwise comparison.  For every ordered pair of rules a
+linear-probability model is fit on the sign of the pairwise difference and votes
+for the rule it predicts to win; the rule with most pairwise wins is chosen, and
+predicted objective breaks ties.  This is the classic pairwise-ranking reduction
+(better suited than regression to choosing between near-tied rules), fit with
+the same ridge machinery so the comparison isolates the reduction, not the
+regulariser.
+
+``farthest`` is measured but never admitted: it is dominated in every cell, and
+letting it into VBS would only flatter the oracle.
 """
 
 from __future__ import annotations
 
+import itertools
 import json
 import sys
 from pathlib import Path
@@ -30,7 +37,8 @@ import numpy as np  # noqa: E402
 OUT = REPO / "experiments/cvrp_midterm/selection"
 PORTFOLIOS = {
     "core": ("nn", "savings", "dd_load", "radial"),
-    "extended": ("nn", "savings", "dd_load", "radial", "isolate", "load_fill"),
+    "with_c": ("nn", "savings", "dd_load", "radial", "c"),
+    "extended_c": ("nn", "savings", "dd_load", "radial", "isolate", "load_fill", "c"),
 }
 FEATURES = ("mean_demand", "cv_demand", "capacity_ratio", "cluster_tendency",
             "radial_std", "depot_eccentricity", "x_spread", "y_spread")
@@ -64,15 +72,44 @@ def ridge_predict(w: np.ndarray, x: np.ndarray) -> np.ndarray:
     return xb @ w
 
 
-def summarize(name: str, picks, Y, names, cells: list[str], extra: dict | None = None) -> dict:
+def pairwise_pick(train_x: np.ndarray, train_y: np.ndarray, test_x: np.ndarray,
+                  fallback: np.ndarray) -> int:
+    """Vote among rules by pairwise win models; predicted objective breaks ties.
+
+    ``train_y`` is (n_train, k) objective values (lower is better), ``fallback``
+    is the predicted objective row used only to break a vote tie.
+    """
+    k = train_y.shape[1]
+    votes = np.zeros(k)
+    for a, b in itertools.combinations(range(k), 2):
+        # +1 means rule ``a`` is better (lower objective) on that instance.
+        target = np.where(train_y[:, a] < train_y[:, b], 1.0, -1.0)
+        if np.all(target == 1.0) or np.all(target == -1.0):
+            votes[a if target[0] > 0 else b] += 1
+            continue
+        w = ridge_fit(train_x, target)
+        if float(ridge_predict(w, test_x)[0]) > 0.0:
+            votes[a] += 1
+        else:
+            votes[b] += 1
+    best = np.flatnonzero(votes == votes.max())
+    if best.size == 1:
+        return int(best[0])
+    return int(best[int(np.argmin(fallback[best]))])
+
+
+def summarize(name: str, picks, Y, names, cells: list[str], fixed_total: float,
+              extra: dict | None = None) -> dict:
     chosen = np.array([Y[i, j] for i, j in enumerate(picks)], dtype=float)
     oracle = Y.min(axis=1)
     regret = (chosen - oracle) / oracle
     vbs = float(oracle.sum())
+    total = float(chosen.sum())
     out = {
         "selector": name,
-        "total_objective": round(float(chosen.sum()), 4),
-        "gap_to_vbs": round(float((chosen.sum() - vbs) / vbs), 6),
+        "total_objective": round(total, 4),
+        "gap_to_vbs": round((total - vbs) / vbs, 6),
+        "gain_vs_fixed": round((fixed_total - total) / fixed_total, 6),
         "mean_regret": round(float(regret.mean()), 6),
         "worst_regret": round(float(regret.max()), 6),
         "picks": {names[j]: int(sum(1 for p in picks if p == j)) for j in range(len(names))},
@@ -92,51 +129,70 @@ def summarize(name: str, picks, Y, names, cells: list[str], extra: dict | None =
 
 
 def run(portfolio: str) -> dict:
-    _rows, X, Y, cells, names = load(portfolio)
-    n = len(rows := _rows)
+    rows, X, Y, cells, names = load(portfolio)
+    n = len(rows)
+    k = len(names)
     vbs = float(Y.min(axis=1).sum())
     sbs_pick = int(Y.sum(axis=0).argmin())
+    fixed_total = float(Y[:, sbs_pick].sum())
     results = [
-        summarize("fixed_best_sbs", [sbs_pick] * n, Y, names, cells,
-                  {"algorithm": names[sbs_pick]})
+        summarize("fixed_best_sbs", [sbs_pick] * n, Y, names, cells, fixed_total,
+                  {"algorithm": names[sbs_pick], "design": "none"})
     ]
 
-    picks_nn = []
-    for i in range(n):
+    folds = list(range(n))
+
+    picks_nn, picks_ridge, picks_pair = [], [], []
+    for i in folds:
         mask = np.arange(n) != i
         train_x, test_x = standardize(X[mask], X[i:i + 1])
         dist = np.linalg.norm(train_x - test_x, axis=1)
         picks_nn.append(int(Y[mask][int(dist.argmin())].argmin()))
-    results.append(summarize("knn1_loo", picks_nn, Y, names, cells))
 
-    picks_ridge = []
-    for i in range(n):
-        mask = np.arange(n) != i
-        train_x, test_x = standardize(X[mask], X[i:i + 1])
         w = ridge_fit(train_x, Y[mask])
-        picks_ridge.append(int(ridge_predict(w, test_x)[0].argmin()))
-    results.append(summarize("ridge_loo", picks_ridge, Y, names, cells))
+        pred = ridge_predict(w, test_x)[0]
+        picks_ridge.append(int(pred.argmin()))
+        picks_pair.append(pairwise_pick(train_x, Y[mask], test_x, pred))
 
-    loro = [0] * n
-    loro_cells: dict[str, dict] = {}
+    results.append(summarize("knn1_loo", picks_nn, Y, names, cells, fixed_total,
+                             {"design": "1-nearest-neighbour on pre-solve features"}))
+    results.append(summarize("ridge_loo", picks_ridge, Y, names, cells, fixed_total,
+                             {"design": "one ridge per rule, argmin of predictions"}))
+    results.append(summarize("pairwise_loo", picks_pair, Y, names, cells, fixed_total,
+                             {"design": "one ridge per pair on the win sign, vote by pairwise wins"}))
+
+    loro_picks = {"ridge": [0] * n, "pairwise": [0] * n}
+    loro_cells = {"ridge": {}, "pairwise": {}}
     for cell in sorted(set(cells)):
         test_idx = [i for i, c in enumerate(cells) if c == cell]
         train_idx = [i for i, c in enumerate(cells) if c != cell]
         train_x, test_x = standardize(X[train_idx], X[test_idx])
         w = ridge_fit(train_x, Y[train_idx])
         pred = ridge_predict(w, test_x)
-        picks = [int(p.argmin()) for p in pred]
-        for i, p in zip(test_idx, picks):
-            loro[i] = p
+        picks_ridge_cell = [int(p.argmin()) for p in pred]
+        picks_pair_cell = [
+            pairwise_pick(train_x, Y[train_idx], test_x[j:j + 1], pred[j])
+            for j in range(len(test_idx))
+        ]
+        for i, p in zip(test_idx, picks_ridge_cell):
+            loro_picks["ridge"][i] = p
+        for i, p in zip(test_idx, picks_pair_cell):
+            loro_picks["pairwise"][i] = p
         sub_oracle = Y[test_idx].min(axis=1).sum()
-        sub_chosen = sum(Y[i, p] for i, p in zip(test_idx, picks))
-        loro_cells[cell] = {
-            "instances": len(test_idx),
-            "gap_to_vbs": round(float((sub_chosen - sub_oracle) / sub_oracle), 6),
-            "picks": {names[j]: int(sum(1 for p in picks if p == j)) for j in range(len(names))},
-        }
-    results.append(summarize("ridge_loro", loro, Y, names, cells,
-                             {"per_held_out_cell": loro_cells}))
+        for label, picks in (("ridge", picks_ridge_cell), ("pairwise", picks_pair_cell)):
+            sub_chosen = sum(Y[i, p] for i, p in zip(test_idx, picks))
+            loro_cells[label][cell] = {
+                "instances": len(test_idx),
+                "gap_to_vbs": round(float((sub_chosen - sub_oracle) / sub_oracle), 6),
+                "picks": {names[j]: int(sum(1 for p in picks if p == j)) for j in range(k)},
+            }
+
+    results.append(summarize("ridge_loro", loro_picks["ridge"], Y, names, cells, fixed_total,
+                             {"design": "ridge trained on seven cells, scored on the eighth",
+                              "per_held_out_cell": loro_cells["ridge"]}))
+    results.append(summarize("pairwise_loro", loro_picks["pairwise"], Y, names, cells, fixed_total,
+                             {"design": "pairwise votes trained on seven cells, scored on the eighth",
+                              "per_held_out_cell": loro_cells["pairwise"]}))
 
     per_cell = {}
     for cell in sorted(set(cells)):
@@ -150,6 +206,7 @@ def run(portfolio: str) -> dict:
             "sbs": round(float(sub_y[:, sub_sbs].sum()), 4),
             "sbs_algorithm": names[sub_sbs],
             "sbs_gap_to_vbs": round((float(sub_y[:, sub_sbs].sum()) - sub_vbs) / sub_vbs, 6),
+            "mean_objective": {names[j]: round(float(sub_y[:, j].mean()), 4) for j in range(k)},
         }
 
     return {
@@ -157,9 +214,9 @@ def run(portfolio: str) -> dict:
         "members": list(names),
         "instances": n,
         "vbs_total": round(vbs, 4),
-        "sbs_total": round(float(Y[:, sbs_pick].sum()), 4),
+        "sbs_total": round(fixed_total, 4),
         "sbs_algorithm": names[sbs_pick],
-        "sbs_gap_to_vbs": round(float((float(Y[:, sbs_pick].sum()) - vbs) / vbs), 6),
+        "sbs_gap_to_vbs": round((fixed_total - vbs) / vbs, 6),
         "selectors": results,
         "per_cell": per_cell,
     }
@@ -186,7 +243,8 @@ def main() -> int:
             "sbs_algorithm": block["sbs_algorithm"],
             "sbs_gap_to_vbs": block["sbs_gap_to_vbs"],
             "selectors": [
-                {k: r[k] for k in ("selector", "gap_to_vbs", "mean_regret")}
+                {k: r[k] for k in ("selector", "total_objective", "gap_to_vbs",
+                                   "gain_vs_fixed", "mean_regret")}
                 for r in block["selectors"]
             ],
         }

@@ -27,6 +27,12 @@ Two defects of revision 1 are addressed here.
        depot    in {centre, eccentric}
        capacity in {loose 45, tight 28}
 
+3. Revision 3 admits the frozen rule C from the earlier PoC into the candidate
+   pool.  C is not rewritten here: the evaluator receives the bytes of the
+   frozen artefact, read from ``reports/evidence/cvrp_p0_p1_p2_20261107/p0/
+   frozen_code/C.py`` and checked against its recorded SHA-256, so the pool
+   member is provably the rule that scored 10.9197 on the shared suite.
+
 No provider calls are involved: this only exercises the deterministic evaluator.
 """
 
@@ -49,6 +55,11 @@ from agent_skill_loop.problems.cvrp import suite_hash  # noqa: E402
 
 OUT = REPO / "experiments/cvrp_midterm/selection"
 SPLIT = "dev_train"
+
+# The frozen high-performing rule from the earlier PoC.  Read, never edited: the
+# SHA-256 below pins the exact bytes that produced the reported objective.
+FROZEN_C_PATH = REPO / "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py"
+FROZEN_C_SHA256 = "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627"
 
 ALGORITHMS = {
     "nn": """
@@ -113,7 +124,14 @@ def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demand
 # headroom and then be read as complementarity.
 CORE = ("nn", "savings", "dd_load", "radial")
 EXTENDED = ("nn", "savings", "dd_load", "radial", "isolate", "load_fill")
-PORTFOLIOS = {"core": CORE, "extended": EXTENDED}
+WITH_C = CORE + ("c",)
+EXTENDED_C = EXTENDED + ("c",)
+PORTFOLIOS = {
+    "core": CORE,
+    "with_c": WITH_C,
+    "extended": EXTENDED,
+    "extended_c": EXTENDED_C,
+}
 
 FEATURE_NAMES = (
     "mean_demand", "cv_demand", "capacity_ratio", "cluster_tendency",
@@ -127,6 +145,31 @@ FACTORS = {
 }
 CAPACITY_LEVELS = {"loose": 45, "tight": 28}
 DEMAND_RANGE = (1, 9)
+
+
+def frozen_c_source() -> str:
+    """Return rule C exactly as frozen, refusing to run if the bytes moved."""
+    raw = FROZEN_C_PATH.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != FROZEN_C_SHA256:
+        raise SystemExit(
+            f"frozen C artefact changed: {digest} != {FROZEN_C_SHA256} "
+            f"({FROZEN_C_PATH})"
+        )
+    return raw.decode("utf-8")
+
+
+ALGORITHMS["c"] = frozen_c_source()
+
+
+def check_frozen_c() -> dict:
+    return {
+        "path": str(FROZEN_C_PATH.relative_to(REPO)).replace("\\", "/"),
+        "sha256": FROZEN_C_SHA256,
+        "bytes": len(ALGORITHMS["c"].encode("utf-8")),
+        "edited_here": False,
+        "provenance": "PoC frozen rule C; objective 10.9197 on the shared 6-instance suite",
+    }
 
 
 def cell_name(spatial: str, depot: str, capacity: str) -> str:
@@ -255,6 +298,22 @@ def _totals(rows: list[dict], names: list[str], pick) -> float:
     return float(sum(float(row[pick(row)]) for row in rows))
 
 
+def pairwise_stats(rows: list[dict], a: str, b: str) -> dict:
+    """Head-to-head for one pair of rules, so ties are not hidden in an average."""
+    better = sum(1 for r in rows if float(r[a]) < float(r[b]) - 1e-12)
+    equal = sum(1 for r in rows if abs(float(r[a]) - float(r[b])) <= 1e-12)
+    rel = [(float(r[a]) - float(r[b])) / float(r[b]) for r in rows]
+    return {
+        "a": a,
+        "b": b,
+        "a_better": better,
+        "equal": equal,
+        "b_better": len(rows) - better - equal,
+        "mean_relative_delta": round(float(np.mean(rel)), 6),
+        "median_relative_delta": round(float(np.median(rel)), 6),
+    }
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     rule_check = check_savings_rule()
@@ -301,13 +360,15 @@ def main() -> int:
         for r in subset:
             oracle_counts[min(members, key=lambda n: (float(r[n]), n))] += 1
         vbs = float(sum(best_per_row))
+        headroom = totals[best] - vbs
         return {
             "instances": len(subset),
             "members": list(members),
             "vbs": round(vbs, 4),
             "sbs": round(totals[best], 4),
             "sbs_algorithm": best,
-            "sbs_gap_to_vbs": round((totals[best] - vbs) / vbs, 6),
+            "sbs_gap_to_vbs": round(headroom / vbs, 6),
+            "headroom": round(headroom, 4),
             "oracle_counts": {k: v for k, v in oracle_counts.items() if v},
             "mean_capacity_ratio": round(
                 float(np.mean([r["capacity_ratio"] for r in subset])), 4
@@ -360,6 +421,7 @@ def main() -> int:
             "instances_per_cell": 12,
             "cells": list(CELLS),
             "portfolios": {k: list(v) for k, v in PORTFOLIOS.items()},
+            "frozen_member": check_frozen_c(),
         },
         "instances": len(rows),
         "portfolio_mean": {
@@ -368,6 +430,11 @@ def main() -> int:
         "portfolios": portfolios,
         "per_cell": per_cell,
         "main_effects": main_effects,
+        "pairwise": {
+            "c_vs_savings": pairwise_stats(rows, "c", "savings"),
+            "c_vs_nn": pairwise_stats(rows, "c", "nn"),
+            "c_vs_dd_load": pairwise_stats(rows, "c", "dd_load"),
+        },
         "rule_check": rule_check,
     }
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -385,6 +452,8 @@ def main() -> int:
             for k, v in portfolios.items()
         },
         "rule_check": rule_check,
+        "frozen_member": summary["design"]["frozen_member"],
+        "pairwise": summary["pairwise"],
     }, indent=2))
     return 0
 

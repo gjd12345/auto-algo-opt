@@ -18,10 +18,25 @@ import agent_skill_loop.evaluator as evaluator  # noqa: E402
 
 RUNS = REPO / "experiments/cvrp_midterm/runs"
 DEV_SUITE = REPO / "reports/evidence/cvrp_super_agent_reference_20261107/dev_suite.json"
-ARMS = ("control", "finding_only", "operations_only", "guided")
-
-
+ARMS_ORDER = ("control", "finding_only", "operations_only")
 BATCH = "a1"
+
+
+def discover_arms(batch: str) -> tuple[str, ...]:
+    """Arms present on disk for this batch.
+
+    Batch 1-3 call the fourth arm ``guided``; batch 4 calls it
+    ``full_guidance``.  Hardcoding one of those silently dropped the arm from
+    every downstream table, so the roster is read from the run directories and
+    only the 2x2 order is fixed.
+    """
+    found = []
+    for path in RUNS.glob(f"{batch}_*"):
+        if not path.is_dir() or path.name.startswith("_"):
+            continue
+        found.append(path.name[len(batch) + 1:])
+    lead = tuple(arm for arm in ARMS_ORDER if arm in found)
+    return lead + tuple(sorted(set(found) - set(lead)))
 
 
 def round_dir(arm: str, round_id: int) -> Path:
@@ -72,7 +87,7 @@ def main() -> int:
     instances = dev["instances"]
 
     report = {}
-    for arm in ARMS:
+    for arm in discover_arms(BATCH):
         rounds = []
         for round_id in (1, 2, 3, 4):
             facts_path = round_dir(arm, round_id) / "evaluation_facts.json"

@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "e1",
+        "algorithm": "Regret-based lookahead heuristic: score each candidate by its insertion cost minus the best alternative insertion cost among unvisited nodes (a \"regret\" measure), combining distance-to-current, distance-to-depot, and demand-fill ratio into a single composite score, then pick the candidate with maximum regret to avoid leaving hard customers stranded.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes]\n\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0:\n        max_dep = 1.0\n    cap = max(rest_capacity, 1e-9)\n\n    # Composite base cost: distance from current + slight depot penalty\n    # minus a reward for filling capacity (larger demand is preferred).\n    fill = dem / cap\n    base = cur + 0.30 * (dep / max_dep) - 0.60 * fill\n\n    if unvisited_nodes.size == 1:\n        return int(unvisited_nodes[0])\n\n    # Regret: for each candidate, compare its best \"second chance\" cost.\n    # Regret = (second best base cost including self-removal) - own base cost.\n    # High regret means the candidate is relatively good and would be costly\n    # to defer; pick the maximum regret.\n    order = np.argsort(base)\n    n = order.size\n    sorted_vals = base[order]\n\n    # Second-best value for each position in sorted order:\n    # if this candidate is the best, second best is the next one;\n    # otherwise second best is the best one.\n    second_best = np.empty(n, dtype=float)\n    second_best[0] = sorted_vals[1] if n > 1 else sorted_vals[0]\n    second_best[1:] = sorted_vals[0]\n\n    regret = second_best - sorted_vals\n\n    # Tiny tie-break: prefer closer to current node.\n    cur_sorted = cur[order]\n    combined = regret - 1e-9 * cur_sorted\n    best_local = int(np.argmax(combined))\n    return int(unvisited_nodes[order[best_local]])",
+        "objective": null
+    },
+    {
+        "sample_order": 2,
+        "operator": "m1",
+        "algorithm": "Replace the depot-distance penalty term with a normalized squared depot-distance penalty and change the secondary stage to prefer the candidate minimizing the combined current+depot distance among near-tied scores.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0:\n        max_dep = 1.0\n    # Primary: closest current distance penalized by normalized squared depot distance\n    scores = cur - 0.5 * (dep / max_dep) ** 2\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    # Secondary: among near-tied, minimize combined current + depot distance\n    tie_nodes = unvisited_nodes[tied]\n    combined = distance_matrix[current_node][tie_nodes] + distance_matrix[depot][tie_nodes]\n    best_combined = float(np.min(combined))\n    finalists = tie_nodes[combined <= best_combined + 1e-9]\n    if finalists.size == 1:\n        return int(finalists[0])\n    # Final tie-break: prefer larger demand relative to remaining capacity\n    cap = max(rest_capacity, 1e-9)\n    ratio = demands[finalists] / cap\n    return int(finalists[int(np.argmax(ratio))])",
+        "objective": -0.02589
+    },
+    {
+        "sample_order": 3,
+        "operator": "e2",
+        "algorithm": "The common backbone is a lexicographic multi-stage greedy: a primary savings/insertion-style score (distance from current node minus a depot-distance reward) followed by deterministic tie-breaks; the new algorithm instead uses a single additive score combining a demand-aware \"route-balance\" reward (remaining capacity after serving the candidate relative to the candidate's urgency) with a distance-ratio closeness measure \u2014 no argmin-on-cur, no depot subtraction, no lexicographic tie stages.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0.0:\n        max_dep = 1.0\n\n    cap = float(rest_capacity) if rest_capacity > 0.0 else 1e-9\n\n    # Closeness ratio: how much of the tour leg is spent closing on the depot.\n    # 1 means the candidate is on the direct path away from current toward depot;\n    # large values mean the candidate is \"forward\" relative to the depot direction.\n    leg = cur + 1e-9\n    forward = (cur + dep) / leg  # in [1, ...], reward forward progress\n\n    # Route-balance reward: prefer candidates that leave a small residual gap\n    # relative to capacity, scaled by their demand (fills vehicles evenly).\n    residual = cap - dem\n    balance = 1.0 - (residual / cap) ** 2  # in [0,1], 1 = tight fit\n\n    # Depot-relative pull: slightly prefer candidates near the depot for the\n    # end-of-tour effect, normalized so scale is comparable across instances.\n    depot_pull = dep / max_dep\n\n    # Single additive score: maximize (we take negative for argmin-style choice)\n    score = forward + 2.0 * balance - 0.25 * depot_pull\n\n    return int(unvisited_nodes[int(np.argmax(score))])",
+        "objective": -0.01039
+    },
+    {
+        "sample_order": 4,
+        "operator": "m2",
+        "algorithm": "Replace the squared normalized depot-distance penalty with a scaled exponential depot-distance penalty (weight tuned differently) and use a relative near-tie band plus a secondary criterion minimizing curvature-aware savings (current+depot minus normalized demand), with a demand-ratio final tie-break.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0:\n        max_dep = 1.0\n    # Primary: closest current distance penalized by exponential normalized depot distance\n    scores = cur + 0.3 * max_dep * (1.0 - np.exp(-dep / max_dep))\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 5e-3 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    # Secondary: among near-tied, minimize combined current+depot minus normalized demand bonus\n    tie_nodes = unvisited_nodes[tied]\n    combined = distance_matrix[current_node][tie_nodes] + distance_matrix[depot][tie_nodes]\n    cap = max(rest_capacity, 1e-9)\n    bonus = 0.2 * (demands[tie_nodes] / cap)\n    adj = combined - bonus\n    best_adj = float(np.min(adj))\n    finalists = tie_nodes[adj <= best_adj + 1e-9]\n    if finalists.size == 1:\n        return int(finalists[0])\n    # Final tie-break: prefer larger demand relative to remaining capacity\n    ratio = demands[finalists] / cap\n    return int(finalists[int(np.argmax(ratio))])",
+        "objective": 0.0431
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Replace the normalized squared depot-distance penalty with a linear normalized depot-distance term weighted differently and increase tolerance for the near-tie secondary stage, keeping the combined current+depot secondary rule and demand tie-break.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0:\n        max_dep = 1.0\n    # Primary: closest current distance penalized by normalized linear depot distance\n    scores = cur - 0.8 * (dep / max_dep)\n    order = np.argsort(scores)\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-4 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    tie_nodes = unvisited_nodes[tied]\n    combined = distance_matrix[current_node][tie_nodes] + distance_matrix[depot][tie_nodes]\n    best_combined = float(np.min(combined))\n    finalists = tie_nodes[combined <= best_combined + 1e-9]\n    if finalists.size == 1:\n        return int(finalists[0])\n    cap = max(rest_capacity, 1e-9)\n    ratio = demands[finalists] / cap\n    return int(finalists[int(np.argmax(ratio))])",
+        "objective": -0.02004
+    },
+    {
+        "sample_order": 6,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

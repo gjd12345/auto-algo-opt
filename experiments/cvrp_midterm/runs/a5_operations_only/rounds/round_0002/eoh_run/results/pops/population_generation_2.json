@@ -1,0 +1,35 @@
+[
+    {
+        "algorithm": "Replace the distance-to-current-node term with a blended score combining distance-to-current, a depot-savings term (how much is saved by serving this node now versus returning to depot), and a capacity-utilization term, then apply a cheap secondary tie-break by demand to better pack routes.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    savings = distance_matrix[current_node][depot] + d_dep - d_cur\n    dem = demands[unvisited_nodes]\n    fill = dem / cap\n\n    primary = 1.0 * d_cur - 0.5 * savings - 0.3 * fill\n\n    best_val = primary.min()\n    tol = 1e-9\n    close = np.where(primary <= best_val + tol)[0]\n\n    if close.size > 1:\n        candidates = unvisited_nodes[close]\n        secondary = -demands[candidates] / cap + 1e-6 * distance_matrix[current_node][candidates]\n        return int(candidates[np.argmin(secondary)])\n\n    return int(unvisited_nodes[int(np.argmin(primary))])",
+        "objective": -0.03777,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "fab3f6a0d9f4410eaaf0a2a83f8ee8ba"
+    },
+    {
+        "algorithm": "The backbone is a greedy nearest-neighbour construction with capacity filtering; the new algorithm replaces the additive priority score with a multiplicative urgency factor (distance-to-current raised to a power divided by a normalized remaining-capacity-plus-demand term), so candidates far but affordable become attractive when capacity is tight, then uses a cheap second-stage tie-break by depot distance to seed the next route.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes].astype(float)\n    d_dep = distance_matrix[depot][unvisited_nodes].astype(float)\n    dem = demands[unvisited_nodes].astype(float)\n    cap = rest_capacity if rest_capacity > 0 else 1.0\n\n    # remaining slack after serving this node, normalized\n    slack = np.maximum(cap - dem, 0.0) / cap\n    # urgency: prefer nodes whose service leaves little slack (tight packing),\n    # while penalizing long hops, multiplicative form\n    urgency = (d_cur + 1e-9) * (1.0 + 2.0 * slack)\n\n    best = urgency.min()\n    tol = 1e-9 * (abs(best) + 1.0)\n    ties = np.where(urgency <= best + tol)[0]\n\n    if ties.size > 1:\n        cand = unvisited_nodes[ties]\n        # secondary: prefer node closest to depot (good for route seeding)\n        return int(cand[np.argmin(d_dep[ties])])\n\n    return int(unvisited_nodes[int(np.argmin(urgency))])",
+        "objective": -0.00434,
+        "other_inf": null,
+        "candidate_id": "candidate_3",
+        "revision": "original",
+        "evaluation_id": "53f551ca0b5c4df0ba64589f54704a2c"
+    },
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    return unvisited_nodes[np.argmin(distance_matrix[current_node][unvisited_nodes])]\n",
+        "objective": 0.0,
+        "other_inf": null
+    },
+    {
+        "algorithm": "Replace the nearest-neighbor distance term with a savings-based score (depot-distance minus distance-from-current), so the heuristic prefers customers that save the most versus a dedicated depot round-trip, while adding a cheap secondary tie-break by current-segment distance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Savings-style score: larger savings (depot round trip avoided) is better.\n    savings = 2.0 * d_dep - d_cur\n    best = np.max(savings)\n    # Secondary ordering: among near-tied top candidates, pick nearest to current.\n    tol = 1e-9 * (1.0 + abs(best))\n    mask = savings >= best - tol\n    candidates = unvisited_nodes[mask]\n    if candidates.size == 1:\n        return int(candidates[0])\n    cand_d_cur = distance_matrix[current_node][candidates]\n    return int(candidates[np.argmin(cand_d_cur)])",
+        "objective": 0.02029,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "0c3ffa25010e4aeeb2dbe54d271bab6b"
+    }
+]

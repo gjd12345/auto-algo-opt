@@ -1,0 +1,35 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    eps = 1e-9\n    score = d_dep / (d_cur + eps)\n\n    s_min = np.min(score)\n    s_max = np.max(score)\n    span = s_max - s_min\n    tol = 0.15 * span\n    near = score >= (s_max - tol)\n    candidates = unvisited_nodes[near]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_dep = distance_matrix[depot][candidates]\n    capacity_factor = rest_capacity - cand_demands\n    secondary = cand_dep / (capacity_factor + 1.0)\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+        "objective": -0.05284,
+        "other_inf": null
+    },
+    {
+        "algorithm": "Replace the ratio score with the Clarke\u2013Wright savings form s = d(depot,current) + d(depot,j) \u2212 d(current,j), gated scale-invariantly, then break ties by largest demand served per unit added detour, so heavier nodes that are cheap to insert are preferred.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_cd = float(distance_matrix[current_node][depot])\n\n    # Clarke-Wright style savings: reward inserting j between depot and current.\n    score = d_cd + d_dep - d_cur\n\n    s_min = float(np.min(score))\n    s_max = float(np.max(score))\n    span = s_max - s_min\n    tol = 0.15 * span\n    near = score >= (s_max - tol)\n    candidates = unvisited_nodes[near]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_cur = distance_matrix[current_node][candidates]\n    cand_dep = distance_matrix[depot][candidates]\n\n    # Secondary: demand served per unit of added detour (scale-invariant).\n    detour = cand_cur + cand_dep - float(distance_matrix[current_node][depot])\n    eps = 1e-9\n    secondary = cand_demands / (detour + eps)\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+        "objective": -0.05046,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "0238e768bd054e368e3309da7b7027aa"
+    },
+    {
+        "algorithm": "Replace the single scalar priority score with a two-stage lexicographic rule: first rank candidates by a depot-weighted savings term (depot distance kept as a multiplicative weight on current-node proximity rather than an additive/ratio term), then within a scale-free multiplicative near-tie band (relative, not span-absolute) choose the candidate with the largest residual-capacity slack times the savings gain, so selection combines routing economics with capacity preservation in a form distinct from both ratio and additive scores.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    eps = 1e-9\n\n    # Primary: depot distance as a multiplicative weight on current-node proximity.\n    # This is a product form (distinct from ratio d_dep/d_cur and additive d_dep-d_cur).\n    score = d_dep * (1.0 / (d_cur + eps))\n\n    s_max = float(np.max(score))\n    # Scale-invariant (multiplicative) near-tie band: candidates within a relative\n    # fraction of the best score. Independent of coordinate scale.\n    band = score >= (s_max * 0.85)\n    candidates = unvisited_nodes[band]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_dep = distance_matrix[depot][candidates]\n    cand_cur = distance_matrix[current_node][candidates]\n\n    # Secondary: capacity slack preserved per unit of depot distance, blended with\n    # the routing savings gain so both capacity and distance inform the tie-break.\n    slack = rest_capacity - cand_demands\n    savings_gain = cand_dep - cand_cur\n    secondary = (slack * (savings_gain + 1.0)) / (cand_dep + 1.0)\n\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+        "objective": -0.01867,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "c12232b3b5e443bca2a2a191e9f6c729"
+    },
+    {
+        "algorithm": "Replace the ratio-based primary score with a capacity-aware additive score (distance to depot minus distance to current node) and use a scale-invariant span-proportional near-tie gate, then break ties by the largest residual capacity slack per unit depot distance.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Primary score: prefer nodes far from depot but close to current node.\n    score = d_dep - d_cur\n\n    s_min = float(np.min(score))\n    s_max = float(np.max(score))\n    span = s_max - s_min\n    tol = 0.15 * span\n    near = score >= (s_max - tol)\n    candidates = unvisited_nodes[near]\n    if candidates.size == 0:\n        candidates = unvisited_nodes\n\n    cand_demands = demands[candidates]\n    cand_dep = distance_matrix[depot][candidates]\n    capacity_factor = rest_capacity - cand_demands  # residual slack after serving\n\n    eps = 1e-9\n    secondary = capacity_factor / (cand_dep + eps)\n    best_idx = int(np.argmax(secondary))\n    return int(candidates[best_idx])",
+        "objective": 0.01934,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "66d4bf49fb1b4585af9ca9e4a9ed0707"
+    }
+]

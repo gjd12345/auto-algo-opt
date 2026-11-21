@@ -1,0 +1,35 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = max(rest_capacity, 1e-9)\n    # Fill preference: reward customers whose demand fits well into remaining capacity\n    fill = dem / cap\n    # Reward customers far from depot (savings-style), penalize detour from current node\n    scores = d_cur - 0.6 * d_dep - 0.25 * fill * d_cur\n\n    return int(unvisited_nodes[np.argmin(scores)])",
+        "objective": -0.08203,
+        "other_inf": null
+    },
+    {
+        "algorithm": "The heuristic scores each feasible customer with a weighted combination of proximity to the current node, radial distance from the depot, and demand-to-capacity fill ratio, tuned with different coefficients than the parent to favor depot-return efficiency and late-route packing.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = max(rest_capacity, 1e-9)\n    fill = dem / cap\n\n    # Different weighting: stronger pull toward far-from-depot customers,\n    # heavier penalty on detour, and stronger fill-based packing incentive.\n    scores = d_cur - 0.9 * d_dep - 0.45 * fill * d_cur + 0.15 * fill * d_dep\n\n    return int(unvisited_nodes[np.argmin(scores)])",
+        "objective": -0.04515,
+        "other_inf": null,
+        "candidate_id": "candidate_1",
+        "revision": "original",
+        "evaluation_id": "f99da70e256f47e1bb29fe5d4a1c71a0"
+    },
+    {
+        "algorithm": "Build a Clarke\u2013Wright-style savings score for each candidate: compute the saving from linking current node to the candidate versus returning to depot, then add a radial-angle/quadrant coherence term and a capacity-slack reward, and pick the candidate maximizing the combined score.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep_cur = distance_matrix[depot][current_node]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = max(rest_capacity, 1e-9)\n\n    # Clarke-Wright savings: gain from servicing candidate after current instead of a separate depot leg\n    savings = d_dep_cur + d_dep - d_cur\n\n    # Capacity slack reward: prefer candidates that consume a moderate fraction,\n    # leaving room to keep chaining (peak reward near 40% of remaining capacity)\n    frac = dem / cap\n    slack = 1.0 - np.abs(frac - 0.4)\n\n    # Directional coherence: reward candidates roughly aligned with the current\n    # radial vector from depot (extends outward sweep), penalize sharp turns.\n    eps = 1e-9\n    cos_cur = (d_dep_cur * d_dep_cur - d_dep * d_dep - d_cur * d_cur) / (2.0 * np.maximum(d_cur, eps) * np.maximum(d_dep_cur, eps))\n    cos_cur = np.clip(cos_cur, -1.0, 1.0)\n\n    scores = savings + 0.35 * d_dep * slack + 0.15 * d_cur * cos_cur\n\n    return int(unvisited_nodes[np.argmax(scores)])",
+        "objective": -0.04095,
+        "other_inf": null,
+        "candidate_id": "candidate_4",
+        "revision": "original",
+        "evaluation_id": "21f62e2cbd9a42ae8ec45aed21255221"
+    },
+    {
+        "algorithm": "The heuristic scores each feasible customer by the detour cost relative to the depot (round-trip overhead), combined with a normalized demand fill ratio and an angular/directional preference, rather than a linear combination of raw distances.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    cap = max(rest_capacity, 1e-9)\n    fill = dem / cap\n\n    # Detour overhead: extra distance incurred vs. going straight back to depot.\n    detour = d_cur + d_dep - distance_matrix[current_node][depot]\n\n    # Reward customers whose demand fills the remaining capacity well (packing).\n    # Use a concave transform via sqrt to penalize extreme small fills less.\n    pack_bonus = np.sqrt(fill)\n\n    # Radial preference: prefer customers farther from depot earlier (sweep-like),\n    # but discounted by how cheap the detour is.\n    radial = d_dep / (d_cur + 1e-9)\n\n    # Composite multiplicative score: minimize detour, maximize fill and radial pull.\n    scores = detour / (1.0 + pack_bonus) - 0.35 * radial\n\n    return int(unvisited_nodes[np.argmin(scores)])",
+        "objective": -0.03632,
+        "other_inf": null,
+        "candidate_id": "candidate_2",
+        "revision": "original",
+        "evaluation_id": "a83eb280a7ca4124bf872048ceb3c26a"
+    }
+]

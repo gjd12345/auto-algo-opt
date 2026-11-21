@@ -1,0 +1,8 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\n\n    Args:\n        current_node:    index of the current node (0 = depot)\n        depot:           index of the depot (always 0)\n        unvisited_nodes: array of feasible unvisited customer indices\n                         (already filtered to satisfy remaining capacity)\n        rest_capacity:   remaining vehicle capacity\n        demands:         demand of every node (index 0 = depot demand = 0)\n        distance_matrix: pairwise Euclidean distance matrix\n    Returns:\n        Index of the next node to visit, or 0 to return to the depot early.\n    \"\"\"\n    if unvisited_nodes.size == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Savings-like: prefer nodes that are close to current and far from depot,\n    # scaled slightly so demand can favor fuller loads without dominating distance.\n    demand_weight = 0.15 * (dem / max(rest_capacity, 1e-9))\n    scores = d_cur - 0.35 * d_dep - demand_weight * d_cur\n\n    return int(unvisited_nodes[np.argmin(scores)])",
+        "objective": -0.03569,
+        "other_inf": null
+    }
+]

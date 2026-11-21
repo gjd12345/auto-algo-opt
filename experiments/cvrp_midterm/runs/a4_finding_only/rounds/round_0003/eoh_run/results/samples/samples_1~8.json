@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "m2",
+        "algorithm": "Shift priority toward depot-distance savings and load utilization using scale-normalized distances, emphasizing filling capacity to reduce route count while keeping travel distance small.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    dm = distance_matrix\n    scale = float(np.max(d_dep)) if np.max(d_dep) > 0 else 1.0\n\n    d_cur_n = d_cur / scale\n    d_dep_n = d_dep / scale\n\n    # savings relative to depot roundtrip\n    savings_n = d_dep_n - d_cur_n\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = dem / cap  # fraction of remaining capacity this node fills\n\n    # Stronger weight on savings and capacity fill than the incumbent\n    score = 1.0 * d_cur_n - 0.9 * savings_n - 0.6 * util\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.02304
+    },
+    {
+        "sample_order": 2,
+        "operator": "e1",
+        "algorithm": "Use a Clarke-Wright-style savings ranking that selects the customer maximizing the depot round-trip savings relative to the current node, combined with a capacity-fill reward normalized by remaining demand mass, all computed in a span-invariant way.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Clarke-Wright style savings: serving this node from current instead of depot\n    savings = d_dep + distance_matrix[current_node][depot] - d_cur\n\n    # Span-invariant normalization: scale by max pairwise distance involving these nodes\n    dm = distance_matrix\n    span = float(np.max(d_dep)) + float(np.max(d_cur))\n    if span <= 0.0:\n        span = 1.0\n\n    savings_n = savings / span\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    total_dem = float(np.sum(dem)) if np.sum(dem) > 0 else 1.0\n\n    # Fraction of remaining demand mass this node represents\n    frac = dem / total_dem\n    # Utilization relative to remaining capacity (clipped to avoid extreme ratios)\n    util = np.clip(dem / cap, 0.0, 1.0)\n\n    # Rank customers by savings first, with mild utilization bonus to pack loads\n    score = -savings_n - 0.25 * util - 0.15 * frac\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.00646
+    },
+    {
+        "sample_order": 3,
+        "operator": "m1",
+        "algorithm": "Select the customer maximizing a span-normalized Clarke\u2013Wright savings term plus a slug of marginal depot-return savings, tempered by a capacity-fill incentive scaled by how much the remaining load would otherwise be wasted, to balance route shortening with efficient vehicle loading.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_home = distance_matrix[current_node][depot]\n\n    # Clarke-Wright saving: serving node now vs returning to depot then visiting it\n    savings = d_dep + d_home - d_cur\n\n    # Span-invariant scale (no absolute lengths): only span-proportional terms\n    span = float(np.max(d_dep)) + float(np.max(d_cur))\n    if span <= 0.0:\n        span = 1.0\n    savings_n = savings / span\n\n    # Marginal depot-return saving: arriving near depot late in a route is cheap\n    depot_pull = (d_home - d_cur) / span  # how much closer node is than depot\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    total_dem = float(np.sum(dem)) if np.sum(dem) > 0 else 1.0\n\n    # Capacity-fill incentive: reward filling the vehicle when load would be wasted\n    util = np.clip(dem / cap, 0.0, 1.0)\n    frac = dem / total_dem\n    # Wastage weight grows as remaining demand mass shrinks relative to capacity\n    fill = util * (0.5 + 0.5 * frac)\n\n    # Score: maximize savings and depot pull, add fill bonus (minimize negative)\n    score = -savings_n - 0.35 * depot_pull - 0.30 * fill\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.02874
+    },
+    {
+        "sample_order": 4,
+        "operator": "e1",
+        "algorithm": "Scale-normalized Clarke-Wright savings ratio: rank each candidate by its savings-per-unit-length against the current node, reweighted by how well its demand fits the remaining capacity relative to the average feasible demand, and pick the maximizer with a depot-return guard.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n\n    # Scale reference: max depot-customer distance (linear in instance scale)\n    scale = np.max(d_dep)\n    if scale <= 0:\n        scale = 1.0\n\n    d_cur_n = d_cur / scale\n    d_dep_n = d_dep / scale\n\n    # Clarke-Wright style savings, normalized by insertion length\n    savings = d_dep_n + d_dep_n - d_cur_n  # = 2*d_dep_n - d_cur_n\n    eps = 1e-9\n    savings_ratio = savings / (d_cur_n + eps)\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    mean_dem = np.mean(dem) if len(dem) > 0 else 1.0\n    if mean_dem <= 0:\n        mean_dem = 1.0\n    fit = 1.0 - np.abs(dem - cap * 0.5) / cap  # prefer mid-fill, then closer to full\n    # blend absolute fill fraction with relative demand consistency\n    util = dem / cap\n    fit_score = 0.5 * fit + 0.5 * util\n\n    # Priority: maximize savings ratio, boost by load fit\n    score = savings_ratio + 0.4 * fit_score\n\n    idx = int(np.argmax(score))\n    best = int(unvisited_nodes[idx])\n\n    # Guard: if returning to depot is cheaper than a detour, do so early\n    if d_cur_n[idx] > 2.0 * d_dep_n[idx]:\n        return depot\n\n    return best",
+        "objective": -0.00717
+    },
+    {
+        "sample_order": 5,
+        "operator": "m1",
+        "algorithm": "Select the node minimizing a scale-normalized blend of insertion cost relative to the current node and the depot roundtrip, discounted by the fraction of remaining capacity it fills, to favor capacity-filling detours with low travel overhead.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    d_ret = distance_matrix[unvisited_nodes][depot]\n\n    scale = float(np.max(d_dep) + np.max(d_cur))\n    if scale <= 0:\n        scale = 1.0\n\n    d_cur_n = d_cur / scale\n    d_dep_n = d_dep / scale\n    d_ret_n = d_ret / scale\n\n    # insertion cost: cost of inserting node between current and depot\n    insertion = d_cur_n + d_ret_n - d_dep_n\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = dem / cap\n\n    # blend insertion cost with direct distance, reward capacity fill\n    score = 0.6 * d_cur_n + 0.4 * insertion - 0.7 * util\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": null
+    },
+    {
+        "sample_order": 6,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

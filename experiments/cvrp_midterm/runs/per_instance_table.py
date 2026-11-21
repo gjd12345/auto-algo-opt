@@ -55,7 +55,12 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         paths = dict(CANDIDATES)
-        for arm in ("control", "finding_only", "operations_only", "guided"):
+        # Arm names differ per batch (a4/a5 call the fourth arm ``full_guidance``),
+        # so read them off the comparison report instead of hard-coding a roster.
+        report = json.loads((HERE / f"compare_{BATCH}.json").read_text(encoding="utf-8"))
+        for arm in report:
+            if arm in paths:
+                continue
             found = arm_best(arm)
             if found is not None:
                 paths[arm] = found[0]

@@ -1,0 +1,58 @@
+[
+    {
+        "sample_order": 1,
+        "operator": "e1",
+        "algorithm": "Use a Clarke-Wright-style savings score that rewards the detour reduction relative to the best alternative connection (nearest-neighbor distance), modulated by a capacity-fill ratio and a depot-return timing term, so the choice balances route elongation, load utilization, and when to close the tour.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    dm = distance_matrix\n    d_cur = dm[current_node][unvisited_nodes]\n    d_dep = dm[depot][unvisited_nodes]\n    dem = demands[unvisited_nodes].astype(float)\n\n    # Representative length scale (scale-invariant under uniform rescaling).\n    scale = np.max(d_dep) if np.max(d_dep) > 0 else 1.0\n\n    # Distance from this candidate to its own nearest other unvisited node:\n    # proxy for the best cheap continuation if we pick it now.\n    sub = dm[np.ix_(unvisited_nodes, unvisited_nodes)]\n    np.fill_diagonal(sub, np.inf)\n    nearest_next = np.min(sub, axis=1)\n    nearest_next = np.where(np.isfinite(nearest_next), nearest_next, d_dep)\n\n    # Detour cost: extra distance incurred by inserting in the current chain\n    # vs. directly jumping to the candidate's own nearest follower.\n    detour = (d_cur + nearest_next) - d_dep\n    detour_n = detour / scale\n\n    # Clarke-Wright saving relative to serving this node from the depot.\n    saving_n = (d_dep - d_cur) / scale\n\n    # Capacity fill ratio: how much of the remaining capacity this fills.\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    fill = dem / cap\n    fill = np.clip(fill, 0.0, 1.0)\n\n    # Depot-return pressure: if little capacity remains, prefer closing soon.\n    pressure = 1.0 - fill.mean() if fill.size > 0 else 0.0\n    pressure = 0.0  # keep per-node, computed below\n\n    # Per-node closing bonus: prefer nodes that leave the vehicle nearly full.\n    residual_after = rest_capacity - dem\n    residual_ratio = np.clip(residual_after / cap, 0.0, 1.0)\n\n    # Composite score (lower is better): small detour, big saving,\n    # high fill, and prefer allocating capacity to larger-demand nodes.\n    score = 1.0 * detour_n - 0.6 * saving_n + 0.7 * residual_ratio - 0.5 * fill\n\n    # Tie-break: among near-ties, break by smaller current distance\n    # (scale-invariant because distance and score share scaling).\n    best_val = np.min(score)\n    span = np.max(score) - np.min(score) if score.size > 1 else 0.0\n    tol = 1e-9 * (span + 1.0)\n    cand_mask = score <= best_val + tol\n    if np.count_nonzero(cand_mask) > 1:\n        # use normalized current distance among ties\n        d_cur_n = d_cur / scale\n        tie_idx = np.argmin(np.where(cand_mask, d_cur_n, np.inf))\n        return int(unvisited_nodes[tie_idx])\n\n    return int(unvisited_nodes[np.argmin(score)])",
+        "objective": null
+    },
+    {
+        "sample_order": 2,
+        "operator": "m1",
+        "algorithm": "Replace the linear savings/load score with a scale-invariant angular-plus-detour priority: rank candidates by the detour overhead d(cur,node)+d(node,depot)-d(cur,depot) normalized by depot distance, penalized by a capacity-fill term, encouraging nodes that both save distance and pack the vehicle.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    dm = distance_matrix\n    d_cur = dm[current_node][unvisited_nodes]\n    d_dep = dm[depot][unvisited_nodes]\n    d_cd = dm[current_node][depot]\n\n    # Scale reference: max depot-customer distance (linear in coordinates -> scale invariant ratios)\n    ref = float(np.max(d_dep)) if len(d_dep) > 0 else 0.0\n    if ref <= 0.0:\n        ref = 1.0\n\n    # Detour overhead: extra distance paid by inserting this node now\n    detour = d_cur + d_dep - d_cd\n    detour_n = detour / ref\n\n    # Capacity fill: prefer nodes that make good use of remaining capacity\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = dem / cap  # in (0, 1]\n\n    # Angular consistency: closer to straight-out direction from depot is better\n    # cos of angle between (depot->current) and (depot->node) as a soft alignment term.\n    # d_cd may be 0 at start; guard it.\n    if d_cd > 0.0:\n        vec_cur = dm[current_node][depot]  # scalar distance already\n        # Use law of cosines: cos = (d_cd^2 + d_dep^2 - d_cur^2) / (2*d_cd*d_dep)\n        denom = 2.0 * d_cd * d_dep\n        denom = np.where(denom > 0, denom, 1.0)\n        cosang = (d_cd * d_cd + d_dep * d_dep - d_cur * d_cur) / denom\n        cosang = np.clip(cosang, -1.0, 1.0)\n    else:\n        cosang = np.zeros_like(d_dep)\n\n    # Priority: low detour, high alignment (cos ~ 1), good capacity fill\n    score = 1.0 * detour_n - 0.25 * cosang - 0.35 * util\n\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": 0.08337
+    },
+    {
+        "sample_order": 3,
+        "operator": "e2",
+        "algorithm": "Both parents greedily rank feasible customers by a scale-normalized blend of insertion-cost/savings, depot-distance alignment, and capacity-fill; the new rule replaces the additive blend with a lexicographic cascade (primary: scale-free \"radial progress\" ratio d(cur,node)/d(depot,node) to sweep outward while curving toward the depot ring, secondary: capacity-fill tiebreak, tertiary: nearest-node distance), so the decision is a strict ordered filter rather than one weighted sum.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    dm = distance_matrix\n    d_cur = dm[current_node][unvisited_nodes].astype(float)\n    d_dep = dm[depot][unvisited_nodes].astype(float)\n\n    # Scale-invariant ratio: ratio of step length to depot distance.\n    # Small ratio => node lies near the current \"ring\", moving tangentially or inward.\n    safe_dep = np.where(d_dep > 0.0, d_dep, 1.0)\n    radial = d_cur / safe_dep\n\n    # Hierarchical lexicographic order implemented by rounding to coarse bins,\n    # then tie-breaking on capacity utilization, then raw closeness.\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = dem / cap\n\n    # Primary key: coarse-binned radial ratio (bins of width 0.15 keep ties meaningful)\n    primary = np.round(radial / 0.15)\n    # Secondary: prefer higher utilization => use negative\n    secondary = -util\n    # Tertiary: nearest first\n    tertiary = d_cur\n\n    # Lexicographic combination via large-magnitude offsets (all bounded arrays)\n    score = primary * 1e6 + secondary * 1e3 + tertiary\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.03333
+    },
+    {
+        "sample_order": 4,
+        "operator": "m2",
+        "algorithm": "Use a lexicographic cascade with a coarser radial-ratio bin (0.30) as the primary key, a reversed capacity-fill tiebreak weighted more heavily, and a depot-return bias for near-capacity loads to consolidate routes.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    dm = distance_matrix\n    d_cur = dm[current_node][unvisited_nodes].astype(float)\n    d_dep = dm[depot][unvisited_nodes].astype(float)\n\n    safe_dep = np.where(d_dep > 0.0, d_dep, 1.0)\n    radial = d_cur / safe_dep\n\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = dem / cap\n    load_frac = 1.0 - util  # higher => smaller remaining load after visit (more fill)\n\n    # Primary: coarser bins of width 0.30 -> wider tiers, fewer micro-decisions\n    primary = np.round(radial / 0.30)\n    # Secondary: prefer larger fill (subtract load fraction so bigger fill -> smaller score)\n    secondary = -load_frac\n    # Tertiary: nearest first\n    tertiary = d_cur\n\n    score = primary * 1e6 + secondary * 5e2 + tertiary\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": 0.0851
+    },
+    {
+        "sample_order": 5,
+        "operator": "m2",
+        "algorithm": "Use a smooth weighted sum with scale-normalized features: nearest-distance normalized by mean distance to unvisited, a radial-progress ratio d(cur,node)/(d(depot,node)+eps), and capacity-fill, combined with weights (0.5, 0.3, 0.2) so no coarse binning is needed and the rule is scale-invariant.",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    \"\"\"Select the next node to visit in a CVRP greedy construction.\"\"\"\n    if len(unvisited_nodes) == 0:\n        return depot\n\n    dm = distance_matrix\n    d_cur = dm[current_node][unvisited_nodes].astype(float)\n    d_dep = dm[depot][unvisited_nodes].astype(float)\n\n    # Scale-normalized nearest-distance feature in [0,1].\n    scale = float(np.mean(d_cur)) if len(d_cur) > 0 else 1.0\n    if scale <= 0.0:\n        scale = 1.0\n    near = d_cur / scale\n\n    # Scale-invariant radial progress ratio in [0,1]-ish.\n    safe_dep = np.where(d_dep > 0.0, d_dep, 1.0)\n    radial = d_cur / safe_dep\n    rmax = float(np.max(radial)) if len(radial) > 0 else 1.0\n    if rmax <= 0.0:\n        rmax = 1.0\n    radial_n = radial / rmax\n\n    # Capacity fill in [0,1].\n    dem = demands[unvisited_nodes].astype(float)\n    cap = float(rest_capacity) if rest_capacity > 0 else 1.0\n    util = np.clip(dem / cap, 0.0, 1.0)\n\n    # Smooth weighted sum (lower is better).\n    score = 0.5 * near + 0.3 * radial_n - 0.2 * util\n    idx = np.argmin(score)\n    return int(unvisited_nodes[idx])",
+        "objective": -0.03947
+    },
+    {
+        "sample_order": 6,
+        "operator": "e1",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 7,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    },
+    {
+        "sample_order": 8,
+        "operator": "e2",
+        "algorithm": null,
+        "code": null,
+        "objective": null
+    }
+]

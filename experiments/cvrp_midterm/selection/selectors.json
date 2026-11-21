@@ -19,6 +19,7 @@
           "selector": "fixed_best_sbs",
           "total_objective": 1274.1252,
           "gap_to_vbs": 0.016261,
+          "gain_vs_fixed": 0.0,
           "mean_regret": 0.017725,
           "worst_regret": 0.139702,
           "picks": {
@@ -37,12 +38,14 @@
             "uniform_eccentric_loose": 0.022865,
             "uniform_eccentric_tight": 0.003222
           },
-          "algorithm": "savings"
+          "algorithm": "savings",
+          "design": "none"
         },
         {
           "selector": "knn1_loo",
           "total_objective": 1293.2543,
           "gap_to_vbs": 0.031518,
+          "gain_vs_fixed": -0.015013,
           "mean_regret": 0.033956,
           "worst_regret": 0.241948,
           "picks": {
@@ -60,12 +63,14 @@
             "uniform_centre_tight": 0.033113,
             "uniform_eccentric_loose": 0.043651,
             "uniform_eccentric_tight": 0.006871
-          }
+          },
+          "design": "1-nearest-neighbour on pre-solve features"
         },
         {
           "selector": "ridge_loo",
           "total_objective": 1277.0346,
           "gap_to_vbs": 0.018581,
+          "gain_vs_fixed": -0.002283,
           "mean_regret": 0.02054,
           "worst_regret": 0.225202,
           "picks": {
@@ -83,12 +88,39 @@
             "uniform_centre_tight": 0.011658,
             "uniform_eccentric_loose": 0.019338,
             "uniform_eccentric_tight": 0.003222
-          }
+          },
+          "design": "one ridge per rule, argmin of predictions"
+        },
+        {
+          "selector": "pairwise_loo",
+          "total_objective": 1279.0215,
+          "gap_to_vbs": 0.020166,
+          "gain_vs_fixed": -0.003843,
+          "mean_regret": 0.022346,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 0,
+            "savings": 79,
+            "dd_load": 17,
+            "radial": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.044128,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.025783,
+            "clustered_eccentric_tight": 0.009469,
+            "uniform_centre_loose": 0.057046,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.020267,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "one ridge per pair on the win sign, vote by pairwise wins"
         },
         {
           "selector": "ridge_loro",
           "total_objective": 1280.8231,
           "gap_to_vbs": 0.021603,
+          "gain_vs_fixed": -0.005257,
           "mean_regret": 0.02351,
           "worst_regret": 0.225202,
           "picks": {
@@ -107,6 +139,7 @@
             "uniform_eccentric_loose": 0.022865,
             "uniform_eccentric_tight": 0.003222
           },
+          "design": "ridge trained on seven cells, scored on the eighth",
           "per_held_out_cell": {
             "clustered_centre_loose": {
               "instances": 12,
@@ -189,194 +222,40 @@
               }
             }
           }
-        }
-      ],
-      "per_cell": {
-        "clustered_centre_loose": {
-          "instances": 12,
-          "vbs": 90.7746,
-          "sbs": 93.3384,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.028245
         },
-        "clustered_centre_tight": {
-          "instances": 12,
-          "vbs": 134.0466,
-          "sbs": 136.2132,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.016163
-        },
-        "clustered_eccentric_loose": {
-          "instances": 12,
-          "vbs": 146.3305,
-          "sbs": 150.3326,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.02735
-        },
-        "clustered_eccentric_tight": {
-          "instances": 12,
-          "vbs": 193.184,
-          "sbs": 195.0132,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.009469
-        },
-        "uniform_centre_loose": {
-          "instances": 12,
-          "vbs": 131.0525,
-          "sbs": 134.4089,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.025611
-        },
-        "uniform_centre_tight": {
-          "instances": 12,
-          "vbs": 162.8968,
-          "sbs": 164.7959,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.011658
-        },
-        "uniform_eccentric_loose": {
-          "instances": 12,
-          "vbs": 167.7665,
-          "sbs": 171.6025,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.022865
-        },
-        "uniform_eccentric_tight": {
-          "instances": 12,
-          "vbs": 227.6869,
-          "sbs": 228.4204,
-          "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.003222
-        }
-      }
-    },
-    "extended": {
-      "portfolio": "extended",
-      "members": [
-        "nn",
-        "savings",
-        "dd_load",
-        "radial",
-        "isolate",
-        "load_fill"
-      ],
-      "instances": 96,
-      "vbs_total": 1253.7384,
-      "sbs_total": 1274.1252,
-      "sbs_algorithm": "savings",
-      "sbs_gap_to_vbs": 0.016261,
-      "selectors": [
         {
-          "selector": "fixed_best_sbs",
-          "total_objective": 1274.1252,
-          "gap_to_vbs": 0.016261,
-          "mean_regret": 0.017725,
-          "worst_regret": 0.139702,
+          "selector": "pairwise_loro",
+          "total_objective": 1282.1584,
+          "gap_to_vbs": 0.022668,
+          "gain_vs_fixed": -0.006305,
+          "mean_regret": 0.025822,
+          "worst_regret": 0.225202,
           "picks": {
             "nn": 0,
-            "savings": 96,
-            "dd_load": 0,
-            "radial": 0,
-            "isolate": 0,
-            "load_fill": 0
-          },
-          "per_cell_gap": {
-            "clustered_centre_loose": 0.028245,
-            "clustered_centre_tight": 0.016163,
-            "clustered_eccentric_loose": 0.02735,
-            "clustered_eccentric_tight": 0.009469,
-            "uniform_centre_loose": 0.025611,
-            "uniform_centre_tight": 0.011658,
-            "uniform_eccentric_loose": 0.022865,
-            "uniform_eccentric_tight": 0.003222
-          },
-          "algorithm": "savings"
-        },
-        {
-          "selector": "knn1_loo",
-          "total_objective": 1293.2543,
-          "gap_to_vbs": 0.031518,
-          "mean_regret": 0.033956,
-          "worst_regret": 0.241948,
-          "picks": {
-            "nn": 12,
-            "savings": 54,
+            "savings": 75,
             "dd_load": 20,
-            "radial": 10,
-            "isolate": 0,
-            "load_fill": 0
+            "radial": 1
           },
           "per_cell_gap": {
-            "clustered_centre_loose": 0.054357,
-            "clustered_centre_tight": 0.016292,
-            "clustered_eccentric_loose": 0.042558,
-            "clustered_eccentric_tight": 0.025798,
-            "uniform_centre_loose": 0.052689,
-            "uniform_centre_tight": 0.033113,
-            "uniform_eccentric_loose": 0.043651,
-            "uniform_eccentric_tight": 0.006871
-          }
-        },
-        {
-          "selector": "ridge_loo",
-          "total_objective": 1277.0346,
-          "gap_to_vbs": 0.018581,
-          "mean_regret": 0.02054,
-          "worst_regret": 0.225202,
-          "picks": {
-            "nn": 2,
-            "savings": 84,
-            "dd_load": 8,
-            "radial": 2,
-            "isolate": 0,
-            "load_fill": 0
-          },
-          "per_cell_gap": {
-            "clustered_centre_loose": 0.043592,
-            "clustered_centre_tight": 0.017161,
-            "clustered_eccentric_loose": 0.033237,
-            "clustered_eccentric_tight": 0.011697,
-            "uniform_centre_loose": 0.030818,
-            "uniform_centre_tight": 0.011658,
-            "uniform_eccentric_loose": 0.019338,
-            "uniform_eccentric_tight": 0.003222
-          }
-        },
-        {
-          "selector": "ridge_loro",
-          "total_objective": 1280.8231,
-          "gap_to_vbs": 0.021603,
-          "mean_regret": 0.02351,
-          "worst_regret": 0.225202,
-          "picks": {
-            "nn": 2,
-            "savings": 76,
-            "dd_load": 15,
-            "radial": 3,
-            "isolate": 0,
-            "load_fill": 0
-          },
-          "per_cell_gap": {
-            "clustered_centre_loose": 0.057826,
+            "clustered_centre_loose": 0.06,
             "clustered_centre_tight": 0.016163,
-            "clustered_eccentric_loose": 0.038713,
-            "clustered_eccentric_tight": 0.026415,
-            "uniform_centre_loose": 0.018561,
-            "uniform_centre_tight": 0.011658,
+            "clustered_eccentric_loose": 0.032518,
+            "clustered_eccentric_tight": 0.009469,
+            "uniform_centre_loose": 0.057046,
+            "uniform_centre_tight": 0.013344,
             "uniform_eccentric_loose": 0.022865,
             "uniform_eccentric_tight": 0.003222
           },
+          "design": "pairwise votes trained on seven cells, scored on the eighth",
           "per_held_out_cell": {
             "clustered_centre_loose": {
               "instances": 12,
-              "gap_to_vbs": 0.057826,
+              "gap_to_vbs": 0.06,
               "picks": {
                 "nn": 0,
                 "savings": 5,
                 "dd_load": 7,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
               }
             },
             "clustered_centre_tight": {
@@ -386,57 +265,47 @@
                 "nn": 0,
                 "savings": 12,
                 "dd_load": 0,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
               }
             },
             "clustered_eccentric_loose": {
               "instances": 12,
-              "gap_to_vbs": 0.038713,
-              "picks": {
-                "nn": 1,
-                "savings": 8,
-                "dd_load": 3,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
-              }
-            },
-            "clustered_eccentric_tight": {
-              "instances": 12,
-              "gap_to_vbs": 0.026415,
-              "picks": {
-                "nn": 1,
-                "savings": 8,
-                "dd_load": 0,
-                "radial": 3,
-                "isolate": 0,
-                "load_fill": 0
-              }
-            },
-            "uniform_centre_loose": {
-              "instances": 12,
-              "gap_to_vbs": 0.018561,
+              "gap_to_vbs": 0.032518,
               "picks": {
                 "nn": 0,
                 "savings": 7,
                 "dd_load": 5,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
               }
             },
-            "uniform_centre_tight": {
+            "clustered_eccentric_tight": {
               "instances": 12,
-              "gap_to_vbs": 0.011658,
+              "gap_to_vbs": 0.009469,
               "picks": {
                 "nn": 0,
                 "savings": 12,
                 "dd_load": 0,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.057046,
+              "picks": {
+                "nn": 0,
+                "savings": 4,
+                "dd_load": 8,
+                "radial": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.013344,
+              "picks": {
+                "nn": 0,
+                "savings": 11,
+                "dd_load": 0,
+                "radial": 1
               }
             },
             "uniform_eccentric_loose": {
@@ -446,9 +315,7 @@
                 "nn": 0,
                 "savings": 12,
                 "dd_load": 0,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
               }
             },
             "uniform_eccentric_tight": {
@@ -458,9 +325,7 @@
                 "nn": 0,
                 "savings": 12,
                 "dd_load": 0,
-                "radial": 0,
-                "isolate": 0,
-                "load_fill": 0
+                "radial": 0
               }
             }
           }
@@ -472,56 +337,1102 @@
           "vbs": 90.7746,
           "sbs": 93.3384,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.028245
+          "sbs_gap_to_vbs": 0.028245,
+          "mean_objective": {
+            "nn": 8.4162,
+            "savings": 7.7782,
+            "dd_load": 8.2163,
+            "radial": 8.3903
+          }
         },
         "clustered_centre_tight": {
           "instances": 12,
           "vbs": 134.0466,
           "sbs": 136.2132,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.016163
+          "sbs_gap_to_vbs": 0.016163,
+          "mean_objective": {
+            "nn": 12.0951,
+            "savings": 11.3511,
+            "dd_load": 12.0964,
+            "radial": 11.6232
+          }
         },
         "clustered_eccentric_loose": {
           "instances": 12,
           "vbs": 146.3305,
           "sbs": 150.3326,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.02735
+          "sbs_gap_to_vbs": 0.02735,
+          "mean_objective": {
+            "nn": 13.5082,
+            "savings": 12.5277,
+            "dd_load": 13.0942,
+            "radial": 12.7489
+          }
         },
         "clustered_eccentric_tight": {
           "instances": 12,
           "vbs": 193.184,
           "sbs": 195.0132,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.009469
+          "sbs_gap_to_vbs": 0.009469,
+          "mean_objective": {
+            "nn": 17.5837,
+            "savings": 16.2511,
+            "dd_load": 17.9801,
+            "radial": 16.8358
+          }
         },
         "uniform_centre_loose": {
           "instances": 12,
           "vbs": 131.0525,
           "sbs": 134.4089,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.025611
+          "sbs_gap_to_vbs": 0.025611,
+          "mean_objective": {
+            "nn": 12.0877,
+            "savings": 11.2007,
+            "dd_load": 11.517,
+            "radial": 12.2049
+          }
         },
         "uniform_centre_tight": {
           "instances": 12,
           "vbs": 162.8968,
           "sbs": 164.7959,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.011658
+          "sbs_gap_to_vbs": 0.011658,
+          "mean_objective": {
+            "nn": 15.108,
+            "savings": 13.733,
+            "dd_load": 15.4763,
+            "radial": 14.553
+          }
         },
         "uniform_eccentric_loose": {
           "instances": 12,
           "vbs": 167.7665,
           "sbs": 171.6025,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.022865
+          "sbs_gap_to_vbs": 0.022865,
+          "mean_objective": {
+            "nn": 15.3588,
+            "savings": 14.3002,
+            "dd_load": 14.512,
+            "radial": 15.0948
+          }
         },
         "uniform_eccentric_tight": {
           "instances": 12,
           "vbs": 227.6869,
           "sbs": 228.4204,
           "sbs_algorithm": "savings",
-          "sbs_gap_to_vbs": 0.003222
+          "sbs_gap_to_vbs": 0.003222,
+          "mean_objective": {
+            "nn": 21.012,
+            "savings": 19.035,
+            "dd_load": 20.7284,
+            "radial": 19.406
+          }
+        }
+      }
+    },
+    "with_c": {
+      "portfolio": "with_c",
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "c"
+      ],
+      "instances": 96,
+      "vbs_total": 1248.5157,
+      "sbs_total": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.020512,
+      "selectors": [
+        {
+          "selector": "fixed_best_sbs",
+          "total_objective": 1274.1252,
+          "gap_to_vbs": 0.020512,
+          "gain_vs_fixed": 0.0,
+          "mean_regret": 0.02272,
+          "worst_regret": 0.139702,
+          "picks": {
+            "nn": 0,
+            "savings": 96,
+            "dd_load": 0,
+            "radial": 0,
+            "c": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.03858,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.02735,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.047652,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "algorithm": "savings",
+          "design": "none"
+        },
+        {
+          "selector": "knn1_loo",
+          "total_objective": 1296.2423,
+          "gap_to_vbs": 0.038227,
+          "gain_vs_fixed": -0.017359,
+          "mean_regret": 0.041478,
+          "worst_regret": 0.241948,
+          "picks": {
+            "nn": 11,
+            "savings": 51,
+            "dd_load": 17,
+            "radial": 10,
+            "c": 7
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.064955,
+            "clustered_centre_tight": 0.013101,
+            "clustered_eccentric_loose": 0.042558,
+            "clustered_eccentric_tight": 0.026704,
+            "uniform_centre_loose": 0.076925,
+            "uniform_centre_tight": 0.053001,
+            "uniform_eccentric_loose": 0.052198,
+            "uniform_eccentric_tight": 0.006871
+          },
+          "design": "1-nearest-neighbour on pre-solve features"
+        },
+        {
+          "selector": "ridge_loo",
+          "total_objective": 1278.6321,
+          "gap_to_vbs": 0.024122,
+          "gain_vs_fixed": -0.003537,
+          "mean_regret": 0.027716,
+          "worst_regret": 0.200273,
+          "picks": {
+            "nn": 1,
+            "savings": 79,
+            "dd_load": 6,
+            "radial": 2,
+            "c": 8
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.06093,
+            "clustered_centre_tight": 0.017161,
+            "clustered_eccentric_loose": 0.032794,
+            "clustered_eccentric_tight": 0.012591,
+            "uniform_centre_loose": 0.061128,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.025889,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "one ridge per rule, argmin of predictions"
+        },
+        {
+          "selector": "pairwise_loo",
+          "total_objective": 1280.4938,
+          "gap_to_vbs": 0.025613,
+          "gain_vs_fixed": -0.004998,
+          "mean_regret": 0.029301,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 0,
+            "savings": 83,
+            "dd_load": 8,
+            "radial": 0,
+            "c": 5
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.083429,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.032034,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.060531,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "one ridge per pair on the win sign, vote by pairwise wins"
+        },
+        {
+          "selector": "ridge_loro",
+          "total_objective": 1281.9779,
+          "gap_to_vbs": 0.026802,
+          "gain_vs_fixed": -0.006163,
+          "mean_regret": 0.031329,
+          "worst_regret": 0.270601,
+          "picks": {
+            "nn": 2,
+            "savings": 71,
+            "dd_load": 13,
+            "radial": 3,
+            "c": 7
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.082029,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.03827,
+            "clustered_eccentric_tight": 0.027322,
+            "uniform_centre_loose": 0.04045,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "ridge trained on seven cells, scored on the eighth",
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.082029,
+              "picks": {
+                "nn": 0,
+                "savings": 2,
+                "dd_load": 5,
+                "radial": 0,
+                "c": 5
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.03827,
+              "picks": {
+                "nn": 1,
+                "savings": 6,
+                "dd_load": 3,
+                "radial": 0,
+                "c": 2
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.027322,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 0,
+                "radial": 3,
+                "c": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.04045,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 5,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.013652,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.029439,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            }
+          }
+        },
+        {
+          "selector": "pairwise_loro",
+          "total_objective": 1281.4924,
+          "gap_to_vbs": 0.026413,
+          "gain_vs_fixed": -0.005782,
+          "mean_regret": 0.030421,
+          "worst_regret": 0.222458,
+          "picks": {
+            "nn": 0,
+            "savings": 76,
+            "dd_load": 13,
+            "radial": 1,
+            "c": 6
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.070525,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.03806,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.06834,
+            "uniform_centre_tight": 0.015341,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "pairwise votes trained on seven cells, scored on the eighth",
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.070525,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 3,
+                "radial": 0,
+                "c": 4
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.03806,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 3,
+                "radial": 0,
+                "c": 2
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.01036,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.06834,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 7,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.015341,
+              "picks": {
+                "nn": 0,
+                "savings": 11,
+                "dd_load": 0,
+                "radial": 1,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.029439,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "c": 0
+              }
+            }
+          }
+        }
+      ],
+      "per_cell": {
+        "clustered_centre_loose": {
+          "instances": 12,
+          "vbs": 89.8713,
+          "sbs": 93.3384,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.03858,
+          "mean_objective": {
+            "nn": 8.4162,
+            "savings": 7.7782,
+            "dd_load": 8.2163,
+            "radial": 8.3903,
+            "c": 8.3512
+          }
+        },
+        "clustered_centre_tight": {
+          "instances": 12,
+          "vbs": 134.0466,
+          "sbs": 136.2132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.016163,
+          "mean_objective": {
+            "nn": 12.0951,
+            "savings": 11.3511,
+            "dd_load": 12.0964,
+            "radial": 11.6232,
+            "c": 12.6176
+          }
+        },
+        "clustered_eccentric_loose": {
+          "instances": 12,
+          "vbs": 146.3305,
+          "sbs": 150.3326,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.02735,
+          "mean_objective": {
+            "nn": 13.5082,
+            "savings": 12.5277,
+            "dd_load": 13.0942,
+            "radial": 12.7489,
+            "c": 13.2425
+          }
+        },
+        "clustered_eccentric_tight": {
+          "instances": 12,
+          "vbs": 193.0135,
+          "sbs": 195.0132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.01036,
+          "mean_objective": {
+            "nn": 17.5837,
+            "savings": 16.2511,
+            "dd_load": 17.9801,
+            "radial": 16.8358,
+            "c": 17.7944
+          }
+        },
+        "uniform_centre_loose": {
+          "instances": 12,
+          "vbs": 128.2954,
+          "sbs": 133.4194,
+          "sbs_algorithm": "c",
+          "sbs_gap_to_vbs": 0.039939,
+          "mean_objective": {
+            "nn": 12.0877,
+            "savings": 11.2007,
+            "dd_load": 11.517,
+            "radial": 12.2049,
+            "c": 11.1183
+          }
+        },
+        "uniform_centre_tight": {
+          "instances": 12,
+          "vbs": 162.5763,
+          "sbs": 164.7959,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.013652,
+          "mean_objective": {
+            "nn": 15.108,
+            "savings": 13.733,
+            "dd_load": 15.4763,
+            "radial": 14.553,
+            "c": 14.924
+          }
+        },
+        "uniform_eccentric_loose": {
+          "instances": 12,
+          "vbs": 166.6951,
+          "sbs": 171.6025,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.029439,
+          "mean_objective": {
+            "nn": 15.3588,
+            "savings": 14.3002,
+            "dd_load": 14.512,
+            "radial": 15.0948,
+            "c": 15.0853
+          }
+        },
+        "uniform_eccentric_tight": {
+          "instances": 12,
+          "vbs": 227.6869,
+          "sbs": 228.4204,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.003222,
+          "mean_objective": {
+            "nn": 21.012,
+            "savings": 19.035,
+            "dd_load": 20.7284,
+            "radial": 19.406,
+            "c": 21.2187
+          }
+        }
+      }
+    },
+    "extended_c": {
+      "portfolio": "extended_c",
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill",
+        "c"
+      ],
+      "instances": 96,
+      "vbs_total": 1248.5157,
+      "sbs_total": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.020512,
+      "selectors": [
+        {
+          "selector": "fixed_best_sbs",
+          "total_objective": 1274.1252,
+          "gap_to_vbs": 0.020512,
+          "gain_vs_fixed": 0.0,
+          "mean_regret": 0.02272,
+          "worst_regret": 0.139702,
+          "picks": {
+            "nn": 0,
+            "savings": 96,
+            "dd_load": 0,
+            "radial": 0,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.03858,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.02735,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.047652,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "algorithm": "savings",
+          "design": "none"
+        },
+        {
+          "selector": "knn1_loo",
+          "total_objective": 1296.2423,
+          "gap_to_vbs": 0.038227,
+          "gain_vs_fixed": -0.017359,
+          "mean_regret": 0.041478,
+          "worst_regret": 0.241948,
+          "picks": {
+            "nn": 11,
+            "savings": 51,
+            "dd_load": 17,
+            "radial": 10,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 7
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.064955,
+            "clustered_centre_tight": 0.013101,
+            "clustered_eccentric_loose": 0.042558,
+            "clustered_eccentric_tight": 0.026704,
+            "uniform_centre_loose": 0.076925,
+            "uniform_centre_tight": 0.053001,
+            "uniform_eccentric_loose": 0.052198,
+            "uniform_eccentric_tight": 0.006871
+          },
+          "design": "1-nearest-neighbour on pre-solve features"
+        },
+        {
+          "selector": "ridge_loo",
+          "total_objective": 1278.6321,
+          "gap_to_vbs": 0.024122,
+          "gain_vs_fixed": -0.003537,
+          "mean_regret": 0.027716,
+          "worst_regret": 0.200273,
+          "picks": {
+            "nn": 1,
+            "savings": 79,
+            "dd_load": 6,
+            "radial": 2,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 8
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.06093,
+            "clustered_centre_tight": 0.017161,
+            "clustered_eccentric_loose": 0.032794,
+            "clustered_eccentric_tight": 0.012591,
+            "uniform_centre_loose": 0.061128,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.025889,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "one ridge per rule, argmin of predictions"
+        },
+        {
+          "selector": "pairwise_loo",
+          "total_objective": 1280.4938,
+          "gap_to_vbs": 0.025613,
+          "gain_vs_fixed": -0.004998,
+          "mean_regret": 0.029301,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 0,
+            "savings": 83,
+            "dd_load": 8,
+            "radial": 0,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 5
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.083429,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.032034,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.060531,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "one ridge per pair on the win sign, vote by pairwise wins"
+        },
+        {
+          "selector": "ridge_loro",
+          "total_objective": 1281.9779,
+          "gap_to_vbs": 0.026802,
+          "gain_vs_fixed": -0.006163,
+          "mean_regret": 0.031329,
+          "worst_regret": 0.270601,
+          "picks": {
+            "nn": 2,
+            "savings": 71,
+            "dd_load": 13,
+            "radial": 3,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 7
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.082029,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.03827,
+            "clustered_eccentric_tight": 0.027322,
+            "uniform_centre_loose": 0.04045,
+            "uniform_centre_tight": 0.013652,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "ridge trained on seven cells, scored on the eighth",
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.082029,
+              "picks": {
+                "nn": 0,
+                "savings": 2,
+                "dd_load": 5,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 5
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.03827,
+              "picks": {
+                "nn": 1,
+                "savings": 6,
+                "dd_load": 3,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 2
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.027322,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 0,
+                "radial": 3,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.04045,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 5,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.013652,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.029439,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            }
+          }
+        },
+        {
+          "selector": "pairwise_loro",
+          "total_objective": 1281.4924,
+          "gap_to_vbs": 0.026413,
+          "gain_vs_fixed": -0.005782,
+          "mean_regret": 0.030421,
+          "worst_regret": 0.222458,
+          "picks": {
+            "nn": 0,
+            "savings": 76,
+            "dd_load": 13,
+            "radial": 1,
+            "isolate": 0,
+            "load_fill": 0,
+            "c": 6
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.070525,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.03806,
+            "clustered_eccentric_tight": 0.01036,
+            "uniform_centre_loose": 0.06834,
+            "uniform_centre_tight": 0.015341,
+            "uniform_eccentric_loose": 0.029439,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "design": "pairwise votes trained on seven cells, scored on the eighth",
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.070525,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 3,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 4
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.03806,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 3,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 2
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.01036,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.06834,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 7,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.015341,
+              "picks": {
+                "nn": 0,
+                "savings": 11,
+                "dd_load": 0,
+                "radial": 1,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.029439,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0,
+                "c": 0
+              }
+            }
+          }
+        }
+      ],
+      "per_cell": {
+        "clustered_centre_loose": {
+          "instances": 12,
+          "vbs": 89.8713,
+          "sbs": 93.3384,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.03858,
+          "mean_objective": {
+            "nn": 8.4162,
+            "savings": 7.7782,
+            "dd_load": 8.2163,
+            "radial": 8.3903,
+            "isolate": 10.7735,
+            "load_fill": 14.3464,
+            "c": 8.3512
+          }
+        },
+        "clustered_centre_tight": {
+          "instances": 12,
+          "vbs": 134.0466,
+          "sbs": 136.2132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.016163,
+          "mean_objective": {
+            "nn": 12.0951,
+            "savings": 11.3511,
+            "dd_load": 12.0964,
+            "radial": 11.6232,
+            "isolate": 14.924,
+            "load_fill": 16.3311,
+            "c": 12.6176
+          }
+        },
+        "clustered_eccentric_loose": {
+          "instances": 12,
+          "vbs": 146.3305,
+          "sbs": 150.3326,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.02735,
+          "mean_objective": {
+            "nn": 13.5082,
+            "savings": 12.5277,
+            "dd_load": 13.0942,
+            "radial": 12.7489,
+            "isolate": 16.1508,
+            "load_fill": 18.7512,
+            "c": 13.2425
+          }
+        },
+        "clustered_eccentric_tight": {
+          "instances": 12,
+          "vbs": 193.0135,
+          "sbs": 195.0132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.01036,
+          "mean_objective": {
+            "nn": 17.5837,
+            "savings": 16.2511,
+            "dd_load": 17.9801,
+            "radial": 16.8358,
+            "isolate": 20.6565,
+            "load_fill": 21.4091,
+            "c": 17.7944
+          }
+        },
+        "uniform_centre_loose": {
+          "instances": 12,
+          "vbs": 128.2954,
+          "sbs": 133.4194,
+          "sbs_algorithm": "c",
+          "sbs_gap_to_vbs": 0.039939,
+          "mean_objective": {
+            "nn": 12.0877,
+            "savings": 11.2007,
+            "dd_load": 11.517,
+            "radial": 12.2049,
+            "isolate": 16.9674,
+            "load_fill": 19.6294,
+            "c": 11.1183
+          }
+        },
+        "uniform_centre_tight": {
+          "instances": 12,
+          "vbs": 162.5763,
+          "sbs": 164.7959,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.013652,
+          "mean_objective": {
+            "nn": 15.108,
+            "savings": 13.733,
+            "dd_load": 15.4763,
+            "radial": 14.553,
+            "isolate": 20.5014,
+            "load_fill": 20.6643,
+            "c": 14.924
+          }
+        },
+        "uniform_eccentric_loose": {
+          "instances": 12,
+          "vbs": 166.6951,
+          "sbs": 171.6025,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.029439,
+          "mean_objective": {
+            "nn": 15.3588,
+            "savings": 14.3002,
+            "dd_load": 14.512,
+            "radial": 15.0948,
+            "isolate": 20.8482,
+            "load_fill": 22.0061,
+            "c": 15.0853
+          }
+        },
+        "uniform_eccentric_tight": {
+          "instances": 12,
+          "vbs": 227.6869,
+          "sbs": 228.4204,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.003222,
+          "mean_objective": {
+            "nn": 21.012,
+            "savings": 19.035,
+            "dd_load": 20.7284,
+            "radial": 19.406,
+            "isolate": 26.784,
+            "load_fill": 26.0037,
+            "c": 21.2187
+          }
         }
       }
     }
@@ -530,7 +1441,8 @@
     "training": "the matrix needs one construct evaluation per portfolio member per training instance",
     "evaluations_per_training_instance": {
       "core": 4,
-      "extended": 6
+      "with_c": 5,
+      "extended_c": 7
     },
     "evaluations_per_served_instance": 1,
     "provider_calls": 0,

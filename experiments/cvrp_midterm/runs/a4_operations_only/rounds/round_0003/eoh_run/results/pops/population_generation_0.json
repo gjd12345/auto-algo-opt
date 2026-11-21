@@ -1,0 +1,8 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    cur = distance_matrix[current_node][unvisited_nodes]\n    dep = distance_matrix[depot][unvisited_nodes]\n    max_dep = float(np.max(dep)) if dep.size > 0 else 1.0\n    if max_dep <= 0:\n        max_dep = 1.0\n    # Primary: closest current distance penalized slightly by depot distance\n    scores = cur - 0.5 * (dep / max_dep)\n    order = np.argsort(scores)\n    # Cheap secondary ordering among near-tied candidates\n    best_score = scores[order[0]]\n    tol = 1e-9 + 1e-6 * (abs(best_score) + 1.0)\n    tied = order[scores[order] <= best_score + tol]\n    if tied.size == 1:\n        return int(unvisited_nodes[tied[0]])\n    # Secondary: prefer larger demand relative to remaining capacity (fuller loads)\n    cap = max(rest_capacity, 1e-9)\n    tie_nodes = unvisited_nodes[tied]\n    ratio = demands[tie_nodes] / cap\n    best_ratio_idx = int(np.argmax(ratio))\n    # Final tie-break: shorter distance to current node\n    candidates = tie_nodes[ratio >= ratio[best_ratio_idx] - 1e-12]\n    dists = distance_matrix[current_node][candidates]\n    return int(candidates[np.argmin(dists)])",
+        "objective": -0.08301,
+        "other_inf": null
+    }
+]

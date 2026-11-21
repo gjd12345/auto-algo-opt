@@ -9,7 +9,9 @@ $repo = "C:\Users\24294\Projects\auto-algo-opt"
 $py = "C:\Users\24294\Projects\aao-venv311\Scripts\python.exe"
 $runs = Join-Path $repo "experiments\cvrp_midterm\runs"
 
-if ($Batch -eq "a1") { $driver = "guided_search.py" } else { $driver = "guided_search_b2.py" }
+if ($Batch -eq "a1") { $driver = "guided_search.py" }
+elseif ($Batch -eq "a4" -or $Batch -eq "a5") { $driver = "guided_search_b3.py" }
+else { $driver = "guided_search_b2.py" }
 $dir = Join-Path $runs "${Batch}_$Arm"
 
 Set-Location $repo

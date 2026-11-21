@@ -1,0 +1,539 @@
+{
+  "instances": 96,
+  "portfolios": {
+    "core": {
+      "portfolio": "core",
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial"
+      ],
+      "instances": 96,
+      "vbs_total": 1253.7384,
+      "sbs_total": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.016261,
+      "selectors": [
+        {
+          "selector": "fixed_best_sbs",
+          "total_objective": 1274.1252,
+          "gap_to_vbs": 0.016261,
+          "mean_regret": 0.017725,
+          "worst_regret": 0.139702,
+          "picks": {
+            "nn": 0,
+            "savings": 96,
+            "dd_load": 0,
+            "radial": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.028245,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.02735,
+            "clustered_eccentric_tight": 0.009469,
+            "uniform_centre_loose": 0.025611,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.022865,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "algorithm": "savings"
+        },
+        {
+          "selector": "knn1_loo",
+          "total_objective": 1293.2543,
+          "gap_to_vbs": 0.031518,
+          "mean_regret": 0.033956,
+          "worst_regret": 0.241948,
+          "picks": {
+            "nn": 12,
+            "savings": 54,
+            "dd_load": 20,
+            "radial": 10
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.054357,
+            "clustered_centre_tight": 0.016292,
+            "clustered_eccentric_loose": 0.042558,
+            "clustered_eccentric_tight": 0.025798,
+            "uniform_centre_loose": 0.052689,
+            "uniform_centre_tight": 0.033113,
+            "uniform_eccentric_loose": 0.043651,
+            "uniform_eccentric_tight": 0.006871
+          }
+        },
+        {
+          "selector": "ridge_loo",
+          "total_objective": 1277.0346,
+          "gap_to_vbs": 0.018581,
+          "mean_regret": 0.02054,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 2,
+            "savings": 84,
+            "dd_load": 8,
+            "radial": 2
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.043592,
+            "clustered_centre_tight": 0.017161,
+            "clustered_eccentric_loose": 0.033237,
+            "clustered_eccentric_tight": 0.011697,
+            "uniform_centre_loose": 0.030818,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.019338,
+            "uniform_eccentric_tight": 0.003222
+          }
+        },
+        {
+          "selector": "ridge_loro",
+          "total_objective": 1280.8231,
+          "gap_to_vbs": 0.021603,
+          "mean_regret": 0.02351,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 2,
+            "savings": 76,
+            "dd_load": 15,
+            "radial": 3
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.057826,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.038713,
+            "clustered_eccentric_tight": 0.026415,
+            "uniform_centre_loose": 0.018561,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.022865,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.057826,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 7,
+                "radial": 0
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.038713,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 3,
+                "radial": 0
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.026415,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 0,
+                "radial": 3
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.018561,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 5,
+                "radial": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.011658,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.022865,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0
+              }
+            }
+          }
+        }
+      ],
+      "per_cell": {
+        "clustered_centre_loose": {
+          "instances": 12,
+          "vbs": 90.7746,
+          "sbs": 93.3384,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.028245
+        },
+        "clustered_centre_tight": {
+          "instances": 12,
+          "vbs": 134.0466,
+          "sbs": 136.2132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.016163
+        },
+        "clustered_eccentric_loose": {
+          "instances": 12,
+          "vbs": 146.3305,
+          "sbs": 150.3326,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.02735
+        },
+        "clustered_eccentric_tight": {
+          "instances": 12,
+          "vbs": 193.184,
+          "sbs": 195.0132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.009469
+        },
+        "uniform_centre_loose": {
+          "instances": 12,
+          "vbs": 131.0525,
+          "sbs": 134.4089,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.025611
+        },
+        "uniform_centre_tight": {
+          "instances": 12,
+          "vbs": 162.8968,
+          "sbs": 164.7959,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.011658
+        },
+        "uniform_eccentric_loose": {
+          "instances": 12,
+          "vbs": 167.7665,
+          "sbs": 171.6025,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.022865
+        },
+        "uniform_eccentric_tight": {
+          "instances": 12,
+          "vbs": 227.6869,
+          "sbs": 228.4204,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.003222
+        }
+      }
+    },
+    "extended": {
+      "portfolio": "extended",
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill"
+      ],
+      "instances": 96,
+      "vbs_total": 1253.7384,
+      "sbs_total": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.016261,
+      "selectors": [
+        {
+          "selector": "fixed_best_sbs",
+          "total_objective": 1274.1252,
+          "gap_to_vbs": 0.016261,
+          "mean_regret": 0.017725,
+          "worst_regret": 0.139702,
+          "picks": {
+            "nn": 0,
+            "savings": 96,
+            "dd_load": 0,
+            "radial": 0,
+            "isolate": 0,
+            "load_fill": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.028245,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.02735,
+            "clustered_eccentric_tight": 0.009469,
+            "uniform_centre_loose": 0.025611,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.022865,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "algorithm": "savings"
+        },
+        {
+          "selector": "knn1_loo",
+          "total_objective": 1293.2543,
+          "gap_to_vbs": 0.031518,
+          "mean_regret": 0.033956,
+          "worst_regret": 0.241948,
+          "picks": {
+            "nn": 12,
+            "savings": 54,
+            "dd_load": 20,
+            "radial": 10,
+            "isolate": 0,
+            "load_fill": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.054357,
+            "clustered_centre_tight": 0.016292,
+            "clustered_eccentric_loose": 0.042558,
+            "clustered_eccentric_tight": 0.025798,
+            "uniform_centre_loose": 0.052689,
+            "uniform_centre_tight": 0.033113,
+            "uniform_eccentric_loose": 0.043651,
+            "uniform_eccentric_tight": 0.006871
+          }
+        },
+        {
+          "selector": "ridge_loo",
+          "total_objective": 1277.0346,
+          "gap_to_vbs": 0.018581,
+          "mean_regret": 0.02054,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 2,
+            "savings": 84,
+            "dd_load": 8,
+            "radial": 2,
+            "isolate": 0,
+            "load_fill": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.043592,
+            "clustered_centre_tight": 0.017161,
+            "clustered_eccentric_loose": 0.033237,
+            "clustered_eccentric_tight": 0.011697,
+            "uniform_centre_loose": 0.030818,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.019338,
+            "uniform_eccentric_tight": 0.003222
+          }
+        },
+        {
+          "selector": "ridge_loro",
+          "total_objective": 1280.8231,
+          "gap_to_vbs": 0.021603,
+          "mean_regret": 0.02351,
+          "worst_regret": 0.225202,
+          "picks": {
+            "nn": 2,
+            "savings": 76,
+            "dd_load": 15,
+            "radial": 3,
+            "isolate": 0,
+            "load_fill": 0
+          },
+          "per_cell_gap": {
+            "clustered_centre_loose": 0.057826,
+            "clustered_centre_tight": 0.016163,
+            "clustered_eccentric_loose": 0.038713,
+            "clustered_eccentric_tight": 0.026415,
+            "uniform_centre_loose": 0.018561,
+            "uniform_centre_tight": 0.011658,
+            "uniform_eccentric_loose": 0.022865,
+            "uniform_eccentric_tight": 0.003222
+          },
+          "per_held_out_cell": {
+            "clustered_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.057826,
+              "picks": {
+                "nn": 0,
+                "savings": 5,
+                "dd_load": 7,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "clustered_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.016163,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "clustered_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.038713,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 3,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "clustered_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.026415,
+              "picks": {
+                "nn": 1,
+                "savings": 8,
+                "dd_load": 0,
+                "radial": 3,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "uniform_centre_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.018561,
+              "picks": {
+                "nn": 0,
+                "savings": 7,
+                "dd_load": 5,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "uniform_centre_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.011658,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "uniform_eccentric_loose": {
+              "instances": 12,
+              "gap_to_vbs": 0.022865,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            },
+            "uniform_eccentric_tight": {
+              "instances": 12,
+              "gap_to_vbs": 0.003222,
+              "picks": {
+                "nn": 0,
+                "savings": 12,
+                "dd_load": 0,
+                "radial": 0,
+                "isolate": 0,
+                "load_fill": 0
+              }
+            }
+          }
+        }
+      ],
+      "per_cell": {
+        "clustered_centre_loose": {
+          "instances": 12,
+          "vbs": 90.7746,
+          "sbs": 93.3384,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.028245
+        },
+        "clustered_centre_tight": {
+          "instances": 12,
+          "vbs": 134.0466,
+          "sbs": 136.2132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.016163
+        },
+        "clustered_eccentric_loose": {
+          "instances": 12,
+          "vbs": 146.3305,
+          "sbs": 150.3326,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.02735
+        },
+        "clustered_eccentric_tight": {
+          "instances": 12,
+          "vbs": 193.184,
+          "sbs": 195.0132,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.009469
+        },
+        "uniform_centre_loose": {
+          "instances": 12,
+          "vbs": 131.0525,
+          "sbs": 134.4089,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.025611
+        },
+        "uniform_centre_tight": {
+          "instances": 12,
+          "vbs": 162.8968,
+          "sbs": 164.7959,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.011658
+        },
+        "uniform_eccentric_loose": {
+          "instances": 12,
+          "vbs": 167.7665,
+          "sbs": 171.6025,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.022865
+        },
+        "uniform_eccentric_tight": {
+          "instances": 12,
+          "vbs": 227.6869,
+          "sbs": 228.4204,
+          "sbs_algorithm": "savings",
+          "sbs_gap_to_vbs": 0.003222
+        }
+      }
+    }
+  },
+  "selection_cost": {
+    "training": "the matrix needs one construct evaluation per portfolio member per training instance",
+    "evaluations_per_training_instance": {
+      "core": 4,
+      "extended": 6
+    },
+    "evaluations_per_served_instance": 1,
+    "provider_calls": 0,
+    "note": "retraining is offline; a deployed selector pays one construct run, not the full portfolio"
+  }
+}

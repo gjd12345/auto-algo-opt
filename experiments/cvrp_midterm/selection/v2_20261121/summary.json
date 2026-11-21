@@ -1,0 +1,587 @@
+{
+  "design": {
+    "factors": {
+      "spatial": [
+        "uniform",
+        "clustered"
+      ],
+      "depot": [
+        "centre",
+        "eccentric"
+      ],
+      "capacity": [
+        "loose",
+        "tight"
+      ]
+    },
+    "capacity_levels": {
+      "loose": 45,
+      "tight": 28
+    },
+    "demand_range": [
+      1,
+      9
+    ],
+    "customers_per_instance": 50,
+    "instances_per_cell": 12,
+    "cells": [
+      "uniform_centre_loose",
+      "uniform_centre_tight",
+      "uniform_eccentric_loose",
+      "uniform_eccentric_tight",
+      "clustered_centre_loose",
+      "clustered_centre_tight",
+      "clustered_eccentric_loose",
+      "clustered_eccentric_tight"
+    ],
+    "portfolios": {
+      "core": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial"
+      ],
+      "extended": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill"
+      ]
+    }
+  },
+  "instances": 96,
+  "portfolio_mean": {
+    "nn": 14.396212,
+    "savings": 13.272138,
+    "dd_load": 14.202563,
+    "radial": 13.857131,
+    "farthest": 38.005881,
+    "isolate": 18.450718,
+    "load_fill": 19.892657
+  },
+  "portfolios": {
+    "core": {
+      "instances": 96,
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial"
+      ],
+      "vbs": 1253.7384,
+      "sbs": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.016261,
+      "oracle_counts": {
+        "nn": 10,
+        "savings": 59,
+        "dd_load": 17,
+        "radial": 10
+      },
+      "mean_capacity_ratio": 7.2341
+    },
+    "extended": {
+      "instances": 96,
+      "members": [
+        "nn",
+        "savings",
+        "dd_load",
+        "radial",
+        "isolate",
+        "load_fill"
+      ],
+      "vbs": 1253.7384,
+      "sbs": 1274.1252,
+      "sbs_algorithm": "savings",
+      "sbs_gap_to_vbs": 0.016261,
+      "oracle_counts": {
+        "nn": 10,
+        "savings": 59,
+        "dd_load": 17,
+        "radial": 10
+      },
+      "mean_capacity_ratio": 7.2341
+    }
+  },
+  "per_cell": {
+    "uniform_centre_loose": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 131.0525,
+        "sbs": 134.4089,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.025611,
+        "oracle_counts": {
+          "nn": 3,
+          "savings": 5,
+          "dd_load": 4
+        },
+        "mean_capacity_ratio": 5.4481
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 131.0525,
+        "sbs": 134.4089,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.025611,
+        "oracle_counts": {
+          "nn": 3,
+          "savings": 5,
+          "dd_load": 4
+        },
+        "mean_capacity_ratio": 5.4481
+      }
+    },
+    "uniform_centre_tight": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 162.8968,
+        "sbs": 164.7959,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.011658,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.125
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 162.8968,
+        "sbs": 164.7959,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.011658,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.125
+      }
+    },
+    "uniform_eccentric_loose": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 167.7665,
+        "sbs": 171.6025,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.022865,
+        "oracle_counts": {
+          "savings": 4,
+          "dd_load": 6,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.5463
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 167.7665,
+        "sbs": 171.6025,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.022865,
+        "oracle_counts": {
+          "savings": 4,
+          "dd_load": 6,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.5463
+      }
+    },
+    "uniform_eccentric_tight": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 227.6869,
+        "sbs": 228.4204,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.003222,
+        "oracle_counts": {
+          "savings": 9,
+          "radial": 3
+        },
+        "mean_capacity_ratio": 8.7202
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 227.6869,
+        "sbs": 228.4204,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.003222,
+        "oracle_counts": {
+          "savings": 9,
+          "radial": 3
+        },
+        "mean_capacity_ratio": 8.7202
+      }
+    },
+    "clustered_centre_loose": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 90.7746,
+        "sbs": 93.3384,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.028245,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 2
+        },
+        "mean_capacity_ratio": 5.5093
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 90.7746,
+        "sbs": 93.3384,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.028245,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 2
+        },
+        "mean_capacity_ratio": 5.5093
+      }
+    },
+    "clustered_centre_tight": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 134.0466,
+        "sbs": 136.2132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.016163,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.0982
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 134.0466,
+        "sbs": 136.2132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.016163,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 9,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 9.0982
+      }
+    },
+    "clustered_eccentric_loose": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 146.3305,
+        "sbs": 150.3326,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.02735,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.6519
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 146.3305,
+        "sbs": 150.3326,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.02735,
+        "oracle_counts": {
+          "nn": 1,
+          "savings": 7,
+          "dd_load": 2,
+          "radial": 2
+        },
+        "mean_capacity_ratio": 5.6519
+      }
+    },
+    "clustered_eccentric_tight": {
+      "core": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial"
+        ],
+        "vbs": 193.184,
+        "sbs": 195.0132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.009469,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 8.7738
+      },
+      "extended": {
+        "instances": 12,
+        "members": [
+          "nn",
+          "savings",
+          "dd_load",
+          "radial",
+          "isolate",
+          "load_fill"
+        ],
+        "vbs": 193.184,
+        "sbs": 195.0132,
+        "sbs_algorithm": "savings",
+        "sbs_gap_to_vbs": 0.009469,
+        "oracle_counts": {
+          "nn": 2,
+          "savings": 8,
+          "dd_load": 1,
+          "radial": 1
+        },
+        "mean_capacity_ratio": 8.7738
+      }
+    }
+  },
+  "main_effects": {
+    "spatial": {
+      "uniform": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 15.8916,
+          "savings": 14.5672,
+          "dd_load": 15.5584,
+          "radial": 15.3147,
+          "farthest": 40.7489,
+          "isolate": 21.2752,
+          "load_fill": 22.0759
+        },
+        "vbs": {
+          "core": 689.4027,
+          "extended": 689.4027
+        },
+        "sbs": {
+          "core": 699.2278,
+          "extended": 699.2278
+        }
+      },
+      "clustered": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 12.9008,
+          "savings": 11.977,
+          "dd_load": 12.8467,
+          "radial": 12.3996,
+          "farthest": 35.2629,
+          "isolate": 15.6262,
+          "load_fill": 17.7094
+        },
+        "vbs": {
+          "core": 564.3357,
+          "extended": 564.3357
+        },
+        "sbs": {
+          "core": 574.8975,
+          "extended": 574.8975
+        }
+      }
+    },
+    "depot": {
+      "centre": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 11.9268,
+          "savings": 11.0158,
+          "dd_load": 11.8265,
+          "radial": 11.6929,
+          "farthest": 34.4379,
+          "isolate": 15.7916,
+          "load_fill": 17.7428
+        },
+        "vbs": {
+          "core": 518.7704,
+          "extended": 518.7704
+        },
+        "sbs": {
+          "core": 528.7564,
+          "extended": 528.7564
+        }
+      },
+      "eccentric": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 16.8657,
+          "savings": 15.5285,
+          "dd_load": 16.5787,
+          "radial": 16.0214,
+          "farthest": 41.5739,
+          "isolate": 21.1099,
+          "load_fill": 22.0425
+        },
+        "vbs": {
+          "core": 734.968,
+          "extended": 734.968
+        },
+        "sbs": {
+          "core": 745.3688,
+          "extended": 745.3688
+        }
+      }
+    },
+    "capacity": {
+      "loose": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 12.3427,
+          "savings": 11.4517,
+          "dd_load": 11.8349,
+          "radial": 12.1097,
+          "farthest": 36.864,
+          "isolate": 16.1849,
+          "load_fill": 18.6833
+        },
+        "vbs": {
+          "core": 535.9241,
+          "extended": 535.9241
+        },
+        "sbs": {
+          "core": 549.6825,
+          "extended": 549.6825
+        }
+      },
+      "tight": {
+        "instances": 48,
+        "mean_objective": {
+          "nn": 16.4497,
+          "savings": 15.0926,
+          "dd_load": 16.5703,
+          "radial": 15.6045,
+          "farthest": 39.1478,
+          "isolate": 20.7165,
+          "load_fill": 21.102
+        },
+        "vbs": {
+          "core": 717.8143,
+          "extended": 717.8143
+        },
+        "sbs": {
+          "core": 724.4427,
+          "extended": 724.4427
+        }
+      }
+    }
+  },
+  "rule_check": {
+    "rule": "S(i, j) = d(i, 0) + d(0, j) - d(i, j)",
+    "cases_checked": 200,
+    "all_savings_zero_at_depot": true,
+    "tie_break_at_depot": "larger d(0, j) wins",
+    "is_full_clarke_wright": false
+  }
+}

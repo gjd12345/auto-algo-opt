@@ -1,0 +1,8 @@
+[
+    {
+        "algorithm": "Explicit parent",
+        "code": "def select_next_node(current_node: int, depot: int, unvisited_nodes: np.ndarray,\n                     rest_capacity: float, demands: np.ndarray,\n                     distance_matrix: np.ndarray) -> int:\n    if unvisited_nodes.size == 0:\n        return depot\n    d_cur = distance_matrix[current_node][unvisited_nodes]\n    d_dep = distance_matrix[depot][unvisited_nodes]\n    # Scale-free relative proximity: distance to current node normalised by\n    # the sum of distances to current node and depot. Ranges in [0, 1].\n    denom = d_cur + d_dep\n    denom = np.where(denom <= 0, 1.0, denom)\n    score = d_cur / denom\n    # Secondary cheap ordering among near-ties: prefer larger demand served\n    # (fills the vehicle efficiently) when primary scores are close.\n    order = np.argsort(score)\n    best = order[0]\n    best_score = score[best]\n    # Near-tie window relative to best score (scale-free)\n    window = 0.05\n    chosen = best\n    best_demand = demands[unvisited_nodes[best]]\n    for idx in order[1:]:\n        if score[idx] - best_score > window:\n            break\n        dem = demands[unvisited_nodes[idx]]\n        if dem > best_demand:\n            best_demand = dem\n            chosen = idx\n    return unvisited_nodes[chosen]",
+        "objective": -0.02583,
+        "other_inf": null
+    }
+]
