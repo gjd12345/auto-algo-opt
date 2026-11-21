@@ -122,6 +122,25 @@ def wait_exit(root: Path, deadline: float) -> None:
     raise SystemExit("task did not exit before the round deadline")
 
 
+def _baseline_score(facts: dict) -> float | None:
+    base = facts.get("baseline")
+    if isinstance(base, dict):
+        value = base.get("objective")
+        return float(value) if isinstance(value, (int, float)) else None
+    return None
+
+
+def _best_score(facts: dict) -> float | None:
+    after = facts.get("incumbent_after")
+    if isinstance(after, dict):
+        value = after.get("objective")
+        return float(value) if isinstance(value, (int, float)) else None
+    candidates = facts.get("candidates") or []
+    values = [c.get("objective") for c in candidates if isinstance(c, dict)]
+    values = [float(v) for v in values if isinstance(v, (int, float))]
+    return min(values) if values else None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", choices=("guided", "control"), required=True)
@@ -129,6 +148,8 @@ def main() -> int:
     args = parser.parse_args()
 
     os.environ["DEEPSEEK_API_KEY"] = load_key()
+    for name in ("NO_PROXY", "no_proxy"):
+        os.environ[name] = "*"
     root = Path(args.root) / f"a1_{args.arm}"
     if root.exists():
         raise SystemExit(f"output already exists: {root}")
@@ -170,7 +191,8 @@ def main() -> int:
         if args.arm == "guided":
             plan["research_activity"] = FINDING
         if round_id > 1:
-            prev = actions.read_evaluation(run=root)["result"]
+            prev_file = Path(str(root) + f"/rounds/round_{round_id - 1:04d}/evaluation_facts.json")
+            prev = json.loads(prev_file.read_text(encoding="utf-8"))
             plan["feedback_basis"] = {
                 "round_id": round_id - 1,
                 "evaluation_ref": f"rounds/round_{round_id - 1:04d}/evaluation_facts.json",
@@ -194,15 +216,22 @@ def main() -> int:
                         expected_state_version=state["state_version"])
         facts = actions.read_evaluation(run=root)["result"]
 
+        evidence = [ref for ref in (facts.get("evidence_refs") or []) if isinstance(ref, str)]
+        observations = []
+        if evidence:
+            observations.append({
+                "claim": (
+                    f"baseline={_baseline_score(facts)} "
+                    f"best_generated={_best_score(facts)} "
+                    f"terminal={facts.get('terminal_reason')}"
+                ),
+                "evidence_refs": [evidence[0]],
+            })
         evaluation = {
-            "round_id": round_id,
             "plan_alignment": "aligned" if args.arm == "guided" else "unknown",
-            "observations": [
-                f"best_generated={facts.get('best_generated_objective')}",
-                f"baseline={facts.get('baseline_objective')}",
-            ],
+            "observations": observations,
             "hypotheses": [],
-            "next_search_advice": "continue",
+            "next_search_advice": {"direction": "continue within the remaining budget"},
             "memory_action": {"kind": "disabled"},
         }
         eval_file = Path(str(root) + f"/evaluation_{round_id}.json")
@@ -220,8 +249,8 @@ def main() -> int:
         )
         print(json.dumps({
             "round": round_id,
-            "baseline": facts.get("baseline_objective"),
-            "best_generated": facts.get("best_generated_objective"),
+            "baseline": _baseline_score(facts),
+            "best_generated": _best_score(facts),
             "terminal_reason": facts.get("terminal_reason"),
         }, ensure_ascii=False), flush=True)
 
