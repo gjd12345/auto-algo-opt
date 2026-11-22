@@ -1,0 +1,162 @@
+{
+  "schema_version": "milestone15-frozen-roster-manifest/v1",
+  "generated_at_utc": "2026-11-22T12:53:20Z",
+  "base_git_head": "48134fc2fa1f062cf3b837a4fdab0eb433df2f7e",
+  "provenance_note": "Records exact code_sha256 for all 15 Milestone 1.5 solvers added on top of Milestone 1 (30 -> 45). Note: created retrospectively during post-audit hardening after initial M1.5 bundle run; screening script tools/reproduce_milestone15.py never loads cvrp_final_accept_120. knowledge_store manifest.json:source_main_sha (d6433549) reflects the historical KB inventory snapshot baseline.",
+  "screening_artifact_sha256": "679bc7f212f00502ccd77c0b55c5b8d4790d2d8519d7a9581ac56effdc4a567f",
+  "legacy_artifact_sha256": "2a7e75a78f4c4db5c175652e361b1946026b9854a7a083c40ac83c8bbff5d8d4",
+  "obp_ablation_sha256": "8dad769010b2a8d7b81f456eb7051ad9054fa192b1258f33bda7b35321ee17d5",
+  "solver_count": 15,
+  "solvers": [
+    {
+      "algorithm_id": "s2_r4_cos",
+      "problem_family": "cvrp",
+      "display_name": "R4 (s2_r4_cos)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-cvrp-s2-r4-cos",
+      "code_path": "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0004/eoh_run/skills/candidate_1/code.py",
+      "code_sha256": "e9a5a162145525c3ec4a3f43162b2e8aaa5ced09db84e60640563a55bb83a8eb",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "cvrp_sweep_2opt",
+      "problem_family": "cvrp",
+      "display_name": "Cartesian Sweep + 2-opt",
+      "paradigm": "cluster_first",
+      "kb_entry_id": "method-cvrp-sweep-2opt",
+      "code_path": "agent_skill_loop/cvrp_workbench/solvers.py",
+      "code_sha256": "b09ff742668df9ef8a5944b67fe26b786dd7086b1c3aabd780f823bc866c1b63",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "cvrp_farthest_insertion",
+      "problem_family": "cvrp",
+      "display_name": "CVRP Farthest Insertion",
+      "paradigm": "insertion",
+      "kb_entry_id": "method-cvrp-farthest-insertion",
+      "code_path": "agent_skill_loop/cvrp_workbench/solvers.py",
+      "code_sha256": "daa50301289457862db99ea71e6c8ab5f2f2e55eae8f1a45eabffee32497fb07",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "i605_cvrp_c1_tworegime",
+      "problem_family": "cvrp",
+      "display_name": "Island605 C1 (Two-Regime Savings + 0.7 Early Return)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+      "code_path": "experiments/island605_archive/rules/all/cvrp/cvrp_000_E2_gen16_g16_r7__0028e678.py",
+      "code_sha256": "0028e6788b34e66ab2c10dda39c24550cae64c4e52138783ed19ab7558872355",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "i605_cvrp_c8_radial_early",
+      "problem_family": "cvrp",
+      "display_name": "Island605 C8 (Radial Pull + Aggressive Early Return)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-cvrp-i605-radial-early-return",
+      "code_path": "experiments/island605_archive/rules/all/cvrp/cvrp_007_E2_highgen_g8_r4__6103d27d.py",
+      "code_sha256": "6103d27db3a1277e02fad0fc9f306449fe8d01a602a82a8824aa5cda13ad5ba2",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "i605_cvrp_c17_phase_noreturn",
+      "problem_family": "cvrp",
+      "display_name": "Island605 C17 (Two-Phase Avg-Demand Switch, No Early Return)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-cvrp-i605-phase-noreturn",
+      "code_path": "experiments/island605_archive/rules/all/cvrp/cvrp_016_E2_highgen_g8_r2__f479a040.py",
+      "code_sha256": "f479a04080401ba5c1c7370ed1b3986b5536a5e6d9eec454bd83278498b5e08c",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "i605_cvrp_c22_band_savings",
+      "problem_family": "cvrp",
+      "display_name": "Island605 C22 (1.1x Relative-Band Savings + Early Return)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-cvrp-i605-relative-band-savings",
+      "code_path": "experiments/island605_archive/rules/all/cvrp/cvrp_021_E2_highgen_g8_r35__c7e0a7ad.py",
+      "code_sha256": "c7e0a7ad1e8b823e76a9275fa597facd2f1936ea736700ffb9a3d8fc3c91b361",
+      "selection_basis": "Screened strictly on cvrp_dev_hetero_24 (24+4) + cvrp_select_multiscale_64 (64) = 92 instances with zero access to cvrp_final_accept_120."
+    },
+    {
+      "algorithm_id": "i605_tsp_t1_rollout",
+      "problem_family": "tsp",
+      "display_name": "Island605 T1 (1-Step NN Rollout / Pilot, O(n^4))",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-tsp-i605-1step-rollout",
+      "code_path": "experiments/island605_archive/rules/all/tsp/tsp_000_E2_highgen_g8_r27__e80308da.py",
+      "code_sha256": "e80308da7399396a1f0d410b31d9e982019d3c71a439b1b099925b3c3ecd9755",
+      "selection_basis": "Screened on tsp_ext_eohs_128 (flagged as selection_screening_suite); externally validated on tsp_ext_tsplib_euc2d (18 OPT)."
+    },
+    {
+      "algorithm_id": "i605_tsp_t46_farness",
+      "problem_family": "tsp",
+      "display_name": "Island605 T46 (Mean Unvisited Farness)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-tsp-i605-mean-farness",
+      "code_path": "experiments/island605_archive/rules/all/tsp/tsp_045_E2_highgen_g8_r5__29653b2e.py",
+      "code_sha256": "29653b2e5174a9b8689c96fa8d54cf75058ab5c15e2163ff9c38c3ffd6da4c17",
+      "selection_basis": "Screened on tsp_ext_eohs_128 (flagged as selection_screening_suite); externally validated on tsp_ext_tsplib_euc2d (18 OPT)."
+    },
+    {
+      "algorithm_id": "i605_tsp_t69_dest_regret",
+      "problem_family": "tsp",
+      "display_name": "Island605 T69 (Fast Linear Destination Pull)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-tsp-i605-dest-pull",
+      "code_path": "experiments/island605_archive/rules/all/tsp/tsp_068_E2_highgen_g8_r7__d20ec2ca.py",
+      "code_sha256": "d20ec2ca04c31540018592ed4896fcc04e89f8d54b785927b35bf3ca8d2d9c48",
+      "selection_basis": "Screened on tsp_ext_eohs_128 (flagged as selection_screening_suite); externally validated on tsp_ext_tsplib_euc2d (18 OPT)."
+    },
+    {
+      "algorithm_id": "i605_tsp_t81_norm_smooth",
+      "problem_family": "tsp",
+      "display_name": "Island605 T81 (Dimensionless Ratio & Smoothness)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-tsp-i605-dimensionless-ratio",
+      "code_path": "experiments/island605_archive/rules/all/tsp/tsp_080_E2_highgen_g8_r12__6c1fc51c.py",
+      "code_sha256": "6c1fc51cc30b677b24e8d8a3e1c4f381635fdddc8daa870d8a992ff6ae807e5d",
+      "selection_basis": "Screened on tsp_ext_eohs_128 (flagged as selection_screening_suite); externally validated on tsp_ext_tsplib_euc2d (18 OPT)."
+    },
+    {
+      "algorithm_id": "i605_obp_b1_exp_deadzone",
+      "problem_family": "obp",
+      "display_name": "Island605 B1 (Exp Utilization + Dead-Zone Penalty)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-obp-i605-exp-deadzone",
+      "code_path": "experiments/island605_archive/rules/all/bp/bp_000_E2_highgen_g8_r27__6999b7b6.py",
+      "code_sha256": "6999b7b66c6c76b3ca5867a29b73dcdb0f90ca391ffaf4ed3c0e0c51e4688d88",
+      "selection_basis": "Screened on 7-instance multi-capacity + 10x scaling slice under workbench open_bins_only protocol; controlled same-stream ablation recorded in obp_protocol_ablation.json."
+    },
+    {
+      "algorithm_id": "i605_obp_b50_sqrt_tier",
+      "problem_family": "obp",
+      "display_name": "Island605 B50 (Sqrt Utilization + 85% Close Bonus)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-obp-i605-sqrt-close-bonus",
+      "code_path": "experiments/island605_archive/rules/all/bp/bp_049_E2_highgen_g8_r5__08876e99.py",
+      "code_sha256": "08876e99d06479cf16ae9dc779cf3ae634388fee044eff1b51fe5c7bd1c446b3",
+      "selection_basis": "Screened on 7-instance multi-capacity + 10x scaling slice under workbench open_bins_only protocol; controlled same-stream ablation recorded in obp_protocol_ablation.json."
+    },
+    {
+      "algorithm_id": "i605_obp_b16_log_half",
+      "problem_family": "obp",
+      "display_name": "Island605 B16 (Half-Fill Log Penalty + >90% Bonus)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "method-obp-i605-log-half-symmetry",
+      "code_path": "experiments/island605_archive/rules/all/bp/bp_015_E2_highgen_g8_r37__ba76c5bc.py",
+      "code_sha256": "ba76c5bc68902a6aa0b7525571c4198e78c13c754a08de8e538aad5c658402eb",
+      "selection_basis": "Screened on 7-instance multi-capacity + 10x scaling slice under workbench open_bins_only protocol; controlled same-stream ablation recorded in obp_protocol_ablation.json."
+    },
+    {
+      "algorithm_id": "i605_obp_b117_hardcap_anti",
+      "problem_family": "obp",
+      "display_name": "Island605 B117 (Hardcoded C=100 Antipattern)",
+      "paradigm": "sequential_construct",
+      "kb_entry_id": "evidence-obp-hardcoded-capacity-antipattern",
+      "code_path": "experiments/island605_archive/rules/all/bp/bp_116_E2_highgen_g8_r39__ae12f32a.py",
+      "code_sha256": "ae12f32a1c33b1a52472c1067b78ced2293dd227c7a8f298d6dded992ccd9dbc",
+      "selection_basis": "Screened on 7-instance multi-capacity + 10x scaling slice under workbench open_bins_only protocol; controlled same-stream ablation recorded in obp_protocol_ablation.json."
+    }
+  ]
+}

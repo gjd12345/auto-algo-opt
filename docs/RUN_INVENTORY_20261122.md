@@ -75,8 +75,7 @@
    是正式测试的临时落盘（`test_research_report_requires_0/{A,B,C}-1..3` 等）。任何统计都应先剔除。
 2. **Codex 那 90 个是主仓的镜像副本**（`work/{main,mid,obp,thesis-midterm}` 四份同名目录），
    `aao-pytemp` 的 238 个是同一实验的 15 份拷贝。二者合计 328 个，占"真实 run"的 32%。
-3. **island605 的 605 份最佳代码在主仓里不可复算**：主仓 `outputs/` 已无 `island605-bp-*`，
-   原始数据只存在 `agent_ad-archive-20260710`，冻结摘要只留了 `evidence/final_batch_20260630/`。
+3. **island605 的 605 份最佳代码在主仓中已完整归档并可直接复算（2026-11-22 里程碑 1.5 勘误）**：虽 6 月原始 `outputs/island605-bp-*` 日志不在主仓，但 `experiments/island605_archive/rules/all/` 完整保存了全部 605 份去重、AST 合法源码；经 `tools/reproduce_milestone15.py` 实测，按 6 月旧协议精确复算命中 **604/605**（仅装箱第 61 名 `bp_060` 因 `n=len(bins)` 余弦核相差 `0.000401`），且三域入口可直接接入现行工作台评测（详见 `experiments/milestone15/`）。
 
 ## 五、结论
 

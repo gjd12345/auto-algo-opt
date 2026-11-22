@@ -24,7 +24,9 @@ from agent_skill_loop.benchmark.catalog import load_profile_suite
 from .protocol import extract_instance_features
 from .selection import evaluate_frozen_transfer_portfolio, evaluate_oof_portfolio
 from .solvers import (
+    MILESTONE15_CVRP_IDS,
     POINTWISE_BASE_8_IDS,
+    POINTWISE_PLUS_M15_IDS,
     POINTWISE_PLUS_S2_12_IDS,
     REFERENCE_7_IDS,
     SOLVER_CATALOG,
@@ -171,11 +173,13 @@ def aggregate_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 TRACE_POINTWISE_CORE_IDS: frozenset[str] = frozenset({
     "nn",
     "savings_pointwise",
+    "s2_r4_cos",
     "s2_r5_spiral",
     "s2_r7_iso",
     "c",
     "s2_ctrl_best",
     "eohs_cvrp_f1",
+    "i605_cvrp_c1_tworegime",
 })
 
 
@@ -225,18 +229,21 @@ def run_workbench_evaluation(
         for src_file in sorted(pub_src.glob("*.json")):
             shutil.copy2(src_file, pub_dest / src_file.name)
 
-    # CVRP extra algorithms per suite
+    # CVRP extra algorithms per suite (Milestone 1 + frozen Milestone 1.5 representatives)
     suite_extra_algs: dict[str, tuple[str, ...]] = {
-        "cvrp_ext_eohs_256": UPSTREAM_CVRP_IDS,
-        "cvrp_ext_reevo_scale": UPSTREAM_CVRP_IDS,
-        "cvrp_ext_cvrplib_abp_74": UPSTREAM_CVRP_IDS,
-        "cvrp_ext_cvrplib_x_100": UPSTREAM_CVRP_IDS,
-        "cvrp_hist_hetero_288": tuple(a for a in POINTWISE_PLUS_S2_12_IDS if a not in REFERENCE_7_IDS),
-        "cvrp_select_multiscale_64": ("a", "b", "c", "v0", "dd_load", "radial", "s2_r3_rho", "s2_ctrl_best"),
-        "cvrp_final_accept_120": ("a", "b", "c", "v0", "dd_load", "radial", "s2_r3_rho", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins"),
-        "cvrp_hist_p0_120": ("a", "b", "c", "v0", "s2_r3_rho", "s2_ctrl_best"),
-        "shared_diagnostic_6": ("a", "b", "c", "v0", "s2_r3_rho", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins"),
-        "cvrp_dev_hetero_24": ("c", "v0", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins"),
+        "cvrp_ext_eohs_256": (*UPSTREAM_CVRP_IDS, *MILESTONE15_CVRP_IDS),
+        "cvrp_ext_reevo_scale": (*UPSTREAM_CVRP_IDS, *MILESTONE15_CVRP_IDS),
+        "cvrp_ext_cvrplib_abp_74": (*UPSTREAM_CVRP_IDS, *MILESTONE15_CVRP_IDS),
+        "cvrp_ext_cvrplib_x_100": (*UPSTREAM_CVRP_IDS, *MILESTONE15_CVRP_IDS),
+        "cvrp_hist_hetero_288": (
+            *tuple(a for a in POINTWISE_PLUS_S2_12_IDS if a not in REFERENCE_7_IDS),
+            *MILESTONE15_CVRP_IDS,
+        ),
+        "cvrp_select_multiscale_64": ("a", "b", "c", "v0", "dd_load", "radial", "s2_r3_rho", "s2_ctrl_best", *MILESTONE15_CVRP_IDS),
+        "cvrp_final_accept_120": ("a", "b", "c", "v0", "dd_load", "radial", "s2_r3_rho", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins", *MILESTONE15_CVRP_IDS),
+        "cvrp_hist_p0_120": ("a", "b", "c", "v0", "s2_r3_rho", "s2_ctrl_best", *MILESTONE15_CVRP_IDS),
+        "shared_diagnostic_6": ("a", "b", "c", "v0", "s2_r3_rho", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins", *MILESTONE15_CVRP_IDS),
+        "cvrp_dev_hetero_24": ("c", "v0", "s2_ctrl_best", "eohs_cvrp_f1", "heuragenix_min_cost_ins", *MILESTONE15_CVRP_IDS),
     }
 
     loaded_suites: list[dict[str, Any]] = []
@@ -681,9 +688,12 @@ def run_workbench_evaluation(
         for s_ids in ok_ids_by_alg.values():
             strict_all_common_ids &= s_ids
 
-        # Primary apples-to-apples intersection excluding O(n^3) diagnostic s2_r7_iso when upstream
-        # rules (e.g. eohs_cvrp_f1 on Set X: 59/100) have partial completion under 500ms budget
-        primary_algs = [a for a in algs_for_suite if a != "s2_r7_iso"] or list(algs_for_suite)
+        # Primary apples-to-apples intersection excluding slow diagnostic rules
+        # (O(n^3) s2_r7_iso in CVRP and O(n^4) i605_tsp_t1_rollout in TSP) so they do not collapse
+        # common_completed for fast solvers while strict_all_common_completed preserves full intersection.
+        primary_algs = [
+            a for a in algs_for_suite if a not in {"s2_r7_iso", "i605_tsp_t1_rollout"}
+        ] or list(algs_for_suite)
         primary_common_ids = set(all_inst_ids)
         for a in primary_algs:
             primary_common_ids &= ok_ids_by_alg[a]
@@ -758,6 +768,9 @@ def run_workbench_evaluation(
         selection_analyses["hetero_288__pointwise_plus_s2"] = evaluate_oof_portfolio(
             "cvrp_hist_hetero_288", "pointwise_plus_s2", rows_288, POINTWISE_PLUS_S2_12_IDS, protocols=("cv12", "loro48", "loso3")
         )
+        selection_analyses["hetero_288__pointwise_plus_m15"] = evaluate_oof_portfolio(
+            "cvrp_hist_hetero_288", "pointwise_plus_m15", rows_288, POINTWISE_PLUS_M15_IDS, protocols=("cv12", "loro48", "loso3")
+        )
         selection_analyses["hetero_288__multiparadigm_7"] = evaluate_oof_portfolio(
             "cvrp_hist_hetero_288", "multiparadigm_7", rows_288, REFERENCE_7_IDS, protocols=("cv12", "loro48", "loso3")
         )
@@ -772,6 +785,14 @@ def run_workbench_evaluation(
             train_rows=tr_64,
             test_rows=te_120,
             members=POINTWISE_PLUS_S2_12_IDS,
+        )
+        selection_analyses["final_accept_120__pointwise_plus_m15_frozen"] = evaluate_frozen_transfer_portfolio(
+            train_suite_id="cvrp_select_multiscale_64",
+            test_suite_id="cvrp_final_accept_120",
+            portfolio_id="pointwise_plus_m15_frozen",
+            train_rows=tr_64,
+            test_rows=te_120,
+            members=POINTWISE_PLUS_M15_IDS,
         )
         selection_analyses["final_accept_120__multiparadigm_7_frozen"] = evaluate_frozen_transfer_portfolio(
             train_suite_id="cvrp_select_multiscale_64",

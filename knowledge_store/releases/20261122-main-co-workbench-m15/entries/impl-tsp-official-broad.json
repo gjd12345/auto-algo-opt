@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "TSP construct broad trainer (same primitive, more instances)",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "TSPCONSTBroad subclasses the construct evaluator. Fitness still uses select_next_node on a neighbor list. Broad only changes how many random Euclidean instances are averaged and how held-out TSPLIB-style files are report",
+  "attributes": {
+    "interface": "same select_next_node; extra train instances and optional held-out",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "official_eoh/examples/tsp_construct/prob_broad.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_construct/prob_broad.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_construct/prob_broad.py",
+      "sha256": "314a77e121dcfe7b4af860135d624a918c805c37fa8c07d4580afe28aff2cbfe"
+    }
+  ],
+  "id": "impl-tsp-official-broad",
+  "content_sha256": "cb731271317c4b02b320eee65be0efb0948450dd85e36d5dec945d6307f6b113"
+}

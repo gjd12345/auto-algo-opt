@@ -1,0 +1,122 @@
+{
+  "type": "method",
+  "title": "OBP 岛屿流派三：半满偏离对数惩罚 + 90% 冲顶指数奖励 (Island605 B16)",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "island605",
+    "i605_obp_b16_log_half",
+    "online-bin-packing",
+    "score",
+    "scale-invariant"
+  ],
+  "status": "reviewed",
+  "summary": "纯无量纲比值公式：以对数鼓励均衡过渡（贴近半满）同时对超过 90% 填充率的箱子施加指数级封箱冲顶奖励，在旧协议与新协议下均稳健且 10× 箱容缩放漂移 0.00%。 现行工作台 Weibull 共同交集差距 +3.34%（完成 173/173），BPPLib 70 例差距 +7.62%（完成 70/70）。",
+  "attributes": {
+    "method_family": "sequential_construct",
+    "online_offline": "online",
+    "interface": "score",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "online_bp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "online_weibull_streams",
+        "bpplib_generalization",
+        "capacity_scale_invariant"
+      ],
+      "weak_on": [
+        "protocol_shift_between_open_new_bin_and_open_only"
+      ],
+      "scale_notes": "旧 6 月允许开新箱协议精确复算 0.01217（Best-Fit 旧基线 0.039843）；现行工作台仅评已打开箱协议下 10× 箱容缩放漂移 0.00%。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "在线逐件装箱评分：现行工作台仅传入所有可行已打开箱剩余容量数组，无可行箱时才开新箱",
+      "evolvable_hook": "score(item, bins) -> np.ndarray",
+      "state_maintained": [
+        "open_bin_remaining_capacities"
+      ],
+      "invariants_and_constraints": [
+        "严禁硬编码箱容常数（如 50 或 100），全部阈值须相对 item 或 bins 无量纲化",
+        "旧协议与新协议成绩分轨报告"
+      ],
+      "typical_pitfalls": [
+        "在旧协议允许主动开新箱下最优的规则，迁移到仅评打开箱的现行协议时排名可能显著变化（如 B1 vs B50）"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "-log(1 + 10*|w/b - 0.5|) + exp(10*(w/b - 0.9))*I[w/b > 0.9]",
+        "variables": {
+          "w": "当前到达物品大小 item",
+          "b": "候选箱当前剩余容量 bins",
+          "r": "装入后残差 b - w"
+        },
+        "preconditions": "所有输入箱满足 b >= w > 0"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/bp/bp_015_E2_highgen_g8_r37__ba76c5bc.py",
+        "sha256": "ba76c5bc68902a6aa0b7525571c4198e78c13c754a08de8e538aad5c658402eb"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b16_log_half",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.033358,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[现行工作台仅评打开箱协议] Weibull 共同交集差距 +3.34%（完成 173/173）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "obp_ext_bpplib",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b16_log_half",
+        "metric": "mean_rel_gap",
+        "value": 0.076248,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[现行工作台仅评打开箱协议] BPPLib 70 例差距 +7.62%（完成 70/70）",
+        "artifact_path": "results/summary.json"
+      }
+    ],
+    "variant_adaptation_note": "一维在线装箱评分函数 score(item, bins)；须严格区分旧岛屿协议（允许主动开新箱）与现行工作台协议（仅在可行已打开箱中评分，装不下才开新箱）。"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "methods": [
+      "method-obp-best-fit",
+      "method-obp-first-fit",
+      "method-obp-residual-utilization"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json",
+    "report:experiments/milestone15/workbench_screening_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-obp-i605-log-half-symmetry",
+  "content_sha256": "398f6f75ce580969f8944b3aeee015e31d051ed28221f237d52cb0a2fce95b4a"
+}

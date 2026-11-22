@@ -1,0 +1,90 @@
+{
+  "id": "method-lit-cvrp-clustered-gillett-miller-sweep",
+  "type": "method",
+  "title": "Gillett-Miller sweep",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cluster-first",
+    "cvrp",
+    "gillett-miller-sweep",
+    "literature",
+    "polar-angle",
+    "standard-cvrp",
+    "sweep"
+  ],
+  "status": "reviewed",
+  "summary": "Sweep: polar-angle clustering then routing and improvement.",
+  "attributes": {
+    "method_family": "literature",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "not_the_original": "Sweep clustering is not select_next_node.",
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "cluster_first",
+    "complexity_class": "O(n^2)",
+    "interface": "solve_cvrp",
+    "applicable_regimes": {
+      "strong_on": [
+        "central_depot",
+        "clustered_spatial",
+        "planar_2d_coordinates"
+      ],
+      "weak_on": [
+        "eccentric_depot",
+        "non_euclidean_distance_matrix"
+      ],
+      "scale_notes": "极角排序仅 O(n log n)，切分后各扇区做路内 TSP/2-opt 总复杂度 O(n^2)，适合中心仓库平面聚类算例。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "先按仓库极角排序所有客户，再按容量上限顺时针/逆时针贪心切分扇区集群，最后对每个集群独立求 TSP 路线并做相邻扇区边界交换",
+      "evolvable_hook": "sector_ordering_key(coords, demands, depot) 与 boundary_swap_priority(cluster_a, cluster_b)",
+      "state_maintained": [
+        "polar_angles",
+        "clusters: list[list[int]]",
+        "cluster_loads"
+      ],
+      "invariants_and_constraints": [
+        "客户严格二维坐标定义极角",
+        "每个扇区需求总和 <= Q",
+        "须枚举多个起始极角消除切口偏置"
+      ],
+      "typical_pitfalls": [
+        "偏心仓库下按单一极角切分易形成狭长径向带，质量明显劣于并行 CW",
+        "仅做一次固定 0 弧度起扫会错过更优扇区边界"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "theta_i = atan2(y_i - y_0, x_i - x_0) in (-pi, pi]",
+        "variables": {
+          "(x_0, y_0)": "仓库坐标",
+          "(x_i, y_i)": "客户 i 坐标"
+        },
+        "preconditions": "需要显式二维平面坐标，仅靠抽象距离矩阵无法直接计算极角"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-lit-cvrp-clustered"
+    ],
+    "sources": [
+      "src-lit-10-1287-opre-22-2-340"
+    ],
+    "implementations": []
+  },
+  "source_refs": [
+    "src-lit-10-1287-opre-22-2-340"
+  ],
+  "evidence_refs": [
+    "literature:10.1287/opre.22.2.340"
+  ],
+  "code_refs": [],
+  "content_sha256": "eceaa102b58d9168d63a7d0a3b90e4e5566036c132489fe0cca316cfe37e722a"
+}

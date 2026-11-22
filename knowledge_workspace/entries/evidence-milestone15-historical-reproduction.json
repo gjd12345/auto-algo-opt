@@ -1,0 +1,132 @@
+{
+  "type": "evidence",
+  "title": "里程碑 1.5 双轨历史实验复现、真实运行期机理普查与去重审计总证据",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "milestone-1.5",
+    "reproduction",
+    "island605",
+    "midterm-audit",
+    "petal-audit",
+    "deduplication"
+  ],
+  "status": "reviewed",
+  "summary": "双轨完成历史实验核验：轨道一（旧协议精确复算）命中 604/605（仅 BP #61 差 0.000401）、核实 24 场仓内中期会话在 88 题呈 23 组路线输出（0 场全等同 NN）及 HeurAgenix petal 对称矩阵 pi/4 缺陷；轨道二（统一工作台初筛）查明 CVRP 真实运行期主动早返为 55/207（非朴素代码匹配 75.4%）、尺度不变 173/207，冻结并全量验收 15 个精炼代表求解器（总库 45 个）。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(n^2)",
+    "interface": "select_next_node",
+    "applicable_regimes": {
+      "strong_on": [
+        "cross_stage_reproducibility",
+        "mechanism_verification_before_kb_ingestion"
+      ],
+      "weak_on": [
+        "external_fme_pilot_raw_logs_absent_from_repo"
+      ],
+      "scale_notes": "严格区分两类验收边界：① cvrp_final_accept_120 已随里程碑一发布过 2,040 条基线逐例结果，里程碑 1.5 选优全程零接触该集、仅用于名单冻结后验收（若论文需完全未发布过结果的全新盲测应另行冻结新题）；② tsp_ext_eohs_128 已用于 206 条 TSP 代表筛选，其成绩标注为选优结果，外部验证以 TSPLIB 18 例为准。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/manifest.json",
+        "sha256": "dfb209666dc47778dc60465b77a52deb6c956332305b26c71d3e0de96628b0dd"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/bp/bp_060_E2_gen16_g16_r2__81f696a2.py",
+        "sha256": "81f696a27c389b43939b8dc7f621dfc668d9d801f1f21e563f8e12da5f8c4609"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c1_tworegime",
+        "metric": "mean_tour_length",
+        "value": 22.4722,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Island605 C1 在 64 题筛选集上 49/64 胜 R5",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c1_tworegime",
+        "metric": "mean_tour_length",
+        "value": 26.0153,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "名单冻结后 C1 在 final_accept_120 验收均长",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_tour_length",
+        "value": 26.7286,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "名单冻结后 R4 在 final_accept_120 验收均长",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "tsp_ext_eohs_128",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_tsp_t1_rollout",
+        "metric": "ok_count",
+        "value": 44,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "TSP 历史第 1 名在 500 ms 预算下仅完成部分实例，证明需联合报告完成率",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b50_sqrt_tier",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.032705,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "OBP B50 在现行工作台仅评打开箱协议下跃居岛屿代表之首",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-tsp",
+      "problem-online-bin-packing"
+    ],
+    "methods": [
+      "method-cvrp-s2-r4-cos",
+      "method-cvrp-sweep-2opt",
+      "method-cvrp-farthest-insertion",
+      "method-cvrp-i605-tworegime-savings",
+      "method-tsp-i605-1step-rollout",
+      "method-tsp-i605-mean-farness",
+      "method-obp-i605-exp-deadzone",
+      "method-obp-i605-sqrt-close-bonus"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json",
+    "report:experiments/milestone15/workbench_screening_605.json",
+    "report:experiments/milestone15/run_inventory_deduped.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-milestone15-historical-reproduction",
+  "content_sha256": "070955e6b92b2ba5c58eb475193aa1806ddda216f8a969af023e35b296781b0e"
+}

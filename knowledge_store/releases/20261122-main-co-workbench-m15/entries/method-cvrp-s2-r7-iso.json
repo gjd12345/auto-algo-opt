@@ -1,0 +1,301 @@
+{
+  "type": "method",
+  "title": "CVRP AST-safe isolation urgency with angular coherence and continuous early return (R7 / s2_r7_iso)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "r7",
+    "s2-r7-iso",
+    "isolation",
+    "early-return",
+    "select_next_node",
+    "scale-invariant",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Stage-2 Round-7 autonomous math constructive rule combining AST-safe nearest-unvisited isolation urgency (-0.24*d_nn), elongation rho, Law-of-Cosines cos(theta_0), two-phase depot start, and continuous early return; strongest pointwise rule on clustered regimes.",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "clustered",
+        "hetero_288_clustered_top_winner",
+        "n_50_to_200",
+        "scale_invariance_1e-3_to_1e3"
+      ],
+      "weak_on": [
+        "vs_parallel_merge_and_local_search",
+        "extra_O(n^2)_submatrix_per_step_at_large_n"
+      ],
+      "scale_notes": "在 hetero-288 聚类子集赢得最多逐实例胜场（与 R5 形成主要互补对）；注意单步内需构造可行子矩阵求最近未访问邻距 d_nn，大 n 时求解耗时略高于 R5。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造骨架（允许合法主动早返仓 return 0），严格通过 AST 白名单校验",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes"
+      ],
+      "invariants_and_constraints": [
+        "使用 np.where(np.eye(n) > 0.5, np.inf, sub) 绕过被禁的 np.fill_diagonal",
+        "所有距离项经 scale = max(d_cur) 归一化保持 0.00% 缩放极差"
+      ],
+      "typical_pitfalls": [
+        "源码中 mid-route 处 pressure 被硬编码为 0.0（H-009 诊断发现），意外关闭了内旋衰减，但仍凭借孤立紧迫项取得强势聚类成绩"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "d_nn(j) = min_{k in F, k != j} d(j, k) / max(d_cur);   score = (d_cur - alpha*d_dep)/scale + 0.35*rho - 0.105*fill - 0.22*cos_t - 0.24*d_nn",
+        "variables": {
+          "d_nn(j)": "候选 j 到其余可行未访问客户的归一化最近邻距（孤立度）",
+          "rho": "三角伸长比 d(i,j)/(d(0,i)+d(0,j))"
+        },
+        "preconditions": "中程步 current_node != depot；使用 AST 允许的 np.where + np.eye 屏蔽对角线"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r7_iso.py",
+        "sha256": "03136fcba99274d5fb57ce6fe15d932e5ab2954b4ee03fa6bcbf5a517b40f268"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.115593,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=18.1779, solve_ms P50=5.4349 / P95=9.9783 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 18.1779,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=18.1779, solve_ms P50=5.4349 / P95=9.9783 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.099552,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=23.1288, solve_ms P50=7.0682 / P95=25.8556 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 23.1288,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=23.1288, solve_ms P50=7.0682 / P95=25.8556 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.137069,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.8805, solve_ms P50=7.6932 / P95=26.1266 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 19.8805,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.8805, solve_ms P50=7.6932 / P95=26.1266 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.090675,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=25.2713, solve_ms P50=6.1442 / P95=29.919 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 25.2713,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=25.2713, solve_ms P50=6.1442 / P95=29.919 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.092625,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.8381, solve_ms P50=7.1761 / P95=26.4639 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 26.8381,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.8381, solve_ms P50=7.1761 / P95=26.4639 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": 0.236581,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=18.3308, solve_ms P50=5.7665 / P95=13.9944 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 18.3308,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=18.3308, solve_ms P50=5.7665 / P95=13.9944 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.117715,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=17.5263, solve_ms P50=4.6452 / P95=14.4179 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 17.5263,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=17.5263, solve_ms P50=4.6452 / P95=14.4179 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": 0.214348,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1061.2027, solve_ms P50=3.1451 / P95=5.7675 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 1061.2027,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1061.2027, solve_ms P50=3.1451 / P95=5.7675 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": 0.173012,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=53577.2676, solve_ms P50=71.7988 / P95=505.0467 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 53577.2676,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=53577.2676, solve_ms P50=71.7988 / P95=505.0467 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.15368,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.2595, solve_ms P50=4.5798 / P95=5.0321 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 10.2595,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.2595, solve_ms P50=4.5798 / P95=5.0321 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-s2-r7-iso",
+  "content_sha256": "30b4db98d6b7c274ff54da7dda1f7240250db942d637570036b0b0a7ec451931"
+}

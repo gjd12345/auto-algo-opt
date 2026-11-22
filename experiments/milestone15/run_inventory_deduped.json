@@ -1,0 +1,604 @@
+{
+  "schema_version": "milestone15-run-inventory-deduped/v1",
+  "scan_totals": {
+    "directories_walked": 49007,
+    "marker_hits_raw": 2108,
+    "pytest_fixtures_excluded": 1071,
+    "marker_real_runs": 1037,
+    "island605_supplemental_dirs": 732,
+    "total_historical_run_dirs": 1769,
+    "mirrors_and_copies_excluded": 344,
+    "smoke_and_misc_excluded": 193
+  },
+  "errata_resolved": [
+    "s2_r5_spiral & s2_r7_iso provenance closed via exact SHA-256 match inside experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/{round_0005,round_0007}.",
+    "island605 605 archived programs are directly re-evaluable in-repo (604/605 legacy match; BP #61 differs by 0.000401 due to len(bins) cosine kernel).",
+    "Midterm '5 runs degenerated to NN' refined: all 5 dev-4 NN matches are inside _aborted/*; the 24 non-aborted in-repo sessions yield 23 distinct 88-instance route outputs with 0 exact NN across all 88 instances.",
+    "HeurAgenix petal_algorithm_b384 confirmed defective on symmetric distance matrices (polar_angle == pi/4 for all customers); replaced by genuine 2D Cartesian Sweep + 2-opt."
+  ],
+  "lineages": [
+    {
+      "lineage_id": "island605",
+      "display_name": "2026-06 三域岛屿并行进化（island605）",
+      "date_range": "2026-06-30 ~ 07",
+      "raw_dir_count": 732,
+      "deduped_status": "core_reproduced_and_abstracted",
+      "action": "保留 605 条归档程序；已完成旧协议 604/605 复算（BP #61 差 0.000401）与现行工作台全量初筛；抽象为三域数学家族并精炼入库 12 个代表求解器（CVRP 4 / TSP 4 / OBP 4）",
+      "reproducible_in_repo": true,
+      "legacy_repro_rate": "604/605",
+      "notes": "旧协议与现行工作台 OBP 协议存在差异（旧允许主动开新箱，现行仅评已打开箱），双轨分别报告；原始 6 月跑盘日志在 archive，但 605 份程序源码全部完好存于 experiments/island605_archive。"
+    },
+    {
+      "lineage_id": "cvrp_midterm",
+      "display_name": "2026-11 主仓 CVRP 闭环实验（experiments/cvrp_midterm）",
+      "date_range": "2026-11",
+      "raw_dir_count": 148,
+      "deduped_status": "core_reproduced_and_provenance_closed",
+      "action": "已逐字节核实 R4/R5/R7 在 s2_autonomous_math_r8 原始轮次目录中的真身；24 个仓内非中止会话在 88 题上呈 23 组不同路线（仅 a2_operations_only 与 a3_guided 同指纹），0 个在全部 88 题上等同最近邻（此前 5 个 dev-4 NN 匹配全部位于 _aborted/*）；补录 R4 (s2_r4_cos) 为正式互补候选",
+      "reproducible_in_repo": true,
+      "legacy_repro_rate": "24/24 in-repo sessions audited; R4/R5/R7 SHA-256 100% matched",
+      "notes": "R4 在 select_64 上 22/64 胜 R5，加入 {R5, R7} 使 VBS 降 0.3902%。"
+    },
+    {
+      "lineage_id": "main_outputs_and_evidence",
+      "display_name": "2026-11 主仓 outputs/ 与 reports/evidence/",
+      "date_range": "2026-11-06 ~ 21",
+      "raw_dir_count": 112,
+      "deduped_status": "archived_frozen_evidence",
+      "action": "reports/evidence（27）为冻结 P0-120/V0/A/B/C 只读证据；outputs/（85）中早期实验与主线重叠，保留历史溯源不重复登记",
+      "reproducible_in_repo": true,
+      "legacy_repro_rate": "Frozen A/B/C/V0 verified in workbench",
+      "notes": "只读红线保护，绝不改动。"
+    },
+    {
+      "lineage_id": "fme_pilot",
+      "display_name": "2026-08/09 批量条件扫描（fme_pilot）",
+      "date_range": "2026-08-30 ~ 09-06",
+      "raw_dir_count": 240,
+      "deduped_status": "collapsed_by_condition",
+      "action": "非多轮闭环进化，而是 47 种记忆/提示条件在多版本下的重复扫描（1,443 个候选文件）；本仓库不含其原始请求与续跑日志，折叠为条件扫描档案，不把重复候选灌入算法库",
+      "reproducible_in_repo": false,
+      "legacy_repro_rate": "External worktree only (Refactor0830); archived summary retained",
+      "notes": "防止高重复度扫描污染知识库与算法库。"
+    },
+    {
+      "lineage_id": "aao_e2e_and_misc",
+      "display_name": "端到端连通冒烟与早期杂项（aao-e2e / agent_ad / optics）",
+      "date_range": "2026-07 ~ 11",
+      "raw_dir_count": 193,
+      "deduped_status": "excluded_non_comparative",
+      "action": "属于工程冒烟测试或早期验证，不参与算法方法对比与入库",
+      "reproducible_in_repo": false,
+      "legacy_repro_rate": "N/A (smoke/harness runs)",
+      "notes": "剔除。"
+    },
+    {
+      "lineage_id": "mirrors_and_copies",
+      "display_name": "镜像副本与临时批量拷贝（aao-pytemp 238 / Codex 90 / Obsidian 16）",
+      "date_range": "2026-09 ~ 11",
+      "raw_dir_count": 344,
+      "deduped_status": "excluded_duplicate_mirror",
+      "action": "纯镜像与 15 份拷贝，彻底去重剔除",
+      "reproducible_in_repo": false,
+      "legacy_repro_rate": "N/A (duplicate copies)",
+      "notes": "占原始扫描真实 run 数的 32%。"
+    },
+    {
+      "lineage_id": "pytest_fixtures",
+      "display_name": "自动化单元测试临时夹具（.audit-pytest*）",
+      "date_range": "2026-11-21",
+      "raw_dir_count": 1071,
+      "deduped_status": "excluded_test_fixture",
+      "action": "统计前彻底剔除，不计入 1,769 历史 run",
+      "reproducible_in_repo": false,
+      "legacy_repro_rate": "N/A (pytest temp dirs)",
+      "notes": "原始标记扫描 2,108 命中减去 1,071 夹具 = 1,037 常规 run；加上 732 岛屿目录 = 1,769。"
+    }
+  ],
+  "midterm_24_sessions": [
+    {
+      "run_name": "a1_control",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a1_control/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "0359b025ddc1d762d0a68121728ad22a03042d88e88cb8cae142e8cebc8d42ab",
+      "dev4_objective": -0.007768613896072272,
+      "dev4_raw_objectives": [
+        11.7439,
+        11.8287,
+        10.6466,
+        12.4303
+      ],
+      "ok_88": 88,
+      "mean_88": 23.742,
+      "mean_sel64": 25.0182,
+      "early_returns_88": 0,
+      "route_fp_88": "f04f7cd5852e8f12",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a1_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a1_finding_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "043b7c174ca01507c49e73bc915d78726016a55fa2c272e23f6f563f7feab8e1",
+      "dev4_objective": -0.08350306412147887,
+      "dev4_raw_objectives": [
+        10.9615,
+        9.3917,
+        11.6342,
+        11.3702
+      ],
+      "ok_88": 88,
+      "mean_88": 24.4118,
+      "mean_sel64": 25.9753,
+      "early_returns_88": 0,
+      "route_fp_88": "d8bf32f0be7ecac6",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a1_guided",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a1_guided/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "e6792bef77ce8feeb72e5ed270628a1bd52685b2f7b01e219ed644f5f6997c80",
+      "dev4_objective": -0.08350306412147887,
+      "dev4_raw_objectives": [
+        10.9615,
+        9.3917,
+        11.6342,
+        11.3702
+      ],
+      "ok_88": 88,
+      "mean_88": 24.3965,
+      "mean_sel64": 25.9204,
+      "early_returns_88": 0,
+      "route_fp_88": "1077ac936679f9de",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a1_operations_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a1_operations_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "8de981cfae6f6ee6adb9e34edbbb8bd8af6df39f6988acccbbb1a8b32eeca473",
+      "dev4_objective": -0.08789213302779297,
+      "dev4_raw_objectives": [
+        10.772,
+        9.4957,
+        10.7626,
+        12.1044
+      ],
+      "ok_88": 88,
+      "mean_88": 23.7915,
+      "mean_sel64": 25.2429,
+      "early_returns_88": 0,
+      "route_fp_88": "72abf5199fbe43db",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a2_control",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a2_control/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "f50ab0370b0f85efac5e0e8c97e18ab57da057d04107028094bb80de2db206fe",
+      "dev4_objective": -0.050970154810448656,
+      "dev4_raw_objectives": [
+        11.0046,
+        10.759,
+        12.1874,
+        10.7705
+      ],
+      "ok_88": 88,
+      "mean_88": 23.7375,
+      "mean_sel64": 25.0737,
+      "early_returns_88": 0,
+      "route_fp_88": "f65f364c11f1bc74",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a2_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a2_finding_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "33340f20741dbc5e214e7a04e1dfaf7a64587db34a4cb038d8246cac5664ed12",
+      "dev4_objective": -0.05497234322502215,
+      "dev4_raw_objectives": [
+        11.1781,
+        10.3695,
+        12.2663,
+        10.7705
+      ],
+      "ok_88": 88,
+      "mean_88": 22.9956,
+      "mean_sel64": 24.1506,
+      "early_returns_88": 0,
+      "route_fp_88": "a1790e9a3e6f25e4",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a2_guided",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a2_guided/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "bce1da12258d7c38e1c3914fd29a383bdca7596d7fc81a3d3c17ae87d10a2a19",
+      "dev4_objective": -0.08553301151060813,
+      "dev4_raw_objectives": [
+        10.515,
+        9.7503,
+        11.6082,
+        11.34
+      ],
+      "ok_88": 88,
+      "mean_88": 23.9172,
+      "mean_sel64": 25.3736,
+      "early_returns_88": 0,
+      "route_fp_88": "20a9dcde1150b713",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a2_operations_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a2_operations_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "5762f0bbcfc2fae3eaa994896d2385fdc72c85018489c46e7ceb83af5f8355d4",
+      "dev4_objective": -0.07902257323290608,
+      "dev4_raw_objectives": [
+        11.0073,
+        10.1811,
+        10.5645,
+        11.6854
+      ],
+      "ok_88": 88,
+      "mean_88": 22.9244,
+      "mean_sel64": 24.3613,
+      "early_returns_88": 0,
+      "route_fp_88": "914a363f814d25e9",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a3_control",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a3_control/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "e3a18aebbd7cc9bb59b912fb5710d5ba6180e552162f7224fee9e6cd9559af55",
+      "dev4_objective": -0.05943869424838719,
+      "dev4_raw_objectives": [
+        10.9575,
+        10.3738,
+        12.2806,
+        10.7605
+      ],
+      "ok_88": 88,
+      "mean_88": 23.5832,
+      "mean_sel64": 24.9623,
+      "early_returns_88": 0,
+      "route_fp_88": "728387d891a4353b",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a3_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "candidate_1",
+      "code_relpath": "experiments/cvrp_midterm/runs/a3_finding_only/rounds/round_0004/eoh_run/skills/candidate_1/code.py",
+      "code_sha256": "9874f26c97fddfbbc25591403eee939599bc90cd7aa9b6c99bbd04f9e712c58d",
+      "dev4_objective": -0.07037117696474222,
+      "dev4_raw_objectives": [
+        11.1941,
+        9.4366,
+        11.9869,
+        11.3727
+      ],
+      "ok_88": 88,
+      "mean_88": 23.2468,
+      "mean_sel64": 24.6302,
+      "early_returns_88": 0,
+      "route_fp_88": "669854620935bb4b",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a3_guided",
+      "final_round": "round_0004",
+      "candidate_id": "candidate_1",
+      "code_relpath": "experiments/cvrp_midterm/runs/a3_guided/rounds/round_0004/eoh_run/skills/candidate_1/code.py",
+      "code_sha256": "a449bee640ae9561c7faf07d064e5b1e387f34c438f16c954e6ab8bf52d445e5",
+      "dev4_objective": -0.07902257323290608,
+      "dev4_raw_objectives": [
+        11.0073,
+        10.1811,
+        10.5645,
+        11.6854
+      ],
+      "ok_88": 88,
+      "mean_88": 22.9244,
+      "mean_sel64": 24.3613,
+      "early_returns_88": 0,
+      "route_fp_88": "914a363f814d25e9",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a3_operations_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a3_operations_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "a46eb864f6d827037d7037315e3fd921faa5094677020ab2b80395ab5dee504f",
+      "dev4_objective": -0.07185574592101071,
+      "dev4_raw_objectives": [
+        10.944,
+        10.6479,
+        11.0811,
+        11.0364
+      ],
+      "ok_88": 88,
+      "mean_88": 23.4366,
+      "mean_sel64": 24.7612,
+      "early_returns_88": 0,
+      "route_fp_88": "e5066687b058cc37",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a4_control",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a4_control/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "7b84fb3d6b2332f72d3d80adf7487066ec4967f99d1ba5599bce382adc22f4f8",
+      "dev4_objective": -0.0820300428786229,
+      "dev4_raw_objectives": [
+        10.8513,
+        9.3917,
+        11.1761,
+        12.021
+      ],
+      "ok_88": 88,
+      "mean_88": 24.3233,
+      "mean_sel64": 25.8693,
+      "early_returns_88": 0,
+      "route_fp_88": "0beee46e9603dc74",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a4_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a4_finding_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "c2fa0a34c6e2fd18104e2edc8fcddb8ee4172caa1732db5bf98f0f05a4ff54de",
+      "dev4_objective": -0.06670252945060517,
+      "dev4_raw_objectives": [
+        11.3108,
+        9.6616,
+        12.2501,
+        10.9012
+      ],
+      "ok_88": 88,
+      "mean_88": 23.0575,
+      "mean_sel64": 24.4012,
+      "early_returns_88": 0,
+      "route_fp_88": "8c1a253b05bc5325",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a4_full_guidance",
+      "final_round": "round_0004",
+      "candidate_id": "candidate_5",
+      "code_relpath": "experiments/cvrp_midterm/runs/a4_full_guidance/rounds/round_0004/eoh_run/skills/candidate_5/code.py",
+      "code_sha256": "31914768f2da4c79ef258ad1663775c3d1e126f92e571f776f06559ee99a1cd9",
+      "dev4_objective": -0.05889048711156018,
+      "dev4_raw_objectives": [
+        11.4272,
+        9.6835,
+        12.127,
+        11.2665
+      ],
+      "ok_88": 88,
+      "mean_88": 22.2341,
+      "mean_sel64": 23.5544,
+      "early_returns_88": 0,
+      "route_fp_88": "e45949d8949213a6",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a4_operations_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a4_operations_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "d597e7fc5120f8d5ef670f3d9ea05ebb8c8d1840dbb03b58b69daaef53e2dc45",
+      "dev4_objective": -0.0830109571318676,
+      "dev4_raw_objectives": [
+        11.4793,
+        9.6239,
+        11.0045,
+        11.2073
+      ],
+      "ok_88": 88,
+      "mean_88": 24.1588,
+      "mean_sel64": 25.6048,
+      "early_returns_88": 0,
+      "route_fp_88": "d3a0536b3cb053e3",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a5_control",
+      "final_round": "round_0004",
+      "candidate_id": "candidate_1",
+      "code_relpath": "experiments/cvrp_midterm/runs/a5_control/rounds/round_0004/eoh_run/skills/candidate_1/code.py",
+      "code_sha256": "d22e3a7262df5a1222c2d7c2e2689be26fc4e05952aeacfe9032e9a5fda16c3e",
+      "dev4_objective": -0.0622140366772943,
+      "dev4_raw_objectives": [
+        11.7559,
+        10.1256,
+        10.7702,
+        11.5949
+      ],
+      "ok_88": 88,
+      "mean_88": 24.0491,
+      "mean_sel64": 25.4888,
+      "early_returns_88": 0,
+      "route_fp_88": "5627d0626548af68",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a5_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a5_finding_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "4736ec893d48cb32ba42445b369e8001b89d290c50c0aea62e34c9784408c433",
+      "dev4_objective": -0.05849130278503358,
+      "dev4_raw_objectives": [
+        11.814,
+        10.1624,
+        11.0127,
+        11.4319
+      ],
+      "ok_88": 88,
+      "mean_88": 24.7406,
+      "mean_sel64": 26.2429,
+      "early_returns_88": 0,
+      "route_fp_88": "4b4c8e0902d3bbd0",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a5_full_guidance",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a5_full_guidance/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "8a53362c0e27cc773cac395e019b845b0ac575bd3ea2d29e38668c821ddf4908",
+      "dev4_objective": -0.03086298175448582,
+      "dev4_raw_objectives": [
+        13.3732,
+        11.0474,
+        10.3492,
+        10.7862
+      ],
+      "ok_88": 88,
+      "mean_88": 24.0959,
+      "mean_sel64": 25.7025,
+      "early_returns_88": 0,
+      "route_fp_88": "4289eb94c1d59f76",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "a5_operations_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/a5_operations_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "0e3c274aaed0898bfd0d2d52545e60549f85c50de219017ba00008c3b8dac037",
+      "dev4_objective": -0.03776769144495002,
+      "dev4_raw_objectives": [
+        12.2879,
+        10.5383,
+        11.4461,
+        11.0853
+      ],
+      "ok_88": 88,
+      "mean_88": 23.0824,
+      "mean_sel64": 24.5135,
+      "early_returns_88": 0,
+      "route_fp_88": "cbd5168a4dc2724c",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "b4_control",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/b4_control/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "1788c166bfe9a85cc0e0892c670d27565fcbd798310d9de271ffdfd571c99fdd",
+      "dev4_objective": -0.018598256906642567,
+      "dev4_raw_objectives": [
+        10.9713,
+        10.8794,
+        11.9713,
+        12.497
+      ],
+      "ok_88": 88,
+      "mean_88": 24.2054,
+      "mean_sel64": 25.64,
+      "early_returns_88": 0,
+      "route_fp_88": "b3a2ad7204804fd1",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 1
+    },
+    {
+      "run_name": "b4_finding_only",
+      "final_round": "round_0004",
+      "candidate_id": "explicit_parent",
+      "code_relpath": "experiments/cvrp_midterm/runs/b4_finding_only/rounds/round_0004/eoh_run/skills/explicit_parent/code.py",
+      "code_sha256": "92b31f34fe0222867061cf4ccd7f54138f0a417d94374356e4772d89d9990ad5",
+      "dev4_objective": -0.05701641301827596,
+      "dev4_raw_objectives": [
+        11.2996,
+        10.5532,
+        11.8308,
+        10.7605
+      ],
+      "ok_88": 88,
+      "mean_88": 23.6819,
+      "mean_sel64": 25.0405,
+      "early_returns_88": 0,
+      "route_fp_88": "5af0d5c9a04e00da",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "s2_autonomous_math_r8",
+      "final_round": "round_0008",
+      "candidate_id": "seed_1",
+      "code_relpath": "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0008/eoh_run/skills/seed_1/code.py",
+      "code_sha256": "ee1d756a0326d4f3ca1a3eed2efabd7f177f8d222462293849171e853bbb51be",
+      "dev4_objective": -0.15762421818408598,
+      "dev4_raw_objectives": [
+        10.1225,
+        9.0985,
+        9.5732,
+        10.9745
+      ],
+      "ok_88": 88,
+      "mean_88": 22.9937,
+      "mean_sel64": 24.3637,
+      "early_returns_88": 130,
+      "route_fp_88": "f143dddda0f106c7",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    },
+    {
+      "run_name": "s2_control_r8",
+      "final_round": "round_0008",
+      "candidate_id": "seed_1",
+      "code_relpath": "experiments/cvrp_midterm/runs/s2_control_r8/rounds/round_0008/eoh_run/skills/seed_1/code.py",
+      "code_sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627",
+      "dev4_objective": -0.10889829612410487,
+      "dev4_raw_objectives": [
+        10.9615,
+        9.3917,
+        10.3738,
+        11.3702
+      ],
+      "ok_88": 88,
+      "mean_88": 24.4534,
+      "mean_sel64": 25.9411,
+      "early_returns_88": 0,
+      "route_fp_88": "75762f7859259e14",
+      "exact_nn_all_88": false,
+      "nn_identical_instances_of_88": 0
+    }
+  ]
+}

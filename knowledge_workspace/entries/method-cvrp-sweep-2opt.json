@@ -1,0 +1,136 @@
+{
+  "type": "method",
+  "title": "CVRP 真坐标极角扫描法 + 路内 2-opt (Gillett-Miller Sweep + 2-opt)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "sweep",
+    "cluster-first",
+    "2-opt",
+    "classical-or",
+    "petal-audit"
+  ],
+  "status": "reviewed",
+  "summary": "经典先聚类后路径的二维真坐标极角扫描算法（多起点正反旋转 + 路内 2-opt）；显式修正了本机 HeurAgenix petal_algorithm_b384 在对称距离矩阵上将所有客户极角误算为 pi/4 的缺陷。EoH-S 256 例差距 +14.94%，CVRPLib A/B/P 差距 +12.23%。",
+  "attributes": {
+    "method_family": "cluster_first",
+    "online_offline": "offline",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "cluster_first",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "central_depot",
+        "planar_2d",
+        "clustered_sectors",
+        "scale_invariant"
+      ],
+      "weak_on": [
+        "eccentric_depot",
+        "no_inter_route_relocate"
+      ],
+      "scale_notes": "纯角度排序 + 比例缩放不变的 2-opt，具备 0.00% 坐标缩放漂移；在中心仓库平面算例上稳定优于单一逐点构造，落后于 CW+跨路线局部搜索。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "按真实二维坐标极角 atan2(y_i-y_0, x_i-x_0) 排序，在最多 16 个均匀起点与正反两个方向中选出总路程最短的可行容量切片，再逐条路线运行 2-opt",
+      "evolvable_hook": "angular_cluster_cut_score 与 intra_route_order_refiner",
+      "state_maintained": [
+        "polar_angles",
+        "cluster_routes",
+        "route_loads"
+      ],
+      "invariants_and_constraints": [
+        "必须使用真实二维坐标计算极角，严禁用对称距离矩阵 d[0,i]/d[i,0] 代替坐标差",
+        "每条路线严格满足总需求 <= Q"
+      ],
+      "typical_pitfalls": [
+        "HeurAgenix petal_algorithm_b384 误写 atan2(d[0,i], d[i,0]) 导致对称矩阵上所有客户极角恒为 pi/4，退化为单客户首次适应追加"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "theta_i = atan2(y_i - y_0, x_i - x_0),  i = 1..n",
+        "variables": {
+          "(x_0, y_0)": "仓库二维坐标",
+          "(x_i, y_i)": "客户 i 二维坐标"
+        },
+        "preconditions": "二维欧氏平面 CVRP；按极角排序后顺/逆时针切分容量可行扇区并做路内 2-opt"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_sweep_2opt",
+        "metric": "mean_rel_gap",
+        "value": 0.14944,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "EoH-S 256 例相对 LKH 差距 +14.94%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_sweep_2opt",
+        "metric": "mean_rel_gap",
+        "value": 0.122274,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib A/B/P 74 例相对 BKS 差距 +12.23%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_sweep_2opt",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.234732,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Set X 共同完成交集差距 +23.47%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_sweep_2opt",
+        "metric": "mean_tour_length",
+        "value": 28.4135,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "final_accept_120 均长 28.4135",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-petal-cluster-construct",
+      "method-cvrp-intra-2opt"
+    ],
+    "sources": [
+      "src-gillett-miller-1974-sweep",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-gillett-miller-1974-sweep",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "code:agent_skill_loop/cvrp_workbench/solvers.py",
+    "report:experiments/milestone15/legacy_reproduction_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-sweep-2opt",
+  "content_sha256": "dbbc6a45d31e0c7d87ddaf58aba46472755f205252f360227778818f4b38c84d"
+}

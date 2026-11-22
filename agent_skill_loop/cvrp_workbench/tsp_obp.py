@@ -13,9 +13,19 @@ import inspect
 import math
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
+
+_REPO = Path(__file__).resolve().parents[2]
+_ISLAND605_TSP_DIR = _REPO / "experiments" / "island605_archive" / "rules" / "all" / "tsp"
+_ISLAND605_BP_DIR = _REPO / "experiments" / "island605_archive" / "rules" / "all" / "bp"
+
+
+def _read_lf(path: Path) -> tuple[str, str, str]:
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return text, hashlib.sha256(text.encode("utf-8")).hexdigest(), path.relative_to(_REPO).as_posix()
 
 from .upstream_rules import (
     EOH_OBP_CODE,
@@ -346,6 +356,56 @@ TSP_SOLVER_CATALOG: dict[str, MultiProblemSolverSpec] = {
     ),
 }
 
+
+def _register_island605_tsp() -> None:
+    specs = (
+        (
+            "i605_tsp_t1_rollout",
+            "tsp_000_E2_highgen_g8_r27__e80308da.py",
+            "Island605 T1 (1-Step NN Rollout / Pilot, O(n^4))",
+            "method-tsp-i605-1step-rollout",
+            "June island605 Rank #1: full greedy NN suffix rollout per candidate (O(m^3) per step, O(n^4) worst-case full tour) + local spread regret + median long-edge penalty; partial completion under 500ms.",
+        ),
+        (
+            "i605_tsp_t46_farness",
+            "tsp_045_E2_highgen_g8_r5__29653b2e.py",
+            "Island605 T46 (Mean Unvisited Farness)",
+            "method-tsp-i605-mean-farness",
+            "June island605 Rank #46: -d(cur,u) + 0.7*mean(d(u,other)) isolation pull; top 100%-completion rule on EoH-S TSP 128 screening.",
+        ),
+        (
+            "i605_tsp_t69_dest_regret",
+            "tsp_068_E2_highgen_g8_r7__d20ec2ca.py",
+            "Island605 T69 (Fast Linear Destination Pull)",
+            "method-tsp-i605-dest-pull",
+            "June island605 Rank #69: vectorized O(n) linear destination pull 0.7*d(dest,u) - d(cur,u); 100% completion at sub-millisecond median latency.",
+        ),
+        (
+            "i605_tsp_t81_norm_smooth",
+            "tsp_080_E2_highgen_g8_r12__6c1fc51c.py",
+            "Island605 T81 (Dimensionless Ratio & Smoothness)",
+            "method-tsp-i605-dimensionless-ratio",
+            "June island605 Rank #81: max-normalized distance + normalized farness + dimensionless piecewise smoothness bands; 100% completion.",
+        ),
+    )
+    for alg_id, fname, label, kb_id, desc in specs:
+        src, sha, rel = _read_lf(_ISLAND605_TSP_DIR / fname)
+        TSP_SOLVER_CATALOG[alg_id] = MultiProblemSolverSpec(
+            algorithm_id=alg_id,
+            problem_family="tsp",
+            display_name=label,
+            paradigm="sequential_construct",
+            interface="select_next_node",
+            kb_entry_id=kb_id,
+            code_path=rel,
+            code_source=src,
+            code_sha256=sha,
+            description=desc,
+        )
+
+
+_register_island605_tsp()
+
 _TSP_COMPILED: dict[str, Callable[..., Any]] = {}
 
 
@@ -375,7 +435,7 @@ def evaluate_tsp_algorithm_on_instance(
             tour, meta = solve_tsp_farthest_insertion(dmat, time_budget_ms=time_budget_ms)
         elif algorithm_id == "tsp_nn_2opt":
             tour, meta = solve_tsp_nn_2opt(dmat, time_budget_ms=time_budget_ms)
-        elif algorithm_id in {"eohs_tsp_f1", "eoh_tsp_f1"}:
+        elif spec.interface == "select_next_node":
             fn = _TSP_COMPILED.get(algorithm_id)
             if fn is None:
                 fn = _compile_tsp_rule(spec.code_source, algorithm_id)
@@ -492,7 +552,7 @@ OBP_BEST_FIT_CODE = """def priority(item: float, bins: np.ndarray) -> np.ndarray
 def _compile_obp_rule(code: str, name: str) -> Callable[..., Any]:
     ns: dict[str, Any] = {"np": np, "numpy": np, "math": math}
     exec(compile(code, f"obp_rule_{name}", "exec"), ns)  # noqa: S102
-    fn = ns.get("priority") or ns.get("heuristic")
+    fn = ns.get("priority") or ns.get("heuristic") or ns.get("score")
     if not callable(fn):
         raise ValueError(f"missing_obp_priority:{name}")
     return fn
@@ -663,6 +723,56 @@ OBP_SOLVER_CATALOG: dict[str, MultiProblemSolverSpec] = {
         description="Upstream ReEvo OBP priority function recomputed locally.",
     ),
 }
+
+
+def _register_island605_obp() -> None:
+    specs = (
+        (
+            "i605_obp_b1_exp_deadzone",
+            "bp_000_E2_highgen_g8_r27__6999b7b6.py",
+            "Island605 B1 (Exp Utilization + Dead-Zone Penalty)",
+            "method-obp-i605-exp-deadzone",
+            "June island605 Rank #1 (legacy 0.00674 with active new-bin opening); evaluated here under workbench open-bins-only protocol.",
+        ),
+        (
+            "i605_obp_b50_sqrt_tier",
+            "bp_049_E2_highgen_g8_r5__08876e99.py",
+            "Island605 B50 (Sqrt Utilization + 85% Close Bonus)",
+            "method-obp-i605-sqrt-close-bonus",
+            "June island605 Rank #50 -> #1 on workbench open-bins screening: sqrt(item/bin) - fragmentation penalty + 85%-full close bonus (0.0% 10x drift).",
+        ),
+        (
+            "i605_obp_b16_log_half",
+            "bp_015_E2_highgen_g8_r37__ba76c5bc.py",
+            "Island605 B16 (Half-Fill Log Penalty + >90% Bonus)",
+            "method-obp-i605-log-half-symmetry",
+            "June island605 Rank #16: -log(1 + 10*|fill-0.5|) + exponential bonus above 90% fullness (0.0% 10x capacity drift).",
+        ),
+        (
+            "i605_obp_b117_hardcap_anti",
+            "bp_116_E2_highgen_g8_r39__ae12f32a.py",
+            "Island605 B117 (Hardcoded C=100 Antipattern)",
+            "evidence-obp-hardcoded-capacity-antipattern",
+            "Diagnostic antipattern: hardcodes capacity=100 in density=1-residual/100, degrading under 10x capacity scaling and C=500/BPPLib.",
+        ),
+    )
+    for alg_id, fname, label, kb_id, desc in specs:
+        src, sha, rel = _read_lf(_ISLAND605_BP_DIR / fname)
+        OBP_SOLVER_CATALOG[alg_id] = MultiProblemSolverSpec(
+            algorithm_id=alg_id,
+            problem_family="obp",
+            display_name=label,
+            paradigm="sequential_construct",
+            interface="score",
+            kb_entry_id=kb_id,
+            code_path=rel,
+            code_source=src,
+            code_sha256=sha,
+            description=desc,
+        )
+
+
+_register_island605_obp()
 
 _OBP_COMPILED: dict[str, Callable[..., Any]] = {}
 

@@ -61,12 +61,9 @@ cvrp-p1-p2 12 个 cell、cvrp-heldout-p0 ×2、obp-math-live —— 其中多数
 未产出可归属规则的 run：`_aborted/probe`、`a1_guided_badread`（坏载荷）、
 无 `evaluation_facts.json` 的 outputs 目录（只剩预算账本）。
 
-**值得注意的两条**：
-1. 五个 control 臂收敛到 NN —— 说明"什么都不给"的对照在 4 轮/24 请求预算下很容易停在最近邻，
-   这本身就解释了 a 系列为何普遍打不过 C。
-2. `s2_r5_spiral` / `s2_r7_iso` 在全部 33 个 run 里**找不到指纹一致的产出 run**
-   （只有 `a4_control` round4、`s2_autonomous_math_r8` round3–5 的候选代码里出现过 spiral 字样）。
-   → 这两条已注册为核心参照的规则，其产出链在主仓 runs 里断了，来源待定。
+**值得注意的两条（2026-11-22 里程碑 1.5 复核勘误）**：
+1. 上述 5 个在 dev-4 上指纹等同于 NN 的运行**全部位于 `_aborted/*` 目录**（`_aborted/a1_control`、`_aborted/a1_control_attempt3`、`_aborted/a3_control_attempt1/2/3`）；经 `tools/reproduce_milestone15.py` 对仓内 24 个非中止会话在 88 题（`dev_24 + select_64`）上重跑核验，共呈 **23 组不同路线输出**（仅 `a2_operations_only` 与 `a3_guided` 一致），**0 个在全部 88 题上等同于最近邻**。
+2. `s2_r5_spiral` 与 `s2_r7_iso` 并非断链无源——此前脚本仅取最后一轮 dev-4 最优个体而漏检；现已逐字节核实两者真身分别位于 `experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0005/eoh_run/skills/candidate_2/code.py` 与 `round_0007/eoh_run/skills/candidate_2/code.py`（SHA-256 100% 一致），且 `s2_r4_cos` 对应 `round_0004/eoh_run/skills/candidate_1/code.py`。
 
 ## 2. 岛屿模型（2026-06-30，archive）
 

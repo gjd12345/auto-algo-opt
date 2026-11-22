@@ -1,0 +1,116 @@
+{
+  "type": "evidence",
+  "title": "跨问题反面教材：硬编码箱容常数与混合单位尺度崩盘（OBP B117/B3 × CVRP C61/H-001）",
+  "category": "evidence",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "cvrp",
+    "antipattern",
+    "hardcoded-capacity",
+    "scale-collapse",
+    "island605"
+  ],
+  "status": "reviewed",
+  "summary": "证实硬编码绝对常数（OBP 写死 capacity=100 或 50）与混合量纲（CVRP 叠加 O(s) 与 O(1/s)）在跨容量/跨尺度测试中必然诱发性能退化：OBP B117 在 10× 箱容缩放下箱数漂移 +1.38%（BPPLib 差距 +10.32%），island605 CVRP #61 在 1e-3 缩尺下漂移 +255.95%，与 CVRP Frozen C（H-001，+206.99%）构成跨问题同源失效机理。",
+  "attributes": {
+    "knowledge_tier": "failure_antipattern",
+    "problem_variant": "online_bp",
+    "variant_adaptation_note": "主归属在线装箱域（OBP），同时关联 CVRP 域尺度崩盘反例，构成跨问题统一量纲设计护栏。",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(1)",
+    "interface": "score",
+    "applicable_regimes": {
+      "strong_on": [
+        "auditing_dimensionless_invariance",
+        "preventing_hardcoded_capacity_constants"
+      ],
+      "weak_on": [
+        "fixed_single_capacity_toy_benchmarks"
+      ],
+      "scale_notes": "605 条岛屿规则实测：CVRP 有 34/207 条不满足缩尺不变（最差 rank #61 达 +255.95%）；OBP 有 9/192 条在 10× 箱容缩放下箱数退化 >0.5%（最差 B117 达 +1.38%）。"
+    },
+    "math_formulation": [
+      {
+        "expr": "B117: density = 1 - (bins - item) / 100  (hardcodes C=100 -> negative/wrong sign when C=500 or 1000)",
+        "variables": {
+          "100": "仅对 C=100 训练流成立的硬编码绝对常数"
+        },
+        "preconditions": "当测试集箱容变为 C=500 或 BPPLib 大箱容（如 C=100,000）时量纲彻底失真"
+      },
+      {
+        "expr": "CVRP #61: score = w*d_cur + (1-w)*(1 / d_dep)  (mixes O(s) and O(1/s) -> +255.95% drift at s=1e-3)",
+        "variables": {
+          "s": "坐标统一缩放因子"
+        },
+        "preconditions": "当坐标缩小 1000 倍时 1/d_dep 相对 d_cur 放大 10^6 倍"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/bp/bp_116_E2_highgen_g8_r39__ae12f32a.py",
+        "sha256": "ae12f32a1c33b1a52472c1067b78ced2293dd227c7a8f298d6dded992ccd9dbc"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/bp/bp_002_E2_gen16_g16_r8__28e1a354.py",
+        "sha256": "28e1a354316b595ecae98a6b4f342938edabb4a2e573c3569f6e034fa20108a3"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/cvrp/cvrp_060_E2_highgen_g8_r11__5743ace4.py",
+        "sha256": "5743ace4ed7cb91090b4bdff3f40f88d1207e47fb10bc70e6e772430bbe5a1ca"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b117_hardcap_anti",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.03404,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "OBP B117 在 Weibull 多箱容共同交集差距 +3.40%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "obp_ext_bpplib",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b117_hardcap_anti",
+        "metric": "mean_rel_gap",
+        "value": 0.103198,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "OBP B117 在 BPPLib 70 例差距 +10.32%",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing",
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-obp-i605-sqrt-close-bonus",
+      "method-cvrp-i605-relative-band-savings"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/workbench_screening_605.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-obp-hardcoded-capacity-antipattern",
+  "content_sha256": "4298615b2a699aed056ae670dcda23863a71ce13f6ad3e196747b63f6f5b1765"
+}

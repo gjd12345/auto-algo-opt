@@ -41,6 +41,20 @@ _REPO = Path(__file__).resolve().parents[2]
 _FROZEN_P0_CODE = _REPO / "reports" / "evidence" / "cvrp_p0_p1_p2_20261107" / "p0" / "frozen_code"
 _FROZEN_V0_CODE = _REPO / "reports" / "evidence" / "cvrp_p0_p1_p2_20261107" / "p1" / "V0.py"
 _RULES_S2_DIR = _REPO / "experiments" / "cvrp_midterm" / "selection_s2" / "rules_s2"
+_S2_R4_CODE_PATH = (
+    _REPO
+    / "experiments"
+    / "cvrp_midterm"
+    / "runs"
+    / "s2_autonomous_math_r8"
+    / "rounds"
+    / "round_0004"
+    / "eoh_run"
+    / "skills"
+    / "candidate_1"
+    / "code.py"
+)
+_ISLAND605_CVRP_DIR = _REPO / "experiments" / "island605_archive" / "rules" / "all" / "cvrp"
 
 PINNED_SOURCE_SHA256: dict[str, str] = {
     "a": "ccdab29f7d08ab162145ae7e468e47a5488b696d9a644bb7e793ab5c2665a866",
@@ -114,6 +128,25 @@ POINTWISE_PLUS_S2_12_IDS: tuple[str, ...] = (
     "s2_r7_iso",
     "s2_r3_rho",
     "s2_ctrl_best",
+)
+
+MILESTONE15_CVRP_IDS: tuple[str, ...] = (
+    "s2_r4_cos",
+    "cvrp_sweep_2opt",
+    "cvrp_farthest_insertion",
+    "i605_cvrp_c1_tworegime",
+    "i605_cvrp_c8_radial_early",
+    "i605_cvrp_c17_phase_noreturn",
+    "i605_cvrp_c22_band_savings",
+)
+
+POINTWISE_PLUS_M15_IDS: tuple[str, ...] = (
+    *POINTWISE_PLUS_S2_12_IDS,
+    "s2_r4_cos",
+    "i605_cvrp_c1_tworegime",
+    "i605_cvrp_c8_radial_early",
+    "i605_cvrp_c17_phase_noreturn",
+    "i605_cvrp_c22_band_savings",
 )
 
 
@@ -560,6 +593,176 @@ def solve_heuragenix_min_cost_ins(
     }
 
 
+def solve_cvrp_sweep_2opt(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    *,
+    depot_coord: tuple[float, float] | list[float],
+    customer_coords: list[list[float]] | np.ndarray,
+    time_budget_ms: float | None = 500.0,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """True Cartesian polar-angle Gillett-Miller Sweep + intra-route 2-opt.
+
+    Computes real polar angles atan2(y_i - y_0, x_i - x_0) from 2D coordinates
+    (in explicit contrast to HeurAgenix petal_algorithm_b384, which evaluates
+    atan2(d[0,i], d[i,0]) == pi/4 on symmetric distance matrices), tests up to
+    16 evenly spaced starting cuts in both orientations, and refines the best
+    angular clustering with budgeted intra-route 2-opt.
+    """
+    t0 = time.perf_counter()
+    deadline = (t0 + time_budget_ms / 1000.0) if time_budget_ms is not None else None
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], {"rotations_tested": 0, "two_opt_moves": 0, "budget_exhausted": False}
+
+    dx0, dy0 = float(depot_coord[0]), float(depot_coord[1])
+    coords = np.asarray(customer_coords, dtype=np.float64)
+    angles = np.arctan2(coords[:, 1] - dy0, coords[:, 0] - dx0)
+    radii = distance_matrix[0, 1:]
+    base_order = [int(i + 1) for i in sorted(range(n), key=lambda k: (float(angles[k]), float(radii[k]), k))]
+
+    def _cluster_cost(order: list[int]) -> tuple[list[list[int]], float]:
+        routes_c: list[list[int]] = []
+        cur_route: list[int] = []
+        cur_load = 0.0
+        total_len = 0.0
+        for node in order:
+            dem = float(demands[node])
+            if cur_route and cur_load + dem > capacity + 1e-12:
+                prev = 0
+                for c in cur_route:
+                    total_len += float(distance_matrix[prev, c])
+                    prev = c
+                total_len += float(distance_matrix[prev, 0])
+                routes_c.append(cur_route)
+                cur_route = [node]
+                cur_load = dem
+            else:
+                cur_route.append(node)
+                cur_load += dem
+        if cur_route:
+            prev = 0
+            for c in cur_route:
+                total_len += float(distance_matrix[prev, c])
+                prev = c
+            total_len += float(distance_matrix[prev, 0])
+            routes_c.append(cur_route)
+        return routes_c, total_len
+
+    n_starts = min(n, 16)
+    step = max(1, n // n_starts)
+    start_indices = list(range(0, n, step))[:n_starts]
+    best_routes: list[list[int]] = []
+    best_cost = float("inf")
+    rotations_tested = 0
+    budget_exhausted = False
+    rev_order = list(reversed(base_order))
+    for seq in (base_order, rev_order):
+        for s_idx in start_indices:
+            if deadline is not None and time.perf_counter() > deadline and best_routes:
+                budget_exhausted = True
+                break
+            rot = seq[s_idx:] + seq[:s_idx]
+            cand_routes, cand_cost = _cluster_cost(rot)
+            rotations_tested += 1
+            if cand_cost < best_cost - 1e-12:
+                best_cost = cand_cost
+                best_routes = cand_routes
+        if budget_exhausted:
+            break
+
+    total_two_opt = 0
+    improved: list[list[int]] = []
+    for r in best_routes:
+        if deadline is not None and time.perf_counter() > deadline:
+            budget_exhausted = True
+            improved.append(r)
+            continue
+        opt_r, m2, hit = _two_opt_single_route(r, distance_matrix, deadline=deadline, max_passes=100)
+        total_two_opt += m2
+        if hit:
+            budget_exhausted = True
+        improved.append(opt_r)
+
+    return normalize_routes(improved), {
+        "rotations_tested": rotations_tested,
+        "two_opt_moves": total_two_opt,
+        "budget_exhausted": budget_exhausted,
+    }
+
+
+def solve_cvrp_farthest_insertion(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    *,
+    time_budget_ms: float | None = 500.0,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Classic depot-anchored Farthest Insertion CVRP constructor.
+
+    Processes customers in descending order of depot distance and inserts each
+    customer at the global minimum-delta feasible route position (or opens a
+    new route when 2 * d(0, i) is cheaper than any feasible insertion).
+    """
+    t0 = time.perf_counter()
+    deadline = (t0 + time_budget_ms / 1000.0) if time_budget_ms is not None else None
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], {"budget_exhausted": False}
+
+    order = sorted(range(1, n + 1), key=lambda c: (-float(distance_matrix[0, c]), c))
+    routes: list[list[int]] = []
+    loads: list[float] = []
+    budget_exhausted = False
+
+    for step_idx, node in enumerate(order):
+        if deadline is not None and (step_idx & 7) == 0 and time.perf_counter() > deadline:
+            budget_exhausted = True
+            for rem in order[step_idx:]:
+                d_rem = float(demands[rem])
+                placed = False
+                for r_i in range(len(routes)):
+                    if loads[r_i] + d_rem <= capacity + 1e-12:
+                        routes[r_i].append(rem)
+                        loads[r_i] += d_rem
+                        placed = True
+                        break
+                if not placed:
+                    routes.append([rem])
+                    loads.append(d_rem)
+            break
+
+        dem_node = float(demands[node])
+        best_delta = 2.0 * float(distance_matrix[0, node])
+        best_r = -1
+        best_pos = 0
+        for r_i, route in enumerate(routes):
+            if loads[r_i] + dem_node > capacity + 1e-12:
+                continue
+            m = len(route)
+            for pos in range(m + 1):
+                prev_n = 0 if pos == 0 else route[pos - 1]
+                next_n = 0 if pos == m else route[pos]
+                delta = (
+                    float(distance_matrix[prev_n, node])
+                    + float(distance_matrix[node, next_n])
+                    - float(distance_matrix[prev_n, next_n])
+                )
+                if delta < best_delta - 1e-12:
+                    best_delta = delta
+                    best_r = r_i
+                    best_pos = pos
+        if best_r < 0:
+            routes.append([node])
+            loads.append(dem_node)
+        else:
+            routes[best_r].insert(best_pos, node)
+            loads[best_r] += dem_node
+
+    return normalize_routes(routes), {"budget_exhausted": budget_exhausted}
+
+
 # ---------------------------------------------------------------------------
 # Solver metadata & unified execution registry
 # ---------------------------------------------------------------------------
@@ -855,6 +1058,96 @@ def _build_solver_catalog() -> dict[str, SolverSpec]:
         description="Adapted from microsoft/HeurAgenix evolved min-cost insertion (spread penalty 0.05) + periodic 2-opt.",
     ))
 
+    # Milestone 1.5 curated additions: R4 complementary rule, classical OR Sweep/Farthest-Insertion,
+    # and 4 mathematically verified island605 CVRP family representatives (selected strictly on dev24+sel64).
+    r4_code, r4_sha, r4_path = _read_verified_source(_S2_R4_CODE_PATH)
+    _add(SolverSpec(
+        algorithm_id="s2_r4_cos",
+        display_name="R4 (s2_r4_cos)",
+        paradigm="sequential_construct",
+        interface="select_next_node",
+        kind="pointwise",
+        kb_entry_id="method-cvrp-s2-r4-cos",
+        code_path=r4_path,
+        code_source=r4_code,
+        code_sha256=r4_sha,
+        description="Stage-2 Round 4 complementary cosine-angle rule (sh6=10.2078, P0-120=19.8100; wins 22/64 vs R5 on select_64).",
+    ))
+
+    sw_src = inspect.getsource(solve_cvrp_sweep_2opt)
+    _add(SolverSpec(
+        algorithm_id="cvrp_sweep_2opt",
+        display_name="Cartesian Sweep + 2-opt",
+        paradigm="cluster_first",
+        interface="solve_cvrp",
+        kind="full_route",
+        kb_entry_id="method-cvrp-sweep-2opt",
+        code_path="agent_skill_loop/cvrp_workbench/solvers.py",
+        code_source=sw_src,
+        code_sha256=_inline_sha(sw_src),
+        default_budget_ms=500.0,
+        description="True 2D polar-angle Gillett-Miller multi-start Sweep + intra-route 2-opt (replaces defective distance-matrix petal).",
+    ))
+
+    fi_src = inspect.getsource(solve_cvrp_farthest_insertion)
+    _add(SolverSpec(
+        algorithm_id="cvrp_farthest_insertion",
+        display_name="CVRP Farthest Insertion",
+        paradigm="insertion",
+        interface="solve_cvrp",
+        kind="full_route",
+        kb_entry_id="method-cvrp-farthest-insertion",
+        code_path="agent_skill_loop/cvrp_workbench/solvers.py",
+        code_source=fi_src,
+        code_sha256=_inline_sha(fi_src),
+        default_budget_ms=500.0,
+        description="Classic depot-anchored farthest-customer minimum-delta insertion constructor.",
+    ))
+
+    for alg_id, fname, label, kb_id, desc in (
+        (
+            "i605_cvrp_c1_tworegime",
+            "cvrp_000_E2_gen16_g16_r7__0028e678.py",
+            "Island605 C1 (Two-Regime Savings + 0.7 Early Return)",
+            "method-cvrp-i605-tworegime-savings",
+            "June island605 Rank #1: farthest depot seed, high-cap CW savings -> low-cap NN with 0.7*d_depot voluntary early return (0.0% scale drift).",
+        ),
+        (
+            "i605_cvrp_c8_radial_early",
+            "cvrp_007_E2_highgen_g8_r4__6103d27d.py",
+            "Island605 C8 (Radial Pull + Aggressive Early Return)",
+            "method-cvrp-i605-radial-early-return",
+            "June island605 Rank #8: farthest depot seed, d_cur - 0.3*d_dep radial pull, aggressive geometric/low-cap early return (0.0% scale drift).",
+        ),
+        (
+            "i605_cvrp_c17_phase_noreturn",
+            "cvrp_016_E2_highgen_g8_r2__f479a040.py",
+            "Island605 C17 (Two-Phase Avg-Demand Switch, No Early Return)",
+            "method-cvrp-i605-phase-noreturn",
+            "June island605 Rank #17: average-demand capacity switch between min-max normalized savings and NN with zero voluntary early returns.",
+        ),
+        (
+            "i605_cvrp_c22_band_savings",
+            "cvrp_021_E2_highgen_g8_r35__c7e0a7ad.py",
+            "Island605 C22 (1.1x Relative-Band Savings + Early Return)",
+            "method-cvrp-i605-relative-band-savings",
+            "June island605 Rank #22: scale-invariant 1.1*min(d_cur) band maximizing savings + geometric early return (0.0% scale drift).",
+        ),
+    ):
+        c_code, c_sha, c_path = _read_verified_source(_ISLAND605_CVRP_DIR / fname)
+        _add(SolverSpec(
+            algorithm_id=alg_id,
+            display_name=label,
+            paradigm="sequential_construct",
+            interface="select_next_node",
+            kind="pointwise",
+            kb_entry_id=kb_id,
+            code_path=c_path,
+            code_source=c_code,
+            code_sha256=c_sha,
+            description=desc,
+        ))
+
     return specs
 
 
@@ -1003,6 +1296,17 @@ def evaluate_algorithm_on_instance(
                 routes, meta = solve_cw_relocate_2opt(matrix, demands, capacity, time_budget_ms=budget)
             elif algorithm_id == "heuragenix_min_cost_ins":
                 routes, meta = solve_heuragenix_min_cost_ins(matrix, demands, capacity, time_budget_ms=budget)
+            elif algorithm_id == "cvrp_sweep_2opt":
+                routes, meta = solve_cvrp_sweep_2opt(
+                    matrix,
+                    demands,
+                    capacity,
+                    depot_coord=instance["depot"],
+                    customer_coords=instance["customer_coordinates"],
+                    time_budget_ms=budget,
+                )
+            elif algorithm_id == "cvrp_farthest_insertion":
+                routes, meta = solve_cvrp_farthest_insertion(matrix, demands, capacity, time_budget_ms=budget)
             else:
                 raise ValueError(f"unsupported_full_route_solver:{algorithm_id}")
         except Exception as exc:

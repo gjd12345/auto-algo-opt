@@ -375,7 +375,11 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
     assert required_sources.issubset(source_ids)
 
     # Validate immutable historic releases + current release
-    for rel_name in ("20260914-main-d6433549-kb-v0", "20261121-main-audit-kb-v1"):
+    for rel_name in (
+        "20260914-main-d6433549-kb-v0",
+        "20261121-main-audit-kb-v1",
+        "20261122-main-co-workbench-final",
+    ):
         check = validate_release(REPO / "knowledge_store" / "releases" / rel_name)
         assert check["ok"] is True, check["errors"][:10]
 
@@ -431,23 +435,23 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
         sub = [r for r in records_doc["records"] if r["suite_id"] == sid and r["algorithm_id"] == alg_id]
         assert aggregate_records(sub) == summary_doc["suites"][sid]["algorithms"][alg_id]["overall"]
 
-    # Set X 3-tier breakdown & common_completed (N_common=59) parity in summary
+    # Set X 3-tier breakdown & common_completed parity in summary
     set_x_sum = summary_doc["suites"]["cvrp_ext_cvrplib_x_100"]
     x_tiers = set_x_sum["algorithms"]["s2_r5_spiral"]["by_x_tier"]
     assert set(x_tiers) == {"X-S (100-250)", "X-M (251-500)", "X-L (501-1000)"}
     assert set_x_sum["vehicle_limit_policy"] == "free_fleet_min_k_lb"
-    assert set_x_sum["common_completed_count"] == 59
-    assert round(set_x_sum["algorithms"]["eohs_cvrp_f1"]["common_completed"]["mean_rel_gap"] * 100, 2) == 27.05
-    assert round(set_x_sum["algorithms"]["s2_r5_spiral"]["common_completed"]["mean_rel_gap"] * 100, 2) == 16.36
-    assert round(set_x_sum["algorithms"]["cw_relocate_2opt"]["common_completed"]["mean_rel_gap"] * 100, 2) == 5.69
+    assert set_x_sum["common_completed_count"] == 69
+    assert round(set_x_sum["algorithms"]["eohs_cvrp_f1"]["common_completed"]["mean_rel_gap"] * 100, 2) == 26.96
+    assert round(set_x_sum["algorithms"]["s2_r5_spiral"]["common_completed"]["mean_rel_gap"] * 100, 2) == 16.22
+    assert round(set_x_sum["algorithms"]["cw_relocate_2opt"]["common_completed"]["mean_rel_gap"] * 100, 2) == 5.72
 
     # Set X Set-10 non-negative convergence rate (never double-subtract timeouts) & Set X lt_k == 0
     set10_x = set_x_sum["algorithms"]["eohs_cvrp_set10_cpi"]["overall"]
-    assert set10_x["ok_count"] == 59
-    assert set10_x["budget_exhausted_count"] == 92
-    assert set10_x["ok_budget_exhausted_count"] == 51
-    assert set10_x["timeout_count"] == 41
-    assert set10_x["local_opt_convergence_rate"] == 0.08
+    assert set10_x["ok_count"] == 69
+    assert set10_x["budget_exhausted_count"] == 83
+    assert set10_x["ok_budget_exhausted_count"] == 52
+    assert set10_x["timeout_count"] == 31
+    assert set10_x["local_opt_convergence_rate"] == 0.17
     for sid, s_obj in summary_doc["suites"].items():
         for aid, a_obj in s_obj["algorithms"].items():
             ov = a_obj["overall"]
@@ -469,7 +473,7 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
         (a_obj["overall"]["lt_k_count"] + a_obj["overall"]["gt_k_count"])
         for a_obj in abp_sum["algorithms"].values()
     )
-    assert total_abp_non_k == 200
+    assert total_abp_non_k == 433
 
     # Synthetic unit test for aggregate_records with mixed ok-budget-exhausted and timeout rows
     synth_agg = aggregate_records([
@@ -483,10 +487,10 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
     assert synth_agg["budget_exhausted_count"] == 2
     assert synth_agg["local_opt_convergence_rate"] == round(1 / 3, 6)
 
-    # EoH-S 256 budget_exhausted_count (49/256) & 18.39% CPI parity
+    # EoH-S 256 budget_exhausted_count (40/256) & 18.38% CPI parity
     eohs_256_cpi = summary_doc["suites"]["cvrp_ext_eohs_256"]["algorithms"]["eohs_cvrp_set10_cpi"]["overall"]
-    assert eohs_256_cpi["ok_count"] == 256 and eohs_256_cpi["budget_exhausted_count"] == 49
-    assert round(eohs_256_cpi["mean_rel_gap"] * 100, 2) == 18.39
+    assert eohs_256_cpi["ok_count"] == 256 and eohs_256_cpi["budget_exhausted_count"] == 40
+    assert round(eohs_256_cpi["mean_rel_gap"] * 100, 2) == 18.38
 
     # Verify Direction-2 mistake records exist and are drillable
     h288_p2 = selection_doc["analyses"]["hetero_288__pointwise_plus_s2"]
@@ -522,7 +526,7 @@ def test_frontend_zero_broken_kb_links_js_syntax_and_bundle_parity(tmp_path: Pat
     cur_dir = resolve_release(repo / "knowledge_store/current")
     index_doc = json.loads((cur_dir / "index.json").read_text(encoding="utf-8"))
     valid_ids = {e["id"] for e in index_doc["entries"]}
-    assert len(valid_ids) == 324
+    assert len(valid_ids) == 340
 
     # 1. Zero broken KB entry links across all frontend/src/*.js modules
     id_re = re.compile(r"\b(?:method|evidence|problem|impl|finding)-[a-z0-9-]+\b")
@@ -577,3 +581,80 @@ def test_frontend_zero_broken_kb_links_js_syntax_and_bundle_parity(tmp_path: Pat
             "if(L.resolveScope({n_instances:74,common_completed_count:74},'')!=='overall')throw new Error('full suite');"
         )
         subprocess.run(["node", "-e", node_check], cwd=str(repo), check=True)
+
+
+def test_milestone15_reproduction_solvers_and_kb_integrity() -> None:
+    """Verify Milestone 1.5 dual-track reproduction artifacts, 45 total solvers, and 16 new KB cards."""
+    from knowledge_tools.core import resolve_release
+
+    assert len(SOLVER_CATALOG) == 26
+    assert len(TSP_SOLVER_CATALOG) == 9
+    assert len(OBP_SOLVER_CATALOG) == 10
+
+    cur_dir = resolve_release(REPO / "knowledge_store" / "current")
+    summary_doc = json.loads((cur_dir / "results" / "summary.json").read_text(encoding="utf-8"))
+    selection_doc = json.loads((cur_dir / "results" / "selection_records.json").read_text(encoding="utf-8"))
+
+    # R4 exact reproduction on shared6 & P0-120
+    sh6_r4 = summary_doc["suites"]["shared_diagnostic_6"]["algorithms"]["s2_r4_cos"]["overall"]
+    assert sh6_r4["mean_tour_length"] == 10.2078
+    p0_r4 = summary_doc["suites"]["cvrp_hist_p0_120"]["algorithms"]["s2_r4_cos"]["overall"]
+    assert p0_r4["mean_tour_length"] == 19.81
+
+    # Genuine Cartesian Sweep + 2-opt verified & outperforms HeurAgenix min-cost insertion on EoH-S 256
+    eohs_sw = summary_doc["suites"]["cvrp_ext_eohs_256"]["algorithms"]["cvrp_sweep_2opt"]["overall"]
+    eohs_hx = summary_doc["suites"]["cvrp_ext_eohs_256"]["algorithms"]["heuragenix_min_cost_ins"]["overall"]
+    assert eohs_sw["ok_count"] == 256
+    assert eohs_sw["mean_rel_gap"] < eohs_hx["mean_rel_gap"]
+
+    # Direction-2 expanded Milestone 1.5 portfolio exists and lowers SBS below old 12-rule VBS
+    assert "hetero_288__pointwise_plus_m15" in selection_doc["analyses"]
+    assert "final_accept_120__pointwise_plus_m15_frozen" in selection_doc["analyses"]
+    m15_sbs = selection_doc["analyses"]["hetero_288__pointwise_plus_m15"]["protocols"]["cv12"]["selectors"]["fixed_best_sbs"]["total"]
+    old_vbs = selection_doc["analyses"]["hetero_288__pointwise_plus_s2"]["protocols"]["cv12"]["selectors"]["oracle_vbs"]["total"]
+    assert m15_sbs < old_vbs
+
+    # Dual-track reproduction artifacts present and consistent
+    leg = json.loads((REPO / "experiments" / "milestone15" / "legacy_reproduction_605.json").read_text(encoding="utf-8"))
+    scr = json.loads((REPO / "experiments" / "milestone15" / "workbench_screening_605.json").read_text(encoding="utf-8"))
+    abl = json.loads((REPO / "experiments" / "milestone15" / "obp_protocol_ablation.json").read_text(encoding="utf-8"))
+    roster = json.loads((REPO / "experiments" / "milestone15" / "frozen_roster_manifest.json").read_text(encoding="utf-8"))
+    assert leg["island605_summary"]["total_matched_within_1e4"] == 604
+    assert "0.028071" in leg["island605_summary"]["bp_rank61_explanation"]
+    assert "0.02817" not in leg["island605_summary"]["bp_rank61_explanation"]
+    assert leg["midterm_sessions_audit"]["n_in_repo_non_aborted_sessions"] == 24
+    assert leg["midterm_sessions_audit"]["n_distinct_88inst_route_outputs"] == 23
+    assert leg["heuragenix_petal_audit"]["symmetric_matrix_angles_all_pi_over_4"] is True
+    assert scr["cvrp_summary"]["true_runtime_voluntary_early_return"] == 55
+    assert roster["solver_count"] == 15
+    # Controlled same-stream OBP ablation proves B1 degrades behind B50/B16 when active new-bin opening is disabled
+    w5 = abl["island605_weibull_5x5000_c100"]
+    assert w5["i605_obp_b1_exp_deadzone"]["allow_open_new_bin"]["ratio_of_means_excess"] < w5["i605_obp_b50_sqrt_tier"]["allow_open_new_bin"]["ratio_of_means_excess"]
+    assert w5["i605_obp_b50_sqrt_tier"]["open_bins_only"]["ratio_of_means_excess"] < w5["i605_obp_b1_exp_deadzone"]["open_bins_only"]["ratio_of_means_excess"]
+
+    # T1 complexity corrected to O(n^4)
+    t1_entry = read_entry(cur_dir, "method-tsp-i605-1step-rollout")
+    assert t1_entry["attributes"]["complexity_class"] == "O(n^4)"
+
+    # All 16 new Milestone 1.5 KB cards readable from current release
+    m15_kb_ids = (
+        "method-cvrp-s2-r4-cos",
+        "method-cvrp-sweep-2opt",
+        "method-cvrp-farthest-insertion",
+        "method-cvrp-i605-tworegime-savings",
+        "method-cvrp-i605-radial-early-return",
+        "method-cvrp-i605-phase-noreturn",
+        "method-cvrp-i605-relative-band-savings",
+        "method-tsp-i605-1step-rollout",
+        "method-tsp-i605-mean-farness",
+        "method-tsp-i605-dest-pull",
+        "method-tsp-i605-dimensionless-ratio",
+        "method-obp-i605-exp-deadzone",
+        "method-obp-i605-sqrt-close-bonus",
+        "method-obp-i605-log-half-symmetry",
+        "evidence-obp-hardcoded-capacity-antipattern",
+        "evidence-milestone15-historical-reproduction",
+    )
+    for cid in m15_kb_ids:
+        entry = read_entry(cur_dir, cid)
+        assert entry["id"] == cid

@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Farthest-30% depot seed with insertion-detour regret, then savings-or-return",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "regret",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "From depot pick among the farthest 30% by max (second-best minus best) detour; on-route reuse savings or depot return.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean route length"
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "implementations": [
+      "impl-cvrp-xfer-local"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py",
+      "sha256": "4cf318851137f817fcc83b579a02e3ccc61490e70f5fc8063f4edf2da4476852"
+    }
+  ],
+  "id": "method-cvrp-far-regret-seed",
+  "content_sha256": "d8ce8cceb47197f83ca6ea20a05322b36dce1208a4b3d6d67fccdc37f0684acf"
+}

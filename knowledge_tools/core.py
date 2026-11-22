@@ -163,6 +163,8 @@ ALLOWED_COMPLEXITY_CLASSES = frozenset({
     "O(n^2)",
     "O(n^2 log n)",
     "O(k*n^2)",
+    "O(n^3)",
+    "O(n^4)",
     "O(1)",
     "empirical",
 })

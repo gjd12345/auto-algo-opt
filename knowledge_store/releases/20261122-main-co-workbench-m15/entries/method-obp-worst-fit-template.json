@@ -1,0 +1,40 @@
+{
+  "type": "method",
+  "title": "Worst Fit template in the official OBP example",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "worst-fit",
+    "template"
+  ],
+  "status": "reviewed",
+  "summary": "Template score returns remaining capacities, so argmax prefers the emptiest feasible bin.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "online",
+    "interface": "score(item, bins)->bins",
+    "objective": "bin count / relative gap"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "sources": [],
+    "implementations": [
+      "impl-obp-official-interface"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/bp_online/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/bp_online/prob.py",
+      "sha256": "5914d4325e9e3a801b5ff63ccd64f572c0265c9146ba2279470e111a556fd049"
+    }
+  ],
+  "id": "method-obp-worst-fit-template",
+  "content_sha256": "22720247f15175a9de576b441ba6a43bfa7943b73bb2c493f39308e062ca07b2"
+}

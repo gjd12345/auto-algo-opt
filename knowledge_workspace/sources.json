@@ -3795,6 +3795,67 @@
       "notes": "605 runs share one elite pool; they are not independent replicates.",
       "read_depth": "full_text_local",
       "url": "https://github.com/gjd12345/auto-algo-opt/tree/e1b90b337d3b6e97e359e03915ab8eedc5f33a8a"
+    },
+    {
+      "id": "src-gillett-miller-1974-sweep",
+      "title": "A Heuristic Algorithm for the Vehicle-Dispatch Problem",
+      "authors": [
+        "Billy E. Gillett",
+        "Leland R. Miller"
+      ],
+      "year": 1974,
+      "venue": "Operations Research, 22(2), 340-349",
+      "doi": "10.1287/opre.22.2.340",
+      "url": "https://doi.org/10.1287/opre.22.2.340",
+      "kind": "primary_article",
+      "accessed_on": "2026-11-22",
+      "availability": "publisher_abstract",
+      "license": "copyrighted; citation and algorithmic summary only",
+      "selected": true,
+      "selection_reason": "Foundational Cartesian polar-angle Sweep algorithm for planar CVRP, implemented cleanly with multi-start rotation and 2-opt.",
+      "locator": "agent_skill_loop/cvrp_workbench/solvers.py:solve_cvrp_sweep_2opt",
+      "read_depth": "abstract",
+      "notes": "Replaces defective HeurAgenix petal_algorithm_b384 which evaluated atan2(d[0,i], d[i,0]) == pi/4 on symmetric distance matrices."
+    },
+    {
+      "id": "src-island605-archive-20260630",
+      "title": "auto-algo-opt June 2026 Three-Domain Island-Model Evolution Archive (605 Unique Programs)",
+      "authors": [
+        "auto-algo-opt research log"
+      ],
+      "year": 2026,
+      "venue": "Internal immutable archive (experiments/island605_archive)",
+      "doi": null,
+      "url": "https://github.com/gjd12345/auto-algo-opt/blob/main/experiments/island605_archive/README.md",
+      "kind": "internal_experiment_report",
+      "accessed_on": "2026-11-22",
+      "availability": "local_repository",
+      "license": "repository-internal research record",
+      "selected": true,
+      "selection_reason": "Complete AST-valid archive of 605 unique island-evolved rules (CVRP 207, TSP 206, BP 192) across 52 island runs.",
+      "locator": "experiments/island605_archive/rules/all/manifest.json",
+      "read_depth": "full_text_local",
+      "notes": "Reproduced 604/605 under exact legacy June protocols (BP #61 differs by 0.000401 due to len(bins) cosine kernel) and screened under unified workbench."
+    },
+    {
+      "id": "src-milestone15-reproduction-20261122",
+      "title": "Milestone 1.5 Historical Run Deduplication, Dual-Track Reproduction, and Mathematical Abstraction Audit",
+      "authors": [
+        "auto-algo-opt research log"
+      ],
+      "year": 2026,
+      "venue": "Internal experimental audit (experiments/milestone15/)",
+      "doi": null,
+      "url": "https://github.com/gjd12345/auto-algo-opt/blob/main/docs/RUN_INVENTORY_20261122.md",
+      "kind": "internal_experiment_report",
+      "accessed_on": "2026-11-22",
+      "availability": "local_repository",
+      "license": "repository-internal research record",
+      "selected": true,
+      "selection_reason": "Two-deliverable reproduction ledger separating exact legacy protocol checks from unified workbench evaluation, true runtime early-return census, and R4/Sweep/island605 integration.",
+      "locator": "experiments/milestone15/legacy_reproduction_605.json; experiments/milestone15/workbench_screening_605.json; experiments/milestone15/run_inventory_deduped.json",
+      "read_depth": "full_text_local",
+      "notes": "Zero peeking at cvrp_final_accept_120 during candidate selection; explicitly discloses final_accept_120 Milestone-1 publication history (2,040 baseline records) and tsp_ext_eohs_128 screening role."
     }
   ],
   "coverage": {

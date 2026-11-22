@@ -1,0 +1,89 @@
+{
+  "type": "method",
+  "title": "Standard CVRP intra-route Or-opt contiguous segment relocation",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "or-opt",
+    "oropt",
+    "local-search",
+    "intra-route",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Relocates contiguous chains of length L in {1, 2, 3} to a better edge position within the same CVRP route using O(1) delta evaluation.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "local_search",
+    "complexity_class": "O(k*n^2)",
+    "interface": "local_move_operator",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "post_2opt_refinement",
+        "clustered_subchains",
+        "all_euclidean_cvrp"
+      ],
+      "weak_on": [
+        "inter_route_rebalancing"
+      ],
+      "scale_notes": "是 3-opt 的高效受限子集（仅 O(m^2) 而非 O(m^3)），常与 2-opt 联合构成路内完全局部最优检查。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "对每条路径及段长 L in {1,2,3}，枚举连续段 (i..i+L-1) 抽出并插入同路径其余边 (k, k+1)（正向或反向），O(1) 计算 3 条旧边换 3 条新边的差值",
+      "evolvable_hook": "or_opt_priority(seg_len, delta, route_len) 或邻域切换顺序",
+      "state_maintained": [
+        "routes",
+        "segment_length_L"
+      ],
+      "invariants_and_constraints": [
+        "插入目标边不得与抽出段内部重叠",
+        "路内 Or-opt 不改变路径总需求，容量恒可行"
+      ],
+      "typical_pitfalls": [
+        "目标索引 k 落在抽出段内部造成节点丢失或重复",
+        "忽略 L=1 即等价于路内单点 relocate"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "Delta_OrOpt = [d(a, d) - d(a, b) - d(c, d)] + [d(u, b) + d(c, v) - d(u, v)]",
+        "variables": {
+          "[b..c]": "长度为 L in {1,2,3} 的连续段",
+          "a, d": "段原前后邻接节点",
+          "(u, v)": "目标插入边"
+        },
+        "preconditions": "单条路径内部移动；对称距离下可额外测试反转段 [c..b] 插入 (u,v)"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-intra-2opt",
+      "method-cvrp-vns"
+    ],
+    "sources": [
+      "src-or-1976-or-opt"
+    ]
+  },
+  "source_refs": [
+    "src-or-1976-or-opt"
+  ],
+  "evidence_refs": [
+    "gap:standard-cvrp-or-opt-benchmark-pending-milestone2"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-intra-or-opt",
+  "content_sha256": "124ed2cdbe213f797185e4a7b6a052f24a73efd77eece517ee6fa572446ea382"
+}

@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Or-opt-2: relocate a 2-node segment, then 2-opt and single-node VND",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Removes two consecutive cities and inserts them after a neighbor-induced edge using a 6-edge delta. Alternates with 2-opt and relocation until the new neighbourhood stops.",
+  "attributes": {
+    "interface": "best_or_opt_2 / apply_segment_relocation(length=2)",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "scripts/evaluate_tsp_or_opt_2_vnd.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_or_opt_2_vnd.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_or_opt_2_vnd.py",
+      "sha256": "f4bc223eb0c50658477f603de626f15384df25c345a910b8968c8cafd9b1e4f7"
+    }
+  ],
+  "id": "impl-tsp-or-opt-2",
+  "content_sha256": "dcd114beedc8f94948f8f291adc3279a1022a156984816445c2fc25ae375d90d"
+}
