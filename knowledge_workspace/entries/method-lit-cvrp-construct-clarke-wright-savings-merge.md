@@ -42,7 +42,7 @@
 
 ## 未确认项与冲突证据
 
-- 在 CVRPLib Set A/B/P 上，纯并行 CW 有时会使用比官方最优车数 $k$ 多 1 辆车（具体合规率见 `results/summary.json` 的 `vehicle_limit_compliance_rate` 字段）；需配合路间移位或车数惩罚项进一步压缩车队规模。
+- 在 CVRPLib Set A/B/P（`cvrp_ext_cvrplib_abp_74`）上，官方 `.sol` BKS 严格固定路线数为 $k$，而当前并行 CW（`cw_parallel_merge`）与叠加 `relocate` 均按自由车数运行（`fixed_k_unconstrained_eval`）：其中 `cw_parallel_merge` 在 48/74（64.9%）上严格满足 `route_count == k`（同 $k$ 子集均差 `+5.49%` vs 全 74 例 `+5.48%`），25 例超出 $k$、1 例（`P-n55-k8`）少于 $k$（具体见 `results/summary.json` 的 `exact_k_compliance_rate` 与 `exact_k_mean_rel_gap`）；若需严格满足固定车数契约，须进一步接入固定车队约束合并或车数惩罚项。
 
 ## EoH 适配
 

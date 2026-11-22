@@ -10,8 +10,10 @@
 
 ## 适用条件、假设与限制
 
-- 所有 CVRPLib 套件均采用 `vehicle_limit_policy = "min_vehicles_advisory"`，单独统计并列报是否满足文件名 `-kK` 建议最小车数的合规率（`vehicle_limit_compliance_rate`）。
-- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过。
+- **车数口径严格区分**：
+  - `cvrp_ext_cvrplib_abp_74`（Set A/B/P）官方 `.sol` BKS **全部固定为指定车数 $k$（74/74 吻合）**；本地构造与局部搜索求解器当前以容量为硬约束、车数自由（`vehicle_limit_policy = "fixed_k_unconstrained_eval"`），因此除全 74 例 BKS 均差（如 `CW + relocate + 2-opt` 为 `+4.85%`）外，单独统计并列报严格固定车数合规率（`exact_k_compliance_rate`）与同 $k$ 子集均值（`exact_k_mean_rel_gap`：例如 `CW + relocate + 2-opt` 为 **48/74 = 64.9%** 满足 `==k`，同 $k$ 子集均差 **`+4.78%`**，另有 1 例 `P-n55-k8` 少用 1 辆、25 例超出 $k$；全部 11 算法 814 次有效运行中共 200 次路线数 $\ne k$）。
+  - `cvrp_ext_cvrplib_x_100`（Uchoa Set X）本身采用**自由车数协议**（`vehicle_limit_policy = "free_fleet_min_k_lb"`），实例名中的 $k$ 仅为最小车数下界 $\lceil \sum q_i / Q \rceil$（官方 BKS 本身在多例上使用 $>k$ 辆车）。
+- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过；`common_completed`（`N_common = 59/100`）用于消去样本幸存者偏差。
 
 ## 来源及支持的具体结论
 

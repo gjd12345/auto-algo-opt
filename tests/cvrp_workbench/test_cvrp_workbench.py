@@ -435,10 +435,53 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
     set_x_sum = summary_doc["suites"]["cvrp_ext_cvrplib_x_100"]
     x_tiers = set_x_sum["algorithms"]["s2_r5_spiral"]["by_x_tier"]
     assert set(x_tiers) == {"X-S (100-250)", "X-M (251-500)", "X-L (501-1000)"}
+    assert set_x_sum["vehicle_limit_policy"] == "free_fleet_min_k_lb"
     assert set_x_sum["common_completed_count"] == 59
     assert round(set_x_sum["algorithms"]["eohs_cvrp_f1"]["common_completed"]["mean_rel_gap"] * 100, 2) == 27.05
     assert round(set_x_sum["algorithms"]["s2_r5_spiral"]["common_completed"]["mean_rel_gap"] * 100, 2) == 16.36
     assert round(set_x_sum["algorithms"]["cw_relocate_2opt"]["common_completed"]["mean_rel_gap"] * 100, 2) == 5.69
+
+    # Set X Set-10 non-negative convergence rate (never double-subtract timeouts) & Set X lt_k == 0
+    set10_x = set_x_sum["algorithms"]["eohs_cvrp_set10_cpi"]["overall"]
+    assert set10_x["ok_count"] == 59
+    assert set10_x["budget_exhausted_count"] == 92
+    assert set10_x["ok_budget_exhausted_count"] == 51
+    assert set10_x["timeout_count"] == 41
+    assert set10_x["local_opt_convergence_rate"] == 0.08
+    for sid, s_obj in summary_doc["suites"].items():
+        for aid, a_obj in s_obj["algorithms"].items():
+            ov = a_obj["overall"]
+            if ov["local_opt_convergence_rate"] is not None:
+                assert 0.0 <= ov["local_opt_convergence_rate"] <= 1.0, f"{sid}/{aid}: {ov}"
+    for aid, a_obj in set_x_sum["algorithms"].items():
+        assert a_obj["overall"]["lt_k_count"] == 0, f"Set X {aid} < k"
+
+    # Set A/B/P fixed-k exact compliance & unconstrained-fleet disclosure
+    abp_sum = summary_doc["suites"]["cvrp_ext_cvrplib_abp_74"]
+    assert abp_sum["vehicle_limit_policy"] == "fixed_k_unconstrained_eval"
+    abp_cw = abp_sum["algorithms"]["cw_relocate_2opt"]["overall"]
+    assert abp_cw["ok_count"] == 74
+    assert abp_cw["exact_k_count"] == 48 and abp_cw["lt_k_count"] == 1 and abp_cw["gt_k_count"] == 25
+    assert abp_cw["exact_k_compliance_rate"] == round(48 / 74, 6)
+    assert round(abp_cw["mean_rel_gap"] * 100, 2) == 4.85
+    assert round(abp_cw["exact_k_mean_rel_gap"] * 100, 2) == 4.78
+    total_abp_non_k = sum(
+        (a_obj["overall"]["lt_k_count"] + a_obj["overall"]["gt_k_count"])
+        for a_obj in abp_sum["algorithms"].values()
+    )
+    assert total_abp_non_k == 200
+
+    # Synthetic unit test for aggregate_records with mixed ok-budget-exhausted and timeout rows
+    synth_agg = aggregate_records([
+        {"status": "ok", "tour_length": 10.0, "rel_gap": 0.1, "route_count": 3, "target_vehicles": 3, "within_vehicle_limit": True, "budget_exhausted": True, "preprocess_ms": 1.0, "solve_ms": 500.0, "verify_ms": 0.2},
+        {"status": "ok", "tour_length": 9.0, "rel_gap": 0.0, "route_count": 3, "target_vehicles": 3, "within_vehicle_limit": True, "budget_exhausted": False, "preprocess_ms": 1.0, "solve_ms": 10.0, "verify_ms": 0.2},
+        {"status": "timeout", "tour_length": None, "rel_gap": None, "route_count": 0, "target_vehicles": 3, "within_vehicle_limit": None, "budget_exhausted": True, "preprocess_ms": 1.0, "solve_ms": 501.0, "verify_ms": 0.0},
+    ])
+    assert synth_agg["ok_count"] == 2
+    assert synth_agg["ok_budget_exhausted_count"] == 1
+    assert synth_agg["timeout_count"] == 1
+    assert synth_agg["budget_exhausted_count"] == 2
+    assert synth_agg["local_opt_convergence_rate"] == round(1 / 3, 6)
 
     # EoH-S 256 budget_exhausted_count (49/256) & 18.39% CPI parity
     eohs_256_cpi = summary_doc["suites"]["cvrp_ext_eohs_256"]["algorithms"]["eohs_cvrp_set10_cpi"]["overall"]
@@ -513,3 +556,24 @@ def test_frontend_zero_broken_kb_links_js_syntax_and_bundle_parity(tmp_path: Pat
     core_text = (cur_dir / "workbench_data/core.js").read_text(encoding="utf-8")
     assert '"kb_entries":' in core_text
     assert '"h003_preview":' in core_text
+
+    # 4. Verify H-003 strict counterfactual primary (7.9730%) & default common_completed resolution in frontend labels
+    h003_raw = (repo / "frontend/h003_preview/data.js").read_text(encoding="utf-8")
+    h003_doc = json.loads(h003_raw[h003_raw.index("=") + 1 : h003_raw.rindex(";")])
+    assert h003_doc["summary"]["rel_gain"] == 0.07973
+    assert round(h003_doc["summary"]["means"][1], 4) == 20.6058
+    assert h003_doc["summary"]["wtl"]["wins"] == 94
+    assert h003_doc["archived_theory"]["rel_gain"] == 0.079628
+    assert h003_doc["depot_only"]["changed_instance_ids"] == ["heldout-200-08"]
+
+    if shutil.which("node"):
+        node_check = (
+            "const fs=require('fs'),vm=require('vm');"
+            "const ctx={window:{},console};vm.createContext(ctx);"
+            "vm.runInContext(fs.readFileSync('frontend/src/labels.js','utf8'),ctx);"
+            "const L=ctx.window.WB_LABELS;"
+            "if(L.resolveScope({n_instances:100,common_completed_count:59},'')!=='common_completed')throw new Error('setX default');"
+            "if(L.resolveScope({n_instances:100,common_completed_count:59},'overall')!=='overall')throw new Error('explicit overall');"
+            "if(L.resolveScope({n_instances:74,common_completed_count:74},'')!=='overall')throw new Error('full suite');"
+        )
+        subprocess.run(["node", "-e", node_check], cwd=str(repo), check=True)

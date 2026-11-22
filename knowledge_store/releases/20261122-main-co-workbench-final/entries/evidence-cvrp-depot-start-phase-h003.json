@@ -14,7 +14,7 @@
     "ana72"
   ],
   "status": "reviewed",
-  "summary": "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; swapping only V0's depot-start step reduces P0-120 total tour length by 7.96% (95% paired Bootstrap CI [6.88%, 8.98%], 94/120 wins).",
+  "summary": "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; strictly preserving frozen V0's mid-route code and swapping only V0's depot-start step reduces P0-120 total tour length by 7.9730% (22.3910 -> 20.6058, 95% paired Bootstrap CI [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory also omitted a -1e-6*dem tie-breaker in 1/24,397 mid-route states (heldout-200-08), yielding 7.9628% (20.6081, 94/120 wins).",
   "attributes": {
     "hypothesis_id": "H-003",
     "interface": "select_next_node",
@@ -30,13 +30,19 @@
       "P0-120": {
         "instances": 120,
         "v0_native_mean": 22.391,
-        "v0_decoupled_mean": 20.6081,
-        "total_length_reduction_pct": 7.96,
+        "v0_depot_only_strict_mean": 20.6058,
+        "total_length_reduction_pct": 7.973,
         "bootstrap_ci95_pct": [
           6.88,
-          8.98
+          9.0
         ],
-        "wins": 94
+        "wins": 94,
+        "v0_decoupled_theory_mean": 20.6081,
+        "v0_decoupled_theory_reduction_pct": 7.9628,
+        "mid_route_state_diffs": 1,
+        "changed_instances_vs_archived": [
+          "heldout-200-08"
+        ]
       }
     },
     "artifact_refs": [
@@ -64,7 +70,7 @@
       "weak_on": [
         "already_decoupled_full_route_solvers"
       ],
-      "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；仅替换 V0 的出发步即在 P0-120 降低总路程 7.96% [6.88%, 8.98%]。"
+      "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；严格保留冻结 V0 中程逻辑并仅替换出仓步，在 P0-120 降低总路程 7.9730%（22.3910 -> 20.6058，95% CI [6.88%, 9.00%]，94/120 胜）；早期简化脚本 V0_decoupled_theory 因中程省略 -1e-6*dem 在 heldout-200-08（1/24,397 状态）分歧，对应 7.9628%（20.6081，同为 94/120 胜）。"
     },
     "math_formulation": [
       {
@@ -84,8 +90,8 @@
         "metric": "mean_tour_length",
         "value": 22.391,
         "comparison_mode": "local_recomputed",
-        "reference_note": "V0 native 22.3910 -> V0_decoupled_theory 20.6081 (-7.96% [6.88%, 8.98%], 94/120 wins)",
-        "artifact_path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json"
+        "reference_note": "V0 native 22.3910 -> strict depot_only 20.6058 (-7.9730% [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory 20.6081 (-7.9628%, 1/24397 mid-route tie-break diff on heldout-200-08)",
+        "artifact_path": "frontend/h003_preview/data.js"
       },
       {
         "suite_id": "cvrp_hist_p0_120",
@@ -146,5 +152,5 @@
     "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md;suite=P0-120+ana72;metric=total_tour_length;budget=offline_counterfactual"
   ],
   "code_refs": [],
-  "content_sha256": "d53db40595181da1d7266ebbcded3062e0e27b610e6554a199967e81669c42f1"
+  "content_sha256": "c0c03d6e0c589ba2925135b4384240ed3250255732612aec4224c0eabe817de1"
 }

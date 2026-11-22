@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 REPO = Path(__file__).resolve().parents[1]
-COMMIT_PIN = "5215ebd"
+MIDTERM_COMMIT_PIN = "5215ebd"
+WORKBENCH_COMMIT_PIN = "d8b6ede"
 
 
 def _sha256_bytes(data: bytes) -> str:
@@ -401,8 +402,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
             }
         ],
         "artifact_refs": [
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/problems/cvrp.py", "sha256": _sha256_file_lf(REPO / "agent_skill_loop/problems/cvrp.py")},
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
+            {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "agent_skill_loop/problems/cvrp.py", "sha256": _sha256_file_lf(REPO / "agent_skill_loop/problems/cvrp.py")},
+            {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
         ],
         "evidence_bindings": _collect_bindings(summary, "nn", core_suites),
     }
@@ -479,7 +480,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
             }
         ],
         "artifact_refs": [
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
+            {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
         ],
         "evidence_bindings": _collect_bindings(summary, "savings_pointwise", core_suites),
     }
@@ -565,8 +566,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
             },
         ],
         "artifact_refs": [
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/run_matrix_s2.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/selection_s2/run_matrix_s2.py")},
+            {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
+            {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/run_matrix_s2.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/selection_s2/run_matrix_s2.py")},
         ],
         "evidence_bindings": _collect_bindings(summary, "cw_parallel_merge", core_suites),
     }
@@ -604,7 +605,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
 
 ## 未确认项与冲突证据
 
-- 在 CVRPLib Set A/B/P 上，纯并行 CW 有时会使用比官方最优车数 $k$ 多 1 辆车（具体合规率见 `results/summary.json` 的 `vehicle_limit_compliance_rate` 字段）；需配合路间移位或车数惩罚项进一步压缩车队规模。
+- 在 CVRPLib Set A/B/P（`cvrp_ext_cvrplib_abp_74`）上，官方 `.sol` BKS 严格固定路线数为 $k$，而当前并行 CW（`cw_parallel_merge`）与叠加 `relocate` 均按自由车数运行（`fixed_k_unconstrained_eval`）：其中 `cw_parallel_merge` 在 48/74（64.9%）上严格满足 `route_count == k`（同 $k$ 子集均差 `+5.49%` vs 全 74 例 `+5.48%`），25 例超出 $k$、1 例（`P-n55-k8`）少于 $k$（具体见 `results/summary.json` 的 `exact_k_compliance_rate` 与 `exact_k_mean_rel_gap`）；若需严格满足固定车数契约，须进一步接入固定车队约束合并或车数惩罚项。
 
 ## EoH 适配
 
@@ -654,8 +655,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
             },
         ],
         "artifact_refs": [
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r5_spiral.py", "sha256": r5_sha},
-            {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/pointwise_adapter.py", "sha256": _sha256_file_lf(REPO / "agent_skill_loop/cvrp_workbench/pointwise_adapter.py")},
+            {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r5_spiral.py", "sha256": r5_sha},
+            {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/pointwise_adapter.py", "sha256": _sha256_file_lf(REPO / "agent_skill_loop/cvrp_workbench/pointwise_adapter.py")},
         ],
         "evidence_bindings": _collect_bindings(summary, "s2_r5_spiral", core_suites + ["shared_diagnostic_6"]),
     })
@@ -774,8 +775,24 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
 
     # 11) Upgrade evidence-cvrp-depot-start-phase-h003
     h3_meta = json.loads((entries_dir / "evidence-cvrp-depot-start-phase-h003.json").read_text(encoding="utf-8"))
+    h3_meta["summary"] = (
+        "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; strictly preserving frozen V0's mid-route code and swapping only V0's depot-start step reduces P0-120 total tour length by 7.9730% (22.3910 -> 20.6058, 95% paired Bootstrap CI [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory also omitted a -1e-6*dem tie-breaker in 1/24,397 mid-route states (heldout-200-08), yielding 7.9628% (20.6081, 94/120 wins)."
+    )
     h3_meta["source_refs"] = sorted(set(h3_meta.get("source_refs", []) + ["src-cvrp-workbench-20261121"]))
     h3_meta["relations"]["sources"] = sorted(set(h3_meta.get("relations", {}).get("sources", []) + ["src-cvrp-workbench-20261121"]))
+    if isinstance(h3_meta["attributes"].get("suites"), dict):
+        h3_meta["attributes"]["suites"]["P0-120"] = {
+            "instances": 120,
+            "v0_native_mean": 22.391,
+            "v0_depot_only_strict_mean": 20.6058,
+            "total_length_reduction_pct": 7.973,
+            "bootstrap_ci95_pct": [6.88, 9.00],
+            "wins": 94,
+            "v0_decoupled_theory_mean": 20.6081,
+            "v0_decoupled_theory_reduction_pct": 7.9628,
+            "mid_route_state_diffs": 1,
+            "changed_instances_vs_archived": ["heldout-200-08"],
+        }
     h3_meta["attributes"].update({
         "knowledge_tier": "math_observation",
         "problem_variant": "standard_cvrp",
@@ -784,7 +801,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
         "applicable_regimes": {
             "strong_on": ["sequential_construct", "uniform", "clustered", "n_50_to_200"],
             "weak_on": ["already_decoupled_full_route_solvers"],
-            "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；仅替换 V0 的出发步即在 P0-120 降低总路程 7.96% [6.88%, 8.98%]。",
+            "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；严格保留冻结 V0 中程逻辑并仅替换出仓步，在 P0-120 降低总路程 7.9730%（22.3910 -> 20.6058，95% CI [6.88%, 9.00%]，94/120 胜）；早期简化脚本 V0_decoupled_theory 因中程省略 -1e-6*dem 在 heldout-200-08（1/24,397 状态）分歧，对应 7.9628%（20.6081，同为 94/120 胜）。",
         },
         "math_formulation": [
             {
@@ -801,13 +818,50 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                 "metric": "mean_tour_length",
                 "value": summary["suites"]["cvrp_hist_p0_120"]["algorithms"]["v0"]["overall"]["mean_tour_length"],
                 "comparison_mode": "local_recomputed",
-                "reference_note": "V0 native 22.3910 -> V0_decoupled_theory 20.6081 (-7.96% [6.88%, 8.98%], 94/120 wins)",
-                "artifact_path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json",
+                "reference_note": "V0 native 22.3910 -> strict depot_only 20.6058 (-7.9730% [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory 20.6081 (-7.9628%, 1/24397 mid-route tie-break diff on heldout-200-08)",
+                "artifact_path": "frontend/h003_preview/data.js",
             },
             *_collect_bindings(summary, "s2_r5_spiral", ["cvrp_hist_p0_120", "cvrp_final_accept_120"]),
         ],
     })
-    h3_md = (entries_dir / "evidence-cvrp-depot-start-phase-h003.md").read_text(encoding="utf-8")
+    h3_md = """# CVRP depot-start alpha=1 ranking switch and counterfactual swap (H-003)
+
+严格区分 `i == 0` 仓库出发步与中程路径构造步评分机制；在 `s_alpha(i, j) = d(i, j) - alpha * d(0, j)` 下，仓库出发步退化为 `(1 - alpha) * d(0, j)`，并在 `alpha = 1` 处发生最小化排序反转。
+
+## 机制与反事实实验归因
+
+- **理论相变边界**：当 `alpha < 1` 时优先选择近仓客户（inside-out），`alpha = 1` 时距离项恒为 `0`，当 `alpha > 1` 时反转为优先选择远端客户（outside-in）。
+- **独立 `P0-120` 严格反事实替换（主证据，`n = 50/100/200` 各 40 例）**：
+  - 严格保留冻结 `V0` 中程代码 `100%` 不变、仅将 `i == 0` 出发分支替换为远端重货优先时，平均路长从 `22.3910` 降至 **`20.6058`**，总路程下降 **`7.9730%`**（`7.97%`，95% 配对 Bootstrap CI `[6.88%, 9.00%]`，10,000 次重采样 0 次非正，**`94/120` 胜、`26/120` 负**）。
+  - 分规模均值：`n=50` `11.5344 -> 11.4556`（`-0.68%`）；`n=100` `20.1761 -> 18.4766`（`-8.42%`）；`n=200` `35.4626 -> 31.8852`（`-10.09%`，`40/40` 全胜）。
+- **与历史 `V0_decoupled_theory` 脚本差异说明**：
+  - 早期归档 `V0_decoupled_theory`（`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`）在中程分支略去了冻结 `V0` 末尾 `-1e-6 * demands` 微小破平项；全量 120 例重放共 `24,397` 次中程状态中仅 **`1` 次**（`heldout-200-08`）发生选择分歧，对应均长 `20.6081`、降幅 **`7.9628%`**（`[6.88%, 8.98%]`，同为 `94/120` 胜）。两口径均证实在仓库出发步反转排序是收益的核心因果来源。
+
+## 定义或方法步骤
+
+1. 显式判别 `current_node == depot` 与 `current_node != depot` 两个阶段。
+2. 仓库出发步禁止直接套用中程净节约 / 径向惩罚公式，应依据剩余车次规模或远端外扫目标选择种子客户。
+3. 中程步保留局部几何与容量权衡，不在已验证规则（如 `V0`、`s2_r5_spiral`）中混入未标定尺度的绝对需求/带宽常项（见 `H-001`）。
+
+## 适用条件、假设与限制
+
+- 对满足三角不等式的欧氏标准 CVRP 构造策略普遍成立；当全解并行合并或局部搜索接管后（如 `cw_relocate_2opt`），出发步顺序不再是决定瓶颈。
+
+## 来源及支持的具体结论
+
+- 分析脚本与对照重放：`experiments/cvrp_midterm/analysis/boundary_analysis.py`、`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`、`frontend/h003_preview/build_data.py`。
+- `P0-120` 与 `Final-Accept-120` 工作台同协议绑定见 `attributes.evidence_bindings`。
+
+## 代码和评测关联
+
+- 严格反事实与历史对照重放脚本：`frontend/h003_preview/build_data.py`（产出 `frontend/h003_preview/data.js`）。
+- 历史分析与盲测基线脚本：`experiments/cvrp_midterm/analysis/boundary_analysis.py`、`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`。
+
+## 未确认项与冲突证据
+
+- 最优出发策略仍与剩余总需求车数比 `rem_routes = sum(q)/rest_capacity` 相关：末期残余很少时近邻紧凑种子可能优于纯外围种子。
+- 本卡片针对顺次构造接口 `select_next_node` 验证；在大型 Set X（`n=500..1000`）上多阶段并行搜索显著更优。
+"""
     _upsert("evidence-cvrp-depot-start-phase-h003", h3_meta, h3_md)
 
     # ------------------------------------------------------------------
@@ -1018,7 +1072,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     }
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
+                    {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
                 ],
                 "evidence_bindings": _collect_bindings(summary, "cw_2opt", core_suites),
             },
@@ -1174,7 +1228,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     }
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
+                    {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/solvers.py", "sha256": solvers_sha},
                 ],
                 "evidence_bindings": _collect_bindings(summary, "cw_relocate_2opt", core_suites),
             },
@@ -1579,7 +1633,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     }
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r7_iso.py", "sha256": r7_sha},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r7_iso.py", "sha256": r7_sha},
                 ],
                 "evidence_bindings": _collect_bindings(summary, "s2_r7_iso", core_suites + ["shared_diagnostic_6"]),
             },
@@ -1669,7 +1723,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     }
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py", "sha256": c_sha},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py", "sha256": c_sha},
                 ],
                 "evidence_bindings": [
                     *_collect_bindings(summary, "c", ["shared_diagnostic_6", "cvrp_dev_hetero_24", "cvrp_hist_p0_120", "cvrp_hist_hetero_288", "cvrp_final_accept_120"]),
@@ -1763,8 +1817,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     },
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/analysis/scale_term_audit.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/analysis/scale_term_audit.py")},
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py", "sha256": c_sha},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/analysis/scale_term_audit.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/analysis/scale_term_audit.py")},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py", "sha256": c_sha},
                 ],
                 "evidence_bindings": [
                     {
@@ -1867,7 +1921,7 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     },
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/ledger/hypotheses.jsonl")},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/ledger/hypotheses.jsonl")},
                 ],
                 "evidence_bindings": [
                     *_collect_bindings(summary, "s2_r5_spiral", ["cvrp_hist_p0_120", "cvrp_final_accept_120"]),
@@ -1983,8 +2037,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     }
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/selection.py", "sha256": selection_sha},
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/select_s2.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/selection_s2/select_s2.py")},
+                    {"kind": "repo_code", "commit": WORKBENCH_COMMIT_PIN, "path": "agent_skill_loop/cvrp_workbench/selection.py", "sha256": selection_sha},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/select_s2.py", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/selection_s2/select_s2.py")},
                 ],
                 "evidence_bindings": h10_bindings,
             },
@@ -2070,8 +2124,8 @@ def sync_kb(workspace: Path, bundle_dir: Path) -> dict[str, Any]:
                     },
                 ],
                 "artifact_refs": [
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r3_rho.py", "sha256": alg_by_id["s2_r3_rho"]["code_sha256"]},
-                    {"kind": "repo_code", "commit": COMMIT_PIN, "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/ledger/hypotheses.jsonl")},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r3_rho.py", "sha256": alg_by_id["s2_r3_rho"]["code_sha256"]},
+                    {"kind": "repo_code", "commit": MIDTERM_COMMIT_PIN, "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl", "sha256": _sha256_file_lf(REPO / "experiments/cvrp_midterm/ledger/hypotheses.jsonl")},
                 ],
                 "evidence_bindings": _collect_bindings(summary, "s2_r3_rho", ["shared_diagnostic_6", "cvrp_hist_p0_120", "cvrp_hist_hetero_288"]),
             },

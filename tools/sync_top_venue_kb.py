@@ -204,8 +204,18 @@ def _local_binding(summary: Mapping[str, Any], suite_id: str, alg_id: str, metri
         return None
     suite_obj = (summary.get("suites") or {}).get(suite_id) or {}
     common = ((suite_obj.get("algorithms") or {}).get(alg_id) or {}).get("common_completed") or {}
-    b_ex = int(overall.get("budget_exhausted_count") or 0)
-    b_note = f", budget_exhausted={b_ex}" if b_ex > 0 else ""
+    b_ex = int(overall.get("ok_budget_exhausted_count") if overall.get("ok_budget_exhausted_count") is not None else (overall.get("budget_exhausted_count") or 0))
+    to_cnt = int(overall.get("timeout_count") if overall.get("timeout_count") is not None else max(0, int(overall.get("n_instances") or 0) - int(overall.get("ok_count") or 0)))
+    b_note = f", ok_budget_exhausted={b_ex}" if b_ex > 0 else ""
+    to_note = f", timeout={to_cnt}" if to_cnt > 0 else ""
+    conv = overall.get("local_opt_convergence_rate")
+    conv_note = f", conv={conv}" if isinstance(conv, (int, float)) and conv < 1.0 else ""
+    k_note = ""
+    if suite_id == "cvrp_ext_cvrplib_abp_74" and overall.get("exact_k_checked"):
+        ex_c = overall.get("exact_k_count")
+        ex_n = overall.get("exact_k_checked")
+        ex_g = overall.get("exact_k_mean_rel_gap")
+        k_note = f", exact_k={ex_c}/{ex_n}(gap={ex_g})"
     c_note = ""
     if common.get("n_instances") and common.get("n_instances") < overall.get("n_instances") and common.get("mean_rel_gap") is not None:
         c_note = f", common_completed({common['n_instances']})_gap={common['mean_rel_gap']}"
@@ -216,7 +226,7 @@ def _local_binding(summary: Mapping[str, Any], suite_id: str, alg_id: str, metri
         "metric": metric,
         "value": overall[metric],
         "comparison_mode": "local_recomputed",
-        "reference_note": f"N={overall.get('n_instances')}, ok={overall.get('ok_count')}{b_note}{c_note}, mean={overall.get('mean_tour_length')}, solve_ms P50={overall.get('solve_ms_p50')}/P95={overall.get('solve_ms_p95')}",
+        "reference_note": f"N={overall.get('n_instances')}, ok={overall.get('ok_count')}{b_note}{to_note}{conv_note}{k_note}{c_note}, mean={overall.get('mean_tour_length')}, solve_ms P50={overall.get('solve_ms_p50')}/P95={overall.get('solve_ms_p95')}",
         "artifact_path": "results/per_instance_records.json",
     }
 
@@ -613,7 +623,7 @@ def sync_top_venue_kb(
                 "applicable_regimes": {
                     "strong_on": ["absolute_bks_calibration", "scale_stress_n100_to_n1000", "cross_paper_ood_benchmark"],
                     "weak_on": ["floating_point_distance_assumption"],
-                    "scale_notes": "Set X 全量 100 例按 X-S (100-250)、X-M (251-500)、X-L (501-1000) 三档统计；官方 .sol 路线在 euc_2d_nint 下 100/100 精确零误差复算。",
+                    "scale_notes": "Set A/B/P 官方 .sol 为固定路线数 k (74/74)；自由车数评估时需另列 exact_k_compliance_rate 与同 k 子集均差（如 cw_relocate_2opt 全 74 例 +4.85%，其中 48/74 满足 ==k 且同 k 子集均差 +4.78%；814 次有效运行中共 200 次路线数 != k）。Set X 为自由车数协议（k 为最少车数下界），按 X-S/X-M/X-L 三档统计且默认按共同完成集 N_common=59 排名。",
                 },
                 "math_formulation": [
                     {
@@ -650,8 +660,10 @@ def sync_top_venue_kb(
 
 ## 适用条件、假设与限制
 
-- 所有 CVRPLib 套件均采用 `vehicle_limit_policy = "min_vehicles_advisory"`，单独统计并列报是否满足文件名 `-kK` 建议最小车数的合规率（`vehicle_limit_compliance_rate`）。
-- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过。
+- **车数口径严格区分**：
+  - `cvrp_ext_cvrplib_abp_74`（Set A/B/P）官方 `.sol` BKS **全部固定为指定车数 $k$（74/74 吻合）**；本地构造与局部搜索求解器当前以容量为硬约束、车数自由（`vehicle_limit_policy = "fixed_k_unconstrained_eval"`），因此除全 74 例 BKS 均差（如 `CW + relocate + 2-opt` 为 `+4.85%`）外，单独统计并列报严格固定车数合规率（`exact_k_compliance_rate`）与同 $k$ 子集均值（`exact_k_mean_rel_gap`：例如 `CW + relocate + 2-opt` 为 **48/74 = 64.9%** 满足 `==k`，同 $k$ 子集均差 **`+4.78%`**，另有 1 例 `P-n55-k8` 少用 1 辆、25 例超出 $k$；全部 11 算法 814 次有效运行中共 200 次路线数 $\ne k$）。
+  - `cvrp_ext_cvrplib_x_100`（Uchoa Set X）本身采用**自由车数协议**（`vehicle_limit_policy = "free_fleet_min_k_lb"`），实例名中的 $k$ 仅为最小车数下界 $\lceil \sum q_i / Q \rceil$（官方 BKS 本身在多例上使用 $>k$ 辆车）。
+- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过；`common_completed`（`N_common = 59/100`）用于消去样本幸存者偏差。
 
 ## 来源及支持的具体结论
 

@@ -31,7 +31,7 @@
       "weak_on": [
         "floating_point_distance_assumption"
       ],
-      "scale_notes": "Set X 全量 100 例按 X-S (100-250)、X-M (251-500)、X-L (501-1000) 三档统计；官方 .sol 路线在 euc_2d_nint 下 100/100 精确零误差复算。"
+      "scale_notes": "Set A/B/P 官方 .sol 为固定路线数 k (74/74)；自由车数评估时需另列 exact_k_compliance_rate 与同 k 子集均差（如 cw_relocate_2opt 全 74 例 +4.85%，其中 48/74 满足 ==k 且同 k 子集均差 +4.78%；814 次有效运行中共 200 次路线数 != k）。Set X 为自由车数协议（k 为最少车数下界），按 X-S/X-M/X-L 三档统计且默认按共同完成集 N_common=59 排名。"
     },
     "math_formulation": [
       {
@@ -51,7 +51,7 @@
         "metric": "mean_rel_gap",
         "value": 0.207218,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=74, ok=74, mean=1053.9054, solve_ms P50=2.5655/P95=4.8322",
+        "reference_note": "N=74, ok=74, exact_k=49/74(gap=0.214152), mean=1053.9054, solve_ms P50=2.5655/P95=4.8322",
         "artifact_path": "results/per_instance_records.json"
       },
       {
@@ -61,7 +61,7 @@
         "metric": "mean_rel_gap",
         "value": 0.054763,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=74, ok=74, mean=914.6757, solve_ms P50=0.6976/P95=1.5164",
+        "reference_note": "N=74, ok=74, exact_k=48/74(gap=0.054897), mean=914.6757, solve_ms P50=0.6976/P95=1.5164",
         "artifact_path": "results/per_instance_records.json"
       },
       {
@@ -71,7 +71,7 @@
         "metric": "mean_rel_gap",
         "value": 0.048524,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=74, ok=74, mean=909.2568, solve_ms P50=1.6035/P95=3.6605",
+        "reference_note": "N=74, ok=74, exact_k=48/74(gap=0.047754), mean=909.2568, solve_ms P50=1.6035/P95=3.6605",
         "artifact_path": "results/per_instance_records.json"
       },
       {
@@ -81,7 +81,7 @@
         "metric": "mean_rel_gap",
         "value": 0.226589,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=74, ok=74, mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
+        "reference_note": "N=74, ok=74, exact_k=67/74(gap=0.232118), mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
         "artifact_path": "results/per_instance_records.json"
       },
       {
@@ -111,7 +111,7 @@
         "metric": "mean_rel_gap",
         "value": 0.054465,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=100, ok=100, budget_exhausted=4, common_completed(59)_gap=0.056878, mean=66139.71, solve_ms P50=55.3373/P95=431.6136",
+        "reference_note": "N=100, ok=100, ok_budget_exhausted=4, conv=0.96, common_completed(59)_gap=0.056878, mean=66139.71, solve_ms P50=55.3373/P95=431.6136",
         "artifact_path": "results/per_instance_records.json"
       },
       {
@@ -121,7 +121,7 @@
         "metric": "mean_rel_gap",
         "value": 0.246558,
         "comparison_mode": "local_recomputed",
-        "reference_note": "N=100, ok=59, budget_exhausted=92, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
+        "reference_note": "N=100, ok=59, ok_budget_exhausted=51, timeout=41, conv=0.08, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
         "artifact_path": "results/per_instance_records.json"
       }
     ],
@@ -680,5 +680,5 @@
   ],
   "code_refs": [],
   "id": "evidence-bench-cvrplib-abpx-standard",
-  "content_sha256": "96a1bbc1463467a51b86421cfe94d6a58d798b3a4f6d71ec8c7e52f46dbbb6ab"
+  "content_sha256": "8498889df1d1c53a328e497442553fe6c55d026e4812f60b309277e87b057e8d"
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": "knowledge-v1",
   "release_id": "20261122-main-co-workbench-final",
-  "generated_at": "2026-11-22T02:17:29Z",
+  "generated_at": "2026-11-22T09:02:43Z",
   "source_main_sha": "d6433549dea055aa3a6ef460686198b3d1888234",
   "entries": [
     {
@@ -135,12 +135,12 @@
         "p0-120",
         "ana72"
       ],
-      "summary": "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; swapping only V0's depot-start step reduces P0-120 total tour length by 7.96% (95% paired Bootstrap CI [6.88%, 8.98%], 94/120 wins).",
-      "search_text": "# CVRP depot-start alpha=1 ranking switch and counterfactual swap (H-003)\n\nFor linear radial-savings constructive scoring `s_alpha(i, j) = d(i, j) - alpha * d(0, j)` on CVRP, at the depot departure step (`i = 0`) the score simplifies to `s_alpha(0, j) = (1 - alpha) * d(0, j)`. Minimizing `s_alpha(0, j)` undergoes a ranking switch at `alpha = 1` (ties at `alpha = 1` are governed by the tie-breaking rule).\n\n## 定义或方法步骤\n\n1. Evaluate the linear scoring family `s_alpha(i, j) = d(i, j) - alpha * d(0, j)` at `i = 0`:\n   - `alpha < 1` selects the nearest feasible customer to the depot (inside-out departure), leaving peripheral customers for tail trips.\n   - `alpha = 1` makes the primary term identically `0`, handing departure selection to the secondary tie-breaking rule.\n   - `alpha > 1` selects the farthest feasible customer from the depot (outside-in departure).\n2. Decouple the departure branch (`current_node == depot`) from mid-route scoring (`current_node != depot`) and perform counterfactual swaps replacing only `i = 0` while keeping mid-route rules (`V0`, `C`, `A`, `B`, `savings`) unchanged.\n\n## 适用条件、假设与限制\n\n- Applies to sequential single-route constructive heuristics under the `select_next_node` interface with Euclidean or metric distance matrices where `d(0, 0) = 0`.\n- Pure-distance alpha-sweep numbers (`20.3165 -> 18.9302` across `alpha = 0.99 -> 1.01`, `-6.82%`, empty-return share `30.14% -> 23.22%`) are empirical tour-length measurements on the `ana72` 72-instance multi-scale suite (`n in {50, 100, 200}`, `{uniform, clustered}`, `Q = 40`, seed `20261123`).\n- Replacing only the depot-start step does not overcome the structural gap between sequential single-node construction and global parallel route merging (e.g., Clarke-Wright merge).\n\n## 来源及支持的具体结论\n\n- Source: `src-cvrp-midterm-20261121` (`experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md`, `experiments/cvrp_midterm/analysis/boundary_analysis.json`, `experiments/cvrp_midterm/analysis/s2_holdout_eval.json`).\n- On `ana72` (72 instances): pure-distance sweep drops from `20.3165` (`alpha=0.99`) to `18.9126` (`alpha=1.00, tie=far`) and `18.9302` (`alpha=1.01`); swapping only `i = 0` to `heavy_far` reduces `V0` from `20.2959` to `18.6124` (`-8.29%`) and `C` from `20.4104` to `18.7909` (`-7.93%`).\n- On frozen `P0-120` blind test (`n = 50, 100, 200`, 40 instances each): keeping frozen `V0` mid-route scoring fixed and replacing only the departure step (`V0_decoupled_theory`) reduces `P0-120` total tour length by **7.96%** (mean `22.3910 -> 20.6081`), 95% paired Bootstrap CI `[6.88%, 8.98%]`, 0/10,000 non-positive resamples, `94/120` wins.\n\n## 代码和评测关联\n\n- Analysis script: `experiments/cvrp_midterm/analysis/boundary_analysis.py` -> `experiments/cvrp_midterm/analysis/boundary_analysis.json`.\n- Blind evaluation script: `experiments/cvrp_midterm/analysis/eval_s2_holdout.py` -> `experiments/cvrp_midterm/analysis/s2_holdout_eval.json` (candidate `V0_decoupled_theory`, `code_sha256: bcb040b0555dd8199465141a689e92eaeb9a4449b1de94d14d316429d9f64a57`).\n- Frozen blind suites: `reports/evidence/cvrp_p0_p1_p2_20261107/p0/suite_{50,100,200}.json` (read-only).\n\n## 未确认项与冲突证据\n\n- Exact optimal depot-start policy depends on remaining fleet demand (`rem_routes = sum(q)/rest_capacity`): late-stage compact seeds can outperform pure outside-in seeds on small residual sets.\n- Results are validated on synthetic Euclidean CVRP instances (`n <= 200`); validation on CVRPLib Set X / asymmetric instances remains future work.\n",
+      "summary": "For s_alpha(0,j)=(1-alpha)*d(0,j), minimizing rank switches at alpha=1; strictly preserving frozen V0's mid-route code and swapping only V0's depot-start step reduces P0-120 total tour length by 7.9730% (22.3910 -> 20.6058, 95% paired Bootstrap CI [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory also omitted a -1e-6*dem tie-breaker in 1/24,397 mid-route states (heldout-200-08), yielding 7.9628% (20.6081, 94/120 wins).",
+      "search_text": "# CVRP depot-start alpha=1 ranking switch and counterfactual swap (H-003)\n\n严格区分 `i == 0` 仓库出发步与中程路径构造步评分机制；在 `s_alpha(i, j) = d(i, j) - alpha * d(0, j)` 下，仓库出发步退化为 `(1 - alpha) * d(0, j)`，并在 `alpha = 1` 处发生最小化排序反转。\n\n## 机制与反事实实验归因\n\n- **理论相变边界**：当 `alpha < 1` 时优先选择近仓客户（inside-out），`alpha = 1` 时距离项恒为 `0`，当 `alpha > 1` 时反转为优先选择远端客户（outside-in）。\n- **独立 `P0-120` 严格反事实替换（主证据，`n = 50/100/200` 各 40 例）**：\n  - 严格保留冻结 `V0` 中程代码 `100%` 不变、仅将 `i == 0` 出发分支替换为远端重货优先时，平均路长从 `22.3910` 降至 **`20.6058`**，总路程下降 **`7.9730%`**（`7.97%`，95% 配对 Bootstrap CI `[6.88%, 9.00%]`，10,000 次重采样 0 次非正，**`94/120` 胜、`26/120` 负**）。\n  - 分规模均值：`n=50` `11.5344 -> 11.4556`（`-0.68%`）；`n=100` `20.1761 -> 18.4766`（`-8.42%`）；`n=200` `35.4626 -> 31.8852`（`-10.09%`，`40/40` 全胜）。\n- **与历史 `V0_decoupled_theory` 脚本差异说明**：\n  - 早期归档 `V0_decoupled_theory`（`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`）在中程分支略去了冻结 `V0` 末尾 `-1e-6 * demands` 微小破平项；全量 120 例重放共 `24,397` 次中程状态中仅 **`1` 次**（`heldout-200-08`）发生选择分歧，对应均长 `20.6081`、降幅 **`7.9628%`**（`[6.88%, 8.98%]`，同为 `94/120` 胜）。两口径均证实在仓库出发步反转排序是收益的核心因果来源。\n\n## 定义或方法步骤\n\n1. 显式判别 `current_node == depot` 与 `current_node != depot` 两个阶段。\n2. 仓库出发步禁止直接套用中程净节约 / 径向惩罚公式，应依据剩余车次规模或远端外扫目标选择种子客户。\n3. 中程步保留局部几何与容量权衡，不在已验证规则（如 `V0`、`s2_r5_spiral`）中混入未标定尺度的绝对需求/带宽常项（见 `H-001`）。\n\n## 适用条件、假设与限制\n\n- 对满足三角不等式的欧氏标准 CVRP 构造策略普遍成立；当全解并行合并或局部搜索接管后（如 `cw_relocate_2opt`），出发步顺序不再是决定瓶颈。\n\n## 来源及支持的具体结论\n\n- 分析脚本与对照重放：`experiments/cvrp_midterm/analysis/boundary_analysis.py`、`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`、`frontend/h003_preview/build_data.py`。\n- `P0-120` 与 `Final-Accept-120` 工作台同协议绑定见 `attributes.evidence_bindings`。\n\n## 代码和评测关联\n\n- 严格反事实与历史对照重放脚本：`frontend/h003_preview/build_data.py`（产出 `frontend/h003_preview/data.js`）。\n- 历史分析与盲测基线脚本：`experiments/cvrp_midterm/analysis/boundary_analysis.py`、`experiments/cvrp_midterm/analysis/eval_s2_holdout.py`。\n\n## 未确认项与冲突证据\n\n- 最优出发策略仍与剩余总需求车数比 `rem_routes = sum(q)/rest_capacity` 相关：末期残余很少时近邻紧凑种子可能优于纯外围种子。\n- 本卡片针对顺次构造接口 `select_next_node` 验证；在大型 Set X（`n=500..1000`）上多阶段并行搜索显著更优。\n",
       "path": "entries/evidence-cvrp-depot-start-phase-h003.md",
       "metadata_path": "entries/evidence-cvrp-depot-start-phase-h003.json",
-      "content_sha256": "d53db40595181da1d7266ebbcded3062e0e27b610e6554a199967e81669c42f1",
-      "metadata_sha256": "f75fbb0f678d6dcd74ead768079dd9877225c4f2c31432958892d7130524e4a8",
+      "content_sha256": "c0c03d6e0c589ba2925135b4384240ed3250255732612aec4224c0eabe817de1",
+      "metadata_sha256": "435cbccec03f76a88265bce4b9baf1ec37132a8434a3e2400c7ce05a245a59d4",
       "source_refs": [
         "src-cvrp-midterm-20261121",
         "src-cvrp-workbench-20261121"
@@ -164,13 +164,19 @@
           "P0-120": {
             "instances": 120,
             "v0_native_mean": 22.391,
-            "v0_decoupled_mean": 20.6081,
-            "total_length_reduction_pct": 7.96,
+            "v0_depot_only_strict_mean": 20.6058,
+            "total_length_reduction_pct": 7.973,
             "bootstrap_ci95_pct": [
               6.88,
-              8.98
+              9.0
             ],
-            "wins": 94
+            "wins": 94,
+            "v0_decoupled_theory_mean": 20.6081,
+            "v0_decoupled_theory_reduction_pct": 7.9628,
+            "mid_route_state_diffs": 1,
+            "changed_instances_vs_archived": [
+              "heldout-200-08"
+            ]
           }
         },
         "artifact_refs": [
@@ -198,7 +204,7 @@
           "weak_on": [
             "already_decoupled_full_route_solvers"
           ],
-          "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；仅替换 V0 的出发步即在 P0-120 降低总路程 7.96% [6.88%, 8.98%]。"
+          "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；严格保留冻结 V0 中程逻辑并仅替换出仓步，在 P0-120 降低总路程 7.9730%（22.3910 -> 20.6058，95% CI [6.88%, 9.00%]，94/120 胜）；早期简化脚本 V0_decoupled_theory 因中程省略 -1e-6*dem 在 heldout-200-08（1/24,397 状态）分歧，对应 7.9628%（20.6081，同为 94/120 胜）。"
         },
         "math_formulation": [
           {
@@ -218,8 +224,8 @@
             "metric": "mean_tour_length",
             "value": 22.391,
             "comparison_mode": "local_recomputed",
-            "reference_note": "V0 native 22.3910 -> V0_decoupled_theory 20.6081 (-7.96% [6.88%, 8.98%], 94/120 wins)",
-            "artifact_path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json"
+            "reference_note": "V0 native 22.3910 -> strict depot_only 20.6058 (-7.9730% [6.88%, 9.00%], 94/120 wins); archived V0_decoupled_theory 20.6081 (-7.9628%, 1/24397 mid-route tie-break diff on heldout-200-08)",
+            "artifact_path": "frontend/h003_preview/data.js"
           },
           {
             "suite_id": "cvrp_hist_p0_120",
@@ -449,7 +455,7 @@
       "path": "entries/evidence-cvrp-selection-complementarity-h010.md",
       "metadata_path": "entries/evidence-cvrp-selection-complementarity-h010.json",
       "content_sha256": "9d9de151805c95dae9edadf8f627474cb2b24c2483e81e59cacdf2a724fc6e6a",
-      "metadata_sha256": "257459ea83e05b87b02a6e4cc758a839ef37c4e7a9776ba1ea6cc6019d054033",
+      "metadata_sha256": "da62f6907e2d6dbeeb6da29a5e1f770686e5d5cf33d183283b9c3898567493ab",
       "source_refs": [
         "src-cvrp-midterm-20261121",
         "src-cvrp-workbench-20261121"
@@ -489,7 +495,7 @@
         "artifact_refs": [
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/selection.py",
             "sha256": "915506a207a74eb51ebe9aef6890b316076a0c8019d0abc78e9125fbaf12828e"
           },
@@ -597,11 +603,11 @@
         "bks"
       ],
       "summary": "Locks the full 174-instance CVRPLib OR gold standard (74 Set A/B/P + all 100 Uchoa Set X stratified into X-S/X-M/X-L) with TSPLIB EUC_2D nearest-integer verification and 100/100 Set X zero-error .sol recomputation.",
-      "search_text": "# CVRPLib 黄金标准库协议：Set A/B/P（74 例）与 Uchoa Set X（全量 100 例）\n\n本卡片固化运筹学黄金标准库 **CVRPLib**（`vidalt/CVRPLIB@34985dd2`）两套独立注册套件的精确距离取整、官方 `.sol` BKS 零误差校验与三档规模切分口径。\n\n## 定义或方法步骤\n\n1. **`cvrp_ext_cvrplib_abp_74`（74 例）**：完整导入 Augerat 1995 Set A（27 例）、Set B（23 例，聚类结构）与 Set P（24 例），固化全部官方 `.vrp` / `.sol` SHA-256 及显式 BKS 路线。\n2. **`cvrp_ext_cvrplib_x_100`（全量 100 例）**：完整导入 Uchoa et al. 2017 EJOR Set X 全部 100 例（$n=100\\text{–}1000$），在汇总与前端按 **`X-S (100–250)` / `X-M (251–500)` / `X-L (501–1000)`** 三档呈现。\n3. **严格取整与 `.sol` 自检**：采用 TSPLIB 标准 `floor(hypot(dx, dy) + 0.5)`（`euc_2d_nint`）；独立重算官方 `.sol` 路线长度，Set X 达到 **100/100 严格 `0.0` 误差**，Set A 27/27 与 Set P 24/24 严格 `0.0` 误差。\n\n## 适用条件、假设与限制\n\n- 所有 CVRPLib 套件均采用 `vehicle_limit_policy = \"min_vehicles_advisory\"`，单独统计并列报是否满足文件名 `-kK` 建议最小车数的合规率（`vehicle_limit_compliance_rate`）。\n- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \\ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过。\n\n## 来源及支持的具体结论\n\n- 本机全解评测结果绑定在 `attributes.evidence_bindings`（见 `results/per_instance_records.json`），EoH-S Table 3 原表 OOD 参照绑定在 `attributes.paper_reported_results`。\n\n## 代码和评测关联\n\n- 导入与校验实现：`agent_skill_loop/cvrp_workbench/suites.py`、`agent_skill_loop/cvrp_workbench/protocol.py`。\n- 自动化零误差自检：`tests/cvrp_workbench/test_cvrp_workbench.py`。\n\n## 未确认项与冲突证据\n\n- Set B 历史上存在 2 例上游归档 `.sol` 路线记录缺陷：\n  1. `B-n50-k8.sol` 第三条路线首客户误录为 `2`（导致客户 `2` 重复访问、客户 `3` 漏访，非法路线长度 `1319`）；按发表的最优解将第三条路线首客户修正为 `3` 后，路线 100% 合法且精确 `euc_2d_nint` 长度为 **`1312`**（与官方 BKS `1312` 严格一致）。\n  2. `B-n57-k7.sol` 第五条路线未做组内 2-opt/移位精修（长度 `1155` vs 官方最优值 `1153`）；恢复其组内最优序列 `[0, 52, 50, 37, 39, 42, 30, 2, 55, 1, 0]` 后，路线 100% 合法且精确 `euc_2d_nint` 长度为 **`1153`**（与官方 BKS `1153` 严格一致）。\n- 修正上述两例归档路线后，`cvrp_ext_cvrplib_abp_74` 全部 **74/74** 例与 `cvrp_ext_cvrplib_x_100` 全部 **100/100** 例均满足 `verify_cvrp_solution` 100% 可行且 `bks_recomputed_nint_cost == bks_reported_cost == reference_objective`（零误差）。\n",
+      "search_text": "# CVRPLib 黄金标准库协议：Set A/B/P（74 例）与 Uchoa Set X（全量 100 例）\n\n本卡片固化运筹学黄金标准库 **CVRPLib**（`vidalt/CVRPLIB@34985dd2`）两套独立注册套件的精确距离取整、官方 `.sol` BKS 零误差校验与三档规模切分口径。\n\n## 定义或方法步骤\n\n1. **`cvrp_ext_cvrplib_abp_74`（74 例）**：完整导入 Augerat 1995 Set A（27 例）、Set B（23 例，聚类结构）与 Set P（24 例），固化全部官方 `.vrp` / `.sol` SHA-256 及显式 BKS 路线。\n2. **`cvrp_ext_cvrplib_x_100`（全量 100 例）**：完整导入 Uchoa et al. 2017 EJOR Set X 全部 100 例（$n=100\\text{–}1000$），在汇总与前端按 **`X-S (100–250)` / `X-M (251–500)` / `X-L (501–1000)`** 三档呈现。\n3. **严格取整与 `.sol` 自检**：采用 TSPLIB 标准 `floor(hypot(dx, dy) + 0.5)`（`euc_2d_nint`）；独立重算官方 `.sol` 路线长度，Set X 达到 **100/100 严格 `0.0` 误差**，Set A 27/27 与 Set P 24/24 严格 `0.0` 误差。\n\n## 适用条件、假设与限制\n\n- **车数口径严格区分**：\n  - `cvrp_ext_cvrplib_abp_74`（Set A/B/P）官方 `.sol` BKS **全部固定为指定车数 $k$（74/74 吻合）**；本地构造与局部搜索求解器当前以容量为硬约束、车数自由（`vehicle_limit_policy = \"fixed_k_unconstrained_eval\"`），因此除全 74 例 BKS 均差（如 `CW + relocate + 2-opt` 为 `+4.85%`）外，单独统计并列报严格固定车数合规率（`exact_k_compliance_rate`）与同 $k$ 子集均值（`exact_k_mean_rel_gap`：例如 `CW + relocate + 2-opt` 为 **48/74 = 64.9%** 满足 `==k`，同 $k$ 子集均差 **`+4.78%`**，另有 1 例 `P-n55-k8` 少用 1 辆、25 例超出 $k$；全部 11 算法 814 次有效运行中共 200 次路线数 $\\ne k$）。\n  - `cvrp_ext_cvrplib_x_100`（Uchoa Set X）本身采用**自由车数协议**（`vehicle_limit_policy = \"free_fleet_min_k_lb\"`），实例名中的 $k$ 仅为最小车数下界 $\\lceil \\sum q_i / Q \\rceil$（官方 BKS 本身在多例上使用 $>k$ 辆车）。\n- 500 ms 预算下，$O(n^3)$ 复杂度规则（如 `s2_r7_iso`）在 Set X 大例（$n \\ge 500$）会诚实触发超时并计入 `completion_rate`，禁止静默跳过；`common_completed`（`N_common = 59/100`）用于消去样本幸存者偏差。\n\n## 来源及支持的具体结论\n\n- 本机全解评测结果绑定在 `attributes.evidence_bindings`（见 `results/per_instance_records.json`），EoH-S Table 3 原表 OOD 参照绑定在 `attributes.paper_reported_results`。\n\n## 代码和评测关联\n\n- 导入与校验实现：`agent_skill_loop/cvrp_workbench/suites.py`、`agent_skill_loop/cvrp_workbench/protocol.py`。\n- 自动化零误差自检：`tests/cvrp_workbench/test_cvrp_workbench.py`。\n\n## 未确认项与冲突证据\n\n- Set B 历史上存在 2 例上游归档 `.sol` 路线记录缺陷：\n  1. `B-n50-k8.sol` 第三条路线首客户误录为 `2`（导致客户 `2` 重复访问、客户 `3` 漏访，非法路线长度 `1319`）；按发表的最优解将第三条路线首客户修正为 `3` 后，路线 100% 合法且精确 `euc_2d_nint` 长度为 **`1312`**（与官方 BKS `1312` 严格一致）。\n  2. `B-n57-k7.sol` 第五条路线未做组内 2-opt/移位精修（长度 `1155` vs 官方最优值 `1153`）；恢复其组内最优序列 `[0, 52, 50, 37, 39, 42, 30, 2, 55, 1, 0]` 后，路线 100% 合法且精确 `euc_2d_nint` 长度为 **`1153`**（与官方 BKS `1153` 严格一致）。\n- 修正上述两例归档路线后，`cvrp_ext_cvrplib_abp_74` 全部 **74/74** 例与 `cvrp_ext_cvrplib_x_100` 全部 **100/100** 例均满足 `verify_cvrp_solution` 100% 可行且 `bks_recomputed_nint_cost == bks_reported_cost == reference_objective`（零误差）。\n",
       "path": "entries/evidence-bench-cvrplib-abpx-standard.md",
       "metadata_path": "entries/evidence-bench-cvrplib-abpx-standard.json",
-      "content_sha256": "96a1bbc1463467a51b86421cfe94d6a58d798b3a4f6d71ec8c7e52f46dbbb6ab",
-      "metadata_sha256": "b9656add5fe22f77d55d07ff1a2791c608a8b7671b34301be948c732c9242a34",
+      "content_sha256": "8498889df1d1c53a328e497442553fe6c55d026e4812f60b309277e87b057e8d",
+      "metadata_sha256": "662c724a7ed984b0cc4dc8273945dc32f4f6aacb907b94bfa502b05b94ac2f0b",
       "source_refs": [
         "src-augerat-1995-cvrplib-abp",
         "src-uchoa-2017-cvrplib-x",
@@ -627,7 +633,7 @@
           "weak_on": [
             "floating_point_distance_assumption"
           ],
-          "scale_notes": "Set X 全量 100 例按 X-S (100-250)、X-M (251-500)、X-L (501-1000) 三档统计；官方 .sol 路线在 euc_2d_nint 下 100/100 精确零误差复算。"
+          "scale_notes": "Set A/B/P 官方 .sol 为固定路线数 k (74/74)；自由车数评估时需另列 exact_k_compliance_rate 与同 k 子集均差（如 cw_relocate_2opt 全 74 例 +4.85%，其中 48/74 满足 ==k 且同 k 子集均差 +4.78%；814 次有效运行中共 200 次路线数 != k）。Set X 为自由车数协议（k 为最少车数下界），按 X-S/X-M/X-L 三档统计且默认按共同完成集 N_common=59 排名。"
         },
         "math_formulation": [
           {
@@ -647,7 +653,7 @@
             "metric": "mean_rel_gap",
             "value": 0.207218,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=1053.9054, solve_ms P50=2.5655/P95=4.8322",
+            "reference_note": "N=74, ok=74, exact_k=49/74(gap=0.214152), mean=1053.9054, solve_ms P50=2.5655/P95=4.8322",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -657,7 +663,7 @@
             "metric": "mean_rel_gap",
             "value": 0.054763,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=914.6757, solve_ms P50=0.6976/P95=1.5164",
+            "reference_note": "N=74, ok=74, exact_k=48/74(gap=0.054897), mean=914.6757, solve_ms P50=0.6976/P95=1.5164",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -667,7 +673,7 @@
             "metric": "mean_rel_gap",
             "value": 0.048524,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=909.2568, solve_ms P50=1.6035/P95=3.6605",
+            "reference_note": "N=74, ok=74, exact_k=48/74(gap=0.047754), mean=909.2568, solve_ms P50=1.6035/P95=3.6605",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -677,7 +683,7 @@
             "metric": "mean_rel_gap",
             "value": 0.226589,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
+            "reference_note": "N=74, ok=74, exact_k=67/74(gap=0.232118), mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -707,7 +713,7 @@
             "metric": "mean_rel_gap",
             "value": 0.054465,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=100, ok=100, budget_exhausted=4, common_completed(59)_gap=0.056878, mean=66139.71, solve_ms P50=55.3373/P95=431.6136",
+            "reference_note": "N=100, ok=100, ok_budget_exhausted=4, conv=0.96, common_completed(59)_gap=0.056878, mean=66139.71, solve_ms P50=55.3373/P95=431.6136",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -717,7 +723,7 @@
             "metric": "mean_rel_gap",
             "value": 0.246558,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=100, ok=59, budget_exhausted=92, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
+            "reference_note": "N=100, ok=59, ok_budget_exhausted=51, timeout=41, conv=0.08, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
             "artifact_path": "results/per_instance_records.json"
           }
         ],
@@ -1290,7 +1296,7 @@
       "path": "entries/evidence-bench-eohs-multi-problem-protocol.md",
       "metadata_path": "entries/evidence-bench-eohs-multi-problem-protocol.json",
       "content_sha256": "dbded6bb305c19ff1c248f46834414eb3b468454dd8e5d6ccef12699bb58e627",
-      "metadata_sha256": "485b440453be562bf02c831ac43de7abd28edb6f7eeb451c792389918b2667f2",
+      "metadata_sha256": "a82a53ba12f3765248cf0de6a7eff8761a9d96ed60228b271629f8196044d7ff",
       "source_refs": [
         "src-feiliu-2025-eohs",
         "src-cvrp-workbench-20261121"
@@ -1344,7 +1350,7 @@
             "metric": "mean_rel_gap",
             "value": 0.183864,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=256, ok=256, budget_exhausted=49, mean=17.8303, solve_ms P50=251.9288/P95=490.0401",
+            "reference_note": "N=256, ok=256, ok_budget_exhausted=49, conv=0.808594, mean=17.8303, solve_ms P50=251.9288/P95=490.0401",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -1394,7 +1400,7 @@
             "metric": "mean_rel_gap",
             "value": 0.034194,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=173, ok=143, budget_exhausted=30, common_completed(143)_gap=0.034194, mean=316.7483, solve_ms P50=125.4079/P95=520.2948",
+            "reference_note": "N=173, ok=143, timeout=30, conv=0.82659, common_completed(143)_gap=0.034194, mean=316.7483, solve_ms P50=125.4079/P95=520.2948",
             "artifact_path": "results/per_instance_records.json"
           }
         ],
@@ -5813,7 +5819,7 @@
       "path": "entries/evidence-bench-heuragenix-and-cobench.md",
       "metadata_path": "entries/evidence-bench-heuragenix-and-cobench.json",
       "content_sha256": "54481a8f189dbea2205f1fbcf5e58f3be911c810909908f8d2df5e9e70f21aa7",
-      "metadata_sha256": "15eabe4790efa156c4e9e945b9123d6ec9a67b4c5a4b2b03586c5e293111093a",
+      "metadata_sha256": "f31b255ad70d7e45a478a8be3c4ace132dc4cd116fe63692e3f51e0c26835321",
       "source_refs": [
         "src-msra-2025-heuragenix",
         "src-sun-2025-cobench",
@@ -5848,7 +5854,7 @@
             "metric": "mean_rel_gap",
             "value": 0.322826,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=1150.2162, solve_ms P50=0.4324/P95=0.8144",
+            "reference_note": "N=74, ok=74, exact_k=58/74(gap=0.295617), mean=1150.2162, solve_ms P50=0.4324/P95=0.8144",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -6364,7 +6370,7 @@
       "path": "entries/evidence-bench-reevo-aco-gls-nco.md",
       "metadata_path": "entries/evidence-bench-reevo-aco-gls-nco.json",
       "content_sha256": "68c95ff7aae54b853ba936e50e8a74a904cc33aa2132fc61b1c430417f07da6b",
-      "metadata_sha256": "ea3376a1bb14c007c663fcf86c6d0d5e995bed0b68b535ef71aeeedd58a4468c",
+      "metadata_sha256": "3af74f33815d3c82091ee4fc211e22fe83f99ab4aacf5cc55abc70b84598839e",
       "source_refs": [
         "src-ye-2024-reevo",
         "src-cvrp-workbench-20261121"
@@ -6418,7 +6424,7 @@
             "metric": "mean_rel_gap",
             "value": 0.032175,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=173, ok=161, budget_exhausted=12, common_completed(143)_gap=0.033943, mean=467.5466, solve_ms P50=38.3652/P95=502.8916",
+            "reference_note": "N=173, ok=161, timeout=12, conv=0.930636, common_completed(143)_gap=0.033943, mean=467.5466, solve_ms P50=38.3652/P95=502.8916",
             "artifact_path": "results/per_instance_records.json"
           }
         ],
@@ -9730,7 +9736,7 @@
       "path": "entries/method-cvrp-s2-r5-spiral.md",
       "metadata_path": "entries/method-cvrp-s2-r5-spiral.json",
       "content_sha256": "767f5086179930cad2f820343c8e3fed21c22686cc7e1af5ef757383dbcfc9bd",
-      "metadata_sha256": "a1ab96663e4bae8b5ddd087e32ed41514c44698d773ccfcb52605f829749e4ac",
+      "metadata_sha256": "8dfd3f695d6e5e28e25ef4bfc06f18737f53803b569221cbc0a76c13172dd903",
       "source_refs": [
         "src-cvrp-midterm-20261121",
         "src-cvrp-workbench-20261121"
@@ -9782,9 +9788,9 @@
           },
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/pointwise_adapter.py",
-            "sha256": "f032c72289ca3f8956c160e2e3ccde38acde102321e1bc25246fcacff0a204dd"
+            "sha256": "c18146df58f8efe04a61edb106d12c1c893057b4895bc7568b845f596c09ffb5"
           }
         ],
         "knowledge_tier": "verified_experiment",
@@ -10250,11 +10256,11 @@
         "standard-cvrp"
       ],
       "summary": "Classic parallel Clarke-Wright route-endpoint savings merge (1964) with local full-route implementation and multi-suite benchmark evidence across synthetic, EoH-S, and CVRPLib A/B/P/X.",
-      "search_text": "# Clarke-Wright savings merge (Parallel CW)\n\n经典 1964 并行 Clarke–Wright 节约合并算法（`cw_parallel_merge`），已在本仓库落地为可独立校验的全解求解器并在全部 7 类 CVRP 套件上完成统一分离测时评测。\n\n## 定义或方法步骤\n\n1. **初始化单客户路径池**：为每个客户 $i \\in \\{1,\\dots,n\\}$ 建立独立往返路径 $R_i = [0, i, 0]$，记录 `route_load[i] = q_i` 与归属 `owner[i] = i`。\n2. **计算并排序正节约量对**：对全部无序客户对 $1 \\le i < j \\le n$ 计算 $s(i, j) = d(0, i) + d(0, j) - d(i, j)$，过滤 $s(i, j) > 10^{-12}$ 后按降序稳定排序（`mergesort`）。\n3. **并行端点合并主循环**：依次考察 $(i, j)$：\n   - 若 `owner[i] == owner[j]`（同路径）或 `route_load[ri] + route_load[rj] > Q + 1e-12`（超容），跳过；\n   - 检查端点不变量：$i$ 必须是 $R_{ri}$ 的首/尾节点，且 $j$ 必须是 $R_{rj}$ 的首/尾节点（禁止路径内部节点合并）；\n   - 按端点朝向翻转必要子段使 $i$ 位于 $R_{ri}$ 尾部、$j$ 位于 $R_{rj}$ 头部，拼接为 `merged = seq_i + seq_j`，累加 `route_load[ri]` 并更新 $R_{rj}$ 内全部节点的 `owner`。\n4. **输出与独立验证**：输出显式路径列表 `[0, ..., 0]`，经 `verify_cvrp_solution` 核验客户覆盖、容量上限与距离重算。\n\n## 适用条件、假设与限制\n\n- 适用于对称标准 CVRP（`euc_2d_float` 与 `euc_2d_nint` 均可直接支持），严格满足坐标缩放不变性。\n- 无法直接映射到单车顺序接口 `select_next_node`（需要全局多路径状态 `solve_cvrp` 骨架）。\n- 仅靠一次贪心合并后，部分路径内仍存在边交叉或跨路径载重微调空间，叠加 `2-opt` 与 `relocate` 可进一步显著缩减总路程（见 `method-cvrp-intra-2opt`、`method-cvrp-inter-relocate`）。\n\n## 来源及支持的具体结论\n\n- 文献来源：`src-clarke-wright`（Clarke & Wright, 1964, DOI `10.1287/opre.12.4.568`）。\n- 本地实测全解评测证据（`src-cvrp-workbench-20261121`，预算 `standard_500ms`）：\n\n| 套件 (`suite_id`) | 样本数 `N` | 均长 (`mean_tour_length`) | 平均相对差距 (`mean_rel_gap`) | 完成率 | 求解耗时 P50 / P95 (ms) |\n|---|---:|---:|---:|---:|---:|\n| `cvrp_dev_hetero_24` | 24 | 16.2225 | -21.42% | 100.0% | 1.4825 / 2.9929 |\n| `cvrp_select_multiscale_64` | 64 | 20.7811 | -19.87% | 100.0% | 2.484 / 11.48 |\n| `cvrp_hist_p0_120` | 120 | 17.357 | -24.97% | 100.0% | 2.6044 / 12.5649 |\n| `cvrp_hist_hetero_288` | 288 | 22.9498 | -18.68% | 100.0% | 1.883 / 13.0128 |\n| `cvrp_final_accept_120` | 120 | 24.3383 | -19.24% | 100.0% | 2.3256 / 11.3919 |\n| `cvrp_ext_eohs_256` | 256 | 16.2227 | +7.89% | 100.0% | 2.245 / 6.1962 |\n| `cvrp_ext_reevo_scale` | 48 | 15.0511 | -24.11% | 100.0% | 1.6489 / 6.5227 |\n| `cvrp_ext_cvrplib_abp_74` | 74 | 914.6757 | +5.48% | 100.0% | 0.6976 / 1.5164 |\n| `cvrp_ext_cvrplib_x_100` | 100 | 66352.22 | +6.01% | 100.0% | 31.8913 / 294.3108 |\n\n## 代码和评测关联\n\n- 全解实现：`agent_skill_loop/cvrp_workbench/solvers.py:solve_cw_parallel_merge`；独立校验：`agent_skill_loop/cvrp_workbench/protocol.py:verify_cvrp_solution`。\n- 逐实例结果与完整路线：`results/per_instance_records.json`、`routes/*.json`。\n\n## 未确认项与冲突证据\n\n- 在 CVRPLib Set A/B/P 上，纯并行 CW 有时会使用比官方最优车数 $k$ 多 1 辆车（具体合规率见 `results/summary.json` 的 `vehicle_limit_compliance_rate` 字段）；需配合路间移位或车数惩罚项进一步压缩车队规模。\n\n## EoH 适配\n\n- target_problem_id：`cvrp_construct` 不可直接映射（`not_mappable`）；在里程碑二计划期动态接口骨架（`solve_cvrp` / `full_route_skeleton`）下，可将节约量权重与合并优先级作为可进化 Hook。\n",
+      "search_text": "# Clarke-Wright savings merge (Parallel CW)\n\n经典 1964 并行 Clarke–Wright 节约合并算法（`cw_parallel_merge`），已在本仓库落地为可独立校验的全解求解器并在全部 7 类 CVRP 套件上完成统一分离测时评测。\n\n## 定义或方法步骤\n\n1. **初始化单客户路径池**：为每个客户 $i \\in \\{1,\\dots,n\\}$ 建立独立往返路径 $R_i = [0, i, 0]$，记录 `route_load[i] = q_i` 与归属 `owner[i] = i`。\n2. **计算并排序正节约量对**：对全部无序客户对 $1 \\le i < j \\le n$ 计算 $s(i, j) = d(0, i) + d(0, j) - d(i, j)$，过滤 $s(i, j) > 10^{-12}$ 后按降序稳定排序（`mergesort`）。\n3. **并行端点合并主循环**：依次考察 $(i, j)$：\n   - 若 `owner[i] == owner[j]`（同路径）或 `route_load[ri] + route_load[rj] > Q + 1e-12`（超容），跳过；\n   - 检查端点不变量：$i$ 必须是 $R_{ri}$ 的首/尾节点，且 $j$ 必须是 $R_{rj}$ 的首/尾节点（禁止路径内部节点合并）；\n   - 按端点朝向翻转必要子段使 $i$ 位于 $R_{ri}$ 尾部、$j$ 位于 $R_{rj}$ 头部，拼接为 `merged = seq_i + seq_j`，累加 `route_load[ri]` 并更新 $R_{rj}$ 内全部节点的 `owner`。\n4. **输出与独立验证**：输出显式路径列表 `[0, ..., 0]`，经 `verify_cvrp_solution` 核验客户覆盖、容量上限与距离重算。\n\n## 适用条件、假设与限制\n\n- 适用于对称标准 CVRP（`euc_2d_float` 与 `euc_2d_nint` 均可直接支持），严格满足坐标缩放不变性。\n- 无法直接映射到单车顺序接口 `select_next_node`（需要全局多路径状态 `solve_cvrp` 骨架）。\n- 仅靠一次贪心合并后，部分路径内仍存在边交叉或跨路径载重微调空间，叠加 `2-opt` 与 `relocate` 可进一步显著缩减总路程（见 `method-cvrp-intra-2opt`、`method-cvrp-inter-relocate`）。\n\n## 来源及支持的具体结论\n\n- 文献来源：`src-clarke-wright`（Clarke & Wright, 1964, DOI `10.1287/opre.12.4.568`）。\n- 本地实测全解评测证据（`src-cvrp-workbench-20261121`，预算 `standard_500ms`）：\n\n| 套件 (`suite_id`) | 样本数 `N` | 均长 (`mean_tour_length`) | 平均相对差距 (`mean_rel_gap`) | 完成率 | 求解耗时 P50 / P95 (ms) |\n|---|---:|---:|---:|---:|---:|\n| `cvrp_dev_hetero_24` | 24 | 16.2225 | -21.42% | 100.0% | 1.4825 / 2.9929 |\n| `cvrp_select_multiscale_64` | 64 | 20.7811 | -19.87% | 100.0% | 2.484 / 11.48 |\n| `cvrp_hist_p0_120` | 120 | 17.357 | -24.97% | 100.0% | 2.6044 / 12.5649 |\n| `cvrp_hist_hetero_288` | 288 | 22.9498 | -18.68% | 100.0% | 1.883 / 13.0128 |\n| `cvrp_final_accept_120` | 120 | 24.3383 | -19.24% | 100.0% | 2.3256 / 11.3919 |\n| `cvrp_ext_eohs_256` | 256 | 16.2227 | +7.89% | 100.0% | 2.245 / 6.1962 |\n| `cvrp_ext_reevo_scale` | 48 | 15.0511 | -24.11% | 100.0% | 1.6489 / 6.5227 |\n| `cvrp_ext_cvrplib_abp_74` | 74 | 914.6757 | +5.48% | 100.0% | 0.6976 / 1.5164 |\n| `cvrp_ext_cvrplib_x_100` | 100 | 66352.22 | +6.01% | 100.0% | 31.8913 / 294.3108 |\n\n## 代码和评测关联\n\n- 全解实现：`agent_skill_loop/cvrp_workbench/solvers.py:solve_cw_parallel_merge`；独立校验：`agent_skill_loop/cvrp_workbench/protocol.py:verify_cvrp_solution`。\n- 逐实例结果与完整路线：`results/per_instance_records.json`、`routes/*.json`。\n\n## 未确认项与冲突证据\n\n- 在 CVRPLib Set A/B/P（`cvrp_ext_cvrplib_abp_74`）上，官方 `.sol` BKS 严格固定路线数为 $k$，而当前并行 CW（`cw_parallel_merge`）与叠加 `relocate` 均按自由车数运行（`fixed_k_unconstrained_eval`）：其中 `cw_parallel_merge` 在 48/74（64.9%）上严格满足 `route_count == k`（同 $k$ 子集均差 `+5.49%` vs 全 74 例 `+5.48%`），25 例超出 $k$、1 例（`P-n55-k8`）少于 $k$（具体见 `results/summary.json` 的 `exact_k_compliance_rate` 与 `exact_k_mean_rel_gap`）；若需严格满足固定车数契约，须进一步接入固定车队约束合并或车数惩罚项。\n\n## EoH 适配\n\n- target_problem_id：`cvrp_construct` 不可直接映射（`not_mappable`）；在里程碑二计划期动态接口骨架（`solve_cvrp` / `full_route_skeleton`）下，可将节约量权重与合并优先级作为可进化 Hook。\n",
       "path": "entries/method-lit-cvrp-construct-clarke-wright-savings-merge.md",
       "metadata_path": "entries/method-lit-cvrp-construct-clarke-wright-savings-merge.json",
-      "content_sha256": "79c9a12a83b37fa035e5410336ef6fab98d71761478ac19a2284a9329c77f404",
-      "metadata_sha256": "0bbd3e6d9afc262b6fd3ef84011580a4f7975b0a8571c1a5132fc38c4b22d88a",
+      "content_sha256": "71749c94f0a897259f701d2b4254f61cc9ce09b40b0a39863eb2913d6f055268",
+      "metadata_sha256": "2ff2fe60b47abc2c119eabb41f159c68abf160a78a808f8d4e73881b1bd0680d",
       "source_refs": [
         "src-clarke-wright",
         "src-cvrp-workbench-20261121"
@@ -10335,9 +10341,9 @@
         "artifact_refs": [
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/solvers.py",
-            "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+            "sha256": "60ef7d0f83063cb361b74f25bb1311aea480a0f0c0235350fe407aca24fd64af"
           },
           {
             "kind": "repo_code",
@@ -14011,7 +14017,7 @@
       "path": "entries/method-cvrp-nearest-feasible-construct.md",
       "metadata_path": "entries/method-cvrp-nearest-feasible-construct.json",
       "content_sha256": "dbcd2649ff19a8134f460d3e89f2ba6fd734fa52e8d53b0b2410051152692ede",
-      "metadata_sha256": "8fe26a0f1cdde7e9646753f55487fd2319d55c271b863a3b21a893fbe3c2f0d5",
+      "metadata_sha256": "b01c1d0b10fca19a31011f35f010c35f2fbbebb56bad41baf8bbe7308e2e7026",
       "source_refs": [
         "src-cvrp-workbench-20261121"
       ],
@@ -14087,9 +14093,9 @@
           },
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/solvers.py",
-            "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+            "sha256": "60ef7d0f83063cb361b74f25bb1311aea480a0f0c0235350fe407aca24fd64af"
           }
         ],
         "evidence_bindings": [
@@ -15191,7 +15197,7 @@
       "path": "entries/method-cvrp-savings-next-node.md",
       "metadata_path": "entries/method-cvrp-savings-next-node.json",
       "content_sha256": "938bdf3d5f60ebfdda2e907cba54f510a531745be2cafcbef4164b44e33c9b0a",
-      "metadata_sha256": "b59b9d3e15615938ef6e5099d1e7e6fb5e47db02573d3b10f703f999432008fd",
+      "metadata_sha256": "f66e504879505583838f053be724f4deb111d87d367ea1e52780c399dbd81586",
       "source_refs": [
         "src-clarke-wright",
         "src-cvrp-workbench-20261121"
@@ -15262,9 +15268,9 @@
         "artifact_refs": [
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/solvers.py",
-            "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+            "sha256": "60ef7d0f83063cb361b74f25bb1311aea480a0f0c0235350fe407aca24fd64af"
           }
         ],
         "evidence_bindings": [
@@ -15978,7 +15984,7 @@
       "path": "entries/method-cvrp-inter-relocate.md",
       "metadata_path": "entries/method-cvrp-inter-relocate.json",
       "content_sha256": "5e03d2c48f3deeb5c2fa6e864d6f2c1fedd78a599b70f8d13251c4b96feffa88",
-      "metadata_sha256": "9bc57d3015b0546569bc2ef8e6c945070bf19c8a4b550deadea2882f2bb6b493",
+      "metadata_sha256": "1c18a1e847c19666783d988c9f15eb0e1e2cd71759f0781de820f9f6a831f7c1",
       "source_refs": [
         "src-cvrp-workbench-20261121"
       ],
@@ -16042,9 +16048,9 @@
         "artifact_refs": [
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/solvers.py",
-            "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+            "sha256": "60ef7d0f83063cb361b74f25bb1311aea480a0f0c0235350fe407aca24fd64af"
           }
         ],
         "evidence_bindings": [
@@ -16460,7 +16466,7 @@
       "path": "entries/method-cvrp-intra-2opt.md",
       "metadata_path": "entries/method-cvrp-intra-2opt.json",
       "content_sha256": "27b3826324d20e732371de67f869727344df234ff45c72e37ad81de063d88cc8",
-      "metadata_sha256": "a7ffbf0e99f8872b6a81f7248049d1441d037863b8a07c1b59c06db63a1fad2c",
+      "metadata_sha256": "0de9136f6a61ede0b19e286cb4241a5c0c950e3be573d77a54d563b896e39bfd",
       "source_refs": [
         "src-croes-1958-2opt",
         "src-cvrp-workbench-20261121"
@@ -16523,9 +16529,9 @@
         "artifact_refs": [
           {
             "kind": "repo_code",
-            "commit": "5215ebd",
+            "commit": "d8b6ede",
             "path": "agent_skill_loop/cvrp_workbench/solvers.py",
-            "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+            "sha256": "60ef7d0f83063cb361b74f25bb1311aea480a0f0c0235350fe407aca24fd64af"
           }
         ],
         "evidence_bindings": [
@@ -17764,7 +17770,7 @@
       "path": "entries/method-lit-ahd-eohs.md",
       "metadata_path": "entries/method-lit-ahd-eohs.json",
       "content_sha256": "131114c531124e9e3b972ba454b904397c45c6407d1b8bf46c2cf2de194ece14",
-      "metadata_sha256": "14a45fb43ba8ab5b00426eef71f944084a84568f5b1cd87d4c88637ba3568a7b",
+      "metadata_sha256": "dbd58bcfd23cbc7a0c8bab29c89bc7c5509389347005fde8a86047089b8c5e03",
       "source_refs": [
         "src-cvrp-workbench-20261121",
         "src-feiliu-2025-eohs"
@@ -17831,7 +17837,7 @@
             "metric": "mean_rel_gap",
             "value": 0.183864,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=256, ok=256, budget_exhausted=49, mean=17.8303, solve_ms P50=251.9288/P95=490.0401",
+            "reference_note": "N=256, ok=256, ok_budget_exhausted=49, conv=0.808594, mean=17.8303, solve_ms P50=251.9288/P95=490.0401",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -17841,7 +17847,7 @@
             "metric": "mean_rel_gap",
             "value": 0.226589,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
+            "reference_note": "N=74, ok=74, exact_k=67/74(gap=0.232118), mean=1075.3243, solve_ms P50=101.2225/P95=198.4273",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -17851,7 +17857,7 @@
             "metric": "mean_rel_gap",
             "value": 0.246558,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=100, ok=59, budget_exhausted=92, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
+            "reference_note": "N=100, ok=59, ok_budget_exhausted=51, timeout=41, conv=0.08, common_completed(59)_gap=0.246558, mean=50225.0678, solve_ms P50=491.4921/P95=506.7851",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -17871,7 +17877,7 @@
             "metric": "mean_rel_gap",
             "value": 0.034194,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=173, ok=143, budget_exhausted=30, common_completed(143)_gap=0.034194, mean=316.7483, solve_ms P50=125.4079/P95=520.2948",
+            "reference_note": "N=173, ok=143, timeout=30, conv=0.82659, common_completed(143)_gap=0.034194, mean=316.7483, solve_ms P50=125.4079/P95=520.2948",
             "artifact_path": "results/per_instance_records.json"
           }
         ],
@@ -19320,7 +19326,7 @@
       "path": "entries/method-lit-ahd-heuragenix.md",
       "metadata_path": "entries/method-lit-ahd-heuragenix.json",
       "content_sha256": "0c171d6adde132b3657ce3d23716eed6262fe45e748c0b720013e224299d7cc4",
-      "metadata_sha256": "2e5e4b2f377c0b92b09c2180036bd04dfac767ab4e324d2f7b91efc1e5d343e7",
+      "metadata_sha256": "49ac747e09471cf72df66d10c616796415ff8018667d4919d120ae23dbea1342",
       "source_refs": [
         "src-cvrp-workbench-20261121",
         "src-msra-2025-heuragenix"
@@ -19378,7 +19384,7 @@
             "metric": "mean_rel_gap",
             "value": 0.322826,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=74, ok=74, mean=1150.2162, solve_ms P50=0.4324/P95=0.8144",
+            "reference_note": "N=74, ok=74, exact_k=58/74(gap=0.295617), mean=1150.2162, solve_ms P50=0.4324/P95=0.8144",
             "artifact_path": "results/per_instance_records.json"
           },
           {
@@ -19568,7 +19574,7 @@
       "path": "entries/method-lit-ahd-reevo.md",
       "metadata_path": "entries/method-lit-ahd-reevo.json",
       "content_sha256": "2273fcefb4b9795de5933734a40c1fce2c733f9107c4f11fde777db96700ff37",
-      "metadata_sha256": "910581c2dc9c5a65194b35a4285a7de00bacb1e0c489a0697b20a6ffbea10851",
+      "metadata_sha256": "bf140886ea51951385ed82f0ce2de6dad83d283313664fa7af54fcd0c9760255",
       "source_refs": [
         "src-cvrp-workbench-20261121",
         "src-ye-2024-reevo"
@@ -19625,7 +19631,7 @@
             "metric": "mean_rel_gap",
             "value": 0.032175,
             "comparison_mode": "local_recomputed",
-            "reference_note": "N=173, ok=161, budget_exhausted=12, common_completed(143)_gap=0.033943, mean=467.5466, solve_ms P50=38.3652/P95=502.8916",
+            "reference_note": "N=173, ok=161, timeout=12, conv=0.930636, common_completed(143)_gap=0.033943, mean=467.5466, solve_ms P50=38.3652/P95=502.8916",
             "artifact_path": "results/per_instance_records.json"
           },
           {

@@ -406,6 +406,9 @@ def test_repo_workspace_and_published_releases_audit_contracts() -> None:
     v0 = validate_release(repo / "knowledge_store/releases/20260914-main-d6433549-kb-v0")
     assert v0["ok"] is True, v0["errors"][:10]
 
+    v1 = validate_release(repo / "knowledge_store/releases/20261121-main-audit-kb-v1")
+    assert v1["ok"] is True, v1["errors"][:10]
+
     cur = validate_release(repo / "knowledge_store/current")
     assert cur["ok"] is True, cur["errors"][:10]
 
@@ -436,6 +439,28 @@ def test_repo_workspace_and_published_releases_audit_contracts() -> None:
             assert hashlib.sha256(blob).hexdigest() == ref["sha256"]
             verified += 1
     assert verified == 7
+
+    # Verify all commit-pinned attributes.artifact_refs resolve cleanly in git and match SHA-256
+    def _walk_refs(obj):
+        if isinstance(obj, dict):
+            if obj.get("commit") and obj.get("path"):
+                yield obj
+            for v in obj.values():
+                yield from _walk_refs(v)
+        elif isinstance(obj, list):
+            for it in obj:
+                yield from _walk_refs(it)
+
+    pinned_verified = 0
+    for meta_path in sorted((repo / "knowledge_workspace/entries").glob("*.json")):
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        for ref in _walk_refs(meta.get("attributes") or {}):
+            spec = f"{ref['commit']}:{ref['path']}"
+            blob = subprocess.check_output(["git", "-C", str(repo), "show", spec])
+            lf_sha = hashlib.sha256(blob.replace(b"\r\n", b"\n")).hexdigest()
+            assert lf_sha == ref["sha256"], f"{meta_path.name}: {spec} sha mismatch"
+            pinned_verified += 1
+    assert pinned_verified >= 18
 
 
 def test_cli_search_without_query_supports_structural_filters(capsys: pytest.CaptureFixture[str]) -> None:
