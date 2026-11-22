@@ -1,0 +1,10 @@
+[
+  {
+    "algorithm": "Baseline hook for cvrp_parallel_merge_static/v1.",
+    "code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
+  },
+  {
+    "algorithm": "Best valid candidate from Racing pilot phase.",
+    "code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Global instance scale (coordinate-scale invariant), guard against zero.\n    scale = np.mean(distance_matrix[0, 1:])\n    scale = np.where(np.isfinite(scale) & (scale > 0.0), scale, 1.0)\n\n    lam = 1.10\n    mu = 0.10\n    alpha = 0.15\n\n    savings = d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)\n\n    # Mild capacity-fill weighting in [0, ~1.3], dimensionless.\n    fill = np.clip((demands[i_idx] + demands[j_idx]) / capacity, 0.0, 2.0)\n\n    scores = (savings / scale) * (1.0 + alpha * fill)\n\n    # Ensure finite outputs.\n    scores = np.where(np.isfinite(scores), scores, 0.0)\n    return scores.astype(np.float64)"
+  }
+]

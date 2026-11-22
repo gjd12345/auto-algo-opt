@@ -1,0 +1,56 @@
+{
+  "arm_id": "llm_diagnostic_planner",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "rationale": "cvrp_parallel_merge_static achieves the best dev_24 quality (raw_mean 16.2225, remaining gap 0.5% postprocess vs CW) while its baseline p95 solve time is 7.0 ms (~1.4% of 500 ms budget; n=200 p95 7.25 ms) with 100% completion, leaving huge safe timing headroom. Dynamic is equally accurate but costs 25 ms p95 with no quality advantage, and sequential_construct lags significantly on dev_24 (bridged gap only 59.8%, 12.6% postprocess drop). Static parallel merge is therefore the optimal choice.",
+  "planning_requests": 1,
+  "planning_input_tokens": 1509,
+  "planning_output_tokens": 191,
+  "planning_wall_ms": 5039.79,
+  "diagnostic_probe_wall_ms": 813.63,
+  "eoh_requests": {
+    "completed_requests": 12,
+    "by_purpose": {
+      "eoh_probe": 1,
+      "eoh_generation": 11
+    },
+    "prompt_tokens": 15167,
+    "completion_tokens": 4808,
+    "total_tokens": 19975
+  },
+  "best_dev24": 16.176009,
+  "wall_s": 104.22,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261122",
+    "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "none",
+    "template_options": {
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    scale = np.mean(distance_matrix[0, 1:])\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    lam = 1.15\n    mu = 0.1\n    beta = 0.05\n    cap = float(capacity) if capacity > 0.0 else 1.0\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n\n    load_i = demands[i_idx]\n    load_j = demands[j_idx]\n    fill = (load_i + load_j) / cap\n\n    scores = savings + beta * fill\n\n    scores = np.where(np.isfinite(scores), scores, 0.0)\n    return scores",
+    "hook_code_sha256": "47528d8002deeecc82672a548b09b3188ef73702983d6406e27104ed62bb56b3",
+    "design_sha256": "1aabf0f8065cdd5f756549bdf59aea55998ece2b6a76173ffdd5d5d073cd3a34",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\llm_diagnostic_planner",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel",
+      "method-cvrp-i605-tworegime-savings"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.1760 vs baseline=16.2225.",
+    "default_budget_ms": 500.0
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "arm_id": "fixed_pointwise",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_sequential_construct",
+  "planning_requests": 0,
+  "planning_input_tokens": 0,
+  "planning_output_tokens": 0,
+  "diagnostic_probe_wall_ms": 0.0,
+  "eoh_requests": {
+    "completed_requests": 4,
+    "by_purpose": {
+      "eoh_probe": 1,
+      "eoh_generation": 3
+    },
+    "prompt_tokens": 4207,
+    "completion_tokens": 2694,
+    "total_tokens": 6901
+  },
+  "best_dev24": 19.159796,
+  "wall_s": 67.41,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_standard_500ms_fixed_pointwise_s20261122",
+    "display_name": "Arm1 Pointwise (s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "sequential_construct",
+    "interface": "cvrp_sequential_construct/v1:select_next_node",
+    "template_id": "cvrp_sequential_construct",
+    "template_version": "v1",
+    "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+    "postprocess_mode": "none",
+    "template_options": {},
+    "hook_name": "select_next_node",
+    "hook_code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    \"\"\"Return an int from unvisited_nodes (or 0 to return to depot early when current_node != 0).\"\"\"\n    n = len(unvisited_nodes)\n    if n == 0:\n        return 0\n\n    scale = float(np.mean(distance_matrix[depot, 1:])) if distance_matrix.shape[0] > 1 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d_cur = distance_matrix[current_node, unvisited_nodes] / scale\n    d_dep = distance_matrix[depot, unvisited_nodes] / scale\n    d_dep_cur = distance_matrix[depot, current_node] / scale\n\n    # Depot savings: how much is saved by going via this customer vs returning now.\n    savings = d_dep_cur + d_dep - d_cur  # larger is better\n    # Prefer nearest customer as a base term.\n    nn_score = -d_cur\n    # Capacity-fill desirability: choose customers leaving low remainder (packing).\n    rem = (rest_capacity - demands[unvisited_nodes]) / max(rest_capacity, 1e-12)\n    fill_score = -np.abs(rem - 0.15)  # target ~15% remainder\n\n    # Regime: if much capacity remains, blend savings and fill; if tight, prioritize short trips.\n    cap_frac = rest_capacity / max(scale, 1e-12)\n    if cap_frac > 3.0:\n        w_sav, w_nn, w_fill = 0.45, 0.35, 0.20\n    elif cap_frac > 1.5:\n        w_sav, w_nn, w_fill = 0.30, 0.50, 0.20\n    else:\n        w_sav, w_nn, w_fill = 0.20, 0.70, 0.10\n\n    score = w_sav * savings + w_nn * nn_score + w_fill * fill_score\n    best_idx = int(np.argmax(score))\n    best_customer = int(unvisited_nodes[best_idx])\n\n    # Voluntary early return: when current node is not depot,\n    # return if remaining capacity is low relative to demand scale,\n    # or the best option is far compared to depot distance.\n    if current_node != depot:\n        mean_demand = float(np.mean(demands[1:])) if len(demands) > 1 else 1.0\n        if not np.isfinite(mean_demand) or mean_demand <= 0.0:\n            mean_demand = 1.0\n\n        if rest_capacity <= 0.25 * mean_demand:\n            return 0\n\n        best_dist = float(distance_matrix[current_node, best_customer]) / scale\n        back_dist = float(distance_matrix[current_node, depot]) / scale\n        if best_dist > 1.8 * max(back_dist, 1e-12) and cap_frac < 0.75:\n            return 0\n\n    return best_customer",
+    "hook_code_sha256": "c1fae432468c28bcaf79de567f806938a76dff2c30d021aec6d053755e9f3df2",
+    "design_sha256": "0ef23fed8b321a2898300b2dbd6c840d05d81ca980b6e57c6d55f70f48135edd",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\fixed_pointwise",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+    "cited_kb_ids": [
+      "method-cvrp-i605-tworegime-savings",
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `select_next_node` under `cvrp_sequential_construct/v1` (postprocess=none); cvrp_dev_hetero_24 mean=19.1598 vs baseline=20.5337.",
+    "default_budget_ms": 500.0
+  }
+}

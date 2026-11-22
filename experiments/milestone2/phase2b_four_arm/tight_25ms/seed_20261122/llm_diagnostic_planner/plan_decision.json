@@ -1,0 +1,17 @@
+{
+  "planner_kind": "llm_diagnostic_planner",
+  "model": "deepseek-v4.1-flash",
+  "target_budget_ms": 25.0,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "selected_template_version": "v1",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel"
+  ],
+  "rationale": "The static parallel-merge template reproduces Clarke-Wright with strong solution quality (baseline mean 24.23, close to the best dev_24 cw_parallel_merge raw mean 16.22 after scaling) and low postprocess need. It has full completion on both n=40 and n=200, with p95 solve times of 7.64 ms and 10.23 ms — respectively 30.6% and 40.9% of the 25 ms target, safely under the 55% headroom threshold. The sequential template has worse solution quality (higher gap, 12.56% postprocess drop, 10.68% remaining gap) despite more headroom, while the dynamic template fails the headroom and completion criteria (90% on n=40, 75% on n=200, p95 ≈ 25 ms = 100% of budget). Therefore static parallel-merge offers the best quality–timing tradeoff.",
+  "raw_response": "{\n  \"template_id\": \"cvrp_parallel_merge_static\",\n  \"template_version\": \"v1\",\n  \"cited_kb_ids\": [\n    \"method-cvrp-cw-parallel\"\n  ],\n  \"rationale\": \"The static parallel-merge template reproduces Clarke-Wright with strong solution quality (baseline mean 24.23, close to the best dev_24 cw_parallel_merge raw mean 16.22 after scaling) and low postprocess need. It has full completion on both n=40 and n=200, with p95 solve times of 7.64 ms and 10.23 ms — respectively 30.6% and 40.9% of the 25 ms target, safely under the 55% headroom threshold. The sequential template has worse solution quality (higher gap, 12.56% postprocess drop, 10.68% remaining gap) despite more headroom, while the dynamic template fails the headroom and completion criteria (90% on n=40, 75% on n=200, p95 ≈ 25 ms = 100% of budget). Therefore static parallel-merge offers the best quality–timing tradeoff.\"\n}",
+  "planning_requests": 1,
+  "planning_input_tokens": 1510,
+  "planning_output_tokens": 256,
+  "planning_wall_ms": 5131.25,
+  "diagnostic_probe_wall_ms": 833.4
+}

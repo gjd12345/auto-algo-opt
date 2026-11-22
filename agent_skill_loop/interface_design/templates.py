@@ -43,6 +43,59 @@ CVRP_PARALLEL_MERGE_STATIC_TEMPLATE_PROGRAM = (
     "    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
 )
 
+CLASSIC_NN_SEQUENTIAL_HOOK_CODE = """import numpy as np
+
+def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+    dists = distance_matrix[current_node, unvisited_nodes]
+    return int(unvisited_nodes[np.argmin(dists)])
+"""
+
+CVRP_SEQUENTIAL_CONSTRUCT_TASK_DESCRIPTION = (
+    "Design a step-by-step customer selection rule `select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix)` "
+    "for sequential vehicle route construction in CVRP.\n"
+    "- Inputs (all read-only): `current_node` (int, 0=depot or customer 1..n), `depot` (int 0), "
+    "`unvisited_nodes` (1D int64 array of currently feasible unvisited customers whose demand <= rest_capacity), "
+    "`rest_capacity` (float > 0), `demands` (length n+1 float64 array), `distance_matrix` ((n+1, n+1) symmetric float64 matrix).\n"
+    "- Output: return one integer customer ID from `unvisited_nodes`, OR return `0` (`depot`) when `current_node != 0` "
+    "to trigger a voluntary early return to the depot. Prefer dimensionless, scale-invariant criteria."
+)
+
+CVRP_SEQUENTIAL_CONSTRUCT_TEMPLATE_PROGRAM = (
+    "import numpy as np\n\n"
+    "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+    "    \"\"\"Return an int from unvisited_nodes (or 0 to return to depot early when current_node != 0).\"\"\"\n"
+    "    dists = distance_matrix[current_node, unvisited_nodes]\n"
+    "    return int(unvisited_nodes[np.argmin(dists)])\n"
+)
+
+CLASSIC_CW_DYNAMIC_STATIC_HOOK_CODE = """import numpy as np
+
+def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):
+    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]
+"""
+
+CVRP_PARALLEL_MERGE_DYNAMIC_TASK_DESCRIPTION = (
+    "Design a state-aware vectorized merge priority function "
+    "`score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes)` "
+    "called after every merge on the refreshed set of currently feasible endpoint pairs in CVRP parallel route merging.\n"
+    "- Static read-only inputs: `distance_matrix` ((n+1, n+1) symmetric float64), `demands` (length n+1 float64), `capacity` (float > 0).\n"
+    "- Dynamic read-only inputs for the M currently feasible endpoint pairs `(i_idx[k], j_idx[k])` (all 1D arrays of length M):\n"
+    "  * `i_idx`, `j_idx` (int64): feasible customer endpoints belonging to two distinct routes with `load_i + load_j <= capacity`;\n"
+    "  * `load_i`, `load_j` (float64): current total demand of the route containing `i_idx` and the route containing `j_idx`;\n"
+    "  * `route_dist_i`, `route_dist_j` (float64): current total travel distance of each endpoint's route (including depot legs);\n"
+    "  * `remaining_routes` (int): current number of active routes before this merge.\n"
+    "- Output: return a 1D float64 numpy array of length M (higher score = merge chosen first at this step). "
+    "Keep computations fast and fully vectorized (called up to n-1 times per instance under a 500 ms budget), "
+    "and use dimensionless, scale-invariant formulations."
+)
+
+CVRP_PARALLEL_MERGE_DYNAMIC_TEMPLATE_PROGRAM = (
+    "import numpy as np\n\n"
+    "def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n"
+    "    \"\"\"Return a 1D array of finite float priority scores for currently feasible merges (higher = merge now).\"\"\"\n"
+    "    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
+)
+
 
 # ---------------------------------------------------------------------------
 # Shared deterministic fixed postprocessors with explicit stop reasons
@@ -480,6 +533,422 @@ def run_cvrp_parallel_merge_static_v1(
 
 
 # ---------------------------------------------------------------------------
+# L1: cvrp_sequential_construct/v1
+# ---------------------------------------------------------------------------
+
+def run_cvrp_sequential_construct_v1(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    hook_fn: Callable[..., Any],
+    *,
+    postprocess_mode: str = "none",
+    time_budget_ms: float | None = 500.0,
+    template_options: Mapping[str, Any] | None = None,
+    capture_merge_sequence: bool = False,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Execute L1 sequential pointwise construction with exact M1 pointwise semantics."""
+    if postprocess_mode not in ALLOWED_POSTPROCESS_MODES:
+        raise ValueError(f"unsupported_postprocess_mode:{postprocess_mode}")
+
+    t0 = time.perf_counter()
+    deadline = (t0 + time_budget_ms / 1000.0) if time_budget_ms is not None else None
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], {
+            "merges_applied": 0,
+            "hook_call_count": 0,
+            "candidate_pair_count": 0,
+            "candidate_gen_ms": 0.0,
+            "hook_ms": 0.0,
+            "merge_ms": 0.0,
+            "postprocess_ms": 0.0,
+            "budget_exhausted": False,
+            "stop_reason": "completed",
+            "voluntary_early_return_count": 0,
+            "forced_capacity_return_count": 0,
+            "pre_postprocess_routes": [],
+            "merge_sequence": [] if capture_merge_sequence else None,
+        }
+
+    unvisited: list[int] = list(range(1, n + 1))
+    routes: list[list[int]] = []
+    cur_route: list[int] = []
+    current_node = 0
+    rest_capacity = float(capacity)
+    hook_call_count = 0
+    hook_ms = 0.0
+    cand_gen_ms = 0.0
+    voluntary_early_returns = 0
+    forced_capacity_returns = 0
+    budget_exhausted = False
+    stop_reason = "completed"
+    action_sequence: list[list[int]] = []
+
+    max_steps = 4 * n + 10
+    steps = 0
+    while unvisited:
+        steps += 1
+        if steps > max_steps:
+            raise ValueError("invalid_route:max_steps_exceeded")
+        if deadline is not None and time.perf_counter() > deadline:
+            budget_exhausted = True
+            stop_reason = "time_budget_exhausted"
+            break
+
+        t_cg0 = time.perf_counter()
+        feasible = [u for u in unvisited if float(demands[u]) <= rest_capacity + 1e-12]
+        cand_gen_ms += (time.perf_counter() - t_cg0) * 1000.0
+
+        if not feasible:
+            if current_node == 0:
+                raise ValueError("infeasible_instance:no_customer_fits_full_capacity")
+            if cur_route:
+                routes.append(cur_route)
+                cur_route = []
+            current_node = 0
+            rest_capacity = float(capacity)
+            forced_capacity_returns += 1
+            continue
+
+        feas_arr = np.asarray(feasible, dtype=np.int64)
+        feas_orig = feas_arr.copy()
+        feas_arr.flags.writeable = False
+
+        t_h0 = time.perf_counter()
+        raw_next = hook_fn(int(current_node), 0, feas_arr, float(rest_capacity), demands, distance_matrix)
+        hook_ms += (time.perf_counter() - t_h0) * 1000.0
+        hook_call_count += 1
+        if not np.array_equal(feas_arr, feas_orig):
+            raise ValueError("candidate_mutated_input:unvisited_nodes")
+
+        if isinstance(raw_next, (bool, np.bool_)):
+            raise ValueError("invalid_return:boolean_node")
+        try:
+            fval = float(raw_next)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid_return:non_numeric:{raw_next}") from exc
+        if not np.isfinite(fval) or abs(fval - round(fval)) > 1e-9:
+            raise ValueError(f"invalid_return:non_integer:{raw_next}")
+        nxt = int(round(fval))
+
+        if nxt == 0:
+            if current_node == 0:
+                raise ValueError("invalid_return:depot_from_depot")
+            if cur_route:
+                routes.append(cur_route)
+                cur_route = []
+            current_node = 0
+            rest_capacity = float(capacity)
+            voluntary_early_returns += 1
+            if capture_merge_sequence:
+                action_sequence.append([current_node, 0])
+            continue
+
+        if nxt not in feasible:
+            raise ValueError(f"invalid_return:infeasible_node:{nxt}")
+
+        if capture_merge_sequence:
+            action_sequence.append([current_node, nxt])
+        cur_route.append(nxt)
+        unvisited.remove(nxt)
+        rest_capacity -= float(demands[nxt])
+        current_node = nxt
+
+    if cur_route:
+        routes.append(cur_route)
+
+    if budget_exhausted and unvisited:
+        # Budget exhausted before finishing construction -> no feasible full incumbent
+        raise ValueError("time_budget_exceeded:incomplete_construction")
+
+    pre_routes = normalize_routes(routes)
+    postprocess_ms = 0.0
+    post_meta: dict[str, Any] = {"two_opt_moves": 0, "relocate_moves": 0, "outer_passes": 0}
+    final_routes = pre_routes
+    if postprocess_mode != "none":
+        if postprocess_mode == "intra_2opt":
+            final_routes, post_meta = apply_intra_2opt(pre_routes, distance_matrix, deadline=deadline)
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+            else:
+                stop_reason = "no_improvement"
+        elif postprocess_mode == "relocate_2opt":
+            final_routes, post_meta = apply_relocate_2opt(
+                pre_routes, distance_matrix, demands, capacity, deadline=deadline
+            )
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+            else:
+                stop_reason = "no_improvement"
+
+    meta: dict[str, Any] = {
+        "merges_applied": 0,
+        "hook_call_count": hook_call_count,
+        "candidate_pair_count": n,
+        "postprocess_mode": postprocess_mode,
+        "candidate_gen_ms": round(cand_gen_ms, 4),
+        "hook_ms": round(hook_ms, 4),
+        "merge_ms": 0.0,
+        "postprocess_ms": round(postprocess_ms, 4),
+        "two_opt_moves": int(post_meta.get("two_opt_moves", 0)),
+        "relocate_moves": int(post_meta.get("relocate_moves", 0)),
+        "outer_passes": int(post_meta.get("outer_passes", 0)),
+        "voluntary_early_return_count": voluntary_early_returns,
+        "forced_capacity_return_count": forced_capacity_returns,
+        "budget_exhausted": budget_exhausted,
+        "stop_reason": stop_reason,
+    }
+    if capture_merge_sequence:
+        meta["merge_sequence"] = action_sequence
+        meta["pre_postprocess_routes"] = pre_routes
+    return final_routes, meta
+
+
+# ---------------------------------------------------------------------------
+# L2b: cvrp_parallel_merge_dynamic/v1
+# ---------------------------------------------------------------------------
+
+def run_cvrp_parallel_merge_dynamic_v1(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    hook_fn: Callable[..., Any],
+    *,
+    postprocess_mode: str = "none",
+    time_budget_ms: float | None = 500.0,
+    template_options: Mapping[str, Any] | None = None,
+    capture_merge_sequence: bool = False,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Execute L2b dynamic-refresh parallel merge with real-time route state feedback.
+
+    Attribution control contract (identical eligibility, tie-breaking, and merge rules to L2a):
+    - Initializes candidate pairs identically to L2a (lexicographic upper-triangle,
+      optional ``positive_savings_only=True`` filter ``d[0, i] + d[0, j] - d[i, j] > 1e-12``).
+    - Before each merge, filters to the currently feasible endpoint pairs monotonically
+      (once infeasible due to same route, interior node, or load > capacity, a pair never
+      becomes feasible again).
+    - Invokes ``hook_fn`` on the refreshed feasible pairs + live route state arrays
+      ``(load_i, load_j, route_dist_i, route_dist_j, remaining_routes)``.
+    - Picks the first argmax (preserving lexicographic `(i, j)` tie-breaking, identical to
+      ``np.argsort(-scores, kind="mergesort")[0]``).
+    - Therefore, with pure static CW savings (``CLASSIC_CW_DYNAMIC_STATIC_HOOK_CODE``) and
+      ``time_budget_ms=None``, L2b-ctrl reproduces L2a / raw CW with **0.0 error** on
+      merge sequence, routes, and objective while isolating pure dynamic-refresh compute cost.
+    """
+    if postprocess_mode not in ALLOWED_POSTPROCESS_MODES:
+        raise ValueError(f"unsupported_postprocess_mode:{postprocess_mode}")
+    opts = dict(template_options or {})
+    positive_savings_only = bool(opts.get("positive_savings_only", True))
+
+    t0 = time.perf_counter()
+    deadline = (t0 + time_budget_ms / 1000.0) if time_budget_ms is not None else None
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], {
+            "merges_applied": 0,
+            "hook_call_count": 0,
+            "candidate_pair_count": 0,
+            "candidate_gen_ms": 0.0,
+            "hook_ms": 0.0,
+            "merge_ms": 0.0,
+            "postprocess_ms": 0.0,
+            "budget_exhausted": False,
+            "stop_reason": "completed",
+            "pre_postprocess_routes": [],
+            "merge_sequence": [] if capture_merge_sequence else None,
+        }
+
+    t_cand0 = time.perf_counter()
+    iu, ju = np.triu_indices(n, k=1)
+    cur_i = (iu + 1).astype(np.int64, copy=False)
+    cur_j = (ju + 1).astype(np.int64, copy=False)
+    if positive_savings_only:
+        sav = distance_matrix[0, cur_i] + distance_matrix[0, cur_j] - distance_matrix[cur_i, cur_j]
+        pos = sav > 1e-12
+        cur_i = np.ascontiguousarray(cur_i[pos], dtype=np.int64)
+        cur_j = np.ascontiguousarray(cur_j[pos], dtype=np.int64)
+    else:
+        cur_i = np.ascontiguousarray(cur_i, dtype=np.int64)
+        cur_j = np.ascontiguousarray(cur_j, dtype=np.int64)
+
+    initial_pair_count = int(cur_i.size)
+    routes: dict[int, list[int]] = {i: [i] for i in range(1, n + 1)}
+    owner_arr = np.arange(n + 1, dtype=np.int64)
+    is_endpoint = np.ones(n + 1, dtype=bool)
+    is_endpoint[0] = False
+    route_load_arr = np.zeros(n + 1, dtype=np.float64)
+    route_load_arr[1:] = demands[1:]
+    route_dist_arr = np.zeros(n + 1, dtype=np.float64)
+    route_dist_arr[1:] = 2.0 * distance_matrix[0, 1:]
+    cand_gen_ms = (time.perf_counter() - t_cand0) * 1000.0
+
+    hook_call_count = 0
+    hook_ms = 0.0
+    merge_ms = 0.0
+    merges = 0
+    budget_exhausted = False
+    stop_reason = "completed"
+    merge_sequence: list[list[int]] = []
+
+    while cur_i.size > 0:
+        if deadline is not None and time.perf_counter() > deadline:
+            budget_exhausted = True
+            stop_reason = "time_budget_exhausted"
+            break
+
+        t_ref0 = time.perf_counter()
+        ri_arr = owner_arr[cur_i]
+        rj_arr = owner_arr[cur_j]
+        feas_mask = (
+            (ri_arr != rj_arr)
+            & is_endpoint[cur_i]
+            & is_endpoint[cur_j]
+            & (route_load_arr[ri_arr] + route_load_arr[rj_arr] <= capacity + 1e-12)
+        )
+        if not np.any(feas_mask):
+            cand_gen_ms += (time.perf_counter() - t_ref0) * 1000.0
+            break
+        cur_i = np.ascontiguousarray(cur_i[feas_mask], dtype=np.int64)
+        cur_j = np.ascontiguousarray(cur_j[feas_mask], dtype=np.int64)
+        ri_f = ri_arr[feas_mask]
+        rj_f = rj_arr[feas_mask]
+        load_i = np.ascontiguousarray(route_load_arr[ri_f], dtype=np.float64)
+        load_j = np.ascontiguousarray(route_load_arr[rj_f], dtype=np.float64)
+        rdist_i = np.ascontiguousarray(route_dist_arr[ri_f], dtype=np.float64)
+        rdist_j = np.ascontiguousarray(route_dist_arr[rj_f], dtype=np.float64)
+
+        cur_i_orig = cur_i.copy()
+        cur_j_orig = cur_j.copy()
+        cur_i.flags.writeable = False
+        cur_j.flags.writeable = False
+        load_i.flags.writeable = False
+        load_j.flags.writeable = False
+        rdist_i.flags.writeable = False
+        rdist_j.flags.writeable = False
+        cand_gen_ms += (time.perf_counter() - t_ref0) * 1000.0
+
+        t_h0 = time.perf_counter()
+        raw_scores = hook_fn(
+            distance_matrix,
+            demands,
+            float(capacity),
+            cur_i,
+            cur_j,
+            load_i,
+            load_j,
+            rdist_i,
+            rdist_j,
+            len(routes),
+        )
+        hook_ms += (time.perf_counter() - t_h0) * 1000.0
+        hook_call_count += 1
+
+        if not np.array_equal(cur_i, cur_i_orig) or not np.array_equal(cur_j, cur_j_orig):
+            raise ValueError("candidate_mutated_input:pair_indices")
+        scores = np.asarray(raw_scores, dtype=np.float64)
+        if scores.ndim != 1 or scores.shape[0] != cur_i.shape[0]:
+            raise ValueError(f"invalid_return:expected_shape=({cur_i.shape[0]},)_got={scores.shape}")
+        if not np.all(np.isfinite(scores)):
+            raise ValueError("nonfinite_hook_scores")
+
+        # np.argmax returns the FIRST index of the maximum, preserving exact (i, j) mergesort tie-break!
+        t_m0 = time.perf_counter()
+        best_k = int(np.argmax(scores))
+        i = int(cur_i[best_k])
+        j = int(cur_j[best_k])
+        ri = int(owner_arr[i])
+        rj = int(owner_arr[j])
+        seq_i = routes[ri]
+        seq_j = routes[rj]
+        i_start = seq_i[0] == i
+        i_end = seq_i[-1] == i
+        j_start = seq_j[0] == j
+        j_end = seq_j[-1] == j
+        if i_start and not i_end:
+            seq_i = seq_i[::-1]
+        if j_end and not j_start:
+            seq_j = seq_j[::-1]
+        merged = seq_i + seq_j
+        routes[ri] = merged
+        new_load = float(route_load_arr[ri] + route_load_arr[rj])
+        # Exact O(1) distance update: remove (i, 0) and (0, j), add (i, j)
+        new_dist = float(
+            route_dist_arr[ri]
+            + route_dist_arr[rj]
+            - distance_matrix[0, i]
+            - distance_matrix[0, j]
+            + distance_matrix[i, j]
+        )
+        route_load_arr[ri] = new_load
+        route_dist_arr[ri] = new_dist
+        for node in seq_j:
+            owner_arr[node] = ri
+        # Update endpoint flags: only merged[0] and merged[-1] remain endpoints
+        if len(seq_i) > 1:
+            is_endpoint[i] = False
+        if len(seq_j) > 1:
+            is_endpoint[j] = False
+        del routes[rj]
+        merges += 1
+        if capture_merge_sequence:
+            merge_sequence.append([i, j])
+        merge_ms += (time.perf_counter() - t_m0) * 1000.0
+
+    pre_routes = normalize_routes([routes[rid] for rid in sorted(routes)])
+
+    postprocess_ms = 0.0
+    post_meta: dict[str, Any] = {"two_opt_moves": 0, "relocate_moves": 0, "outer_passes": 0}
+    final_routes = pre_routes
+    if postprocess_mode != "none":
+        if budget_exhausted:
+            stop_reason = "time_budget_exhausted"
+        elif postprocess_mode == "intra_2opt":
+            final_routes, post_meta = apply_intra_2opt(pre_routes, distance_matrix, deadline=deadline)
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+            else:
+                stop_reason = "no_improvement"
+        elif postprocess_mode == "relocate_2opt":
+            final_routes, post_meta = apply_relocate_2opt(
+                pre_routes, distance_matrix, demands, capacity, deadline=deadline
+            )
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+            else:
+                stop_reason = "no_improvement"
+
+    meta: dict[str, Any] = {
+        "merges_applied": merges,
+        "hook_call_count": hook_call_count,
+        "candidate_pair_count": initial_pair_count,
+        "positive_savings_only": positive_savings_only,
+        "postprocess_mode": postprocess_mode,
+        "candidate_gen_ms": round(cand_gen_ms, 4),
+        "hook_ms": round(hook_ms, 4),
+        "merge_ms": round(merge_ms, 4),
+        "postprocess_ms": round(postprocess_ms, 4),
+        "two_opt_moves": int(post_meta.get("two_opt_moves", 0)),
+        "relocate_moves": int(post_meta.get("relocate_moves", 0)),
+        "outer_passes": int(post_meta.get("outer_passes", 0)),
+        "budget_exhausted": budget_exhausted,
+        "stop_reason": stop_reason,
+    }
+    if capture_merge_sequence:
+        meta["merge_sequence"] = merge_sequence
+        meta["pre_postprocess_routes"] = pre_routes
+    return final_routes, meta
+
+
+# ---------------------------------------------------------------------------
 # Versioned Template Registry
 # ---------------------------------------------------------------------------
 
@@ -511,6 +980,21 @@ def _compute_template_source_sha256(runner_fn: Callable[..., Any]) -> str:
 
 
 def _build_template_registry() -> dict[tuple[str, str], TemplateSpec]:
+    l1 = TemplateSpec(
+        template_id="cvrp_sequential_construct",
+        template_version="v1",
+        problem_family="cvrp",
+        paradigm="sequential_construct",
+        hook_name="select_next_node",
+        hook_signature=("current_node", "depot", "unvisited_nodes", "rest_capacity", "demands", "distance_matrix"),
+        allowed_postprocess_modes=ALLOWED_POSTPROCESS_MODES,
+        runner=run_cvrp_sequential_construct_v1,
+        default_task_description=CVRP_SEQUENTIAL_CONSTRUCT_TASK_DESCRIPTION,
+        default_template_program=CVRP_SEQUENTIAL_CONSTRUCT_TEMPLATE_PROGRAM,
+        default_baseline_hook_code=CLASSIC_NN_SEQUENTIAL_HOOK_CODE,
+        template_source_sha256=_compute_template_source_sha256(run_cvrp_sequential_construct_v1),
+        advisory_deadline_supported=True,
+    )
     l2a = TemplateSpec(
         template_id="cvrp_parallel_merge_static",
         template_version="v1",
@@ -526,7 +1010,37 @@ def _build_template_registry() -> dict[tuple[str, str], TemplateSpec]:
         template_source_sha256=_compute_template_source_sha256(run_cvrp_parallel_merge_static_v1),
         advisory_deadline_supported=True,
     )
-    return {(l2a.template_id, l2a.template_version): l2a}
+    l2b = TemplateSpec(
+        template_id="cvrp_parallel_merge_dynamic",
+        template_version="v1",
+        problem_family="cvrp",
+        paradigm="parallel_merge",
+        hook_name="score_merge_dynamic",
+        hook_signature=(
+            "distance_matrix",
+            "demands",
+            "capacity",
+            "i_idx",
+            "j_idx",
+            "load_i",
+            "load_j",
+            "route_dist_i",
+            "route_dist_j",
+            "remaining_routes",
+        ),
+        allowed_postprocess_modes=ALLOWED_POSTPROCESS_MODES,
+        runner=run_cvrp_parallel_merge_dynamic_v1,
+        default_task_description=CVRP_PARALLEL_MERGE_DYNAMIC_TASK_DESCRIPTION,
+        default_template_program=CVRP_PARALLEL_MERGE_DYNAMIC_TEMPLATE_PROGRAM,
+        default_baseline_hook_code=CLASSIC_CW_DYNAMIC_STATIC_HOOK_CODE,
+        template_source_sha256=_compute_template_source_sha256(run_cvrp_parallel_merge_dynamic_v1),
+        advisory_deadline_supported=True,
+    )
+    return {
+        (l1.template_id, l1.template_version): l1,
+        (l2a.template_id, l2a.template_version): l2a,
+        (l2b.template_id, l2b.template_version): l2b,
+    }
 
 
 TEMPLATE_REGISTRY: dict[tuple[str, str], TemplateSpec] = _build_template_registry()
@@ -553,6 +1067,64 @@ def build_classic_cw_static_design(
     ),
 ) -> InterfaceDesign:
     spec = get_template_spec("cvrp_parallel_merge_static", "v1")
+    return InterfaceDesign(
+        design_id=design_id,
+        problem_family=spec.problem_family,
+        paradigm=spec.paradigm,
+        template_id=spec.template_id,
+        template_version=spec.template_version,
+        postprocess_mode=postprocess_mode,
+        hook_name=spec.hook_name,
+        hook_signature=spec.hook_signature,
+        hook_task_description=spec.default_task_description,
+        baseline_hook_code=spec.default_baseline_hook_code,
+        cited_kb_ids=("method-cvrp-cw-parallel", "method-cvrp-i605-tworegime-savings"),
+        diagnostic_ref=diagnostic_ref,
+        rationale=rationale,
+        template_options={"positive_savings_only": bool(positive_savings_only)},
+    )
+
+
+def build_sequential_construct_design(
+    *,
+    design_id: str = "m2_l1_sequential_construct",
+    postprocess_mode: str = "none",
+    baseline_hook_code: str | None = None,
+    diagnostic_ref: dict[str, Any] | None = None,
+    rationale: str = "Fixed pointwise sequential construction control arm (cvrp_sequential_construct/v1).",
+) -> InterfaceDesign:
+    spec = get_template_spec("cvrp_sequential_construct", "v1")
+    return InterfaceDesign(
+        design_id=design_id,
+        problem_family=spec.problem_family,
+        paradigm=spec.paradigm,
+        template_id=spec.template_id,
+        template_version=spec.template_version,
+        postprocess_mode=postprocess_mode,
+        hook_name=spec.hook_name,
+        hook_signature=spec.hook_signature,
+        hook_task_description=spec.default_task_description,
+        baseline_hook_code=baseline_hook_code or spec.default_baseline_hook_code,
+        cited_kb_ids=("method-cvrp-i605-tworegime-savings", "method-cvrp-s2-r5-spiral"),
+        diagnostic_ref=diagnostic_ref,
+        rationale=rationale,
+        template_options={},
+    )
+
+
+def build_parallel_merge_dynamic_design(
+    *,
+    design_id: str = "m2_l2b_cw_dynamic_raw",
+    postprocess_mode: str = "none",
+    diagnostic_ref: dict[str, Any] | None = None,
+    positive_savings_only: bool = True,
+    rationale: str = (
+        "Dynamic-refresh parallel merge with real-time route load & travel-distance feedback "
+        "(cvrp_parallel_merge_dynamic/v1); baseline hook uses pure static CW savings (L2b-ctrl) "
+        "to isolate dynamic refresh compute cost from state-feedback quality gain."
+    ),
+) -> InterfaceDesign:
+    spec = get_template_spec("cvrp_parallel_merge_dynamic", "v1")
     return InterfaceDesign(
         design_id=design_id,
         problem_family=spec.problem_family,

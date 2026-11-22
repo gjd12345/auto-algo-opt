@@ -542,14 +542,47 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                                 "present": plan.reasoning_summary is not None,
                                 "content_sha256": db._sha256(plan.reasoning_summary) if plan.reasoning_summary is not None else None,
                             }}
+                interface_design_meta = None
+                if plan.interface_selection is not None:
+                    from agent_skill_loop.interface_design.session_bridge import validate_session_interface_selection
+                    m2_design, m2_val = validate_session_interface_selection(
+                        plan.interface_selection,
+                        round_id=rd["round_id"],
+                        candidate_timeout_s=float(row["solver_timeout"]),
+                        instance_time_budget_ms=500.0,
+                    )
+                    val_ref = f"{prefix}/interface_validation.json"
+                    val_sha = save(root, val_ref, m2_val)
+                    if not m2_val.get("passed"):
+                        fail(
+                            "INTERFACE_VALIDATION_FAILED",
+                            action,
+                            f"5-gate validation failed ({val_ref}): {m2_val.get('failures')}",
+                        )
+                    des_ref = f"{prefix}/interface_design.json"
+                    des_sha = save(root, des_ref, m2_design.to_dict())
+                    interface_design_meta = {
+                        "template_id": m2_design.template_id,
+                        "template_version": m2_design.template_version,
+                        "design_ref": des_ref,
+                        "design_sha256": m2_design.design_sha256,
+                        "design_file_sha256": des_sha,
+                        "validation_ref": val_ref,
+                        "validation_sha256": val_sha,
+                        "validation_passed": True,
+                    }
                 save(root, f"{prefix}/plan.submitted.json", text)
                 ph = save(root, f"{prefix}/plan.json", plan.as_dict())
                 ch = save(root, f"{prefix}/round_context.txt", context)
+                if interface_design_meta is not None:
+                    manifest["interface_selection"] = interface_design_meta
                 save(root, f"{prefix}/context_manifest.json", manifest)
                 con.execute("UPDATE rounds SET state='READY_TO_EXECUTE',submitted_plan_ref=?,submitted_plan_sha256=?,normalized_plan_ref=?,normalized_plan_sha256=?,round_context_ref=?,round_context_sha256=?,context_manifest_ref=? WHERE run_id=? AND round_id=?",
                     (f"{prefix}/plan.submitted.json", raw_hash, f"{prefix}/plan.json", ph, f"{prefix}/round_context.txt", ch, f"{prefix}/context_manifest.json", row["run_id"], rd["round_id"]))
-                result = receipt(con, row, rd, action, operation_id, ih, {"plan_ref": f"{prefix}/plan.json", "context_manifest": manifest,
-                                                                         "search_policy": effective_policy})
+                result_payload = {"plan_ref": f"{prefix}/plan.json", "context_manifest": manifest, "search_policy": effective_policy}
+                if interface_design_meta is not None:
+                    result_payload["interface_selection"] = interface_design_meta
+                result = receipt(con, row, rd, action, operation_id, ih, result_payload)
         db.flush_audit(root)
         return result
 

@@ -1,0 +1,58 @@
+{
+  "arm_id": "diagnostic_rule_planner",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_parallel_merge_dynamic",
+  "decision_trace": [
+    "Step 1 (2x3 gap decomposition on dev_24): best pointwise + Relocate+2opt still trails bare CW by +1.39% -> switch paradigm from sequential_construct to parallel_merge.",
+    "Step 2 (target budget=500.0 ms headroom check): L2b-ctrl full_completion=100.00%, p95=26.11 ms <= threshold 275.00 ms -> select cvrp_parallel_merge_dynamic/v1 (L2b) for real-time route-load and distance feedback."
+  ],
+  "planning_requests": 0,
+  "planning_input_tokens": 0,
+  "planning_output_tokens": 0,
+  "diagnostic_probe_wall_ms": 850.35,
+  "eoh_requests": {
+    "completed_requests": 13,
+    "by_purpose": {
+      "eoh_probe": 1,
+      "eoh_generation": 12
+    },
+    "prompt_tokens": 21210,
+    "completion_tokens": 6669,
+    "total_tokens": 27879
+  },
+  "best_dev24": 16.266689,
+  "wall_s": 105.91,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261122",
+    "display_name": "Arm4a DiagRule (cvrp_parallel_merge_dynamic, s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_dynamic/v1:score_merge_dynamic",
+    "template_id": "cvrp_parallel_merge_dynamic",
+    "template_version": "v1",
+    "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+    "postprocess_mode": "none",
+    "template_options": {
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_dynamic",
+    "hook_code": "import numpy as np\n\ndef score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n    \"\"\"Return a 1D array of finite float priority scores for currently feasible merges (higher = merge now).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    scale = np.mean(distance_matrix[0, 1:])\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    savings = d0i + d0j - dij\n    lam = 0.15\n    mu = 0.10\n    gen_savings = savings - lam * dij - mu * np.abs(d0i - d0j)\n\n    load_ratio = (load_i + load_j) / capacity\n    slack = 1.0 - np.abs(1.0 - load_ratio)\n    balance = 1.0 - np.abs(route_dist_i - route_dist_j) / (route_dist_i + route_dist_j + 1e-12)\n    progress = 1.0 / float(max(remaining_routes, 1))\n\n    score = (gen_savings / scale) + 0.05 * load_ratio + 0.10 * slack + 0.05 * balance + 0.02 * progress\n    return np.asarray(score, dtype=np.float64)",
+    "hook_code_sha256": "80e367df67ebbd7a6f55d7249e03ab8b35b311a44acfe40ef5b33efda797daf2",
+    "design_sha256": "06c8414dd995b85db6c708965620adb05c790781b0d43f8393f411ead6d347b4",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\diagnostic_rule_planner",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel",
+      "method-cvrp-i605-tworegime-savings"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `score_merge_dynamic` under `cvrp_parallel_merge_dynamic/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.2667 vs baseline=16.2225.",
+    "default_budget_ms": 500.0
+  }
+}

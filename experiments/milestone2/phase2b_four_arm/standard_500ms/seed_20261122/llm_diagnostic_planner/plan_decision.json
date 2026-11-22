@@ -1,0 +1,17 @@
+{
+  "planner_kind": "llm_diagnostic_planner",
+  "model": "deepseek-v4.1-flash",
+  "target_budget_ms": 500.0,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "selected_template_version": "v1",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel"
+  ],
+  "rationale": "cvrp_parallel_merge_static achieves the best dev_24 quality (raw_mean 16.2225, remaining gap 0.5% postprocess vs CW) while its baseline p95 solve time is 7.0 ms (~1.4% of 500 ms budget; n=200 p95 7.25 ms) with 100% completion, leaving huge safe timing headroom. Dynamic is equally accurate but costs 25 ms p95 with no quality advantage, and sequential_construct lags significantly on dev_24 (bridged gap only 59.8%, 12.6% postprocess drop). Static parallel merge is therefore the optimal choice.",
+  "raw_response": "{\n  \"template_id\": \"cvrp_parallel_merge_static\",\n  \"template_version\": \"v1\",\n  \"cited_kb_ids\": [\"method-cvrp-cw-parallel\"],\n  \"rationale\": \"cvrp_parallel_merge_static achieves the best dev_24 quality (raw_mean 16.2225, remaining gap 0.5% postprocess vs CW) while its baseline p95 solve time is 7.0 ms (~1.4% of 500 ms budget; n=200 p95 7.25 ms) with 100% completion, leaving huge safe timing headroom. Dynamic is equally accurate but costs 25 ms p95 with no quality advantage, and sequential_construct lags significantly on dev_24 (bridged gap only 59.8%, 12.6% postprocess drop). Static parallel merge is therefore the optimal choice.\"\n}",
+  "planning_requests": 1,
+  "planning_input_tokens": 1509,
+  "planning_output_tokens": 191,
+  "planning_wall_ms": 5039.79,
+  "diagnostic_probe_wall_ms": 813.63
+}

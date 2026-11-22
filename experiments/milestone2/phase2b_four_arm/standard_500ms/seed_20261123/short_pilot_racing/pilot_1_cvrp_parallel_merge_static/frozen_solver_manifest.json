@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261123_pilot_cvrp_parallel_merge_static",
+  "display_name": "Racing Pilot · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d = distance_matrix\n    di0 = d[0, i_idx]\n    dj0 = d[0, j_idx]\n    dij = d[i_idx, j_idx]\n\n    scale = np.mean(d[0, 1:])\n    scale = scale if np.isfinite(scale) and scale > 0.0 else 1.0\n\n    # Generalized Clarke-Wright savings with slight asymmetry penalty reduction\n    lam = 1.15\n    mu = 0.08\n    savings = (di0 + dj0 - lam * dij + mu * np.abs(di0 - dj0)) / scale\n\n    # Mild demand/capacity-fill adjustment: prefer fuller loads but keep dimensionless\n    qsum = demands[i_idx] + demands[j_idx]\n    fill = np.clip(qsum / capacity, 0.0, 1.0)\n    demand_bonus = 0.05 * fill\n\n    score = savings + demand_bonus\n    return np.where(np.isfinite(score), score, 0.0).astype(np.float64)",
+  "hook_code_sha256": "c13a43b67e4f9634fc6a214e7e3d7b0ab18aae8cf4eda94229809c47f6b22ee8",
+  "design_sha256": "2641dc786ebfc9cff0c9a63c4ef316a87784c16b0e80b961aefc1c8c1919b0ed",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_1_cvrp_parallel_merge_static",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.2044 vs baseline=16.2225.",
+  "default_budget_ms": 500.0
+}

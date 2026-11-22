@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_tight_25ms_short_pilot_racing_s20261122_winner",
+  "display_name": "M2 Racing Winner (cvrp_parallel_merge_static)",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Global, coordinate-scale-invariant normalization (mean depot radius).\n    scale = float(np.mean(distance_matrix[0, 1:]))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Generalized Clarke-Wright savings with mild radial-balance and demand terms.\n    lam = 1.15\n    mu = 0.12\n    savings = d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)\n    savings = savings / scale\n\n    # Demand-aware soft feasibility/priority: prefer pairs whose combined load\n    # fits capacity and whose fill ratio is moderate-to-high.\n    qi = demands[i_idx]\n    qj = demands[j_idx]\n    load = qi + qj\n    inv_cap = 1.0 / float(capacity) if capacity > 0.0 else 0.0\n    fill = np.clip(load * inv_cap, 0.0, 1.0)  # 0..1\n    feasible = np.where(load <= capacity, 1.0, 0.0)\n\n    # Mild dimensionless adjustment: balanced, feasible pair loads slightly preferred.\n    # Penalize over-capacity pairs so they are attempted later.\n    demand_bonus = 0.05 * fill * (1.0 - np.abs(qi - qj) * inv_cap)\n\n    scores = feasible * (savings + demand_bonus) + (1.0 - feasible) * (savings - 0.5)\n\n    # Guard against non-finite values.\n    scores = np.where(np.isfinite(scores), scores, -np.inf)\n    return scores.astype(np.float64)",
+  "hook_code_sha256": "7a9c28577c54ac7dd5310434083e512b9657cb74486994141a1da7b8e7738a66",
+  "design_sha256": "1a1986010fa8d918201d97899d9ce90bba9c468632dc76930cc8b1d8ad79500b",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\tight_25ms\\seed_20261122\\short_pilot_racing\\continuation_cvrp_parallel_merge_static",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.1544 vs baseline=16.2225.",
+  "default_budget_ms": 25.0
+}

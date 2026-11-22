@@ -102,6 +102,10 @@ Read the focused contracts before producing documents:
 - For offline benchmark audit/calibration and benchmark Session options, use
   the focused [benchmark contract](references/benchmark.md). All Skill
   references needed at runtime are contained under this Skill directory.
+- For plan-time solver interface diagnostics, 5-gate validation, and switching
+  templates (e.g. `cvrp_sequential_construct/v1` → `cvrp_parallel_merge_static/v1`
+  or `cvrp_parallel_merge_dynamic/v1`) inside the standard Session loop across
+  any Coding Agent harness, read [interface design](references/interface-design.md).
 
 ## Iteration B search progress and outer policy
 

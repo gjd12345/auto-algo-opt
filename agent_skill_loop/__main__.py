@@ -110,6 +110,88 @@ def cmd_workflow(args: argparse.Namespace) -> int:
     return 2
 
 
+def cmd_interface(args: argparse.Namespace) -> int:
+    """Harness-agnostic Milestone 2 interface discovery, diagnostics, validation, and workbench eval."""
+    from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver, InterfaceDesign
+    from agent_skill_loop.interface_design.diagnostics import run_gap_decomposition_diagnostic
+    from agent_skill_loop.interface_design.planner import (
+        KB_ROUND_CONTEXT_BY_TEMPLATE,
+        probe_template_budget_headroom,
+        select_interface_by_diagnostic_rule,
+    )
+    from agent_skill_loop.interface_design.templates import TEMPLATE_REGISTRY
+    from agent_skill_loop.interface_design.validator import InterfaceValidator
+
+    act = args.interface_action
+    if act == "list-templates":
+        items = [
+            {
+                "template_id": spec.template_id,
+                "template_version": spec.template_version,
+                "problem_family": spec.problem_family,
+                "paradigm": spec.paradigm,
+                "hook_name": spec.hook_name,
+                "hook_signature": list(spec.hook_signature),
+                "allowed_postprocess_modes": sorted(spec.allowed_postprocess_modes),
+                "template_source_sha256": spec.template_source_sha256,
+                "kb_clue": KB_ROUND_CONTEXT_BY_TEMPLATE.get(spec.template_id),
+            }
+            for spec in TEMPLATE_REGISTRY.values()
+        ]
+        print(json.dumps({"ok": True, "templates": items}, ensure_ascii=False, indent=2))
+        return 0
+    if act == "diagnose":
+        out_dir = Path(args.output).resolve()
+        diag = run_gap_decomposition_diagnostic(output_dir=out_dir, time_budget_ms=float(args.budget_ms))
+        probe = probe_template_budget_headroom(
+            time_budget_ms=float(args.budget_ms),
+            probe_suite_specs=(("cvrp_dev_hetero_24", "dev_train", 24), ("cvrp_select_multiscale_64", "selection", 16)),
+            include_n200_probe=True,
+        )
+        diag_doc = json.loads(Path(diag["json_path"]).read_text(encoding="utf-8"))
+        rec = select_interface_by_diagnostic_rule(
+            diagnostic_summary=diag_doc,
+            budget_probe=probe,
+            target_budget_ms=float(args.budget_ms),
+            diagnostic_ref={"path": diag["json_path"], "sha256": diag["json_sha256"], "usage_role": "dev_selection"},
+        )
+        out = {
+            "ok": True,
+            "diagnostic_json": diag["json_path"],
+            "diagnostic_sha256": diag["json_sha256"],
+            "budget_probe": probe,
+            "recommended_interface": {
+                "template_id": rec["selected_template_id"],
+                "template_version": rec["selected_template_version"],
+                "cited_kb_ids": rec["cited_kb_ids"],
+                "decision_trace": rec["decision_trace"],
+            },
+        }
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return 0
+    if act == "validate":
+        raw = json.loads(Path(args.design).read_text(encoding="utf-8"))
+        design = InterfaceDesign.from_dict(raw)
+        rep = InterfaceValidator(instance_time_budget_ms=float(args.budget_ms)).validate(design)
+        print(json.dumps(rep.as_dict(), ensure_ascii=False, indent=2))
+        return 0 if rep.passed else 2
+    if act == "workbench-eval":
+        from agent_skill_loop.cvrp_workbench.runner import run_frozen_workbench_bundle
+        solvers = [
+            FrozenInterfaceSolver.from_dict(json.loads(Path(p).read_text(encoding="utf-8")))
+            for p in args.frozen_manifest
+        ]
+        res = run_frozen_workbench_bundle(
+            Path(args.output),
+            frozen_solvers=solvers,
+            budget_id=args.budget_id,
+            time_budget_ms=float(args.budget_ms),
+        )
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+    raise SystemExit(f"unsupported interface action: {act}")
+
+
 def cmd_benchmark(args: argparse.Namespace) -> int:
     """Run only offline benchmark operations; never creates provider traffic."""
     from agent_skill_loop.benchmark import cli as benchmark_cli
@@ -563,13 +645,32 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--offset", type=int, default=0)
             command.add_argument("--limit", type=int, default=4096)
         command.set_defaults(func=cmd_session_action, session_function="memory_" + name)
+    iface = sub.add_parser("interface", help="Milestone 2 plan-time interface diagnostics, 5-gate validation, and workbench eval")
+    iface_sub = iface.add_subparsers(dest="interface_action", required=True)
+    iface_list = iface_sub.add_parser("list-templates", help="List registered versioned solver templates")
+    iface_list.set_defaults(func=cmd_interface)
+    iface_diag = iface_sub.add_parser("diagnose", help="Run 2x3 gap decomposition and target-budget headroom probe")
+    iface_diag.add_argument("--output", required=True)
+    iface_diag.add_argument("--budget-ms", type=float, default=500.0)
+    iface_diag.set_defaults(func=cmd_interface)
+    iface_val = iface_sub.add_parser("validate", help="Run 5-gate behavioral InterfaceValidator on a design JSON")
+    iface_val.add_argument("--design", required=True)
+    iface_val.add_argument("--budget-ms", type=float, default=500.0)
+    iface_val.set_defaults(func=cmd_interface)
+    iface_wb = iface_sub.add_parser("workbench-eval", help="Evaluate frozen M2 solver manifest(s) on M1 Workbench")
+    iface_wb.add_argument("--frozen-manifest", nargs="+", required=True)
+    iface_wb.add_argument("--output", required=True)
+    iface_wb.add_argument("--budget-id", default="standard_500ms")
+    iface_wb.add_argument("--budget-ms", type=float, default=500.0)
+    iface_wb.set_defaults(func=cmd_interface)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        if args.command in {"session", "benchmark"}:
+        if args.command in {"session", "benchmark", "interface"}:
             return int(args.func(args))
         problem_id = getattr(args, "problem", PROBLEM_CVRP)
         # Resolve from the spec registry so the CLI and the loop agree on identity.

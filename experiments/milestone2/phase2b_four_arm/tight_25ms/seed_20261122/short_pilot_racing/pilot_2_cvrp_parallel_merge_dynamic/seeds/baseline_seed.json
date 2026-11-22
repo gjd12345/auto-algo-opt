@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Baseline hook for cvrp_parallel_merge_dynamic/v1.",
+    "code": "import numpy as np\n\ndef score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
+  }
+]

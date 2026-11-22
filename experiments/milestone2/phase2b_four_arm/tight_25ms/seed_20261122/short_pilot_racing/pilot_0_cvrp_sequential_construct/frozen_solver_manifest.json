@@ -1,0 +1,31 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_tight_25ms_short_pilot_racing_s20261122_pilot_cvrp_sequential_construct",
+  "display_name": "Racing Pilot · cvrp_sequential_construct",
+  "problem_family": "cvrp",
+  "paradigm": "sequential_construct",
+  "interface": "cvrp_sequential_construct/v1:select_next_node",
+  "template_id": "cvrp_sequential_construct",
+  "template_version": "v1",
+  "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+  "postprocess_mode": "none",
+  "template_options": {},
+  "hook_name": "select_next_node",
+  "hook_code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    \"\"\"Return an int from unvisited_nodes (or 0 to return to depot early when current_node != 0).\"\"\"\n    unvisited_nodes = np.asarray(unvisited_nodes, dtype=np.int64)\n    if unvisited_nodes.size == 0:\n        return int(depot)\n\n    scale = float(np.mean(distance_matrix[depot, 1:]))\n    if not np.isfinite(scale) or scale <= 0:\n        scale = 1.0\n\n    d_cur = distance_matrix[current_node, unvisited_nodes].astype(np.float64)\n    d_depot_next = distance_matrix[depot, unvisited_nodes].astype(np.float64)\n    d_cur_depot = float(distance_matrix[current_node, depot])\n\n    # Depot savings: how much closer the customer is to the depot than current node is.\n    savings = (d_cur_depot - d_cur) / scale\n    # Normalized nearest distance.\n    near = d_cur / scale\n    # Normalized distance from depot to candidate.\n    depot_near = d_depot_next / scale\n\n    cap_ratio = rest_capacity / max(1e-12, float(np.mean(demands[1:])) )\n\n    # Regime switch based on capacity fill level.\n    if cap_ratio >= 2.5:\n        # Plenty of capacity: prefer nearest customers, slight savings bonus.\n        score = -near + 0.15 * savings\n    elif cap_ratio >= 0.75:\n        # Balanced: blend savings and proximity.\n        score = 0.6 * savings - 0.6 * near + 0.1 * depot_near\n    else:\n        # Low capacity: strong savings and depot proximity preference.\n        score = 1.0 * savings - 0.3 * near + 0.4 * depot_near\n\n    # Prefer larger demands slightly to avoid leaving fragments.\n    demand_bonus = 0.05 * (demands[unvisited_nodes].astype(np.float64) / max(1e-12, float(np.mean(demands[1:]))))\n    score = score + demand_bonus\n\n    # Voluntary early return: if current node is not depot and best candidate is far.\n    if current_node != depot:\n        best_idx = int(np.argmax(score))\n        best_near = float(near[best_idx])\n        # If rest capacity is very low relative to average demand, or best candidate far, return.\n        if cap_ratio < 0.35 and best_near > 1.0:\n            return int(depot)\n        if best_near > 2.5 and d_cur_depot / scale < best_near * 0.6:\n            return int(depot)\n\n    best_idx = int(np.argmax(score))\n    return int(unvisited_nodes[best_idx])",
+  "hook_code_sha256": "12d71981222d16e847a30781ff0ea81ca9c9daef9e0d86b984b9e2f4cb7adff9",
+  "design_sha256": "02a541ae4632330b6eb797257ab197b8fa71686fe57d6796f5a29facbc0c1f77",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\tight_25ms\\seed_20261122\\short_pilot_racing\\pilot_0_cvrp_sequential_construct",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+  "cited_kb_ids": [
+    "method-cvrp-i605-tworegime-savings",
+    "method-cvrp-s2-r5-spiral"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `select_next_node` under `cvrp_sequential_construct/v1` (postprocess=none); cvrp_dev_hetero_24 mean=19.6349 vs baseline=20.5337.",
+  "default_budget_ms": 25.0
+}

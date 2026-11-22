@@ -1,0 +1,18 @@
+{
+  "planner_kind": "deterministic_diagnostic_rule",
+  "target_budget_ms": 500.0,
+  "selected_template_id": "cvrp_parallel_merge_dynamic",
+  "selected_template_version": "v1",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "decision_trace": [
+    "Step 1 (2x3 gap decomposition on dev_24): best pointwise + Relocate+2opt still trails bare CW by +1.39% -> switch paradigm from sequential_construct to parallel_merge.",
+    "Step 2 (target budget=500.0 ms headroom check): L2b-ctrl full_completion=100.00%, p95=26.11 ms <= threshold 275.00 ms -> select cvrp_parallel_merge_dynamic/v1 (L2b) for real-time route-load and distance feedback."
+  ],
+  "planning_requests": 0,
+  "planning_input_tokens": 0,
+  "planning_output_tokens": 0,
+  "diagnostic_probe_wall_ms": 850.35
+}

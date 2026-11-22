@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261123_pilot_cvrp_parallel_merge_dynamic",
+  "display_name": "Racing Pilot · cvrp_parallel_merge_dynamic",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_dynamic/v1:score_merge_dynamic",
+  "template_id": "cvrp_parallel_merge_dynamic",
+  "template_version": "v1",
+  "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_dynamic",
+  "hook_code": "import numpy as np\n\ndef score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n    \"\"\"Return a 1D array of finite float priority scores for currently feasible merges (higher = merge now).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Global instance scale (mean depot-to-customer distance), scale-invariant normalization\n    scale = np.mean(distance_matrix[0, 1:])\n    scale = scale if scale > 0 else 1.0\n\n    # Classic Clarke-Wright anchor, normalized by global scale\n    cw = (d0i + d0j - dij) / scale\n\n    # Generalized savings terms (also scale-normalized)\n    lam = 0.10\n    mu = 0.05\n    gen = lam * dij / scale\n    radial = mu * np.abs(d0i - d0j) / scale\n\n    # Live route-state signals (dimensionless)\n    cap = capacity if capacity > 0 else 1.0\n    combined_load = load_i + load_j\n    fill = combined_load / cap                       # 0..1, prefer fuller trucks\n    slack = 1.0 - fill                               # near-zero => tight packing reward\n    tight = np.exp(-((1.0 - fill) ** 2) / 0.05)      # peak near full capacity\n\n    # Route-length balance: prefer merging routes of similar size\n    denom = route_dist_i + route_dist_j + 1e-12\n    balance = 1.0 - np.abs(route_dist_i - route_dist_j) / denom\n\n    # Merge progress: early merges slightly favored; decreases as routes consumed\n    progress = 1.0 / (1.0 + np.maximum(remaining_routes, 1.0))\n\n    # Combine: anchored, gently augmented\n    score = (\n        cw\n        + gen\n        + radial\n        + 0.35 * fill\n        + 0.20 * tight\n        + 0.15 * balance\n        + 0.10 * progress\n        - 0.10 * slack\n    )\n\n    # Ensure finite output\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "7edc89c58b7e93397703e84aa483d2565be22f8ba0de7bb6bfb24d243b48187a",
+  "design_sha256": "3d4f545a3c7b5296c6b7cc499efe2f2febf92911a76ecf5e26b4cd748c82f40a",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_2_cvrp_parallel_merge_dynamic",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_dynamic` under `cvrp_parallel_merge_dynamic/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.9156 vs baseline=16.2225.",
+  "default_budget_ms": 500.0
+}

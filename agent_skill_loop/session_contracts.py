@@ -18,7 +18,7 @@ MAX_ROUND_CONTEXT_CHARS = 12000
 PLAN_KEYS = frozenset({
     "round_id", "direction", "operations", "preserve", "feedback_basis",
     "memory_basis", "reference_skill_ref", "hypothesis", "search_policy",
-    "search_intent", "reflection_basis",
+    "search_intent", "reflection_basis", "interface_selection",
 })
 PLAN_NON_AUTHORITY_METADATA_KEYS = frozenset({"type", "reasoning_summary", "research_activity"})
 OPERATION_KEYS = frozenset({"type", "target", "mechanism"})
@@ -195,6 +195,7 @@ class PlanDocument:
     # into the upstream EoH prompt.
     reasoning_summary: str | None = None
     research_activity: dict[str, Any] | None = None
+    interface_selection: dict[str, Any] | None = None
 
     @classmethod
     def from_dict(
@@ -292,6 +293,10 @@ class PlanDocument:
             expected = dict(available_reflection_basis or {})
             if reflection.as_dict() != expected:
                 raise ValueError("reflection_reference_not_previous_accepted_evaluation")
+        interface_selection = None
+        if raw.get("interface_selection") is not None:
+            from agent_skill_loop.interface_design.session_bridge import parse_interface_selection
+            interface_selection = parse_interface_selection(raw["interface_selection"])
         return cls(
             round_id,
             _text(raw.get("direction"), "direction"),
@@ -306,6 +311,7 @@ class PlanDocument:
             reflection,
             reasoning_summary,
             research_activity,
+            interface_selection,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -327,6 +333,8 @@ class PlanDocument:
             result["reasoning_summary"] = self.reasoning_summary
         if self.research_activity is not None:
             result["research_activity"] = dict(self.research_activity)
+        if self.interface_selection is not None:
+            result["interface_selection"] = dict(self.interface_selection)
         return result
 
 

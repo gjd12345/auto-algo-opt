@@ -1,0 +1,233 @@
+{
+  "schema_version": "m2-interface-validation-report/v1",
+  "passed": true,
+  "design_id": "m2_2b_tight_25ms_fixed_pointwise_s20261122",
+  "design_sha256": "7be046d65816ec5e4cf85c32ace9c9d53aeba75bf40d86bbe4ce242ee5582f1e",
+  "template_id": "cvrp_sequential_construct",
+  "template_version": "v1",
+  "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+  "hook_code_sha256": "05f76df6e29705dcb49cecb028f5faf1f06c0331965e8ecf3dedfb094b1e2f0d",
+  "gates": [
+    {
+      "gate_id": 1,
+      "gate_name": "ast_whitelist",
+      "passed": true,
+      "failure_count": 0
+    },
+    {
+      "gate_id": 2,
+      "gate_name": "template_and_signature",
+      "passed": true,
+      "failure_count": 0
+    },
+    {
+      "gate_id": 3,
+      "gate_name": "subprocess_feasibility",
+      "passed": true,
+      "n_instances": 4,
+      "objective": 14.834987,
+      "worker_wall_ms": 575.8306,
+      "subprocess_overhead_ms": 563.9736
+    },
+    {
+      "gate_id": 4,
+      "gate_name": "dual_action_causal_sensitivity",
+      "passed": true,
+      "first_merge_prefer_A": [
+        0,
+        1
+      ],
+      "first_merge_prefer_B": [
+        0,
+        2
+      ],
+      "pre_postprocess_routes_differ": true,
+      "baseline_hook_calls": 5
+    },
+    {
+      "gate_id": 5,
+      "gate_name": "budget_and_scale_diagnostics",
+      "passed": true,
+      "outcome_counts": {
+        "completed": 4,
+        "budget_exhausted_feasible_incumbent": 0,
+        "timeout_or_infeasible": 0
+      },
+      "max_solve_ms": 5.9094,
+      "budget_headroom_ms": 19.0906,
+      "scale_drift_pct": 6.9431,
+      "scale_drift_warning": true
+    }
+  ],
+  "failures": [],
+  "diagnostics": {
+    "candidate_timeout_s": 20.0,
+    "instance_time_budget_ms": 25.0,
+    "gate2": {
+      "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+      "advisory_deadline_supported": true
+    },
+    "gate3": {
+      "n_instances": 4,
+      "objective": 14.834987,
+      "outcomes": [
+        "completed",
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "worker_wall_ms": 575.8306,
+      "subprocess_overhead_ms": 563.9736
+    },
+    "gate4": {
+      "instance_id": "m2_gate4_dual_action_4cust",
+      "prefer_A_first_merge": [
+        0,
+        1
+      ],
+      "prefer_B_first_merge": [
+        0,
+        2
+      ],
+      "prefer_A_pre_routes": [
+        [
+          0,
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          3,
+          4,
+          0
+        ]
+      ],
+      "prefer_B_pre_routes": [
+        [
+          0,
+          2,
+          4,
+          0
+        ],
+        [
+          0,
+          3,
+          1,
+          0
+        ]
+      ],
+      "baseline_hook_calls": 5,
+      "baseline_pre_routes": [
+        [
+          0,
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          4,
+          0
+        ]
+      ],
+      "constant_zero_pre_routes": [
+        [
+          0,
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          3,
+          4,
+          0
+        ]
+      ],
+      "negated_cw_pre_routes": [
+        [
+          0,
+          1,
+          4,
+          0
+        ],
+        [
+          0,
+          2,
+          3,
+          0
+        ]
+      ]
+    },
+    "gate5": {
+      "budget_ms": 25.0,
+      "outcome_counts": {
+        "completed": 4,
+        "budget_exhausted_feasible_incumbent": 0,
+        "timeout_or_infeasible": 0
+      },
+      "max_solve_ms": 5.9094,
+      "budget_headroom_ms": 19.0906,
+      "scale_drift_pct": 6.9431,
+      "scale_drift_warning": true,
+      "worker_wall_ms": 547.4764,
+      "subprocess_overhead_ms": 526.481,
+      "timing_breakdown": [
+        {
+          "instance_id": "sel64_n200_uniform_centre_loose_uniform-48",
+          "outcome_class": "completed",
+          "stop_reason": "completed",
+          "preprocess_ms": 1.0286,
+          "candidate_gen_ms": 1.3802,
+          "hook_ms": 3.0859,
+          "merge_ms": 0.0,
+          "postprocess_ms": 0.0,
+          "solve_ms": 5.8065,
+          "verify_ms": 1.1462
+        },
+        {
+          "instance_id": "sel64_n200_uniform_centre_loose_bimodal-49",
+          "outcome_class": "completed",
+          "stop_reason": "completed",
+          "preprocess_ms": 0.8239,
+          "candidate_gen_ms": 1.5208,
+          "hook_ms": 3.0445,
+          "merge_ms": 0.0,
+          "postprocess_ms": 0.0,
+          "solve_ms": 5.9094,
+          "verify_ms": 1.0196
+        },
+        {
+          "instance_id": "dev24_n50_uniform_centre_loose_uniform-00",
+          "outcome_class": "completed",
+          "stop_reason": "completed",
+          "preprocess_ms": 0.0941,
+          "candidate_gen_ms": 0.1025,
+          "hook_ms": 0.7597,
+          "merge_ms": 0.0,
+          "postprocess_ms": 0.0,
+          "solve_ms": 1.1408,
+          "verify_ms": 0.1327
+        },
+        {
+          "instance_id": "dev24_n50_uniform_centre_loose_uniform-00__scale_1e-3",
+          "outcome_class": "completed",
+          "stop_reason": "completed",
+          "preprocess_ms": 0.0678,
+          "candidate_gen_ms": 0.1012,
+          "hook_ms": 0.7392,
+          "merge_ms": 0.0,
+          "postprocess_ms": 0.0,
+          "solve_ms": 1.0957,
+          "verify_ms": 0.1131
+        }
+      ]
+    }
+  }
+}

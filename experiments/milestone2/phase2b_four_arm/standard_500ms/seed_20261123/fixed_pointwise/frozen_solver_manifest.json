@@ -1,0 +1,31 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_standard_500ms_fixed_pointwise_s20261123",
+  "display_name": "Arm1 Pointwise (s20261123)",
+  "problem_family": "cvrp",
+  "paradigm": "sequential_construct",
+  "interface": "cvrp_sequential_construct/v1:select_next_node",
+  "template_id": "cvrp_sequential_construct",
+  "template_version": "v1",
+  "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+  "postprocess_mode": "none",
+  "template_options": {},
+  "hook_name": "select_next_node",
+  "hook_code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    \"\"\"Return an int from unvisited_nodes (or 0 to return to depot early when current_node != 0).\"\"\"\n    if len(unvisited_nodes) == 0:\n        return 0\n\n    n = distance_matrix.shape[0] - 1\n    scale = float(np.mean(distance_matrix[0, 1:])) if n > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0:\n        scale = 1.0\n\n    cur = distance_matrix[current_node, unvisited_nodes].astype(np.float64) / scale\n    d0 = distance_matrix[depot, unvisited_nodes].astype(np.float64) / scale\n    d0_cur = float(distance_matrix[depot, current_node]) / scale\n    dem = demands[unvisited_nodes].astype(np.float64)\n\n    savings = d0_cur - cur\n    detour = (cur + d0) / max(d0_cur, 1e-12)\n    fill = dem / max(rest_capacity, 1e-12)\n\n    score = savings + 0.25 * fill - 0.10 * detour\n\n    best_idx = int(np.argmax(score))\n    best_customer = int(unvisited_nodes[best_idx])\n    best_detour = float(detour[best_idx])\n\n    total_demand = max(float(np.sum(demands[1:])), 1e-12)\n    cap_frac = rest_capacity / total_demand\n\n    if current_node != depot:\n        if best_detour > 2.0 and cap_frac < 0.30:\n            return 0\n        if best_detour > 2.4:\n            return 0\n\n    return best_customer",
+  "hook_code_sha256": "4020a8db26d44b397ffa0b3ad9050d1f6a0081a32248877481b68264070e6b55",
+  "design_sha256": "62005e578e7c75ba87601aa29c119be1706e76a59ac581a78d8684365712e5d5",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\fixed_pointwise",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+  "cited_kb_ids": [
+    "method-cvrp-i605-tworegime-savings",
+    "method-cvrp-s2-r5-spiral"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `select_next_node` under `cvrp_sequential_construct/v1` (postprocess=none); cvrp_dev_hetero_24 mean=19.1132 vs baseline=20.5337.",
+  "default_budget_ms": 500.0
+}

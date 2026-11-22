@@ -1,0 +1,118 @@
+{
+  "arm_id": "short_pilot_racing",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "planning_requests": 0,
+  "planning_input_tokens": 0,
+  "planning_output_tokens": 0,
+  "diagnostic_probe_wall_ms": 0.0,
+  "eoh_requests": {
+    "pilot_requests": 9,
+    "continuation_requests": 7,
+    "completed_requests": 16,
+    "pilot_input_tokens": 8772,
+    "pilot_output_tokens": 3197,
+    "continuation_input_tokens": 9079,
+    "continuation_output_tokens": 3183,
+    "prompt_tokens": 17851,
+    "completion_tokens": 6380,
+    "total_tokens": 24231
+  },
+  "pilot_results": [
+    {
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "order_idx": 0,
+      "ok": true,
+      "best_objective": 19.136135,
+      "baseline_objective": 20.533714,
+      "evolved_count": 2,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 2264,
+        "completion_tokens": 1224,
+        "total_tokens": 3488
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\short_pilot_racing\\pilot_0_cvrp_sequential_construct"
+    },
+    {
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "order_idx": 1,
+      "ok": true,
+      "best_objective": 16.155232,
+      "baseline_objective": 16.222472,
+      "evolved_count": 2,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 2764,
+        "completion_tokens": 937,
+        "total_tokens": 3701
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\short_pilot_racing\\pilot_1_cvrp_parallel_merge_static"
+    },
+    {
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "order_idx": 2,
+      "ok": true,
+      "best_objective": 16.728982,
+      "baseline_objective": 16.222472,
+      "evolved_count": 1,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 3744,
+        "completion_tokens": 1036,
+        "total_tokens": 4780
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\short_pilot_racing\\pilot_2_cvrp_parallel_merge_dynamic"
+    }
+  ],
+  "best_dev24": 16.155232,
+  "wall_s": 148.2,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261122",
+    "display_name": "Arm3 Racing (cvrp_parallel_merge_static, s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "none",
+    "template_options": {
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Global, coordinate-scale-invariant normalization\n    scale = float(np.mean(distance_matrix[0, 1:]))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Generalized savings (Yellow / Paessens style)\n    lam = 1.10\n    mu = 0.10\n    savings = d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)\n    savings = savings / scale\n\n    # Mild capacity-fill adjustment (dimensionless)\n    cap = float(capacity) if np.isfinite(capacity) and capacity > 0.0 else 1.0\n    fill = (demands[i_idx] + demands[j_idx]) / cap\n    fill = np.clip(fill, 0.0, 1.0)\n    alpha = 0.05\n\n    scores = savings + alpha * fill\n\n    # Guarantee finiteness and float64 output\n    scores = np.asarray(scores, dtype=np.float64)\n    scores = np.where(np.isfinite(scores), scores, 0.0)\n    return scores",
+    "hook_code_sha256": "1c96d8ea06b03839092cecdd22a20b84d29ad4a235d7bc38107e4c5951e5ebf2",
+    "design_sha256": "ff70da0ca339509fb12c7a192879c262920d60711597997ea7a40dbd9dff1122",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261122\\short_pilot_racing\\continuation_cvrp_parallel_merge_static",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel",
+      "method-cvrp-i605-tworegime-savings"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.1552 vs baseline=16.2225.",
+    "default_budget_ms": 500.0
+  }
+}

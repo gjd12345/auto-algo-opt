@@ -1,0 +1,94 @@
+{
+  "schema_version": "m2-racing-ledger/v1",
+  "protocol": {
+    "candidate_templates": [
+      "cvrp_sequential_construct/v1",
+      "cvrp_parallel_merge_static/v1",
+      "cvrp_parallel_merge_dynamic/v1"
+    ],
+    "total_sample_budget": 12,
+    "pilot_samples_per_arm": 2,
+    "continuation_samples": 6,
+    "resume_policy": "resume_from_pilot_seeds",
+    "winner_criterion": "lowest_valid_evolved_objective_then_template_order",
+    "total_request_cap": 24
+  },
+  "pilot_results": [
+    {
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "order_idx": 0,
+      "ok": true,
+      "best_objective": 20.18072,
+      "baseline_objective": 20.533714,
+      "evolved_count": 2,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 2707,
+        "completion_tokens": 1071,
+        "total_tokens": 3778
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_0_cvrp_sequential_construct"
+    },
+    {
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "order_idx": 1,
+      "ok": true,
+      "best_objective": 16.204415,
+      "baseline_objective": 16.222472,
+      "evolved_count": 1,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 2470,
+        "completion_tokens": 678,
+        "total_tokens": 3148
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_1_cvrp_parallel_merge_static"
+    },
+    {
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "order_idx": 2,
+      "ok": true,
+      "best_objective": 16.915605,
+      "baseline_objective": 16.222472,
+      "evolved_count": 1,
+      "requests": {
+        "completed_requests": 3,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 2
+        },
+        "prompt_tokens": 2834,
+        "completion_tokens": 1272,
+        "total_tokens": 4106
+      },
+      "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_2_cvrp_parallel_merge_dynamic"
+    }
+  ],
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "selected_template_version": "v1",
+  "requests": {
+    "pilot_requests": 9,
+    "continuation_requests": 7,
+    "completed_requests": 16,
+    "pilot_input_tokens": 8011,
+    "pilot_output_tokens": 3021,
+    "continuation_input_tokens": 9752,
+    "continuation_output_tokens": 3315,
+    "prompt_tokens": 17763,
+    "completion_tokens": 6336,
+    "total_tokens": 24099
+  },
+  "best_objective": 16.204415,
+  "total_wall_ms": 152292.13
+}

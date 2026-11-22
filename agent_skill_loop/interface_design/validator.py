@@ -100,6 +100,79 @@ def score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):
     return -(distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx])
 """
 
+_GATE4_PROBES_BY_TEMPLATE: dict[str, dict[str, Any]] = {
+    "cvrp_parallel_merge_static": {
+        "prefer_A": _GATE4_PREFER_A_CODE,
+        "prefer_B": _GATE4_PREFER_B_CODE,
+        "expected_A": [1, 2],
+        "expected_B": [1, 3],
+        "constant_zero": _GATE4_CONSTANT_ZERO_CODE,
+        "negated": _GATE4_NEGATED_CW_CODE,
+    },
+    "cvrp_parallel_merge_dynamic": {
+        "prefer_A": """import numpy as np
+
+def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):
+    scores = np.zeros(i_idx.shape[0], dtype=np.float64)
+    is_a = (i_idx == 1) & (j_idx == 2)
+    is_b = (i_idx == 1) & (j_idx == 3)
+    scores = np.where(is_a, 100.0, scores)
+    scores = np.where(is_b, 1.0, scores)
+    return scores
+""",
+        "prefer_B": """import numpy as np
+
+def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):
+    scores = np.zeros(i_idx.shape[0], dtype=np.float64)
+    is_a = (i_idx == 1) & (j_idx == 2)
+    is_b = (i_idx == 1) & (j_idx == 3)
+    scores = np.where(is_b, 100.0, scores)
+    scores = np.where(is_a, 1.0, scores)
+    return scores
+""",
+        "expected_A": [1, 2],
+        "expected_B": [1, 3],
+        "constant_zero": """import numpy as np
+
+def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):
+    return np.zeros(i_idx.shape[0], dtype=np.float64)
+""",
+        "negated": """import numpy as np
+
+def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):
+    return -(distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx])
+""",
+    },
+    "cvrp_sequential_construct": {
+        "prefer_A": """import numpy as np
+
+def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+    if current_node == 0 and np.any(unvisited_nodes == 1):
+        return 1
+    return int(unvisited_nodes[0])
+""",
+        "prefer_B": """import numpy as np
+
+def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+    if current_node == 0 and np.any(unvisited_nodes == 2):
+        return 2
+    return int(unvisited_nodes[-1])
+""",
+        "expected_A": [0, 1],
+        "expected_B": [0, 2],
+        "constant_zero": """import numpy as np
+
+def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+    return int(unvisited_nodes[0])
+""",
+        "negated": """import numpy as np
+
+def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):
+    return int(unvisited_nodes[np.argmax(distance_matrix[current_node, unvisited_nodes])])
+""",
+    },
+}
+
 
 def _default_gate3_instances() -> list[dict[str, Any]]:
     suite = load_profile_suite(BENCHMARK_ID, "cvrp_dev_hetero_24", split="dev_train")
@@ -312,10 +385,15 @@ class InterfaceValidator:
 
         # --- Gate 4: Dual-Action Causal Sensitivity Probe (Pre-Postprocessing) ---
         g4_inst = build_gate4_dual_action_instance()
+        probe_cfg = _GATE4_PROBES_BY_TEMPLATE.get(design.template_id)
+        if probe_cfg is None:
+            raise ValueError(f"missing_gate4_probe_config:{design.template_id}")
+        expected_a = probe_cfg["expected_A"]
+        expected_b = probe_cfg["expected_B"]
         probe_a = self.evaluator.evaluate(
             template_id=design.template_id,
             template_version=design.template_version,
-            hook_code=_GATE4_PREFER_A_CODE,
+            hook_code=probe_cfg["prefer_A"],
             instances=[g4_inst],
             postprocess_mode=design.postprocess_mode,
             template_options=design.template_options,
@@ -325,7 +403,7 @@ class InterfaceValidator:
         probe_b = self.evaluator.evaluate(
             template_id=design.template_id,
             template_version=design.template_version,
-            hook_code=_GATE4_PREFER_B_CODE,
+            hook_code=probe_cfg["prefer_B"],
             instances=[g4_inst],
             postprocess_mode=design.postprocess_mode,
             template_options=design.template_options,
@@ -346,7 +424,7 @@ class InterfaceValidator:
         probe_zero = self.evaluator.evaluate(
             template_id=design.template_id,
             template_version=design.template_version,
-            hook_code=_GATE4_CONSTANT_ZERO_CODE,
+            hook_code=probe_cfg["constant_zero"],
             instances=[g4_inst],
             postprocess_mode=design.postprocess_mode,
             template_options=design.template_options,
@@ -356,7 +434,7 @@ class InterfaceValidator:
         probe_neg = self.evaluator.evaluate(
             template_id=design.template_id,
             template_version=design.template_version,
-            hook_code=_GATE4_NEGATED_CW_CODE,
+            hook_code=probe_cfg["negated"],
             instances=[g4_inst],
             postprocess_mode=design.postprocess_mode,
             template_options=design.template_options,
@@ -387,7 +465,7 @@ class InterfaceValidator:
                 detail=f"Dual-action probe failed: probe_a={probe_a.get('error_code')}, probe_b={probe_b.get('error_code')}.",
                 fix_hint="Ensure template accepts valid hook priority scores and constructs feasible routes.",
             ))
-        elif first_a != [1, 2] or first_b != [1, 3] or pre_a == pre_b:
+        elif first_a != expected_a or first_b != expected_b or pre_a == pre_b:
             g4_failures.append(GateFailure(
                 gate_id=4,
                 gate_name="dual_action_causal_sensitivity",
@@ -395,10 +473,10 @@ class InterfaceValidator:
                 line_no=None,
                 symbol=design.hook_name,
                 detail=(
-                    f"Pre-postprocessing causal check failed: prefer_A executed {first_a} (expected [1, 2]), "
-                    f"prefer_B executed {first_b} (expected [1, 3]), pre_routes_equal={pre_a == pre_b}."
+                    f"Pre-postprocessing causal check failed: prefer_A executed {first_a} (expected {expected_a}), "
+                    f"prefer_B executed {first_b} (expected {expected_b}), pre_routes_equal={pre_a == pre_b}."
                 ),
-                fix_hint="Verify the template actually sorts and executes merges according to the hook's returned scores.",
+                fix_hint="Verify the template actually executes decisions according to the hook's output before postprocessing.",
             ))
         if base_calls < 1:
             g4_failures.append(GateFailure(

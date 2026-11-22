@@ -1,0 +1,264 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-22T15:28:55Z",
+  "solver_count": 3,
+  "solvers": [
+    {
+      "solver_id": "m2_2b_l2b_ctrl_static_refresh",
+      "registered_at": "2026-11-22T15:28:55Z",
+      "arm_id": "l2b_ctrl",
+      "search_seed": null,
+      "budget_id": "standard_500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "m2_2b_l2b_ctrl_static_refresh",
+        "display_name": "M2 L2b-ctrl · Dynamic Refresh + Static CW",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_dynamic/v1:score_merge_dynamic",
+        "template_id": "cvrp_parallel_merge_dynamic",
+        "template_version": "v1",
+        "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+        "postprocess_mode": "none",
+        "template_options": {
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_dynamic",
+        "hook_code": "import numpy as np\n\ndef score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n",
+        "hook_code_sha256": "34a7bff59cd71cb3ad0394a3d11591e2f8a3b63fe3b0993c71a61a10318eaff6",
+        "design_sha256": "9db4324247309017fe86b0cd84a0940bc0618aca59342dea0e3fe2682b898887",
+        "origin_run": "control_l2b_refresh_static_cw",
+        "kb_release_id": "20261122-main-co-workbench-m15",
+        "kb_entry_id": "method-cvrp-cw-parallel",
+        "cited_kb_ids": [
+          "method-cvrp-cw-parallel"
+        ],
+        "diagnostic_ref": {
+          "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+          "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+          "usage_role": "dev_selection"
+        },
+        "description": "Controlled ablation: dynamic candidate refresh after every merge with pure static CW savings.",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "500ms_dev24": {
+          "mean_tour_length": 16.2225,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 4.4731,
+          "solve_ms_p95": 7.7527
+        },
+        "500ms_sel64": {
+          "mean_tour_length": 20.7811,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 6.7102,
+          "solve_ms_p95": 38.4714
+        },
+        "25ms_sel64": {
+          "mean_tour_length": 38.9977,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 16,
+          "solve_ms_p50": 7.1932,
+          "solve_ms_p95": 25.7385
+        }
+      },
+      "resource_ledger": {
+        "mode": "baseline_control"
+      }
+    },
+    {
+      "solver_id": "m2_2b_l2a_evolved_s20261122",
+      "registered_at": "2026-11-22T15:28:55Z",
+      "arm_id": "l2a_evolved",
+      "search_seed": 20261122,
+      "budget_id": "standard_500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "m2_2b_l2a_evolved_s20261122",
+        "display_name": "M2 L2a Static Evolved (seed 20261122)",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+        "template_id": "cvrp_parallel_merge_static",
+        "template_version": "v1",
+        "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+        "postprocess_mode": "none",
+        "template_options": {
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_static",
+        "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n    scale = np.mean(distance_matrix[0, 1:])\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n    lam = 1.2\n    mu = 0.1\n    savings = d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)\n    base = savings / scale\n    fill = (demands[i_idx] + demands[j_idx]) / capacity\n    score = base + 0.05 * fill\n    return np.where(np.isfinite(score), score, -np.inf)",
+        "hook_code_sha256": "84bd55bf81e03d23f049b71909a6cbd480e7b6ba6de8def277f0d02fc8474733",
+        "design_sha256": "32427c63c083a3e8a11042a264b6b3f9eed790b0f0c38cee7b7b07f615abc1d3",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_l2_attribution\\eoh_l2a_seed20261122",
+        "kb_release_id": "20261122-main-co-workbench-m15",
+        "kb_entry_id": "method-cvrp-cw-parallel",
+        "cited_kb_ids": [
+          "method-cvrp-cw-parallel",
+          "method-cvrp-i605-tworegime-savings"
+        ],
+        "diagnostic_ref": {
+          "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+          "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+          "usage_role": "dev_selection"
+        },
+        "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.2159 vs baseline=16.2225.",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "500ms_dev24": {
+          "mean_tour_length": 16.2159,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 1.6826,
+          "solve_ms_p95": 2.8999
+        },
+        "500ms_sel64": {
+          "mean_tour_length": 20.8934,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 2.3251,
+          "solve_ms_p95": 10.8262
+        },
+        "25ms_sel64": {
+          "mean_tour_length": 20.8934,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 2.5071,
+          "solve_ms_p95": 11.1891
+        }
+      },
+      "resource_ledger": {
+        "schema_version": "m2-eoh-resource-ledger/v1",
+        "generated_at": "2026-11-22T15:27:18Z",
+        "mode": "live",
+        "model": "deepseek-v4.1-flash",
+        "search_seed": 20261122,
+        "eoh_status": "completed",
+        "eoh_error": null,
+        "hard_cap": {
+          "max_requests": 28,
+          "max_sample_nums": 16,
+          "wall_seconds": 420.0,
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0
+        },
+        "requests": {
+          "completed_requests": 17,
+          "by_purpose": {
+            "eoh_probe": 1,
+            "eoh_generation": 16
+          },
+          "prompt_tokens": 24159,
+          "completion_tokens": 6994,
+          "total_tokens": 31153
+        },
+        "evaluations_total": 18,
+        "evaluations_valid": 17,
+        "evaluations_evolved_distinct": 15,
+        "baseline_objective": 16.222472,
+        "best_objective": 16.215916,
+        "improved_over_baseline": true,
+        "total_wall_ms": 118924.48
+      }
+    },
+    {
+      "solver_id": "m2_2b_l2b_evolved_s20261122",
+      "registered_at": "2026-11-22T15:28:55Z",
+      "arm_id": "l2b_evolved",
+      "search_seed": 20261122,
+      "budget_id": "standard_500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "m2_2b_l2b_evolved_s20261122",
+        "display_name": "M2 L2b Dynamic State Evolved (seed 20261122)",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_dynamic/v1:score_merge_dynamic",
+        "template_id": "cvrp_parallel_merge_dynamic",
+        "template_version": "v1",
+        "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+        "postprocess_mode": "none",
+        "template_options": {
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_dynamic",
+        "hook_code": "import numpy as np\n\ndef score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n    \"\"\"Return a 1D array of finite float priority scores for currently feasible merges (higher = merge now).\"\"\"\n    # Global instance scale (mean depot-to-customer distance); avoid per-pair normalization.\n    scale = float(np.mean(distance_matrix[0, 1:]))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Classic Clarke-Wright savings normalized by global scale.\n    cw = (d0i + d0j - dij) / scale\n\n    # Generalized savings: gentle radial-shape and distance terms.\n    lam = 0.15\n    mu = 0.10\n    gen = lam * (dij / scale) + mu * (np.abs(d0i - d0j) / scale)\n\n    # Live route-state signals.\n    combined_load = load_i + load_j\n    fill = combined_load / capacity                       # in [0, 1]\n    slack = 1.0 - fill                                    # small when nearly full\n    # Prefer near-full merges: reward fill, penalize slack mildly.\n    fill_term = 0.35 * fill - 0.10 * slack\n\n    # Route-length balance: reward balanced merges (scale-invariant ratio).\n    ri = route_dist_i / scale\n    rj = route_dist_j / scale\n    denom = ri + rj + 1e-12\n    imbalance = np.abs(ri - rj) / denom\n    balance_term = 0.15 * (1.0 - imbalance)\n\n    # Merge-progress factor: encourage decisive merges early, gentle later.\n    progress = 1.0 / float(max(remaining_routes, 1))\n    progress_term = 0.10 * progress\n\n    return cw + gen + fill_term + balance_term + progress_term",
+        "hook_code_sha256": "4d07035892a8a2ce55bf754d9767c17ec6caca61746fdcdfda8c99542c4931bf",
+        "design_sha256": "dde244b290d746b187d2734ce425f03a3436071b93b64ad74ab49ebb88d2f1d6",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_l2_attribution\\eoh_l2b_seed20261122",
+        "kb_release_id": "20261122-main-co-workbench-m15",
+        "kb_entry_id": "method-cvrp-cw-parallel",
+        "cited_kb_ids": [
+          "method-cvrp-cw-parallel",
+          "method-cvrp-i605-tworegime-savings"
+        ],
+        "diagnostic_ref": {
+          "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+          "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+          "usage_role": "dev_selection"
+        },
+        "description": "Milestone 2 EoH (live) evolved `score_merge_dynamic` under `cvrp_parallel_merge_dynamic/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.6214 vs baseline=16.2225.",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "500ms_dev24": {
+          "mean_tour_length": 16.6214,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 7.0619,
+          "solve_ms_p95": 11.6306
+        },
+        "500ms_sel64": {
+          "mean_tour_length": 21.6338,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 0,
+          "solve_ms_p50": 9.884,
+          "solve_ms_p95": 60.3809
+        },
+        "25ms_sel64": {
+          "mean_tour_length": 51.0779,
+          "completion_rate": 1.0,
+          "ok_budget_exhausted_count": 16,
+          "solve_ms_p50": 10.6432,
+          "solve_ms_p95": 25.9174
+        }
+      },
+      "resource_ledger": {
+        "schema_version": "m2-eoh-resource-ledger/v1",
+        "generated_at": "2026-11-22T15:28:46Z",
+        "mode": "live",
+        "model": "deepseek-v4.1-flash",
+        "search_seed": 20261122,
+        "eoh_status": "completed",
+        "eoh_error": null,
+        "hard_cap": {
+          "max_requests": 28,
+          "max_sample_nums": 16,
+          "wall_seconds": 420.0,
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0
+        },
+        "requests": {
+          "completed_requests": 9,
+          "by_purpose": {
+            "eoh_probe": 1,
+            "eoh_generation": 8
+          },
+          "prompt_tokens": 15962,
+          "completion_tokens": 4836,
+          "total_tokens": 20798
+        },
+        "evaluations_total": 10,
+        "evaluations_valid": 9,
+        "evaluations_evolved_distinct": 7,
+        "baseline_objective": 16.222472,
+        "best_objective": 16.621383,
+        "improved_over_baseline": false,
+        "total_wall_ms": 84405.24
+      }
+    }
+  ]
+}

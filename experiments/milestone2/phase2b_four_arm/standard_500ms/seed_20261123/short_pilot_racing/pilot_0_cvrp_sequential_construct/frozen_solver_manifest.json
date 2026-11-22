@@ -1,0 +1,31 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261123_pilot_cvrp_sequential_construct",
+  "display_name": "Racing Pilot · cvrp_sequential_construct",
+  "problem_family": "cvrp",
+  "paradigm": "sequential_construct",
+  "interface": "cvrp_sequential_construct/v1:select_next_node",
+  "template_id": "cvrp_sequential_construct",
+  "template_version": "v1",
+  "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+  "postprocess_mode": "none",
+  "template_options": {},
+  "hook_name": "select_next_node",
+  "hook_code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    \"\"\"Return an int from unvisited_nodes (or 0 to return to depot early when current_node != 0).\"\"\"\n    unvisited = np.asarray(unvisited_nodes, dtype=np.int64)\n    if unvisited.size == 0:\n        return int(depot)\n\n    scale = float(np.mean(distance_matrix[depot, 1:]))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    cur = int(current_node)\n    eps = 1e-12\n\n    d_cur = np.asarray(distance_matrix[cur, unvisited], dtype=np.float64) / scale\n    d0_next = np.asarray(distance_matrix[depot, unvisited], dtype=np.float64) / scale\n    detour = np.maximum(d_cur, eps)\n\n    dem = np.asarray(demands, dtype=np.float64)[unvisited]\n    rest = max(float(rest_capacity), eps)\n\n    # Dimensionless capacity pressure in [0, 1): large when rest_capacity is small vs scale.\n    pressure = rest / (rest + scale)\n\n    if pressure > 0.5:\n        # Tight capacity: maximize fill per unit detour, penalized slightly by depot distance.\n        fill = dem / rest\n        score = fill / detour - 0.1 * d0_next\n    else:\n        # Loose capacity: maximize normalized depot savings per unit detour.\n        savings = d0_next - d_cur\n        score = savings / detour\n\n    best_idx = int(np.argmax(score))\n    best_node = int(unvisited[best_idx])\n    best_dist = float(d_cur[best_idx])\n\n    if cur != depot:\n        mean_d0 = float(np.mean(distance_matrix[depot, 1:])) / scale\n        if best_dist > max(1.5, 1.25 * mean_d0) and rest < 0.25 * scale:\n            return int(depot)\n\n    return best_node",
+  "hook_code_sha256": "7808bf038148fcdf9a36cdee24039b547509199338b2f76798cc268c63297c2c",
+  "design_sha256": "83c67ed51a124481f75e2753dab6e5fecc4372d6c3fb8749da968acfdd0ba73f",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\standard_500ms\\seed_20261123\\short_pilot_racing\\pilot_0_cvrp_sequential_construct",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+  "cited_kb_ids": [
+    "method-cvrp-i605-tworegime-savings",
+    "method-cvrp-s2-r5-spiral"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `select_next_node` under `cvrp_sequential_construct/v1` (postprocess=none); cvrp_dev_hetero_24 mean=20.1807 vs baseline=20.5337.",
+  "default_budget_ms": 500.0
+}

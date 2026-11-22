@@ -358,6 +358,8 @@ def run_dynamic_eoh_evolution(
     request_timeout_s: float = 90.0,
     wall_seconds: float = 300.0,
     require_evolved: bool = True,
+    extra_seed_entries: Sequence[Mapping[str, str]] | None = None,
+    round_context: str | None = None,
 ) -> dict[str, Any]:
     """Validate ``design``, run real upstream EoH on it, and export a ``FrozenInterfaceSolver`` manifest."""
     assert_suite_not_m2_blind(suite_id)
@@ -400,6 +402,7 @@ def run_dynamic_eoh_evolution(
         candidate_timeout_s=candidate_timeout_s,
         instance_time_budget_ms=instance_time_budget_ms,
         evaluation_log=eval_log,
+        round_context=round_context,
     )
 
     # Evaluate baseline hook first so we have an exact same-skeleton baseline objective
@@ -407,16 +410,27 @@ def run_dynamic_eoh_evolution(
     if not baseline_eval.get("valid") or baseline_eval.get("objective") is None:
         raise RuntimeError(f"baseline_hook_failed_on_suite:{baseline_eval.get('error_code')}")
 
-    # Write seed file containing baseline hook so EoH starts cleanly from verified baseline
+    # Write seed file containing baseline hook (plus optional pilot resume seeds)
+    seed_entries: list[dict[str, str]] = [
+        {"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.", "code": design.baseline_hook_code}
+    ]
+    seen_seed_shas = {design.baseline_hook_sha256}
+    if extra_seed_entries:
+        for item in extra_seed_entries:
+            code = str(item.get("code") or "")
+            if not code.strip():
+                continue
+            csha = sha256_text(code)
+            if csha not in seen_seed_shas:
+                seen_seed_shas.add(csha)
+                seed_entries.append({
+                    "algorithm": str(item.get("algorithm") or "Carried-over valid seed"),
+                    "code": code,
+                })
     seed_path = output_dir / "seeds" / "baseline_seed.json"
     seed_path.parent.mkdir(parents=True, exist_ok=True)
     seed_path.write_text(
-        json.dumps(
-            [{"algorithm": "Classic Clarke-Wright static savings baseline.", "code": design.baseline_hook_code}],
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
+        json.dumps(seed_entries, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
         newline="\n",
     )
@@ -428,14 +442,42 @@ def run_dynamic_eoh_evolution(
         mock_srv = MockEoHLLMServer(mock_responses, request_log=req_log)
         local_url = mock_srv.start()
     elif mode == "live":
+        from agent_skill_loop.client import ProviderFailure
         from eoh_frozen.llm_bridge import OpenAIPathBridge
+
+        class _ResilientM2Bridge(OpenAIPathBridge):
+            """Retry transient provider connectivity blips without terminating the entire EoH run."""
+
+            def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
+                last_exc: Exception | None = None
+                backoff_schedule = (3.0, 6.0, 10.0, 15.0)
+                max_attempts = len(backoff_schedule) + 1
+                for attempt in range(max_attempts):
+                    try:
+                        return super()._forward_serial(prompt, purpose=purpose)
+                    except ProviderFailure as exc:
+                        last_exc = exc
+                        # Only recover from transient connectivity / 429 / 5xx; never retry 401/400 auth errors
+                        transient = (
+                            exc.error_code in {"provider_connectivity_or_protocol_error", "request_deadline"}
+                            or exc.status == 429
+                            or (isinstance(exc.status, int) and 500 <= exc.status < 600)
+                        )
+                        if transient and attempt < max_attempts - 1:
+                            self.terminal = False
+                            self.last_error = None
+                            time.sleep(backoff_schedule[attempt])
+                            continue
+                        raise
+                assert last_exc is not None
+                raise last_exc
 
         load_local_env()
         api_key = os.environ.get(api_key_env, "").strip()
         if not api_key:
             raise RuntimeError(f"missing_api_key:{api_key_env}")
         budget = RequestBudget(max_requests)
-        bridge = OpenAIPathBridge(
+        bridge = _ResilientM2Bridge(
             endpoint,
             api_key,
             model,

@@ -1,0 +1,6 @@
+[
+  {
+    "algorithm": "Baseline hook for cvrp_sequential_construct/v1.",
+    "code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    dists = distance_matrix[current_node, unvisited_nodes]\n    return int(unvisited_nodes[np.argmin(dists)])\n"
+  }
+]

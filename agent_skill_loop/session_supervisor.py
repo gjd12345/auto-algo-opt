@@ -494,6 +494,21 @@ def execute_task(root, task_id):
             }
             db._atomic_write(output / "summary.json", db._json(summary) + "\n")
             return
+        if plan.get("interface_selection") is not None:
+            from agent_skill_loop.interface_design.session_bridge import execute_m2_session_task
+            execute_m2_session_task(
+                root=root,
+                task_id=task_id,
+                row=row,
+                rd=rd,
+                config=config,
+                plan=plan,
+                suite=suite,
+                output=output,
+                wall_seconds=wall,
+                policy=policy,
+            )
+            return
         cmd_run(args)
         summary_path = output / "summary.json"
         if summary_path.is_file():
@@ -540,7 +555,16 @@ def collect_facts(root, con, run, rd, task):
         result=item["evaluation"]
         con.execute("UPDATE solver_calls SET state=?,objective=?,valid=?,error_code=? WHERE evaluation_id=?",
                     ("complete" if result["valid"] else "failed",result["objective"],int(result["valid"]),result["error_code"],item["evaluation_id"]))
-    if output.is_dir():
+    plan_doc = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8")) if rd["normalized_plan_ref"] else {}
+    m2_interface_sel = plan_doc.get("interface_selection") if isinstance(plan_doc, dict) else None
+    if m2_interface_sel is not None:
+        m2_summary = json.loads((output / "summary.json").read_text(encoding="utf-8")) if (output / "summary.json").is_file() else {}
+        exported = {
+            "best_generated_path": m2_summary.get("best_generated_path"),
+            "exported_skill": m2_summary.get("exported_skill"),
+            "frozen_solver_manifest": m2_summary.get("frozen_solver_manifest"),
+        }
+    elif output.is_dir():
         finalize_evaluations(output,suite,stop_reason=task["terminal_reason"])
         exported=export_run_evidence(output,suite)
     else: exported={}
@@ -549,7 +573,12 @@ def collect_facts(root, con, run, rd, task):
         con.execute("UPDATE rounds SET population_snapshot_ref=?,population_snapshot_sha256=? WHERE run_id=? AND round_id=?",
                     (population_snapshot["ref"], population_snapshot["sha256"], run["run_id"], rd["round_id"]))
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
-    if baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
+    if m2_interface_sel is not None:
+        m2_des_path = root / f"rounds/round_{rd['round_id']:04d}/interface_design.json"
+        m2_expected_base = json.loads(m2_des_path.read_text(encoding="utf-8")).get("baseline_hook_sha256") if m2_des_path.is_file() else None
+        if baseline and m2_expected_base and baseline["code_sha256"] != m2_expected_base:
+            raise ValueError("baseline_identity_mismatch")
+    elif baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()
     before = None
     if rd["incumbent_before_ref"]:
@@ -682,6 +711,8 @@ def collect_facts(root, con, run, rd, task):
             "phase_budget": phase_budget,
             "startup_preflight": preflight, "request_costs": request_costs,
             "search_progress": progress,
+            "interface_selection": m2_interface_sel,
+            "frozen_solver_ref": f"{prefix}/{exported['frozen_solver_manifest']}" if exported.get("frozen_solver_manifest") else None,
             "terminal_reason":task["terminal_reason"]}
 
 

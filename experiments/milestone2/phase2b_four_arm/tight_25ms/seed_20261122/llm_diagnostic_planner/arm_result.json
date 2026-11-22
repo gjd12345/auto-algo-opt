@@ -1,0 +1,56 @@
+{
+  "arm_id": "llm_diagnostic_planner",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "rationale": "The static parallel-merge template reproduces Clarke-Wright with strong solution quality (baseline mean 24.23, close to the best dev_24 cw_parallel_merge raw mean 16.22 after scaling) and low postprocess need. It has full completion on both n=40 and n=200, with p95 solve times of 7.64 ms and 10.23 ms — respectively 30.6% and 40.9% of the 25 ms target, safely under the 55% headroom threshold. The sequential template has worse solution quality (higher gap, 12.56% postprocess drop, 10.68% remaining gap) despite more headroom, while the dynamic template fails the headroom and completion criteria (90% on n=40, 75% on n=200, p95 ≈ 25 ms = 100% of budget). Therefore static parallel-merge offers the best quality–timing tradeoff.",
+  "planning_requests": 1,
+  "planning_input_tokens": 1510,
+  "planning_output_tokens": 256,
+  "planning_wall_ms": 5131.25,
+  "diagnostic_probe_wall_ms": 833.4,
+  "eoh_requests": {
+    "completed_requests": 12,
+    "by_purpose": {
+      "eoh_probe": 1,
+      "eoh_generation": 11
+    },
+    "prompt_tokens": 14842,
+    "completion_tokens": 4140,
+    "total_tokens": 18982
+  },
+  "best_dev24": 16.176009,
+  "wall_s": 92.34,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_tight_25ms_llm_diagnostic_planner_s20261122",
+    "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "none",
+    "template_options": {
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Global, coordinate-scale-invariant normalizer.\n    scale = np.mean(distance_matrix[0, 1:])\n    scale = max(float(scale), 1e-12)\n\n    # Generalized Clarke-Wright savings with radial asymmetry term.\n    lam = 1.15\n    mu = 0.10\n    savings = d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)\n\n    # Mild demand-fill adjustment: prefer merges that use capacity efficiently.\n    q_i = demands[i_idx]\n    q_j = demands[j_idx]\n    fill = (q_i + q_j) / max(float(capacity), 1e-12)\n    demand_bonus = 0.05 * fill\n\n    score = savings / scale + demand_bonus\n    score = np.where(np.isfinite(score), score, -1e12)\n    return score.astype(np.float64)",
+    "hook_code_sha256": "e4900e0c4fd28745ea615fc198e1ab6d6e36c0bde30e0663fef5fe83efa65b89",
+    "design_sha256": "c3293ea31e54b93587cf20ec2feaf9b1f7bee00da96342f33cc39300e7a1e2af",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\tight_25ms\\seed_20261122\\llm_diagnostic_planner",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel",
+      "method-cvrp-i605-tworegime-savings"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.1760 vs baseline=16.2225.",
+    "default_budget_ms": 25.0
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "arm_id": "fixed_pointwise",
+  "seed": 20261122,
+  "selected_template_id": "cvrp_sequential_construct",
+  "planning_requests": 0,
+  "planning_input_tokens": 0,
+  "planning_output_tokens": 0,
+  "diagnostic_probe_wall_ms": 0.0,
+  "eoh_requests": {
+    "completed_requests": 14,
+    "by_purpose": {
+      "eoh_probe": 1,
+      "eoh_generation": 13
+    },
+    "prompt_tokens": 22341,
+    "completion_tokens": 8008,
+    "total_tokens": 30349
+  },
+  "best_dev24": 19.886908,
+  "wall_s": 130.9,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "m2_2b_tight_25ms_fixed_pointwise_s20261122",
+    "display_name": "Arm1 Pointwise (s20261122)",
+    "problem_family": "cvrp",
+    "paradigm": "sequential_construct",
+    "interface": "cvrp_sequential_construct/v1:select_next_node",
+    "template_id": "cvrp_sequential_construct",
+    "template_version": "v1",
+    "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+    "postprocess_mode": "none",
+    "template_options": {},
+    "hook_name": "select_next_node",
+    "hook_code": "import numpy as np\n\ndef select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n    uv = np.asarray(unvisited_nodes, dtype=np.int64)\n    if uv.size == 0:\n        return int(depot)\n\n    scale = float(np.mean(distance_matrix[depot, 1:]))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d_cur = np.asarray(distance_matrix[current_node, uv], dtype=np.float64) / scale\n    d_dep = np.asarray(distance_matrix[depot, uv], dtype=np.float64) / scale\n    dem = np.asarray(demands, dtype=np.float64)[uv]\n    rest = float(rest_capacity) / scale\n\n    # Depot-savings: benefit of going to customer now vs returning to depot\n    savings = d_dep - d_cur\n\n    # Capacity utilization: prefer customers that fill remaining capacity well\n    util = dem / np.maximum(rest, 1e-12)\n    util = np.clip(util, 0.0, 1.0)\n\n    # Distance penalty (dimensionless)\n    dist_pen = d_cur\n\n    # Composite score\n    score = savings + 0.5 * util - 0.25 * dist_pen\n\n    best_idx = int(np.argmax(score))\n    best_savings = float(savings[best_idx])\n    best_dist = float(d_cur[best_idx])\n    best_dem = float(dem[best_idx])\n\n    if current_node != depot:\n        # Voluntary early return if savings negative (heading away from depot region)\n        far = best_dist > 0.9\n        tight = rest < best_dem * 1.05\n        if best_savings < 0.0 and (far or tight):\n            return int(depot)\n        if far and rest < 0.35:\n            return int(depot)\n\n    return int(uv[best_idx])",
+    "hook_code_sha256": "05f76df6e29705dcb49cecb028f5faf1f06c0331965e8ecf3dedfb094b1e2f0d",
+    "design_sha256": "7be046d65816ec5e4cf85c32ace9c9d53aeba75bf40d86bbe4ce242ee5582f1e",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2b_four_arm\\tight_25ms\\seed_20261122\\fixed_pointwise",
+    "kb_release_id": "20261122-main-co-workbench-m15",
+    "kb_entry_id": "method-cvrp-i605-tworegime-savings",
+    "cited_kb_ids": [
+      "method-cvrp-i605-tworegime-savings",
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "diagnostic_ref": {
+      "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+      "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+      "usage_role": "dev_selection"
+    },
+    "description": "Milestone 2 EoH (live) evolved `select_next_node` under `cvrp_sequential_construct/v1` (postprocess=none); cvrp_dev_hetero_24 mean=19.8869 vs baseline=20.5337.",
+    "default_budget_ms": 25.0
+  }
+}

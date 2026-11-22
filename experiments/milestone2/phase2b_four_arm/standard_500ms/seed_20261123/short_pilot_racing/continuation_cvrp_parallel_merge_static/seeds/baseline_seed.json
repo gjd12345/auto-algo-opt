@@ -1,0 +1,10 @@
+[
+  {
+    "algorithm": "Baseline hook for cvrp_parallel_merge_static/v1.",
+    "code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
+  },
+  {
+    "algorithm": "Best valid candidate from Racing pilot phase.",
+    "code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d = distance_matrix\n    di0 = d[0, i_idx]\n    dj0 = d[0, j_idx]\n    dij = d[i_idx, j_idx]\n\n    scale = np.mean(d[0, 1:])\n    scale = scale if np.isfinite(scale) and scale > 0.0 else 1.0\n\n    # Generalized Clarke-Wright savings with slight asymmetry penalty reduction\n    lam = 1.15\n    mu = 0.08\n    savings = (di0 + dj0 - lam * dij + mu * np.abs(di0 - dj0)) / scale\n\n    # Mild demand/capacity-fill adjustment: prefer fuller loads but keep dimensionless\n    qsum = demands[i_idx] + demands[j_idx]\n    fill = np.clip(qsum / capacity, 0.0, 1.0)\n    demand_bonus = 0.05 * fill\n\n    score = savings + demand_bonus\n    return np.where(np.isfinite(score), score, 0.0).astype(np.float64)"
+  }
+]

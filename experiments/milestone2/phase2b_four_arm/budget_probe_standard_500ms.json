@@ -1,0 +1,75 @@
+{
+  "schema_version": "m2-template-budget-probe/v1",
+  "generated_at": "2026-11-22T15:51:38Z",
+  "time_budget_ms": 500.0,
+  "probe_instance_count": 40,
+  "probe_wall_ms": 813.63,
+  "templates": {
+    "cvrp_sequential_construct/v1": {
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "n_instances": 40,
+      "full_completion_rate": 1.0,
+      "feasible_rate": 1.0,
+      "outcome_counts": {
+        "completed": 40,
+        "budget_exhausted_feasible_incumbent": 0,
+        "timeout_or_infeasible": 0
+      },
+      "baseline_mean_tour_length": 30.001,
+      "solve_ms_p50": 1.0608,
+      "solve_ms_p95": 3.2018,
+      "solve_ms_max": 3.8388,
+      "candidate_gen_ms_p95": 1.5407,
+      "hook_ms_p95": 0.4648,
+      "headroom_ratio_p95": 0.9936,
+      "n200_total": 16,
+      "n200_full_completion_rate": 1.0,
+      "n200_solve_ms_p95": 3.4447
+    },
+    "cvrp_parallel_merge_static/v1": {
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "n_instances": 40,
+      "full_completion_rate": 1.0,
+      "feasible_rate": 1.0,
+      "outcome_counts": {
+        "completed": 40,
+        "budget_exhausted_feasible_incumbent": 0,
+        "timeout_or_infeasible": 0
+      },
+      "baseline_mean_tour_length": 24.2261,
+      "solve_ms_p50": 1.6855,
+      "solve_ms_p95": 6.9975,
+      "solve_ms_max": 7.6122,
+      "candidate_gen_ms_p95": 0.3041,
+      "hook_ms_p95": 0.2074,
+      "headroom_ratio_p95": 0.986,
+      "n200_total": 16,
+      "n200_full_completion_rate": 1.0,
+      "n200_solve_ms_p95": 7.2536
+    },
+    "cvrp_parallel_merge_dynamic/v1": {
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "n_instances": 40,
+      "full_completion_rate": 1.0,
+      "feasible_rate": 1.0,
+      "outcome_counts": {
+        "completed": 40,
+        "budget_exhausted_feasible_incumbent": 0,
+        "timeout_or_infeasible": 0
+      },
+      "baseline_mean_tour_length": 24.2261,
+      "solve_ms_p50": 4.6898,
+      "solve_ms_p95": 25.061,
+      "solve_ms_max": 29.0141,
+      "candidate_gen_ms_p95": 15.3531,
+      "hook_ms_p95": 6.7997,
+      "headroom_ratio_p95": 0.9499,
+      "n200_total": 16,
+      "n200_full_completion_rate": 1.0,
+      "n200_solve_ms_p95": 26.41
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "planner_kind": "llm_diagnostic_planner",
+  "model": "deepseek-v4.1-flash",
+  "target_budget_ms": 500.0,
+  "selected_template_id": "cvrp_parallel_merge_static",
+  "selected_template_version": "v1",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "cvrp_parallel_merge_static/v1",
+    "dev_24_exploratory_2x3_bridging"
+  ],
+  "rationale": "The static parallel merge template (cvrp_parallel_merge_static/v1) exactly reproduces the Clarke-Wright (CW) baseline, which on dev_24 is the strongest raw method (16.22 mean) and remains best even after Relocate+2opt (16.14). Its iterative dynamic variant (cvrp_parallel_merge_dynamic/v1) has ~25 ms p95 and would consume >5% of budget but is structurally riskier at scale, whereas static stays ultra-fast (~7 ms p95, ~7.3 ms on n=200) with 100% completion and huge headroom under the 500 ms budget. The sequential construct template (cvrp_sequential_construct/v1) lags CW by ~10.7% remaining gap on dev_24, so it would waste evolution budget. Choosing static parallel merge gives the best quality head start with negligible timing pressure, leaving ample budget for evolution of merge heuristics or fast post-processing.",
+  "raw_response": "{\n  \"template_id\": \"cvrp_parallel_merge_static\",\n  \"template_version\": \"v1\",\n  \"cited_kb_ids\": [\n    \"method-cvrp-cw-parallel\",\n    \"cvrp_parallel_merge_static/v1\",\n    \"dev_24_exploratory_2x3_bridging\"\n  ],\n  \"rationale\": \"The static parallel merge template (cvrp_parallel_merge_static/v1) exactly reproduces the Clarke-Wright (CW) baseline, which on dev_24 is the strongest raw method (16.22 mean) and remains best even after Relocate+2opt (16.14). Its iterative dynamic variant (cvrp_parallel_merge_dynamic/v1) has ~25 ms p95 and would consume >5% of budget but is structurally riskier at scale, whereas static stays ultra-fast (~7 ms p95, ~7.3 ms on n=200) with 100% completion and huge headroom under the 500 ms budget. The sequential construct template (cvrp_sequential_construct/v1) lags CW by ~10.7% remaining gap on dev_24, so it would waste evolution budget. Choosing static parallel merge gives the best quality head start with negligible timing pressure, leaving ample budget for evolution of merge heuristics or fast post-processing.\"\n}",
+  "planning_requests": 1,
+  "planning_input_tokens": 1509,
+  "planning_output_tokens": 290,
+  "planning_wall_ms": 4490.02,
+  "diagnostic_probe_wall_ms": 813.63
+}
