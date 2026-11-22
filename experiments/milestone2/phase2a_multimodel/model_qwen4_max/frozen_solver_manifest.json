@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_l2a_qwen4_max",
+  "display_name": "M2 L2a · qwen4-max",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    i = np.asarray(i_idx, dtype=np.int64)\n    j = np.asarray(j_idx, dtype=np.int64)\n    if i.size == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    d0i = distance_matrix[0, i]\n    d0j = distance_matrix[0, j]\n    dij = distance_matrix[i, j]\n\n    # Scale reference: median depot distance among candidate endpoints (dimensionless normalization).\n    depot_dists = np.concatenate((d0i, d0j))\n    scale = np.median(depot_dists)\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = np.max(np.abs(depot_dists))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Normalized classic savings term.\n    savings = (d0i + d0j - dij) / scale\n\n    # Demand pressure relative to capacity; favors pairs whose combined load fits comfortably.\n    di = demands[i]\n    dj = demands[j]\n    load_ratio = (di + dj) / max(float(capacity), 1e-12)\n    feasibility_bonus = np.exp(-np.clip(load_ratio, 0.0, 50.0))\n    overload_penalty = np.where(load_ratio > 1.0, -(load_ratio - 1.0), 0.0)\n\n    # Angular alignment via law of cosines at depot: cos(theta) in [-1, 1].\n    denom = 2.0 * d0i * d0j\n    safe_denom = np.where(denom > 1e-12, denom, 1.0)\n    cos_theta = (d0i * d0i + d0j * d0j - dij * dij) / safe_denom\n    cos_theta = np.clip(cos_theta, -1.0, 1.0)\n    cos_theta = np.where(denom > 1e-12, cos_theta, 0.0)\n    alignment = 0.5 * (cos_theta + 1.0)  # [0,1], higher when rays point same direction\n\n    # Symmetry of radial distances: prefer endpoints at comparable depot distances.\n    radial_balance = np.minimum(d0i, d0j) / np.maximum(np.maximum(d0i, d0j), 1e-12)\n\n    score = (\n        1.0 * savings\n        + 0.35 * feasibility_bonus\n        + 0.25 * alignment\n        + 0.15 * radial_balance\n        + 0.5 * overload_penalty\n    )\n\n    score = np.where(np.isfinite(score), score, -1e6)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "942978149cd19efd67370ec37838ec01bc83a5f3dcf283c2f2de57ee87f5c461",
+  "design_sha256": "bf7e32ccac1e025212db0d29dbcf4d38bf0875e31e21a8a02f822af869333d2b",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_multimodel\\model_qwen4_max",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=16.3959 vs baseline=16.2225.",
+  "default_budget_ms": 500.0
+}

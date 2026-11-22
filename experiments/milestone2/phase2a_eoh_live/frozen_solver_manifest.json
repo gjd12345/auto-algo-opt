@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_eoh_l2a_merge_live",
+  "display_name": "M2 EoH Static Merge (live)",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    savings = d0i + d0j - dij\n\n    # Geometric-mean radial norm: scale-invariant \"expected\" savings magnitude.\n    radial = np.sqrt(np.maximum(d0i * d0j, 0.0)) + 1e-12\n\n    # Cosine-like similarity in [0, 1]: savings relative to the two legs.\n    cos_sim = np.clip(savings / (d0i + d0j + 1e-12), -1.0, 1.0)\n\n    # Bounded dimensionless demand-fit: peaks when combined load ~ capacity.\n    combined = demands[i_idx] + demands[j_idx]\n    fit = np.clip(combined / capacity, 0.0, 1.0)\n    # Penalize overflow gently; reward fuller merges.\n    load_factor = 1.0 - np.abs(fit - 0.5) * 0.5  # in [0.75, 1.0]\n\n    # Angular savings normalized by radial scale, modulated by load fit.\n    score = (cos_sim * savings / radial) * load_factor\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "5062e415c76fb22d7a84246cb59e7e1cb08418f45fb7d3b92151f82ed24970c5",
+  "design_sha256": "0d30fa4e174bd540de422a2a3b29b767602a7d5db9be3c1ac095d01099c11d7e",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_eoh_live",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=18.0294 vs baseline=16.2225.",
+  "default_budget_ms": 500.0
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "m2_l2a_deepseek_v4_pro",
+  "display_name": "M2 L2a · deepseek-v4-pro",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    # Classic Clarke-Wright savings: s_ij = d(0,i) + d(0,j) - d(i,j)\n    savings = distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n    \n    # Geometric mean of depot distances for scale normalization\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    geom_mean = np.sqrt(np.maximum(d0i * d0j, 1e-12))\n    \n    # Normalized savings (dimensionless)\n    normalized_savings = savings / np.maximum(geom_mean, 1e-12)\n    \n    # Capacity utilization of the merged route\n    merged_demand = demands[i_idx] + demands[j_idx]\n    utilization = merged_demand / capacity\n    \n    # Penalty factor: prefers merges that leave more remaining capacity\n    # Scale factor: 1.0 when empty, 0.0 when full\n    capacity_factor = 1.0 - np.clip(utilization, 0.0, 1.0)\n    \n    # Final score balances spatial savings with capacity feasibility\n    score = normalized_savings * (0.5 + 0.5 * capacity_factor)\n    \n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "bd9e98d1984efb1f097accc7031d9a9f8e4258e379f594fde69eacd1d6ad08c1",
+  "design_sha256": "17cb4c4dbae0b45f223e801a680cdc15d83b6335e3b779162a330683530f3133",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_multimodel\\model_deepseek_v4_pro",
+  "kb_release_id": "20261122-main-co-workbench-m15",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "sha256": "6ffb6d76a27952057e519b1f0fda411a7f3ae1bb36496d80746c19298b0ced8d",
+    "usage_role": "dev_selection"
+  },
+  "description": "Milestone 2 EoH (live) evolved `score_merge_static` under `cvrp_parallel_merge_static/v1` (postprocess=none); cvrp_dev_hetero_24 mean=18.3039 vs baseline=16.2225.",
+  "default_budget_ms": 500.0
+}

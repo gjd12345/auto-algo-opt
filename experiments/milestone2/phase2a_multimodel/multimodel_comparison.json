@@ -1,0 +1,174 @@
+{
+  "schema_version": "m2-phase2a-multimodel-comparison/v1",
+  "config": {
+    "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+    "pop_size": 3,
+    "n_pop": 2,
+    "max_sample_nums": 8,
+    "max_requests": 16,
+    "search_seed": 20261122,
+    "operators": [
+      "e1",
+      "e2",
+      "m1",
+      "m2"
+    ]
+  },
+  "reference_baselines": {
+    "cvrp_dev_hetero_24": {
+      "s2_r5_spiral": {
+        "mean_tour_length": 18.1588,
+        "solve_ms_p50": 2.7142,
+        "completion_rate": 1.0
+      },
+      "i605_cvrp_c1_tworegime": {
+        "mean_tour_length": 17.6087,
+        "solve_ms_p50": 0.9559,
+        "completion_rate": 1.0
+      },
+      "cw_parallel_merge": {
+        "mean_tour_length": 16.2225,
+        "solve_ms_p50": 1.1085,
+        "completion_rate": 1.0
+      }
+    },
+    "cvrp_select_multiscale_64": {
+      "s2_r5_spiral": {
+        "mean_tour_length": 22.8904,
+        "solve_ms_p50": 3.4316,
+        "completion_rate": 1.0
+      },
+      "i605_cvrp_c1_tworegime": {
+        "mean_tour_length": 22.4722,
+        "solve_ms_p50": 1.1855,
+        "completion_rate": 1.0
+      },
+      "cw_parallel_merge": {
+        "mean_tour_length": 20.7811,
+        "solve_ms_p50": 1.6174,
+        "completion_rate": 1.0
+      }
+    }
+  },
+  "models": [
+    {
+      "model": "deepseek-v4.1-flash",
+      "solver_id": "m2_l2a_deepseek_v4_1_flash",
+      "ok": true,
+      "error": null,
+      "wall_s": 78.64,
+      "evaluations_valid": 8,
+      "evaluations_total": 10,
+      "evolved_count": 6,
+      "completed_requests": 9,
+      "prompt_tokens": 11528,
+      "completion_tokens": 4364,
+      "total_tokens": 15892,
+      "dev_24_mean": 16.6656,
+      "select_64_mean": 21.739,
+      "select_64_solve_ms_p50": 1.7519,
+      "max_scale_drift_pct": 0.0
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "solver_id": "m2_l2a_deepseek_v4_pro",
+      "ok": true,
+      "error": null,
+      "wall_s": 114.82,
+      "evaluations_valid": 4,
+      "evaluations_total": 4,
+      "evolved_count": 2,
+      "completed_requests": 16,
+      "prompt_tokens": 17707,
+      "completion_tokens": 4780,
+      "total_tokens": 22487,
+      "dev_24_mean": 18.3039,
+      "select_64_mean": 24.0634,
+      "select_64_solve_ms_p50": 1.7054,
+      "max_scale_drift_pct": 0.0
+    },
+    {
+      "model": "kimi-k2.7-code",
+      "solver_id": "m2_l2a_kimi_k2_7_code",
+      "ok": false,
+      "error": "RuntimeError: no_valid_evolved_eoh_candidate_produced:eoh_status=stopped_with_exception:RuntimeError: LLM API check failed. Verify endpoint, key, and model.",
+      "wall_s": 7.87,
+      "evaluations_valid": 0,
+      "evaluations_total": 0,
+      "evolved_count": 0,
+      "completed_requests": 0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "dev_24_mean": null,
+      "select_64_mean": null,
+      "select_64_solve_ms_p50": null,
+      "max_scale_drift_pct": null
+    },
+    {
+      "model": "glm-5.3",
+      "solver_id": "m2_l2a_glm_5_3",
+      "ok": true,
+      "error": null,
+      "wall_s": 103.52,
+      "evaluations_valid": 7,
+      "evaluations_total": 10,
+      "evolved_count": 5,
+      "completed_requests": 9,
+      "prompt_tokens": 11459,
+      "completion_tokens": 4989,
+      "total_tokens": 16448,
+      "dev_24_mean": 18.1239,
+      "select_64_mean": 23.4676,
+      "select_64_solve_ms_p50": 1.7275,
+      "max_scale_drift_pct": 0.0
+    },
+    {
+      "model": "qwen4-max",
+      "solver_id": "m2_l2a_qwen4_max",
+      "ok": true,
+      "error": null,
+      "wall_s": 119.79,
+      "evaluations_valid": 10,
+      "evaluations_total": 10,
+      "evolved_count": 8,
+      "completed_requests": 9,
+      "prompt_tokens": 10963,
+      "completion_tokens": 4263,
+      "total_tokens": 15226,
+      "dev_24_mean": 16.3959,
+      "select_64_mean": 21.1066,
+      "select_64_solve_ms_p50": 1.8872,
+      "max_scale_drift_pct": 0.0
+    }
+  ],
+  "workbench_bundle": {
+    "ok": true,
+    "bundle_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_multimodel\\workbench_bundle_500ms",
+    "suite_count": 2,
+    "record_count": 616,
+    "scale_stress_count": 28,
+    "algorithms": [
+      "s2_r5_spiral",
+      "i605_cvrp_c1_tworegime",
+      "cw_parallel_merge",
+      "m2_l2a_deepseek_v4_1_flash",
+      "m2_l2a_deepseek_v4_pro",
+      "m2_l2a_glm_5_3",
+      "m2_l2a_qwen4_max"
+    ],
+    "file_count": 19
+  },
+  "dashboard": {
+    "ok": true,
+    "release_id": "m2-phase2a-multimodel-500ms",
+    "dashboard_html": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_multimodel\\dashboard_500ms\\dashboard.html",
+    "dashboard_sha256": "e4cb0ad9a58d00f378fdd2b73e748477aefe7d3097fcad7268c4c7583699c53a",
+    "dashboard_bytes": 155771,
+    "core_js_bytes": 2213056,
+    "suite_bundle_count": 2,
+    "suite_bundles_total_bytes": 3062727,
+    "kb_entries_embedded": 340,
+    "published_results_embedded": 369
+  }
+}

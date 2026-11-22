@@ -923,3 +923,467 @@ def run_workbench_evaluation(
         "selection_analyses": list(selection_analyses.keys()),
         "file_count": len(bundle_files) + 1,
     }
+
+
+def run_frozen_workbench_bundle(
+    bundle_dir: Path,
+    *,
+    frozen_solvers: Sequence[Any],
+    reference_solver_ids: Sequence[str] = ("s2_r5_spiral", "i605_cvrp_c1_tworegime", "cw_parallel_merge"),
+    suite_specs: Sequence[tuple[str, str]] = (
+        ("cvrp_dev_hetero_24", "dev_train"),
+        ("cvrp_select_multiscale_64", "selection"),
+    ),
+    budget_id: str = "standard_500ms",
+    time_budget_ms: float = 500.0,
+) -> dict[str, Any]:
+    """Explicit M2 workbench entry point for re-evaluating frozen M2 solvers alongside M1 references.
+
+    Leaves ``run_workbench_evaluation`` and all Milestone 1 / 1.5 defaults completely untouched.
+    Produces the exact single-budget bundle schema consumed by ``frontend/build_dashboard.py``.
+    """
+    from agent_skill_loop.interface_design.blind_commitment import assert_suite_not_m2_blind
+    from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver, classify_outcome
+    from agent_skill_loop.interface_design.runtime import evaluate_frozen_interface_solver
+
+    parsed_frozen: list[FrozenInterfaceSolver] = [
+        fs if isinstance(fs, FrozenInterfaceSolver) else FrozenInterfaceSolver.from_dict(fs)
+        for fs in frozen_solvers
+    ]
+    frozen_by_id: dict[str, FrozenInterfaceSolver] = {fs.solver_id: fs for fs in parsed_frozen}
+    if len(frozen_by_id) != len(parsed_frozen):
+        raise ValueError("duplicate_frozen_solver_id")
+
+    for ref_id in reference_solver_ids:
+        if ref_id not in SOLVER_CATALOG:
+            raise KeyError(f"unknown_reference_cvrp_solver:{ref_id}")
+        if ref_id in frozen_by_id:
+            raise ValueError(f"solver_id_collision_with_reference:{ref_id}")
+
+    bundle_dir = Path(bundle_dir).resolve()
+    suites_dir = bundle_dir / "suites"
+    results_dir = bundle_dir / "results"
+    routes_dir = bundle_dir / "routes"
+    traces_dir = bundle_dir / "traces"
+    pub_dest = bundle_dir / "published_results"
+    for d in (suites_dir, results_dir, routes_dir, traces_dir, pub_dest):
+        d.mkdir(parents=True, exist_ok=True)
+
+    # Copy frozen published_results/*.json so build_dashboard.py works out-of-the-box
+    pub_src = WORKBENCH_BENCHMARKS_DIR / "published_results"
+    if pub_src.is_dir():
+        for src_file in sorted(pub_src.glob("*.json")):
+            shutil.copy2(src_file, pub_dest / src_file.name)
+    elif not (pub_dest / "index.json").is_file():
+        _write_json(pub_dest / "index.json", {"schema_version": "cvrp-workbench-published-results/v1", "records": []})
+
+    algs_order = [*list(reference_solver_ids), *[fs.solver_id for fs in parsed_frozen]]
+
+    all_records: list[dict[str, Any]] = []
+    scale_stress_records: list[dict[str, Any]] = []
+    suite_catalog_index: list[dict[str, Any]] = []
+    summary_by_suite: dict[str, Any] = {}
+
+    for suite_id, split in suite_specs:
+        assert_suite_not_m2_blind(suite_id)
+        suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
+        assert_suite_not_m2_blind(suite_id, suite)
+        if (suite.get("problem_family") or "cvrp") != "cvrp":
+            raise ValueError(f"m2_frozen_bundle_supports_cvrp_only:{suite_id}")
+
+        dist_conv = suite["distance_convention"]
+        veh_pol = suite["vehicle_limit_policy"]
+        instances = suite["instances"]
+
+        enriched_instances: list[dict[str, Any]] = []
+        for inst in instances:
+            feats, _ = extract_instance_features(inst)
+            enriched_instances.append({**inst, "features": {k: round(v, 6) for k, v in feats.items()}})
+
+        suite_payload = {
+            "suite_id": suite_id,
+            "benchmark_id": BENCHMARK_ID,
+            "problem_family": "cvrp",
+            "benchmark_tier": suite.get("benchmark_tier") or "local_controlled",
+            "split": suite["split"],
+            "suite_role": suite["suite_role"],
+            "exposure_status": suite["exposure_status"],
+            "distance_convention": dist_conv,
+            "vehicle_limit_policy": veh_pol,
+            "reference_kind": instances[0].get("reference_kind") if instances else None,
+            "data_manifest_hash": suite["data_manifest_hash"],
+            "reference_manifest_hash": suite["reference_manifest_hash"],
+            "benchmark_spec_hash": suite["benchmark_spec_hash"],
+            "selection_manifest_hash": suite.get("selection_manifest_hash"),
+            "published_results_path": suite.get("published_results_path"),
+            "published_results_hash": suite.get("published_results_hash"),
+            "instance_count": len(enriched_instances),
+            "algorithms_evaluated": algs_order,
+            "metadata": suite.get("metadata", {}),
+            "instances": enriched_instances,
+        }
+        suite_sha = _write_compact_json(suites_dir / f"{suite_id}.json", suite_payload)
+        suite_catalog_index.append({
+            "suite_id": suite_id,
+            "path": f"suites/{suite_id}.json",
+            "sha256": suite_sha,
+            "benchmark_id": BENCHMARK_ID,
+            "problem_family": "cvrp",
+            "benchmark_tier": suite_payload["benchmark_tier"],
+            "split": suite_payload["split"],
+            "suite_role": suite_payload["suite_role"],
+            "exposure_status": suite_payload["exposure_status"],
+            "distance_convention": dist_conv,
+            "vehicle_limit_policy": veh_pol,
+            "reference_kind": suite_payload["reference_kind"],
+            "instance_count": len(enriched_instances),
+            "algorithms_evaluated": algs_order,
+            "data_manifest_hash": suite["data_manifest_hash"],
+            "selection_manifest_hash": suite.get("selection_manifest_hash"),
+            "published_results_path": suite.get("published_results_path"),
+            "metadata": suite_payload["metadata"],
+        })
+
+        suite_routes_map: dict[str, dict[str, Any]] = {}
+        suite_traces_map: dict[str, dict[str, Any]] = {}
+        suite_records: list[dict[str, Any]] = []
+
+        for idx, inst in enumerate(instances):
+            iid = str(inst["instance_id"])
+            suite_routes_map[iid] = {}
+            if isinstance(inst.get("bks_routes"), list):
+                suite_routes_map[iid]["__bks__"] = {
+                    "routes": inst["bks_routes"],
+                    "tour_length": inst.get("bks_recomputed_nint_cost") or inst.get("reference_objective"),
+                    "rel_gap": 0.0,
+                    "is_bks_overlay": True,
+                }
+
+            for alg_id in algs_order:
+                if alg_id in frozen_by_id:
+                    fs = frozen_by_id[alg_id]
+                    res = evaluate_frozen_interface_solver(
+                        fs,
+                        inst,
+                        distance_convention=dist_conv,
+                        vehicle_limit_policy=veh_pol,
+                        time_budget_ms=time_budget_ms,
+                    )
+                    paradigm = fs.paradigm
+                    interface_str = f"{fs.template_id}/{fs.template_version}:{fs.hook_name}"
+                    kb_entry_id = fs.kb_entry_id
+                else:
+                    spec = SOLVER_CATALOG[alg_id]
+                    want_trace = spec.kind == "pointwise" and _should_store_trace(suite_id, idx, inst, alg_id)
+                    res = evaluate_algorithm_on_instance(
+                        alg_id,
+                        inst,
+                        distance_convention=dist_conv,
+                        vehicle_limit_policy=veh_pol,
+                        time_budget_ms=time_budget_ms,
+                        record_trace=want_trace,
+                    )
+                    paradigm = spec.paradigm
+                    interface_str = spec.interface
+                    kb_entry_id = spec.kb_entry_id
+
+                record = {
+                    "suite_id": suite_id,
+                    "problem_family": "cvrp",
+                    "benchmark_tier": suite_payload["benchmark_tier"],
+                    "suite_role": suite_payload["suite_role"],
+                    "exposure_status": suite_payload["exposure_status"],
+                    "comparison_mode": "local_recomputed",
+                    "budget_id": budget_id,
+                    "budget_ms": time_budget_ms,
+                    "instance_id": iid,
+                    "cell": inst.get("cell"),
+                    "size": int(inst["size"]),
+                    "spatial": inst.get("spatial"),
+                    "depot_style": inst.get("depot_style"),
+                    "capacity_level": inst.get("capacity_level"),
+                    "demand_dist": inst.get("demand_dist"),
+                    "cvrplib_set": inst.get("cvrplib_set"),
+                    "x_tier": inst.get("x_tier"),
+                    "algorithm_id": alg_id,
+                    "paradigm": paradigm,
+                    "interface": interface_str,
+                    "kb_entry_id": kb_entry_id,
+                    "status": res["status"],
+                    "outcome_class": res.get("outcome_class") or classify_outcome(
+                        valid=bool(res["valid"]),
+                        status=str(res["status"]),
+                        budget_exhausted=bool(res.get("budget_exhausted", False)),
+                    ),
+                    "valid": res["valid"],
+                    "error_code": res["error_code"],
+                    "tour_length": round(float(res["tour_length"]), 6) if res["tour_length"] is not None else None,
+                    "reference_objective": round(float(res["reference_objective"]), 6) if res["reference_objective"] is not None else None,
+                    "reference_kind": res["reference_kind"],
+                    "rel_gap": res["rel_gap"],
+                    "route_count": res["route_count"],
+                    "max_utilization": res["max_utilization"],
+                    "mean_utilization": res["mean_utilization"],
+                    "target_vehicles": res["target_vehicles"],
+                    "within_vehicle_limit": res["within_vehicle_limit"],
+                    "exact_vehicle_count": res["exact_vehicle_count"],
+                    "vehicle_count_delta": res["vehicle_count_delta"],
+                    "preprocess_ms": res["preprocess_ms"],
+                    "candidate_gen_ms": res.get("candidate_gen_ms"),
+                    "hook_ms": res.get("hook_ms"),
+                    "postprocess_ms": res.get("postprocess_ms"),
+                    "solve_ms": res["solve_ms"],
+                    "verify_ms": res["verify_ms"],
+                    "voluntary_early_return_count": res.get("voluntary_early_return_count", 0),
+                    "forced_capacity_return_count": res.get("forced_capacity_return_count", 0),
+                    "budget_exhausted": res["budget_exhausted"],
+                    "has_trace": bool(res.get("trace_steps")),
+                }
+                suite_records.append(record)
+                all_records.append(record)
+                suite_routes_map[iid][alg_id] = {
+                    "routes": res["routes"],
+                    "route_loads": res["route_loads"],
+                    "route_distances": res["route_distances"],
+                    "tour_length": record["tour_length"],
+                    "rel_gap": record["rel_gap"],
+                    "voluntary_early_return_count": record["voluntary_early_return_count"],
+                }
+                if res.get("trace_steps"):
+                    suite_traces_map.setdefault(iid, {})[alg_id] = res["trace_steps"]
+
+        _write_compact_json(routes_dir / f"{suite_id}.json", {
+            "suite_id": suite_id,
+            "problem_family": "cvrp",
+            "budget_id": budget_id,
+            "routes_by_instance": suite_routes_map,
+        })
+        if suite_traces_map:
+            _write_compact_json(traces_dir / f"{suite_id}.json", {
+                "suite_id": suite_id,
+                "budget_id": budget_id,
+                "traces_by_instance": suite_traces_map,
+            })
+
+        # Scale-stress checks if present on the suite (e.g. cvrp_dev_hetero_24 1e-3 scaling)
+        for s_inst in suite.get("scale_stress_instances", []):
+            parent_id = s_inst["parent_instance_id"]
+            scale_val = float(s_inst["coord_scale"])
+            for alg_id in algs_order:
+                if alg_id in frozen_by_id:
+                    res_s = evaluate_frozen_interface_solver(
+                        frozen_by_id[alg_id],
+                        s_inst,
+                        distance_convention=dist_conv,
+                        vehicle_limit_policy=veh_pol,
+                        time_budget_ms=time_budget_ms,
+                    )
+                else:
+                    res_s = evaluate_algorithm_on_instance(
+                        alg_id,
+                        s_inst,
+                        distance_convention=dist_conv,
+                        vehicle_limit_policy=veh_pol,
+                        time_budget_ms=time_budget_ms,
+                        record_trace=False,
+                    )
+                parent_rec = next(
+                    r for r in suite_records
+                    if r["instance_id"] == parent_id and r["algorithm_id"] == alg_id
+                )
+                norm_len = (float(res_s["tour_length"]) / scale_val) if res_s["tour_length"] is not None else None
+                drift_pct = (
+                    round(100.0 * abs(norm_len - float(parent_rec["tour_length"])) / max(float(parent_rec["tour_length"]), 1e-12), 4)
+                    if (norm_len is not None and parent_rec["tour_length"] is not None)
+                    else None
+                )
+                scale_stress_records.append({
+                    "suite_id": suite_id,
+                    "instance_id": s_inst["instance_id"],
+                    "parent_instance_id": parent_id,
+                    "coord_scale": scale_val,
+                    "algorithm_id": alg_id,
+                    "status": res_s["status"],
+                    "nominal_tour_length": parent_rec["tour_length"],
+                    "scaled_normalized_tour_length": round(norm_len, 6) if norm_len is not None else None,
+                    "scale_drift_pct": drift_pct,
+                })
+
+        ok_ids_by_alg = {
+            alg_id: {
+                str(r["instance_id"])
+                for r in suite_records
+                if r["algorithm_id"] == alg_id and r.get("status") == "ok" and r.get("tour_length") is not None
+            }
+            for alg_id in algs_order
+        }
+        all_inst_ids = {str(inst["instance_id"]) for inst in instances}
+        common_ids = set(all_inst_ids)
+        for s_ids in ok_ids_by_alg.values():
+            common_ids &= s_ids
+
+        alg_summaries: dict[str, Any] = {}
+        for alg_id in algs_order:
+            rows_a = [r for r in suite_records if r["algorithm_id"] == alg_id]
+            by_scale = {
+                str(sz): aggregate_records([r for r in rows_a if int(r["size"]) == sz])
+                for sz in sorted({int(r["size"]) for r in rows_a})
+            }
+            by_spatial = {
+                sp: aggregate_records([r for r in rows_a if r.get("spatial") == sp])
+                for sp in sorted({str(r["spatial"]) for r in rows_a if r.get("spatial")})
+            }
+            alg_summaries[alg_id] = {
+                "overall": aggregate_records(rows_a),
+                "common_completed": aggregate_records([r for r in rows_a if str(r["instance_id"]) in common_ids]),
+                "strict_all_common_completed": aggregate_records([r for r in rows_a if str(r["instance_id"]) in common_ids]),
+                "by_scale": by_scale,
+                "by_spatial": by_spatial,
+            }
+
+        summary_by_suite[suite_id] = {
+            "suite_id": suite_id,
+            "problem_family": "cvrp",
+            "benchmark_tier": suite_payload["benchmark_tier"],
+            "suite_role": suite_payload["suite_role"],
+            "exposure_status": suite_payload["exposure_status"],
+            "distance_convention": dist_conv,
+            "vehicle_limit_policy": veh_pol,
+            "reference_kind": suite_payload["reference_kind"],
+            "comparison_mode": "local_recomputed",
+            "budget_id": budget_id,
+            "budget_ms": time_budget_ms,
+            "n_instances": len(instances),
+            "common_completed_count": len(common_ids),
+            "common_completed_algorithms": algs_order,
+            "strict_all_common_completed_count": len(common_ids),
+            "algorithms": alg_summaries,
+        }
+
+    # Build algorithms.json containing reference M1 solvers + M2 frozen solvers with full provenance
+    alg_rows: list[dict[str, Any]] = []
+    for ref_id in reference_solver_ids:
+        spec = SOLVER_CATALOG[ref_id]
+        alg_rows.append({
+            "algorithm_id": spec.algorithm_id,
+            "problem_family": "cvrp",
+            "display_name": spec.display_name,
+            "paradigm": spec.paradigm,
+            "interface": spec.interface,
+            "kind": spec.kind,
+            "kb_entry_id": spec.kb_entry_id,
+            "code_path": spec.code_path,
+            "code_sha256": spec.code_sha256,
+            "code_source": spec.code_source,
+            "upstream_commit": spec.upstream_commit,
+            "comparison_mode": spec.comparison_mode,
+            "is_core_reference": True,
+            "default_budget_ms": spec.default_budget_ms,
+            "description": spec.description,
+        })
+    for fs in parsed_frozen:
+        alg_rows.append({
+            "algorithm_id": fs.solver_id,
+            "problem_family": fs.problem_family,
+            "display_name": fs.display_name,
+            "paradigm": fs.paradigm,
+            "interface": f"{fs.template_id}/{fs.template_version}:{fs.hook_name}",
+            "kind": "m2_interface_solver",
+            "kb_entry_id": fs.kb_entry_id,
+            "code_path": f"{fs.origin_run}/frozen_solver_manifest.json",
+            "code_sha256": fs.hook_code_sha256,
+            "code_source": fs.hook_code,
+            "template_id": fs.template_id,
+            "template_version": fs.template_version,
+            "template_source_sha256": fs.template_source_sha256,
+            "postprocess_mode": fs.postprocess_mode,
+            "design_sha256": fs.design_sha256,
+            "origin_run": fs.origin_run,
+            "kb_release_id": fs.kb_release_id,
+            "cited_kb_ids": list(fs.cited_kb_ids),
+            "comparison_mode": "local_recomputed",
+            "is_core_reference": True,
+            "default_budget_ms": fs.default_budget_ms,
+            "description": fs.description,
+        })
+
+    _write_json(bundle_dir / "algorithms.json", {
+        "schema_version": "cvrp-workbench-algorithms/v2",
+        "bundle_kind": "m2_frozen_evaluation",
+        "core_reference_ids": algs_order,
+        "frozen_m2_solver_ids": [fs.solver_id for fs in parsed_frozen],
+        "algorithms": alg_rows,
+    })
+    _write_json(bundle_dir / "frozen_solvers_manifest.json", {
+        "schema_version": "m2-frozen-solvers-roster/v1",
+        "generated_at": _utc_now(),
+        "budget_id": budget_id,
+        "budget_ms": time_budget_ms,
+        "frozen_solvers": [fs.to_dict() for fs in parsed_frozen],
+    })
+    _write_json(suites_dir / "index.json", {
+        "schema_version": "cvrp-workbench-suites-index/v2",
+        "generated_at": _utc_now(),
+        "suites": suite_catalog_index,
+    })
+    _write_compact_json(results_dir / "per_instance_records.json", {
+        "schema_version": "cvrp-workbench-per-instance-records/v2",
+        "generated_at": _utc_now(),
+        "comparison_mode": "local_recomputed",
+        "budget_id": budget_id,
+        "budget_ms": time_budget_ms,
+        "environment": {"python": sys.version.split()[0], "platform": platform.platform()},
+        "record_count": len(all_records),
+        "records": all_records,
+    })
+    _write_json(results_dir / "summary.json", {
+        "schema_version": "cvrp-workbench-summary/v2",
+        "generated_at": _utc_now(),
+        "comparison_mode": "local_recomputed",
+        "budget_id": budget_id,
+        "budget_ms": time_budget_ms,
+        "core_reference_ids": algs_order,
+        "suites": summary_by_suite,
+    })
+    _write_json(results_dir / "scale_stress_records.json", {
+        "schema_version": "cvrp-workbench-scale-stress/v1",
+        "generated_at": _utc_now(),
+        "record_count": len(scale_stress_records),
+        "records": scale_stress_records,
+    })
+    _write_compact_json(results_dir / "selection_records.json", {
+        "schema_version": "cvrp-workbench-selection-records/v1",
+        "generated_at": _utc_now(),
+        "budget_id": budget_id,
+        "analyses": {},
+    })
+
+    bundle_files = []
+    for path in sorted(p for p in bundle_dir.rglob("*") if p.is_file() and p.name != "workbench_manifest.json"):
+        bundle_files.append({
+            "path": path.relative_to(bundle_dir).as_posix(),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "size": path.stat().st_size,
+        })
+    wb_manifest = {
+        "schema_version": "cvrp-workbench-bundle/v2",
+        "bundle_kind": "m2_frozen_evaluation",
+        "generated_at": _utc_now(),
+        "budget_id": budget_id,
+        "budget_ms": time_budget_ms,
+        "suite_count": len(suite_catalog_index),
+        "record_count": len(all_records),
+        "frozen_m2_solver_count": len(parsed_frozen),
+        "files": bundle_files,
+    }
+    _write_json(bundle_dir / "workbench_manifest.json", wb_manifest)
+
+    return {
+        "ok": True,
+        "bundle_dir": str(bundle_dir),
+        "suite_count": len(suite_catalog_index),
+        "record_count": len(all_records),
+        "scale_stress_count": len(scale_stress_records),
+        "algorithms": algs_order,
+        "file_count": len(bundle_files) + 1,
+    }

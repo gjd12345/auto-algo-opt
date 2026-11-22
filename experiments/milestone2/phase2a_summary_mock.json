@@ -1,0 +1,101 @@
+{
+  "ok": true,
+  "step_2a1_blind_commitment": {
+    "seal": {
+      "reused_existing": true
+    },
+    "verify": {
+      "ok": true,
+      "suite_id": "cvrp_m2_blind_120",
+      "instance_count": 120,
+      "suite_content_sha256": "fca04528fc4c0c93d30259e414a11142dc9cd39e1e8564fb8edcbb8d16887d41",
+      "verified_instances": 120
+    },
+    "commitment_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\benchmarks\\cvrp_workbench\\manifests\\cvrp_m2_blind_120_commitment.json"
+  },
+  "step_2a2_diagnostics": {
+    "json_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\diagnostics\\gap_decomposition_2x3.json",
+    "json_sha256": "ba9699b3fdf4271c38f46cff38b225164a6114f863d3aa3b5fb474251712755a",
+    "record_count": 1056
+  },
+  "step_2a3_cw_equivalence_and_5gates": {
+    "checked_instances": 88,
+    "exact_merge_sequence_matches": 88,
+    "exact_route_matches": 88,
+    "max_obj_abs_diff": 0.0,
+    "budget_500_outcomes": {
+      "completed": 88
+    },
+    "validation_passed": true,
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac"
+  },
+  "step_2a4_dynamic_eoh": {
+    "mode": "mock",
+    "eoh_status": "completed",
+    "baseline_objective": 16.222472,
+    "best_objective": 16.188713,
+    "evaluations_total": 6,
+    "evaluations_valid": 6,
+    "evolved_count": 4,
+    "frozen_manifest_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_eoh_mock\\frozen_solver_manifest.json",
+    "resource_ledger": {
+      "schema_version": "m2-eoh-resource-ledger/v1",
+      "generated_at": "2026-11-22T15:00:24Z",
+      "mode": "mock",
+      "model": "deterministic_mock",
+      "search_seed": 20261122,
+      "eoh_status": "completed",
+      "eoh_error": null,
+      "hard_cap": {
+        "max_requests": null,
+        "max_sample_nums": 4,
+        "wall_seconds": 300.0,
+        "candidate_timeout_s": 20.0,
+        "instance_time_budget_ms": 500.0
+      },
+      "requests": {
+        "completed_requests": 6,
+        "by_purpose": {
+          "eoh_probe": 1,
+          "eoh_generation": 5
+        },
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0
+      },
+      "evaluations_total": 6,
+      "evaluations_valid": 6,
+      "evaluations_evolved_distinct": 3,
+      "baseline_objective": 16.222472,
+      "best_objective": 16.188713,
+      "improved_over_baseline": true,
+      "total_wall_ms": 9839.7
+    }
+  },
+  "step_2a5_workbench_and_dashboard": {
+    "bundle_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_workbench_bundle_mock",
+    "record_count": 352,
+    "algorithms": [
+      "s2_r5_spiral",
+      "i605_cvrp_c1_tworegime",
+      "cw_parallel_merge",
+      "m2_eoh_l2a_merge_mock"
+    ],
+    "mean_tour_lengths": {
+      "cvrp_dev_hetero_24": {
+        "s2_r5_spiral": 18.1588,
+        "i605_cvrp_c1_tworegime": 17.6087,
+        "cw_parallel_merge": 16.2225,
+        "m2_eoh_l2a_merge_mock": 16.1887
+      },
+      "cvrp_select_multiscale_64": {
+        "s2_r5_spiral": 22.8904,
+        "i605_cvrp_c1_tworegime": 22.4722,
+        "cw_parallel_merge": 20.7811,
+        "m2_eoh_l2a_merge_mock": 20.8723
+      }
+    },
+    "dashboard_html": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone2\\phase2a_dashboard_mock\\dashboard.html",
+    "dashboard_sha256": "5bece6b9ff629e71cc1dc0388e4ec6e4c349e943b94dacd0384c3819aaa14ec1"
+  }
+}
