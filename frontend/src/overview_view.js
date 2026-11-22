@@ -78,19 +78,20 @@
     const snap = L.computeHeroSnapshot(core);
     const fam = state.family || "cvrp";
     const cfg = OVERVIEW_CFG[fam] || OVERVIEW_CFG.cvrp;
-    const scope = state.scope || "overall";
+    const reqScope = state.scope || "";
 
     const hasPartial = cfg.suites.some(function (sid) {
       const s = L.getSuiteSummary(core, sid);
-      return s && s.common_completed_count && s.common_completed_count < s.n_instances;
+      return L.hasPartialCompletion(s);
     });
+    const autoUsingCommon = reqScope !== "overall" && hasPartial;
 
     const rowsHtml = cfg.suites.map(function (sid) {
       const sum = L.getSuiteSummary(core, sid);
       const sMeta = L.getSuite(core, sid);
       if (!sum || !sMeta) return "";
-      const useCommon = scope === "common_completed" && sum.common_completed_count && sum.common_completed_count < sum.n_instances;
-      const effScope = useCommon ? "common_completed" : "overall";
+      const effScope = L.resolveScope(sum, reqScope);
+      const useCommon = effScope === "common_completed";
 
       const vals = cfg.algs.map(function (aid) {
         const st = L.getAlgStats(sum, aid, effScope);
@@ -100,15 +101,16 @@
       const valid = vals.filter(function (v) { return v.gap !== null && v.gap !== undefined; }).map(function (v) { return Number(v.gap); });
       const minGap = valid.length ? Math.min.apply(null, valid) : null;
 
+      const polTag = sMeta.vehicle_limit_policy === "fixed_k_unconstrained_eval" ? " · 固定k合规另列" : "";
       const subText = useCommon
-        ? ("共同完成 " + sum.common_completed_count + "/" + sum.n_instances + " 例")
-        : (sum.n_instances + " 例 · " + L.esc(sMeta.distance_convention));
+        ? ("共同完成交集 " + sum.common_completed_count + "/" + sum.n_instances + " 例 · " + L.esc(sMeta.distance_convention) + polTag)
+        : (sum.n_instances + " 例 · " + L.esc(sMeta.distance_convention) + polTag);
 
       const cells = vals.map(function (v) {
         if (v.gap === null || v.gap === undefined) return '<td class="num muted">—</td>';
         const isBest = minGap !== null && Math.abs(Number(v.gap) - minGap) < 1e-6;
         const partial = (!useCommon && v.ok < v.n) ? ('<span class="cell-sub">(' + v.ok + "/" + v.n + ")</span>") : "";
-        const navScope = (!useCommon && v.ok < v.n) ? "&scope=common_completed" : "";
+        const navScope = useCommon ? "&scope=common_completed" : (v.ok < v.n ? "&scope=overall" : "");
         return '<td class="num cell-click ' + (isBest ? "cell-best" : "") + '" data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(sid) + navScope + '">' +
           L.fmtPct(v.gap, 2) + partial + "</td>";
       }).join("");
@@ -139,7 +141,7 @@
       '      <p class="panel-sub">数值为平均相对参考差距（越低越优；点击任意行或数值查看详表与论文原表对照）</p>',
       '    </div>',
       '    <div class="controls-inline">',
-      hasPartial ? ('<label class="toggle-label"><input type="checkbox" id="ov-common-ck"' + (scope === "common_completed" ? " checked" : "") + "/> 仅看共同完成集</label>") : "",
+      hasPartial ? ('<label class="toggle-label"><input type="checkbox" id="ov-common-ck"' + (autoUsingCommon ? " checked" : "") + "/> 仅看共同完成集</label>") : "",
       '      <button class="btn link" data-nav="page=benchmarks&family=' + L.esc(fam) + '&tab=panorama&expandAll=true">展开全部 ' + snap.suiteCount + ' 套件 →</button>',
       '    </div>',
       '  </div>',

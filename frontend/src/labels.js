@@ -118,6 +118,15 @@
     OOD: "Out-of-Distribution：训练分布之外的新规模或新空间集群工况。"
   };
 
+  const POLICY_LABELS = {
+    unconstrained: "自由车数 (仅容量可行)",
+    min_vehicles_advisory: "参考车数 k (不强制上限)",
+    free_fleet_min_k_lb: "自由车数 (k 为最小车数下界)",
+    fixed_k_unconstrained_eval: "官方 BKS 为固定 k (当前自由车数对比 + ==k 合规统计)",
+    strict_max_vehicles: "严格车数上限 (<=k)",
+    not_applicable: "不适用"
+  };
+
   function esc(val) {
     if (val === null || val === undefined) return "";
     return String(val)
@@ -211,6 +220,23 @@
     return (core && core.summary && core.summary.suites && core.summary.suites[suiteId]) || null;
   }
 
+  function hasPartialCompletion(suiteSum) {
+    return Boolean(
+      suiteSum &&
+      suiteSum.common_completed_count &&
+      suiteSum.n_instances &&
+      suiteSum.common_completed_count < suiteSum.n_instances
+    );
+  }
+
+  function resolveScope(suiteSum, requestedScope) {
+    if (requestedScope === "overall") return "overall";
+    if (requestedScope === "common_completed") {
+      return (suiteSum && suiteSum.common_completed_count) ? "common_completed" : "overall";
+    }
+    return hasPartialCompletion(suiteSum) ? "common_completed" : "overall";
+  }
+
   function getAlgStats(suiteSum, algId, scope) {
     if (!suiteSum || !suiteSum.algorithms || !suiteSum.algorithms[algId]) return null;
     const a = suiteSum.algorithms[algId];
@@ -288,6 +314,7 @@
     TIER_LABELS: TIER_LABELS,
     SUITE_ROLE_LABELS: SUITE_ROLE_LABELS,
     EXPOSURE_LABELS: EXPOSURE_LABELS,
+    POLICY_LABELS: POLICY_LABELS,
     esc: esc,
     fmtPct: fmtPct,
     fmtRatioAsPctPlain: fmtRatioAsPctPlain,
@@ -304,6 +331,8 @@
     getAlgMechanism: getAlgMechanism,
     jargon: jargon,
     getSuiteSummary: getSuiteSummary,
+    hasPartialCompletion: hasPartialCompletion,
+    resolveScope: resolveScope,
     getAlgStats: getAlgStats,
     computeHeroSnapshot: computeHeroSnapshot
   };

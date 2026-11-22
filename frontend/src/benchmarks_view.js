@@ -75,23 +75,27 @@
 
     const matrixRows = displaySuites.map(function (s) {
       const sum = L.getSuiteSummary(core, s.suite_id);
+      const effScope = L.resolveScope(sum, state.scope);
+      const useCommon = effScope === "common_completed";
       const gaps = displayAlgs.map(function (a) {
-        const st = L.getAlgStats(sum, a.algorithm_id, "overall");
+        const st = L.getAlgStats(sum, a.algorithm_id, effScope);
         return st && st.mean_rel_gap !== null && st.mean_rel_gap !== undefined ? Number(st.mean_rel_gap) : null;
       });
       const valid = gaps.filter(function (g) { return g !== null; });
       const bestG = valid.length ? Math.min.apply(null, valid) : null;
       const cells = displayAlgs.map(function (a, i) {
-        const st = L.getAlgStats(sum, a.algorithm_id, "overall");
+        const st = L.getAlgStats(sum, a.algorithm_id, effScope);
+        const ov = L.getAlgStats(sum, a.algorithm_id, "overall");
         const g = gaps[i];
         if (!st || g === null) return '<td class="num muted">—</td>';
         const isBest = bestG !== null && Math.abs(g - bestG) < 1e-6;
-        const okTag = st.ok_count < st.n_instances ? ('<span class="cell-sub">(' + st.ok_count + "/" + st.n_instances + ")</span>") : "";
-        return '<td class="num cell-click ' + (isBest ? "cell-best" : "") + '" data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(s.suite_id) + '&tab=leaderboard">' +
+        const okTag = (!useCommon && ov && ov.ok_count < ov.n_instances) ? ('<span class="cell-sub">(' + ov.ok_count + "/" + ov.n_instances + ")</span>") : "";
+        return '<td class="num cell-click ' + (isBest ? "cell-best" : "") + '" data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(s.suite_id) + (useCommon ? "&scope=common_completed" : "") + '&tab=leaderboard">' +
           L.fmtPct(g, 2) + okTag + "</td>";
       }).join("");
+      const scopeTag = useCommon ? (" · 共同交集 " + sum.common_completed_count + "/" + s.instance_count) : "";
       return '<tr data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(s.suite_id) + '&tab=leaderboard">' +
-        '<td><div class="row-title">' + L.esc(L.suiteTitle(s)) + '</div><div class="row-sub mono">' + L.esc(s.suite_id) + " · N=" + s.instance_count + " · " + L.esc(s.distance_convention) + "</div></td>" + cells + "</tr>";
+        '<td><div class="row-title">' + L.esc(L.suiteTitle(s)) + '</div><div class="row-sub mono">' + L.esc(s.suite_id) + " · N=" + s.instance_count + scopeTag + " · " + L.esc(s.distance_convention) + "</div></td>" + cells + "</tr>";
     }).join("");
 
     let previewHtml = '<div class="muted">正在载入测试集 <code>' + L.esc(activeSuite.suite_id) + "</code> 算例坐标…</div>";
@@ -137,7 +141,7 @@
     const suiteId = activeSuite.suite_id;
     const sum = L.getSuiteSummary(core, suiteId);
     const tab = state.tab || "leaderboard";
-    const scope = state.scope || "overall";
+    const scope = L.resolveScope(sum, state.scope);
     const sortBy = state.sortBy || "mean_rel_gap";
     const sortDir = state.sortDir || "asc";
 
@@ -191,19 +195,37 @@
         return sortDir === "desc" ? vb - va : va - vb;
       });
 
+      const isFixedKSuite = activeSuite.vehicle_limit_policy === "fixed_k_unconstrained_eval";
       const bestGap = algRows.length && algRows[0].st.mean_rel_gap !== null && sortBy === "mean_rel_gap" && sortDir === "asc" ? Number(algRows[0].st.mean_rel_gap) : null;
       const trs = algRows.map(function (r) {
         const kbId = L.resolveAlgKbId(core, r.aid);
         const isPartial = r.ov.ok_count < r.ov.n_instances;
-        const exh = r.ov.budget_exhausted_count || 0;
-        const okText = r.ov.ok_count + "/" + r.ov.n_instances + (exh > 0 ? " (截断 " + exh + ")" : "");
+        const okBex = r.ov.ok_budget_exhausted_count !== undefined ? r.ov.ok_budget_exhausted_count : (r.ov.budget_exhausted_count || 0);
+        const toCnt = r.ov.timeout_count !== undefined ? r.ov.timeout_count : (r.ov.n_instances - r.ov.ok_count);
+        const convRate = r.ov.local_opt_convergence_rate;
+        const convNote = (convRate !== null && convRate !== undefined && convRate < 1.0)
+          ? (" · 收敛 " + L.fmtRatioAsPctPlain(Math.max(0, convRate), 0))
+          : "";
+        const okText = r.ov.ok_count + "/" + r.ov.n_instances +
+          (toCnt > 0 ? " (超时 " + toCnt + ")" : okBex > 0 ? " (预算终止 " + okBex + ")" : "") +
+          convNote;
         const isBest = bestGap !== null && r.st.mean_rel_gap !== null && Math.abs(Number(r.st.mean_rel_gap) - bestGap) < 1e-6;
+        let exactKCell = "";
+        if (isFixedKSuite) {
+          const exCnt = r.st.exact_k_count;
+          const exChk = r.st.exact_k_checked;
+          const exGap = r.st.exact_k_mean_rel_gap;
+          exactKCell = '<td class="num">' +
+            (exCnt !== undefined && exChk ? (exCnt + "/" + exChk + " (" + L.fmtRatioAsPctPlain(r.st.exact_k_compliance_rate, 1) + ")" + (exGap !== null && exGap !== undefined ? ("<div class=\"row-sub\">" + L.fmtPct(exGap, 2) + "</div>") : "")) : "—") +
+            "</td>";
+        }
         return "<tr>" +
           '<td><div class="row-title">' + L.esc(L.algTitle(core, r.aid)) + '</div><div class="row-sub mono">' + L.esc(r.aid) + "</div></td>" +
           '<td class="sec">' + L.esc((r.meta && L.PARADIGM_LABELS[r.meta.paradigm]) || (r.meta && r.meta.paradigm) || "—") + "</td>" +
           '<td><span class="status-tag ' + (isPartial ? "warn" : "good") + '">' + L.esc(okText) + "</span></td>" +
           '<td class="num">' + L.fmtObj(r.st.mean_tour_length) + "</td>" +
           '<td class="num ' + (isBest ? "cell-best" : "") + '">' + L.fmtPct(r.st.mean_rel_gap, 2) + "</td>" +
+          exactKCell +
           '<td class="num">' + L.fmtMs(r.st.solve_ms_p50) + " / " + L.fmtMs(r.st.solve_ms_p95) + "</td>" +
           '<td class="num">' + (r.st.total_voluntary_early_returns || 0) + "</td>" +
           '<td class="num">' + (kbId ? ('<button class="btn link sm" data-nav="page=knowledge&tab=library&entry=' + L.esc(kbId) + '">知识卡</button> ') : "") +
@@ -212,14 +234,15 @@
       }).join("");
 
       const p0Block = suiteId === "cvrp_hist_p0_120" ? PARTS.renderH003P0Spotlight(core, L) : "";
+      const policyDesc = (L.POLICY_LABELS && L.POLICY_LABELS[activeSuite.vehicle_limit_policy]) || activeSuite.vehicle_limit_policy || "";
 
       bodyHtml = '<div class="panel">' +
         '  <div class="panel-head">' +
-        '    <div><h2 class="panel-title">' + L.esc(L.suiteTitle(activeSuite)) + '</h2><p class="panel-sub">参考基准：' + L.esc(activeSuite.reference_kind) + " · 距离公约：" + L.esc(activeSuite.distance_convention) + " · CPU 上限 " + L.esc(sum && sum.budget_ms) + " ms" + (scope === "common_completed" && commonN ? (" · 当前仅计共同完成 " + commonN + "/" + activeSuite.instance_count + " 例") : "") + "</p></div>" +
+        '    <div><h2 class="panel-title">' + L.esc(L.suiteTitle(activeSuite)) + '</h2><p class="panel-sub">参考基准：' + L.esc(activeSuite.reference_kind) + " · 距离公约：" + L.esc(activeSuite.distance_convention) + (policyDesc ? (" · 车数口径：" + L.esc(policyDesc)) : "") + " · CPU 上限 " + L.esc(sum && sum.budget_ms) + " ms" + (scope === "common_completed" && commonN ? (" · 当前按共同完成集 N_common=" + commonN + "/" + activeSuite.instance_count + " 例同样本排名") : (hasPartial ? " · 当前为含部分完成算例的原始完成率统计" : "")) + "</p></div>" +
         '    <div class="controls-inline"><button class="btn sm" id="l2-export-latex">LaTeX 表</button><button class="btn sm" id="l2-export-csv">CSV</button><button class="btn sm" id="l2-export-json">JSON</button></div>' +
         "  </div>" +
         '  <div class="table-wrap"><table>' +
-        '    <thead><tr><th>算法</th><th>范式</th><th>完成情况</th><th class="sortable num" data-sort="mean_tour_length">均目标值 ⇅</th><th class="sortable num" data-sort="mean_rel_gap">平均差距 ⇅</th><th class="sortable num" data-sort="solve_ms_p50">P50 / P95 ⇅</th><th class="num">主动早返</th><th class="num">操作</th></tr></thead>' +
+        '    <thead><tr><th>算法</th><th>范式</th><th>完成情况</th><th class="sortable num" data-sort="mean_tour_length">均目标值 ⇅</th><th class="sortable num" data-sort="mean_rel_gap">平均差距 ⇅</th>' + (isFixedKSuite ? '<th class="num">固定 k 合规 (==k · 同 k 均差)</th>' : "") + '<th class="sortable num" data-sort="solve_ms_p50">P50 / P95 ⇅</th><th class="num">主动早返</th><th class="num">操作</th></tr></thead>' +
         "    <tbody>" + trs + "</tbody>" +
         "  </table></div>" +
         '  <div id="l2-latex-preview" style="margin-top:14px;"></div>' +
@@ -244,7 +267,7 @@
     if (sSel) {
       sSel.addEventListener("change", function () {
         const sObj = L.getSuite(core, sSel.value);
-        nav({ suite: sSel.value, family: (sObj && sObj.problem_family) || state.family, scope: "overall", inst: "" });
+        nav({ suite: sSel.value, family: (sObj && sObj.problem_family) || state.family, scope: "", inst: "" });
       });
     }
     const ck = rootEl.querySelector("#bm-common-ck");

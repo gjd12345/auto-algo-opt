@@ -56,6 +56,8 @@ ALLOWED_VEHICLE_LIMIT_POLICIES = frozenset({
     "unconstrained",
     "min_vehicles_advisory",
     "strict_max_vehicles",
+    "free_fleet_min_k_lb",
+    "fixed_k_unconstrained_eval",
     "not_applicable",
 })
 

@@ -102,7 +102,15 @@ def aggregate_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             "mean_route_count": None,
             "vehicle_limit_checked": 0,
             "vehicle_limit_compliance_rate": None,
+            "exact_k_checked": 0,
+            "exact_k_count": 0,
+            "lt_k_count": 0,
+            "gt_k_count": 0,
+            "exact_k_compliance_rate": None,
+            "exact_k_mean_rel_gap": None,
             "budget_exhausted_count": 0,
+            "ok_budget_exhausted_count": 0,
+            "timeout_count": 0,
             "local_opt_convergence_rate": None,
             "preprocess_ms_p50": None,
             "solve_ms_p50": None,
@@ -120,7 +128,14 @@ def aggregate_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     ver_ms = [float(r["verify_ms"]) for r in records if r.get("verify_ms") is not None]
     veh_checked = [r for r in ok_rows if r.get("within_vehicle_limit") is not None]
     veh_ok = sum(1 for r in veh_checked if r.get("within_vehicle_limit") is True)
+    exact_checked = [r for r in ok_rows if r.get("target_vehicles") is not None and r.get("route_count") is not None]
+    exact_k_rows = [r for r in exact_checked if int(r["route_count"]) == int(r["target_vehicles"])]
+    lt_k_count = sum(1 for r in exact_checked if int(r["route_count"]) < int(r["target_vehicles"]))
+    gt_k_count = sum(1 for r in exact_checked if int(r["route_count"]) > int(r["target_vehicles"]))
+    exact_gaps = [float(r["rel_gap"]) for r in exact_k_rows if r.get("rel_gap") is not None]
     budget_ex = sum(1 for r in records if r.get("budget_exhausted") is True)
+    ok_budget_ex = sum(1 for r in ok_rows if r.get("budget_exhausted") is True)
+    timeout_cnt = sum(1 for r in records if r.get("status") == "timeout")
     early_ret = sum(int(r.get("voluntary_early_return_count") or 0) for r in ok_rows)
 
     return {
@@ -134,8 +149,16 @@ def aggregate_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "mean_route_count": round(float(np.mean(routes_cnt)), 3) if routes_cnt else None,
         "vehicle_limit_checked": len(veh_checked),
         "vehicle_limit_compliance_rate": round(veh_ok / len(veh_checked), 6) if veh_checked else None,
+        "exact_k_checked": len(exact_checked),
+        "exact_k_count": len(exact_k_rows),
+        "lt_k_count": lt_k_count,
+        "gt_k_count": gt_k_count,
+        "exact_k_compliance_rate": round(len(exact_k_rows) / len(exact_checked), 6) if exact_checked else None,
+        "exact_k_mean_rel_gap": round(float(np.mean(exact_gaps)), 6) if exact_gaps else None,
         "budget_exhausted_count": budget_ex,
-        "local_opt_convergence_rate": round((len(ok_rows) - budget_ex) / n, 6),
+        "ok_budget_exhausted_count": ok_budget_ex,
+        "timeout_count": timeout_cnt,
+        "local_opt_convergence_rate": round((len(ok_rows) - ok_budget_ex) / n, 6),
         "preprocess_ms_p50": _quantile(pre_ms, 50),
         "solve_ms_p50": _quantile(sol_ms, 50),
         "solve_ms_p95": _quantile(sol_ms, 95),
@@ -454,6 +477,8 @@ def run_workbench_evaluation(
                         "mean_utilization": res["mean_utilization"],
                         "target_vehicles": res["target_vehicles"],
                         "within_vehicle_limit": res["within_vehicle_limit"],
+                        "exact_vehicle_count": res["exact_vehicle_count"],
+                        "vehicle_count_delta": res["vehicle_count_delta"],
                         "preprocess_ms": res["preprocess_ms"],
                         "solve_ms": res["solve_ms"],
                         "verify_ms": res["verify_ms"],

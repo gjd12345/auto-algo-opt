@@ -159,6 +159,7 @@
     const hp = core.h003_preview;
     if (!hp || !hp.summary) return "";
     const s = hp.summary;
+    const arch = hp.archived_theory;
     const bySize = hp.by_size || {};
     const rows = ["50", "100", "200"].map(function (sz) {
       const b = bySize[sz];
@@ -171,12 +172,16 @@
         '<td class="num">' + b.wtl.wins + " / " + b.wtl.losses + "</td></tr>";
     }).join("");
 
+    const archNote = arch
+      ? (" · 历史 V0_decoupled_theory 另改写中程破平 1/24,397 步，均长 " + L.fmtNum(arch.mean, 4) + "，降幅 -" + L.fmtRatioAsPctPlain(arch.rel_gain, 2))
+      : "";
+
     return '<div class="panel">' +
       '<div class="panel-head">' +
-      '  <div><h3 class="panel-title">P0-120 配对检验：原始 V0 vs 出仓解耦改写</h3><p class="panel-sub">整体相对降幅 -' + L.fmtRatioAsPctPlain(s.rel_gain, 2) + "（95% CI [" + L.fmtRatioAsPctPlain(s.ci95[0], 2) + ", " + L.fmtRatioAsPctPlain(s.ci95[1], 2) + "]，胜/负 " + s.wtl.wins + "/" + s.wtl.losses + "）</p></div>" +
+      '  <div><h3 class="panel-title">P0-120 配对检验：原始 V0 vs 严格出仓反事实替换</h3><p class="panel-sub">严格保留冻结 V0 中程逻辑、仅替换出仓步：总体降幅 -' + L.fmtRatioAsPctPlain(s.rel_gain, 2) + "（均值 " + L.fmtNum(s.means[1], 4) + "，95% CI [" + L.fmtRatioAsPctPlain(s.ci95[0], 2) + ", " + L.fmtRatioAsPctPlain(s.ci95[1], 2) + "]，胜/负 " + s.wtl.wins + "/" + s.wtl.losses + L.esc(archNote) + "）</p></div>" +
       '  <button class="btn sm" data-nav="page=knowledge&tab=stories&story=h003">进入 H-003 机理页 →</button>' +
       "</div>" +
-      '<div class="table-wrap"><table><thead><tr><th>规模分组</th><th class="num">V0 均值</th><th class="num">解耦改写均值</th><th class="num">相对降幅</th><th class="num">95% Bootstrap CI</th><th class="num">胜 / 负</th></tr></thead>' +
+      '<div class="table-wrap"><table><thead><tr><th>规模分组</th><th class="num">V0 均值</th><th class="num">严格出仓替换均值</th><th class="num">相对降幅</th><th class="num">95% Bootstrap CI</th><th class="num">胜 / 负</th></tr></thead>' +
       "<tbody>" + rows + "</tbody></table></div></div>";
   }
 

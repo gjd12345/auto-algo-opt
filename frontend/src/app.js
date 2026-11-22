@@ -19,7 +19,7 @@
       family: params.get("family") || "cvrp",
       suite: params.get("suite") || "",
       tab: params.get("tab") || "",
-      scope: params.get("scope") || "overall",
+      scope: params.get("scope") || "",
       sortBy: params.get("sortBy") || "mean_rel_gap",
       sortDir: params.get("sortDir") || "asc",
       inst: params.get("inst") || "",
@@ -54,7 +54,7 @@
     if (st.family && st.family !== "cvrp") p.set("family", st.family);
     if (st.suite) p.set("suite", st.suite);
     if (st.tab) p.set("tab", st.tab);
-    if (st.scope && st.scope !== "overall") p.set("scope", st.scope);
+    if (st.scope) p.set("scope", st.scope);
     if (st.sortBy && st.sortBy !== "mean_rel_gap") p.set("sortBy", st.sortBy);
     if (st.sortDir && st.sortDir !== "asc") p.set("sortDir", st.sortDir);
     if (st.inst) p.set("inst", st.inst);

@@ -370,12 +370,17 @@
         for (const value of values) row.insertCell().textContent = value;
       }
       const replay = data.checks;
-      const caveat = replay.differences
-        ? "归档对照在中程去掉了 V0 的微小需求破平项。两组重放共执行 " + replay.states.toLocaleString("zh-CN") + " 次中程选择，其中 " + replay.differences + " 次受这一项影响。"
-        : "本次重放到达的中程状态上，两条规则均给出相同的选择。";
+      const arch = data.archived_theory;
       const strict = data.depot_only;
-      text("replay-checks", caveat + " 严格保留原始中程代码后，均长为 " + number(strict.mean)
-        + "，总路程下降 " + percent(strict.rel_gain) + "，较归档版本有 " + strict.changed_instances + " 例路长发生变化。");
+      const caveat = replay.differences
+        ? "本页主表严格保留冻结 V0 中程代码（仅替换出仓分支），均长为 " + number(strict.mean)
+          + "，总路程下降 " + percent(strict.rel_gain) + "（95% 区间 " + interval(strict.ci95) + "，" + strict.wtl.wins + " 胜 " + strict.wtl.losses + " 负）。"
+          + "历史归档脚本 V0_decoupled_theory 在中程去掉了 V0 的微小需求破平项，两组重放共执行 "
+          + replay.states.toLocaleString("zh-CN") + " 次中程选择，其中 " + replay.differences + " 次受此项影响（"
+          + (strict.changed_instance_ids && strict.changed_instance_ids.length ? strict.changed_instance_ids.join(", ") : strict.changed_instances + " 例")
+          + "），对应归档均长 " + (arch ? number(arch.mean) : "—") + "、降幅 " + (arch ? percent(arch.rel_gain) : "—") + "。"
+        : "本次重放到达的中程状态上，严格仅替换出仓与历史解耦脚本给出完全一致的选择。";
+      text("replay-checks", caveat);
     }
 
     function showScores(instance) {

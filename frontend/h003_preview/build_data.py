@@ -33,13 +33,12 @@ def replay(instance, rule, counterpart, checks):
     return outcome
 
 
-def summarize(rows):
-    left, right = zip(*(row["lengths"] for row in rows))
-    comparison = paired_bootstrap_delta(list(right), list(left))
-    return {"n": len(rows), "means": [mean(left), mean(right)], **comparison}
+def summarize_pair(baseline_lengths, variant_lengths):
+    comparison = paired_bootstrap_delta(list(variant_lengths), list(baseline_lengths))
+    return {"n": len(baseline_lengths), "means": [mean(baseline_lengths), mean(variant_lengths)], **comparison}
 
 
-def main():
+def main(output_path: Path | None = None):
     frozen = json.loads(OUT_JSON.read_text(encoding="utf-8"))
     baseline = compile_rule(FROZEN_V0.read_text(encoding="utf-8"), "V0")
     variant = compile_rule(V0_DECOUPLED_CODE, "V0_decoupled_theory")
@@ -50,8 +49,11 @@ def main():
 
     checks = {"states": 0, "differences": 0}
     rows = []
-    depot_only_lengths = []
-    by_size = {}
+    archived_lengths = []
+    baseline_lengths = []
+    strict_lengths = []
+    archived_by_size = {}
+    strict_by_size = {}
     frozen_comparisons = frozen["comparisons"]["V0_decoupled_vs_V0"]
     for size in (50, 100, 200):
         path = FROZEN_P0 / f"suite_{size}.json"
@@ -63,52 +65,73 @@ def main():
             strict = execute_pointwise_rule(replace_depot_only, instance, record_trace=False)
             if not strict["valid"]:
                 raise ValueError(f"{instance['instance_id']}: {strict['error_detail']}")
-            depot_only_lengths.append(strict["tour_length"])
+            baseline_lengths.append(left["tour_length"])
+            archived_lengths.append(right["tour_length"])
+            strict_lengths.append(strict["tour_length"])
             rows.append({
                 "id": instance["instance_id"],
                 "size": size,
                 "coords": [instance["depot"], *instance["customer_coordinates"]],
                 "demands": [0, *instance["demands"]],
                 "capacity": instance["capacity"],
-                "lengths": [left["tour_length"], right["tour_length"]],
-                "routes": [left["routes"], right["routes"]],
+                "lengths": [left["tour_length"], strict["tour_length"]],
+                "routes": [left["routes"], strict["routes"]],
+                "archived_length": right["tour_length"],
             })
-        stats = summarize(rows[start:])
-        if any(stats[key] != frozen_comparisons[f"p0_{size}"][key] for key in ("wtl", "rel_gain", "ci95")):
+        arch_stats = summarize_pair(baseline_lengths[start:], archived_lengths[start:])
+        if any(arch_stats[key] != frozen_comparisons[f"p0_{size}"][key] for key in ("wtl", "rel_gain", "ci95")):
             raise ValueError(f"Replayed metrics differ from the archived n={size} evidence")
-        by_size[size] = stats
+        archived_by_size[size] = arch_stats
+        strict_by_size[size] = summarize_pair(baseline_lengths[start:], strict_lengths[start:])
 
-    summary = summarize(rows)
+    archived_summary = summarize_pair(baseline_lengths, archived_lengths)
     archived = frozen_comparisons["p0_all120"]
-    if any(summary[key] != archived[key] for key in ("wtl", "rel_gain", "ci95")):
+    if any(archived_summary[key] != archived[key] for key in ("wtl", "rel_gain", "ci95")):
         raise ValueError("Replayed metrics differ from the archived P0-120 evidence")
-    for actual, rule_id in zip(summary["means"], ("V0", "V0_decoupled_theory")):
+    for actual, rule_id in zip(archived_summary["means"], ("V0", "V0_decoupled_theory")):
         if round(actual, 4) != frozen["results"][rule_id]["p0_120_mean"]:
             raise ValueError(f"Replayed average differs from the archived {rule_id} evidence")
 
+    strict_summary = summarize_pair(baseline_lengths, strict_lengths)
     examples = [row for row in rows if row["size"] == 50 and row["routes"][0][0][1] != row["routes"][1][0][1]]
     target = median(row["lengths"][0] - row["lengths"][1] for row in examples)
     example = min(examples, key=lambda row: abs(row["lengths"][0] - row["lengths"][1] - target))
+    changed_ids = [
+        row["id"] for row in rows if abs(row["lengths"][1] - row["archived_length"]) > 1e-8
+    ]
     depot_only = {
-        "mean": mean(depot_only_lengths),
-        "rel_gain": paired_bootstrap_delta(depot_only_lengths, [row["lengths"][0] for row in rows])["rel_gain"],
-        "changed_instances": sum(abs(value - row["lengths"][1]) > 1e-8 for row, value in zip(rows, depot_only_lengths)),
+        **strict_summary,
+        "mean": strict_summary["means"][1],
+        "by_size": strict_by_size,
+        "changed_instances": len(changed_ids),
+        "changed_instance_ids": changed_ids,
+    }
+    archived_theory = {
+        **archived_summary,
+        "mean": archived_summary["means"][1],
+        "by_size": archived_by_size,
     }
     payload = {
-        "summary": summary,
-        "by_size": by_size,
+        "summary": strict_summary,
+        "by_size": strict_by_size,
         "checks": checks,
         "depot_only": depot_only,
+        "archived_theory": archived_theory,
         "example": example["id"],
         "instances": rows,
     }
-    Path(__file__).with_name("data.js").write_text(
+    out_target = Path(output_path) if output_path is not None else Path(__file__).with_name("data.js")
+    out_target.write_text(
         "window.H003_PREVIEW = " + json.dumps(payload, separators=(",", ":"), allow_nan=False) + ";\n",
         encoding="utf-8",
         newline="\n",
     )
-    print(f"Replayed {summary['n']} pairs; {checks}; example={example['id']}")
+    print(f"Replayed {strict_summary['n']} pairs; strict_gain={strict_summary['rel_gain']:.6f}; archived_gain={archived_summary['rel_gain']:.6f}; {checks}; changed={changed_ids}; example={example['id']}")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--output", type=Path, default=None)
+    args = p.parse_args()
+    main(args.output)

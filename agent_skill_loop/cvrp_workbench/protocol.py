@@ -8,12 +8,9 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+from agent_skill_loop.benchmark.contracts import ALLOWED_VEHICLE_LIMIT_POLICIES
+
 ALLOWED_DISTANCE_CONVENTIONS = frozenset({"euc_2d_float", "euc_2d_nint"})
-ALLOWED_VEHICLE_LIMIT_POLICIES = frozenset({
-    "unconstrained",
-    "min_vehicles_advisory",
-    "strict_max_vehicles",
-})
 
 FEATURE_NAMES: tuple[str, ...] = (
     "mean_demand",
@@ -172,6 +169,8 @@ def verify_cvrp_solution(
             "mean_utilization": None,
             "target_vehicles": target_vehicles,
             "within_vehicle_limit": None,
+            "exact_vehicle_count": None,
+            "vehicle_count_delta": None,
             "verify_ms": round((time.perf_counter() - t0) * 1000.0, 4),
         }
 
@@ -226,6 +225,8 @@ def verify_cvrp_solution(
 
     route_count = len(routes)
     within_vehicle_limit = None if target_vehicles is None else (route_count <= target_vehicles)
+    exact_vehicle_count = None if target_vehicles is None else (route_count == target_vehicles)
+    vehicle_count_delta = None if target_vehicles is None else (route_count - target_vehicles)
     utils = [load / capacity for load in route_loads] if route_loads else [0.0]
 
     # 5. Vehicle limit policy
@@ -243,6 +244,8 @@ def verify_cvrp_solution(
             "mean_utilization": round(sum(utils) / len(utils), 6),
             "target_vehicles": target_vehicles,
             "within_vehicle_limit": False,
+            "exact_vehicle_count": False,
+            "vehicle_count_delta": vehicle_count_delta,
             "verify_ms": round((time.perf_counter() - t0) * 1000.0, 4),
         }
 
@@ -259,6 +262,8 @@ def verify_cvrp_solution(
         "mean_utilization": round(sum(utils) / len(utils), 6),
         "target_vehicles": target_vehicles,
         "within_vehicle_limit": within_vehicle_limit,
+        "exact_vehicle_count": exact_vehicle_count,
+        "vehicle_count_delta": vehicle_count_delta,
         "verify_ms": round((time.perf_counter() - t0) * 1000.0, 4),
     }
 

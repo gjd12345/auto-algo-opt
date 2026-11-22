@@ -1132,7 +1132,7 @@ def materialize_cvrp_workbench_registry(
             "suite_role": "external_or_standard",
             "exposure_status": "public_standard",
             "distance_convention": "euc_2d_nint",
-            "vehicle_limit_policy": "min_vehicles_advisory",
+            "vehicle_limit_policy": "fixed_k_unconstrained_eval",
             "reference_kind": "best_known",
             "asset_status": "original_verified",
             "upstream_repo": cvrplib_abp_meta["upstream_repo"],
@@ -1141,7 +1141,9 @@ def materialize_cvrp_workbench_registry(
             "published_file": "eohs_2025_tables_1_3.json",
             "instances": cvrplib_abp_74,
             "metadata": cvrplib_abp_meta,
-            "deviations": ["full CVRPLib Augerat Set A (27) + Set B (23) + Set P (24) = 74 instances with official .sol routes verified to 0.0 euc_2d_nint error"],
+            "deviations": [
+                "full CVRPLib Augerat Set A (27) + Set B (23) + Set P (24) = 74 instances with official .sol routes (fixed k per instance) verified to 0.0 euc_2d_nint error; local constructive/search solvers run unconstrained and report exact-k compliance alongside unconstrained BKS gap"
+            ],
         },
         {
             "profile": "cvrp_ext_cvrplib_x_100",
@@ -1152,7 +1154,7 @@ def materialize_cvrp_workbench_registry(
             "suite_role": "external_or_standard",
             "exposure_status": "public_standard",
             "distance_convention": "euc_2d_nint",
-            "vehicle_limit_policy": "min_vehicles_advisory",
+            "vehicle_limit_policy": "free_fleet_min_k_lb",
             "reference_kind": "best_known",
             "asset_status": "original_verified",
             "upstream_repo": cvrplib_x_meta["upstream_repo"],
@@ -1162,7 +1164,9 @@ def materialize_cvrp_workbench_registry(
             "instances": cvrplib_x_100,
             "metadata": cvrplib_x_meta,
             "compact_manifest": True,
-            "deviations": ["complete Uchoa et al. 2017 Set X (all 100 instances, n=100..1000, X-S/X-M/X-L tiers) with 100/100 official .sol routes verified to strict 0.0 euc_2d_nint error"],
+            "deviations": [
+                "complete Uchoa et al. 2017 Set X (all 100 instances, n=100..1000, X-S/X-M/X-L tiers, free fleet with k as minimum-vehicles lower bound) with 100/100 official .sol routes verified to strict 0.0 euc_2d_nint error"
+            ],
         },
         {
             "profile": "tsp_ext_tsplib_euc2d",

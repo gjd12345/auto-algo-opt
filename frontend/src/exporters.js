@@ -89,10 +89,11 @@
     const sum = L.getSuiteSummary(core, suiteId);
     if (!suite || !sum) return "% Suite summary unavailable";
 
-    const useCommon = scope === "common_completed" && sum.common_completed_count;
+    const effScope = L.resolveScope(sum, scope);
+    const useCommon = effScope === "common_completed" && sum.common_completed_count;
     const commonN = sum.common_completed_count || suite.instance_count;
     const rows = Object.keys(sum.algorithms || {}).map(function (aid) {
-      const stats = L.getAlgStats(sum, aid, scope);
+      const stats = L.getAlgStats(sum, aid, effScope);
       return { aid: aid, stats: stats, allStats: L.getAlgStats(sum, aid, "overall") };
     }).filter(function (r) { return Boolean(r.stats); });
 

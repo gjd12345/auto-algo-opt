@@ -244,6 +244,8 @@ def execute_pointwise_rule(
             "mean_utilization": None,
             "target_vehicles": instance.get("k_vehicles"),
             "within_vehicle_limit": None,
+            "exact_vehicle_count": None,
+            "vehicle_count_delta": None,
             "verify_ms": 0.0,
         }
 
@@ -261,6 +263,8 @@ def execute_pointwise_rule(
         "mean_utilization": verification["mean_utilization"],
         "target_vehicles": verification["target_vehicles"],
         "within_vehicle_limit": verification["within_vehicle_limit"],
+        "exact_vehicle_count": verification["exact_vehicle_count"],
+        "vehicle_count_delta": verification["vehicle_count_delta"],
         "preprocess_ms": round(preprocess_ms, 4),
         "solve_ms": round(solve_ms, 4),
         "verify_ms": round(float(verification["verify_ms"]), 4),

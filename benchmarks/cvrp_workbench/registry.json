@@ -257,7 +257,7 @@
       "suite_role": "external_or_standard",
       "exposure_status": "public_standard",
       "distance_convention": "euc_2d_nint",
-      "vehicle_limit_policy": "min_vehicles_advisory",
+      "vehicle_limit_policy": "fixed_k_unconstrained_eval",
       "instance_count": 74,
       "upstream_repo": "https://github.com/vidalt/CVRPLIB",
       "upstream_commit": "34985dd200238b69b8eb18abb8e4b0f6fd8b9257",
@@ -275,11 +275,11 @@
       "manifests": {
         "reference_hash": "10b6b339c6d24f55654ae2ee6b3e1c3d40e749979791bb736a770cc2bf58edca",
         "train_hash": "fddeddc763c49538c9c16991bfe9c18257714614b909b6eaba79708df73bbebe",
-        "test_hash": "9870e55c9e363df2461f83d449db8c01e7133423ba4e3eb1513209d9c2410c38",
+        "test_hash": "ee2bf959b312910b06ea245233b164aa0c043959e894aeaec40283387b1d8bf9",
         "dev_train_hash": "fddeddc763c49538c9c16991bfe9c18257714614b909b6eaba79708df73bbebe",
-        "heldout_hash": "9870e55c9e363df2461f83d449db8c01e7133423ba4e3eb1513209d9c2410c38"
+        "heldout_hash": "ee2bf959b312910b06ea245233b164aa0c043959e894aeaec40283387b1d8bf9"
       },
-      "metric_spec_hash": "bb0e145f721ca6ae9232078501ade73bfb28fbecb149e6bad3129fc91ea5c117",
+      "metric_spec_hash": "fcdfec70e2aafc496090f022a5e5dfc3c56a34b7a5528cd24d2865638980891d",
       "metric_spec": {
         "metric_id": "instance_relative_gap",
         "version": "v1",
@@ -291,12 +291,12 @@
           "numerator": "raw_objective-reference_objective",
           "denominator": "reference_objective",
           "distance_convention": "euc_2d_nint",
-          "vehicle_limit_policy": "min_vehicles_advisory"
+          "vehicle_limit_policy": "fixed_k_unconstrained_eval"
         }
       },
-      "benchmark_spec_hash": "03ac917b736733f5771adbdce0d9532e8a1d9ba788bed4442821131c18e73455",
+      "benchmark_spec_hash": "131db4f524ecf261abd0e385e7316961ed57c7e92eedd2d48fc9a71e1138b764",
       "deviations": [
-        "full CVRPLib Augerat Set A (27) + Set B (23) + Set P (24) = 74 instances with official .sol routes verified to 0.0 euc_2d_nint error"
+        "full CVRPLib Augerat Set A (27) + Set B (23) + Set P (24) = 74 instances with official .sol routes (fixed k per instance) verified to 0.0 euc_2d_nint error; local constructive/search solvers run unconstrained and report exact-k compliance alongside unconstrained BKS gap"
       ],
       "published_results_path": "published_results/eohs_2025_tables_1_3.json",
       "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e",
@@ -346,7 +346,7 @@
       "suite_role": "external_or_standard",
       "exposure_status": "public_standard",
       "distance_convention": "euc_2d_nint",
-      "vehicle_limit_policy": "min_vehicles_advisory",
+      "vehicle_limit_policy": "free_fleet_min_k_lb",
       "instance_count": 100,
       "upstream_repo": "https://github.com/vidalt/CVRPLIB",
       "upstream_commit": "34985dd200238b69b8eb18abb8e4b0f6fd8b9257",
@@ -364,11 +364,11 @@
       "manifests": {
         "reference_hash": "5f5ca2dff7f475c9c11c099b7c38cdf3d53241e6885690fe527aee39b1fcdeeb",
         "train_hash": "159879ddc51bb301f8bb361be8b991a0f953c4a8218e93d5b55d5c0ea688f049",
-        "test_hash": "d381114046797b9fa397d1b320b0b23c50a4aec94a1fe30a18a63d9c7595134e",
+        "test_hash": "10e90b58e30ea8c2f9b5738425b52dfb4538c30d44dc884059a882f3ad2ddf2a",
         "dev_train_hash": "159879ddc51bb301f8bb361be8b991a0f953c4a8218e93d5b55d5c0ea688f049",
-        "heldout_hash": "d381114046797b9fa397d1b320b0b23c50a4aec94a1fe30a18a63d9c7595134e"
+        "heldout_hash": "10e90b58e30ea8c2f9b5738425b52dfb4538c30d44dc884059a882f3ad2ddf2a"
       },
-      "metric_spec_hash": "081d06f1031dc2fba72d82d963843eb8d914da1393992885398a6a3aeabb418f",
+      "metric_spec_hash": "bae630b8ac24a4bbd78cadac29004bff91c978753b8885ec1f31e703dc165181",
       "metric_spec": {
         "metric_id": "instance_relative_gap",
         "version": "v1",
@@ -380,12 +380,12 @@
           "numerator": "raw_objective-reference_objective",
           "denominator": "reference_objective",
           "distance_convention": "euc_2d_nint",
-          "vehicle_limit_policy": "min_vehicles_advisory"
+          "vehicle_limit_policy": "free_fleet_min_k_lb"
         }
       },
-      "benchmark_spec_hash": "ad67f28644f451027cfbe0f0cd0ecc3b73b5b05f72616d94d0ceb37ea5abf32e",
+      "benchmark_spec_hash": "1180b5bf47b3a59679c3320573234378c0507323e8d6971e6c02223975bd88b1",
       "deviations": [
-        "complete Uchoa et al. 2017 Set X (all 100 instances, n=100..1000, X-S/X-M/X-L tiers) with 100/100 official .sol routes verified to strict 0.0 euc_2d_nint error"
+        "complete Uchoa et al. 2017 Set X (all 100 instances, n=100..1000, X-S/X-M/X-L tiers, free fleet with k as minimum-vehicles lower bound) with 100/100 official .sol routes verified to strict 0.0 euc_2d_nint error"
       ],
       "published_results_path": "published_results/eohs_2025_tables_1_3.json",
       "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e"
