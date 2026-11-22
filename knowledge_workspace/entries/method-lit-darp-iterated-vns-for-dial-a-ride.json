@@ -18,7 +18,12 @@
       "adapter_kind": "not_mappable"
     },
     "not_the_original": "DARP windows and pairing are not in cvrp_construct.",
-    "origin": "openalex+grok-4.5-screen"
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "darp",
+    "paradigm": "metaheuristic",
+    "complexity_class": "O(k*n^2)",
+    "variant_adaptation_note": "原文献针对带乘客上下车配对、先后序与最大乘车时间约束的多目标拨号乘车问题（DARP），并非标准 CVRP 的 VNS。标准 CVRP 下的变邻域搜索请使用 method-cvrp-vns（直接基于单客户需求容量约束与 2-opt/Or-opt/relocate/swap/2-opt* 邻域，无需配对与时间窗校验）。"
   },
   "relations": {
     "problems": [

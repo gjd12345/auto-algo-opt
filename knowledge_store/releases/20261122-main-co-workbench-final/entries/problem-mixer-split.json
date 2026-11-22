@@ -1,0 +1,36 @@
+{
+  "type": "problem",
+  "title": "Mixer split (concrete delivery volume split)",
+  "category": "problem",
+  "problem_family": "mixer_split",
+  "tags": [
+    "mixer-split"
+  ],
+  "status": "reviewed",
+  "summary": "Split order volumes into vehicle-capacity suborders; cost combines extra vehicles, suborder count, and travel/mix time.",
+  "attributes": {
+    "online_offline": "offline",
+    "interface": "SplitOrders",
+    "objective": "weighted cost"
+  },
+  "relations": {
+    "methods": [
+      "method-mixer-greedy-capacity-split"
+    ],
+    "implementations": [
+      "impl-mixer-split-greedy"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go",
+      "sha256": "d2ec22a1d1473375660ed16b2d278782feac20dbcdc598bd8a3714941d429dc0"
+    }
+  ],
+  "id": "problem-mixer-split",
+  "content_sha256": "6672424c39b25f0e8211540cea9d3def61b49d1d2c9d6e39068f5f40f24ef502"
+}

@@ -7,9 +7,14 @@ consume these records but never treats a report as control state.
 """
 
 from .contracts import (
+    ALLOWED_BENCHMARK_TIERS,
+    ALLOWED_DISTANCE_CONVENTIONS,
+    ALLOWED_EXPOSURE_STATUSES,
     ALLOWED_FROZEN_SELECTION_KINDS,
     ALLOWED_REFERENCE_KINDS,
     ALLOWED_ASSET_STATUSES,
+    ALLOWED_SUITE_ROLES,
+    ALLOWED_VEHICLE_LIMIT_POLICIES,
     BenchmarkSpec,
     ExperimentManifest,
     FrozenSelection,
@@ -20,7 +25,13 @@ from .contracts import (
     sha256_json,
     sha256_text,
 )
-from .catalog import benchmark_profile, load_benchmark_registry, load_profile_suite
+from .catalog import (
+    benchmark_profile,
+    list_benchmark_profiles,
+    load_all_benchmark_registries,
+    load_benchmark_registry,
+    load_profile_suite,
+)
 from .archive import ArchiveEntry, build_archive, build_archive_from_session, freeze_selection
 from .report import build_report
 from .research_report import build_research_loop_report
@@ -33,8 +44,13 @@ from .pilot import (
 
 __all__ = [
     "ALLOWED_ASSET_STATUSES",
+    "ALLOWED_BENCHMARK_TIERS",
+    "ALLOWED_DISTANCE_CONVENTIONS",
+    "ALLOWED_EXPOSURE_STATUSES",
     "ALLOWED_FROZEN_SELECTION_KINDS",
     "ALLOWED_REFERENCE_KINDS",
+    "ALLOWED_SUITE_ROLES",
+    "ALLOWED_VEHICLE_LIMIT_POLICIES",
     "BenchmarkSpec",
     "ArchiveEntry",
     "ExperimentManifest",
@@ -48,6 +64,8 @@ __all__ = [
     "build_research_loop_report",
     "benchmark_profile",
     "evaluation_identity",
+    "list_benchmark_profiles",
+    "load_all_benchmark_registries",
     "load_benchmark_registry",
     "load_profile_suite",
     "sha256_json",

@@ -1,0 +1,96 @@
+{
+  "type": "method",
+  "title": "Standard CVRP Large Neighborhood Search (LNS / Shaw-Regret Ruin-and-Recreate)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "lns",
+    "alns",
+    "ruin-and-recreate",
+    "shaw-removal",
+    "regret",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Ruin-and-recreate metaheuristic for standard CVRP pairing Shaw relatedness/worst/random destroy operators with cheapest and Regret-k repair under explicit time budgets.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "O(k*n^2)",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "cvrplib_set_x",
+        "large_n_200_to_1000",
+        "tight_capacity",
+        "escaping_deep_local_optima"
+      ],
+      "weak_on": [
+        "sub_20ms_budget"
+      ],
+      "scale_notes": "每次破坏 10%-25% 相关客户并用 Regret-k 整体重插，能够一次性跨越局部搜索需要几十步才能完成的路径重组，在 Set X 大规模异构算例上优势显著。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "外层循环维护全局最优与当前解；每轮执行 Destroy(移除 q 个客户) -> Repair(Cheapest / Regret-k 重插) -> 可选轻量局部搜索 -> SA / Record-to-Record 接受准则",
+      "evolvable_hook": "destroy_relatedness(i, j, routes, dmat, demands) 与 repair_priority(u, insertion_costs) 及自适应算子权重更新",
+      "state_maintained": [
+        "best_routes",
+        "current_routes",
+        "operator_weights",
+        "temperature_or_rtr_threshold"
+      ],
+      "invariants_and_constraints": [
+        "Destroy 移除客户数 q 满足 1 <= q < n",
+        "Repair 阶段允许新开路径保证 100% 恢复可行解",
+        "所有候选解须在输出前通过独立全解校验器"
+      ],
+      "typical_pitfalls": [
+        "移除比例过高导致单轮重插耗时爆炸",
+        "Shaw 相关性缺少随机化指数 p 导致反复拆同一簇陷入循环"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "R_Shaw(i, j) = phi_d * (d(i,j)/d_max) + phi_q * (|q_i - q_j|/q_max) + phi_r * 1[route(i) != route(j)]",
+        "variables": {
+          "R_Shaw(i,j)": "客户 i 与 j 的相关性（越小越相关）",
+          "phi_d, phi_q, phi_r": "空间/需求/同路径权重"
+        },
+        "preconditions": "无时间窗标准 CVRP（去掉时间窗项）；按 u^p 幂律随机偏向选择相关性最小的待移除客户"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-cheapest-regret-insertion",
+      "method-cvrp-vns"
+    ],
+    "sources": [
+      "src-shaw-1998-lns",
+      "src-ropke-pisinger-2006-alns"
+    ]
+  },
+  "source_refs": [
+    "src-shaw-1998-lns",
+    "src-ropke-pisinger-2006-alns"
+  ],
+  "evidence_refs": [
+    "literature:10.1007/3-540-49481-2_30",
+    "literature:10.1287/trsc.1050.0135"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-lns-shaw-regret",
+  "content_sha256": "f23f9a5db9b6b49fe00e04e17cec78ac17e93d6a555e26a846cca00f2e728709"
+}

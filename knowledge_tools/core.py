@@ -122,6 +122,51 @@ SOURCE_READ_DEPTHS = frozenset({"metadata", "metadata_only", "abstract", "full_t
 EVALUATION_EVIDENCE_PREFIXES = ("evaluation:", "metric:")
 GENERIC_RUN_INDEX = "run-index:inventory"
 
+ALLOWED_KNOWLEDGE_TIERS = frozenset({
+    "literature_abstract",
+    "local_implementation",
+    "verified_experiment",
+    "math_observation",
+    "failure_antipattern",
+})
+ALLOWED_PROBLEM_VARIANTS = frozenset({
+    "standard_cvrp",
+    "vrptw",
+    "darp",
+    "ovrp",
+    "standard_tsp",
+    "online_bp",
+    "other",
+})
+ALLOWED_PARADIGMS = frozenset({
+    "sequential_construct",
+    "parallel_merge",
+    "insertion",
+    "cluster_first",
+    "local_search",
+    "metaheuristic",
+    "ruin_and_recreate",
+    "math_mechanism",
+    "selector_portfolio",
+    "complementary_constructive_set",
+    "llm_ahd_framework",
+})
+ALLOWED_COMPARISON_MODES = frozenset({
+    "local_recomputed",
+    "paper_reported_reference",
+})
+ALLOWED_PAPER_VERIFICATION_STATUSES = frozenset({
+    "verified_from_paper_table",
+    "pending_pdf_or_repo_table_extraction",
+})
+ALLOWED_COMPLEXITY_CLASSES = frozenset({
+    "O(n^2)",
+    "O(n^2 log n)",
+    "O(k*n^2)",
+    "O(1)",
+    "empirical",
+})
+
 
 def utc_now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -990,6 +1035,91 @@ def validate_workspace(workspace: Path) -> dict[str, Any]:
                 errors.append(f"entry {entry_id!r} has eoh_map=possible but no ## EoH 适配")
             if eoh.get("adapter_kind") == "not_mappable":
                 errors.append(f"entry {entry_id!r} possible map cannot use not_mappable adapter")
+        attrs = metadata.get("attributes")
+        if isinstance(attrs, Mapping):
+            tier = attrs.get("knowledge_tier")
+            if tier is not None and tier not in ALLOWED_KNOWLEDGE_TIERS:
+                errors.append(f"entry {entry_id!r} has invalid attributes.knowledge_tier: {tier!r}")
+            variant = attrs.get("problem_variant")
+            if variant is not None:
+                if variant not in ALLOWED_PROBLEM_VARIANTS:
+                    errors.append(f"entry {entry_id!r} has invalid attributes.problem_variant: {variant!r}")
+                elif variant != "standard_cvrp":
+                    note = attrs.get("variant_adaptation_note")
+                    if not isinstance(note, str) or not note.strip():
+                        errors.append(
+                            f"entry {entry_id!r} has problem_variant={variant!r} but lacks attributes.variant_adaptation_note"
+                        )
+            paradigm_val = attrs.get("paradigm")
+            if paradigm_val is not None and paradigm_val not in ALLOWED_PARADIGMS:
+                errors.append(f"entry {entry_id!r} has invalid attributes.paradigm: {paradigm_val!r}")
+            comp_val = attrs.get("complexity_class")
+            if comp_val is not None and comp_val not in ALLOWED_COMPLEXITY_CLASSES:
+                errors.append(f"entry {entry_id!r} has invalid attributes.complexity_class: {comp_val!r}")
+            regimes = attrs.get("applicable_regimes")
+            if regimes is not None:
+                if (
+                    not isinstance(regimes, Mapping)
+                    or not isinstance(regimes.get("strong_on"), list)
+                    or not isinstance(regimes.get("weak_on"), list)
+                    or not isinstance(regimes.get("scale_notes"), str)
+                ):
+                    errors.append(f"entry {entry_id!r} has malformed attributes.applicable_regimes")
+            blueprint = attrs.get("interface_blueprint")
+            if blueprint is not None:
+                if (
+                    not isinstance(blueprint, Mapping)
+                    or not isinstance(blueprint.get("skeleton_role"), str)
+                    or not isinstance(blueprint.get("evolvable_hook"), str)
+                    or not isinstance(blueprint.get("state_maintained"), list)
+                    or not isinstance(blueprint.get("invariants_and_constraints"), list)
+                    or not isinstance(blueprint.get("typical_pitfalls"), list)
+                ):
+                    errors.append(f"entry {entry_id!r} has malformed attributes.interface_blueprint")
+            math_forms = attrs.get("math_formulation")
+            if math_forms is not None:
+                if not isinstance(math_forms, list) or any(
+                    not isinstance(f, Mapping)
+                    or not isinstance(f.get("expr"), str)
+                    or not isinstance(f.get("variables"), Mapping)
+                    or not isinstance(f.get("preconditions"), str)
+                    for f in math_forms
+                ):
+                    errors.append(f"entry {entry_id!r} has malformed attributes.math_formulation")
+            ev_bindings = attrs.get("evidence_bindings")
+            if ev_bindings is not None:
+                if not isinstance(ev_bindings, list) or any(
+                    not isinstance(b, Mapping)
+                    or not isinstance(b.get("suite_id"), str)
+                    or not isinstance(b.get("algorithm_id"), str)
+                    or not isinstance(b.get("metric"), str)
+                    or "value" not in b
+                    or (b.get("comparison_mode") is not None and b.get("comparison_mode") != "local_recomputed")
+                    for b in ev_bindings
+                ):
+                    errors.append(f"entry {entry_id!r} has malformed attributes.evidence_bindings (must be local_recomputed)")
+            paper_results = attrs.get("paper_reported_results")
+            if paper_results is not None:
+                if not isinstance(paper_results, list):
+                    errors.append(f"entry {entry_id!r} attributes.paper_reported_results must be a list")
+                else:
+                    for p_idx, pr in enumerate(paper_results):
+                        if (
+                            not isinstance(pr, Mapping)
+                            or not isinstance(pr.get("paper_source_id"), str)
+                            or not isinstance(pr.get("table_ref"), str)
+                            or not isinstance(pr.get("method_name"), str)
+                            or not isinstance(pr.get("metric"), str)
+                            or pr.get("comparison_mode") != "paper_reported_reference"
+                            or pr.get("verification_status") not in ALLOWED_PAPER_VERIFICATION_STATUSES
+                            or not isinstance(pr.get("protocol_boundary_note"), str)
+                            or not pr.get("protocol_boundary_note", "").strip()
+                        ):
+                            errors.append(f"entry {entry_id!r} has malformed attributes.paper_reported_results[{p_idx}]")
+                        elif pr.get("paper_source_id") not in source_by_id:
+                            errors.append(f"entry {entry_id!r} paper_reported_results[{p_idx}] unknown source {pr.get('paper_source_id')!r}")
+                        elif pr.get("verification_status") == "verified_from_paper_table" and not isinstance(pr.get("value"), (int, float)):
+                            errors.append(f"entry {entry_id!r} paper_reported_results[{p_idx}] verified item requires numeric value")
         for ref in metadata.get("code_refs", []) or []:
             if not isinstance(ref, Mapping):
                 errors.append(f"entry {entry_id!r} has malformed code_ref")
@@ -1392,10 +1522,42 @@ def _atomic_pointer(store: Path, release_dir: Path) -> str:
         return "path_file"
 
 
+def _validate_and_list_workbench_bundle(bundle_dir: Path) -> list[dict[str, Any]]:
+    bundle_dir = bundle_dir.resolve()
+    manifest_path = bundle_dir / "workbench_manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"missing workbench_manifest.json in {bundle_dir}")
+    manifest = read_json(manifest_path)
+    if not isinstance(manifest, Mapping) or not isinstance(manifest.get("files"), list):
+        raise ValueError("invalid workbench_manifest.json")
+    listed: list[dict[str, Any]] = []
+    for item in manifest["files"]:
+        if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+            raise ValueError("malformed workbench_manifest file entry")
+        rel = _safe_rel(item["path"])
+        target = bundle_dir / rel
+        if not target.is_file():
+            raise FileNotFoundError(f"missing workbench bundle file: {rel}")
+        actual_sha = sha256_file(target)
+        if actual_sha != item.get("sha256"):
+            raise ValueError(f"workbench bundle hash mismatch: {rel}")
+        listed.append({"path": rel, "sha256": actual_sha, "size": target.stat().st_size})
+    listed.append({
+        "path": "workbench_manifest.json",
+        "sha256": sha256_file(manifest_path),
+        "size": manifest_path.stat().st_size,
+    })
+    listed.sort(key=lambda r: r["path"])
+    return listed
+
+
 def build_release(
     workspace: Path,
     store: Path,
     release_id: str | None = None,
+    *,
+    workbench_bundle: Path | None = None,
+    dashboard_dir: Path | None = None,
 ) -> dict[str, Any]:
     workspace = workspace.resolve()
     store = store.resolve()
@@ -1421,12 +1583,23 @@ def build_release(
         extra = workspace / name
         if extra.is_file():
             published_inputs.append({"path": name, "sha256": sha256_file(extra)})
+    workbench_files: list[dict[str, Any]] = []
+    if workbench_bundle is not None:
+        workbench_files = _validate_and_list_workbench_bundle(workbench_bundle)
+    dashboard_bundle_files: list[dict[str, Any]] = []
+    if dashboard_dir is not None:
+        d_root = dashboard_dir.resolve()
+        if not (d_root / "dashboard.html").is_file():
+            raise FileNotFoundError(f"dashboard_dir missing dashboard.html: {d_root}")
+        for p in sorted(item for item in d_root.rglob("*") if item.is_file()):
+            rel = _safe_rel(p.relative_to(d_root).as_posix())
+            dashboard_bundle_files.append({"path": rel, "sha256": sha256_file(p)})
     dashboard_path = Path(__file__).with_name("dashboard.py")
     tools_fingerprint = {
         "knowledge_tools": __version__,
         "dashboard_sha256": sha256_file(dashboard_path) if dashboard_path.is_file() else None,
     }
-    content_seed = canonical_json({
+    seed_payload: dict[str, Any] = {
         "inventory": inventory.get("source_main_sha"),
         "entries": entries,
         "sources": source_doc,
@@ -1434,7 +1607,12 @@ def build_release(
         "protocol_files": protocol_files,
         "published_inputs": published_inputs,
         "tools": tools_fingerprint,
-    })
+    }
+    if workbench_files:
+        seed_payload["workbench_files"] = workbench_files
+    if dashboard_bundle_files:
+        seed_payload["dashboard_bundle_files"] = dashboard_bundle_files
+    content_seed = canonical_json(seed_payload)
     content_digest = sha256_bytes(content_seed)
     if not release_id:
         timestamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -1506,14 +1684,31 @@ def build_release(
             body_path = workspace / str(rel)
             if body_path.is_file():
                 bodies[str(item.get("id"))] = body_path.read_text(encoding="utf-8")
-        (stage / "dashboard.html").write_text(
-            dashboard_html(
-                release_id, index, taxonomy, source_doc, pending, diff, inventory,
-                bodies=bodies,
-            ),
-            encoding="utf-8",
-            newline="\n",
-        )
+        if workbench_bundle is not None:
+            wb_root = workbench_bundle.resolve()
+            for item in workbench_files:
+                rel = item["path"]
+                src_f = wb_root / rel
+                dst_f = stage / rel
+                dst_f.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(src_f, dst_f)
+        if dashboard_dir is not None:
+            d_root = dashboard_dir.resolve()
+            for item in dashboard_bundle_files:
+                rel = item["path"]
+                src_f = d_root / rel
+                dst_f = stage / rel
+                dst_f.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(src_f, dst_f)
+        else:
+            (stage / "dashboard.html").write_text(
+                dashboard_html(
+                    release_id, index, taxonomy, source_doc, pending, diff, inventory,
+                    bodies=bodies,
+                ),
+                encoding="utf-8",
+                newline="\n",
+            )
         # The manifest hashes every other publication file.  Its own detached
         # hash is written to manifest.sha256 to avoid a self-referential hash.
         manifest_files = []
@@ -1651,6 +1846,31 @@ def validate_release(release: Path) -> dict[str, Any]:
                 errors.append(f"index content hash mismatch: {entry.get('id')}")
     except (FileNotFoundError, ValueError, TypeError) as exc:
         errors.append(f"invalid release index: {exc}")
+    wb_manifest_path = path / "workbench_manifest.json"
+    if wb_manifest_path.is_file():
+        try:
+            wb_manifest = read_json(wb_manifest_path)
+            if not isinstance(wb_manifest, Mapping) or not isinstance(wb_manifest.get("files"), list):
+                errors.append("invalid workbench_manifest.json")
+            else:
+                for item in wb_manifest["files"]:
+                    if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+                        errors.append("malformed workbench_manifest file entry")
+                        continue
+                    rel = _safe_rel(item["path"])
+                    target = path / rel
+                    if not target.is_file():
+                        errors.append(f"missing workbench release file: {rel}")
+                    elif sha256_file(target) != item.get("sha256"):
+                        errors.append(f"workbench release hash mismatch: {rel}")
+                for required_rel in ("suites/index.json", "results/per_instance_records.json", "results/summary.json"):
+                    req_path = path / required_rel
+                    if not req_path.is_file():
+                        errors.append(f"missing required workbench artifact: {required_rel}")
+                    else:
+                        read_json(req_path)
+        except (OSError, ValueError, TypeError) as exc:
+            errors.append(f"invalid workbench bundle in release: {exc}")
     self_hash_name = manifest.get("self_hash_file", "manifest.sha256")
     try:
         detached = path / _safe_rel(str(self_hash_name))
@@ -1703,12 +1923,35 @@ _TERM_ALIASES = {
     "扫描": ["sweep"],
     "禁忌": ["tabu"],
     "粒度": ["granular"],
-    "局部搜索": ["localsearch", "local", "2opt", "relocate"],
-    "插入": ["insertion"],
+    "局部搜索": ["localsearch", "local", "2opt", "relocate", "oropt", "swap"],
+    "插入": ["insertion", "cheapestinsertion", "regret"],
     "相变": ["phasetransition", "phase", "alpha", "depotstart"],
-    "早返仓": ["earlyreturn", "return0"],
-    "螺旋": ["spiral"],
-    "孤立": ["isolation", "isolated"],
+    "早返仓": ["earlyreturn", "voluntaryearlyreturn", "return0"],
+    "早返": ["earlyreturn", "voluntaryearlyreturn", "return0"],
+    "主动回仓": ["earlyreturn", "voluntaryearlyreturn", "return0"],
+    "回仓": ["earlyreturn", "voluntaryearlyreturn", "depotreturn"],
+    "螺旋": ["spiral", "inwardspiral"],
+    "孤立": ["isolation", "isolated", "r7"],
+    "花瓣": ["petal", "sweep", "clusterfirst"],
+    "聚类": ["cluster", "clusterfirst", "sweep", "petal"],
+    "后悔值": ["regret", "regret2", "regretk"],
+    "变邻域": ["vns", "rvnd", "variableneighborhood"],
+    "大邻域": ["lns", "alns", "ruinandrecreate", "shaw"],
+    "邻域": ["neighborhood", "localsearch", "vns", "lns"],
+    "破坏重建": ["ruinandrecreate", "lns", "alns", "shaw"],
+    "移位": ["relocate", "relocation"],
+    "交换": ["swap", "2opt", "2optstar", "exchange"],
+    "尺度崩溃": ["scalecollapse", "h001", "frozenc", "scale"],
+    "尺度坍塌": ["scalecollapse", "h001", "frozenc", "scale"],
+    "坍塌": ["scalecollapse", "collapse", "h001"],
+    "尺度": ["scale", "scaling", "scalecollapse", "h001"],
+    "缩放": ["scale", "scaling", "scalecollapse", "h001"],
+    "选择器": ["selector", "portfolio", "h010", "rfreg"],
+    "算法选择": ["selector", "portfolio", "h010", "complementarity"],
+    "互补": ["complementarity", "vbs", "sbs", "h010"],
+    "证伪": ["falsified", "antipattern", "h004a", "h008a"],
+    "失败": ["failure", "antipattern", "falsified"],
+    "反模式": ["antipattern", "failure", "falsified"],
 }
 
 _EXACT_ID_PREFIX_RE = re.compile(
@@ -1773,6 +2016,10 @@ def _entry_matches_filters(
     entry_type: str | None = None,
     interface: str | None = None,
     eoh_status: str | None = None,
+    paradigm: str | None = None,
+    knowledge_tier: str | None = None,
+    problem_variant: str | None = None,
+    comparison_mode: str | None = None,
 ) -> bool:
     if problem_family:
         if str(entry.get("problem_family") or "").casefold() != problem_family.casefold():
@@ -1797,11 +2044,33 @@ def _entry_matches_filters(
         eoh_map = attrs.get("eoh_map") if isinstance(attrs.get("eoh_map"), Mapping) else {}
         if str(eoh_map.get("status") or "").casefold() != eoh_status.casefold():
             return False
+    if paradigm:
+        if _norm_alias(attrs.get("paradigm") or "") != _norm_alias(paradigm):
+            return False
+    if knowledge_tier:
+        if _norm_alias(attrs.get("knowledge_tier") or "") != _norm_alias(knowledge_tier):
+            return False
+    if problem_variant:
+        if _norm_alias(attrs.get("problem_variant") or "") != _norm_alias(problem_variant):
+            return False
+    if comparison_mode:
+        cm_norm = _norm_alias(comparison_mode)
+        if cm_norm == _norm_alias("local_recomputed"):
+            ev_b = attrs.get("evidence_bindings")
+            if not isinstance(ev_b, list) or not ev_b:
+                return False
+        elif cm_norm == _norm_alias("paper_reported_reference"):
+            pr = attrs.get("paper_reported_results")
+            if not isinstance(pr, list) or not pr:
+                return False
+        else:
+            return False
     return True
 
 
 def _format_search_hit(entry: Mapping[str, Any], index: Mapping[str, Any], path: Path, score: float) -> dict[str, Any]:
-    return {
+    attrs = entry.get("attributes") if isinstance(entry.get("attributes"), Mapping) else {}
+    hit: dict[str, Any] = {
         "id": entry.get("id"),
         "title": entry.get("title"),
         "summary": entry.get("summary", ""),
@@ -1813,6 +2082,10 @@ def _format_search_hit(entry: Mapping[str, Any], index: Mapping[str, Any], path:
         "content_sha256": entry.get("content_sha256"),
         "score": score,
     }
+    for key in ("paradigm", "knowledge_tier", "problem_variant", "complexity_class"):
+        if attrs.get(key) is not None:
+            hit[key] = attrs.get(key)
+    return hit
 
 
 def search_release(
@@ -1824,6 +2097,10 @@ def search_release(
     entry_type: str | None = None,
     interface: str | None = None,
     eoh_status: str | None = None,
+    paradigm: str | None = None,
+    knowledge_tier: str | None = None,
+    problem_variant: str | None = None,
+    comparison_mode: str | None = None,
 ) -> dict[str, Any]:
     path, index = _load_release_index(release)
     alias_map = _search_alias_map(path)
@@ -1833,12 +2110,58 @@ def search_release(
         norm_family_filter = alias_map.get(key, problem_family.strip().casefold())
 
     q_strip = str(query or "").strip()
-    if not q_strip:
-        raise ValueError("query must contain at least one non-space term")
     limit = max(0, int(limit))
 
     entries = list(index.get("entries", []))
     by_id = {str(e.get("id")): e for e in entries if e.get("id")}
+    active_filters = {
+        "problem_family": norm_family_filter,
+        "entry_type": entry_type,
+        "interface": interface,
+        "eoh_status": eoh_status,
+        "paradigm": paradigm,
+        "knowledge_tier": knowledge_tier,
+        "problem_variant": problem_variant,
+        "comparison_mode": comparison_mode,
+    }
+    has_active_filters = any(bool(v) for v in active_filters.values())
+
+    if not q_strip:
+        if not has_active_filters:
+            raise ValueError("query must contain at least one non-space term")
+        filtered_results = [
+            _format_search_hit(
+                entry,
+                index,
+                path,
+                round(float(_TYPE_WEIGHT.get(str(entry.get("type") or ""), 1.0)), 4),
+            )
+            for entry in entries
+            if _entry_matches_filters(
+                entry,
+                problem_family=norm_family_filter,
+                entry_type=entry_type,
+                interface=interface,
+                eoh_status=eoh_status,
+                paradigm=paradigm,
+                knowledge_tier=knowledge_tier,
+                problem_variant=problem_variant,
+                comparison_mode=comparison_mode,
+            )
+        ]
+        filtered_results.sort(key=lambda item: (-item["score"], item["title"] or item["id"] or ""))
+        return {
+            "query": query,
+            "release_id": index.get("release_id"),
+            "release": str(path),
+            "exact_id_lookup": False,
+            "weak_match_only": False,
+            "filter_only": True,
+            "filters": active_filters,
+            "total": len(filtered_results),
+            "count": min(len(filtered_results), limit),
+            "results": filtered_results[:limit],
+        }
 
     # 1. Exact unambiguous entry ID lookup
     if q_strip in by_id:
@@ -1851,6 +2174,10 @@ def search_release(
                 entry_type=entry_type,
                 interface=interface,
                 eoh_status=eoh_status,
+                paradigm=paradigm,
+                knowledge_tier=knowledge_tier,
+                problem_variant=problem_variant,
+                comparison_mode=comparison_mode,
             )
             else []
         )
@@ -1861,12 +2188,7 @@ def search_release(
             "exact_id_lookup": True,
             "exact_id_found": bool(matched),
             "weak_match_only": False,
-            "filters": {
-                "problem_family": norm_family_filter,
-                "entry_type": entry_type,
-                "interface": interface,
-                "eoh_status": eoh_status,
-            },
+            "filters": active_filters,
             "total": len(matched),
             "count": min(len(matched), limit),
             "results": matched[:limit],
@@ -1880,12 +2202,7 @@ def search_release(
             "exact_id_found": False,
             "weak_match_only": False,
             "message": f"no entry with exact id {q_strip!r}",
-            "filters": {
-                "problem_family": norm_family_filter,
-                "entry_type": entry_type,
-                "interface": interface,
-                "eoh_status": eoh_status,
-            },
+            "filters": active_filters,
             "total": 0,
             "count": 0,
             "results": [],
@@ -1957,6 +2274,10 @@ def search_release(
             entry_type=entry_type,
             interface=interface,
             eoh_status=eoh_status,
+            paradigm=paradigm,
+            knowledge_tier=knowledge_tier,
+            problem_variant=problem_variant,
+            comparison_mode=comparison_mode,
         ):
             continue
         field_texts: dict[str, str] = {}
@@ -2014,12 +2335,7 @@ def search_release(
         "release": str(path),
         "exact_id_lookup": False,
         "weak_match_only": weak_only,
-        "filters": {
-            "problem_family": norm_family_filter,
-            "entry_type": entry_type,
-            "interface": interface,
-            "eoh_status": eoh_status,
-        },
+        "filters": active_filters,
         "total": len(results),
         "count": min(len(results), limit),
         "results": results[:limit],
@@ -2059,6 +2375,8 @@ def read_entry(release: Path, entry_id: str) -> dict[str, Any]:
         "content_sha256": body_hash,
         "source_refs": item.get("source_refs", []),
         "evidence_refs": item.get("evidence_refs", []),
+        "attributes": item.get("attributes", {}),
+        "relations": item.get("relations", {}),
         "body": body,
     }
     sources_path = path / "sources.json"

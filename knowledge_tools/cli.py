@@ -49,15 +49,21 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("--workspace", type=Path, required=True)
     build.add_argument("--store", type=Path, required=True)
     build.add_argument("--release-id")
+    build.add_argument("--workbench-bundle", type=Path, help="optional CVRP workbench bundle directory to embed in release")
+    build.add_argument("--dashboard-dir", type=Path, help="optional static frontend build directory containing dashboard.html")
 
     search = sub.add_parser("search", help="search a release index")
     search.add_argument("--release", type=Path, required=True)
-    search.add_argument("--query", required=True)
+    search.add_argument("--query", default="", help="search query string (optional when structural filters are provided)")
     search.add_argument("--limit", type=int, default=10)
     search.add_argument("--family", help="filter by problem family (e.g. cvrp, tsp, obp)")
     search.add_argument("--type", dest="entry_type", help="filter by entry type (e.g. method, implementation, evidence)")
     search.add_argument("--interface", help="filter by interface string (e.g. select_next_node)")
     search.add_argument("--eoh-status", help="filter by attributes.eoh_map.status (e.g. possible, not_mappable)")
+    search.add_argument("--paradigm", help="filter by attributes.paradigm (e.g. local_search, parallel_merge)")
+    search.add_argument("--tier", dest="knowledge_tier", help="filter by attributes.knowledge_tier (e.g. verified_experiment)")
+    search.add_argument("--variant", dest="problem_variant", help="filter by attributes.problem_variant (e.g. standard_cvrp, vrptw)")
+    search.add_argument("--comparison-mode", dest="comparison_mode", help="filter by local_recomputed or paper_reported_reference")
 
     read = sub.add_parser("read", help="read one entry from a fixed release")
     read.add_argument("--release", type=Path, required=True)
@@ -142,7 +148,13 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "validate":
             result = validate_workspace(args.workspace)
         elif args.command == "build":
-            result = build_release(args.workspace, args.store, args.release_id)
+            result = build_release(
+                args.workspace,
+                args.store,
+                args.release_id,
+                workbench_bundle=args.workbench_bundle,
+                dashboard_dir=args.dashboard_dir,
+            )
         elif args.command == "search":
             result = search_release(
                 args.release,
@@ -152,6 +164,10 @@ def main(argv: list[str] | None = None) -> int:
                 entry_type=args.entry_type,
                 interface=args.interface,
                 eoh_status=args.eoh_status,
+                paradigm=args.paradigm,
+                knowledge_tier=args.knowledge_tier,
+                problem_variant=args.problem_variant,
+                comparison_mode=args.comparison_mode,
             )
         elif args.command == "read":
             result = read_entry(args.release, args.id)

@@ -1,0 +1,765 @@
+{
+  "schema_version": "algorithm-optimization-benchmark-registry/v1.3",
+  "benchmark_id": "cvrp_workbench_v1",
+  "published_results_index_path": "published_results/index.json",
+  "published_results_index_hash": "e74ae2fce8143d16e987d0bd811fe98bb47132a962e5ab9cffa75571ea51c182",
+  "published_results_files": {
+    "eohs_2025_tables_1_3.json": {
+      "rel_path": "published_results/eohs_2025_tables_1_3.json",
+      "sha256": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e",
+      "record_count": 216
+    },
+    "funsearch_eoh_2024_tables.json": {
+      "rel_path": "published_results/funsearch_eoh_2024_tables.json",
+      "sha256": "0cebe2002d3332b264ce9ceb23088bf0abfc6a076c8aca4569729f6dc5e810f4",
+      "record_count": 67
+    },
+    "reevo_2024_tables.json": {
+      "rel_path": "published_results/reevo_2024_tables.json",
+      "sha256": "3a9619d880b872a118f4467c2388e742a295252c3530ae36654dd771820e2e4e",
+      "record_count": 56
+    },
+    "heuragenix_cobench_2025_tables.json": {
+      "rel_path": "published_results/heuragenix_cobench_2025_tables.json",
+      "sha256": "ad615fb28734d37f7a6bb75910697d67119dc4fe48ba2be17d753bb5b0990ecd",
+      "record_count": 30
+    },
+    "index.json": {
+      "rel_path": "published_results/index.json",
+      "sha256": "e74ae2fce8143d16e987d0bd811fe98bb47132a962e5ab9cffa75571ea51c182",
+      "record_count": 369
+    }
+  },
+  "benchmarks": [
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_ext_eohs_256",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "top_venue_protocol",
+      "primary_split": "heldout",
+      "suite_role": "external_top_venue",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 256,
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "7d4b1f77d1b101125cd713b1d247e3a2e46cf407",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "external_top_venue",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_ext_eohs_256_references.json",
+        "dev_train": "manifests/cvrp_ext_eohs_256_train_locked.json",
+        "train": "manifests/cvrp_ext_eohs_256_train_locked.json",
+        "heldout": "manifests/cvrp_ext_eohs_256_heldout.json",
+        "test": "manifests/cvrp_ext_eohs_256_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "bf803cd79c8970fdb0a28ad11f58e6904fddb504322c85cf875b494b62ca91f5",
+        "train_hash": "11f5c78e755087c158d5e12b6f502de60d6fe307e57e280389d0c2cf9e400c04",
+        "test_hash": "3a6a283da86ee3bb5a8d419d7c15b871de978458781bca966c4a6e18b1078961",
+        "dev_train_hash": "11f5c78e755087c158d5e12b6f502de60d6fe307e57e280389d0c2cf9e400c04",
+        "heldout_hash": "3a6a283da86ee3bb5a8d419d7c15b871de978458781bca966c4a6e18b1078961"
+      },
+      "metric_spec_hash": "5c79e4c57bb5244fba3ea5a2a81b5e07d556ec4463d34df1218a217fe9b94e1b",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "lkh_reference",
+        "reference_manifest_hash": "8998b62504bf27a11e2ef8d60fd3815bb12e2c7da186071b97eb83b2476fabfd",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "32d26ff1cdde495521a8a11f2061512241024c6c699fe514bd313402cd89d8d7",
+      "deviations": [
+        "imported verbatim from FeiLiu36/EoH-S data_cvrp_10_150_256_withbaseline.pkl (256 instances, euc_2d_float, LKH baseline)"
+      ],
+      "published_results_path": "published_results/eohs_2025_tables_1_3.json",
+      "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_ext_reevo_scale",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "top_venue_protocol",
+      "primary_split": "heldout",
+      "suite_role": "external_top_venue",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 48,
+      "upstream_repo": "https://github.com/ai4co/reevo",
+      "upstream_commit": "6dce18257da5e11db2d138e417a2fffc5c72d05f",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "external_top_venue",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_ext_reevo_scale_references.json",
+        "dev_train": "manifests/cvrp_ext_reevo_scale_train_locked.json",
+        "train": "manifests/cvrp_ext_reevo_scale_train_locked.json",
+        "heldout": "manifests/cvrp_ext_reevo_scale_heldout.json",
+        "test": "manifests/cvrp_ext_reevo_scale_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "1308fb18cd070cd9b46297915f2749fdc658c460c6d4f2e4761fdfe02bcc7241",
+        "train_hash": "21534b2683ca978bf70c7fbe42c6b0ac353c7594e3a6b91ef051639bc10b43ec",
+        "test_hash": "c6695d8264829c8c8232fabbf258c8fdeaf1f717f965ae1a7669eb732d024967",
+        "dev_train_hash": "21534b2683ca978bf70c7fbe42c6b0ac353c7594e3a6b91ef051639bc10b43ec",
+        "heldout_hash": "c6695d8264829c8c8232fabbf258c8fdeaf1f717f965ae1a7669eb732d024967"
+      },
+      "metric_spec_hash": "c3b585366e93e51f7d8a9790572c8270383f77796d4f08e607756e7efa8e2381",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "864fa29943d146dd7f2f4c187c4c98d12c52a644f14e884f3e67d15b9a264844",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "88cc1863d4e9eb209e1e13ca513329855b0813e2e18fd67f1247644985e522c2",
+      "deviations": [
+        "aligned to ai4co/reevo CVRP C=50, depot=[0.5,0.5], n in {50,100,200}; local baseline uses NN solver_reference while ReEvo Table 3 NCO reference stays in published_results/reevo_2024_tables.json"
+      ],
+      "published_results_path": "published_results/reevo_2024_tables.json",
+      "published_results_hash": "3a9619d880b872a118f4467c2388e742a295252c3530ae36654dd771820e2e4e"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "tsp_ext_eohs_128",
+      "problem_id": "tsp_construct",
+      "problem_family": "tsp",
+      "benchmark_tier": "top_venue_protocol",
+      "primary_split": "heldout",
+      "suite_role": "external_top_venue",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "not_applicable",
+      "instance_count": 128,
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "7d4b1f77d1b101125cd713b1d247e3a2e46cf407",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "tsp_workbench",
+      "paper_protocol_profile": "external_top_venue",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/tsp_ext_eohs_128_references.json",
+        "dev_train": "manifests/tsp_ext_eohs_128_train_locked.json",
+        "train": "manifests/tsp_ext_eohs_128_train_locked.json",
+        "heldout": "manifests/tsp_ext_eohs_128_heldout.json",
+        "test": "manifests/tsp_ext_eohs_128_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "a193548a7abd16a1c903f86500465b1f1fe55ac2f0ada3c468ff0dd07b986f6c",
+        "train_hash": "4da13aa51e1756c36a69fe2b8b3e13456daedd003d70b989f269039e68f2b5e5",
+        "test_hash": "be0a5280e0f803822c67c78f6f354575eed1d0771715e0f33b1b1f0db497c709",
+        "dev_train_hash": "4da13aa51e1756c36a69fe2b8b3e13456daedd003d70b989f269039e68f2b5e5",
+        "heldout_hash": "be0a5280e0f803822c67c78f6f354575eed1d0771715e0f33b1b1f0db497c709"
+      },
+      "metric_spec_hash": "75b7b6f65d427e649c62b9cea43eec825cc072586d1b485e76f0d2b101529cc5",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "lkh_reference",
+        "reference_manifest_hash": "af5943b4e10d65483621397316e4a059f73b8384df98b09ddc156ab60f2c119b",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "not_applicable"
+        }
+      },
+      "benchmark_spec_hash": "1e1e09989df9c8c6642a4f9c3bf9cef07b8baa29039c3f81e0bb49df0953f9a1",
+      "deviations": [
+        "imported verbatim from FeiLiu36/EoH-S datasets/tsp/*.pkl (4 cluster regimes x 32 = 128 instances with LKH baseline)"
+      ],
+      "published_results_path": "published_results/eohs_2025_tables_1_3.json",
+      "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "obp_ext_eoh_weibull",
+      "problem_id": "obp_online",
+      "problem_family": "obp",
+      "benchmark_tier": "top_venue_protocol",
+      "primary_split": "heldout",
+      "suite_role": "external_top_venue",
+      "exposure_status": "public_standard",
+      "distance_convention": "not_applicable",
+      "vehicle_limit_policy": "not_applicable",
+      "instance_count": 173,
+      "upstream_repo": "https://github.com/FeiLiu36/EoH-S",
+      "upstream_commit": "7d4b1f77d1b101125cd713b1d247e3a2e46cf407",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "obp_workbench",
+      "paper_protocol_profile": "external_top_venue",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/obp_ext_eoh_weibull_references.json",
+        "dev_train": "manifests/obp_ext_eoh_weibull_train_locked.json",
+        "train": "manifests/obp_ext_eoh_weibull_train_locked.json",
+        "heldout": "manifests/obp_ext_eoh_weibull_heldout.json",
+        "test": "manifests/obp_ext_eoh_weibull_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "33fd91bf243a58c875c18feeb14dc4a7021ef752e03991fe4caa36300ae4a9d8",
+        "train_hash": "923ab5e5251ef4e9b4f2a28fe427fdb355b1cc1abfc41507073bb702c2c57942",
+        "test_hash": "0329c4322e82ac8dbadc4388a0291a5953fff6b7f671c1d241e3bb1d4f3e7cdb",
+        "dev_train_hash": "923ab5e5251ef4e9b4f2a28fe427fdb355b1cc1abfc41507073bb702c2c57942",
+        "heldout_hash": "0329c4322e82ac8dbadc4388a0291a5953fff6b7f671c1d241e3bb1d4f3e7cdb"
+      },
+      "metric_spec_hash": "da9a0abbfe45092ae16f5c9abf466fa3c294b6d5ef906a47b38082d262ea9c23",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "theoretical_lb",
+        "reference_manifest_hash": "8b67dcee8a36b6007afe1ce91c1f3afea69f647a75182388ad89709c4ed24424",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "not_applicable",
+          "vehicle_limit_policy": "not_applicable"
+        }
+      },
+      "benchmark_spec_hash": "c9385cf2fc88de5e4776488b225a6116d711405ded9335e739b3512aab9a1158",
+      "deviations": [
+        "combines EoH-S 128 OBP training + 30 EoH-S Weibull test (1k/5k/10k x C=200,500) + 15 EoH/FunSearch Weibull C=100 (1k/5k/10k) = 173 instances"
+      ],
+      "published_results_path": "published_results/funsearch_eoh_2024_tables.json",
+      "published_results_hash": "0cebe2002d3332b264ce9ceb23088bf0abfc6a076c8aca4569729f6dc5e810f4"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_ext_cvrplib_abp_74",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "or_gold_standard",
+      "primary_split": "heldout",
+      "suite_role": "external_or_standard",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_nint",
+      "vehicle_limit_policy": "min_vehicles_advisory",
+      "instance_count": 74,
+      "upstream_repo": "https://github.com/vidalt/CVRPLIB",
+      "upstream_commit": "34985dd200238b69b8eb18abb8e4b0f6fd8b9257",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "external_or_standard",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_ext_cvrplib_abp_74_references.json",
+        "dev_train": "manifests/cvrp_ext_cvrplib_abp_74_train_locked.json",
+        "train": "manifests/cvrp_ext_cvrplib_abp_74_train_locked.json",
+        "heldout": "manifests/cvrp_ext_cvrplib_abp_74_heldout.json",
+        "test": "manifests/cvrp_ext_cvrplib_abp_74_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "10b6b339c6d24f55654ae2ee6b3e1c3d40e749979791bb736a770cc2bf58edca",
+        "train_hash": "fddeddc763c49538c9c16991bfe9c18257714614b909b6eaba79708df73bbebe",
+        "test_hash": "9870e55c9e363df2461f83d449db8c01e7133423ba4e3eb1513209d9c2410c38",
+        "dev_train_hash": "fddeddc763c49538c9c16991bfe9c18257714614b909b6eaba79708df73bbebe",
+        "heldout_hash": "9870e55c9e363df2461f83d449db8c01e7133423ba4e3eb1513209d9c2410c38"
+      },
+      "metric_spec_hash": "bb0e145f721ca6ae9232078501ade73bfb28fbecb149e6bad3129fc91ea5c117",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "best_known",
+        "reference_manifest_hash": "10b6b339c6d24f55654ae2ee6b3e1c3d40e749979791bb736a770cc2bf58edca",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_nint",
+          "vehicle_limit_policy": "min_vehicles_advisory"
+        }
+      },
+      "benchmark_spec_hash": "03ac917b736733f5771adbdce0d9532e8a1d9ba788bed4442821131c18e73455",
+      "deviations": [
+        "full CVRPLib Augerat Set A (27) + Set B (23) + Set P (24) = 74 instances with official .sol routes verified to 0.0 euc_2d_nint error"
+      ],
+      "published_results_path": "published_results/eohs_2025_tables_1_3.json",
+      "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e",
+      "data_manifest_hash": "dfa9297e34eb829253d07d579f05a43a62102403a8c490d90330b0e18492c5b5",
+      "reference_manifest_hash": "4b303ef16f3655773fb296359f395206297b10a4d209d360038470032d1cf3b3",
+      "metadata": {
+        "upstream_repo": "https://github.com/vidalt/CVRPLIB",
+        "upstream_commit": "34985dd200238b69b8eb18abb8e4b0f6fd8b9257",
+        "download_date": "2026-11-21",
+        "bks_version": "vidalt/CVRPLIB@34985dd2 (official CVRPLib .sol files)",
+        "distance_convention": "euc_2d_nint (TSPLIB floor(sqrt(dx^2+dy^2)+0.5))",
+        "set_counts": {
+          "A": 27,
+          "B": 23,
+          "P": 24
+        },
+        "bks_nint_discrepancies": [
+          {
+            "instance_id": "B-n50-k8",
+            "set": "B",
+            "bks_reported_cost": 1312.0,
+            "bks_archive_raw_cost": 1319.0,
+            "bks_recomputed_nint_cost": 1312.0,
+            "note": "Repaired upstream B-n50-k8.sol Route #3 archive typo (first customer 2 -> 3, fixing duplicate node 2 / missing node 3); feasible euc_2d_nint cost = 1312 == official BKS."
+          },
+          {
+            "instance_id": "B-n57-k7",
+            "set": "B",
+            "bks_reported_cost": 1153.0,
+            "bks_archive_raw_cost": 1155.0,
+            "bks_recomputed_nint_cost": 1153.0,
+            "note": "Repaired upstream B-n57-k7.sol Route #5 archive sequence ([37,39,52,50,42,30,2,55,1] -> [52,50,37,39,42,30,2,55,1], 1155 -> 1153); feasible euc_2d_nint cost = 1153 == official BKS."
+          }
+        ],
+        "sol_recompute_zero_error_count": 74,
+        "instance_count": 74,
+        "upstream_paper": "Augerat et al. (1995), CVRPLib Sets A (27), B (23), P (24)"
+      }
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_ext_cvrplib_x_100",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "or_gold_standard",
+      "primary_split": "heldout",
+      "suite_role": "external_or_standard",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_nint",
+      "vehicle_limit_policy": "min_vehicles_advisory",
+      "instance_count": 100,
+      "upstream_repo": "https://github.com/vidalt/CVRPLIB",
+      "upstream_commit": "34985dd200238b69b8eb18abb8e4b0f6fd8b9257",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "external_or_standard",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_ext_cvrplib_x_100_references.json",
+        "dev_train": "manifests/cvrp_ext_cvrplib_x_100_train_locked.json",
+        "train": "manifests/cvrp_ext_cvrplib_x_100_train_locked.json",
+        "heldout": "manifests/cvrp_ext_cvrplib_x_100_heldout.json",
+        "test": "manifests/cvrp_ext_cvrplib_x_100_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "5f5ca2dff7f475c9c11c099b7c38cdf3d53241e6885690fe527aee39b1fcdeeb",
+        "train_hash": "159879ddc51bb301f8bb361be8b991a0f953c4a8218e93d5b55d5c0ea688f049",
+        "test_hash": "d381114046797b9fa397d1b320b0b23c50a4aec94a1fe30a18a63d9c7595134e",
+        "dev_train_hash": "159879ddc51bb301f8bb361be8b991a0f953c4a8218e93d5b55d5c0ea688f049",
+        "heldout_hash": "d381114046797b9fa397d1b320b0b23c50a4aec94a1fe30a18a63d9c7595134e"
+      },
+      "metric_spec_hash": "081d06f1031dc2fba72d82d963843eb8d914da1393992885398a6a3aeabb418f",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "best_known",
+        "reference_manifest_hash": "ffc8c50bccb6d744404aa4fb3febdcb4b08cfeba0ed406514aff5873493c5f15",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_nint",
+          "vehicle_limit_policy": "min_vehicles_advisory"
+        }
+      },
+      "benchmark_spec_hash": "ad67f28644f451027cfbe0f0cd0ecc3b73b5b05f72616d94d0ceb37ea5abf32e",
+      "deviations": [
+        "complete Uchoa et al. 2017 Set X (all 100 instances, n=100..1000, X-S/X-M/X-L tiers) with 100/100 official .sol routes verified to strict 0.0 euc_2d_nint error"
+      ],
+      "published_results_path": "published_results/eohs_2025_tables_1_3.json",
+      "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "tsp_ext_tsplib_euc2d",
+      "problem_id": "tsp_construct",
+      "problem_family": "tsp",
+      "benchmark_tier": "or_gold_standard",
+      "primary_split": "heldout",
+      "suite_role": "external_or_standard",
+      "exposure_status": "public_standard",
+      "distance_convention": "euc_2d_nint",
+      "vehicle_limit_policy": "not_applicable",
+      "instance_count": 18,
+      "upstream_repo": "https://github.com/FeiLiu36/EoH",
+      "upstream_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "tsp_workbench",
+      "paper_protocol_profile": "external_or_standard",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/tsp_ext_tsplib_euc2d_references.json",
+        "dev_train": "manifests/tsp_ext_tsplib_euc2d_train_locked.json",
+        "train": "manifests/tsp_ext_tsplib_euc2d_train_locked.json",
+        "heldout": "manifests/tsp_ext_tsplib_euc2d_heldout.json",
+        "test": "manifests/tsp_ext_tsplib_euc2d_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "0ebf86da3b0957acc99665f962e01f7cfab359f2953da0d5211f9fc448453917",
+        "train_hash": "6a00352b2b2852f591f7f2b068deb95c82205faa20d5e3bc4541d1eec73e9d93",
+        "test_hash": "864d6fb737daf2e3ff2796b824a65accc55ea205b74a22a5ee19e1f6f14db049",
+        "dev_train_hash": "6a00352b2b2852f591f7f2b068deb95c82205faa20d5e3bc4541d1eec73e9d93",
+        "heldout_hash": "864d6fb737daf2e3ff2796b824a65accc55ea205b74a22a5ee19e1f6f14db049"
+      },
+      "metric_spec_hash": "bdde87d174ed9be2e7b4d1d7b353fcf97fd504970701ec455a133d289482b2b9",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "best_known",
+        "reference_manifest_hash": "69b2e093d6d75513f2bd6d6f14afff6bdd43c4707aa303dd5f9bd477497a1433",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_nint",
+          "vehicle_limit_policy": "not_applicable"
+        }
+      },
+      "benchmark_spec_hash": "8311602bc5d34e2352456e3e56f33fa196b4fe98005720ba384411bdb2455595",
+      "deviations": [
+        "18 classic TSPLIB EUC_2D instances (eil51..pr2392) with official .opt.tour.gz verified 18/18 to strict 0.0 euc_2d_nint OPT error"
+      ],
+      "published_results_path": "published_results/heuragenix_cobench_2025_tables.json",
+      "published_results_hash": "ad615fb28734d37f7a6bb75910697d67119dc4fe48ba2be17d753bb5b0990ecd"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "obp_ext_bpplib",
+      "problem_id": "obp_online",
+      "problem_family": "obp",
+      "benchmark_tier": "or_gold_standard",
+      "primary_split": "heldout",
+      "suite_role": "external_or_standard",
+      "exposure_status": "public_standard",
+      "distance_convention": "not_applicable",
+      "vehicle_limit_policy": "not_applicable",
+      "instance_count": 70,
+      "upstream_repo": "https://github.com/mdelorme2/BPPLIB",
+      "upstream_commit": "fc3aa784a3b14282fc591d710f056abc1b1451c3",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "obp_workbench",
+      "paper_protocol_profile": "external_or_standard",
+      "heldout_policy": "open_public_standard",
+      "manifest_paths": {
+        "reference": "manifests/obp_ext_bpplib_references.json",
+        "dev_train": "manifests/obp_ext_bpplib_train_locked.json",
+        "train": "manifests/obp_ext_bpplib_train_locked.json",
+        "heldout": "manifests/obp_ext_bpplib_heldout.json",
+        "test": "manifests/obp_ext_bpplib_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "63d350dd9e4925f2b615df8296e6b3a66600e7fff94b79812e8322e471ddda8a",
+        "train_hash": "0f4cfcb4c4fcd226be0443963a41d45b2c6e12497a0f99c3d1427310617984fc",
+        "test_hash": "b82f0fdd1a400f5ce1fefe8452094f545ee45e640774a55f55b8778d4ff7ce3e",
+        "dev_train_hash": "0f4cfcb4c4fcd226be0443963a41d45b2c6e12497a0f99c3d1427310617984fc",
+        "heldout_hash": "b82f0fdd1a400f5ce1fefe8452094f545ee45e640774a55f55b8778d4ff7ce3e"
+      },
+      "metric_spec_hash": "0dac46a378d002bfcb59526154659fe60650dca72e2ca207d82869c70a3d4689",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "theoretical_lb",
+        "reference_manifest_hash": "a5e3bde95448951889dcc4f57059f8babbdef701c6060d37f51a149793f52042",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "not_applicable",
+          "vehicle_limit_policy": "not_applicable"
+        }
+      },
+      "benchmark_spec_hash": "faa953e1b3b2728af4988cd485b2001fe085e49a0663aad358cd72609a13c8a6",
+      "deviations": [
+        "authentic Delorme BPPLIB Sch_1 (24) + Sch_2 (24) + Scholl_H (10 Scholl_3 + 12 Hard28) = 70 instances with deterministic online arrival permutation & Solutions.xlsx OPT"
+      ],
+      "published_results_path": "published_results/eohs_2025_tables_1_3.json",
+      "published_results_hash": "0b6a906f1c439456c1e17d4ff446ce0e6a1b5eb04d2770bf59bc3d4ffdee2f9e"
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_dev_hetero_24",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "local_controlled",
+      "primary_split": "dev_train",
+      "suite_role": "dev_search",
+      "exposure_status": "fresh_isolated",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 24,
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "5215ebd",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "dev_search",
+      "heldout_policy": "locked_no_access_diagnostic",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_dev_hetero_24_references.json",
+        "dev_train": "manifests/cvrp_dev_hetero_24_train.json",
+        "train": "manifests/cvrp_dev_hetero_24_train.json",
+        "heldout": "manifests/cvrp_dev_hetero_24_heldout_locked.json",
+        "test": "manifests/cvrp_dev_hetero_24_heldout_locked.json"
+      },
+      "manifests": {
+        "reference_hash": "26dc00652dd243bc214777f18a2627d73d267802ac250e01c95c9a0301b7f103",
+        "train_hash": "971ce96e5b6eef5071d6ac0e02f7039722989270f013e3fc6fc3260d7a0af8ca",
+        "test_hash": "47fb93c89bd6d63daca319dcc6f886befdda33c4cccebd364ff396f0cfcee62e",
+        "dev_train_hash": "971ce96e5b6eef5071d6ac0e02f7039722989270f013e3fc6fc3260d7a0af8ca",
+        "heldout_hash": "47fb93c89bd6d63daca319dcc6f886befdda33c4cccebd364ff396f0cfcee62e"
+      },
+      "metric_spec_hash": "fdb6d5ca073f38589a32a849016213e2590e9a6cd62439e748043d2c19027c87",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "fd6937f4e1f46c13c06ef6bbf2bb84c9b7a0a3c300fb49627c81855c72f0270c",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "a4b07aa62f2980296d36622ca11f4ca928c5b78f0ce7993912c40524f94697f9",
+      "deviations": [
+        "independent seed 20261130 disjoint from cvrp_construct_mini, P0-120, ana72, and hetero-288"
+      ]
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_select_multiscale_64",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "local_controlled",
+      "primary_split": "selection",
+      "suite_role": "selection_tuning",
+      "exposure_status": "fresh_isolated",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 64,
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "5215ebd",
+      "asset_status": "regenerated_protocol_compatible",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "selection_tuning",
+      "heldout_policy": "locked_no_access_diagnostic",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_select_multiscale_64_references.json",
+        "dev_train": "manifests/cvrp_select_multiscale_64_train_locked.json",
+        "train": "manifests/cvrp_select_multiscale_64_train_locked.json",
+        "selection": "manifests/cvrp_select_multiscale_64_selection.json",
+        "heldout": "manifests/cvrp_select_multiscale_64_heldout_locked.json",
+        "test": "manifests/cvrp_select_multiscale_64_heldout_locked.json"
+      },
+      "manifests": {
+        "reference_hash": "34d673de1d265266cefa68ca4cd9d4f8acc20a5db82f22401bcb6712c79f450e",
+        "train_hash": "17d29db878524fbd2b77b3982353f965a1bb938983f2898ac4c4cba1223167e3",
+        "selection_hash": "8d2beaefa6e1ffa267ad95d18b4c1aee6682a059027cc735fcc88feb6e8569c0",
+        "test_hash": "cfc7e770e8241bdcb4a178c943af129c1fb32c64a5c946113169b5315ac8a6dc",
+        "dev_train_hash": "17d29db878524fbd2b77b3982353f965a1bb938983f2898ac4c4cba1223167e3",
+        "heldout_hash": "cfc7e770e8241bdcb4a178c943af129c1fb32c64a5c946113169b5315ac8a6dc"
+      },
+      "metric_spec_hash": "f977eb009e0447c1f22d0795f48aeb6342c6ab53fc14ccf3d384c330810975f0",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "af522fad6e5a4cd5b816025ac5d7315b37339ce13bd92db6d09f3c94ef58f1e2",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "21e42369ae49a1a90c5f3f3ba794cf508ffc7016ac3132ac801b3d76e0976c8d",
+      "deviations": [
+        "registered with an independent selection split and selection_manifest_hash separate from dev_train and heldout"
+      ]
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_hist_p0_120",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "local_controlled",
+      "primary_split": "heldout",
+      "suite_role": "historical_regression",
+      "exposure_status": "historically_exposed",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 120,
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "5215ebd",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "historical_regression",
+      "heldout_policy": "open_historical_regression",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_hist_p0_120_references.json",
+        "dev_train": "manifests/cvrp_hist_p0_120_train_locked.json",
+        "train": "manifests/cvrp_hist_p0_120_train_locked.json",
+        "heldout": "manifests/cvrp_hist_p0_120_heldout.json",
+        "test": "manifests/cvrp_hist_p0_120_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "06f107a82ea13d2a93b1ed744d4f3d8f5baafede735683b559a1501731534aa7",
+        "train_hash": "c622a790f229fe9cbeb3e28aedd11024b05830d2ec07ce30eee2572506fed8aa",
+        "test_hash": "f090b64ef214f526a7fbd2d9e7d808d53088b22c1120d3f71881792e489307da",
+        "dev_train_hash": "c622a790f229fe9cbeb3e28aedd11024b05830d2ec07ce30eee2572506fed8aa",
+        "heldout_hash": "f090b64ef214f526a7fbd2d9e7d808d53088b22c1120d3f71881792e489307da"
+      },
+      "metric_spec_hash": "257100bbaf1a2081290d9bb5327b62661ff27a4b6400adcf8fff22f4b4c646e3",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "b91528dd38e61efab10eb749ce61ed88291874b50331390a2ad841739259f20f",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "c3676eb684be48b8490f41dc4069e7de39bd874696c4545bfd51626c59615f0c",
+      "deviations": [
+        "historically evaluated in Stage-2 midterm reporting; retained as a regression benchmark rather than a fresh blind test"
+      ]
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_hist_hetero_288",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "local_controlled",
+      "primary_split": "heldout",
+      "suite_role": "historical_regression",
+      "exposure_status": "historically_exposed",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 288,
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "5215ebd",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "historical_regression",
+      "heldout_policy": "open_historical_regression",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_hist_hetero_288_references.json",
+        "dev_train": "manifests/cvrp_hist_hetero_288_train_locked.json",
+        "train": "manifests/cvrp_hist_hetero_288_train_locked.json",
+        "heldout": "manifests/cvrp_hist_hetero_288_heldout.json",
+        "test": "manifests/cvrp_hist_hetero_288_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "e93a1851d7646f6549b353ca77d7754e577c3232f0916fb2cdd1e4429ac7a3d4",
+        "train_hash": "7a9f34b994636af3c221f37b9edfaeae2f975329b35e5f45209c666e8a94b1ad",
+        "test_hash": "311060bc14a23d251068d7156e4d3919613fbefc74e1f2dbb11a8a6ed1277834",
+        "dev_train_hash": "7a9f34b994636af3c221f37b9edfaeae2f975329b35e5f45209c666e8a94b1ad",
+        "heldout_hash": "311060bc14a23d251068d7156e4d3919613fbefc74e1f2dbb11a8a6ed1277834"
+      },
+      "metric_spec_hash": "9b3586f3a763fb90c4d36aad554c0a7f47525f6823275ff0e47fa376f115450d",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "0895e19f7c3daf5c8a9d65b2834afa89211425ab6b9ed5a019cbe67536f09854",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "9c3f087f0b28b4f47cad6a9a722ffc6cf2e70729045df89c0caf6b9c6243b75d",
+      "deviations": [
+        "historically exposed to Direction-2 RF/ridge/pairwise out-of-fold evaluation; must not be treated as a fresh blind acceptance set",
+        "canonical raw instances SHA-256 verified as 1c7ee3a778433a98bac7e3f9e9e2b75dd96cfc822e20bdabd98e73b1453e12d6"
+      ]
+    },
+    {
+      "benchmark_id": "cvrp_workbench_v1",
+      "profile": "cvrp_final_accept_120",
+      "problem_id": "cvrp_construct",
+      "problem_family": "cvrp",
+      "benchmark_tier": "local_controlled",
+      "primary_split": "heldout",
+      "suite_role": "final_acceptance",
+      "exposure_status": "fresh_isolated",
+      "distance_convention": "euc_2d_float",
+      "vehicle_limit_policy": "unconstrained",
+      "instance_count": 120,
+      "upstream_repo": "https://github.com/gjd12345/auto-algo-opt",
+      "upstream_commit": "5215ebd",
+      "asset_status": "original_verified",
+      "upstream_code_profile": "cvrp_workbench",
+      "paper_protocol_profile": "final_acceptance",
+      "heldout_policy": "open_final_acceptance",
+      "manifest_paths": {
+        "reference": "manifests/cvrp_final_accept_120_references.json",
+        "dev_train": "manifests/cvrp_final_accept_120_train_locked.json",
+        "train": "manifests/cvrp_final_accept_120_train_locked.json",
+        "heldout": "manifests/cvrp_final_accept_120_heldout.json",
+        "test": "manifests/cvrp_final_accept_120_heldout.json"
+      },
+      "manifests": {
+        "reference_hash": "bd3aa2c25821d4f7fcb41b7bca4176417561319b3f9f97184e3b0102bb084b4c",
+        "train_hash": "ae5ddd109fa5368f432daffa9f7d7f896ee6d9d30b82afbb924736db6de93761",
+        "test_hash": "4996c7595fb6e9279dc1ae0125c12d50c3a6289a7474839df1c7bd3b1b4428ae",
+        "dev_train_hash": "ae5ddd109fa5368f432daffa9f7d7f896ee6d9d30b82afbb924736db6de93761",
+        "heldout_hash": "4996c7595fb6e9279dc1ae0125c12d50c3a6289a7474839df1c7bd3b1b4428ae"
+      },
+      "metric_spec_hash": "dc5e528e5dfe69611407253e755f04ce3d16aa54c8ec6a32ce93b920b29353e6",
+      "metric_spec": {
+        "metric_id": "instance_relative_gap",
+        "version": "v1",
+        "direction": "minimize",
+        "aggregation": "mean_instance_relative_gap",
+        "reference_kind": "solver_reference",
+        "reference_manifest_hash": "ac7158806ebc3af90995cdfbca04e1c7f4efa51a7d2d4fb2fe28c3ccce142e07",
+        "config": {
+          "numerator": "raw_objective-reference_objective",
+          "denominator": "reference_objective",
+          "distance_convention": "euc_2d_float",
+          "vehicle_limit_policy": "unconstrained"
+        }
+      },
+      "benchmark_spec_hash": "3eaeb9870d72b728ef5ca66beb1094d134c1731b79b462d1462e29cfdab162c0",
+      "deviations": [
+        "generated with brand-new independent seed 20261201; evaluated only after solver pool and selectors are frozen"
+      ]
+    }
+  ]
+}

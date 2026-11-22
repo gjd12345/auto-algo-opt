@@ -29,6 +29,8 @@ def load_suite(path: Path | None = None, *, benchmark_id: str = "eohs_v1", profi
     expected_data_hash = (
         benchmark.train_manifest_hash
         if split in {"train", "dev_train"}
+        else benchmark.selection_manifest_hash
+        if split == "selection"
         else benchmark.test_manifest_hash
         if split in {"test", "heldout"}
         else None
@@ -53,7 +55,13 @@ def load_suite(path: Path | None = None, *, benchmark_id: str = "eohs_v1", profi
     # declared manifest hash authenticates the source asset, but it is not
     # sufficient to authenticate caller-supplied instance bytes.  Rebind the
     # container to the trusted registry asset before accepting its identity.
-    expected_split = "dev_train" if split in {"train", "dev_train"} else "heldout"
+    expected_split = (
+        "dev_train"
+        if split in {"train", "dev_train"}
+        else "selection"
+        if split == "selection"
+        else "heldout"
+    )
     registered_suite = load_profile_suite(benchmark_id, profile, split=expected_split)
     if payload.get("instances") != registered_suite.get("instances"):
         raise ValueError("data_manifest_content_mismatch")
@@ -90,7 +98,8 @@ def load_suite(path: Path | None = None, *, benchmark_id: str = "eohs_v1", profi
     if payload.get("content_hash") is not None and payload.get("content_hash") != expected_suite_hash:
         raise ValueError("suite_hash_mismatch")
     payload["content_hash"] = expected_suite_hash
-    problem.validate_suite(payload)
+    if split_value != "selection":
+        problem.validate_suite(payload)
     return payload
 
 

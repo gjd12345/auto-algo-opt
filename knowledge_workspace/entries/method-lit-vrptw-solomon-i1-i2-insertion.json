@@ -18,7 +18,12 @@
       "adapter_kind": "not_mappable"
     },
     "not_the_original": "Time-window insertion is not cvrp_construct select_next_node.",
-    "origin": "openalex+grok-4.5-screen"
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "vrptw",
+    "paradigm": "insertion",
+    "complexity_class": "O(n^2)",
+    "variant_adaptation_note": "Solomon I1/I2 原文包含严格时间窗 [e_i, l_i] 与等待时间推迟约束。迁移至标准无时间窗 CVRP 时，删除时间窗可行性判定与 b_j 时间推迟项，保留带径向偏置的 c_2(i,u,j) = lambda*d(0,u) - c_11(i,u,j) 即可转化为标准 CVRP 顺序/并行插入构造，须用独立 CVRP 路线校验器复核客户覆盖与容量。"
   },
   "relations": {
     "problems": [

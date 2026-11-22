@@ -18,7 +18,12 @@
       "adapter_kind": "not_mappable"
     },
     "not_the_original": "Parallel insertion is not select_next_node.",
-    "origin": "openalex+grok-4.5-screen"
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "vrptw",
+    "paradigm": "insertion",
+    "complexity_class": "O(n^2)",
+    "variant_adaptation_note": "原方法面向带时间窗的 VRPTW（最小化车数 + 里程），插入代价 c_1(i,u,j) 同时包含距离增量与推迟到达时间增量。向无时间窗标准 CVRP 迁移时，须将时间窗权重置零（alpha_2=0），仅保留纯空间绕行增量 c_11 = d(i,u)+d(u,j)-mu*d(i,j) 与容量约束 q_u <= rest_cap，并改用标准 CVRP 最便宜插入/Regret-k 校验（见 method-cvrp-cheapest-regret-insertion）。"
   },
   "relations": {
     "problems": [

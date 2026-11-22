@@ -1,0 +1,168 @@
+{
+  "type": "evidence",
+  "title": "Stage-2 autonomous math discoveries synthesis: early return, rho, rem_routes, cos(theta_0), inward spiral, and isolation urgency (H-004 to H-009)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "h-004",
+    "h-005",
+    "h-006",
+    "h-007",
+    "h-008",
+    "h-009",
+    "early-return",
+    "spiral",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Tracks the six verified Stage-2 mathematical mechanisms discovered across Rounds 1-7: voluntary early return (sigma < tau), elongation ratio rho, two-phase rem_routes start, Law-of-Cosines cos(theta_0), state-only spiral alpha_eff, and AST-safe isolation urgency d_nn.",
+  "attributes": {
+    "knowledge_tier": "math_observation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(n^2)",
+    "interface": "select_next_node",
+    "applicable_regimes": {
+      "strong_on": [
+        "sequential_construct",
+        "multi_scale_n50_n100_n200",
+        "scale_invariance"
+      ],
+      "weak_on": [
+        "single_run_search_variance_not_yet_multi_seed"
+      ],
+      "scale_notes": "各机理均在 ana72 上通过离线消融检验后注入下一轮进化，最终在零泄露 P0-120 与全新隔离的 final_accept_120 上持续验证。"
+    },
+    "math_formulation": [
+      {
+        "expr": "sigma(i,j) = 1 - rho(i,j) = (d(0,i) + d(0,j) - d(i,j)) / (d(0,i) + d(0,j)) < tau(pressure) => return 0",
+        "variables": {
+          "sigma(i,j)": "无量纲归一化节约率（0 表示跨仓库直连，1 表示零绕行共线）",
+          "tau(pressure)": "随容量压力递增的早返阈值"
+        },
+        "preconditions": "H-004 / H-005：current_node != depot，利用 evaluator.py 合法早返动作避免跨仓库长距离桥接"
+      },
+      {
+        "expr": "alpha_eff = alpha_0 - alpha_1 * min(1, mean(q_F) / rest_cap)",
+        "variables": {
+          "alpha_eff": "纯状态内旋权重（同步对所有候选统一，避免 H-004a 反重货偏置）"
+        },
+        "preconditions": "H-007：车辆满载初期大 alpha 外扫，近满载时降 alpha 沿回仓走廊收割客户"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl",
+        "sha256": "a32592fc40379d01b21cb8a944e2702905f9520b1164ba69354e3f8989ff314d"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.150357,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 19.6092,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.102122,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 26.6301,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.137069,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.8805, solve_ms P50=7.6932 / P95=26.1266 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 19.8805,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.8805, solve_ms P50=7.6932 / P95=26.1266 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_rel_gap",
+        "value": -0.092625,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.8381, solve_ms P50=7.1761 / P95=26.4639 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r7_iso",
+        "metric": "mean_tour_length",
+        "value": 26.8381,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.8381, solve_ms P50=7.1761 / P95=26.4639 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral",
+      "method-cvrp-s2-r7-iso"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-stage2-math-discoveries-h004-h009",
+  "content_sha256": "17ac23062fe4ecd72f445e33dbb43f103fd3d03ce2eb0c06f2b30595cf5fea40"
+}

@@ -1,0 +1,388 @@
+{
+  "type": "method",
+  "title": "ReEvo: Reflective Evolution LLM Hyper-Heuristic (NeurIPS 2024)",
+  "category": "optimization_frameworks_experiments",
+  "problem_family": "unknown",
+  "tags": [
+    "reevo",
+    "llm-ahd",
+    "reflective-evolution",
+    "gls",
+    "aco",
+    "nco",
+    "co-bench"
+  ],
+  "status": "reviewed",
+  "summary": "Reflective Evolution (Ye et al., NeurIPS 2024 / arXiv:2402.01145) coupling evolutionary search with short-term pairwise reflections and long-term verbal gradient summaries across GLS, ACO, GA, and NCO attention reshaping.",
+  "attributes": {
+    "method_family": "llm_ahd_framework",
+    "online_offline": "offline",
+    "objective": "cross-problem combinatorial optimization gap",
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "automated_heuristic_design",
+        "cross_problem_benchmarking"
+      ],
+      "weak_on": [
+        "zero_budget_single_pass_without_evolution"
+      ],
+      "scale_notes": "顶会 LLM-AHD 方法横向对比卡，严格分轨记录本机同协议复跑 (evidence_bindings) 与原论文发表成绩 (paper_reported_results)。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "双角色 LLM 循环（Generator + Reflector）：基于成对好坏个体对比生成短期反思，提炼为长期反思提示以指导精英交叉与变异",
+      "evolvable_hook": "面向多种外层框架的启发式矩阵/评分函数（GLS penalty、ACO heuristic matrix、NCO attention bias、constructive score）",
+      "state_maintained": [
+        "population",
+        "short_term_reflections",
+        "long_term_reflection_memory"
+      ],
+      "invariants_and_constraints": [
+        "反思与进化解耦，支持白盒与黑盒问题提示",
+        "每轮仅保留精炼长期反思防止上下文膨胀"
+      ],
+      "typical_pitfalls": [
+        "在 CO-Bench 复杂多约束通用问题上（0.774）受限于约束违反错误率，低于 FunSearch/EoH"
+      ]
+    },
+    "evidence_bindings": [
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "reevo_obp_f1",
+        "metric": "mean_rel_gap",
+        "value": 0.032175,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=173, ok=161, budget_exhausted=12, common_completed(143)_gap=0.033943, mean=467.5466, solve_ms P50=38.3652/P95=502.8916",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "obp_ext_bpplib",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "reevo_obp_f1",
+        "metric": "mean_rel_gap",
+        "value": 0.100787,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=70, ok=70, mean=75.1286, solve_ms P50=7.0879/P95=25.1074",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ],
+    "paper_reported_results": [
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 1 (TSP20 GLS)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "ReEvo_TSP20",
+        "method_name": "KGLS-ReEvo",
+        "paradigm": "local_search",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.0,
+        "unit": "percent",
+        "reference_kind": "known_optimum",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 1 TSP-GLS 相对最优差距（%）；使用单核 AMD EPYC 7742 测时，属 GLS 局部搜索范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 1 (TSP50 GLS)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "ReEvo_TSP50",
+        "method_name": "KGLS-ReEvo",
+        "paradigm": "local_search",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.0,
+        "unit": "percent",
+        "reference_kind": "known_optimum",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 1 TSP-GLS 相对最优差距（%）；使用单核 AMD EPYC 7742 测时，属 GLS 局部搜索范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 1 (TSP100 GLS)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "ReEvo_TSP100",
+        "method_name": "KGLS-ReEvo",
+        "paradigm": "local_search",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.0,
+        "unit": "percent",
+        "reference_kind": "known_optimum",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 1 TSP-GLS 相对最优差距（%）；使用单核 AMD EPYC 7742 测时，属 GLS 局部搜索范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 1 (TSP200 GLS)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "ReEvo_TSP200",
+        "method_name": "KGLS-ReEvo",
+        "paradigm": "local_search",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.216,
+        "unit": "percent",
+        "reference_kind": "known_optimum",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 1 TSP-GLS 相对最优差距（%）；使用单核 AMD EPYC 7742 测时，属 GLS 局部搜索范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 2 (TSPLIB Constructive Avg)",
+        "suite_id": "tsp_ext_tsplib_euc2d",
+        "subset": "TSPLIB_ReEvo_Table2",
+        "method_name": "ReEvo (Constructive)",
+        "paradigm": "sequential_construct",
+        "metric": "mean_opt_gap_pct",
+        "value": 14.6,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 2 TSPLIB 构造式启发式平均最优差距（%），直接核自 arXiv:2402.01145 p.7。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP200 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP200",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 4.02,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP500 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP500",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 24.32,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP1000 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP1000",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 29.08,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP200 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP200",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.74,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP500 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP500",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 1.55,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (TSP1000 NCO)",
+        "suite_id": "tsp_ext_eohs_128",
+        "subset": "NCO_TSP1000",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 2.97,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (TSP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器 + 注意力重塑，与纯 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP200 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP200",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 10.48,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP500 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP500",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 25.7,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP1000 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP1000",
+        "method_name": "POMO + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 218.22,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP200 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP200",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 3.3,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP500 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP500",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 2.94,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Table 3 (CVRP1000 NCO)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "NCO_CVRP1000",
+        "method_name": "LEHD + ReEvo",
+        "paradigm": "neural_attention_reshaping",
+        "metric": "mean_opt_gap_pct",
+        "value": 4.76,
+        "unit": "percent",
+        "reference_kind": "lkh_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "ReEvo NeurIPS 2024 Table 3 (CVRP 部分，直接核自 PDF p.8)：预训练 NCO 神经网络求解器（POMO/LEHD）+ 注意力重塑，与无训练 CPU 启发式属不同范式。"
+      },
+      {
+        "paper_source_id": "src-ye-2024-reevo",
+        "table_ref": "Section 5.2 / Figure 2 (ACO across TSP/CVRP/OP/MKP/BPP)",
+        "suite_id": "cvrp_ext_reevo_scale",
+        "subset": "ACO_5COPs_Fig2",
+        "method_name": "ACO-ReEvo (vs DeepACO / Human ACO)",
+        "paradigm": "metaheuristic",
+        "metric": "rel_improvement_pct_over_human_aco",
+        "value": null,
+        "unit": "percent",
+        "reference_kind": "solver_reference",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "pending_pdf_or_repo_table_extraction",
+        "protocol_boundary_note": "经核验 arXiv:2402.01145 原文：§5.2 ACO 跨五问题结果仅以折线/柱状图 Figure 2 呈现（原文 Table 4 实为自相关分析），无公开数值表；严格不从图估数。"
+      },
+      {
+        "paper_source_id": "src-sun-2025-cobench",
+        "table_ref": "Figure 3 (36 CO Problems Overall)",
+        "suite_id": "cobench_36co_paper_ref",
+        "subset": "COBench_36_Problems",
+        "method_name": "ReEvo (o3-mini-medium)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "normalized_avg_score",
+        "value": 0.774,
+        "unit": "score_0_1",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "CO-Bench 36 个真实 OR 问题归一化平均分（Avg Score in [0,1]，越大越好；LLM Agents 均基于 o3-mini-medium），直接核自 arXiv:2504.04310 Fig. 3 (p.5)。"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-tsp",
+      "problem-online-bin-packing"
+    ],
+    "sources": [
+      "src-cvrp-workbench-20261121",
+      "src-ye-2024-reevo"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-workbench-20261121",
+    "src-ye-2024-reevo"
+  ],
+  "evidence_refs": [
+    "report:docs/cvrp-kb-benchmark-frontend-final-plan.md"
+  ],
+  "code_refs": [],
+  "id": "method-lit-ahd-reevo",
+  "content_sha256": "2273fcefb4b9795de5933734a40c1fce2c733f9107c4f11fde777db96700ff37"
+}

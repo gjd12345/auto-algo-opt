@@ -41,7 +41,8 @@ def audit_sqlite_requests(run_dir: Path) -> dict:
     db_path = run_dir / "session.sqlite3"
     if not db_path.is_file():
         return {"present": False, "error": "missing session.sqlite3"}
-    has_wal = db_path.with_name(db_path.name + "-wal").is_file()
+    wal_path = db_path.with_name(db_path.name + "-wal")
+    has_wal = wal_path.is_file() and wal_path.stat().st_size > 0
     query = "mode=ro" if has_wal else "mode=ro&immutable=1"
     uri = f"file:{db_path.resolve().as_posix()}?{query}"
     con = sqlite3.connect(uri, uri=True)

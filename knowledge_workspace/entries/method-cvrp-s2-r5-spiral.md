@@ -31,6 +31,19 @@
 - **Shared-6 diagnostic suite** (development diagnostic containing the 4 search instances): `10.2714` vs `Frozen C 10.9197`, triggering `17` valid voluntary early returns (zero per-instance discrepancy vs official evaluator).
 - **`hetero-288` 5-factor matrix**: total tour length `7211.13`, below the old 8-rule portfolio VBS (`7234.72`).
 
+### 统一工作台多套件复算结果（`cvrp_workbench_v1`, 预算 `standard_500ms`）
+
+| 套件 (`suite_id`) | 样本数 `N` | 均长 (`mean_tour_length`) | 平均相对差距 (`mean_rel_gap`) | 完成率 | 求解耗时 P50 / P95 (ms) |
+|---|---:|---:|---:|---:|---:|
+| `cvrp_dev_hetero_24` | 24 | 18.1588 | -11.42% | 100.0% | 2.5289 / 3.5605 |
+| `cvrp_select_multiscale_64` | 64 | 22.8904 | -11.13% | 100.0% | 3.2058 / 14.849 |
+| `cvrp_hist_p0_120` | 120 | 19.6092 | -15.04% | 100.0% | 5.2298 / 15.2793 |
+| `cvrp_hist_hetero_288` | 288 | 25.0387 | -9.92% | 100.0% | 5.0377 / 13.0799 |
+| `cvrp_final_accept_120` | 120 | 26.6301 | -10.21% | 100.0% | 5.2973 / 14.8585 |
+| `cvrp_ext_eohs` | 256 | 18.1094 | +22.16% | 100.0% | 6.3593 / 11.9836 |
+| `cvrp_ext_cvrplib_abpx` | 90 | 11946.7556 | +19.64% | 100.0% | 3.0261 / 48.6303 |
+| `shared_diagnostic_6` | 6 | 10.2714 | -15.14% | 100.0% | 2.4963 / 3.3535 |
+
 ## 代码和评测关联
 
 - Exported rule: `experiments/cvrp_midterm/selection_s2/rules_s2/s2_r5_spiral.py` (`code_sha256: e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587`).

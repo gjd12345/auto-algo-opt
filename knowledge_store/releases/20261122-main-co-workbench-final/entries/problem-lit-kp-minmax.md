@@ -1,0 +1,27 @@
+# Min-max knapsack (literature secondary)
+
+Secondary literature variant, not a new registered EoH problem_id.
+
+## 定义或方法步骤
+
+Minimise the worst load.
+
+Catalog search query: `minmax knapsack heuristic`.
+
+## 适用条件、假设与限制
+
+Parent family `knapsack`. eoh_map=not_registered/not_mappable.
+
+Do not treat this card as a new evaluator interface.
+
+## 来源及支持的具体结论
+
+Catalog-defined variant. Method conclusions live on the screened method cards.
+
+## 代码和评测关联
+
+Target heuristics (search hints only): Min-max greedy (not_mappable), Load-balance local search (not_mappable).
+
+## 未确认项与冲突证据
+
+No suite/metric/budget. Empty until a screened method is attached.

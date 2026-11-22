@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Cross-problem local_only CVRP elite: far-30% regret seed then savings-or-depot",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "From depot: among customers in the farthest 30% by depot distance, pick max (second-best minus best) insertion detour; on-route reuse savings formula if capacity_ratio>0.4 else nearest or depot.",
+  "attributes": {
+    "interface": "select_next_node",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/cross_problem_transfer/best_codes/cvrp_construct_local_only_best.py",
+      "sha256": "4cf318851137f817fcc83b579a02e3ccc61490e70f5fc8063f4edf2da4476852"
+    }
+  ],
+  "id": "impl-cvrp-xfer-local",
+  "content_sha256": "0c882cbd97bc7ba55434071445df98c35482f41a7e25735d53426ebd1058a664"
+}

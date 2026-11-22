@@ -12,6 +12,8 @@ from typing import Any, Mapping, Sequence
 ALLOWED_REFERENCE_KINDS = frozenset({
     "known_optimum",
     "best_known",
+    "lkh_reference",
+    "theoretical_lb",
     "solver_reference",
     "analytical_reference",
     "upstream_compatibility_reference",
@@ -25,6 +27,36 @@ ALLOWED_FROZEN_SELECTION_KINDS = frozenset({
     "incumbent_top1",
     "archive_topk",
     "final_population_set",
+})
+ALLOWED_SUITE_ROLES = frozenset({
+    "dev_search",
+    "selection_tuning",
+    "historical_regression",
+    "final_acceptance",
+    "external_standard",
+    "external_top_venue",
+    "external_or_standard",
+})
+ALLOWED_BENCHMARK_TIERS = frozenset({
+    "top_venue_protocol",
+    "or_gold_standard",
+    "local_controlled",
+})
+ALLOWED_EXPOSURE_STATUSES = frozenset({
+    "fresh_isolated",
+    "historically_exposed",
+    "public_standard",
+})
+ALLOWED_DISTANCE_CONVENTIONS = frozenset({
+    "euc_2d_float",
+    "euc_2d_nint",
+    "not_applicable",
+})
+ALLOWED_VEHICLE_LIMIT_POLICIES = frozenset({
+    "unconstrained",
+    "min_vehicles_advisory",
+    "strict_max_vehicles",
+    "not_applicable",
 })
 
 
@@ -136,15 +168,38 @@ class BenchmarkSpec:
     upstream_code_profile: str = "upstream_code"
     paper_protocol_profile: str = "paper_protocol"
     deviations: tuple[str, ...] = ()
+    selection_manifest_hash: str | None = None
+    suite_role: str | None = None
+    exposure_status: str | None = None
+    distance_convention: str | None = None
+    vehicle_limit_policy: str | None = None
+    problem_family: str | None = None
+    benchmark_tier: str | None = None
+    published_results_path: str | None = None
+    published_results_hash: str | None = None
 
     def __post_init__(self) -> None:
         for name in ("train_manifest_hash", "test_manifest_hash", "reference_manifest_hash", "metric_spec_hash"):
             _require_hash(getattr(self, name), name)
         if self.asset_status not in ALLOWED_ASSET_STATUSES:
             raise ValueError("invalid_benchmark_asset_status")
+        if self.selection_manifest_hash is not None:
+            _require_hash(self.selection_manifest_hash, "selection_manifest_hash")
+        if self.suite_role is not None and self.suite_role not in ALLOWED_SUITE_ROLES:
+            raise ValueError("invalid_suite_role")
+        if self.exposure_status is not None and self.exposure_status not in ALLOWED_EXPOSURE_STATUSES:
+            raise ValueError("invalid_exposure_status")
+        if self.distance_convention is not None and self.distance_convention not in ALLOWED_DISTANCE_CONVENTIONS:
+            raise ValueError("invalid_distance_convention")
+        if self.vehicle_limit_policy is not None and self.vehicle_limit_policy not in ALLOWED_VEHICLE_LIMIT_POLICIES:
+            raise ValueError("invalid_vehicle_limit_policy")
+        if self.benchmark_tier is not None and self.benchmark_tier not in ALLOWED_BENCHMARK_TIERS:
+            raise ValueError("invalid_benchmark_tier")
+        if self.published_results_hash is not None:
+            _require_hash(self.published_results_hash, "published_results_hash")
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "benchmark_id": self.benchmark_id,
             "profile": self.profile,
             "problem_id": self.problem_id,
@@ -161,6 +216,27 @@ class BenchmarkSpec:
             },
             "deviations": list(self.deviations),
         }
+        # Only serialize v1.2 optional protocol fields when explicitly present so
+        # legacy v1.1 BenchmarkSpec content_hash values remain byte-identical.
+        if self.selection_manifest_hash is not None:
+            payload["selection_manifest_hash"] = self.selection_manifest_hash
+        if self.suite_role is not None:
+            payload["suite_role"] = self.suite_role
+        if self.exposure_status is not None:
+            payload["exposure_status"] = self.exposure_status
+        if self.distance_convention is not None:
+            payload["distance_convention"] = self.distance_convention
+        if self.vehicle_limit_policy is not None:
+            payload["vehicle_limit_policy"] = self.vehicle_limit_policy
+        if self.problem_family is not None:
+            payload["problem_family"] = self.problem_family
+        if self.benchmark_tier is not None:
+            payload["benchmark_tier"] = self.benchmark_tier
+        if self.published_results_path is not None:
+            payload["published_results_path"] = self.published_results_path
+        if self.published_results_hash is not None:
+            payload["published_results_hash"] = self.published_results_hash
+        return payload
 
     @property
     def content_hash(self) -> str:

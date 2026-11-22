@@ -6,8 +6,11 @@
   "problem_family": "cvrp",
   "tags": [
     "cvrp",
+    "granular-tabu",
+    "granular-tabu-search",
     "literature",
-    "granular-tabu-search"
+    "metaheuristic",
+    "standard-cvrp"
   ],
   "status": "reviewed",
   "summary": "Toth and Vigo GTS: tabu search on a drastically reduced neighborhood.",
@@ -15,10 +18,58 @@
     "method_family": "literature",
     "eoh_map": {
       "status": "not_mappable",
-      "adapter_kind": "not_mappable"
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
     },
     "not_the_original": "Granular tabu is not cvrp_construct select_next_node.",
-    "origin": "openalex+grok-4.5-screen"
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "metaheuristic",
+    "complexity_class": "O(k*n^2)",
+    "interface": "solve_cvrp",
+    "applicable_regimes": {
+      "strong_on": [
+        "large_n_200_to_1000",
+        "cvrplib_abpx",
+        "high_quality_metaheuristic"
+      ],
+      "weak_on": [
+        "sub_millisecond_budget"
+      ],
+      "scale_notes": "通过粒度阈值剪枝约 80%-90% 长边，使大 n 下的 Tabu 邻域评估仍保持接近线性稀疏度。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "构建稀疏粒度边集 E_g = {(i,j) : d(i,j) <= beta * z_bar / (n + k)} 并保留仓库边与当前解边；仅在 E_g 诱导的候选移动（relocate/swap/2-opt*）上执行带禁忌表与破禁准则的迭代搜索",
+      "evolvable_hook": "granularity_threshold_schedule(iter, stagnation, z_best) 与 move_penalized_score(delta, freq, tabu_state)",
+      "state_maintained": [
+        "routes",
+        "granular_neighbors",
+        "tabu_tenure_table",
+        "penalty_weights"
+      ],
+      "invariants_and_constraints": [
+        "仓库关联边始终留在稀疏图中防止断连",
+        "停滞期动态放宽 beta 触发多样性重启动",
+        "最终输出必须满足严格容量可行"
+      ],
+      "typical_pitfalls": [
+        "beta 过小导致可行移动过稀陷入死胡同",
+        "允许不可行中间解但未实现自适应容量惩罚恢复机制"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "vartheta = beta * (z_bar / (n + K));   E_g = {(i,j) : d(i,j) <= vartheta} U {(0,i)}",
+        "variables": {
+          "beta": "稀疏度系数（典型 1.0..2.0）",
+          "z_bar": "快速初始解总路程",
+          "n": "客户数",
+          "K": "路径数"
+        },
+        "preconditions": "欧氏或度量 CVRP；需配合稀疏邻接表预先过滤候选对"
+      }
+    ]
   },
   "relations": {
     "problems": [

@@ -1,0 +1,345 @@
+{
+  "id": "method-cvrp-s2-r5-spiral",
+  "type": "method",
+  "title": "CVRP state-only inward spiral with angular coherence and adaptive early return (R5 / s2_r5_spiral)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "r5",
+    "s2-r5-spiral",
+    "construct",
+    "early-return",
+    "spiral",
+    "scale-invariant",
+    "select_next_node"
+  ],
+  "status": "reviewed",
+  "summary": "Strictly scale-invariant CVRP select_next_node heuristic combining two-phase depot start, state-only inward spiral alpha_eff, elongation rho, cos(theta_0), and adaptive early depot return; selected on ana72, reducing P0-120 total tour length by 4.92% [4.22%, 5.67%] (109/120 wins) vs paired control.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean route length",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "selection_protocol": "ana72 offline selection (zero P0 peeking)",
+    "experimental_conditions": {
+      "run_dir": "experiments/cvrp_midterm/runs/s2_autonomous_math_r8",
+      "round": 5,
+      "candidate_id": "candidate_2",
+      "code_sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587",
+      "eoh_requests_per_arm": 48,
+      "token_overhead_vs_control_pct": 35.0,
+      "external_analysis_cost": "separate external Coding Agent round analysis",
+      "p0_120_mean": 19.6092,
+      "p0_120_vs_control_total_red_pct": 4.92,
+      "p0_120_vs_control_ci95_pct": [
+        4.22,
+        5.67
+      ],
+      "p0_120_vs_control_mean_per_instance_rel_red_pct": 5.66,
+      "p0_120_wins_vs_control": 109,
+      "shared6_mean": 10.2714,
+      "shared6_early_returns": 17,
+      "scale_spread_pct": 0.0,
+      "hetero_288_total": 7211.13,
+      "p0_vs_cw_merge_pct_over_cw": 12.98,
+      "hetero_288_vs_cw_merge_pct_over_cw": 9.1
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r5_spiral.py",
+        "sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "agent_skill_loop/cvrp_workbench/pointwise_adapter.py",
+        "sha256": "f032c72289ca3f8956c160e2e3ccde38acde102321e1bc25246fcacff0a204dd"
+      }
+    ],
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "uniform",
+        "clustered",
+        "n_50_to_200",
+        "eccentric_depot",
+        "scale_invariance_1e-3_to_1e3"
+      ],
+      "weak_on": [
+        "vs_parallel_merge_and_local_search"
+      ],
+      "scale_notes": "在单车顺序构造接口下全面领先传统逐点规则（P0-120 较配对对照降 4.92%、hetero-288 单规则低于旧 8 规则池 VBS），并在共享 6 例精确复现 10.2714 与 17 次主动回仓；但跨范式对比仍落后于并行 CW 与局部搜索。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造骨架，支持候选函数在可行集非空时返回 0 触发合法主动早返仓",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes",
+        "route_idx"
+      ],
+      "invariants_and_constraints": [
+        "所有几何量均经 scale 或 pair 无量纲化，保证 0.00% 坐标缩放漂移",
+        "仅在 current_node != depot 时允许主动返回 0",
+        "pressure 仅依赖当前车辆状态，不引入反重货偏置"
+      ],
+      "typical_pitfalls": [
+        "若去除两阶段 rem_routes 仓库出发分支，大 n=200 会显著退化",
+        "若用 sum(dem)/rest_cap 代替 mean(dem)/rest_cap 会导致 pressure 饱和引发过早回仓"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score(i,j) = (d(i,j) - alpha_eff * d(0,j))/scale + 0.35*rho(i,j) - 0.10*fill(j) - 0.20*cos(theta_0)",
+        "variables": {
+          "scale": "mean(d_dep) + mean(d_cur) + 1e-12",
+          "alpha_eff": "1.02 - 0.85 * min(1, mean(q_F)/rest_cap)",
+          "rho(i,j)": "d(i,j) / max(d(0,i) + d(0,j), 1e-12)",
+          "fill(j)": "q_j / (rest_cap + 1e-12)",
+          "cos(theta_0)": "(d(0,i)^2 + d(0,j)^2 - d(i,j)^2) / (2 d(0,i) d(0,j))"
+        },
+        "preconditions": "中程步 current_node != depot；欧氏/度量距离矩阵"
+      },
+      {
+        "expr": "voluntary_early_return (return 0) iff max(q_F) > 0.55*rest_cap and (1 - rho_best) < 0.25 + 0.50*pressure",
+        "variables": {
+          "1 - rho_best": "最佳候选的归一化节约率 sigma",
+          "pressure": "min(1, mean(q_F)/rest_cap)"
+        },
+        "preconditions": "避免跨仓库长距离跳接，在剩余载重收紧时提前回仓补满"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.114161,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=18.1588, solve_ms P50=3.9665 / P95=7.4604 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 18.1588,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=18.1588, solve_ms P50=3.9665 / P95=7.4604 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.111316,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=22.8904, solve_ms P50=4.9826 / P95=14.5407 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 22.8904,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=22.8904, solve_ms P50=4.9826 / P95=14.5407 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.150357,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 19.6092,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.099176,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=25.0387, solve_ms P50=4.614 / P95=16.0609 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 25.0387,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=25.0387, solve_ms P50=4.614 / P95=16.0609 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.102122,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 26.6301,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": 0.221558,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=18.1094, solve_ms P50=4.0004 / P95=7.8456 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 18.1094,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=18.1094, solve_ms P50=4.0004 / P95=7.8456 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.124451,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=17.3302, solve_ms P50=3.5095 / P95=8.5377 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 17.3302,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=17.3302, solve_ms P50=3.5095 / P95=8.5377 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": 0.207218,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1053.9054, solve_ms P50=2.5655 / P95=4.8322 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 1053.9054,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1053.9054, solve_ms P50=2.5655 / P95=4.8322 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": 0.152996,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=70421.77, solve_ms P50=29.837 / P95=136.9249 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 70421.77,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=70421.77, solve_ms P50=29.837 / P95=136.9249 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.151363,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.2714, solve_ms P50=3.1441 / P95=3.8519 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 10.2714,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.2714, solve_ms P50=3.1441 / P95=3.8519 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "evaluation:evidence-cvrp-depot-start-phase-h003;suite=P0-120+hetero-288;metric=total_tour_length;budget=48_requests_8_rounds"
+  ],
+  "code_refs": [],
+  "content_sha256": "767f5086179930cad2f820343c8e3fed21c22686cc7e1af5ef757383dbcfc9bd"
+}

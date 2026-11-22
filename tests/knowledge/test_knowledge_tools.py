@@ -436,3 +436,23 @@ def test_repo_workspace_and_published_releases_audit_contracts() -> None:
             assert hashlib.sha256(blob).hexdigest() == ref["sha256"]
             verified += 1
     assert verified == 7
+
+
+def test_cli_search_without_query_supports_structural_filters(capsys: pytest.CaptureFixture[str]) -> None:
+    from knowledge_tools.cli import main
+
+    repo = Path(__file__).resolve().parents[2]
+    rc = main([
+        "search",
+        "--release", str(repo / "knowledge_store/current"),
+        "--paradigm", "local_search",
+        "--tier", "verified_experiment",
+        "--variant", "standard_cvrp",
+        "--comparison-mode", "local_recomputed",
+        "--limit", "20",
+    ])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["filter_only"] is True
+    assert out["total"] >= 1
+    assert any(hit["id"] == "method-cvrp-intra-2opt" for hit in out["results"])

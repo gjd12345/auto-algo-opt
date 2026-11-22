@@ -18,7 +18,12 @@
       "adapter_kind": "not_mappable"
     },
     "not_the_original": "CW merge of routes is not select_next_node. Abstract does not use savings as a next-customer score.",
-    "origin": "openalex+grok-4.5-screen"
+    "origin": "openalex+grok-4.5-screen",
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "ovrp",
+    "paradigm": "parallel_merge",
+    "complexity_class": "O(n^2)",
+    "variant_adaptation_note": "开放式车辆路径问题（OVRP）不要求车辆返回仓库，因此端点合并公式与标准闭环 CVRP 不同（不再节省返程边 d(i,0) 或 d(j,0)）。迁移回标准闭环 CVRP 时必须恢复完整闭环节约量 s(i,j)=d(0,i)+d(0,j)-d(i,j) 并强制所有路径起止于仓库 0（见 method-lit-cvrp-construct-clarke-wright-savings-merge）。"
   },
   "relations": {
     "problems": [

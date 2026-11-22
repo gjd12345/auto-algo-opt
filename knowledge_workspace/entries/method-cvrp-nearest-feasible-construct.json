@@ -4,28 +4,281 @@
   "category": "method",
   "problem_family": "cvrp",
   "tags": [
+    "baseline",
+    "construct",
     "cvrp",
     "nearest-neighbor",
-    "construct"
+    "nn",
+    "select_next_node",
+    "standard-cvrp"
   ],
   "status": "reviewed",
   "summary": "Official CVRP template: among capacity-feasible unvisited customers, pick the nearest; 0 returns to depot.",
   "attributes": {
     "method_family": "construction",
     "online_offline": "offline",
-    "interface": "select_next_node with rest_capacity",
-    "objective": "mean route length"
+    "objective": "mean route length",
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "fast_reference_baseline",
+        "strict_scale_invariance"
+      ],
+      "weak_on": [
+        "eccentric_depot",
+        "clustered_multi_route",
+        "large_n_200_plus"
+      ],
+      "scale_notes": "O(n^2) 极快基线（n=200 求解 P50 < 2 ms），但因短视贪心且缺少远端出发与早返机制，在全部多规模与 CVRPLib 套件上均显著弱于 R5 与并行 CW。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造循环：维护当前位置、剩余载重与未访问集合；当无可行客户时强制回仓 0 并重置满载",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes"
+      ],
+      "invariants_and_constraints": [
+        "客户 1..n 恰好访问一次",
+        "每步仅在 demands[j] <= rest_capacity 的可行集合中选择或主动返回 0",
+        "输入矩阵与需求只读"
+      ],
+      "typical_pitfalls": [
+        "从仓库出发时按最近客户起步（inside-out），将远端孤立客户留到尾程产生高额空驶回程"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "j* = argmin_{j in F(r)} d(i, j)",
+        "variables": {
+          "i": "当前所在节点",
+          "F(r)": "满足 q_j <= r 的未访问可行客户集",
+          "d(i,j)": "节点 i 到 j 的距离"
+        },
+        "preconditions": "对称非负距离矩阵，且所有单客户需求 q_j <= Q"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "agent_skill_loop/problems/cvrp.py",
+        "sha256": "22abc7f248ef66046369ccad337df73f521d42f8a281ad17bed54f844d1936f8"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "agent_skill_loop/cvrp_workbench/solvers.py",
+        "sha256": "c2bae070ff4b8846d08d1a73c45a681143436cd99a8190631614f2ab96b3c741"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=20.5337, solve_ms P50=1.1277 / P95=2.3476 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 20.5337,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=20.5337, solve_ms P50=1.1277 / P95=2.3476 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=25.7007, solve_ms P50=1.473 / P95=5.2994 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 25.7007,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=64, mean_tour_length=25.7007, solve_ms P50=1.473 / P95=5.2994 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=23.0203, solve_ms P50=1.4419 / P95=5.8038 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 23.0203,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=23.0203, solve_ms P50=1.4419 / P95=5.8038 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=27.781, solve_ms P50=1.2742 / P95=6.4725 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 27.781,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=27.781, solve_ms P50=1.2742 / P95=6.4725 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=29.5549, solve_ms P50=1.4337 / P95=6.2473 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 29.5549,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=29.5549, solve_ms P50=1.4337 / P95=6.2473 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.325941,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=19.7501, solve_ms P50=1.2724 / P95=3.0214 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 19.7501,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, mean_tour_length=19.7501, solve_ms P50=1.2724 / P95=3.0214 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=19.9013, solve_ms P50=0.9755 / P95=3.1446 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_reevo_scale",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 19.9013,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=48, mean_tour_length=19.9013, solve_ms P50=0.9755 / P95=3.1446 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.38213,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1198.7703, solve_ms P50=0.5075 / P95=1.2793 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 1198.7703,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, mean_tour_length=1198.7703, solve_ms P50=0.5075 / P95=1.2793 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_rel_gap",
+        "value": 0.254727,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=76518.08, solve_ms P50=12.6503 / P95=90.8738 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "nn",
+        "metric": "mean_tour_length",
+        "value": 76518.08,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, mean_tour_length=76518.08, solve_ms P50=12.6503 / P95=90.8738 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ]
   },
   "relations": {
     "problems": [
       "problem-cvrp"
     ],
-    "sources": [],
+    "sources": [
+      "src-cvrp-workbench-20261121"
+    ],
     "implementations": [
       "impl-cvrp-official-construct"
     ]
   },
-  "source_refs": [],
+  "source_refs": [
+    "src-cvrp-workbench-20261121"
+  ],
   "evidence_refs": [
     "code:official_eoh/examples/cvrp_construct/prob.py"
   ],
@@ -36,5 +289,5 @@
     }
   ],
   "id": "method-cvrp-nearest-feasible-construct",
-  "content_sha256": "131ffc88cf8b4e88126ee2056f9b4244a7315a208a79a0995bb3738f60934fc3"
+  "content_sha256": "dbcd2649ff19a8134f460d3e89f2ba6fd734fa52e8d53b0b2410051152692ede"
 }

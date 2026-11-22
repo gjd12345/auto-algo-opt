@@ -49,6 +49,84 @@
       {
         "path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json"
       }
+    ],
+    "knowledge_tier": "math_observation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(1)",
+    "applicable_regimes": {
+      "strong_on": [
+        "sequential_construct",
+        "uniform",
+        "clustered",
+        "n_50_to_200"
+      ],
+      "weak_on": [
+        "already_decoupled_full_route_solvers"
+      ],
+      "scale_notes": "对所有线性径向构造规则 s_alpha(i,j)=d(i,j)-alpha*d(0,j) 在任意规模下均成立；仅替换 V0 的出发步即在 P0-120 降低总路程 7.96% [6.88%, 8.98%]。"
+    },
+    "math_formulation": [
+      {
+        "expr": "s_alpha(0, j) = d(0, j) - alpha * d(0, j) = (1 - alpha) * d(0, j)",
+        "variables": {
+          "alpha": "中程径向拉回权重",
+          "d(0,j)": "仓库到客户 j 距离"
+        },
+        "preconditions": "仓库出发步 i = 0 且 d(0,0) = 0；最小化 s_alpha(0,j) 在 alpha = 1 处发生排序反转"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "stage2a_counterfactual",
+        "algorithm_id": "v0",
+        "metric": "mean_tour_length",
+        "value": 22.391,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "V0 native 22.3910 -> V0_decoupled_theory 20.6081 (-7.96% [6.88%, 8.98%], 94/120 wins)",
+        "artifact_path": "experiments/cvrp_midterm/analysis/s2_holdout_eval.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.150357,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 19.6092,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=19.6092, solve_ms P50=5.5531 / P95=16.7064 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_rel_gap",
+        "value": -0.102122,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r5_spiral",
+        "metric": "mean_tour_length",
+        "value": 26.6301,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=26.6301, solve_ms P50=5.3029 / P95=15.7886 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
     ]
   },
   "relations": {
@@ -56,11 +134,13 @@
       "problem-cvrp"
     ],
     "sources": [
-      "src-cvrp-midterm-20261121"
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
     ]
   },
   "source_refs": [
-    "src-cvrp-midterm-20261121"
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
   ],
   "evidence_refs": [
     "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md;suite=P0-120+ana72;metric=total_tour_length;budget=offline_counterfactual"
