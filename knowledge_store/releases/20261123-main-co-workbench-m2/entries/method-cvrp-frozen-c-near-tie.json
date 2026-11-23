@@ -1,0 +1,208 @@
+{
+  "type": "method",
+  "title": "Frozen PoC rule C: linear radial score with absolute near-tie capacity band",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "frozen-c",
+    "h-001",
+    "scale-collapse",
+    "near-tie",
+    "select_next_node",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Frozen PoC constructive rule C (10.9197 on shared_diagnostic_6 at nominal scale s=1) whose mixed-unit near-tie gate band=1e-3*(span+1.0) triggers an O(1/s^2) capacity-fit payload causing +207% collapse at coordinate scale s=1e-3.",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "nominal_unit_square_n50_dev_only"
+      ],
+      "weak_on": [
+        "rescaled_coordinates_1e-3",
+        "large_n_100_200",
+        "eccentric_depot"
+      ],
+      "scale_notes": "标称单位正方形 n=50 共享 6 例为 10.9197，但因出发步耦合 (alpha=0.6<1) 在 P0-120 退化至 22.55，且在 s=1e-3 坐标缩放下崩溃 +207%（dev24 压力抽检最大漂移见 evidence_bindings）。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造 select_next_node（作为早期 PoC 冻结基线与尺度崩溃诊断靶标）",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes"
+      ],
+      "invariants_and_constraints": [
+        "严格禁止在未无量纲化的情况下混合绝对常量 1.0 与坐标距离 d_cur"
+      ],
+      "typical_pitfalls": [
+        "band = 1e-3*(span + 1.0) 混合量纲，cap_term = 0.01*|rest_cap - dem|/d_cur 按 O(1/s^2) 爆炸"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "base = d(i,j) - 0.6*d(0,j);  band = 1e-3*(span + 1.0);  cap_term = 0.01 * |rest_cap - q_j| / max(d(i,j), 1e-9)",
+        "variables": {
+          "span": "max(base) - min(base)",
+          "band": "混合量纲近并列门控带宽",
+          "cap_term": "非无量纲容量匹配项"
+        },
+        "preconditions": "仅在 s ~ 1 单位正方形上偶然工作；当坐标缩放 s -> 0 时 cap_term/base ~ O(1/s^2) 接管决策"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py",
+        "sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_rel_gap",
+        "value": -0.09895,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.9197, solve_ms P50=1.8854 / P95=2.4518 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_tour_length",
+        "value": 10.9197,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.9197, solve_ms P50=1.8854 / P95=2.4518 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_rel_gap",
+        "value": -0.002167,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=20.4863, solve_ms P50=2.389 / P95=5.6042 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_tour_length",
+        "value": 20.4863,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=24, mean_tour_length=20.4863, solve_ms P50=2.389 / P95=5.6042 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_rel_gap",
+        "value": -0.031097,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=22.5539, solve_ms P50=3.9129 / P95=12.5861 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_tour_length",
+        "value": 22.5539,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=22.5539, solve_ms P50=3.9129 / P95=12.5861 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_rel_gap",
+        "value": 0.011777,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=28.2581, solve_ms P50=2.9885 / P95=14.1544 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_tour_length",
+        "value": 28.2581,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=28.2581, solve_ms P50=2.9885 / P95=14.1544 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_rel_gap",
+        "value": 0.002653,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=29.7929, solve_ms P50=3.488 / P95=13.3323 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "c",
+        "metric": "mean_tour_length",
+        "value": 29.7929,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=29.7929, solve_ms P50=3.488 / P95=13.3323 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_scale_stress_1e-3",
+        "algorithm_id": "c",
+        "metric": "max_scale_drift_pct_at_1e-3",
+        "value": 263.8998,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "4 例 1e-3 坐标缩放压力抽检最大相对漂移 263.90%（R5 / R7 / CW 为 0.00%）",
+        "artifact_path": "results/scale_stress_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-frozen-c-near-tie",
+  "content_sha256": "5c2c05d6996552634e36738e9712155c071940273d12f11395002180a10a4061"
+}

@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "TSP construct elite: weighted remainder-tour and regret scores",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The code still only chooses the next city. It mixes direct distance, a simulated nearest-neighbor remainder tour, a worst-minus-best local regret, and a penalty when the edge exceeds 1.5× median neighbor distance (commen",
+  "attributes": {
+    "interface": "select_next_node with simulated NN remainder, local regret, long-edge penalty",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "evidence/final_batch_20260630/best_codes/tsp_construct_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:evidence/final_batch_20260630/best_codes/tsp_construct_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "evidence/final_batch_20260630/best_codes/tsp_construct_best.py",
+      "sha256": "09fdbbc526a0a2db4c794ef5edb137293c1461524a1f8118e04ac2d6904925bb"
+    }
+  ],
+  "id": "impl-tsp-final-batch-best",
+  "content_sha256": "900255456f68dea0ea77207aa4e4cdf248e68ae69ba78a7485fbed2af953cdb6"
+}

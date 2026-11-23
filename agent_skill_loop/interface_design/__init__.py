@@ -12,6 +12,13 @@ from .blind_commitment import (
     seal_m2_blind_120,
     verify_sealed_against_commitment,
 )
+from .blind_eval import (
+    execute_m2_blind_evaluation,
+    freeze_pre_blind_protocol,
+    paired_bootstrap_comparison,
+    paired_wilcoxon_signed_rank,
+    unseal_and_verify_m2_blind_suite,
+)
 from .contracts import (
     ALLOWED_POSTPROCESS_MODES,
     FrozenInterfaceSolver,

@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Insertships evaluator: replace InsertShips in a Go dispatcher and run Solomon-like JSON",
+  "category": "implementation",
+  "problem_family": "insertships_routing",
+  "tags": [
+    "insertships_routing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The Python Evaluation class copies go_solver sources, regex-replaces InsertShips (or Optimization), go build, then runs the binary on Solomon-format JSON batches. Objective is mean parsed 'final cost' (optional composite",
+  "attributes": {
+    "interface": "evolved func InsertShips(dispatch, oris, dess, total_ship) Dispatch compiled into go_solver/main.go",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "Agent_EOH/eoh/src/eoh/examples/user_insertships_go/prob_insertships_go.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:Agent_EOH/eoh/src/eoh/examples/user_insertships_go/prob_insertships_go.py"
+  ],
+  "code_refs": [
+    {
+      "path": "Agent_EOH/eoh/src/eoh/examples/user_insertships_go/prob_insertships_go.py",
+      "sha256": "02bc4199aa17998531a4df1239fe82a887c0a7b226d42577537635b24643a9bb"
+    }
+  ],
+  "id": "impl-insertships-go-harness",
+  "content_sha256": "af6e99176bf7fef449a8bf199a5e6ae52b4e564a7dec14c66677d2ed123cc996"
+}

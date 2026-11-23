@@ -1,0 +1,130 @@
+{
+  "type": "evidence",
+  "title": "里程碑二计划期诊断选接口、五臂同预算对照与 Protocol T1/T2 预算自适应总证据",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-2",
+    "diagnostic-planning",
+    "short-pilot-racing",
+    "protocol-t1",
+    "protocol-t2",
+    "session-runtime"
+  ],
+  "status": "reviewed",
+  "summary": "在统一模型 (deepseek-v4.1-flash) 与总搜索预算 (B=12) 下完成五臂配对对照与盲测验证：① 500ms 下 LLM 诊断规划组 (Arm 4b) 以最低演化成本 (10.5 req / 17.1k tok / 92.5s) 取得 select_64 (20.8618) 与 blind_120 (24.2306) 双料第一，较固定逐点进化 (Arm 1) 在盲测集上降低 12.62% (120/120 全胜, p=0.00e+00)，并较机械阈值规则 (Arm 4a) 显著降低 0.31%；② 25ms 紧预算下 Protocol T1 诊断规划自动从 L2b 切换至 L2a，实现 blind_120 0/120 超时截断（对比 Protocol T2 直接迁移 500ms L2b 触发 40/120 题截断，路长降低 62.84%）。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "interface": "score_merge_static",
+    "applicable_regimes": {
+      "strong_on": [
+        "plan_time_interface_selection",
+        "budget_constrained_evolution",
+        "cross_harness_skill_orchestration"
+      ],
+      "weak_on": [
+        "single_fixed_interface_without_diagnostics"
+      ],
+      "scale_notes": "2x3 差距分解（1,056 条逐例记录）+ 0.8s 预算裕度探针可在零/单次 LLM 请求内准确定位瓶颈并规避 n=200 超时陷阱，比 Short-Pilot Racing 节省 34% 请求与 38% 墙钟时间。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/diagnostics.py",
+        "sha256": "0924b835246838f14b4850ab40753849a82ecbe8e5090260f7b6b6a55f443535"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/validator.py",
+        "sha256": "8da8687665397cde75052ee15abfdf8f64d33d539669eb36121448c9bf79fa7b"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/planner.py",
+        "sha256": "52b71f4600240e5f79034e5e80b235107c7e3d2cba8d49d54b30faa5e53ffbaa"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/session_bridge.py",
+        "sha256": "8a6fc78cb567c790256c699d4615c28622695fef3d34d872935391be5012b00b"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json",
+        "sha256": "f110ed6709628b22c93d2fedc755ddf6e6981546ab99938322849508664477df"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2b_four_arm/four_arm_report_tight_25ms.json",
+        "sha256": "7156df6f5f82a9a02e47990fc409e5d569a3492169915bf51ffa86ec46fbcd10"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 24.2003,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Arm 4b (s20261123) 在 500ms 盲测 120 题均长",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_fixed_pointwise_s20261123",
+        "metric": "mean_tour_length",
+        "value": 27.5724,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Arm 1 固定逐点进化在 500ms 盲测 120 题均长",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_25ms",
+        "algorithm_id": "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
+        "metric": "mean_tour_length",
+        "value": 24.1627,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Protocol T1 (25ms 自适应切 L2a) 在 25ms 盲测 120 题均长（0/120 预算耗尽）",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-lit-ahd-eoh"
+    ],
+    "sources": [
+      "src-milestone2-interface-design-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone2-interface-design-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone2/diagnostics/gap_decomposition_2x3.json",
+    "report:experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json",
+    "report:experiments/milestone2/phase2b_four_arm/four_arm_report_tight_25ms.json",
+    "report:experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-m2-diagnostic-planning-and-budget-adaptation",
+  "content_sha256": "734878bdddb91ef96a4b0c5ba08bf21b053386524a177d979c1928af9dda98fa"
+}

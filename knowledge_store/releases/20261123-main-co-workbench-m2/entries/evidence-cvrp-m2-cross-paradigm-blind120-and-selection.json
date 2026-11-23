@@ -1,0 +1,130 @@
+{
+  "type": "evidence",
+  "title": "里程碑二 cvrp_m2_blind_120 一次性启封盲测与跨范式方向二算法选择证据",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-2",
+    "blind-test",
+    "cvrp_m2_blind_120",
+    "direction-2",
+    "cross-paradigm-selection",
+    "complementarity"
+  ],
+  "status": "reviewed",
+  "summary": "在冻结 pre_blind_protocol.json 后一次性启封并校验 cvrp_m2_blind_120（120/120 SHA-256 匹配 fca04528...）：跨范式进化使候选池从 M1.5 同范式逐点池 {R5, R4, C1}（盲测 SBS 均长 25.8670, VBS 均长 25.7758）跃升至 M2 纯进化跨范式池（盲测 SBS 均长 24.1627, VBS 均长 24.0122）与全混合跨范式池（盲测 SBS 均长 24.1791, VBS 均长 23.9934，(SBS-VBS)/SBS=0.77%, (SBS-VBS)/VBS=0.77%），M2 进化求解器在盲测 120 题中贡献 86/120 个 Oracle 最优胜场。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "selector_portfolio",
+    "complexity_class": "O(n^2)",
+    "interface": "solve_cvrp",
+    "applicable_regimes": {
+      "strong_on": [
+        "one_shot_blind_generalization",
+        "cross_paradigm_portfolio_complementarity"
+      ],
+      "weak_on": [
+        "small_sample_selector_when_single_paradigm_gap_is_narrow"
+      ],
+      "scale_notes": "同时报告 (SBS-VBS)/SBS 与 (SBS-VBS)/VBS 双分母；在 cvrp_m2_blind_120 上全混合池 Oracle VBS 均长降至 23.9934（总长 2879.2139 vs 裸 CW 2901.4892）。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "benchmarks/cvrp_workbench/manifests/cvrp_m2_blind_120_commitment.json",
+        "sha256": "f2c1eb736c93ec3b513360addda92d7887ed4153ddf7d01968860564b2b592f6"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/blind_commitment.py",
+        "sha256": "75d4b2946027892b2b54982ca84205b044effa24fb9507328ba04a3602230583"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/blind_eval.py",
+        "sha256": "128d23c068a693c94ff4399770abb1e316fd1825281dc41101e6e4c09ed23f87"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2c_blind_eval/pre_blind_protocol.json",
+        "sha256": "b42af554dd31d2735fbf3f1d78d4ecf23b58106eb518e841842074ac1d37a487"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json",
+        "sha256": "3822f9c3f11779d391fbb6d1e0db36d2bc08368a1e80878d4edd0aead7931893"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2c_blind_eval/direction2_cross_paradigm_report.json",
+        "sha256": "a993fc0464fb0a5e7ed5f8c29aec4e138a2c80dfb2b3d96112b6847bede1177c"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "cw_parallel_merge",
+        "metric": "mean_tour_length",
+        "value": 24.1791,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "裸 CW 在盲测 120 题均长 24.1791",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 24.2003,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "M2 Arm 4b (s20261123) 在盲测 120 题均长 24.2003",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "i605_cvrp_c1_tworegime",
+        "metric": "mean_tour_length",
+        "value": 25.867,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "M1.5 最强逐点规则 C1 在盲测 120 题均长 25.8670",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-i605-tworegime-savings",
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "sources": [
+      "src-milestone2-interface-design-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone2-interface-design-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone2/phase2c_blind_eval/pre_blind_protocol.json",
+    "report:experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json",
+    "report:experiments/milestone2/phase2c_blind_eval/direction2_cross_paradigm_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-m2-cross-paradigm-blind120-and-selection",
+  "content_sha256": "c9a9d6b3ae15897711abdd0e7e3811d0fc10305f89ab8fd4bff60c685c08f802"
+}

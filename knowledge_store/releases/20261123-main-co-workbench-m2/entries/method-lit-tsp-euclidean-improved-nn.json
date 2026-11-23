@@ -1,0 +1,40 @@
+{
+  "id": "method-lit-tsp-euclidean-improved-nn",
+  "type": "method",
+  "title": "Improved Nearest Neighbor Algorithm",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "literature",
+    "improved-nearest-neighbo"
+  ],
+  "status": "reviewed",
+  "summary": "Abstract describes a deterministic nearest-neighbor tour construction that repeatedly adds the closest city, matching the target Nearest Neighbor / next_node_score entrypoint.",
+  "attributes": {
+    "method_family": "literature",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "next_node_score"
+    },
+    "not_the_original": "Not the classical Rosenkrantz–Stearns–Lewis nearest neighbor; a 2024 deterministic NNA variant that initializes from the globally shortest edge. Evaluator still starts at city 0, so the seed-edge step cannot be reproduced in select_next_node.",
+    "origin": "openalex+grok-4.5-screen"
+  },
+  "relations": {
+    "problems": [
+      "problem-lit-tsp-euclidean"
+    ],
+    "sources": [
+      "src-lit-10-38032-jea-2024-01-004"
+    ],
+    "implementations": []
+  },
+  "source_refs": [
+    "src-lit-10-38032-jea-2024-01-004"
+  ],
+  "evidence_refs": [
+    "literature:10.38032/jea.2024.01.004"
+  ],
+  "code_refs": [],
+  "content_sha256": "48c31692be34eb8213318535cbd39535e5f1b46cc973d50d9da3d994b80bbd4a"
+}

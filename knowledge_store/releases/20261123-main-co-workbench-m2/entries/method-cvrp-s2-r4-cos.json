@@ -1,0 +1,173 @@
+{
+  "type": "method",
+  "title": "CVRP 两阶段出发与余弦角相干互补规则 (R4 / s2_r4_cos)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "r4",
+    "s2-r4-cos",
+    "cosine-coherence",
+    "complementary",
+    "scale-invariant",
+    "select_next_node"
+  ],
+  "status": "reviewed",
+  "summary": "阶段二第 4 轮产出的尺度不变互补规则：结合两阶段剩余车队出发、常数径向项 alpha=0.75、三角伸长比 rho、余弦定理射线角相干 cos(theta_0) 与陡峭容量自适应早返；共享 6 题 10.2078（16 次早返），select_64 上 22/64 胜 R5 并使 {R5, R7} 逐例理想最优降低 0.39%。",
+  "attributes": {
+    "method_family": "sequential_construct",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "complementary_to_r5_r7",
+        "uniform_and_clustered",
+        "scale_invariance_1e-3"
+      ],
+      "weak_on": [
+        "slightly_behind_r5_on_mean_p0_120",
+        "vs_parallel_merge_and_local_search"
+      ],
+      "scale_notes": "共享 6 题均值 10.2078（略优于 R5 的 10.2714），P0-120 为 19.81，冻结后在 final_accept_120 均长 26.7286；定位为与 R5/R7 强互补的算法选择候选。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造骨架，允许在可行客户非空时返回 0 主动早返仓",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes"
+      ],
+      "invariants_and_constraints": [
+        "全无量纲化评分（0.00% 坐标缩放漂移）",
+        "仅在 current_node != depot 时触发主动早返"
+      ],
+      "typical_pitfalls": [
+        "中程保持常数 alpha=0.75，近满载阶段收口略弱于 R5 的状态内旋 alpha_eff"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score(i,j) = (d(i,j) - 0.75*d(0,j))/scale + 0.35*rho(i,j) - 0.10*fill(j) - 0.20*cos(theta_0)",
+        "variables": {
+          "scale": "mean(d_dep) + mean(d_cur) + 1e-12",
+          "rho(i,j)": "d(i,j) / max(d(0,i)+d(0,j), 1e-12)",
+          "cos(theta_0)": "clip((d(0,j)^2 + d(0,i)^2 - d(i,j)^2)/(2*d(0,j)*d(0,i)), -1, 1)"
+        },
+        "preconditions": "中程步 current_node != depot；出发步按 rem_routes = sum(q)/rest_cap > 7 切换由外向内/紧致径向"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/cvrp_midterm/runs/s2_autonomous_math_r8/rounds/round_0004/eoh_run/skills/candidate_1/code.py",
+        "sha256": "e9a5a162145525c3ec4a3f43162b2e8aaa5ced09db84e60640563a55bb83a8eb"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_tour_length",
+        "value": 10.2078,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "共享 6 题 10.2078（16 次主动早返）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_tour_length",
+        "value": 19.81,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "历史 P0-120 均值 19.8100",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_tour_length",
+        "value": 23.0164,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "select_64 上 22/64 胜 R5，加入 {R5,R7} 降 VBS 0.39%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_tour_length",
+        "value": 26.7286,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "名单冻结后于 final_accept_120 统一验收",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_rel_gap",
+        "value": 0.229002,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "EoH-S 256 例相对 LKH 差距 +22.90%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "mean_rel_gap",
+        "value": 0.211782,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib A/B/P 74 例相对 BKS 差距 +21.18%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "s2_r4_cos",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.169795,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Set X 共同完成交集差距 +16.98%",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral",
+      "method-cvrp-s2-r7-iso"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-s2-r4-cos",
+  "content_sha256": "2e760ce84fe4988592ee9cfc8c210c98292d70b388ad7b0b2f90221f92537558"
+}

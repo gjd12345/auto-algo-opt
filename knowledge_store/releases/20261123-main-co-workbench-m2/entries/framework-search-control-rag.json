@@ -1,0 +1,40 @@
+{
+  "type": "framework",
+  "title": "Search control and expert selection on main",
+  "category": "optimization_frameworks_experiments",
+  "problem_family": "unknown",
+  "tags": [
+    "search-control",
+    "router",
+    "framework"
+  ],
+  "status": "reviewed",
+  "summary": "TSPSEARCHCONTROLLER schedules frozen LS primitives; CVRPEXPERTROUTER maps instance features to a frozen construct expert.",
+  "attributes": {
+    "interface": "build_search_plan / select_expert",
+    "online_offline": "not_applicable"
+  },
+  "relations": {
+    "implementations": [
+      "impl-tsp-search-controller",
+      "impl-cvrp-expert-router"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_search_controller/prob.py",
+    "code:official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_search_controller/prob.py",
+      "sha256": "14022f0879aa2eb3a18c9bff3bb41cfffb16dd19071be319f305da623587d0ec"
+    },
+    {
+      "path": "official_eoh/examples/cvrp_expert_router/cvrp_expert_router_problem.py",
+      "sha256": "739ca01d69a1b5dd385c040e61bcb94b9d9cabe6d4376d0f6c33c57ffbc0ae18"
+    }
+  ],
+  "id": "framework-search-control-rag",
+  "content_sha256": "b5379de8ce164eb5f9dcd93eab56548c8f82fb58348f229f7968dd621c5334b7"
+}

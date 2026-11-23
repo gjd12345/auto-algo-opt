@@ -1,0 +1,380 @@
+{
+  "schema_version": "m2-phase2c-pre-blind-protocol/v1",
+  "frozen_at": "2026-11-22T16:39:47Z",
+  "blind_commitment": {
+    "suite_id": "cvrp_m2_blind_120",
+    "instance_count": 120,
+    "commitment_file_sha256": "f2c1eb736c93ec3b513360addda92d7887ed4153ddf7d01968860564b2b592f6",
+    "suite_content_sha256": "fca04528fc4c0c93d30259e414a11142dc9cd39e1e8564fb8edcbb8d16887d41",
+    "generator_version": "cvrp_m2_blind_generator/v1",
+    "generator_source_sha256": "75d4b2946027892b2b54982ca84205b044effa24fb9507328ba04a3602230583"
+  },
+  "evaluation_budgets": [
+    {
+      "budget_id": "standard_500ms",
+      "time_budget_ms": 500.0,
+      "protocol_role": "Primary full-roster zero-shot blind evaluation (Protocol T2) & Direction-2 cross-paradigm selection."
+    },
+    {
+      "budget_id": "tight_25ms",
+      "time_budget_ms": 25.0,
+      "protocol_role": "Target-budget-aware adaptation verification (Protocol T1: 25ms-adapted Arm 4a/4b [L2a] vs Protocol T2: 500ms-selected Arm 4a [L2b] transferred directly to 25ms)."
+    }
+  ],
+  "reference_baselines": [
+    {
+      "algorithm_id": "nn",
+      "display_name": "Nearest Neighbor (NN)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "5ed7fc27a9fdbc5ff922b5c81be7734513855573ee6cccccc105655a0ad67252",
+      "kb_entry_id": "method-cvrp-nearest-feasible-construct"
+    },
+    {
+      "algorithm_id": "s2_r5_spiral",
+      "display_name": "R5 (s2_r5_spiral)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587",
+      "kb_entry_id": "method-cvrp-s2-r5-spiral"
+    },
+    {
+      "algorithm_id": "s2_r4_cos",
+      "display_name": "R4 (s2_r4_cos)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "e9a5a162145525c3ec4a3f43162b2e8aaa5ced09db84e60640563a55bb83a8eb",
+      "kb_entry_id": "method-cvrp-s2-r4-cos"
+    },
+    {
+      "algorithm_id": "i605_cvrp_c1_tworegime",
+      "display_name": "Island605 C1 (Two-Regime Savings + 0.7 Early Return)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "0028e6788b34e66ab2c10dda39c24550cae64c4e52138783ed19ab7558872355",
+      "kb_entry_id": "method-cvrp-i605-tworegime-savings"
+    },
+    {
+      "algorithm_id": "cw_parallel_merge",
+      "display_name": "Clarke-Wright Parallel Merge",
+      "paradigm": "parallel_merge",
+      "interface": "solve_cvrp",
+      "code_sha256": "ece836675fd61138fdd1224025c1ff0ea72be8ccfc41632c1c7b03b43c02d417",
+      "kb_entry_id": "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    },
+    {
+      "algorithm_id": "cw_relocate_2opt",
+      "display_name": "CW + Relocate + 2-opt",
+      "paradigm": "local_search",
+      "interface": "solve_cvrp",
+      "code_sha256": "3d165df70ff282f1e7867e016a3629a54888688614bb27cd35321105b4a11326",
+      "kb_entry_id": "method-cvrp-inter-relocate"
+    }
+  ],
+  "frozen_m2_solvers": [
+    {
+      "solver_id": "m2_2b_l2b_ctrl_static_refresh",
+      "display_name": "M2 L2b-ctrl · Dynamic Refresh + Static CW",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+      "hook_name": "score_merge_dynamic",
+      "hook_code_sha256": "34a7bff59cd71cb3ad0394a3d11591e2f8a3b63fe3b0993c71a61a10318eaff6",
+      "postprocess_mode": "none",
+      "design_sha256": "9db4324247309017fe86b0cd84a0940bc0618aca59342dea0e3fe2682b898887",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_l2a_evolved_s20261122",
+      "display_name": "M2 L2a Static Evolved (seed 20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "84bd55bf81e03d23f049b71909a6cbd480e7b6ba6de8def277f0d02fc8474733",
+      "postprocess_mode": "none",
+      "design_sha256": "32427c63c083a3e8a11042a264b6b3f9eed790b0f0c38cee7b7b07f615abc1d3",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_l2b_evolved_s20261122",
+      "display_name": "M2 L2b Dynamic State Evolved (seed 20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+      "hook_name": "score_merge_dynamic",
+      "hook_code_sha256": "4d07035892a8a2ce55bf754d9767c17ec6caca61746fdcdfda8c99542c4931bf",
+      "postprocess_mode": "none",
+      "design_sha256": "dde244b290d746b187d2734ce425f03a3436071b93b64ad74ab49ebb88d2f1d6",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_fixed_pointwise_s20261122",
+      "display_name": "Arm1 Pointwise (s20261122)",
+      "paradigm": "sequential_construct",
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+      "hook_name": "select_next_node",
+      "hook_code_sha256": "c1fae432468c28bcaf79de567f806938a76dff2c30d021aec6d053755e9f3df2",
+      "postprocess_mode": "none",
+      "design_sha256": "0ef23fed8b321a2898300b2dbd6c840d05d81ca980b6e57c6d55f70f48135edd",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+      "display_name": "Arm2 DevFixed (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "d6bac15dee08a02ae196fbd7ef3e428dc40ccec3ff21e4e3f4940090a62e67bd",
+      "postprocess_mode": "none",
+      "design_sha256": "7500a218d6251719336fd3c945c27e71d520b54a5b674809f9ced66d584cc63b",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261122",
+      "display_name": "Arm3 Racing (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "1c96d8ea06b03839092cecdd22a20b84d29ad4a235d7bc38107e4c5951e5ebf2",
+      "postprocess_mode": "none",
+      "design_sha256": "ff70da0ca339509fb12c7a192879c262920d60711597997ea7a40dbd9dff1122",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261122",
+      "display_name": "Arm4a DiagRule (cvrp_parallel_merge_dynamic, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+      "hook_name": "score_merge_dynamic",
+      "hook_code_sha256": "80e367df67ebbd7a6f55d7249e03ab8b35b311a44acfe40ef5b33efda797daf2",
+      "postprocess_mode": "none",
+      "design_sha256": "06c8414dd995b85db6c708965620adb05c790781b0d43f8393f411ead6d347b4",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261122",
+      "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "47528d8002deeecc82672a548b09b3188ef73702983d6406e27104ed62bb56b3",
+      "postprocess_mode": "none",
+      "design_sha256": "1aabf0f8065cdd5f756549bdf59aea55998ece2b6a76173ffdd5d5d073cd3a34",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_fixed_pointwise_s20261123",
+      "display_name": "Arm1 Pointwise (s20261123)",
+      "paradigm": "sequential_construct",
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+      "hook_name": "select_next_node",
+      "hook_code_sha256": "4020a8db26d44b397ffa0b3ad9050d1f6a0081a32248877481b68264070e6b55",
+      "postprocess_mode": "none",
+      "design_sha256": "62005e578e7c75ba87601aa29c119be1706e76a59ac581a78d8684365712e5d5",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_dev_fixed_strong_s20261123",
+      "display_name": "Arm2 DevFixed (cvrp_parallel_merge_static, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "5f3c9dfa5abbfd10b2cd522dd415be866ba7c7f1cbed7c6d3769f99e594a3f14",
+      "postprocess_mode": "none",
+      "design_sha256": "4db1d4a976a6501d61346d6b82a2e90669bbfa7db9e9d7778ad4830f3bf6fd37",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_short_pilot_racing_s20261123",
+      "display_name": "Arm3 Racing (cvrp_parallel_merge_static, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "c13a43b67e4f9634fc6a214e7e3d7b0ab18aae8cf4eda94229809c47f6b22ee8",
+      "postprocess_mode": "none",
+      "design_sha256": "a860bcdbf63b5b1917a02c865be4b2c8376156d9653b3c9bd1e33c38664d3e12",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+      "display_name": "Arm4a DiagRule (cvrp_parallel_merge_dynamic, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+      "hook_name": "score_merge_dynamic",
+      "hook_code_sha256": "40d9d011702a3db236f83bf1c3c99dbe5866655b611ef322a12a08ebd8f0e70b",
+      "postprocess_mode": "none",
+      "design_sha256": "06c8414dd995b85db6c708965620adb05c790781b0d43f8393f411ead6d347b4",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+      "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "4fcfd2a34b0094d2d08fec924dacd383c043ca8f959707011e03fd455bcf66ce",
+      "postprocess_mode": "none",
+      "design_sha256": "97ccef589242266a6f81452a29d8597a25aab6dd02ea25dad88e076d466f673c",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_tight_25ms_fixed_pointwise_s20261122",
+      "display_name": "Arm1 Pointwise (s20261122)",
+      "paradigm": "sequential_construct",
+      "template_id": "cvrp_sequential_construct",
+      "template_version": "v1",
+      "template_source_sha256": "e1b126be7cc2752bd51ec40f3df22109dc346caa454651c9dba78e50db6e0232",
+      "hook_name": "select_next_node",
+      "hook_code_sha256": "05f76df6e29705dcb49cecb028f5faf1f06c0331965e8ecf3dedfb094b1e2f0d",
+      "postprocess_mode": "none",
+      "design_sha256": "7be046d65816ec5e4cf85c32ace9c9d53aeba75bf40d86bbe4ce242ee5582f1e",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m2_2b_tight_25ms_short_pilot_racing_s20261122",
+      "display_name": "Arm3 Racing (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "7a9c28577c54ac7dd5310434083e512b9657cb74486994141a1da7b8e7738a66",
+      "postprocess_mode": "none",
+      "design_sha256": "1a1986010fa8d918201d97899d9ce90bba9c468632dc76930cc8b1d8ad79500b",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
+      "display_name": "Arm4a DiagRule (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "6f8f5ee0a344094e9b6b5400ebedd8c07bc33f289e7a4497f68ba33a2d3215b9",
+      "postprocess_mode": "none",
+      "design_sha256": "e14f1da6cb2f9ffc20178ea095dcdb5f3227aac77c981d43eb7e6801b32eb5dc",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m2_2b_tight_25ms_llm_diagnostic_planner_s20261122",
+      "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "e4900e0c4fd28745ea615fc198e1ab6d6e36c0bde30e0663fef5fe83efa65b89",
+      "postprocess_mode": "none",
+      "design_sha256": "c3293ea31e54b93587cf20ec2feaf9b1f7bee00da96342f33cc39300e7a1e2af",
+      "default_budget_ms": 25.0
+    }
+  ],
+  "direction2_selection_protocol": {
+    "train_suite_id": "cvrp_select_multiscale_64",
+    "test_suite_ids": [
+      "cvrp_m2_blind_120",
+      "cvrp_final_accept_120"
+    ],
+    "oof_protocols_on_select_64": [
+      "cv12",
+      "loro48",
+      "loso3"
+    ],
+    "selectors_evaluated": [
+      "fixed_best_sbs",
+      "stump_1d",
+      "knn5",
+      "ridge",
+      "pairwise_cs",
+      "pairwise_plain",
+      "rf_reg",
+      "rf_pairwise_cs"
+    ],
+    "failure_handling_rule": "If a member solver fails or times out without an incumbent on an instance, substitute the training SBS solver's valid tour_length and solve_ms and record the fallback.",
+    "reported_denominators": [
+      "gap_over_sbs_pct = (SBS - VBS) / SBS * 100",
+      "gap_over_vbs_pct = (SBS - VBS) / VBS * 100"
+    ],
+    "portfolios": {
+      "m15_pointwise_pool": {
+        "description": "Milestone 1/1.5 single-paradigm evolved pointwise constructive pool (R5, R4, Island605 C1).",
+        "members": [
+          "s2_r5_spiral",
+          "s2_r4_cos",
+          "i605_cvrp_c1_tworegime"
+        ]
+      },
+      "m2_evolved_cross_paradigm_pool": {
+        "description": "Milestone 2 purely evolved cross-paradigm pool combining M1/M1.5 pointwise rules with M2 evolved static (L2a) and dynamic (L2b) parallel-merge solvers.",
+        "members": [
+          "s2_r5_spiral",
+          "i605_cvrp_c1_tworegime",
+          "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+          "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+          "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+          "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122"
+        ]
+      },
+      "m2_full_hybrid_pool": {
+        "description": "Full cross-paradigm hybrid pool combining classical bare CW + M1/M1.5 pointwise + M2 evolved L2a/L2b parallel-merge solvers.",
+        "members": [
+          "s2_r5_spiral",
+          "i605_cvrp_c1_tworegime",
+          "cw_parallel_merge",
+          "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+          "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+          "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+          "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122"
+        ]
+      }
+    }
+  },
+  "pre_declared_hypothesis_tests": [
+    {
+      "test_id": "H1_llm_planner_vs_fixed_pointwise_500ms",
+      "description": "Arm 4b LLM diagnostic planner (L2a) vs Arm 1 fixed pointwise evolution (L1) across paired seeds on cvrp_m2_blind_120 at 500ms."
+    },
+    {
+      "test_id": "H2_llm_planner_vs_best_m15_pointwise_c1_500ms",
+      "description": "Arm 4b LLM diagnostic planner (s20261123, select_64 winner) vs M1.5 strongest pointwise rule i605_cvrp_c1_tworegime on cvrp_m2_blind_120 at 500ms."
+    },
+    {
+      "test_id": "H3_llm_planner_vs_rule_planner_500ms",
+      "description": "Arm 4b LLM diagnostic planner (picked L2a) vs Arm 4a deterministic rule planner (picked L2b) across paired seeds on cvrp_m2_blind_120 at 500ms."
+    },
+    {
+      "test_id": "H4_protocol_t1_vs_t2_budget_adaptation_25ms",
+      "description": "Protocol T1 (25ms-adapted Arm 4a/4b selecting L2a) vs Protocol T2 (500ms Arm 4a L2b transferred zero-shot to 25ms) on cvrp_m2_blind_120 at 25ms."
+    },
+    {
+      "test_id": "H5_l2_three_way_attribution_blind120",
+      "description": "Controlled 3-way attribution (L2a static vs L2b-ctrl dynamic refresh + static CW vs L2b dynamic state feedback) on cvrp_m2_blind_120 at 500ms and 25ms."
+    }
+  ],
+  "infrastructure_rerun_policy": "Strictly one-shot evaluation on unsealed cvrp_m2_blind_120; no hyperparameter, prompt, or candidate changes permitted after unsealing."
+}

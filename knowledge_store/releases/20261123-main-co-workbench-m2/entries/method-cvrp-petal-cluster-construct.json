@@ -1,0 +1,92 @@
+{
+  "type": "method",
+  "title": "CVRP Petal cluster-first route-second and set partitioning heuristic",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "petal",
+    "sweep",
+    "cluster-first",
+    "set-partitioning",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Extends polar-angle Sweep by enumerating feasible contiguous angular petals and solving a set-partitioning dynamic program or IP over petals to form complete CVRP routes.",
+  "attributes": {
+    "knowledge_tier": "literature_abstract",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "cluster_first",
+    "complexity_class": "O(n^2)",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "central_depot",
+        "planar_2d",
+        "clustered_sectors"
+      ],
+      "weak_on": [
+        "eccentric_depot",
+        "overlapping_radial_rings"
+      ],
+      "scale_notes": "比单次 Sweep 消除起始极角切口偏置，在中心仓库平面算例上常显著优于 Sweep，仍需要后接路间局部搜索消除扇区边界锯齿。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "按极角排列客户序列；枚举全部需求不超过容量 Q 的连续极角片段作为候选花瓣（1-petal / 2-petal），用快速 TSP/2-opt 估算每瓣代价，再用最短路 DP 或集合划分选择不重叠花瓣覆盖全部客户",
+      "evolvable_hook": "petal_cost_estimator(petal_nodes, dmat, demands, Q) 与 petal_candidate_filter(angles, radii)",
+      "state_maintained": [
+        "angular_order",
+        "candidate_petals",
+        "petal_costs",
+        "dp_partition_table"
+      ],
+      "invariants_and_constraints": [
+        "所选花瓣构成客户 1..n 的精确划分",
+        "每片花瓣总需求 <= Q",
+        "花瓣内部路径起止于仓库 0"
+      ],
+      "typical_pitfalls": [
+        "枚举全部花瓣时若对每瓣做高耗时 TSP 会超预算",
+        "偏心仓库时仅按极角划分会导致跨环长边"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "min sum_{p in P} c_p x_p   s.t.  sum_{p ni i} x_p = 1 (forall i=1..n),  sum_{i in p} q_i <= Q",
+        "variables": {
+          "P": "由连续极角片段生成的候选花瓣集合",
+          "c_p": "花瓣 p 的闭环路径长度",
+          "x_p": "二进制选取变量"
+        },
+        "preconditions": "二维平面客户坐标；当仅允许连续单扇区花瓣时可用环上 O(n*K_max) 最短路 DP 精确求解"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-cvrp-clustered-gillett-miller-sweep"
+    ],
+    "sources": [
+      "src-foster-ryan-1976-petal"
+    ]
+  },
+  "source_refs": [
+    "src-foster-ryan-1976-petal"
+  ],
+  "evidence_refs": [
+    "literature:10.1057/jors.1976.63"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-petal-cluster-construct",
+  "content_sha256": "1aad5c2ecd30619b4833a55669cef161c3a7e1e82a94bfb8434540862dc64a91"
+}

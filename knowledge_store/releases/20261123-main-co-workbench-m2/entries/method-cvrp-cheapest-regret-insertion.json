@@ -1,0 +1,101 @@
+{
+  "type": "method",
+  "title": "Standard CVRP cheapest detour and Regret-k route insertion",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "insertion",
+    "cheapest-insertion",
+    "regret-k",
+    "regret-2",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Time-window-free standard CVRP route insertion comparing minimum-detour cheapest insertion and Regret-k (k=2,3) lookahead insertion across parallel routes, explicitly distinguished from Solomon VRPTW insertion.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "insertion",
+    "complexity_class": "O(n^2 log n)",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "tight_capacity",
+        "bimodal_demands",
+        "lns_repair_operator",
+        "clustered"
+      ],
+      "weak_on": [
+        "very_large_n_without_candidate_list"
+      ],
+      "scale_notes": "Regret-2 / Regret-3 插入在紧容量与双峰需求下显著避免将重货或偏远客户推迟到最后单独开车的尾部灾难，同时也是 LNS/ALNS 的核心修复算子。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "维护当前多条路径集合与剩余容量；每轮对所有未插入客户计算在全部可行路径各位置的最小插入增量 Delta_1(u) 及次优路径增量 Delta_2(u)，按最小 Delta_1（Cheapest）或最大 Regret_k = sum_{m=2..k}(Delta_m - Delta_1) 选择下一个插入客户与位置",
+      "evolvable_hook": "insertion_priority(u, best_route_deltas, demand_u, route_loads, d_depot_u) -> float",
+      "state_maintained": [
+        "routes",
+        "route_loads",
+        "unrouted_customers",
+        "best_insertion_cache"
+      ],
+      "invariants_and_constraints": [
+        "仅在 route_load[r] + q_u <= Q 的路径中计算可行插入",
+        "若某客户在所有现有路径均超容，则允许新开单客户路径 [0, u, 0]（插入代价 2*d(0,u)）",
+        "增量更新仅需重算刚被修改那条路径的插入代价"
+      ],
+      "typical_pitfalls": [
+        "未考虑开新路径 [0, u, 0] 导致紧容量实例提前卡死",
+        "朴素 O(n^3) 每步全量重算在大 n 下超时，须增量维护每条路径的最优插槽"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "Delta(u; r, p) = d(r_{p-1}, u) + d(u, r_p) - d(r_{p-1}, r_p)",
+        "variables": {
+          "u": "待插入客户",
+          "r": "目标路径",
+          "p": "插入位置索引"
+        },
+        "preconditions": "无时间窗标准 CVRP；满足容量约束 load(r) + q_u <= Q"
+      },
+      {
+        "expr": "Regret_k(u) = sum_{m=2}^{k} (Delta_{(m)}(u) - Delta_{(1)}(u))",
+        "variables": {
+          "Delta_{(m)}(u)": "客户 u 在第 m 好可行路径上的最小插入增量"
+        },
+        "preconditions": "优先插入 Regret_k(u) 最大的客户（若仅有一条可行路径则赋予大惩罚值立即插入）"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-vrptw-solomon-i1-i2-insertion",
+      "method-lit-cvrp-minveh-solomon-insertion-minimise-vehicles",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "sources": [
+      "src-ropke-pisinger-2006-alns"
+    ]
+  },
+  "source_refs": [
+    "src-ropke-pisinger-2006-alns"
+  ],
+  "evidence_refs": [
+    "literature:10.1287/trsc.1050.0135"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-cheapest-regret-insertion",
+  "content_sha256": "eef0fea182fff740bcfc52cc7cf299e914a5cfacebd2586bb52e470c83e4f181"
+}

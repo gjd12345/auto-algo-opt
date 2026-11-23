@@ -379,6 +379,7 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
         "20260914-main-d6433549-kb-v0",
         "20261121-main-audit-kb-v1",
         "20261122-main-co-workbench-final",
+        "20261122-main-co-workbench-m15",
     ):
         check = validate_release(REPO / "knowledge_store" / "releases" / rel_name)
         assert check["ok"] is True, check["errors"][:10]
@@ -526,7 +527,7 @@ def test_frontend_zero_broken_kb_links_js_syntax_and_bundle_parity(tmp_path: Pat
     cur_dir = resolve_release(repo / "knowledge_store/current")
     index_doc = json.loads((cur_dir / "index.json").read_text(encoding="utf-8"))
     valid_ids = {e["id"] for e in index_doc["entries"]}
-    assert len(valid_ids) == 340
+    assert len(valid_ids) == 345
 
     # 1. Zero broken KB entry links across all frontend/src/*.js modules
     id_re = re.compile(r"\b(?:method|evidence|problem|impl|finding)-[a-z0-9-]+\b")

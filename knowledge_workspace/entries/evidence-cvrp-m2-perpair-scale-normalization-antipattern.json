@@ -1,0 +1,113 @@
+{
+  "type": "evidence",
+  "title": "并行合并反面教材：逐对局部距离归一化破坏远端径向优先级 vs 全局仓距尺度归一化",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-2",
+    "antipattern",
+    "scale-normalization",
+    "parallel-merge",
+    "radial-priority"
+  ],
+  "status": "reviewed",
+  "summary": "在里程碑二 2A/2B 早期进化中发现：LLM 为追求无量纲化常将节约量写成 (d(0,i)+d(0,j)-d(i,j))/(d(0,i)+d(0,j))；该逐对局部归一化虽满足 0.00% 坐标缩放不变，却将远端大节约边与近仓小三角边压缩到同一 [0,1] 区间，完全摧毁 Clarke-Wright 优先闭合远端边缘客户的核心几何序（使 dev_24 从 16.2225 退化至 16.66~18.08）。改用全局单一仓距尺度 mean(d(0, 1..n)) 归一化后，既严格保持 0.00% 缩放不变，又保留远端径向序，立即使进化钩子在 dev_24 下探至 16.1398。",
+  "attributes": {
+    "knowledge_tier": "failure_antipattern",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(1)",
+    "interface": "score_merge_static",
+    "applicable_regimes": {
+      "strong_on": [
+        "parallel_merge_score_design",
+        "preserving_radial_priority_under_scale_invariance"
+      ],
+      "weak_on": [
+        "pointwise_single_vehicle_local_ratios"
+      ],
+      "scale_notes": "两种写法在 1e-3 坐标缩放下均为 0.00% 漂移，但全局分母 mean(d[0,1:]) 是全图常数（不改变纯节约量的相对排序），而逐对分母 (d0i+d0j) 是局部二元函数（剧烈扭曲跨半径候选对的排序）。"
+    },
+    "math_formulation": [
+      {
+        "expr": "Antipattern: s_local(i,j) = (d(0,i) + d(0,j) - d(i,j)) / (d(0,i) + d(0,j)) = 1 - d(i,j)/(d(0,i)+d(0,j))",
+        "variables": {
+          "d(0,i)+d(0,j)": "随候选对半径变化的局部二元分母"
+        },
+        "preconditions": "导致离仓 0.05 的近仓小边与离仓 0.90 的远端长边在同夹角下得分完全相同，远端客户被迫留到尾程单跑"
+      },
+      {
+        "expr": "Correct: s_global(i,j) = (d(0,i) + d(0,j) - lam*d(i,j) + mu*|d(0,i)-d(0,j)|) / mean_{k=1..n} d(0,k) + beta*(q_i+q_j)/Q",
+        "variables": {
+          "mean_{k=1..n} d(0,k)": "全实例共享的单一距离尺度常数"
+        },
+        "preconditions": "对全图所有候选对除以同一正数常数，100% 保持径向优先级且与无量纲容量项量级匹配"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/planner.py",
+        "sha256": "52b71f4600240e5f79034e5e80b235107c7e3d2cba8d49d54b30faa5e53ffbaa"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2a_multimodel/multimodel_comparison.json",
+        "sha256": "d07bc090772a7c29740a6ad57a9064ba7f6b07dc8462fe651d74b837cc8a7b3b"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json",
+        "sha256": "f110ed6709628b22c93d2fedc755ddf6e6981546ab99938322849508664477df"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+        "metric": "mean_tour_length",
+        "value": 16.1398,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "采用全局 mean(d[0,1:]) 归一化后 dev_24 降至 16.1398（对比逐对归一化 16.6656）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 20.8236,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "采用全局归一化后 select_64 降至 20.8236（对比逐对归一化 21.7390）",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "sources": [
+      "src-milestone2-interface-design-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone2-interface-design-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone2/phase2a_multimodel/multimodel_comparison.json",
+    "report:experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+  "content_sha256": "8233be6e6eb80acf86e7e090b454fb8fcb3ec6a0c5c10b041e73447c852917b5"
+}
