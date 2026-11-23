@@ -498,6 +498,11 @@ def execute_m2_session_task(
         local_url = mock_srv.start()
     else:
         class _ResilientSessionBridge(OpenAIPathBridge):
+            def _save_exchange(self, slot, prompt: str, response: str, *, metadata=None) -> None:
+                if slot is not None:
+                    slot.response_sha256 = hashlib.sha256(str(response).encode("utf-8")).hexdigest()
+                super()._save_exchange(slot, prompt, response, metadata=metadata)
+
             def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
                 last_exc: Exception | None = None
                 for attempt in range(3):
@@ -531,7 +536,18 @@ def execute_m2_session_task(
             }
             _atomic_write_text(output / "summary.json", json.dumps(summary, indent=2) + "\n")
             return
-        budget = SessionRequestBudget(str(root), task_id)
+        parent_budget = None
+        pb_cfg = config.get("persistent_budget") if isinstance(config, Mapping) else None
+        if isinstance(pb_cfg, Mapping) and pb_cfg.get("ledger_path"):
+            from agent_skill_loop.request_budget import PersistentRequestBudget
+
+            parent_budget = PersistentRequestBudget(
+                Path(str(pb_cfg["ledger_path"])),
+                pb_cfg.get("max_requests"),
+                run_id=str(pb_cfg.get("run_id") or row["run_id"]),
+                reconcile_inflight=False,
+            )
+        budget = SessionRequestBudget(str(root), task_id, parent=parent_budget)
         bridge = _ResilientSessionBridge(
             endpoint,
             api_key,

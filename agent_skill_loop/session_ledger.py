@@ -46,10 +46,11 @@ def mark_effect(con,row,task):
 
 
 class SessionRequestBudget(RequestBudget):
-    def __init__(self, root, task_id):
-        super().__init__(None)
+    def __init__(self, root, task_id, *, parent: RequestBudget | None = None):
+        super().__init__(None, parent=parent)
         self.root, self.task_id = Path(root), task_id
         self.denial_reason = None
+        self._parent_slots: dict[str, RequestSlot] = {}
 
     @property
     def used(self):
@@ -65,6 +66,8 @@ class SessionRequestBudget(RequestBudget):
             used = con.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
             round_used = con.execute("SELECT COUNT(*) FROM requests WHERE task_id=?", (self.task_id,)).fetchone()[0]
             limits = [v-n for v,n in ((row["eoh_max_requests"],used),(row["eoh_round_max_requests"],round_used)) if v is not None]
+            if self._parent is not None and self._parent.remaining is not None:
+                limits.append(self._parent.remaining)
             return max(0,min(limits)) if limits else None
         finally: con.close()
 
@@ -74,6 +77,7 @@ class SessionRequestBudget(RequestBudget):
         con = db._connect(self.root / "session.sqlite3")
         try:
             with db._transaction(con):
+                db._ensure_requests_columns(con)
                 row = db._require_run(con, action="request", run_id=None)
                 task = con.execute("SELECT * FROM tasks WHERE task_id=?",(self.task_id,)).fetchone()
                 used = con.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
@@ -103,9 +107,18 @@ class SessionRequestBudget(RequestBudget):
                     )
                     self._rejected+=1
                     return None
-                request_id=uuid.uuid4().hex
+                parent_slot = None
+                if self._parent is not None:
+                    parent_slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model)
+                    if parent_slot is None:
+                        self.denial_reason = "outer_budget_exhausted"
+                        self._rejected += 1
+                        return None
+                request_id = (parent_slot.request_id if parent_slot is not None and parent_slot.request_id else None) or uuid.uuid4().hex
                 mark_effect(con,row,task)
                 slot=RequestSlot(used+1,purpose,problem,attempt,model,request_id=request_id)
+                if parent_slot is not None:
+                    self._parent_slots[request_id] = parent_slot
                 con.execute("INSERT INTO requests(request_id,run_id,round_id,task_id,sequence,purpose,attempt,model,state,created_at_utc) VALUES (?,?,?,?,?,?,?,?,'reserved',?)",
                             (request_id,row["run_id"],task["round_id"],self.task_id,slot.index,purpose,attempt,model,db._utc_now()))
             slot.reserved_event=self._make_event(slot,"reserved",request_id=request_id)
@@ -115,12 +128,31 @@ class SessionRequestBudget(RequestBudget):
         finally: con.close()
 
     def finish(self, slot, state, **fields):
-        event=super().finish(slot,state,**fields)
+        if getattr(slot, "response_sha256", None) and not fields.get("response_sha256") and not fields.get("response_text"):
+            fields["response_sha256"] = slot.response_sha256
+        if self._parent is not None and slot.request_id in self._parent_slots:
+            pslot = self._parent_slots.pop(slot.request_id)
+            parent_ev = self._parent.finish(pslot, state, **fields)
+            slot.state = state
+            for k in ("elapsed_seconds", "status", "error_code", "input_tokens", "output_tokens", "model", "response_sha256"):
+                if k in parent_ev:
+                    setattr(slot, k, parent_ev[k])
+            event = {**parent_ev, "index": slot.index, "request_id": slot.request_id}
+            with self._lock:
+                self.events.append(event)
+        else:
+            orig_parent = self._parent
+            self._parent = None
+            try:
+                event = super().finish(slot, state, **fields)
+            finally:
+                self._parent = orig_parent
         event["request_id"]=slot.request_id
         terminal="complete" if state=="complete" else "unknown" if state in {"killed_unknown", "connectivity_failed", "unknown"} else "failed"
         con=db._connect(self.root / "session.sqlite3")
         try:
             with db._transaction(con):
+                db._ensure_requests_columns(con)
                 con.execute("UPDATE requests SET state=?,status=?,input_tokens=?,output_tokens=?,elapsed_seconds=?,error_code=?,finish_reason=?,response_sha256=?,finished_at_utc=? WHERE request_id=?",
                     (terminal,event.get("status"),event.get("input_tokens"),event.get("output_tokens"),event.get("elapsed_seconds"),event.get("error_code"),event.get("finish_reason"),event.get("response_sha256"),db._utc_now(),slot.request_id))
         finally: con.close()
@@ -128,9 +160,12 @@ class SessionRequestBudget(RequestBudget):
 
     def mark_sent(self, slot):
         now = db._utc_now()
+        if self._parent is not None and slot.request_id in self._parent_slots and hasattr(self._parent, "mark_sent"):
+            self._parent.mark_sent(self._parent_slots[slot.request_id], sent_at_utc=now)
         con=db._connect(self.root/"session.sqlite3")
         try:
             with db._transaction(con):
+                db._ensure_requests_columns(con)
                 con.execute("UPDATE requests SET state='sent',sent_at_utc=? WHERE request_id=? AND state='reserved'",(now,slot.request_id))
         finally: con.close()
         slot.state = "sent"

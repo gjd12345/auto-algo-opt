@@ -441,6 +441,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             finish_reason TEXT,
             created_at_utc TEXT NOT NULL,
             finished_at_utc TEXT,
+            attempt INTEGER,
+            response_sha256 TEXT,
+            sent_at_utc TEXT,
             UNIQUE(run_id, sequence),
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
         )""",
@@ -579,10 +582,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     for name, definition in {"metric_spec_hash": "TEXT", "origin": "TEXT", "budget_phase": "TEXT"}.items():
         if name not in table_columns["solver_calls"]:
             connection.execute(f"ALTER TABLE solver_calls ADD COLUMN {name} {definition}")
-    request_columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
-    for name, definition in {"attempt": "INTEGER", "response_sha256": "TEXT", "sent_at_utc": "TEXT"}.items():
-        if name not in request_columns:
-            connection.execute(f"ALTER TABLE requests ADD COLUMN {name} {definition}")
+    _ensure_requests_columns(connection)
     for name, definition in {
         "search_policy_defaults_json": "TEXT",
         "search_policy_limits_json": "TEXT",
@@ -597,6 +597,17 @@ def _create_schema(connection: sqlite3.Connection) -> None:
 
 def _row(connection: sqlite3.Connection, query: str, parameters: tuple[Any, ...]) -> sqlite3.Row | None:
     return connection.execute(query, parameters).fetchone()
+
+
+def _ensure_requests_columns(connection: sqlite3.Connection) -> bool:
+    """Idempotently backfill M3 request ledger columns on pre-existing sessions."""
+    request_columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
+    added = False
+    for name, definition in {"attempt": "INTEGER", "response_sha256": "TEXT", "sent_at_utc": "TEXT"}.items():
+        if name not in request_columns:
+            connection.execute(f"ALTER TABLE requests ADD COLUMN {name} {definition}")
+            added = True
+    return added
 
 
 def _require_run(
@@ -1302,6 +1313,7 @@ def initialize_session(
     max_rounds: int | None = None,
     round_budget: int | None = None,
     explicit_seed_set: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+    persistent_budget: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     action = "init"
     if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
@@ -1734,6 +1746,8 @@ def initialize_session(
         "search_seed_derivation": "base_plus_round_id_minus_one",
         "init": {"provider_requests": 0, "solver_calls": 0},
     }
+    if persistent_budget is not None:
+        config["persistent_budget"] = dict(persistent_budget)
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
         staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.init-", dir=str(output.parent)))
@@ -2003,9 +2017,8 @@ def stop_session(
     try:
         _require_schema(connection, action=action)
         flush_audit(Path(run).resolve())
-        # The lock is acquired before the idempotency/version decision.  Two
-        # concurrent stop calls therefore cannot both observe the same token.
         with _transaction(connection):
+            _ensure_requests_columns(connection)
             current_run = _require_run(connection, action=action, run_id=expected_run_id)
             input_hash = _sha256(_json({"action": action, "run_id": current_run["run_id"], "reason": reason.strip()}))
             existing = _row(connection, "SELECT * FROM operations WHERE operation_id=?", (operation_id,))

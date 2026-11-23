@@ -43,6 +43,10 @@ def opened(run, action, expected_run_id=None):
     con = db._connect(root / "session.sqlite3")
     try:
         db._require_schema(con, action=action)
+        req_cols = {r[1] for r in con.execute("PRAGMA table_info(requests)")}
+        if not {"attempt", "response_sha256", "sent_at_utc"}.issubset(req_cols):
+            with db._transaction(con):
+                db._ensure_requests_columns(con)
         row = db._require_run(con, action=action, run_id=expected_run_id)
         db._verify_files(root, row, action=action)
         yield root, con

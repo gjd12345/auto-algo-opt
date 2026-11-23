@@ -12,6 +12,8 @@ Gates:
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import random
 from typing import Any, Callable, Mapping, Sequence
 
 from agent_skill_loop.benchmark.catalog import load_profile_suite
@@ -242,12 +244,53 @@ def _default_gate4_cvrp_instance(template_id: str) -> dict[str, Any]:
     return build_gate4_dual_action_instance()
 
 
+def _build_gate5_n200_stress_instances() -> list[dict[str, Any]]:
+    """Build deterministic standalone n=200 Gate-5 stress probes isolated from selection/blind splits."""
+    specs = (
+        ("m3_gate5_stress_n200_00", "uniform", "eccentric", "tight", "uniform", 28, [0.05, 0.95]),
+        ("m3_gate5_stress_n200_01", "clustered", "centre", "loose", "bimodal", 45, [0.5, 0.5]),
+    )
+    probes: list[dict[str, Any]] = []
+    for inst_id, spatial, depot_style, cap_lvl, ddist, cap, depot in specs:
+        digest = hashlib.sha256(f"gate5_stress_probe/v1|{inst_id}".encode("utf-8")).hexdigest()
+        rng = random.Random(int(digest[:16], 16))
+        if spatial == "uniform":
+            coords = [[round(rng.random(), 8), round(rng.random(), 8)] for _ in range(200)]
+        else:
+            centres = [(rng.random(), rng.random()) for _ in range(4)]
+            coords = []
+            for _ in range(200):
+                cx, cy = centres[rng.randrange(4)]
+                coords.append([
+                    round(min(1.0, max(0.0, rng.gauss(cx, 0.06))), 8),
+                    round(min(1.0, max(0.0, rng.gauss(cy, 0.06))), 8),
+                ])
+        if ddist == "uniform":
+            demands = [rng.randint(1, 9) for _ in range(200)]
+        else:
+            choices = (1, 2, 8, 9)
+            demands = [choices[rng.randrange(4)] for _ in range(200)]
+        probes.append({
+            "instance_id": inst_id,
+            "cell": f"n200_{spatial}_{depot_style}_{cap_lvl}_{ddist}",
+            "size": 200,
+            "spatial": spatial,
+            "depot_style": depot_style,
+            "capacity_level": cap_lvl,
+            "demand_dist": ddist,
+            "source_tag": "gate5_independent_stress_probe",
+            "depot": depot,
+            "customer_coordinates": coords,
+            "demands": demands,
+            "capacity": cap,
+        })
+    return probes
+
+
 def _default_gate5_instances() -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     dev_suite = load_profile_suite(BENCHMARK_ID, "cvrp_dev_hetero_24", split="dev_train")
-    sel_suite = load_profile_suite(BENCHMARK_ID, "cvrp_select_multiscale_64", split="selection")
     assert_suite_not_blind("cvrp_dev_hetero_24", dev_suite)
-    assert_suite_not_blind("cvrp_select_multiscale_64", sel_suite)
-    n200_insts = [inst for inst in sel_suite["instances"] if int(inst["size"]) == 200][:2]
+    n200_insts = _build_gate5_n200_stress_instances()
     nominal = dev_suite["instances"][0]
     scaled = dev_suite["scale_stress_instances"][0]
     return n200_insts, nominal, scaled

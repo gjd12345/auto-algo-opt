@@ -23,6 +23,7 @@ from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.interface_design.blind_commitment import (
     M3_BLIND_COMMITMENT_PATH,
     SEALED_M3_BLIND_SUITE_ID,
+    _generator_source_sha256,
     assert_suite_allowed_for_interactive_role,
     assert_suite_not_blind,
     read_public_blind_commitment,
@@ -54,7 +55,8 @@ from agent_skill_loop.interface_design.templates import (
 from agent_skill_loop.interface_design.validator import PROBLEM_GATE_PROBES, InterfaceValidator
 from agent_skill_loop.request_budget import PersistentRequestBudget, RequestBudget
 from agent_skill_loop.session_actions import collect, execute, finish_round, read_evaluation, submit_evaluation, submit_plan
-from agent_skill_loop.session_runtime import initialize_session, read_state
+from agent_skill_loop.session_ledger import SessionRequestBudget
+from agent_skill_loop.session_runtime import _connect, initialize_session, read_state
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -161,6 +163,9 @@ def test_l3_ruin_recreate_gates_6cust_probe_anytime_and_determinism(tmp_path: Pa
         g5 = report.diagnostics["gate5"]
         assert g5["outcome_counts"][OUTCOME_TIMEOUT_OR_INFEASIBLE] == 0
         assert g5["scale_drift_pct"] == 0.0
+        g5_ids = [row["instance_id"] for row in g5["timing_breakdown"]]
+        assert g5_ids[:2] == ["m3_gate5_stress_n200_00", "m3_gate5_stress_n200_01"]
+        assert all("select" not in str(iid) for iid in g5_ids)
 
     # Verify Anytime missing rule for checkpoints strictly before first_feasible_ms
     curve_unit = _l3_build_anytime_curve(
@@ -361,10 +366,15 @@ def test_session_bridge_25ms_budget_locked_kb_no_clue_and_l3_mock(tmp_path: Path
 
 
 def test_m3_blind_commitment_external_custody_and_split_guardrails(tmp_path: Path) -> None:
-    # 1. Verify committed M3 public commitment exists & has zero coordinate/demand/seed leaks
+    # 1. Verify committed M3 public commitment exists, matches current generator source hash & leaks zero coords/seeds
     comm = read_public_blind_commitment(M3_BLIND_COMMITMENT_PATH, expected_suite_id=SEALED_M3_BLIND_SUITE_ID)
     assert comm["suite_id"] == SEALED_M3_BLIND_SUITE_ID
     assert comm["instance_count"] == 120
+    assert comm["generator_source_sha256"] == _generator_source_sha256()
+    ext_sealed = Path.home() / ".agent_skill_custody" / "m3_blind" / "cvrp_m3_blind_120_sealed.json"
+    if ext_sealed.is_file():
+        real_ver = verify_sealed_against_commitment(sealed_path=ext_sealed, commitment_path=M3_BLIND_COMMITMENT_PATH)
+        assert real_ver["ok"] is True and real_ver["verified_instances"] == 120
     raw_comm = M3_BLIND_COMMITMENT_PATH.read_text(encoding="utf-8")
     for forbidden in ("customer_coordinates", "sealed_seed_token", '"demands"', '"depot"'):
         assert forbidden not in raw_comm
@@ -407,3 +417,191 @@ def test_m3_blind_commitment_external_custody_and_split_guardrails(tmp_path: Pat
         assert_suite_allowed_for_interactive_role("cvrp_select_multiscale_64", role="interactive_sandbox")
     with pytest.raises(ValueError, match="selection_suite_forbidden_in_interactive_role"):
         assert_suite_allowed_for_interactive_role("custom", {"suite_role": "selection"}, role="feedback_archive")
+
+
+def test_legacy_session_requests_schema_auto_migrates_on_resume(tmp_path: Path) -> None:
+    run_dir = tmp_path / "legacy_session"
+    init_res = initialize_session(
+        output=run_dir,
+        operation_id="init_legacy",
+        eoh_model="deepseek-chat",
+        eoh_endpoint="mock://local",
+        seed=20261124,
+        size=10,
+        count=2,
+        memory_enabled=False,
+    )
+    # Downgrade `requests` table to exact pre-3A schema (missing attempt, response_sha256, sent_at_utc)
+    con = _connect(run_dir / "session.sqlite3")
+    try:
+        con.execute("DROP TABLE requests")
+        con.execute(
+            """
+            CREATE TABLE requests (
+                request_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                round_id INTEGER,
+                task_id TEXT,
+                sequence INTEGER NOT NULL,
+                purpose TEXT NOT NULL CHECK (purpose IN ('eoh_probe','eoh_generation','eoh_repair')),
+                model TEXT,
+                state TEXT NOT NULL CHECK (state IN ('reserved','sent','complete','failed','unknown')),
+                status INTEGER,
+                input_tokens INTEGER,
+                output_tokens INTEGER,
+                elapsed_seconds REAL,
+                error_code TEXT,
+                finish_reason TEXT,
+                created_at_utc TEXT NOT NULL,
+                finished_at_utc TEXT,
+                UNIQUE(run_id, sequence),
+                FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
+            )
+            """
+        )
+        run_id = con.execute("SELECT run_id FROM runs").fetchone()[0]
+        old_cols = {r[1] for r in con.execute("PRAGMA table_info(requests)")}
+        assert "attempt" not in old_cols
+    finally:
+        con.close()
+
+    # Re-opening via submit_plan auto-migrates missing columns before executing
+    plan_file = tmp_path / "legacy_plan.json"
+    plan_file.write_text(
+        json.dumps(
+            {
+                "round_id": 1,
+                "direction": "Continue legacy session",
+                "operations": [{"type": "preserve", "target": "interface", "mechanism": "resume"}],
+                "preserve": "compatibility",
+                "feedback_basis": None,
+                "memory_basis": [],
+                "reference_skill_ref": None,
+                "hypothesis": "Auto migration restores request columns on resume.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    sub = submit_plan(run=run_dir, operation_id="plan_legacy", expected_state_version=init_res["state_version"], file=plan_file)
+    assert sub["ok"] is True
+
+    # Simulate an active task writing via SessionRequestBudget into migrated DB
+    con = _connect(run_dir / "session.sqlite3")
+    try:
+        cols_after = {r[1] for r in con.execute("PRAGMA table_info(requests)")}
+        assert {"attempt", "response_sha256", "sent_at_utc"}.issubset(cols_after)
+        con.execute(
+            "INSERT INTO tasks(task_id,run_id,round_id,state,created_at_utc) VALUES ('t_leg',?,1,'RUNNING','2026-11-23T00:00:00Z')",
+            (run_id,),
+        )
+    finally:
+        con.close()
+
+    sb = SessionRequestBudget(run_dir, "t_leg")
+    slot = sb.reserve(purpose="eoh_generation", problem="cvrp", attempt=2, model="deepseek-chat")
+    assert slot is not None
+    sb.mark_sent(slot)
+    sb.finish(slot, "complete", status=200, input_tokens=5, output_tokens=3, response_text="legacy ok")
+
+    con = _connect(run_dir / "session.sqlite3")
+    try:
+        rec = dict(con.execute("SELECT state, attempt, sent_at_utc, response_sha256 FROM requests").fetchone())
+        assert rec["state"] == "complete"
+        assert rec["attempt"] == 2
+        assert rec["sent_at_utc"] is not None
+        assert rec["response_sha256"] == hashlib.sha256(b"legacy ok").hexdigest()
+    finally:
+        con.close()
+
+
+def test_two_layer_shared_persistent_budget_in_live_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from eoh_frozen.smoke import fixture_provider
+
+    monkeypatch.setenv("SESSION_SHARED_BUDGET_KEY", "fixture-secret")
+    ledger_db = tmp_path / "shared_agent_budget.sqlite3"
+    run_key = "shared_outer_inner_run"
+    outer_budget = PersistentRequestBudget(ledger_db, max_requests=4, run_id=run_key)
+    outer_slot = outer_budget.reserve(purpose="planner", problem="cvrp", attempt=1, model="deepseek-chat")
+    assert outer_slot is not None
+    outer_budget.mark_sent(outer_slot)
+    outer_budget.finish(outer_slot, "complete", status=200, input_tokens=12, output_tokens=6, response_text="plan")
+    assert outer_budget.used == 1 and outer_budget.remaining == 3
+
+    l3_replies = iter(DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE["cvrp_ruin_recreate"])
+
+    def responder(prompt: str, idx: int) -> tuple[int, str]:
+        if prompt == "1+1=?":
+            return 200, "2"
+        return 200, next(l3_replies, DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE["cvrp_ruin_recreate"][-1])
+
+    run_dir = tmp_path / "shared_session"
+    with fixture_provider("cvrp_construct", responder=responder) as (endpoint, prompts):
+        init_res = initialize_session(
+            output=run_dir,
+            operation_id="op_init_shared",
+            eoh_model="deepseek-chat",
+            eoh_endpoint=endpoint,
+            eoh_api_key_env="SESSION_SHARED_BUDGET_KEY",
+            eoh_max_requests=12,
+            engine_wall_seconds=120.0,
+            memory_enabled=False,
+            seed=20261124,
+            size=12,
+            count=2,
+            search_policy_defaults={"pop_size": 2, "n_pop": 1, "max_sample_nums": 6},
+            persistent_budget={"ledger_path": str(ledger_db), "max_requests": 4, "run_id": run_key},
+        )
+        plan_file = tmp_path / "plan_shared.json"
+        plan_file.write_text(
+            json.dumps(
+                {
+                    "round_id": 1,
+                    "direction": "Verify shared two-layer persistent budget",
+                    "operations": [{"type": "replace", "target": "score_ruin_nodes", "mechanism": "Shared cap"}],
+                    "preserve": "Budget conservation",
+                    "feedback_basis": None,
+                    "memory_basis": [],
+                    "reference_skill_ref": None,
+                    "hypothesis": "Inner EoH stops when outer persistent budget reaches 4 total calls.",
+                    "interface_selection": {
+                        "template_id": "cvrp_ruin_recreate",
+                        "template_version": "v1",
+                        "postprocess_mode": "none",
+                        "time_budget_ms": 250.0,
+                        "template_options": {"inject_static_kb_clues": False},
+                        "cited_kb_ids": [],
+                        "rationale": "Shared outer/inner cap integration test.",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        sub = submit_plan(run=run_dir, operation_id="op_plan_shared", expected_state_version=init_res["state_version"], file=plan_file)
+        execute(run=run_dir, operation_id="op_exec_shared", expected_state_version=sub["state_version"])
+
+        deadline = time.monotonic() + 60.0
+        st = read_state(run=run_dir)
+        while time.monotonic() < deadline:
+            if (st.get("task") or {}).get("state") == "EXITED":
+                break
+            time.sleep(0.2)
+            st = read_state(run=run_dir)
+        assert (st.get("task") or {}).get("state") == "EXITED", st
+
+        # Outer budget started with 1 used out of 4; inner HTTP traffic must stop at exactly 3 calls (total=4)
+        assert len(prompts) == 3
+
+    reloaded = PersistentRequestBudget(ledger_db, max_requests=4, run_id=run_key)
+    assert reloaded.used == 4
+    assert reloaded.remaining == 0
+    recs = reloaded.request_records()
+    assert len(recs) == 4
+    assert recs[0]["purpose"] == "planner"
+    assert all(r["purpose"].startswith("eoh_") for r in recs[1:])
+    assert all(r["response_sha256"] for r in recs)
+
+    with sqlite3.connect(run_dir / "session.sqlite3") as con:
+        s_rows = con.execute("SELECT request_id, state, response_sha256 FROM requests ORDER BY sequence ASC").fetchall()
+        assert len(s_rows) == 3
+        assert [r[0] for r in s_rows] == [r["request_id"] for r in recs[1:]]
+        assert all(r[2] == recs[i + 1]["response_sha256"] for i, r in enumerate(s_rows))

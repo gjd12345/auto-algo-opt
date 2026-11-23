@@ -102,5 +102,5 @@ python -m agent_skill_loop interface workbench-eval \
 - Never edit `eoh_frozen/` or registered template code from a Session plan.
 - Re-run experiments in a new output directory. Compare attempted requests
   across planner, pilots, retries, and continuation using one arm-wide cap.
-- The [Milestone 2 runbook](../../../docs/milestone2-reliability.md) covers
+- See `docs/milestone2-reliability.md` in the repository root for
   custody, publication recovery, and historical comparison limits.

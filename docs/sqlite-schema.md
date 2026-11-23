@@ -112,6 +112,9 @@ CREATE TABLE requests (
             finish_reason TEXT,
             created_at_utc TEXT NOT NULL,
             finished_at_utc TEXT,
+            attempt INTEGER,
+            response_sha256 TEXT,
+            sent_at_utc TEXT,
             UNIQUE(run_id, sequence),
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
         );
