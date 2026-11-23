@@ -26,7 +26,7 @@ from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget
 from eoh_frozen.generation_contract import generation_parameters
 
-from .blind_commitment import assert_suite_not_m2_blind
+from .blind_commitment import assert_suite_not_blind
 from .contracts import (
     OUTCOME_BUDGET_EXHAUSTED_INCUMBENT,
     OUTCOME_COMPLETED,
@@ -38,6 +38,7 @@ from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
 from .templates import (
     build_classic_cw_static_design,
     build_parallel_merge_dynamic_design,
+    build_ruin_recreate_design,
     build_sequential_construct_design,
     get_template_spec,
 )
@@ -46,6 +47,13 @@ CANDIDATE_TEMPLATE_ORDER: tuple[tuple[str, str], ...] = (
     ("cvrp_sequential_construct", "v1"),
     ("cvrp_parallel_merge_static", "v1"),
     ("cvrp_parallel_merge_dynamic", "v1"),
+)
+
+M3_CANDIDATE_TEMPLATE_ORDER: tuple[tuple[str, str], ...] = (
+    ("cvrp_sequential_construct", "v1"),
+    ("cvrp_parallel_merge_static", "v1"),
+    ("cvrp_parallel_merge_dynamic", "v1"),
+    ("cvrp_ruin_recreate", "v1"),
 )
 
 # Balanced KB-derived domain clues (from M1.5 knowledge_workspace cards) passed symmetrically
@@ -71,6 +79,11 @@ KB_ROUND_CONTEXT_BY_TEMPLATE: dict[str, str] = {
         "- Classic Clarke-Wright `(d0i + d0j - dij) / scale` is a strong anchor; augment it gently with generalized savings (`lam * dij`, `mu * |d0i - d0j|`) "
         "and live route-state signals (`(load_i + load_j) / capacity`, capacity slack near full truckload, route-length balance, or merge progress via `remaining_routes`).\n"
         "- Keep expressions fast and vectorized (O(M) numpy operations per call)."
+    ),
+    "cvrp_ruin_recreate": (
+        "KB DOMAIN CLUES (from M2/M3 Ruin-and-Recreate LNS & scale-invariance principles):\n"
+        "- CRITICAL: Normalize distances and `removal_savings` by a GLOBAL instance scale `scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)` so ruin priorities remain coordinate-scale invariant.\n"
+        "- Strong LNS ruin rules combine normalized detour `removal_savings / scale`, route slack `1 - route_loads / capacity`, and adaptive diversification via `stagnation_ratio` and `iter_frac`."
     ),
 }
 
@@ -109,6 +122,13 @@ def build_design_for_template(
             diagnostic_ref=diagnostic_ref,
             rationale=rationale or "L2b dynamic-refresh parallel merge template.",
         )
+    if template_id == "cvrp_ruin_recreate" and template_version == "v1":
+        return build_ruin_recreate_design(
+            design_id=design_id or "m3_l3_ruin_recreate",
+            postprocess_mode=postprocess_mode,
+            diagnostic_ref=diagnostic_ref,
+            rationale=rationale or "L3 Ruin-and-Recreate LNS template.",
+        )
     raise KeyError(f"unsupported_template_builder:{template_id}/{template_version}")
 
 
@@ -125,9 +145,9 @@ def probe_template_budget_headroom(
     t0 = time.perf_counter()
     probe_instances: list[dict[str, Any]] = []
     for suite_id, split, limit in probe_suite_specs:
-        assert_suite_not_m2_blind(suite_id)
+        assert_suite_not_blind(suite_id)
         suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
-        assert_suite_not_m2_blind(suite_id, suite)
+        assert_suite_not_blind(suite_id, suite)
         insts = suite["instances"]
         if include_n200_probe and suite_id == "cvrp_select_multiscale_64":
             n200 = [x for x in insts if int(x["size"]) == 200][: (limit or 8)]

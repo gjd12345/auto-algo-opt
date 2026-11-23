@@ -11,12 +11,13 @@ Gates:
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping, Sequence
 
 from agent_skill_loop.benchmark.catalog import load_profile_suite
 from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 
-from .blind_commitment import assert_suite_not_m2_blind
+from .blind_commitment import assert_suite_not_blind
 from .contracts import (
     OUTCOME_BUDGET_EXHAUSTED_INCUMBENT,
     OUTCOME_COMPLETED,
@@ -171,26 +172,105 @@ def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demand
     return int(unvisited_nodes[np.argmax(distance_matrix[current_node, unvisited_nodes])])
 """,
     },
+    "cvrp_ruin_recreate": {
+        "prefer_A": """import numpy as np
+
+def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):
+    return np.array([400.0, 300.0, 200.0, 100.0, 0.0, 0.0], dtype=np.float64)
+""",
+        "prefer_B": """import numpy as np
+
+def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):
+    return np.array([0.0, 0.0, 400.0, 300.0, 200.0, 100.0], dtype=np.float64)
+""",
+        "expected_A": [1, 2, 3, 4],
+        "expected_B": [3, 4, 5, 6],
+        "constant_zero": """import numpy as np
+
+def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):
+    return np.zeros(removal_savings.shape[0], dtype=np.float64)
+""",
+        "negated": """import numpy as np
+
+def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):
+    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)
+    return -removal_savings / scale
+""",
+    },
 }
+
+
+def build_gate4_l3_6cust_instance() -> dict[str, Any]:
+    """Fixed 6-customer CVRP probe instance for L3 (n=6 -> q=clip(0,4,24)=4).
+
+    Two tie-free 4-of-6 ruin groups ({1,2,3,4} vs {3,4,5,6}) induce strictly
+    different partial routes prior to deterministic Regret-2 recreate.
+    """
+    return {
+        "instance_id": "m3_gate4_dual_action_6cust",
+        "cell": "gate4_dual_action_l3",
+        "size": 6,
+        "spatial": "diagnostic",
+        "depot_style": "centre",
+        "capacity_level": "tight",
+        "demand_dist": "diagnostic",
+        "depot": [0.5, 0.5],
+        "customer_coordinates": [
+            [0.85, 0.50],  # 1
+            [0.75, 0.78],  # 2
+            [0.25, 0.80],  # 3
+            [0.12, 0.50],  # 4
+            [0.24, 0.20],  # 5
+            [0.78, 0.22],  # 6
+        ],
+        "demands": [3, 4, 3, 4, 3, 4],
+        "capacity": 10,
+    }
 
 
 def _default_gate3_instances() -> list[dict[str, Any]]:
     suite = load_profile_suite(BENCHMARK_ID, "cvrp_dev_hetero_24", split="dev_train")
-    assert_suite_not_m2_blind("cvrp_dev_hetero_24", suite)
+    assert_suite_not_blind("cvrp_dev_hetero_24", suite)
     insts = suite["instances"]
     # 4 balanced instances covering n=50/100, uniform/clustered, centre/eccentric, loose/tight
     return [insts[0], insts[5], insts[12], insts[17]]
 
 
+def _default_gate4_cvrp_instance(template_id: str) -> dict[str, Any]:
+    if template_id == "cvrp_ruin_recreate":
+        return build_gate4_l3_6cust_instance()
+    return build_gate4_dual_action_instance()
+
+
 def _default_gate5_instances() -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     dev_suite = load_profile_suite(BENCHMARK_ID, "cvrp_dev_hetero_24", split="dev_train")
     sel_suite = load_profile_suite(BENCHMARK_ID, "cvrp_select_multiscale_64", split="selection")
-    assert_suite_not_m2_blind("cvrp_dev_hetero_24", dev_suite)
-    assert_suite_not_m2_blind("cvrp_select_multiscale_64", sel_suite)
+    assert_suite_not_blind("cvrp_dev_hetero_24", dev_suite)
+    assert_suite_not_blind("cvrp_select_multiscale_64", sel_suite)
     n200_insts = [inst for inst in sel_suite["instances"] if int(inst["size"]) == 200][:2]
     nominal = dev_suite["instances"][0]
     scaled = dev_suite["scale_stress_instances"][0]
     return n200_insts, nominal, scaled
+
+
+@dataclass(frozen=True)
+class ProblemGateProbes:
+    """Problem-family registry for Gate 3/4/5 validation probes (M3 -> M3.1 hook)."""
+
+    problem_family: str
+    gate3_instances: Callable[[], list[dict[str, Any]]]
+    gate4_instance: Callable[[str], dict[str, Any]]
+    gate5_instances: Callable[[], tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]]
+
+
+PROBLEM_GATE_PROBES: dict[str, ProblemGateProbes] = {
+    "cvrp": ProblemGateProbes(
+        problem_family="cvrp",
+        gate3_instances=_default_gate3_instances,
+        gate4_instance=_default_gate4_cvrp_instance,
+        gate5_instances=_default_gate5_instances,
+    ),
+}
 
 
 class InterfaceValidator:
@@ -328,7 +408,10 @@ class InterfaceValidator:
             )
 
         # --- Gate 3: Restricted Subprocess Execution & Baseline Feasibility ---
-        g3_insts = list(gate3_instances) if gate3_instances is not None else _default_gate3_instances()
+        probe_family = PROBLEM_GATE_PROBES.get(design.problem_family)
+        if probe_family is None:
+            raise ValueError(f"unsupported_problem_family_gates:{design.problem_family}")
+        g3_insts = list(gate3_instances) if gate3_instances is not None else probe_family.gate3_instances()
         g3_resp = self.evaluator.evaluate(
             template_id=design.template_id,
             template_version=design.template_version,
@@ -384,7 +467,7 @@ class InterfaceValidator:
             )
 
         # --- Gate 4: Dual-Action Causal Sensitivity Probe (Pre-Postprocessing) ---
-        g4_inst = build_gate4_dual_action_instance()
+        g4_inst = probe_family.gate4_instance(design.template_id)
         probe_cfg = _GATE4_PROBES_BY_TEMPLATE.get(design.template_id)
         if probe_cfg is None:
             raise ValueError(f"missing_gate4_probe_config:{design.template_id}")
@@ -516,7 +599,7 @@ class InterfaceValidator:
             n200_list = list(gate5_n200_instances)
             nom_inst, scl_inst = gate5_scale_pair
         else:
-            n200_list, nom_inst, scl_inst = _default_gate5_instances()
+            n200_list, nom_inst, scl_inst = probe_family.gate5_instances()
 
         g5_insts = [*n200_list, nom_inst, scl_inst]
         g5_resp = self.evaluator.evaluate(

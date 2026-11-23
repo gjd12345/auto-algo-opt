@@ -544,12 +544,18 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                             }}
                 interface_design_meta = None
                 if plan.interface_selection is not None:
-                    from agent_skill_loop.interface_design.session_bridge import validate_session_interface_selection
+                    from agent_skill_loop.interface_design.session_bridge import (
+                        resolve_session_kb_release,
+                        resolve_session_time_budget_ms,
+                        validate_session_interface_selection,
+                    )
+                    resolved_budget_ms = resolve_session_time_budget_ms(plan.interface_selection, config)
+                    kb_release_id, kb_manifest_sha256 = resolve_session_kb_release(config, session_root=root)
                     m2_design, m2_val = validate_session_interface_selection(
                         plan.interface_selection,
                         round_id=rd["round_id"],
                         candidate_timeout_s=float(row["solver_timeout"]),
-                        instance_time_budget_ms=500.0,
+                        instance_time_budget_ms=resolved_budget_ms,
                     )
                     val_ref = f"{prefix}/interface_validation.json"
                     val_sha = save(root, val_ref, m2_val)
@@ -564,6 +570,9 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     interface_design_meta = {
                         "template_id": m2_design.template_id,
                         "template_version": m2_design.template_version,
+                        "instance_time_budget_ms": resolved_budget_ms,
+                        "kb_release_id": kb_release_id,
+                        "kb_manifest_sha256": kb_manifest_sha256,
                         "design_ref": des_ref,
                         "design_sha256": m2_design.design_sha256,
                         "design_file_sha256": des_sha,

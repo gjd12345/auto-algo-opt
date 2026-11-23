@@ -949,6 +949,581 @@ def run_cvrp_parallel_merge_dynamic_v1(
 
 
 # ---------------------------------------------------------------------------
+# L3 Ruin-and-Recreate / Large Neighborhood Search (Milestone 3)
+# ---------------------------------------------------------------------------
+
+CLASSIC_L3_WORST_REMOVAL_HOOK_CODE = """import numpy as np
+
+def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):
+    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)
+    return removal_savings / scale
+"""
+
+CVRP_RUIN_RECREATE_TASK_DESCRIPTION = (
+    "Design a node-ruin priority scoring function "
+    "`score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac)` "
+    "for Ruin-and-Recreate Large Neighborhood Search (LNS) in CVRP.\n"
+    "- Inputs (all read-only): `distance_matrix` ((n+1, n+1) symmetric float64 matrix with depot 0); "
+    "`demands` ((n+1,) float64 array with demands[0]==0); `capacity` (positive float); "
+    "`route_ids` ((n,) int64 array mapping customers 1..n at index c-1 to route index 0..R-1); "
+    "`route_loads` ((n,) float64 array of each customer's current route load); "
+    "`route_dists` ((n,) float64 array of each customer's current route travel distance); "
+    "`removal_savings` ((n,) float64 array of exact detour saved if customer c is removed from its route); "
+    "`stagnation_ratio` (float in [0, 1] measuring consecutive non-improving LNS steps); "
+    "`iter_frac` (float in [0, 1] measuring LNS search progress).\n"
+    "- Output: return a 1D numpy float64 array of length n (for customers 1..n). "
+    "Higher score means the customer is selected into the Top-q ruin set before deterministic Regret-2 recreate and affected-route 2-opt. "
+    "Prefer coordinate-scale invariant, normalized mathematical criteria."
+)
+
+CVRP_RUIN_RECREATE_TEMPLATE_PROGRAM = (
+    "import numpy as np\n\n"
+    "def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n"
+    "    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n"
+    "    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n"
+    "    return removal_savings / scale\n"
+)
+
+_L3_ANYTIME_CHECKPOINTS_MS: tuple[int, ...] = (10, 25, 100, 250, 500)
+
+
+def _l3_route_distance(route: Sequence[int], distance_matrix: np.ndarray) -> float:
+    if not route:
+        return 0.0
+    total = float(distance_matrix[0, route[0]])
+    for a, b in zip(route[:-1], route[1:]):
+        total += float(distance_matrix[a, b])
+    total += float(distance_matrix[route[-1], 0])
+    return total
+
+
+def _l3_two_opt_route(
+    route: list[int],
+    distance_matrix: np.ndarray,
+    *,
+    deadline: float | None = None,
+) -> tuple[list[int], float, bool, int]:
+    """Deterministic intra-route 2-opt for L3, returning (best_route, dist, exhausted, moves)."""
+    cur = list(route)
+    cur_dist = _l3_route_distance(cur, distance_matrix)
+    m = len(cur)
+    if m < 3:
+        return cur, cur_dist, False, 0
+    moves = 0
+    exhausted = False
+    improved = True
+    while improved:
+        improved = False
+        if deadline is not None and time.perf_counter() >= deadline:
+            exhausted = True
+            break
+        best_delta = -1e-12
+        best_pair: tuple[int, int] | None = None
+        for i in range(m - 1):
+            a = 0 if i == 0 else cur[i - 1]
+            b = cur[i]
+            dab = float(distance_matrix[a, b])
+            for j in range(i + 1, m):
+                c = cur[j]
+                d = 0 if j == m - 1 else cur[j + 1]
+                delta = (float(distance_matrix[a, c]) + float(distance_matrix[b, d])) - (dab + float(distance_matrix[c, d]))
+                if delta < best_delta:
+                    best_delta = delta
+                    best_pair = (i, j)
+        if best_pair is not None:
+            ii, jj = best_pair
+            cur[ii : jj + 1] = cur[ii : jj + 1][::-1]
+            cur_dist = _l3_route_distance(cur, distance_matrix)
+            moves += 1
+            improved = True
+    return cur, cur_dist, exhausted, moves
+
+
+def _l3_initial_cw_parallel(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    *,
+    deadline: float | None = None,
+) -> tuple[list[list[int]], bool]:
+    """Fast deterministic parallel CW initialization bounded by unified deadline."""
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], False
+    cap = float(capacity)
+    for c in range(1, n + 1):
+        if float(demands[c]) > cap + 1e-12:
+            raise ValueError(f"infeasible_customer_demand:{c}")
+
+    routes: dict[int, list[int]] = {c: [c] for c in range(1, n + 1)}
+    loads: dict[int, float] = {c: float(demands[c]) for c in range(1, n + 1)}
+    owner = np.arange(n + 1, dtype=np.int64)
+    is_endpoint = np.ones(n + 1, dtype=bool)
+    is_endpoint[0] = False
+
+    exhausted = False
+    if n >= 2:
+        i_idx, j_idx = np.triu_indices(n, k=1)
+        i_idx = i_idx + 1
+        j_idx = j_idx + 1
+        sav = distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]
+        feas_pair = (demands[i_idx] + demands[j_idx] <= cap + 1e-12) & (sav > 0.0)
+        if np.any(feas_pair):
+            vi = i_idx[feas_pair]
+            vj = j_idx[feas_pair]
+            vs = sav[feas_pair]
+            order = np.argsort(-vs, kind="mergesort")
+            check_mask = 511
+            for step, pos in enumerate(order):
+                if (step & check_mask) == 0 and deadline is not None and time.perf_counter() >= deadline:
+                    exhausted = True
+                    break
+                u = int(vi[pos])
+                v = int(vj[pos])
+                if not (is_endpoint[u] and is_endpoint[v]):
+                    continue
+                ru = int(owner[u])
+                rv = int(owner[v])
+                if ru == rv:
+                    continue
+                if loads[ru] + loads[rv] > cap + 1e-12:
+                    continue
+                su = routes[ru]
+                sv = routes[rv]
+                if su[0] == u and len(su) > 1:
+                    su = su[::-1]
+                if sv[-1] == v and len(sv) > 1:
+                    sv = sv[::-1]
+                routes[ru] = su + sv
+                loads[ru] += loads[rv]
+                for node in sv:
+                    owner[node] = ru
+                if len(su) > 1:
+                    is_endpoint[u] = False
+                if len(sv) > 1:
+                    is_endpoint[v] = False
+                del routes[rv]
+    return normalize_routes([routes[k] for k in sorted(routes)]), exhausted
+
+
+def _l3_best_route_insertion(
+    route: Sequence[int],
+    cust: int,
+    distance_matrix: np.ndarray,
+) -> tuple[float, int]:
+    """Return (min_delta, best_pos) for inserting customer ``cust`` into ``route``."""
+    m = len(route)
+    best_delta = float("inf")
+    best_pos = 0
+    for pos in range(m + 1):
+        prev_n = 0 if pos == 0 else route[pos - 1]
+        next_n = 0 if pos == m else route[pos]
+        delta = (
+            float(distance_matrix[prev_n, cust])
+            + float(distance_matrix[cust, next_n])
+            - float(distance_matrix[prev_n, next_n])
+        )
+        if delta < best_delta - 1e-12:
+            best_delta = delta
+            best_pos = pos
+    return best_delta, best_pos
+
+
+def _l3_regret2_recreate(
+    partial_routes: Sequence[Sequence[int]],
+    removed_customers: Sequence[int],
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    *,
+    deadline: float | None = None,
+) -> tuple[list[list[int]] | None, list[float], list[float], set[int], bool]:
+    """Deterministic Regret-2 insertion of ``removed_customers``; aborts cleanly on deadline."""
+    routes: list[list[int]] = [list(r) for r in partial_routes if r]
+    loads: list[float] = [sum(float(demands[c]) for c in r) for r in routes]
+    dists: list[float] = [_l3_route_distance(r, distance_matrix) for r in routes]
+    uninserted = set(int(c) for c in removed_customers)
+    dirty_routes: set[int] = set()
+    cap = float(capacity)
+
+    # Cache (delta, pos) per (customer, route_idx) and refresh only modified route
+    cache: dict[tuple[int, int], tuple[float, int]] = {}
+    for c in uninserted:
+        dc = float(demands[c])
+        for r_idx, r in enumerate(routes):
+            if loads[r_idx] + dc <= cap + 1e-12:
+                cache[(c, r_idx)] = _l3_best_route_insertion(r, c, distance_matrix)
+
+    while uninserted:
+        if deadline is not None and time.perf_counter() >= deadline:
+            return None, [], [], dirty_routes, True
+        chosen_cust: int | None = None
+        chosen_key: tuple[float, float, int] | None = None
+        chosen_move: tuple[float, int, int] | None = None  # (delta, r_idx_or_-1, pos)
+
+        for c in sorted(uninserted):
+            dc = float(demands[c])
+            new_route_cost = 2.0 * float(distance_matrix[0, c])
+            options: list[tuple[float, int, int]] = [(new_route_cost, len(routes), 0)]
+            # Track actual -1 sentinel after sorting or differentiate len(routes)
+            best_options: list[tuple[float, int, int]] = [(new_route_cost, -1, 0)]
+            for r_idx in range(len(routes)):
+                if loads[r_idx] + dc <= cap + 1e-12:
+                    delta, pos = cache[(c, r_idx)]
+                    best_options.append((delta, r_idx, pos))
+            best_options.sort(key=lambda item: (item[0], item[1], item[2]))
+            best = best_options[0]
+            second_delta = best_options[1][0] if len(best_options) >= 2 else (best[0] + new_route_cost)
+            regret = second_delta - best[0]
+            key = (regret, -best[0], -c)
+            if chosen_key is None or key > chosen_key:
+                chosen_key = key
+                chosen_cust = c
+                chosen_move = best
+
+        assert chosen_cust is not None and chosen_move is not None
+        delta, target_r, target_pos = chosen_move
+        uninserted.remove(chosen_cust)
+        if target_r == -1:
+            target_r = len(routes)
+            routes.append([chosen_cust])
+            loads.append(float(demands[chosen_cust]))
+            dists.append(2.0 * float(distance_matrix[0, chosen_cust]))
+        else:
+            routes[target_r].insert(target_pos, chosen_cust)
+            loads[target_r] += float(demands[chosen_cust])
+            dists[target_r] += float(delta)
+        dirty_routes.add(target_r)
+        for rem_c in uninserted:
+            if loads[target_r] + float(demands[rem_c]) <= cap + 1e-12:
+                cache[(rem_c, target_r)] = _l3_best_route_insertion(routes[target_r], rem_c, distance_matrix)
+            else:
+                cache.pop((rem_c, target_r), None)
+
+    return routes, loads, dists, dirty_routes, False
+
+
+def _l3_extract_state_arrays(
+    routes: Sequence[Sequence[int]],
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    n: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Compute customer-aligned length-n read-only LNS state vectors."""
+    route_ids = np.zeros(n, dtype=np.int64)
+    route_loads = np.zeros(n, dtype=np.float64)
+    route_dists = np.zeros(n, dtype=np.float64)
+    removal_savings = np.zeros(n, dtype=np.float64)
+
+    for r_idx, route in enumerate(routes):
+        r_load = sum(float(demands[c]) for c in route)
+        r_dist = _l3_route_distance(route, distance_matrix)
+        m = len(route)
+        for pos, c in enumerate(route):
+            c_idx = c - 1
+            prev_n = 0 if pos == 0 else route[pos - 1]
+            next_n = 0 if pos == m - 1 else route[pos + 1]
+            route_ids[c_idx] = r_idx
+            route_loads[c_idx] = r_load
+            route_dists[c_idx] = r_dist
+            removal_savings[c_idx] = (
+                float(distance_matrix[prev_n, c])
+                + float(distance_matrix[c, next_n])
+                - float(distance_matrix[prev_n, next_n])
+            )
+    for arr in (route_ids, route_loads, route_dists, removal_savings):
+        arr.setflags(write=False)
+    return route_ids, route_loads, route_dists, removal_savings
+
+
+def _l3_build_anytime_curve(
+    history: Sequence[tuple[float, float]],
+    *,
+    first_feasible_ms: float | None,
+    end_ms: float,
+    budget_exhausted: bool,
+) -> dict[str, float | None]:
+    curve: dict[str, float | None] = {}
+    for cp in _L3_ANYTIME_CHECKPOINTS_MS:
+        key = str(cp)
+        if first_feasible_ms is None or float(cp) < float(first_feasible_ms):
+            curve[key] = None
+            continue
+        if budget_exhausted and float(cp) > end_ms:
+            curve[key] = None
+            continue
+        val: float | None = None
+        for snap_ms, snap_cost in history:
+            if snap_ms <= float(cp) + 1e-9 or not budget_exhausted:
+                if snap_ms <= float(cp) + 1e-9:
+                    val = round(float(snap_cost), 6)
+                else:
+                    break
+        if val is None and not budget_exhausted and history:
+            val = round(float(history[-1][1]), 6)
+        elif val is None and history and history[0][0] <= float(cp) + 1e-9:
+            val = round(float(history[0][1]), 6)
+        curve[key] = val
+    return curve
+
+
+def run_cvrp_ruin_recreate_v1(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    hook_fn: Callable[..., Any],
+    *,
+    postprocess_mode: str = "none",
+    time_budget_ms: float | None = 500.0,
+    template_options: Mapping[str, Any] | None = None,
+    capture_merge_sequence: bool = False,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Execute L3 Ruin-and-Recreate LNS using evolved ``score_ruin_nodes`` under unified deadline."""
+    if postprocess_mode not in ALLOWED_POSTPROCESS_MODES:
+        raise ValueError(f"invalid_postprocess_mode:{postprocess_mode}")
+
+    opts = dict(template_options or {})
+    n = int(distance_matrix.shape[0] - 1)
+    if n <= 0:
+        return [], {
+            "merges_applied": 0,
+            "hook_call_count": 0,
+            "candidate_pair_count": 0,
+            "postprocess_mode": postprocess_mode,
+            "budget_exhausted": False,
+            "stop_reason": "empty_instance",
+            "first_feasible_ms": 0.0,
+            "anytime_curve": {str(cp): 0.0 for cp in _L3_ANYTIME_CHECKPOINTS_MS},
+        }
+
+    t0 = time.perf_counter()
+    deadline = (t0 + float(time_budget_ms) / 1000.0) if (time_budget_ms is not None and float(time_budget_ms) > 0) else None
+    max_iters_opt = opts.get("max_iters")
+    max_iters = int(max_iters_opt) if max_iters_opt is not None else max(25, min(180, 3 * n))
+    if capture_merge_sequence:
+        max_iters = min(max_iters, 5)
+
+    # 1. Initial feasible solution via unified-deadline CW + lightweight intra_2opt
+    t_init0 = time.perf_counter()
+    cur_routes, cw_exhausted = _l3_initial_cw_parallel(distance_matrix, demands, capacity, deadline=deadline)
+    first_feasible_ms = round((time.perf_counter() - t0) * 1000.0, 4)
+
+    init_2opt_moves = 0
+    best_routes: list[list[int]] = []
+    init_cost = 0.0
+    two_opt_exhausted = cw_exhausted
+    for r in cur_routes:
+        if not two_opt_exhausted:
+            opt_r, opt_d, ex_r, mv = _l3_two_opt_route(r, distance_matrix, deadline=deadline)
+            init_2opt_moves += mv
+            two_opt_exhausted = two_opt_exhausted or ex_r
+            best_routes.append(opt_r)
+            init_cost += opt_d
+        else:
+            best_routes.append(list(r))
+            init_cost += _l3_route_distance(r, distance_matrix)
+
+    best_routes = normalize_routes(best_routes)
+    cur_routes = [list(r) for r in best_routes]
+    best_cost = float(init_cost)
+    cand_gen_ms = (time.perf_counter() - t_init0) * 1000.0
+    history: list[tuple[float, float]] = [(first_feasible_ms, best_cost)]
+
+    matrix_ro = np.array(distance_matrix, dtype=np.float64, copy=True)
+    demands_ro = np.array(demands, dtype=np.float64, copy=True)
+    matrix_ro.setflags(write=False)
+    demands_ro.setflags(write=False)
+    matrix_ref = matrix_ro.copy()
+    demands_ref = demands_ro.copy()
+
+    hook_ms = 0.0
+    lns_ms = 0.0
+    hook_call_count = 0
+    iterations_completed = 0
+    two_opt_moves = init_2opt_moves
+    budget_exhausted = two_opt_exhausted
+    stop_reason = "time_budget_exhausted" if budget_exhausted else "max_iters_completed"
+    q = min(n, max(4, min(24, int(0.15 * n))))
+    stagnation = 0
+    first_ruin_set: list[int] | None = None
+    first_partial_routes: list[list[int]] | None = None
+
+    # 2. LNS Loop
+    if not budget_exhausted and max_iters > 0:
+        for it in range(max_iters):
+            if deadline is not None and time.perf_counter() >= deadline:
+                budget_exhausted = True
+                stop_reason = "time_budget_exhausted"
+                break
+
+            t_s0 = time.perf_counter()
+            route_ids, route_loads, route_dists, removal_savings = _l3_extract_state_arrays(
+                cur_routes, matrix_ro, demands_ro, n
+            )
+            rid_ref = route_ids.copy()
+            rload_ref = route_loads.copy()
+            rdist_ref = route_dists.copy()
+            rsav_ref = removal_savings.copy()
+            cand_gen_ms += (time.perf_counter() - t_s0) * 1000.0
+
+            stag_ratio = float(stagnation) / float(max(1, max_iters))
+            iter_frac = float(it) / float(max(1, max_iters - 1))
+
+            t_h0 = time.perf_counter()
+            raw_scores = hook_fn(
+                matrix_ro,
+                demands_ro,
+                float(capacity),
+                route_ids,
+                route_loads,
+                route_dists,
+                removal_savings,
+                stag_ratio,
+                iter_frac,
+            )
+            hook_call_count += 1
+            hook_ms += (time.perf_counter() - t_h0) * 1000.0
+
+            if not np.array_equal(matrix_ro, matrix_ref) or not np.array_equal(demands_ro, demands_ref):
+                raise ValueError("candidate_mutated_input")
+            if (
+                not np.array_equal(route_ids, rid_ref)
+                or not np.array_equal(route_loads, rload_ref)
+                or not np.array_equal(route_dists, rdist_ref)
+                or not np.array_equal(removal_savings, rsav_ref)
+            ):
+                raise ValueError("candidate_mutated_input:l3_state")
+
+            scores = np.asarray(raw_scores, dtype=np.float64)
+            if scores.ndim != 1 or scores.shape[0] != n:
+                raise ValueError(f"invalid_return:expected_shape=({n},)_got={scores.shape}")
+            if not np.all(np.isfinite(scores)):
+                raise ValueError("nonfinite_hook_scores")
+
+            t_l0 = time.perf_counter()
+            ranked_custs = sorted(
+                range(1, n + 1),
+                key=lambda c: (-float(scores[c - 1]), (c - 1 + it * 7) % max(1, n)),
+            )
+            ruined = ranked_custs[:q]
+            ruined_set = set(ruined)
+            partial = [[c for c in r if c not in ruined_set] for r in cur_routes]
+            partial = [r for r in partial if r]
+
+            if capture_merge_sequence and it == 0:
+                first_ruin_set = list(ruined)
+                first_partial_routes = normalize_routes(partial)
+
+            rec_routes, _, _, dirty_routes, rec_exhausted = _l3_regret2_recreate(
+                partial,
+                ruined,
+                matrix_ro,
+                demands_ro,
+                float(capacity),
+                deadline=deadline,
+            )
+            if rec_exhausted or rec_routes is None:
+                lns_ms += (time.perf_counter() - t_l0) * 1000.0
+                budget_exhausted = True
+                stop_reason = "time_budget_exhausted"
+                break
+
+            for r_idx in sorted(dirty_routes):
+                if deadline is not None and time.perf_counter() >= deadline:
+                    budget_exhausted = True
+                    stop_reason = "time_budget_exhausted"
+                    break
+                opt_r, _, ex_2, mv = _l3_two_opt_route(rec_routes[r_idx], matrix_ro, deadline=deadline)
+                rec_routes[r_idx] = opt_r
+                two_opt_moves += mv
+                if ex_2:
+                    budget_exhausted = True
+                    stop_reason = "time_budget_exhausted"
+                    break
+
+            cand_routes = normalize_routes(rec_routes)
+            cand_cost = sum(_l3_route_distance(r, matrix_ro) for r in cand_routes)
+            iterations_completed += 1
+
+            now_ms = (time.perf_counter() - t0) * 1000.0
+            if cand_cost < best_cost - 1e-9:
+                best_cost = float(cand_cost)
+                best_routes = cand_routes
+                history.append((now_ms, best_cost))
+                stagnation = 0
+            else:
+                stagnation += 1
+
+            rtr_tol = 0.02 * max(0.05, 1.0 - iter_frac)
+            if cand_cost <= best_cost * (1.0 + rtr_tol):
+                cur_routes = cand_routes
+            elif stagnation >= 4:
+                cur_routes = [list(r) for r in best_routes]
+
+            lns_ms += (time.perf_counter() - t_l0) * 1000.0
+            if budget_exhausted:
+                break
+
+    final_routes = best_routes
+    postprocess_ms = 0.0
+    post_meta: dict[str, Any] = {"two_opt_moves": 0, "relocate_moves": 0, "outer_passes": 0}
+    if postprocess_mode != "none" and not budget_exhausted:
+        if postprocess_mode == "intra_2opt":
+            final_routes, post_meta = apply_intra_2opt(best_routes, matrix_ro, deadline=deadline)
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            two_opt_moves += int(post_meta.get("two_opt_moves", 0))
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+        elif postprocess_mode == "relocate_2opt":
+            final_routes, post_meta = apply_relocate_2opt(
+                best_routes, matrix_ro, demands_ro, capacity, deadline=deadline
+            )
+            postprocess_ms = float(post_meta["postprocess_ms"])
+            two_opt_moves += int(post_meta.get("two_opt_moves", 0))
+            if post_meta["budget_exhausted"]:
+                budget_exhausted = True
+                stop_reason = str(post_meta["stop_reason"])
+
+    final_cost = sum(_l3_route_distance(r, matrix_ro) for r in final_routes)
+    end_ms = (time.perf_counter() - t0) * 1000.0
+    if final_cost < best_cost - 1e-9:
+        history.append((end_ms, final_cost))
+    anytime_curve = _l3_build_anytime_curve(
+        history,
+        first_feasible_ms=first_feasible_ms,
+        end_ms=end_ms,
+        budget_exhausted=budget_exhausted,
+    )
+
+    meta: dict[str, Any] = {
+        "merges_applied": iterations_completed,
+        "iterations_completed": iterations_completed,
+        "ruin_size_q": q,
+        "hook_call_count": hook_call_count,
+        "candidate_pair_count": n,
+        "postprocess_mode": postprocess_mode,
+        "candidate_gen_ms": round(cand_gen_ms, 4),
+        "hook_ms": round(hook_ms, 4),
+        "merge_ms": round(lns_ms, 4),
+        "postprocess_ms": round(postprocess_ms, 4),
+        "two_opt_moves": int(two_opt_moves),
+        "relocate_moves": int(post_meta.get("relocate_moves", 0)),
+        "outer_passes": int(post_meta.get("outer_passes", 0)),
+        "budget_exhausted": budget_exhausted,
+        "stop_reason": stop_reason,
+        "first_feasible_ms": first_feasible_ms,
+        "anytime_curve": anytime_curve,
+    }
+    if capture_merge_sequence:
+        meta["first_ruin_set"] = first_ruin_set or []
+        meta["pre_recreate_routes"] = first_partial_routes or []
+        meta["merge_sequence"] = [first_ruin_set] if first_ruin_set is not None else []
+        meta["pre_postprocess_routes"] = first_partial_routes or []
+    return final_routes, meta
+
+
+# ---------------------------------------------------------------------------
 # Versioned Template Registry
 # ---------------------------------------------------------------------------
 
@@ -973,6 +1548,22 @@ def _compute_template_source_sha256(runner_fn: Callable[..., Any]) -> str:
     parts = [
         inspect.getsource(runner_fn),
         inspect.getsource(_two_opt_single_route_tracked),
+        inspect.getsource(apply_intra_2opt),
+        inspect.getsource(apply_relocate_2opt),
+    ]
+    return hashlib.sha256("\n###\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def _compute_l3_template_source_sha256() -> str:
+    parts = [
+        inspect.getsource(run_cvrp_ruin_recreate_v1),
+        inspect.getsource(_l3_route_distance),
+        inspect.getsource(_l3_two_opt_route),
+        inspect.getsource(_l3_initial_cw_parallel),
+        inspect.getsource(_l3_best_route_insertion),
+        inspect.getsource(_l3_regret2_recreate),
+        inspect.getsource(_l3_extract_state_arrays),
+        inspect.getsource(_l3_build_anytime_curve),
         inspect.getsource(apply_intra_2opt),
         inspect.getsource(apply_relocate_2opt),
     ]
@@ -1036,10 +1627,36 @@ def _build_template_registry() -> dict[tuple[str, str], TemplateSpec]:
         template_source_sha256=_compute_template_source_sha256(run_cvrp_parallel_merge_dynamic_v1),
         advisory_deadline_supported=True,
     )
+    l3 = TemplateSpec(
+        template_id="cvrp_ruin_recreate",
+        template_version="v1",
+        problem_family="cvrp",
+        paradigm="ruin_recreate",
+        hook_name="score_ruin_nodes",
+        hook_signature=(
+            "distance_matrix",
+            "demands",
+            "capacity",
+            "route_ids",
+            "route_loads",
+            "route_dists",
+            "removal_savings",
+            "stagnation_ratio",
+            "iter_frac",
+        ),
+        allowed_postprocess_modes=ALLOWED_POSTPROCESS_MODES,
+        runner=run_cvrp_ruin_recreate_v1,
+        default_task_description=CVRP_RUIN_RECREATE_TASK_DESCRIPTION,
+        default_template_program=CVRP_RUIN_RECREATE_TEMPLATE_PROGRAM,
+        default_baseline_hook_code=CLASSIC_L3_WORST_REMOVAL_HOOK_CODE,
+        template_source_sha256=_compute_l3_template_source_sha256(),
+        advisory_deadline_supported=True,
+    )
     return {
         (l1.template_id, l1.template_version): l1,
         (l2a.template_id, l2a.template_version): l2a,
         (l2b.template_id, l2b.template_version): l2b,
+        (l3.template_id, l3.template_version): l3,
     }
 
 
@@ -1140,4 +1757,34 @@ def build_parallel_merge_dynamic_design(
         diagnostic_ref=diagnostic_ref,
         rationale=rationale,
         template_options={"positive_savings_only": bool(positive_savings_only)},
+    )
+
+
+def build_ruin_recreate_design(
+    *,
+    design_id: str = "m3_l3_ruin_recreate",
+    postprocess_mode: str = "none",
+    diagnostic_ref: dict[str, Any] | None = None,
+    template_options: Mapping[str, Any] | None = None,
+    rationale: str = (
+        "Ruin-and-Recreate LNS template (cvrp_ruin_recreate/v1) with CW+intra_2opt init, "
+        "deterministic Regret-2 recreate, affected-route intra_2opt, and Anytime trajectory under unified deadline."
+    ),
+) -> InterfaceDesign:
+    spec = get_template_spec("cvrp_ruin_recreate", "v1")
+    return InterfaceDesign(
+        design_id=design_id,
+        problem_family=spec.problem_family,
+        paradigm=spec.paradigm,
+        template_id=spec.template_id,
+        template_version=spec.template_version,
+        postprocess_mode=postprocess_mode,
+        hook_name=spec.hook_name,
+        hook_signature=spec.hook_signature,
+        hook_task_description=spec.default_task_description,
+        baseline_hook_code=spec.default_baseline_hook_code,
+        cited_kb_ids=("method-cvrp-cw-parallel",),
+        diagnostic_ref=diagnostic_ref,
+        rationale=rationale,
+        template_options=dict(template_options or {}),
     )

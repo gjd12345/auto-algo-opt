@@ -16,7 +16,7 @@ from typing import Any
 from agent_skill_loop.eval_worker import _watch_parent
 
 from .contracts import GateFailure
-from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess, validate_hook_ast
+from .runtime import PROBLEM_ADAPTERS, compile_hook_function, evaluate_hook_on_instance_inprocess, validate_hook_ast
 from .templates import get_template_spec
 
 
@@ -36,6 +36,8 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
 
     try:
         tpl = get_template_spec(template_id, template_version)
+        if tpl.problem_family not in PROBLEM_ADAPTERS:
+            raise KeyError(f"unsupported_problem_family:{tpl.problem_family}")
     except KeyError as exc:
         f = GateFailure(
             gate_id=2,

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import random
 import time
@@ -24,23 +25,116 @@ from agent_skill_loop.contracts import EOH_COMMIT, EvaluationResult, SkillVersio
 from agent_skill_loop.evaluator import evaluator_source_hash
 from agent_skill_loop.session_ledger import SessionRequestBudget, solver_event
 from agent_skill_loop.skill_store import _atomic_write_text, load_skill, save_skill
+from knowledge_tools.core import resolve_release
 
 from .contracts import ALLOWED_POSTPROCESS_MODES, FrozenInterfaceSolver, InterfaceDesign, sha256_text
-from .dynamic_eoh import DEFAULT_MOCK_MERGE_CANDIDATES, DynamicInterfaceProblem, MockEoHLLMServer
+from .dynamic_eoh import (
+    DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE,
+    DEFAULT_MOCK_MERGE_CANDIDATES,
+    DynamicInterfaceProblem,
+    MockEoHLLMServer,
+)
 from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template
 from .runtime import validate_hook_ast
 from .templates import TEMPLATE_REGISTRY, get_template_spec
 from .validator import InterfaceValidator
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 INTERFACE_SELECTION_KEYS = frozenset({
     "template_id",
     "template_version",
     "postprocess_mode",
     "template_options",
+    "time_budget_ms",
     "cited_kb_ids",
     "diagnostic_ref",
     "rationale",
 })
+
+
+def _validate_positive_budget_ms(value: Any, *, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field_name}_must_be_number")
+    val = float(value)
+    if not math.isfinite(val) or val <= 0.0:
+        raise ValueError(f"{field_name}_must_be_positive")
+    return val
+
+
+def resolve_session_time_budget_ms(
+    selection: Mapping[str, Any] | None = None,
+    config: Mapping[str, Any] | None = None,
+    design: InterfaceDesign | None = None,
+) -> float:
+    """Resolve one consistent per-instance solve budget (ms) across submit/execute/revalidate."""
+    cfg_val: float | None = None
+    sel_val: float | None = None
+    opt_val: float | None = None
+
+    if isinstance(config, Mapping) and config.get("instance_time_budget_ms") is not None:
+        cfg_val = _validate_positive_budget_ms(config["instance_time_budget_ms"], field_name="instance_time_budget_ms")
+    if isinstance(selection, Mapping) and selection.get("time_budget_ms") is not None:
+        sel_val = _validate_positive_budget_ms(selection["time_budget_ms"], field_name="interface_selection_time_budget_ms")
+    if design is not None and design.template_options.get("time_budget_ms") is not None:
+        opt_val = _validate_positive_budget_ms(design.template_options["time_budget_ms"], field_name="template_options_time_budget_ms")
+
+    if cfg_val is not None and sel_val is not None and abs(cfg_val - sel_val) > 1e-6:
+        raise ValueError(f"session_time_budget_mismatch:config={cfg_val}:selection={sel_val}")
+    if cfg_val is not None:
+        return cfg_val
+    if sel_val is not None:
+        return sel_val
+    if opt_val is not None:
+        return opt_val
+    return 500.0
+
+
+def resolve_session_kb_release(
+    config: Mapping[str, Any] | None = None,
+    *,
+    session_root: Path | None = None,
+    repo_root: Path = _REPO_ROOT,
+) -> tuple[str, str]:
+    """Resolve and session-lock the active KB release ID and manifest SHA-256."""
+    if isinstance(config, Mapping) and config.get("kb_release_id") and config.get("kb_manifest_sha256"):
+        return str(config["kb_release_id"]), str(config["kb_manifest_sha256"])
+
+    lock_path = (Path(session_root) / "kb_release_lock.json") if session_root is not None else None
+    if lock_path is not None and lock_path.is_file():
+        locked = json.loads(lock_path.read_text(encoding="utf-8"))
+        return str(locked["kb_release_id"]), str(locked["kb_manifest_sha256"])
+
+    target: Path | None = None
+    if isinstance(config, Mapping):
+        if config.get("kb_release_path"):
+            target = Path(str(config["kb_release_path"]))
+        elif config.get("kb_release_id"):
+            cand = repo_root / "knowledge_store" / "releases" / str(config["kb_release_id"])
+            if cand.exists():
+                target = cand
+    if target is None:
+        target = repo_root / "knowledge_store" / "current"
+
+    rel_dir = resolve_release(target)
+    manifest_path = rel_dir / "manifest.json"
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
+    manifest_obj = json.loads(manifest_bytes)
+    rel_id = str(manifest_obj.get("release_id") or rel_dir.name)
+
+    if lock_path is not None:
+        payload = json.dumps(
+            {
+                "kb_release_id": rel_id,
+                "kb_manifest_sha256": manifest_sha,
+                "release_dir": str(rel_dir),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ) + "\n"
+        _atomic_write_text(lock_path, payload)
+    return rel_id, manifest_sha
 
 
 def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -85,7 +179,7 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
     if len(rationale) > 2048:
         raise ValueError("interface_selection_rationale_too_large")
 
-    return {
+    parsed: dict[str, Any] = {
         "template_id": tid,
         "template_version": tver,
         "postprocess_mode": post_mode,
@@ -94,6 +188,11 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         "diagnostic_ref": dict(diag_ref) if isinstance(diag_ref, Mapping) else None,
         "rationale": rationale,
     }
+    if raw.get("time_budget_ms") is not None:
+        parsed["time_budget_ms"] = _validate_positive_budget_ms(
+            raw["time_budget_ms"], field_name="interface_selection_time_budget_ms"
+        )
+    return parsed
 
 
 def validate_session_interface_selection(
@@ -313,8 +412,17 @@ def execute_m2_session_task(
     session_ref = {"root": str(root), "task_id": task_id}
 
     round_context_text = (root / rd["round_context_ref"]).read_text(encoding="utf-8") if rd["round_context_ref"] else ""
-    kb_clue = KB_ROUND_CONTEXT_BY_TEMPLATE.get(design.template_id, "")
+    agent_guidance_on = bool(row["agent_guidance"]) if "agent_guidance" in row.keys() else True
+    opt_clues = design.template_options.get("inject_static_kb_clues")
+    cfg_clues = config.get("inject_static_kb_clues") if isinstance(config, Mapping) else None
+    inject_static_kb_clues = (
+        bool(opt_clues) if opt_clues is not None else (bool(cfg_clues) if cfg_clues is not None else agent_guidance_on)
+    )
+    kb_clue = KB_ROUND_CONTEXT_BY_TEMPLATE.get(design.template_id, "") if inject_static_kb_clues else ""
     combined_ctx = (round_context_text + "\n\n" + kb_clue).strip() if kb_clue else round_context_text
+
+    budget_ms = resolve_session_time_budget_ms(plan.get("interface_selection"), config, design)
+    kb_release_id, kb_manifest_sha256 = resolve_session_kb_release(config, session_root=root)
 
     task = _SessionTrackedDynamicProblem(
         session=session_ref,
@@ -326,10 +434,11 @@ def execute_m2_session_task(
         instances=instances,
         suite_id=f"session_{row['problem']}",
         candidate_timeout_s=float(row["solver_timeout"]),
-        instance_time_budget_ms=500.0,
+        instance_time_budget_ms=budget_ms,
         evaluation_log=eval_log,
         round_context=combined_ctx,
     )
+    _atomic_write_text(output / "task_description.txt", task.task_description)
 
     seed_origin_by_hash = {design.baseline_hook_sha256: "baseline"}
     seed_entries = [{"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.",
@@ -384,7 +493,8 @@ def execute_m2_session_task(
     bridge = None
     mock_srv = None
     if use_mock:
-        mock_srv = MockEoHLLMServer(DEFAULT_MOCK_MERGE_CANDIDATES, request_log=req_log)
+        mock_candidates = DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE.get(design.template_id, DEFAULT_MOCK_MERGE_CANDIDATES)
+        mock_srv = MockEoHLLMServer(mock_candidates, request_log=req_log)
         local_url = mock_srv.start()
     else:
         class _ResilientSessionBridge(OpenAIPathBridge):
@@ -483,7 +593,7 @@ def execute_m2_session_task(
     ]
     best_rel = None
     frozen_rel = None
-    validator = InterfaceValidator(candidate_timeout_s=float(row["solver_timeout"]), instance_time_budget_ms=500.0)
+    validator = InterfaceValidator(candidate_timeout_s=float(row["solver_timeout"]), instance_time_budget_ms=budget_ms)
     validated = []
     best = None
     for candidate in sorted(gen_valid, key=lambda r: float(r["evaluation"]["objective"])):
@@ -535,11 +645,12 @@ def execute_m2_session_task(
             hook_code_sha256=str(best["code_sha256"]),
             design_sha256=design.design_sha256,
             origin_run=str(output),
-            kb_release_id="20261122-main-co-workbench-m15",
+            kb_release_id=kb_release_id,
             kb_entry_id=design.cited_kb_ids[0] if design.cited_kb_ids else None,
             cited_kb_ids=design.cited_kb_ids,
             diagnostic_ref=design.diagnostic_ref,
             description=sv.description,
+            default_budget_ms=budget_ms,
         )
         _atomic_write_text(
             output / "frozen_solver_manifest.json",
@@ -555,6 +666,11 @@ def execute_m2_session_task(
         "template_version": design.template_version,
         "template_source_sha256": tpl.template_source_sha256,
         "design_sha256": design.design_sha256,
+        "instance_time_budget_ms": budget_ms,
+        "kb_release_id": kb_release_id,
+        "kb_manifest_sha256": kb_manifest_sha256,
+        "static_kb_clues_injected": inject_static_kb_clues,
+        "task_description_sha256": sha256_text(task.task_description),
         "eoh_commit": EOH_COMMIT,
         "suite_hash": suite_hash,
         "evaluator_hash": eval_hash,

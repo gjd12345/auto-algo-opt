@@ -26,7 +26,7 @@ from agent_skill_loop.cvrp_workbench.protocol import prepare_instance_arrays, ve
 from agent_skill_loop.cvrp_workbench.solvers import evaluate_algorithm_on_instance
 from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 
-from .blind_commitment import assert_suite_not_m2_blind
+from .blind_commitment import assert_suite_not_blind
 from .contracts import classify_outcome
 from .templates import apply_intra_2opt, apply_relocate_2opt
 
@@ -75,9 +75,9 @@ def run_gap_decomposition_diagnostic(
     summary_by_suite: dict[str, Any] = {}
 
     for suite_id, split in suites:
-        assert_suite_not_m2_blind(suite_id)
+        assert_suite_not_blind(suite_id)
         suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
-        assert_suite_not_m2_blind(suite_id, suite)
+        assert_suite_not_blind(suite_id, suite)
         dist_conv = suite["distance_convention"]
         veh_pol = suite["vehicle_limit_policy"]
         instances = suite["instances"]

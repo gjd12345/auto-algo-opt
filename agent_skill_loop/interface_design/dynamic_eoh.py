@@ -34,7 +34,7 @@ from agent_skill_loop.client import load_local_env
 from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.request_budget import RequestBudget
 
-from .blind_commitment import assert_suite_not_m2_blind
+from .blind_commitment import assert_suite_not_blind
 from .contracts import (
     FrozenInterfaceSolver,
     InterfaceDesign,
@@ -68,7 +68,7 @@ class DynamicInterfaceProblem(BaseProblem):
         round_context: str | None = None,
         n_processes: int = 1,
     ) -> None:
-        assert_suite_not_m2_blind(suite_id)
+        assert_suite_not_blind(suite_id)
         # EoH outer process timeout receives a margin above our inner subprocess timeout
         super().__init__(timeout=max(5, int(candidate_timeout_s) + 5), n_processes=n_processes)
         self.design = design
@@ -293,6 +293,92 @@ DEFAULT_MOCK_MERGE_CANDIDATES: tuple[str, ...] = (
     ),
 )
 
+DEFAULT_MOCK_L1_CANDIDATES: tuple[str, ...] = (
+    (
+        "{Scale-invariant savings + distance step selection.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[depot, 1:]), 1e-12)\n"
+        "    d_cur = distance_matrix[current_node, unvisited_nodes] / scale\n"
+        "    d_dep = distance_matrix[depot, unvisited_nodes] / scale\n"
+        "    score = d_dep - 1.15 * d_cur + 0.05 * (demands[unvisited_nodes] / np.maximum(rest_capacity, 1e-12))\n"
+        "    return int(unvisited_nodes[np.argmax(score)])\n"
+        "```\n"
+    ),
+    (
+        "{Two-regime sequential construct prioritizing near customers with mild return pull.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[depot, 1:]), 1e-12)\n"
+        "    d_cur = distance_matrix[current_node, unvisited_nodes] / scale\n"
+        "    d_dep = distance_matrix[depot, unvisited_nodes] / scale\n"
+        "    return int(unvisited_nodes[np.argmin(d_cur - 0.15 * d_dep)])\n"
+        "```\n"
+    ),
+)
+
+DEFAULT_MOCK_L2B_CANDIDATES: tuple[str, ...] = (
+    (
+        "{Dynamic CW savings with route-load balance bonus.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n"
+        "    sav = (distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - 1.1 * distance_matrix[i_idx, j_idx]) / scale\n"
+        "    load_frac = (load_i + load_j) / max(float(capacity), 1e-12)\n"
+        "    return sav + 0.10 * load_frac\n"
+        "```\n"
+    ),
+    (
+        "{Asymmetry and compact-route dynamic savings merge.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n"
+        "    d0i = distance_matrix[0, i_idx]\n"
+        "    d0j = distance_matrix[0, j_idx]\n"
+        "    sav = (d0i + d0j - 1.2 * distance_matrix[i_idx, j_idx] + 0.1 * np.abs(d0i - d0j)) / scale\n"
+        "    slack = 1.0 - (load_i + load_j) / max(float(capacity), 1e-12)\n"
+        "    return sav - 0.12 * slack\n"
+        "```\n"
+    ),
+)
+
+DEFAULT_MOCK_L3_RUIN_CANDIDATES: tuple[str, ...] = (
+    (
+        "{Scale-invariant detour plus route underutilization and stagnation diversification.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n"
+        "    norm_sav = removal_savings / scale\n"
+        "    slack = 1.0 - (route_loads / max(float(capacity), 1e-12))\n"
+        "    radial = distance_matrix[0, 1:] / scale\n"
+        "    return norm_sav + 0.25 * slack + 0.10 * stagnation_ratio * radial\n"
+        "```\n"
+    ),
+    (
+        "{Cost-detour plus route-density weighted LNS ruin priority.}\n"
+        "```python\n"
+        "import numpy as np\n\n"
+        "def score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n"
+        "    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n"
+        "    sav = removal_savings / scale\n"
+        "    rel_detour = removal_savings / np.maximum(route_dists, 1e-12)\n"
+        "    return sav + 0.35 * rel_detour + 0.08 * (1.0 - iter_frac) * (distance_matrix[0, 1:] / scale)\n"
+        "```\n"
+    ),
+)
+
+DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE: dict[str, tuple[str, ...]] = {
+    "cvrp_sequential_construct": DEFAULT_MOCK_L1_CANDIDATES,
+    "cvrp_parallel_merge_static": DEFAULT_MOCK_MERGE_CANDIDATES,
+    "cvrp_parallel_merge_dynamic": DEFAULT_MOCK_L2B_CANDIDATES,
+    "cvrp_ruin_recreate": DEFAULT_MOCK_L3_RUIN_CANDIDATES,
+}
+
 
 def _summarize_request_log(request_log: Path) -> dict[str, Any]:
     counts_by_purpose: dict[str, int] = {}
@@ -368,7 +454,13 @@ def run_dynamic_eoh_evolution(
     round_context: str | None = None,
 ) -> dict[str, Any]:
     """Validate ``design``, run real upstream EoH on it, and export a ``FrozenInterfaceSolver`` manifest."""
-    assert_suite_not_m2_blind(suite_id)
+    assert_suite_not_blind(suite_id)
+    if kb_release_id == "20261122-main-co-workbench-m15":
+        try:
+            from knowledge_tools.core import resolve_release
+            kb_release_id = resolve_release(Path(__file__).resolve().parents[2] / "knowledge_store" / "current").name
+        except Exception:
+            pass
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     results_dir = output_dir / "results"
@@ -399,7 +491,7 @@ def run_dynamic_eoh_evolution(
 
     # 2. Load dev suite (never blind!)
     suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
-    assert_suite_not_m2_blind(suite_id, suite)
+    assert_suite_not_blind(suite_id, suite)
     instances = list(suite["instances"][:max_instances] if max_instances is not None else suite["instances"])
     eval_log = results_dir / "evaluations.jsonl"
     req_log = results_dir / "requests.jsonl"

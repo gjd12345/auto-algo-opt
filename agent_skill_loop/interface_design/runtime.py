@@ -21,6 +21,7 @@ import subprocess
 import sys
 import threading
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -367,6 +368,82 @@ def compile_hook_function(
     return fn
 
 
+@dataclass(frozen=True)
+class ProblemRuntimeAdapter:
+    """Per-problem input prep, template dispatch, and verifier contract for M3/M3.1."""
+
+    problem_family: str
+    prepare_inputs: Callable[[Mapping[str, Any], str], tuple[tuple[Any, ...], dict[str, Any]]]
+    verify_solution: Callable[..., dict[str, Any]]
+    failure_verification: Callable[[str | None, str | None, Mapping[str, Any], dict[str, Any]], dict[str, Any]]
+
+
+def _cvrp_prepare_inputs(instance: Mapping[str, Any], distance_convention: str) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    matrix, demands, capacity = prepare_instance_arrays(instance, distance_convention=distance_convention)
+    return (matrix, demands, capacity), {
+        "expected_matrix": matrix.copy(),
+        "expected_demands": demands.copy(),
+        "submitted_matrix": matrix,
+        "submitted_demands": demands,
+        "capacity": capacity,
+    }
+
+
+def _cvrp_verify_solution(
+    instance: Mapping[str, Any],
+    solution: Any,
+    orig_refs: Mapping[str, Any],
+    *,
+    distance_convention: str,
+    vehicle_limit_policy: str,
+) -> dict[str, Any]:
+    return verify_cvrp_solution(
+        instance,
+        solution,
+        distance_convention=distance_convention,
+        vehicle_limit_policy=vehicle_limit_policy,
+        expected_matrix=orig_refs["expected_matrix"],
+        submitted_matrix=orig_refs["submitted_matrix"],
+        expected_demands=orig_refs["expected_demands"],
+        submitted_demands=orig_refs["submitted_demands"],
+    )
+
+
+def _cvrp_failure_verification(
+    error_code: str | None,
+    error_detail: str | None,
+    instance: Mapping[str, Any],
+    orig_refs: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "valid": False,
+        "error_code": error_code,
+        "error_detail": error_detail,
+        "tour_length": None,
+        "route_count": 0,
+        "route_loads": [],
+        "route_distances": [],
+        "capacity": orig_refs.get("capacity"),
+        "max_utilization": None,
+        "mean_utilization": None,
+        "target_vehicles": instance.get("k_vehicles"),
+        "within_vehicle_limit": None,
+        "exact_vehicle_count": None,
+        "vehicle_count_delta": None,
+        "verify_ms": 0.0,
+    }
+
+
+PROBLEM_ADAPTERS: dict[str, ProblemRuntimeAdapter] = {
+    "cvrp": ProblemRuntimeAdapter(
+        problem_family="cvrp",
+        prepare_inputs=_cvrp_prepare_inputs,
+        verify_solution=_cvrp_verify_solution,
+        failure_verification=_cvrp_failure_verification,
+    ),
+}
+
+
 def evaluate_hook_on_instance_inprocess(
     *,
     template_id: str,
@@ -380,12 +457,14 @@ def evaluate_hook_on_instance_inprocess(
     time_budget_ms: float | None = 500.0,
     capture_merge_sequence: bool = False,
 ) -> dict[str, Any]:
-    """Run one registered template + compiled hook on one CVRP instance and verify via M1 verifier."""
+    """Run one registered template + compiled hook on one instance via ``PROBLEM_ADAPTERS``."""
     tpl = get_template_spec(template_id, template_version)
+    if tpl.problem_family not in PROBLEM_ADAPTERS:
+        raise ValueError(f"unsupported_problem_family:{tpl.problem_family}")
+    adapter = PROBLEM_ADAPTERS[tpl.problem_family]
+
     t_pre0 = time.perf_counter()
-    matrix, demands, capacity = prepare_instance_arrays(instance, distance_convention=distance_convention)
-    matrix_orig = matrix.copy()
-    demands_orig = demands.copy()
+    solver_args, orig_refs = adapter.prepare_inputs(instance, distance_convention)
     preprocess_ms = (time.perf_counter() - t_pre0) * 1000.0
 
     t_solve0 = time.perf_counter()
@@ -398,9 +477,7 @@ def evaluate_hook_on_instance_inprocess(
     try:
         with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink), np.errstate(all="ignore"):
             routes, meta = tpl.runner(
-                matrix,
-                demands,
-                capacity,
+                *solver_args,
                 hook_fn,
                 postprocess_mode=postprocess_mode,
                 time_budget_ms=time_budget_ms,
@@ -422,38 +499,19 @@ def evaluate_hook_on_instance_inprocess(
     solve_ms = (time.perf_counter() - t_solve0) * 1000.0
 
     if status == "ok":
-        verification = verify_cvrp_solution(
+        verification = adapter.verify_solution(
             instance,
             routes,
+            orig_refs,
             distance_convention=distance_convention,
             vehicle_limit_policy=vehicle_limit_policy,
-            expected_matrix=matrix_orig,
-            submitted_matrix=matrix,
-            expected_demands=demands_orig,
-            submitted_demands=demands,
         )
         if not verification["valid"]:
             status = "infeasible"
             error_code = verification["error_code"]
             error_detail = verification["error_detail"]
     else:
-        verification = {
-            "valid": False,
-            "error_code": error_code,
-            "error_detail": error_detail,
-            "tour_length": None,
-            "route_count": 0,
-            "route_loads": [],
-            "route_distances": [],
-            "capacity": capacity,
-            "max_utilization": None,
-            "mean_utilization": None,
-            "target_vehicles": instance.get("k_vehicles"),
-            "within_vehicle_limit": None,
-            "exact_vehicle_count": None,
-            "vehicle_count_delta": None,
-            "verify_ms": 0.0,
-        }
+        verification = adapter.failure_verification(error_code, error_detail, instance, orig_refs)
 
     ref_obj = instance.get("reference_objective")
     ref_val = float(ref_obj) if isinstance(ref_obj, (int, float)) and math.isfinite(float(ref_obj)) and float(ref_obj) > 0 else None
@@ -473,6 +531,7 @@ def evaluate_hook_on_instance_inprocess(
 
     out: dict[str, Any] = {
         "instance_id": str(instance.get("instance_id", "")),
+        "problem_family": tpl.problem_family,
         "status": status,
         "outcome_class": outcome_class,
         "valid": bool(verification["valid"]),
@@ -509,9 +568,19 @@ def evaluate_hook_on_instance_inprocess(
         "candidate_pair_count": int(meta.get("candidate_pair_count", 0)),
         "template_source_sha256": tpl.template_source_sha256,
     }
+    if "first_feasible_ms" in meta:
+        out["first_feasible_ms"] = meta["first_feasible_ms"]
+    if "anytime_curve" in meta:
+        out["anytime_curve"] = meta["anytime_curve"]
+    if "iterations_completed" in meta:
+        out["iterations_completed"] = int(meta["iterations_completed"])
     if capture_merge_sequence:
         out["merge_sequence"] = meta.get("merge_sequence")
         out["pre_postprocess_routes"] = meta.get("pre_postprocess_routes")
+        if "first_ruin_set" in meta:
+            out["first_ruin_set"] = meta.get("first_ruin_set")
+        if "pre_recreate_routes" in meta:
+            out["pre_recreate_routes"] = meta.get("pre_recreate_routes")
     return out
 
 

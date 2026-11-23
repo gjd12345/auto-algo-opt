@@ -949,7 +949,7 @@ def run_frozen_workbench_bundle(
     Leaves ``run_workbench_evaluation`` and all Milestone 1 / 1.5 defaults completely untouched.
     Produces the exact single-budget bundle schema consumed by ``frontend/build_dashboard.py``.
     """
-    from agent_skill_loop.interface_design.blind_commitment import assert_suite_not_m2_blind
+    from agent_skill_loop.interface_design.blind_commitment import assert_suite_not_blind
     from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver, classify_outcome
     from agent_skill_loop.interface_design.runtime import evaluate_frozen_interface_solver
 
@@ -992,9 +992,9 @@ def run_frozen_workbench_bundle(
     summary_by_suite: dict[str, Any] = {}
 
     for suite_id, split in suite_specs:
-        assert_suite_not_m2_blind(suite_id)
+        assert_suite_not_blind(suite_id)
         suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
-        assert_suite_not_m2_blind(suite_id, suite)
+        assert_suite_not_blind(suite_id, suite)
         if (suite.get("problem_family") or "cvrp") != "cvrp":
             raise ValueError(f"m2_frozen_bundle_supports_cvrp_only:{suite_id}")
 

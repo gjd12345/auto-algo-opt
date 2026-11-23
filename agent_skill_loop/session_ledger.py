@@ -105,10 +105,9 @@ class SessionRequestBudget(RequestBudget):
                     return None
                 request_id=uuid.uuid4().hex
                 mark_effect(con,row,task)
-                slot=RequestSlot(used+1,purpose,problem,attempt,model)
-                slot.request_id=request_id
-                con.execute("INSERT INTO requests(request_id,run_id,round_id,task_id,sequence,purpose,model,state,created_at_utc) VALUES (?,?,?,?,?,?,?,'reserved',?)",
-                            (request_id,row["run_id"],task["round_id"],self.task_id,slot.index,purpose,model,db._utc_now()))
+                slot=RequestSlot(used+1,purpose,problem,attempt,model,request_id=request_id)
+                con.execute("INSERT INTO requests(request_id,run_id,round_id,task_id,sequence,purpose,attempt,model,state,created_at_utc) VALUES (?,?,?,?,?,?,?,?,'reserved',?)",
+                            (request_id,row["run_id"],task["round_id"],self.task_id,slot.index,purpose,attempt,model,db._utc_now()))
             slot.reserved_event=self._make_event(slot,"reserved",request_id=request_id)
             slot.reserved_event["request_id"]=request_id
             self.events.append(slot.reserved_event)
@@ -118,20 +117,25 @@ class SessionRequestBudget(RequestBudget):
     def finish(self, slot, state, **fields):
         event=super().finish(slot,state,**fields)
         event["request_id"]=slot.request_id
-        terminal="complete" if state=="complete" else "unknown" if state in {"killed_unknown", "connectivity_failed"} else "failed"
+        terminal="complete" if state=="complete" else "unknown" if state in {"killed_unknown", "connectivity_failed", "unknown"} else "failed"
         con=db._connect(self.root / "session.sqlite3")
         try:
             with db._transaction(con):
-                con.execute("UPDATE requests SET state=?,status=?,input_tokens=?,output_tokens=?,elapsed_seconds=?,error_code=?,finish_reason=?,finished_at_utc=? WHERE request_id=?",
-                    (terminal,event.get("status"),event.get("input_tokens"),event.get("output_tokens"),event.get("elapsed_seconds"),event.get("error_code"),event.get("finish_reason"),db._utc_now(),slot.request_id))
+                con.execute("UPDATE requests SET state=?,status=?,input_tokens=?,output_tokens=?,elapsed_seconds=?,error_code=?,finish_reason=?,response_sha256=?,finished_at_utc=? WHERE request_id=?",
+                    (terminal,event.get("status"),event.get("input_tokens"),event.get("output_tokens"),event.get("elapsed_seconds"),event.get("error_code"),event.get("finish_reason"),event.get("response_sha256"),db._utc_now(),slot.request_id))
         finally: con.close()
         return event
 
     def mark_sent(self, slot):
+        now = db._utc_now()
         con=db._connect(self.root/"session.sqlite3")
         try:
-            con.execute("UPDATE requests SET state='sent' WHERE request_id=? AND state='reserved'",(slot.request_id,))
+            with db._transaction(con):
+                con.execute("UPDATE requests SET state='sent',sent_at_utc=? WHERE request_id=? AND state='reserved'",(now,slot.request_id))
         finally: con.close()
+        slot.state = "sent"
+        slot.sent_at_utc = now
+        return self.add_event(slot, "sent")
 
 
 def solver_event(session, payload):

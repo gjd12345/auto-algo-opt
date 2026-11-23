@@ -579,6 +579,10 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     for name, definition in {"metric_spec_hash": "TEXT", "origin": "TEXT", "budget_phase": "TEXT"}.items():
         if name not in table_columns["solver_calls"]:
             connection.execute(f"ALTER TABLE solver_calls ADD COLUMN {name} {definition}")
+    request_columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
+    for name, definition in {"attempt": "INTEGER", "response_sha256": "TEXT", "sent_at_utc": "TEXT"}.items():
+        if name not in request_columns:
+            connection.execute(f"ALTER TABLE requests ADD COLUMN {name} {definition}")
     for name, definition in {
         "search_policy_defaults_json": "TEXT",
         "search_policy_limits_json": "TEXT",
