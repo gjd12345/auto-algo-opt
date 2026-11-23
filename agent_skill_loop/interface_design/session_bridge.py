@@ -301,6 +301,8 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         suite_hash: str,
         evaluator_hash: str,
         metric_spec_hash: str | None = None,
+        problem_spec_hash: str | None = None,
+        data_manifest_hash: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(suite_hash=suite_hash, **kwargs)
@@ -308,6 +310,8 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         self.session_problem_id = problem_id
         self.session_evaluator_hash = evaluator_hash
         self.session_metric_spec_hash = metric_spec_hash
+        self.session_problem_spec_hash = problem_spec_hash
+        self.session_data_manifest_hash = data_manifest_hash
         self.seed_origins: dict[str, str] = {}
         self._seq = 0
 
@@ -332,6 +336,8 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
             "suite_hash": self.suite_hash,
             "evaluation_id": eval_id,
             "metric_spec_hash": self.session_metric_spec_hash,
+            "problem_spec_hash": self.session_problem_spec_hash,
+            "data_manifest_hash": self.session_data_manifest_hash,
             "evaluation": None,
         }
         solver_event(self.session, start_payload)
@@ -409,6 +415,8 @@ def execute_m2_session_task(
     suite_hash = str(row["suite_hash"])
     eval_hash = str(row["evaluator_hash"])
     metric_hash = row["metric_spec_hash"] if "metric_spec_hash" in row.keys() else None
+    problem_spec_hash = row["problem_spec_hash"] if "problem_spec_hash" in row.keys() else None
+    data_manifest_hash = row["data_manifest_hash"] if "data_manifest_hash" in row.keys() else None
     session_ref = {"root": str(root), "task_id": task_id}
 
     round_context_text = (root / rd["round_context_ref"]).read_text(encoding="utf-8") if rd["round_context_ref"] else ""
@@ -430,6 +438,8 @@ def execute_m2_session_task(
         suite_hash=suite_hash,
         evaluator_hash=eval_hash,
         metric_spec_hash=metric_hash,
+        problem_spec_hash=problem_spec_hash,
+        data_manifest_hash=data_manifest_hash,
         design=design,
         instances=instances,
         suite_id=f"session_{row['problem']}",
