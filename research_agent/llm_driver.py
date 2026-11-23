@@ -156,7 +156,8 @@ class OpenAIAgentDriver:
             headers["x-opencode-session"] = self._opencode_session_id
 
         last_exc: Exception | None = None
-        for retry in range(3):
+        backoff_schedule = (3.0, 8.0, 15.0)
+        for retry in range(len(backoff_schedule) + 1):
             self._attempt += 1
             slot = self.budget.reserve(
                 purpose=purpose,
@@ -263,8 +264,8 @@ class OpenAIAgentDriver:
                     or exc.status == 429
                     or (isinstance(exc.status, int) and 500 <= exc.status < 600)
                 )
-                if transient and retry < 2:
-                    time.sleep(2.0 * (retry + 1))
+                if transient and retry < len(backoff_schedule):
+                    time.sleep(backoff_schedule[retry])
                     continue
                 raise
             except Exception as exc:

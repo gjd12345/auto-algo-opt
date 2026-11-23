@@ -515,7 +515,8 @@ def execute_m2_session_task(
 
             def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
                 last_exc: Exception | None = None
-                for attempt in range(3):
+                backoff_schedule = (3.0, 8.0, 15.0)
+                for attempt in range(len(backoff_schedule) + 1):
                     try:
                         return super()._forward_serial(prompt, purpose=purpose)
                     except ProviderFailure as exc:
@@ -525,10 +526,10 @@ def execute_m2_session_task(
                             or exc.status == 429
                             or (isinstance(exc.status, int) and 500 <= exc.status < 600)
                         )
-                        if transient and attempt < 2:
+                        if transient and attempt < len(backoff_schedule):
                             self.terminal = False
                             self.last_error = None
-                            time.sleep(2.0 * (attempt + 1))
+                            time.sleep(backoff_schedule[attempt])
                             continue
                         raise
                 assert last_exc is not None

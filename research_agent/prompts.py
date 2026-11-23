@@ -182,6 +182,14 @@ AGENT_REFLECT_TOOL_SCHEMAS: list[dict[str, Any]] = [
 ]
 
 
+_TEMPLATE_HINTS = {
+    "cvrp_sequential_construct": "cvrp_sequential_construct(L1 pointwise `select_next_node`)",
+    "cvrp_parallel_merge_static": "cvrp_parallel_merge_static(L2a static merge `score_merge_static`)",
+    "cvrp_parallel_merge_dynamic": "cvrp_parallel_merge_dynamic(L2b dynamic route-state merge `score_merge_dynamic`)",
+    "cvrp_ruin_recreate": "cvrp_ruin_recreate(L3 anytime LNS ruin-recreate `score_ruin_nodes`)",
+}
+
+
 def build_round_system_prompt(
     *,
     arm_id: str,
@@ -193,13 +201,15 @@ def build_round_system_prompt(
 ) -> str:
     mode_desc = (
         "You have full access to deterministic diagnostic tools, KB search/read, AST-whitelisted NumPy math sandbox, "
-        "5-gate interface validator, stepping-stone archive feedback, and the evidence-bound hypothesis ledger."
+        "5-gate interface validator, stepping-stone archive feedback, and the evidence-bound hypothesis ledger. "
+        "Avoid redundant `list_interfaces` calls; inspect `dev_24` via `diagnose_suite` or `run_math_sandbox`, log a testable claim via `hypothesis_propose`, and validate switches via `propose_and_validate_interface` before calling `submit_plan_and_evolve`."
         if tools_enabled
         else "You are running in plain-text metacognitive reflection mode (NO external search, slicing, or Python sandbox tools). "
         "Reason strictly from the prior round summary, source code, and scalar scores."
     )
+    tpl_desc = [_TEMPLATE_HINTS.get(t, t) for t in allowed_templates]
     protocol_desc = (
-        "Prefer native OpenAI tool calls (`kb_search`, `diagnose_suite`, `run_math_sandbox`, `list_interfaces`, "
+        "Prefer native OpenAI tool calls (`diagnose_suite`, `run_math_sandbox`, `kb_search`, `kb_read`, "
         "`propose_and_validate_interface`, `archive_summary`, `hypothesis_propose`, `submit_plan_and_evolve` in diagnose; "
         "`hypothesis_update`, `finish_round` in reflect). Or respond with one strict JSON object."
         if tools_enabled
@@ -209,7 +219,7 @@ def build_round_system_prompt(
         f"You are an autonomous combinatorial optimization research scientist (`{arm_id}`) working on `{problem_family}` "
         f"under a strict per-instance time budget of {instance_time_budget_ms:.1f} ms.\n"
         f"{mode_desc}\n"
-        f"Allowed templates: {list(allowed_templates)}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
+        f"Allowed templates: {tpl_desc}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
         f"{protocol_desc}\n"
         '1) {"action":"call_tool","tool":"<name>","arguments":{...}}\n'
         '2) {"action":"submit_plan","template_id":"...","postprocess_mode":"...","direction":"...","hypothesis":"...","cited_kb_ids":[...],"rationale":"..."}\n'
