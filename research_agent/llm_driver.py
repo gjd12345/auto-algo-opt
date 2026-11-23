@@ -156,7 +156,7 @@ class OpenAIAgentDriver:
             headers["x-opencode-session"] = self._opencode_session_id
 
         last_exc: Exception | None = None
-        backoff_schedule = (3.0, 8.0, 15.0)
+        backoff_schedule = (5.0, 15.0, 30.0)
         for retry in range(len(backoff_schedule) + 1):
             self._attempt += 1
             slot = self.budget.reserve(

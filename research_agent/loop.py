@@ -205,6 +205,8 @@ def run_research_agent(
             ckpt.round_step_index = 0
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
+            ckpt.round_inner_requests = 0
+            ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
             _save_ckpt()
             continue
@@ -374,6 +376,10 @@ def run_research_agent(
                 eval_dev_suite=bool(config.eval_dev_suite),
             )
             ckpt.session_initialized = True
+            ckpt.round_prev_best_dev = prev_best_dev
+            ckpt.round_inner_requests = int(
+                (session_out.get("requests_after") or budget.used) - (session_out.get("requests_before") or budget.used)
+            )
 
             # Record best dev frozen solver + archive stepping stones (enforce completion rate & penalized score)
             frozen = session_out.get("frozen_solver")
@@ -549,14 +555,19 @@ def run_research_agent(
             dev_obj = (session_out.get("dev_eval") or {}).get("mean_tour_length") if session_out else (
                 (reflect_payload_now or {}).get("mean_tour_length")
             )
+            prev_cmp = prev_best_dev if session_out else ckpt.round_prev_best_dev
             delta_str = ""
-            if dev_obj is not None and prev_best_dev is not None:
-                delta_str = f"{float(dev_obj) - float(prev_best_dev):+.4f}"
+            if dev_obj is not None and prev_cmp is not None:
+                delta_str = f"{float(dev_obj) - float(prev_cmp):+.4f}"
             if dev_obj is not None and (prev_best_dev is None or float(dev_obj) < float(prev_best_dev)):
                 prev_best_dev = float(dev_obj)
 
             h_counts = ledger_tool.counts()
-            inner_used = int((session_out.get("requests_after") or budget.used) - (session_out.get("requests_before") or budget.used)) if session_out else 0
+            inner_used = (
+                int((session_out.get("requests_after") or budget.used) - (session_out.get("requests_before") or budget.used))
+                if session_out
+                else int(ckpt.round_inner_requests or 0)
+            )
             r_summary = {
                 "round_id": r_id,
                 "arm_id": config.arm_id,
@@ -582,6 +593,8 @@ def run_research_agent(
             ckpt.round_step_index = 0
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
+            ckpt.round_inner_requests = 0
+            ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None

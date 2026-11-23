@@ -515,7 +515,7 @@ def execute_m2_session_task(
 
             def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
                 last_exc: Exception | None = None
-                backoff_schedule = (3.0, 8.0, 15.0)
+                backoff_schedule = (5.0, 15.0, 30.0)
                 for attempt in range(len(backoff_schedule) + 1):
                     try:
                         return super()._forward_serial(prompt, purpose=purpose)

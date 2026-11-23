@@ -173,6 +173,8 @@ class AgentCheckpoint:
     round_step_index: int = 0
     round_outer_requests: int = 0
     round_reflect_requests: int = 0
+    round_inner_requests: int = 0
+    round_prev_best_dev: float | None = None
     round_plan_args: dict[str, Any] | None = None
     last_diag_ref: dict[str, Any] | None = None
     session_initialized: bool = False
