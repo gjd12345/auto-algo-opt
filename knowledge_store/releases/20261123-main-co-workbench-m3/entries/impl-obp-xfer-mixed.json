@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Cross-problem mixed_abstract OBP elite: 1/residual^1.5 minus leftover-from-half-max",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "scores = residual**(-1.5) - |residual-bins.max()/2|/(bins.max()/2).",
+  "attributes": {
+    "interface": "score(item, bins)",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_mixed_abstract_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_mixed_abstract_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_mixed_abstract_best.py",
+      "sha256": "e6c9a6f5d86be228cdac812ef15d23f1c0a0f05d0e8e3cf1ebf54e36eab5276b"
+    }
+  ],
+  "id": "impl-obp-xfer-mixed",
+  "content_sha256": "f7dcdb0137440a016a2691ff7f4caa71e5e11bf3bd5241d0db29352418cb0a33"
+}

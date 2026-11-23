@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0003_cvrp_parallel_merge_static_fdf33aac",
+  "display_name": "Session R3 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    eps = 1e-12\n\n    # Global geometric scale for scale-invariant normalization\n    n = distance_matrix.shape[0] - 1\n    if n > 0:\n        k = min(n, 96)\n        idx = np.arange(1, k + 1)\n        scale = float(np.mean(distance_matrix[0, idx]))\n        if not np.isfinite(scale) or scale <= 0.0:\n            scale = float(np.max(distance_matrix[0, idx]))\n    else:\n        scale = 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Clarke-Wright saving, normalized by global scale\n    saving = d0i + d0j - dij\n    saving_term = saving / scale\n\n    # Endpoint proximity: shorter connecting edge preferred\n    denom_r = d0i + d0j + eps\n    prox = dij / denom_r\n    prox_term = 1.0 - np.clip(prox, 0.0, 1.0)\n\n    # Radial balance (mild preference for similar depot radii)\n    radial = np.abs(d0i - d0j) / denom_r\n    balance_term = 1.0 - np.clip(radial, 0.0, 1.0)\n\n    # Concave load-fill reward, peaked near capacity\n    q = demands[i_idx] + demands[j_idx]\n    fill = q / capacity\n    fill_clip = np.clip(fill, 0.0, 2.0)\n    load_term = np.sqrt(fill_clip * (2.0 - fill_clip))\n    # Overload penalty (soft), steeper than incumbent\n    overload = np.clip(fill - 1.0, 0.0, 1.0)\n    load_term = load_term * (1.0 - 0.75 * overload)\n\n    # Weighted combination: emphasize saving and load, deemphasize symmetry\n    score = (\n        1.6 * saving_term\n        + 0.25 * balance_term\n        + 0.40 * prox_term\n        + 0.85 * load_term\n    )\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "fdf33aac951a64eb64c411673327d9d4c45c2a6374cbfb2e842620750da359ec",
+  "design_sha256": "dad25372f0dd7b1972926f6e2136f7c44b4f044a13e64f223043548c96f26749",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261126\\arm_m3_0_pure_eoh\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

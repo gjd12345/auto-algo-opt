@@ -1,0 +1,33 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_43b86af7",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "intra_2opt",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    lam = 0.95\n    mu = 0.12\n    w_fill = 0.28\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    n = distance_matrix.shape[0] - 1\n    s = np.mean(distance_matrix[0, 1:n + 1])\n    if not np.isfinite(s) or s <= 0.0:\n        s = 1.0\n\n    savings = (d0i + d0j - lam * dij) / s\n    asym = mu * np.abs(d0i - d0j) / s\n\n    load_sum = demands[i_idx] + demands[j_idx]\n    residual = np.abs(capacity - load_sum) / capacity\n    fill = 1.0 - residual\n\n    score = savings + asym + w_fill * fill\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "43b86af7327e358be1f755073b607bee083bc57960d700de80becf51e4f51ea1",
+  "design_sha256": "13b3355021ad145360e4bd3ec40f5963781eac90b97835c0b29c23cea038db39",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261126\\arm_m3_2_fixed_l2a\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+  "cited_kb_ids": [
+    "method-cvrp-m2-l2a-generalized-savings",
+    "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+    "method-lit-cvrp-construct-clarke-wright-savings-merge",
+    "method-cvrp-intra-2opt",
+    "method-cvrp-m2-l2b-dynamic-state-merge"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

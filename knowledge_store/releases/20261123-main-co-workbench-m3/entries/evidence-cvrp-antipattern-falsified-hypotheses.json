@@ -1,0 +1,148 @@
+{
+  "type": "evidence",
+  "title": "CVRP falsified hypotheses & engineering antipatterns (H-004a, H-008a, dev4 overfitting R3, AST traps)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "antipattern",
+    "falsified",
+    "h-004a",
+    "h-008a",
+    "overfitting",
+    "ast-whitelist",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Documents four verified failure/falsification cases in CVRP heuristic search: terminal-stop +d_dep anti-heavy bias (H-004a), discrete exact-fit bin-packing detours (H-008a), dev4 single-scale selection overfitting (auto_dev1_r3), and hidden AST whitelist rejections (fill_diagonal/ix_/count_nonzero).",
+  "attributes": {
+    "knowledge_tier": "failure_antipattern",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "empirical",
+    "interface": "select_next_node",
+    "applicable_regimes": {
+      "strong_on": [
+        "guarding_autonomous_search_against_known_dead_ends"
+      ],
+      "weak_on": [],
+      "scale_notes": "挂接在关联构造规则与实验工况下，防止未来 Research Agent 重复踩入已证伪方向。"
+    },
+    "math_formulation": [
+      {
+        "expr": "H-004a antipattern: +w_ret * d(0,j) when (rest_cap - q_j < min_other_q)  => selectively penalizes heavy q_j",
+        "variables": {
+          "w_ret": "尾站回程惩罚权重",
+          "min_other_q": "其余未访问客户最小需求"
+        },
+        "preconditions": "在 dev4 (-0.038 -> +0.023) 与 ana72 (18.67 -> 19.52) 均单调恶化，已证伪放弃"
+      },
+      {
+        "expr": "H-008a antipattern: -w_bp * 1[rest_cap == q_j] + w_bp * 1[0 < rest_cap - q_j < min_q] => spatial detour > packing savings",
+        "variables": {
+          "w_bp": "离散满载/残容惩罚权重"
+        },
+        "preconditions": "在 ana72 上随 w_bp in {0.05, 0.12, 0.25} 单调恶化（17.877 -> 18.102），已证伪放弃"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/selection_s2/rules_s2/s2_r3_rho.py",
+        "sha256": "ee1d756a0326d4f3ca1a3eed2efabd7f177f8d222462293849171e853bbb51be"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/ledger/hypotheses.jsonl",
+        "sha256": "a32592fc40379d01b21cb8a944e2702905f9520b1164ba69354e3f8989ff314d"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_rel_gap",
+        "value": -0.149135,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.3051, solve_ms P50=2.3067 / P95=2.6277 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_tour_length",
+        "value": 10.3051,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=6, mean_tour_length=10.3051, solve_ms P50=2.3067 / P95=2.6277 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_rel_gap",
+        "value": -0.089187,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=21.1411, solve_ms P50=4.3773 / P95=12.6865 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_tour_length",
+        "value": 21.1411,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, mean_tour_length=21.1411, solve_ms P50=4.3773 / P95=12.6865 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_rel_gap",
+        "value": -0.048309,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=26.6431, solve_ms P50=3.4565 / P95=12.4863 ms",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "s2_r3_rho",
+        "metric": "mean_tour_length",
+        "value": 26.6431,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=288, mean_tour_length=26.6431, solve_ms P50=3.4565 / P95=12.4863 ms",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral",
+      "method-cvrp-s2-r7-iso"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-antipattern-falsified-hypotheses",
+  "content_sha256": "795e502c49fba88f3f5883fe9d5c343da1322fad32996654c8675446b2c64a66"
+}

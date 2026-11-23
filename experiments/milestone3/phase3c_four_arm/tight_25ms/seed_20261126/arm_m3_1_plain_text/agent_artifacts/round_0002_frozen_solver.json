@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0002_cvrp_parallel_merge_static_ba45fd2a",
+  "display_name": "Session R2 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    eps = 1e-12\n    ri = np.maximum(d0i, eps)\n    rj = np.maximum(d0j, eps)\n\n    # Normalized Clarke-Wright savings in [0, 1].\n    savings = d0i + d0j - dij\n    norm_savings = savings / np.maximum(ri + rj, eps)\n    norm_savings = np.clip(norm_savings, 0.0, 1.0)\n\n    # Two-sided relative detour: low when the inter-customer link is small\n    # compared to at least one depot radius, favoring short links.\n    ratio_i = dij / ri\n    ratio_j = dij / rj\n    detour = np.minimum(ratio_i, ratio_j)\n    detour_factor = 1.0 / (1.0 + detour)\n\n    # Capacity utilization using a square-root concave transform.\n    combined = demands[i_idx] + demands[j_idx]\n    fill = np.clip(combined / capacity, 0.0, 1.0)\n    fill_factor = np.sqrt(fill)\n\n    # Symmetric product blend: savings * detour * (1 + fill).\n    score = norm_savings * detour_factor * (0.5 + 0.5 * fill_factor)\n\n    feasible = combined <= capacity + eps\n    score = np.where(feasible, score, -1.0 + 0.5 * norm_savings)\n\n    score = np.where(np.isfinite(score), score, -1.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "ba45fd2a5619e3982e41744090b7f157013b3491d8b30383395448206985acc9",
+  "design_sha256": "30519f41ee28aa6ba930fcec90b0098e313a77678bf44b4255bc2dc516c0b26c",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261126\\arm_m3_1_plain_text\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

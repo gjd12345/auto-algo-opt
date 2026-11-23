@@ -1,0 +1,99 @@
+{
+  "type": "evidence",
+  "title": "里程碑三四臂 × 三独立随机种子同总预算 (B_total=36) 归因实验证据 (500ms & 25ms)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3",
+    "four-arm",
+    "multi-seed",
+    "b-total-36",
+    "pyvrp-plus-baseline",
+    "variance-reduction"
+  ],
+  "status": "reviewed",
+  "summary": "在 B_total=36、deepseek-v4.1-flash（无静态线索注入）及三种子 (20261124/20261125/20261126) 下完成 24 场公平归因：500 ms 下 select_64 三种子均值：M3-0 纯 EoH=21.9022、M3-1 纯文本反思=22.0327、M3-2 固定 L2a 完整代理=20.7348、M3-3 全动态完整代理=20.7551（最优单粒 20.7170）；25 ms 下 M3-2=20.7517（最优 20.6733）、M3-3=20.8741（零超时保守滞留静态 L2a）vs M3-0=22.4032 / M3-1=23.0255。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "interface": "score_merge_static",
+    "applicable_regimes": {
+      "strong_on": [
+        "fair_shared_budget_attribution",
+        "multi_seed_variance_elimination"
+      ],
+      "weak_on": [
+        "single_seed_lucky_draw_claims"
+      ],
+      "scale_notes": "同时严格披露每组 attempted_requests 与 completed_requests；研究代理工具链将 3 粒种子离散度压缩超过 20 倍。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "tools/run_phase3c_four_arm.py",
+        "sha256": "dc850fc10f8ce204b41c4c7d582d336907a7e4fc18f00df490ef48b967980223"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/loop.py",
+        "sha256": "3950f7bd832758db1e4f232aa98224dabf6a21748c1e52d214e14a65a43a370c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/prompts.py",
+        "sha256": "a5e683e91f39b9772a920e9f04ea7f9b7f97c6e6045bfc510114a84d14970d6f"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+        "metric": "mean_tour_length",
+        "value": 20.717,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "500ms 全动态代理最优种子 select_64 均长",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_tour_length",
+        "value": 20.6733,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "25ms 下 M3-2 最优种子 select_64 超越 CW+Relocate+2opt",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-research-agent-m3-autonomous-loop",
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone3-research-agent-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone3-research-agent-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3/phase3c_four_arm/phase3c_report_standard_500ms.json",
+    "report:experiments/milestone3/phase3c_four_arm/phase3c_report_tight_25ms.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-m3-four-arm-multiseed-500ms-25ms",
+  "content_sha256": "3ce8738ec3f40344e9328c785e4b7d4db52e89f04fa4515db14c2d89d909a4ec"
+}

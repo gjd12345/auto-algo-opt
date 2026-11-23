@@ -1,0 +1,37 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the L2a static merge hook towards (a) stronger tight-capacity awareness — raise the dimensionless capacity-fill bonus weight and give the depot-distance-difference term mu a larger share when residual capacity is near one maximum demand — and (b) reclaim the timing headroom (median ≈2.4 ms vs the 25 ms budget) with a deterministic intra-route 2-opt postprocess, leaving relocate_2opt unused so the budget envelope stays safe.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB method-cvrp-m2-l2a-generalized-savings is the direct ancestor of this template+postprocess=none solver (dev_24 16.1595) and shows the normalized generalized savings form scaled by mean(d(0,1..n)) plus a capacity-fill bonus is both the best-scoring and the cheapest (≈2.4 ms median) L2a rule; the round-1 result (16.1721 at 1.84 ms) sits on the same frontier, so the exploitable slack is time, not score shape alone. KB method-cvrp-m2-l2b-dynamic-state-merge gives the quantitative boundary: dynamic candidate refresh cost 3.7x p95 and caused 40/120 budget-exhaustion collapses at 25 ms, which is why this plan keeps the static hook (no per-merge refresh) and spends the remaining budget only on an O(1)-delta intra-route move. KB method-cvrp-intra-2opt documents intra-route 2-opt as a deterministic, already validated low-risk improvement on top of parallel Clarke-Wright, and the archive weakest regimes (capacity tight −21.5%, size 100, uniform demand) are exactly where leftover edge crossings inside long routes concentrate, since tight capacity forces more-merged routes on 100-node instances. Combining a capacity-fill-weighted static score with intra 2-opt therefore targets the two failure modes that the single-solver portfolio (gap_over_sbs 0.0%, VBS==SBS) cannot cover by itself."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Round-1 L2a reached dev_24 mean 16.1721 at 1.84 ms/instance, i.e. only ~7% of the 25 ms budget is consumed. Therefore (H1) appending deterministic intra-route 2-opt cannot trigger budget-exhaustion degradation (observed only for dynamic-refresh L2b-ctrl at 40/120 in the 25 ms regime) and should lower mean objective by at least ~1.5% versus postprocess=none; and (H2) since the weakest regime is capacity_level=tight (vbs_rel_gap −21.5%) plus size=100/uniform demand, re-weighting the generalized-savings score toward the dimensionless capacity-fill bonus and mu*|d(0,i)-d(0,j)| will improve the tight-capacity subset specifically without regressing clustered instances, because both terms remain scale-normalized by mean(d(0,1..n)) and thus stay coordinate-scaling invariant (0.00% drift).",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "intra_2opt",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-cvrp-intra-2opt",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m2-l2a-generalized-savings is the direct ancestor of this template+postprocess=none solver (dev_24 16.1595) and shows the normalized generalized savings form scaled by mean(d(0,1..n)) plus a capacity-fill bonus is both the best-scoring and the cheapest (≈2.4 ms median) L2a rule; the round-1 result (16.1721 at 1.84 ms) sits on the same frontier, so the exploitable slack is time, not score shape alone. KB method-cvrp-m2-l2b-dynamic-state-merge gives the quantitative boundary: dynamic candidate refresh cost 3.7x p95 and caused 40/120 budget-exhaustion collapses at 25 ms, which is why this plan keeps the static hook (no per-merge refresh) and spends the remaining budget only on an O(1)-delta intra-route move. KB method-cvrp-intra-2opt documents intra-route 2-opt as a deterministic, already validated low-risk improvement on top of parallel Clarke-Wright, and the archive weakest regimes (capacity tight −21.5%, size 100, uniform demand) are exactly where leftover edge crossings inside long routes concentrate, since tight capacity forces more-merged routes on 100-node instances. Combining a capacity-fill-weighted static score with intra 2-opt therefore targets the two failure modes that the single-solver portfolio (gap_over_sbs 0.0%, VBS==SBS) cannot cover by itself."
+  }
+}

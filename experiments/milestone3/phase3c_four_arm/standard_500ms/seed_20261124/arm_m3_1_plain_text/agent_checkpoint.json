@@ -1,0 +1,82 @@
+{
+  "schema_version": "m3-research-agent-checkpoint/v1",
+  "run_id": "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261124",
+  "current_round": 4,
+  "phase": "completed",
+  "round_step_index": 0,
+  "round_outer_requests": 0,
+  "round_reflect_requests": 0,
+  "round_inner_requests": 0,
+  "round_prev_best_dev": null,
+  "round_plan_args": null,
+  "last_diag_ref": null,
+  "session_initialized": true,
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "active_template_id": "cvrp_parallel_merge_static",
+  "active_postprocess_mode": "none",
+  "best_solver_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json",
+  "best_dev_objective": 17.693031,
+  "best_all_feasible": true,
+  "best_completion_rate": 1.0,
+  "frozen_checkpoints": {
+    "18": "checkpoints/frozen_checkpoint_18.json",
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "arm_m3_1_plain_text",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "17.7963",
+      "delta_vs_prev": "",
+      "requests_used_total": 12,
+      "outer_requests_round": 2,
+      "inner_requests_round": 10,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "arm_m3_1_plain_text",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "17.6930",
+      "delta_vs_prev": "-0.1033",
+      "requests_used_total": 24,
+      "outer_requests_round": 2,
+      "inner_requests_round": 10,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "arm_m3_1_plain_text",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "17.7921",
+      "delta_vs_prev": "+0.0991",
+      "requests_used_total": 36,
+      "outer_requests_round": 2,
+      "inner_requests_round": 10,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    }
+  ],
+  "pending_reflect_payload": null,
+  "pending_submit_tool_call": null,
+  "updated_at_utc": "2026-11-23T08:54:58Z"
+}

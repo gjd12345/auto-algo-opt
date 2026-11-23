@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:cbc1ee10a4f440f290d4d21054a15e75"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Replacing the static parallel-merge construction with an anytime Shaw-relatedness ruin-and-recreate loop (Regret-2 repair + relocate_2opt polish of touched routes) reduces mean objective on cvrp_dev_hetero_24 below the current 16.004 frontier, with the largest gains in the weakest regimes (tight capacity, n=100, uniform demand, eccentric depot, clustered spatial) because whole-route restructuring escapes the local optima that pairwise savings merges cannot.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:cbc1ee10a4f440f290d4d21054a15e75"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Switch from the static parallel-merge (L2a) frontier solver to the anytime LNS ruin-recreate template (L3), evolving a Shaw-relatedness destroy hook with a demand/spatial-normalized relatedness R(i,j)=phi_d*(d(i,j)/d_max)+phi_q*(|q_i-q_j|/q_max)+phi_r*1[route(i)!=route(j)] plus a power-law (u^p) randomization exponent, combined with a Regret-2/cheapest re-insertion priority that prefers low-detour, capacity-filling repairs; keep destroy scale q adaptive in [max(4,0.08n), min(40,0.25n)] scaled inversely with remaining time so the loop always returns the incumbent best before the 500 ms cutoff, and apply relocate+2-opt polishing only to changed routes."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

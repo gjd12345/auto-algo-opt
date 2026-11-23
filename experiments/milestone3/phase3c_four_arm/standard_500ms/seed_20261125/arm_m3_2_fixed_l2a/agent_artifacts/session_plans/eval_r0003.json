@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:86fade2702c744f9892a04038d3dec7c"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Normalizing the pairwise merge score by the global mean depot distance scale = mean(d(0,1..n)) — score = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/scale + nu*((load_i+load_j)/capacity)^2 — keeps the rule dimensionless and coordinate-scale invariant (0% scaling drift), while the capacity-fill reward (nu>0) and the asymmetry term mu>0 let the static merge prefer near-full routes and balanced depot legs. This should specifically reduce the relative gap in the weakest regimes (capacity_level=tight, spatial=clustered, depot_style=eccentric) that dominate the current VBS-vs-SBS gap, and preserve the ~2-4 ms median runtime so that relocate_2opt postprocess stays well inside the 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:86fade2702c744f9892a04038d3dec7c"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Scale-normalized generalized savings with capacity-fill reward and asymmetric depot-distance penalty (tight-capacity / clustered focus)"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

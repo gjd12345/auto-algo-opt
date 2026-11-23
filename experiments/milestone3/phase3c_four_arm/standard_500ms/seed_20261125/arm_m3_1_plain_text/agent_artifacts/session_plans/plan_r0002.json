@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Refine the static merge scoring to favor distance-savings-positive route pairs with balanced load, and increase candidate merge diversity while keeping the same parallel static merge structure.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 used 13 total requests without any supported or refuted hypotheses, so the next round should make a targeted, low-risk parameterization change within the only allowed template. Since postprocess is fixed to none, improving the static merge scoring is the most direct way to affect solution quality under the 500 ms budget."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "The current best objective (16.2225) can be improved by biasing static parallel merges toward pairs with higher distance savings and moderate load imbalance, avoiding premature merges that reduce route feasibility or require costly later repair.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 used 13 total requests without any supported or refuted hypotheses, so the next round should make a targeted, low-risk parameterization change within the only allowed template. Since postprocess is fixed to none, improving the static merge scoring is the most direct way to affect solution quality under the 500 ms budget."
+  }
+}

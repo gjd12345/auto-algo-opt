@@ -1,0 +1,47 @@
+{
+  "run_id": "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261126",
+  "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261126\\arm_m3_1_plain_text",
+  "problem_family": "cvrp",
+  "arm_id": "arm_m3_1_plain_text",
+  "max_rounds": 3,
+  "total_request_cap": 36,
+  "outer_requests_per_round_cap": 1,
+  "outer_reflect_cap": 1,
+  "eoh_pop_size": 3,
+  "eoh_n_pop": 2,
+  "eoh_max_sample_nums": 9,
+  "instance_time_budget_ms": 25.0,
+  "allowed_templates": [
+    "cvrp_parallel_merge_static"
+  ],
+  "allowed_postprocess_modes": [
+    "none"
+  ],
+  "initial_template_id": "cvrp_parallel_merge_static",
+  "initial_postprocess_mode": "none",
+  "planner_model": "deepseek-v4.1-flash",
+  "eoh_model": "deepseek-v4.1-flash",
+  "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+  "api_key_env": "OPENCODE_GO_API_KEY",
+  "search_seed": 20261126,
+  "dev_suite_id": "cvrp_dev_hetero_24",
+  "dev_split": "dev_train",
+  "use_benchmark_dev_suite": true,
+  "eval_dev_suite": true,
+  "dev_instance_count": 12,
+  "dev_instance_size": 50,
+  "agent_guidance": true,
+  "inject_static_kb_clues": false,
+  "tools_enabled": false,
+  "archive_feedback_enabled": false,
+  "kb_store_path": null,
+  "checkpoint_budgets": [
+    18,
+    36
+  ],
+  "mode": "live",
+  "request_timeout_s": 90.0,
+  "wall_seconds": 900.0,
+  "candidate_timeout_s": 20.0,
+  "sandbox_timeout_s": 15.0
+}

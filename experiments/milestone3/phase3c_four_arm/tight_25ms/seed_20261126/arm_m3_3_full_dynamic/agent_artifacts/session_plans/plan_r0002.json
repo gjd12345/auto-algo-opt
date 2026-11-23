@@ -1,0 +1,39 @@
+{
+  "round_id": 2,
+  "direction": "Refine the scale-normalized generalized savings merge score with the balanced-fill variant (lam≈1.08, mu≈0.12, beta_fill≈0.10, beta_balance≈0.05) and let EoH co-evolve the four dimensionless coefficients (lam, mu, beta_fill, beta_balance, plus scale divisor choice) rather than hard-coding, keeping the one-shot vectorized evaluation to preserve the sub-4ms p95 at the 25ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Diagnostic on dev_24 at 25ms with the generalization of the KB L2a rule (global depot-distance normalization, lam=1.08, mu=0.12) plus a dimensionless capacity-fill reward (0.10) and a new endpoint demand-balance reward (0.05) gives mean 16.1205 vs the round-1 archive SBS 16.1921 (-0.44%), with 24/24 completed, 0 exhausted, p50 2.19ms / p95 3.34ms — i.e. ~13% of the 25ms budget, leaving large headroom. Weak regimes remain size=100 (20.84), eccentric depot (19.32), tight capacity (18.56), so more merge-order fidelity (edge-weight lam, radial asymmetry mu) is still worth harvesting. Since the hook is a one-shot vectorized scoring pass, extra coefficient degrees of freedom cost no runtime, so submitting the balanced-fill family for inner EoH evolution is a risk-free improvement direction."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Adding a dimensionless endpoint demand-balance term (1 - |q_i-q_j|/(q_i+q_j)) on top of the scale-normalized generalized savings + capacity-fill score strictly improves dev_24 mean tour length relative to pure fill-weighted savings (16.1921), because it reduces tail-fragment routes by pairing comparable-demand endpoints; and EoH perturbing lam in [1.00,1.20], mu in [0.05,0.20], beta_fill in [0.0,0.20], beta_balance in [0.0,0.12] will find a strictly better static merge rule without any budget-exhaustion risk (p95 stays <5ms of 25ms).",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "06cb4ba64b77035b8ac0d0b730c7decaddc52aaa61f03639112039e6a162ebe0",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Diagnostic on dev_24 at 25ms with the generalization of the KB L2a rule (global depot-distance normalization, lam=1.08, mu=0.12) plus a dimensionless capacity-fill reward (0.10) and a new endpoint demand-balance reward (0.05) gives mean 16.1205 vs the round-1 archive SBS 16.1921 (-0.44%), with 24/24 completed, 0 exhausted, p50 2.19ms / p95 3.34ms — i.e. ~13% of the 25ms budget, leaving large headroom. Weak regimes remain size=100 (20.84), eccentric depot (19.32), tight capacity (18.56), so more merge-order fidelity (edge-weight lam, radial asymmetry mu) is still worth harvesting. Since the hook is a one-shot vectorized scoring pass, extra coefficient degrees of freedom cost no runtime, so submitting the balanced-fill family for inner EoH evolution is a risk-free improvement direction."
+  }
+}

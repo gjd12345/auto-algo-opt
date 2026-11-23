@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Continue the static parallel-merge CVRP template, focusing this round on improving the merge-selection/scoring behavior rather than changing postprocessing. Prioritize deterministic, low-overhead merge decisions that preserve diversity among partial routes and avoid premature consolidation.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The active template and postprocess mode are fixed by the allowed set. With no archive feedback or open hypotheses, the safest productive step is to exploit the current static parallel-merge approach and test a focused variation in merge prioritization/scoring. This keeps runtime overhead low and directly targets the mechanism most likely to affect CVRP objective quality under the strict budget."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Because round 1 achieved best objective 17.9649 with no refuted hypotheses and the only available template is static parallel merge, refinements to the static merge scoring/selection logic should improve solution quality within the 500 ms per-instance budget without needing postprocessing.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "The active template and postprocess mode are fixed by the allowed set. With no archive feedback or open hypotheses, the safest productive step is to exploit the current static parallel-merge approach and test a focused variation in merge prioritization/scoring. This keeps runtime overhead low and directly targets the mechanism most likely to affect CVRP objective quality under the strict budget."
+  }
+}

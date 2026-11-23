@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Adopt the KB-verified generalized Clarke-Wright scoring family: score(i,j) = (d0i + d0j - lam*d(i,j) + mu*|d0i - d0j|) / mean(d[0,1:]) + beta*clip((q_i+q_j)/Q,0,1) with lam~1.00-1.15, mu~0.08-0.15, beta~0.05-0.15, keeping relocate_2opt postprocess; search for a capacity-fill-aware radial correction that improves the tight-capacity clustered regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 delivered 16.0861 mean objective at ~4.1 ms (huge margin under the 500 ms budget), so compute is free and the binding factor is merge-order quality. The KB-verified L2a rule (dev_24 16.1398 with postprocess=none, beating bare CW 16.2225 and CW+relocate+2opt 16.1549) provides a deterministic, scale-invariant starting point whose three coefficients (lam, mu, beta) are exactly the evolvable hook parameters; the same entry's documented anti-pattern (per-pair (d0i+d0j) normalization) is explicitly excluded by the hypothesis so EoH cannot drift into the ~18.0 degradation basin. The unconfirmed item in that entry — whether the evolved merge start retains residual gain after relocate_2opt — is precisely what this arm's fixed relocate_2opt interface tests, and the KB's capacity-fill term targets the reported weakest regimes (capacity_level=tight, spatial=clustered, size=100), giving a concrete, falsifiable route past the current Pareto point."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Normalizing the generalized savings by the single global depot-distance scale (never per-pair d0i+d0j) while adding a mild radial-asymmetry term mu*|d0i-d0j| and a dimensionless capacity-fill reward beta*(q_i+q_j)/Q will lower mean tour length on cvrp_dev_hetero_24 below the current 16.0861 (relocate_2opt), with the largest relative gains on tight-capacity and clustered instances where fragmented last-routes arise; per-pair local normalization would instead destroy the radial priority order and must be avoided.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 delivered 16.0861 mean objective at ~4.1 ms (huge margin under the 500 ms budget), so compute is free and the binding factor is merge-order quality. The KB-verified L2a rule (dev_24 16.1398 with postprocess=none, beating bare CW 16.2225 and CW+relocate+2opt 16.1549) provides a deterministic, scale-invariant starting point whose three coefficients (lam, mu, beta) are exactly the evolvable hook parameters; the same entry's documented anti-pattern (per-pair (d0i+d0j) normalization) is explicitly excluded by the hypothesis so EoH cannot drift into the ~18.0 degradation basin. The unconfirmed item in that entry — whether the evolved merge start retains residual gain after relocate_2opt — is precisely what this arm's fixed relocate_2opt interface tests, and the KB's capacity-fill term targets the reported weakest regimes (capacity_level=tight, spatial=clustered, size=100), giving a concrete, falsifiable route past the current Pareto point."
+  }
+}

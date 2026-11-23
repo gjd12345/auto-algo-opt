@@ -1,0 +1,41 @@
+{
+  "schema_version": "m3-backbone-attribution/v1",
+  "suite_id": "cvrp_select_multiscale_64",
+  "comparisons": {
+    "best_l2a": {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "relocate_2opt",
+      "mean_tour_length": 20.717,
+      "valid_count": 64,
+      "first_feasible_ms_mean": null,
+      "anytime_curve_means": {
+        "10": null,
+        "25": null,
+        "100": null,
+        "250": null,
+        "500": null
+      }
+    },
+    "l3_ctrl": {
+      "solver_id": "m3_l3_ctrl_500ms",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "mean_tour_length": 20.7206,
+      "valid_count": 64,
+      "first_feasible_ms_mean": 2.5527,
+      "anytime_curve_means": {
+        "10": null,
+        "25": 20.7206,
+        "100": 20.7206,
+        "250": 20.7206,
+        "500": 20.7206
+      }
+    },
+    "cw_relocate_2opt": {
+      "solver_id": "cw_relocate_2opt",
+      "mean_tour_length": 20.6978,
+      "valid_count": 64
+    }
+  }
+}

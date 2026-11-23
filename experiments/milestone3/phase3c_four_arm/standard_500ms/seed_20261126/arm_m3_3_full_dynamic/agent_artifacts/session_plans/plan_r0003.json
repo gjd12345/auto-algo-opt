@@ -1,0 +1,41 @@
+{
+  "round_id": 3,
+  "direction": "Refine the globally-normalized generalized-savings static merge hook, adding a capacity-saturation-aware term aimed at the observed weak regimes (capacity_level=tight, size=100, spatial=clustered, depot_style=eccentric). Evolve jointly over: edge penalty lambda in [1.00,1.30], radial asymmetry mu in [0.05,0.25] scaled by |d(0,i)-d(0,j)|, and a capacity-fill reward that switches from a linear clip((q_i+q_j)/Q,0,1) term (beta in [0.0,0.20]) to a concavity/steepness-controlled variant such as fill**gamma with gamma in [1.0,3.0], plus an optional endpoint-demand-balance term 1-|q_i-q_j|/(q_i+q_j+eps). Keep the single global depot-distance scale mean(d(0,1..n)) as the only denominator (never per-pair (d0i+d0j)), keep scoring fully vectorized/one-shot before the merge loop so p95 stays well under the 500 ms budget, and require a positive classical-savings precondition filter. The goal is to lower the number of fragmented tail-end routes on tight-capacity instances and to preserve far-radial merge priority for eccentric depots, while remaining complementary to the incumbent relocate_2opt postprocess.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Incumbent arm_m3_3 solver (L2a generalized savings + relocate_2opt) sits at mean 15.987976 with 2.94 ms mean solve time, i.e. we have >150x headroom in the 500 ms budget, so additional hook-side intelligence is essentially free. Archive weak regimes are exactly tight capacity (12 instances), size=100, clustered spatial and eccentric depots, which are the regimes where Clarke-Wright-style merges leave fragmented tail routes (capacity-fill matters) and where far-radial ordering matters (eccentric depot). KB method-cvrp-m2-l2a-generalized-savings documents the verified formula family score=(d0i+d0j-lam*dij+mu*|d0i-d0j|)/mean(d0,1..n)+beta*clip(fill) with lam 1.00-1.15, mu 0.08-0.15, beta 0.05-0.15, and it explicitly leaves the relocate_2opt composition unverified, which is exactly what this round can settle. evidence-cvrp-m2-perpair-scale-normalization-antipattern warns that any per-pair denominator destroys radial priority (16.22 -> ~18.0), so the search space is constrained to a single global depot scale. L2b evidence shows dynamic candidate refresh costs ~3.7x time for zero accuracy gain at 500 ms, so we keep the static one-shot scoring skeleton and spend the budget on the postprocess plus a richer static scoring term instead."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 with postprocess_mode=relocate_2opt, replacing the linear capacity-fill reward beta*clip((q_i+q_j)/Q,0,1) by a steepened (gamma>1) fill reward and widening the radial asymmetry coefficient mu reduces fragmented tail routes on capacity_level=tight instances and preserves far-radial merge priority on depot_style=eccentric instances, yielding a mean objective below the current 15.987976 without increasing p95 solve time materially; the per-pair normalization (d0i+d0j-dij)/(d0i+d0j) variant is predicted to degrade, confirming that only global depot-distance scaling is beneficial.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "dc577e5b18aa0f78adaa022f0cea00b92488dd1c31421fe007debb1badf6ed34",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Incumbent arm_m3_3 solver (L2a generalized savings + relocate_2opt) sits at mean 15.987976 with 2.94 ms mean solve time, i.e. we have >150x headroom in the 500 ms budget, so additional hook-side intelligence is essentially free. Archive weak regimes are exactly tight capacity (12 instances), size=100, clustered spatial and eccentric depots, which are the regimes where Clarke-Wright-style merges leave fragmented tail routes (capacity-fill matters) and where far-radial ordering matters (eccentric depot). KB method-cvrp-m2-l2a-generalized-savings documents the verified formula family score=(d0i+d0j-lam*dij+mu*|d0i-d0j|)/mean(d0,1..n)+beta*clip(fill) with lam 1.00-1.15, mu 0.08-0.15, beta 0.05-0.15, and it explicitly leaves the relocate_2opt composition unverified, which is exactly what this round can settle. evidence-cvrp-m2-perpair-scale-normalization-antipattern warns that any per-pair denominator destroys radial priority (16.22 -> ~18.0), so the search space is constrained to a single global depot scale. L2b evidence shows dynamic candidate refresh costs ~3.7x time for zero accuracy gain at 500 ms, so we keep the static one-shot scoring skeleton and spend the budget on the postprocess plus a richer static scoring term instead."
+  }
+}

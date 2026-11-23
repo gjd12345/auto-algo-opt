@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:b0a01f9fcaee4274bd7804ca0bab4fff"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at a 25 ms budget, the L2a generalized savings hook normalized by the GLOBAL depot-distance scale mean(d[0,1:]) (with lam*dij edge penalty, mu radial-asymmetry term, and dimensionless capacity-fill reward) combined with postprocess_mode='none' beats the round-1 configuration (same template + intra_2opt, mean objective 16.1441) and reaches <= 16.14 mean objective while staying far under the time budget (expect p95 well below 10 ms), because (a) global-scale normalization preserves far-from-depot merge priority whereas per-pair (d0i+d0j) normalization would degrade to ~18.0, and (b) intra-route 2-opt only rearranges already-merged routes without changing the merge sequence, so it cannot recover merge-level gaps and slightly perturbs canonical route ordering.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b0a01f9fcaee4274bd7804ca0bab4fff"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the vectorized score_merge_static hook toward a globally depot-distance-normalized generalized savings rule: score = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d[0,1:]) + beta*clip((qi+qj)/Q,0,1) [+ optional endpoint-demand-balance term gamma*(1 - |qi-qj|/(qi+qj))], with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; simultaneously DROP the intra_2opt postprocess (postprocess_mode='none') because the dev_24 evidence pair (none=16.1398 vs postprocessed=16.1549/16.1441) shows local intra-route 2-opt reorder is neutral-to-harmful at this construct stage and it consumes budget that is better spent on a richer static score."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

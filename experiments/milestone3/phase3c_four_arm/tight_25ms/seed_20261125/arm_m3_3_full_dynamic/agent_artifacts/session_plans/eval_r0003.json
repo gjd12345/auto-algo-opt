@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:4913a0c8167c4b798299f4a8c75c63f4"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "L2a solve time is only ~1.7 ms mean at dev_24 (≈7% of the 25 ms budget), and round-2 evidence showed that adding more capacity-approximation terms (fill^2, endpoint balance) into the static score degrades the merge sequence (16.1978 vs 16.1013). Therefore the remaining headroom lies outside the scoring function: enabling bounded inter-route 1-0 relocate alternated with intra-route 2-opt on top of the generalized savings partition should reach mean objective <= 16.05 (beating the r1 SBS 16.1013) with p95 wall time < 12 ms and zero exhausted instances, because relocate repairs the tight-capacity (vbs_rel_gap -22.05%) and eccentric-depot (19.2451) regimes where pure savings leaves residual fragmentation.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:4913a0c8167c4b798299f4a8c75c63f4"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Switch the zero-postprocess L2a pipeline to a budgeted `relocate_2opt` post-merge phase, and re-evolve the static hook toward smaller `lam`/`mu` (geometry-trusting) with a tightness-adaptive capacity term, so the merge layer supplies a diverse-but-competent starting partition that inter-route 1-0 relocate + intra-route 2-opt can polish within the 25 ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

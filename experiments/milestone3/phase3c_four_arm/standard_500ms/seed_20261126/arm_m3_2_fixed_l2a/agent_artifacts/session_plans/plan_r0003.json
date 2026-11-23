@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Refine the L2a static merge scoring hook under strict global-scale normalization: (1) keep denominator scale = mean(d[0,1:]) (never per-pair d0i+d0j, which KB shows degrades dev_24 from ~16.2 to ~18.0); (2) add a capacity-fill reward beta*clip((q_i+q_j)/Q,0,1) plus a dimensionless endpoint-demand balance term gamma*(1-|q_i-q_j|/(q_i+q_j)) to cut tail-route fragmentation — targeting the 'tight' capacity regime (12/24 instances, worst vbs_rel_gap -22.0%); (3) modulate lambda in [1.00,1.15] by demand tightness so tight-capacity instances favor bigger edge penalties; (4) since the current postprocess is relocate_2opt (active, mean 16.0617), the merge ordering only needs to be a good LS seed — bias scoring slightly toward spatially coherent endpoint merges rather than exhaustive savings magnitude, and verify relocate_2opt still gains residual benefit over the evolved start.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB entry method-cvrp-m2-l2a-generalized-savings defines the exact evolvable hook score_merge_static and its invariants: mandatory global scale mean(d[0,1:]) normalization (per-pair normalization is a documented pitfall causing ~1.8 tour-length degradation), lambda in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], one-shot fully vectorized scoring with hook_ms<0.4 so the 500 ms budget is far from binding (no timeout risk, 0 budget-exhausted instances in archive). Archive feedback shows the current solver (relocate_2opt) at 16.0617 with VBS gap only 0.0696%, so remaining headroom is small and must come from regime-specific ordering: weakest regimes are capacity_level=tight (-22.03%), size=100 (-20.50%), demand_dist=uniform (-20.88%), depot_style=eccentric (-19.83%). Adding a tight-capacity term (fill reward + endpoint balance) directly targets fragmentation in tight-capacity instances, and because relocate_2opt is enabled, a merge ordering with better spatial coherence should still leave residual LS improvement. Round-2 delta was -0.0243, so expected gain is modest but directionally evidenced; both round-1 and round-2 solvers already pass the 5-gate validator for this (template, postprocess) pair, so no interface switch is introduced."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Keeping the global depot-distance scale normalization and adding a dimensionless capacity-fill reward with endpoint-demand balance (score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + gamma*(1-|qi-qj|/(qi+qj))) yields a merge sequence that, followed by relocate_2opt, reduces dev_24 mean tour length below the round-2 baseline 16.0617, with the largest gains concentrated on tight-capacity and 100-node instances (the weakest regimes, vbs_rel_gap ~ -22.0%).",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-intra-2opt"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m2-l2a-generalized-savings defines the exact evolvable hook score_merge_static and its invariants: mandatory global scale mean(d[0,1:]) normalization (per-pair normalization is a documented pitfall causing ~1.8 tour-length degradation), lambda in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], one-shot fully vectorized scoring with hook_ms<0.4 so the 500 ms budget is far from binding (no timeout risk, 0 budget-exhausted instances in archive). Archive feedback shows the current solver (relocate_2opt) at 16.0617 with VBS gap only 0.0696%, so remaining headroom is small and must come from regime-specific ordering: weakest regimes are capacity_level=tight (-22.03%), size=100 (-20.50%), demand_dist=uniform (-20.88%), depot_style=eccentric (-19.83%). Adding a tight-capacity term (fill reward + endpoint balance) directly targets fragmentation in tight-capacity instances, and because relocate_2opt is enabled, a merge ordering with better spatial coherence should still leave residual LS improvement. Round-2 delta was -0.0243, so expected gain is modest but directionally evidenced; both round-1 and round-2 solvers already pass the 5-gate validator for this (template, postprocess) pair, so no interface switch is introduced."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_8bd8ca0f",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Clarke-Wright saving\n    saving = d0i + d0j - dij\n\n    # Normalize by the local geometric scale of the triangle\n    scale = d0i + d0j + dij\n    scale = np.where(scale > 0.0, scale, 1.0)\n    ratio = saving / scale  # in (-1, 1], dimensionless\n\n    # Load-fill: how much of capacity the merged endpoints consume\n    q = demands[i_idx] + demands[j_idx]\n    fill = q / capacity  # dimensionless, typically in (0, 2]\n\n    # Penalize overloads softly while rewarding fuller routes\n    load_term = fill * (2.0 - np.clip(fill, 0.0, 2.0))\n\n    # Radial balance: prefer merging endpoints at similar depot distance\n    radial = np.abs(d0i - d0j) / (d0i + d0j + 1e-12)\n    balance_term = 1.0 - radial\n\n    # Endpoint distance proximity (short edges merge well)\n    prox = dij / (d0i + d0j + 1e-12)\n    prox_term = 1.0 - np.clip(prox, 0.0, 1.0)\n\n    score = ratio * (0.5 + 0.5 * load_term) * balance_term * prox_term\n    return score.astype(np.float64)",
+  "hook_code_sha256": "8bd8ca0f40f6c4ccd55b7595ff7e670f82f99d38861d5d44af0c5ff022f81d15",
+  "design_sha256": "88f80658257d7b6ae8093e4ffb6c398635085e4480dd6dba0dd1e51bc735b3cc",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261126\\arm_m3_0_pure_eoh\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

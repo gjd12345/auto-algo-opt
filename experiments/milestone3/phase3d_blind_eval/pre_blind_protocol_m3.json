@@ -1,0 +1,655 @@
+{
+  "schema_version": "m3-phase3d-pre-blind-protocol/v1",
+  "frozen_at": "2026-11-23T09:48:42Z",
+  "blind_commitment": {
+    "suite_id": "cvrp_m3_blind_120",
+    "instance_count": 120,
+    "commitment_file_sha256": "dfbb58fc0b3516888ec64ade4265f4f58601eb6ceadab505cfc99408da433d8c",
+    "suite_content_sha256": "2d55ea7592ad55a67f7ffa0f98b88b20dbfe66000261819e9b401907cf2c2fd0",
+    "generator_version": "cvrp_m3_blind_generator/v1",
+    "generator_source_sha256": "11c0f9ca086eb6c0217858d5aa80da570c4ba7502d6b56a898969511875bb334"
+  },
+  "seeds": [
+    20261124,
+    20261125,
+    20261126
+  ],
+  "arms": [
+    "arm_m3_0_pure_eoh",
+    "arm_m3_1_plain_text",
+    "arm_m3_2_fixed_l2a",
+    "arm_m3_3_full_dynamic"
+  ],
+  "evaluation_budgets": [
+    {
+      "budget_id": "standard_500ms",
+      "time_budget_ms": 500.0,
+      "role": "Primary multi-seed blind evaluation, Section 5.3 backbone/anytime comparison, external benchmarks & Direction-2."
+    },
+    {
+      "budget_id": "tight_25ms",
+      "time_budget_ms": 25.0,
+      "role": "Budget-aware adaptation vs direct transfer and L3 timeout-avoidance test on cvrp_m3_blind_120."
+    }
+  ],
+  "reference_baselines": [
+    {
+      "algorithm_id": "nn",
+      "display_name": "Nearest Neighbor (NN)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "5ed7fc27a9fdbc5ff922b5c81be7734513855573ee6cccccc105655a0ad67252",
+      "kb_entry_id": "method-cvrp-nearest-feasible-construct"
+    },
+    {
+      "algorithm_id": "s2_r5_spiral",
+      "display_name": "R5 (s2_r5_spiral)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "e5e5dcf83797fc6ba67026eb08cb6504a7bcd10e3c3dbecbee948634dfc50587",
+      "kb_entry_id": "method-cvrp-s2-r5-spiral"
+    },
+    {
+      "algorithm_id": "s2_r4_cos",
+      "display_name": "R4 (s2_r4_cos)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "e9a5a162145525c3ec4a3f43162b2e8aaa5ced09db84e60640563a55bb83a8eb",
+      "kb_entry_id": "method-cvrp-s2-r4-cos"
+    },
+    {
+      "algorithm_id": "i605_cvrp_c1_tworegime",
+      "display_name": "Island605 C1 (Two-Regime Savings + 0.7 Early Return)",
+      "paradigm": "sequential_construct",
+      "interface": "select_next_node",
+      "code_sha256": "0028e6788b34e66ab2c10dda39c24550cae64c4e52138783ed19ab7558872355",
+      "kb_entry_id": "method-cvrp-i605-tworegime-savings"
+    },
+    {
+      "algorithm_id": "cw_parallel_merge",
+      "display_name": "Clarke-Wright Parallel Merge",
+      "paradigm": "parallel_merge",
+      "interface": "solve_cvrp",
+      "code_sha256": "ece836675fd61138fdd1224025c1ff0ea72be8ccfc41632c1c7b03b43c02d417",
+      "kb_entry_id": "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    },
+    {
+      "algorithm_id": "cw_relocate_2opt",
+      "display_name": "CW + Relocate + 2-opt",
+      "paradigm": "local_search",
+      "interface": "solve_cvrp",
+      "code_sha256": "3d165df70ff282f1e7867e016a3629a54888688614bb27cd35321105b4a11326",
+      "kb_entry_id": "method-cvrp-inter-relocate"
+    }
+  ],
+  "frozen_solvers": [
+    {
+      "solver_id": "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+      "display_name": "Arm2 DevFixed (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "d6bac15dee08a02ae196fbd7ef3e428dc40ccec3ff21e4e3f4940090a62e67bd",
+      "frozen_solver_sha256": "7f5808c31409ebed2adf2dd594ae731ebfba5f310ed53b723eaed351f24df618",
+      "postprocess_mode": "none",
+      "design_sha256": "7500a218d6251719336fd3c945c27e71d520b54a5b674809f9ced66d584cc63b",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+      "display_name": "Arm4a DiagRule (cvrp_parallel_merge_dynamic, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_dynamic",
+      "template_version": "v1",
+      "template_source_sha256": "8aaa530513762011dad69eb798e4ec01e5b4c206b26a3bb974ce9a0febeb9af5",
+      "hook_name": "score_merge_dynamic",
+      "hook_code_sha256": "40d9d011702a3db236f83bf1c3c99dbe5866655b611ef322a12a08ebd8f0e70b",
+      "frozen_solver_sha256": "9a4e80fd5eec139ae5757265e25d0b9b80b2bc3cc248154bb719d0edb5fc0789",
+      "postprocess_mode": "none",
+      "design_sha256": "06c8414dd995b85db6c708965620adb05c790781b0d43f8393f411ead6d347b4",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+      "display_name": "Arm4b LLMPlan (cvrp_parallel_merge_static, s20261123)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "4fcfd2a34b0094d2d08fec924dacd383c043ca8f959707011e03fd455bcf66ce",
+      "frozen_solver_sha256": "a0e3a2938c15903872b4a401d563093d8f8e535a0a60ab03f80246864e2c5a81",
+      "postprocess_mode": "none",
+      "design_sha256": "97ccef589242266a6f81452a29d8597a25aab6dd02ea25dad88e076d466f673c",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
+      "display_name": "Arm4a DiagRule (cvrp_parallel_merge_static, s20261122)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "6f8f5ee0a344094e9b6b5400ebedd8c07bc33f289e7a4497f68ba33a2d3215b9",
+      "frozen_solver_sha256": "69d6393a54a3b96188a8a4fbf86665372bea346a321b26cd16c520185c4b5634",
+      "postprocess_mode": "none",
+      "design_sha256": "e14f1da6cb2f9ffc20178ea095dcdb5f3227aac77c981d43eb7e6801b32eb5dc",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261124",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261124, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "416dfa388e087b05bf459629c0bc157e70fbb299ba92d568cca89e27fe17b4bd",
+      "frozen_solver_sha256": "df77d641b74839274e917c2b808482751f50c7e0cc91c7b1b1a420c32dddeaca",
+      "postprocess_mode": "none",
+      "design_sha256": "30519f41ee28aa6ba930fcec90b0098e313a77678bf44b4255bc2dc516c0b26c",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261125",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261125, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "685b42e880df6369e3831b100dae5bb25dd1476d17caca1e5ca244450c7f0e6b",
+      "frozen_solver_sha256": "7bbc98ca29b6592d0872fb4efc59a523a18ca2cba42eb72aea57ab9cd4fd8cd8",
+      "postprocess_mode": "none",
+      "design_sha256": "dad25372f0dd7b1972926f6e2136f7c44b4f044a13e64f223043548c96f26749",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261126",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261126, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "fdf33aac951a64eb64c411673327d9d4c45c2a6374cbfb2e842620750da359ec",
+      "frozen_solver_sha256": "33bf0ef4297f1a9dd1cecac94efbcbc3f46a0b704386d60f7d24f84c1416f70b",
+      "postprocess_mode": "none",
+      "design_sha256": "dad25372f0dd7b1972926f6e2136f7c44b4f044a13e64f223043548c96f26749",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261124",
+      "display_name": "M3 arm_m3_1_plain_text (s20261124, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "4754dd65763929ef120378bbafa7efd0204f4506cbb9379712cd8153d0628fe9",
+      "frozen_solver_sha256": "b6401da8913cf4947ca3908698e061b77e90e9923ae6b3cab99c55a1664bca11",
+      "postprocess_mode": "none",
+      "design_sha256": "9662b95570a9a372b2926c23e35063219063e2bc0e782fd16a98b3a62c6b604a",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261125",
+      "display_name": "M3 arm_m3_1_plain_text (s20261125, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "1ffd848d9e63361e68ac72cba3e33ac91c0b4d357b4b61622f8b841567984b62",
+      "frozen_solver_sha256": "11fe50d438401517f619e8ba102eef1ff9bc9a704cd59c0c60057ae61c6e2152",
+      "postprocess_mode": "none",
+      "design_sha256": "aa94f3a917d63dad61b20fe8a6c7dbe3723897bf77b675e1abbf9633037a0972",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261126",
+      "display_name": "M3 arm_m3_1_plain_text (s20261126, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "bb93edaf7d7fce6af64414ca1da79a0620bf0a120b5c14241c51e6c05c8ad695",
+      "frozen_solver_sha256": "e28250dc3e63a8bc872dcebc0f30bb065e81bffcdcd80468f05367755b97c3b0",
+      "postprocess_mode": "none",
+      "design_sha256": "d50902bcb39da754f8cdfa35597159b552e556f01ed409056bc1819257b4763a",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261124",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261124, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "488a9859f76c954ce43f119f5a30d2cbc39bec6b2ab0586cb7d56291f5e51a7e",
+      "frozen_solver_sha256": "c620fb4198b6b45e1d374d6ff2b7125a04bc26c379fd23d45a0dac3f83e082d5",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "4eed751c38d355f6d39e0dc3ed229b41f877ba113993391cd51459ccbd3b813a",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261125",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261125, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "a6a44abafa7e92fe8de99d5f2f7fb49b7c2ee60c32cf72f0898405b25d83e79d",
+      "frozen_solver_sha256": "45641e70a41c0da12b60b19e0cbcee3da8bf6d270ffd1f21627f6ef83fbbdf35",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "1486b00b12c3e9c7d21cf21ced56dd81530901765c5b7f654f5fbcd3d08052f5",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261126, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "ccc54605c35349883b921ca88a101335e42de2898766960d419b6913dd5c1381",
+      "frozen_solver_sha256": "bf2da1127ca7a783e506ee67da35fec3c7999c5f7f927b1a7fd7d72b652aeba4",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "b538879448f2663a4afd5bd834a6156c8ba37bba1d54e51e0040e738223e802b",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261124",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261124, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "e621c51550a66a7d441f3cb764896dc68b21d8ae3f31283a6d9ce0490400191f",
+      "frozen_solver_sha256": "54f8dbb27169a7f9f9dc7ab43107a4584357e8561ee3f53a9284a0097e47ab4f",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "a1ae43ec6b49099221520ef9af63dffad32d606f4e3d395b20995efd69403261",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261125, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "24a40f3b83e8fb9d8919719c1b5eaa44c8b94aab8c88fb3749e16e79561ff4df",
+      "frozen_solver_sha256": "7355723473681ea95c501414ae05619e0c322cac6308c22ad7c31d0668d54e1e",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "dabe4fcfe9fd817f41496c5f113f6fd3809cc654c4f78b241fd28c9f8866a1af",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261126",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261126, 500ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "04280d4406b07a7be018b00d746d25fbd224a75849c78b8e43768311c809bfae",
+      "frozen_solver_sha256": "7e47d8a0992ecfe24d8eb6e1299d43bc8bb519092a33c0ae9195121f564801c0",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "a014aec642e3a5b882543b5e59a4204aabdd1eea3886012f6a2d79f83534a426",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+      "display_name": "M3 arm_m3_3 R2 Evolved L3 (s20261124, 500ms)",
+      "paradigm": "ruin_recreate",
+      "template_id": "cvrp_ruin_recreate",
+      "template_version": "v1",
+      "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+      "hook_name": "score_ruin_nodes",
+      "hook_code_sha256": "17f17831a8c66b409e06019c04c7320fb947177639fb73497a5f37012fc4c612",
+      "frozen_solver_sha256": "c51d0eba9fbb3cb597c46fb2aa3e46d7270af8bbdcb2ba2bfad18a072ae18016",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "2e50332823286b10fce96bae2c0a6c09f6b3e31f3da818c45053a2bd292754ae",
+      "default_budget_ms": 500.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261124",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261124, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "b0b6a1bda4b1b7e7500ade2d712fcd4b3eb4fd7648bcd103ec94347648f14afd",
+      "frozen_solver_sha256": "167463d6a587cd47bc18431b8157d38527b0803597bee5116bc244292e4ac9e4",
+      "postprocess_mode": "none",
+      "design_sha256": "30519f41ee28aa6ba930fcec90b0098e313a77678bf44b4255bc2dc516c0b26c",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261125",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261125, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "f1dfb5fb5f4cd89363d1800a64337840ece6bd79bd3afe5ef51a2b11931312f0",
+      "frozen_solver_sha256": "a2dfc58d4509916980f86151c5ef747437c6f7e97bfe20bc3a98d2aa15fb690e",
+      "postprocess_mode": "none",
+      "design_sha256": "dad25372f0dd7b1972926f6e2136f7c44b4f044a13e64f223043548c96f26749",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261126",
+      "display_name": "M3 arm_m3_0_pure_eoh (s20261126, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "71f4ceed1d43b68cf5b34b7238833540f3c049bfdf41c197b80ad150d861a221",
+      "frozen_solver_sha256": "183bebb2320a29ce6057d60fb1e08a53a5c4c4c1d8f0d4330f3ab5d8d5868352",
+      "postprocess_mode": "none",
+      "design_sha256": "dad25372f0dd7b1972926f6e2136f7c44b4f044a13e64f223043548c96f26749",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261124",
+      "display_name": "M3 arm_m3_1_plain_text (s20261124, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "27407824710ca51c14fe466871d921c97765b3c75585288b080af62c071c08d8",
+      "frozen_solver_sha256": "1e5be3a86adc0a0fc6bac7904ed824ec787454e627cc2ed983f0ec58cfd3fa7e",
+      "postprocess_mode": "none",
+      "design_sha256": "2875331cd83f826ef31791c53467bb928cebd5e73a6206b4db5ba4cad4404bc6",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261125",
+      "display_name": "M3 arm_m3_1_plain_text (s20261125, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "d43a29bbe2b224598f7f2c1386bf06edba4674943b0457ded4f668088185aea1",
+      "frozen_solver_sha256": "2152fc938e95150424b618f1fa243d715250bb292b4600520ba854032676e1b3",
+      "postprocess_mode": "none",
+      "design_sha256": "7dfa305c6cf9d2d9373265b09cc24db7c09516ab05613354395d29af5123a4e8",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261126",
+      "display_name": "M3 arm_m3_1_plain_text (s20261126, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "ba45fd2a5619e3982e41744090b7f157013b3491d8b30383395448206985acc9",
+      "frozen_solver_sha256": "114e0f2d7ac7155a68ab80fa7bc3cbe16661202e0bc45a3db94799923ce720ce",
+      "postprocess_mode": "none",
+      "design_sha256": "30519f41ee28aa6ba930fcec90b0098e313a77678bf44b4255bc2dc516c0b26c",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261124",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261124, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "31e86da8b545ca5b3f05a455f0ce5c4907769341d203accd9cf1a47be7e2dadf",
+      "frozen_solver_sha256": "00fb16edbe7c9507782cb05fb924be9c9866fa0c4e58af191fcd297842b9ce83",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "aa43cff79048c5378a9704675bc4cf99ad2752827a05d480341c0b9b62c0d95f",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261125",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261125, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "52191ddd1be6026a2b3f789e49d99ac433f736d1d7d38b12fed71b3d32b9f0c7",
+      "frozen_solver_sha256": "cc27947938e4c3a156afc631c13b98875da802ca8122a2affab1ce8d3f415798",
+      "postprocess_mode": "intra_2opt",
+      "design_sha256": "73c6ab0ace07f36a012a80be368e0d9b5253c96151d652e6bdda0f90ee308a1d",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126",
+      "display_name": "M3 arm_m3_2_fixed_l2a (s20261126, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "7c209c102b351fd7d9e386863ede496d3d5e4463db9e517607cce32f26e1cef6",
+      "frozen_solver_sha256": "31c0a40412db1ecb518e2061ec23a886a1f8d8c5a8f8ee665bc342611044b436",
+      "postprocess_mode": "relocate_2opt",
+      "design_sha256": "319c8ca39430fa6abc49f4d60d40449edab71c0c3ccd6f0597064c64c6b0ff23",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261124",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261124, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "c97328327a61223712a40b98ac1b8f7b75e7209a9b31a2ddab6e4c5e682c86e0",
+      "frozen_solver_sha256": "2894c3bd696feb5172eef203c502881cf0f14d917a23d7114fd354fb7218c3d7",
+      "postprocess_mode": "none",
+      "design_sha256": "357a07e49c26eeda027859d4f5c4990ab10d7fa3583e89fe6a205bb4a7ffc236",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261125",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261125, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "05f65c4d4052a0fdc5554f819cefad0668045bf93ed15a6c46cad6b6bb6c8f59",
+      "frozen_solver_sha256": "dbc66e0b2600c7cd70cbc73e347948a33936f754571a6acb728af61c4cf3511c",
+      "postprocess_mode": "none",
+      "design_sha256": "de9deda71adcd4c104c16091707f9fcbff19284f0fc47f1037540a910ba7e2f0",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261126",
+      "display_name": "M3 arm_m3_3_full_dynamic (s20261126, 25ms)",
+      "paradigm": "parallel_merge",
+      "template_id": "cvrp_parallel_merge_static",
+      "template_version": "v1",
+      "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+      "hook_name": "score_merge_static",
+      "hook_code_sha256": "6b4dd35c6e9afadd9dbc794791253fe1a61300dc0ce3ae1e2be97264fe5c8b73",
+      "frozen_solver_sha256": "6c9379512c1ba36afb8816b9ed684f3f687db19f5d2c4284ccc20f425f8d0715",
+      "postprocess_mode": "none",
+      "design_sha256": "d200def5fa5b681dedfbf34b09d739837791276f31934c73cdc6abc258bb9d7c",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_l3_ctrl_25ms",
+      "display_name": "M3 L3-ctrl Worst Removal (25ms)",
+      "paradigm": "ruin_recreate",
+      "template_id": "cvrp_ruin_recreate",
+      "template_version": "v1",
+      "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+      "hook_name": "score_ruin_nodes",
+      "hook_code_sha256": "fadc010c7e3fd0446ececb0d3043382d88b4333079e3e01fd14f37f6c6e7fa5b",
+      "frozen_solver_sha256": "0b2b90a42836f586a07af4a5d70bf9ca65fa4469e56465a36299dd8366d33f03",
+      "postprocess_mode": "none",
+      "design_sha256": "880b792767694b51363e0b1ed556886cfc3498edd2868c126edcee07aff08c2b",
+      "default_budget_ms": 25.0
+    },
+    {
+      "solver_id": "m3_l3_ctrl_500ms",
+      "display_name": "M3 L3-ctrl Worst Removal (500ms)",
+      "paradigm": "ruin_recreate",
+      "template_id": "cvrp_ruin_recreate",
+      "template_version": "v1",
+      "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+      "hook_name": "score_ruin_nodes",
+      "hook_code_sha256": "fadc010c7e3fd0446ececb0d3043382d88b4333079e3e01fd14f37f6c6e7fa5b",
+      "frozen_solver_sha256": "f1d4e1fcfb2cd255139f713934a9fbfd402e5fea25bebd944d18191c845d411f",
+      "postprocess_mode": "none",
+      "design_sha256": "880b792767694b51363e0b1ed556886cfc3498edd2868c126edcee07aff08c2b",
+      "default_budget_ms": 500.0
+    }
+  ],
+  "external_benchmark_suites_500ms": [
+    "cvrp_ext_eohs_256",
+    "cvrp_ext_cvrplib_abp_74",
+    "cvrp_ext_cvrplib_x_100"
+  ],
+  "external_benchmark_roster_ids": [
+    "nn",
+    "s2_r5_spiral",
+    "i605_cvrp_c1_tworegime",
+    "cw_parallel_merge",
+    "cw_relocate_2opt",
+    "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+    "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+    "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261124",
+    "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261124",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261124",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261124",
+    "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261125",
+    "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261125",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261125",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+    "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261126",
+    "m3_3c_standard_500ms_arm_m3_1_plain_text_s20261126",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261126",
+    "m3_l3_ctrl_500ms",
+    "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+    "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126"
+  ],
+  "tight_25ms_blind_roster_ids": [
+    "nn",
+    "s2_r5_spiral",
+    "i605_cvrp_c1_tworegime",
+    "cw_parallel_merge",
+    "cw_relocate_2opt",
+    "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
+    "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+    "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261124",
+    "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261124",
+    "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261124",
+    "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261124",
+    "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261125",
+    "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261125",
+    "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261125",
+    "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261125",
+    "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261126",
+    "m3_3c_tight_25ms_arm_m3_1_plain_text_s20261126",
+    "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126",
+    "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261126",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261124",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+    "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261126",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261124",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261125",
+    "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+    "m3_l3_ctrl_25ms",
+    "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124"
+  ],
+  "failure_scoring_rule": {
+    "penalized_cost_if_invalid_or_none": "2.0 * reference_objective (consistent with M3 dev penalized scoring)",
+    "reporting_requirement": "Always report raw completion_rate, ok_budget_exhausted_count, and timeout_count alongside penalized cost."
+  },
+  "statistical_protocol": {
+    "unit_of_replication": "Per-seed paired over the exact 120 blind instances; NEVER pool 3x120 as 360 independent trials.",
+    "per_instance_tests": [
+      "Two-sided Wilcoxon signed-rank test with tie & continuity correction",
+      "10,000-draw paired Bootstrap 95% CI on relative percentage gain (cand vs base)"
+    ],
+    "multiple_testing_correction": "Holm-Bonferroni step-down adjusted p-values (p_holm_wilcoxon) per pre-registered hypothesis family."
+  },
+  "direction2_selection_protocol": {
+    "train_suite_id": "cvrp_select_multiscale_64",
+    "test_suite_ids": [
+      "cvrp_m3_blind_120",
+      "cvrp_final_accept_120"
+    ],
+    "oof_protocols_on_select_64": [
+      "cv12",
+      "loro48",
+      "loso3"
+    ],
+    "reported_denominators": [
+      "gap_over_sbs_pct = (SBS - VBS) / SBS * 100",
+      "gap_over_vbs_pct = (SBS - VBS) / VBS * 100"
+    ],
+    "portfolios": {
+      "m15_pointwise_pool": {
+        "description": "Milestone 1/1.5 single-paradigm pointwise constructive pool (R5, R4, Island605 C1).",
+        "members": [
+          "s2_r5_spiral",
+          "s2_r4_cos",
+          "i605_cvrp_c1_tworegime"
+        ]
+      },
+      "m2_full_hybrid_pool": {
+        "description": "Milestone 2 full cross-paradigm hybrid pool (R5, C1, CW, M2 L2a/L2b).",
+        "members": [
+          "s2_r5_spiral",
+          "i605_cvrp_c1_tworegime",
+          "cw_parallel_merge",
+          "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+          "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+          "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+          "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122"
+        ]
+      },
+      "m3_evolved_cross_paradigm_pool": {
+        "description": "Milestone 3 purely evolved cross-paradigm pool (L1 R5/C1 + M3 L2a+relocate_2opt + M3-3 R2 evolved L3).",
+        "members": [
+          "s2_r5_spiral",
+          "i605_cvrp_c1_tworegime",
+          "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+          "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+          "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+          "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126"
+        ]
+      },
+      "m3_full_hybrid_pool": {
+        "description": "Full Milestone 3 cross-paradigm hybrid pool (L1 R5/C1 + CW + CW+LS + L3-ctrl + M3 evolved L2a & L3).",
+        "members": [
+          "s2_r5_spiral",
+          "i605_cvrp_c1_tworegime",
+          "cw_parallel_merge",
+          "cw_relocate_2opt",
+          "m3_l3_ctrl_500ms",
+          "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+          "m3_3c_standard_500ms_arm_m3_3_full_dynamic_s20261125",
+          "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+          "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126"
+        ]
+      }
+    }
+  },
+  "infrastructure_rerun_policy": "Strictly one-shot evaluation on unsealed cvrp_m3_blind_120; zero search/prompt/hyperparameter changes after unsealing."
+}

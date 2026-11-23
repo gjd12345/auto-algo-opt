@@ -1,0 +1,35 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_d290e41f",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "relocate_2opt",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    d0 = distance_matrix[0, 1:]\n    scale = float(np.mean(d0)) if d0.size > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    lam = 1.10\n    mu = 0.10\n    beta = 0.10\n    gamma = 0.02\n\n    qi = demands[i_idx]\n    qj = demands[j_idx]\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n    fill = beta * np.clip((qi + qj) / capacity, 0.0, 1.0)\n    balance = gamma * (1.0 - np.abs(qi - qj) / (capacity + 1e-12))\n\n    score = savings + fill + balance\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "d290e41f09917f96893cffd3b63b5727d1ebd4a347d49aa7bd51e084586d5bea",
+  "design_sha256": "0999150357c3a483a1db4555b17f5061804ad81f1d84c6580a2311d64160ad2d",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\live_3round_audit_clean\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+  "cited_kb_ids": [
+    "method-cvrp-m2-l2a-generalized-savings",
+    "method-lit-cvrp-construct-clarke-wright-savings-merge",
+    "method-cvrp-m2-l2b-dynamic-state-merge"
+  ],
+  "diagnostic_ref": {
+    "path": "agent_artifacts/diagnostics/diag_0001.json",
+    "sha256": "881b96338672630c74934fa81367433a834aa9e997ffc233a0da53a94569d218",
+    "usage_role": "dev_selection"
+  },
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

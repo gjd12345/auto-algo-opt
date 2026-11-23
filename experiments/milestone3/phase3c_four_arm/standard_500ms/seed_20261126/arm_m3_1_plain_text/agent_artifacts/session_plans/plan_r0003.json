@@ -1,0 +1,32 @@
+{
+  "round_id": 3,
+  "direction": "Continue with cvrp_parallel_merge_static under postprocess none, preserving the round-2 best as baseline while probing focused variations of the L2a static merge scoring: route-pair candidate ordering, distance/savings normalization, and deterministic tie-breaking.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Only one template and one postprocess mode are allowed, so the best use of the remaining budget is local meta-tuning of the active solver rather than broad exploration. Deterministic tie-breaking should reduce variance within the 500 ms per-instance budget and make scalar-score comparisons attributable to merge-ranking changes."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "The round-2 improvement of -0.5667 to best objective 17.3982 indicates that static merge ordering is on a productive trajectory; controlled local changes to merge-pair ranking should yield additional CVRP objective reduction without changing template or postprocessing.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Only one template and one postprocess mode are allowed, so the best use of the remaining budget is local meta-tuning of the active solver rather than broad exploration. Deterministic tie-breaking should reduce variance within the 500 ms per-instance budget and make scalar-score comparisons attributable to merge-ranking changes."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:645d4478aea043039750242c3f6ae391"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If the merge score keeps the global depot-distance scale (mean d[0,1:]) but increases the dimensionless fill reward beta (0.10 -> 0.15-0.25, clipped (q_i+q_j)/Q) and adds an endpoint demand-balance term (1 - |q_i-q_j|/(q_i+q_j)) together with a slightly higher radial asymmetry mu (0.12-0.18), then tight-capacity instances (12/24 of dev_24, worst VBS gap -21.9%) and eccentric-depot instances (-19.8%) will be served by fewer fragmented tail routes and mean dev_24 tour length will drop below the current 16.02-16.09 plateau without any budget-exhaustion regression (p95 solve time stays < 15 ms at 500 ms budget).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:645d4478aea043039750242c3f6ae391"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Tighten the tight-capacity / eccentric-depot / size-100 regimes by strengthening the dimensionless capacity-fill reward and radial asymmetry term inside the globally-scaled generalized savings score, while keeping a single one-shot vectorized evaluation and the immutable global scale normalizer."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

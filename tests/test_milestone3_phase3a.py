@@ -57,6 +57,7 @@ from agent_skill_loop.request_budget import PersistentRequestBudget, RequestBudg
 from agent_skill_loop.session_actions import collect, execute, finish_round, read_evaluation, submit_evaluation, submit_plan
 from agent_skill_loop.session_ledger import SessionRequestBudget
 from agent_skill_loop.session_runtime import _connect, initialize_session, read_state
+from knowledge_tools.core import resolve_release
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -300,9 +301,10 @@ def test_session_bridge_25ms_budget_locked_kb_no_clue_and_l3_mock(tmp_path: Path
     )
     sub_res = submit_plan(run=run_dir, operation_id="op_plan_m3", expected_state_version=ver, file=plan_file)
     iface_meta = sub_res["result"]["interface_selection"]
+    cur_rel_id = resolve_release(REPO / "knowledge_store" / "current").name
     assert iface_meta["validation_passed"] is True
     assert iface_meta["instance_time_budget_ms"] == 25.0
-    assert iface_meta["kb_release_id"] == "20261123-main-co-workbench-m2"
+    assert iface_meta["kb_release_id"] == cur_rel_id
     assert len(iface_meta["kb_manifest_sha256"]) == 64
 
     submit_val = json.loads((run_dir / iface_meta["validation_ref"]).read_text(encoding="utf-8"))
@@ -325,7 +327,7 @@ def test_session_bridge_25ms_budget_locked_kb_no_clue_and_l3_mock(tmp_path: Path
     summary = json.loads((eoh_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["template_id"] == "cvrp_ruin_recreate"
     assert summary["instance_time_budget_ms"] == 25.0
-    assert summary["kb_release_id"] == "20261123-main-co-workbench-m2"
+    assert summary["kb_release_id"] == cur_rel_id
     assert summary["kb_manifest_sha256"] == iface_meta["kb_manifest_sha256"]
     assert summary["static_kb_clues_injected"] is False
 
@@ -337,7 +339,7 @@ def test_session_bridge_25ms_budget_locked_kb_no_clue_and_l3_mock(tmp_path: Path
 
     frozen = json.loads((eoh_dir / "frozen_solver_manifest.json").read_text(encoding="utf-8"))
     assert frozen["default_budget_ms"] == 25.0
-    assert frozen["kb_release_id"] == "20261123-main-co-workbench-m2"
+    assert frozen["kb_release_id"] == cur_rel_id
     assert frozen["template_id"] == "cvrp_ruin_recreate"
 
     col_res = collect(run=run_dir, operation_id="op_col_m3", expected_state_version=st["state_version"])

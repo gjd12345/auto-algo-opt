@@ -1,0 +1,36 @@
+{
+  "checkpoint_budget": 36,
+  "triggered_at_used": 36,
+  "captured_at": "2026-11-23T09:29:44Z",
+  "best_dev_objective": 17.72466,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "session_r0003_cvrp_parallel_merge_static_27407824",
+    "display_name": "Session R3 · cvrp_parallel_merge_static",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "none",
+    "template_options": {
+      "inject_static_kb_clues": false,
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    eps = 1e-30\n\n    removed = d0i + d0j\n    removed_safe = np.where(removed > eps, removed, eps)\n\n    # Standard normalized savings in roughly (-1, 1).\n    savings = removed - dij\n    detour_eff = savings / removed_safe\n\n    # Stronger detour penalty: cubic emphasis on the replacement edge ratio\n    # so long new edges are discouraged more aggressively than quadratically.\n    new_edge_ratio = dij / removed_safe\n    r2 = new_edge_ratio * new_edge_ratio\n    dist_penalty = 1.0 / (1.0 + r2 + new_edge_ratio * r2 + new_edge_ratio)\n\n    # Capacity utilization after hypothetical merge.\n    combined = demands[i_idx] + demands[j_idx]\n    cap_safe = np.maximum(capacity, eps)\n    util = combined / cap_safe\n\n    # Tighter feasibility gate for over-capacity merges.\n    overflow = np.maximum(util - 1.0, 0.0)\n    gate = np.exp(-8.0 * overflow)\n\n    # Sharper reward for utilization near a slightly conservative target.\n    util_clipped = np.clip(util, 0.0, 1.0)\n    util_fit = np.exp(-14.0 * (util_clipped - 0.92) ** 2)\n\n    # Spatial overlap via law of cosines at the depot.\n    prod = d0i * d0j\n    prod_safe = np.where(prod > eps, prod, eps)\n    cos_angle = (d0i * d0i + d0j * d0j - dij * dij) / (2.0 * prod_safe)\n    cos_angle = np.clip(cos_angle, -1.0, 1.0)\n    overlap = 0.5 * (1.0 - cos_angle)\n\n    # Balanced endpoint distances as a light tie-breaker.\n    balance = 1.0 - 0.5 * np.abs(d0i - d0j) / removed_safe\n\n    score = (\n        detour_eff\n        * dist_penalty\n        * gate\n        * (0.42 + 0.44 * util_fit + 0.14 * overlap)\n        * (0.95 + 0.05 * balance)\n    )\n\n    score = np.where(np.isfinite(score), score, -1e30)\n    return score",
+    "hook_code_sha256": "27407824710ca51c14fe466871d921c97765b3c75585288b080af62c071c08d8",
+    "design_sha256": "2875331cd83f826ef31791c53467bb928cebd5e73a6206b4db5ba4cad4404bc6",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261124\\arm_m3_1_plain_text\\session_run\\rounds\\round_0003\\eoh_run",
+    "kb_release_id": "20261123-main-co-workbench-m2",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel",
+      "method-cvrp-i605-tworegime-savings"
+    ],
+    "diagnostic_ref": null,
+    "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+    "default_budget_ms": 25.0
+  }
+}

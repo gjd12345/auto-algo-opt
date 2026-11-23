@@ -1,0 +1,149 @@
+{
+  "type": "evidence",
+  "title": "CVRP multi-scale complementarity, out-of-fold selection, and frozen transfer boundaries (H-010)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "h-010",
+    "selector",
+    "portfolio",
+    "vbs",
+    "sbs",
+    "cv12",
+    "loro48",
+    "loso3",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Quantifies SBS vs Oracle (VBS) complementarity contraction with scale, separated selector timing (feat + infer + solve), positive/negative OOF results across cv12/loro48/loso3 on hetero-288, and frozen cross-suite transfer from select-64 to isolated final-accept-120.",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "selector_portfolio",
+    "complexity_class": "empirical",
+    "interface": "select_algorithm",
+    "applicable_regimes": {
+      "strong_on": [
+        "within_distribution_cv12_small_n50",
+        "heterogeneous_pointwise_pools"
+      ],
+      "weak_on": [
+        "leave_one_scale_out_loso3",
+        "dominated_single_paradigm_large_n200",
+        "ultra_tight_runtime_overhead"
+      ],
+      "scale_notes": "在所测逐点池中互补间隙随规模显著收窄（n=50 -> n=100 -> n=200）；在含局部搜索的多范式 7 池中 cw_relocate_2opt 几乎全面占优，互补性转为质量-耗时 Pareto 权衡。"
+    },
+    "math_formulation": [
+      {
+        "expr": "y_{i,k} = (c_{i,k} - min_m c_{i,m}) / min_m c_{i,m};   T_total(i) = T_feat(i) + T_infer(i) + T_solve(i, pi(i))",
+        "variables": {
+          "y_{i,k}": "严格在训练集内计算的尺度无关相对遗憾回归目标",
+          "T_feat, T_infer, T_solve": "分离测量的特征提取、单实例推理与所选算法求解耗时"
+        },
+        "preconditions": "固定单一最佳 SBS 不支付 T_feat 与 T_infer；禁止混用不同计时边界"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "d8b6ede",
+        "path": "agent_skill_loop/cvrp_workbench/selection.py",
+        "sha256": "915506a207a74eb51ebe9aef6890b316076a0c8019d0abc78e9125fbaf12828e"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/selection_s2/select_s2.py",
+        "sha256": "81482c9609d88210bf84e1358d86eb1632665f1440f6682c0ac3a31c9248448a"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "pointwise_plus_s2__cv12",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": 0.002773,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=+0.28% [+0.08%, +0.49%], p=0.0029, feat=0.773 + infer=0.113 + solve=6.942 = 7.829 ms",
+        "artifact_path": "results/selection_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "pointwise_plus_s2__loro48",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": 0.000714,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=+0.07% [-0.14%, +0.28%], p=0.2585, feat=0.773 + infer=0.142 + solve=6.972 = 7.888 ms",
+        "artifact_path": "results/selection_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "pointwise_plus_s2__loso3",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": -0.001308,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=-0.13% [-0.40%, +0.14%], p=0.8378, feat=0.773 + infer=0.104 + solve=6.950 = 7.828 ms",
+        "artifact_path": "results/selection_records.json"
+      },
+      {
+        "suite_id": "cvrp_hist_hetero_288",
+        "run_id": "multiparadigm_7__cv12",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=+0.00% [+0.00%, +0.00%], p=1.0000, feat=0.773 + infer=0.127 + solve=9.968 = 10.868 ms",
+        "artifact_path": "results/selection_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "pointwise_plus_s2_frozen__frozen_transfer",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": 0.001344,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=+0.13% [-0.02%, +0.31%], p=0.0501, feat=0.649 + infer=0.095 + solve=7.191 = 7.935 ms",
+        "artifact_path": "results/selection_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "multiparadigm_7_frozen__frozen_transfer",
+        "algorithm_id": "rf_reg",
+        "metric": "gain_vs_sbs",
+        "value": 0.0,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "gain=+0.00% [+0.00%, +0.00%], p=1.0000, feat=0.649 + infer=0.091 + solve=9.960 = 10.700 ms",
+        "artifact_path": "results/selection_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral",
+      "method-cvrp-s2-r7-iso",
+      "method-cvrp-inter-relocate"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-selection-complementarity-h010",
+  "content_sha256": "9d9de151805c95dae9edadf8f627474cb2b24c2483e81e59cacdf2a724fc6e6a"
+}

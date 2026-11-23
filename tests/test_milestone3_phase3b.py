@@ -19,7 +19,10 @@ import pytest
 
 from agent_skill_loop.interface_design.dynamic_eoh import DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE
 from agent_skill_loop.request_budget import PersistentRequestBudget
+from knowledge_tools.core import resolve_release
 from research_agent import AgentConfig, run_research_agent
+
+REPO = Path(__file__).resolve().parents[1]
 from research_agent.contracts import RESULTS_TSV_HEADER, sha256_file
 from research_agent.tools.archive_tools import SteppingStoneArchiveTool
 from research_agent.tools.ledger_tools import HypothesisLedgerTool
@@ -67,8 +70,9 @@ def test_research_agent_3round_mock_autonomous_loop_and_evidenced_refutation(tmp
     assert "cvrp_ruin_recreate" in tsv_lines[3]
 
     # KB log resolved current release & sandbox artifact exists
+    cur_rel_id = resolve_release(REPO / "knowledge_store" / "current").name
     kb_lines = (run_dir / "agent_artifacts" / "kb_events.jsonl").read_text(encoding="utf-8").splitlines()
-    assert any("20261123-main-co-workbench-m2" in line for line in kb_lines)
+    assert any(cur_rel_id in line for line in kb_lines)
     sb_path = run_dir / "agent_artifacts" / "sandbox" / "run_0001.json"
     assert sb_path.is_file()
     sb_doc = json.loads(sb_path.read_text(encoding="utf-8"))

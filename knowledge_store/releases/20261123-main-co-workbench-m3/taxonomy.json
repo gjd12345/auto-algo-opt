@@ -1,0 +1,89 @@
+{
+  "schema_version": "taxonomy-v2",
+  "root": {
+    "problems": {
+      "description": "问题分类树；在线/离线、约束、目标、接口单独记录",
+      "families": [
+        "online_bin_packing",
+        "tsp",
+        "cvrp",
+        "knapsack",
+        "mixer_split",
+        "insertships_routing"
+      ]
+    },
+    "methods": {
+      "description": "构造、局部搜索及其他方法家族；方法与问题通过 relations 关联"
+    },
+    "optimization_frameworks_experiments": {
+      "description": "搜索控制、提示策略、RAG、记忆和进化实验；不与问题启发式混类"
+    }
+  },
+  "pages": [
+    {
+      "id": "online_bin_packing",
+      "label": "Online bin packing (OBP)",
+      "kind": "problem_family",
+      "online_offline": "online",
+      "status": "classified",
+      "aliases": [
+        "装箱",
+        "在线装箱",
+        "OBP",
+        "bin packing"
+      ]
+    },
+    {
+      "id": "tsp",
+      "label": "Traveling salesman problem (TSP)",
+      "kind": "problem_family",
+      "online_offline": "offline",
+      "status": "classified",
+      "aliases": [
+        "旅行商",
+        "巡回"
+      ]
+    },
+    {
+      "id": "cvrp",
+      "label": "Capacitated vehicle routing (CVRP)",
+      "kind": "problem_family",
+      "online_offline": "offline",
+      "status": "classified",
+      "aliases": [
+        "车辆路径",
+        "vehicle routing"
+      ]
+    },
+    {
+      "id": "knapsack",
+      "label": "Knapsack",
+      "kind": "problem_family",
+      "online_offline": "offline",
+      "status": "classified",
+      "aliases": [
+        "背包"
+      ]
+    },
+    {
+      "id": "mixer_split",
+      "label": "Mixer split",
+      "kind": "problem_family",
+      "online_offline": "offline",
+      "status": "classified"
+    },
+    {
+      "id": "insertships_routing",
+      "label": "Insertships routing",
+      "kind": "problem_family",
+      "online_offline": "online",
+      "status": "classified"
+    },
+    {
+      "id": "optimization_frameworks_experiments",
+      "label": "优化框架与实验策略",
+      "kind": "framework",
+      "status": "classified"
+    }
+  ]
+}

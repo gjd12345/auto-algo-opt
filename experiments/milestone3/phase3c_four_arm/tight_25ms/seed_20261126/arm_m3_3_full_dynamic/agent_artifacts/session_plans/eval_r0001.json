@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:966146f6ce2a410ca2a610fd8c3f23a4"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Normalizing the generalized savings expression by a single global depot-distance scale mean(d(0,1..n)) — instead of the per-pair local ratio (d0i+d0j-dij)/(d0i+d0j) — preserves the radial priority of far-from-depot customers while keeping exact coordinate-scale invariance, so a lam/mu/beta-tuned one-shot vectorized scoring hook on cvrp_parallel_merge_static with postprocess_mode='none' will beat bare Clarke-Wright (16.2225) and CW+relocate+2opt (16.1549) on dev_hetero_24, reaching mean_tour_length <~16.15 within the 25 ms budget with zero timeout truncations.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:966146f6ce2a410ca2a610fd8c3f23a4"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the globally depot-distance-scale-normalized generalized Clarke-Wright savings rule for L2a static merge: single vectorized pre-loop scoring using lam in [1.00,1.15] on d(i,j), mu in [0.08,0.15] radial asymmetry term |d(0,i)-d(0,j)|, plus a light dimensionless capacity-fill reward beta in [0.05,0.15] on clip((q_i+q_j)/Q,0,1) and an optional endpoint demand-balance term; strictly forbid per-pair (d0i+d0j) normalization."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

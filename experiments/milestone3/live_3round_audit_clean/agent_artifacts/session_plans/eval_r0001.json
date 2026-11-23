@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:bd2039ef58d44477a81de14f281e192e"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H1: A single global depot-distance scale mean(d[0,1:]) (never per-pair (d0i+d0j)) plus mild edge penalty lam~1.10 and radial asymmetry mu~0.10 on top of a dimensionless capacity-fill reward beta~0.10 yields static merge quality at or below 16.14 on cvrp_dev_hetero_24 (bare CW = 16.2225), preserving scale invariance; expected largest gains on tight-capacity and eccentric-depot slices where radial priority and fill matter. H2: Because dev_24 p50 is 2.03 ms (0.4% of the 500 ms budget), appending relocate_2opt consumes the residual budget to reduce inter-route fragmentation left by construction, giving a further 0.3-1.0% mean improvement with 100% completion (no budget-exhaustion degradation).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:bd2039ef58d44477a81de14f281e192e"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the L2a static pair-merge score into a globally depot-scale-normalized generalized savings rule (score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + small endpoint-demand-balance term), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], and close residual inter-route gaps by enabling relocate_2opt post-processing (budget margin is ~250x: 2.0 ms p50 vs 500 ms)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

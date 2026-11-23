@@ -1,0 +1,36 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the L2a static pair-merge score into a globally depot-scale-normalized generalized savings rule (score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + small endpoint-demand-balance term), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], and close residual inter-route gaps by enabling relocate_2opt post-processing (budget margin is ~250x: 2.0 ms p50 vs 500 ms).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Diagnostics on dev_24 (cvrp_parallel_merge_static/none) give mean 16.2225 at p50=2.03 ms / p95=2.25 ms with 24/24 valid and 0 budget exhaustion, i.e. ~0.4% budget utilisation, so the whole budget is available for post-processing. KB entry method-cvrp-m2-l2a-generalized-savings (verified_experiment) shows the same skeleton's evolved hook reaches 16.1398 on dev_24 and 24.2003 on blind_120 (vs 24.1791 CW) with the mandated global mean(d[0,1:]) normalisation, and explicitly flags the two pitfalls to avoid in EoH search: per-pair (d0i+d0j) normalisation (degrades dev_24 to ~18.0) and post-merge inter-route relocate absence as the known weakness. Regimes weakest in diagnostics are tight capacity (18.57) and eccentric depot (19.41) — both are exactly the regimes where radial-asymmetry mu and fill reward beta help, so those are the primary targets. L2b evidence (method-cvrp-m2-l2b-dynamic-state-merge) warns that expensive per-step refresh under tight budgets causes degradation (40/120 exhausted at 25 ms), which justifies keeping the hook one-shot vectorised and spending the remaining budget on a cheap relocate_2opt post-pass rather than dynamic refresh. Therefore plan: static template with evolved generalized-savings hook + relocate_2opt, tested for the KB's open question on residual gain after local search."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "H1: A single global depot-distance scale mean(d[0,1:]) (never per-pair (d0i+d0j)) plus mild edge penalty lam~1.10 and radial asymmetry mu~0.10 on top of a dimensionless capacity-fill reward beta~0.10 yields static merge quality at or below 16.14 on cvrp_dev_hetero_24 (bare CW = 16.2225), preserving scale invariance; expected largest gains on tight-capacity and eccentric-depot slices where radial priority and fill matter. H2: Because dev_24 p50 is 2.03 ms (0.4% of the 500 ms budget), appending relocate_2opt consumes the residual budget to reduce inter-route fragmentation left by construction, giving a further 0.3-1.0% mean improvement with 100% completion (no budget-exhaustion degradation).",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "881b96338672630c74934fa81367433a834aa9e997ffc233a0da53a94569d218",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Diagnostics on dev_24 (cvrp_parallel_merge_static/none) give mean 16.2225 at p50=2.03 ms / p95=2.25 ms with 24/24 valid and 0 budget exhaustion, i.e. ~0.4% budget utilisation, so the whole budget is available for post-processing. KB entry method-cvrp-m2-l2a-generalized-savings (verified_experiment) shows the same skeleton's evolved hook reaches 16.1398 on dev_24 and 24.2003 on blind_120 (vs 24.1791 CW) with the mandated global mean(d[0,1:]) normalisation, and explicitly flags the two pitfalls to avoid in EoH search: per-pair (d0i+d0j) normalisation (degrades dev_24 to ~18.0) and post-merge inter-route relocate absence as the known weakness. Regimes weakest in diagnostics are tight capacity (18.57) and eccentric depot (19.41) — both are exactly the regimes where radial-asymmetry mu and fill reward beta help, so those are the primary targets. L2b evidence (method-cvrp-m2-l2b-dynamic-state-merge) warns that expensive per-step refresh under tight budgets causes degradation (40/120 exhausted at 25 ms), which justifies keeping the hook one-shot vectorised and spending the remaining budget on a cheap relocate_2opt post-pass rather than dynamic refresh. Therefore plan: static template with evolved generalized-savings hook + relocate_2opt, tested for the KB's open question on residual gain after local search."
+  }
+}

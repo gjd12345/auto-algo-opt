@@ -1,0 +1,35 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0003_cvrp_parallel_merge_static_b253f2b1",
+  "display_name": "Session R3 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "relocate_2opt",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    i_idx = np.asarray(i_idx, dtype=np.int64)\n    j_idx = np.asarray(j_idx, dtype=np.int64)\n    d = np.asarray(distance_matrix, dtype=np.float64)\n    q = np.asarray(demands, dtype=np.float64)\n\n    n = d.shape[0] - 1\n\n    # Global depot-distance scale (L2a invariant): one scalar for the instance.\n    d0 = d[0, 1:n + 1]\n    scale = float(np.mean(d0)) if n > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = d[0, i_idx]\n    d0j = d[0, j_idx]\n    dij = d[i_idx, j_idx]\n\n    eps = 1e-12\n\n    # Normalized radial distances -> dimensionless in [0, ~].\n    ri = d0i / scale\n    rj = d0j / scale\n\n    # Cosine of the angle at the depot between the two customer rays,\n    # recovered from the law of cosines; scale-invariant.\n    cos_ij = (d0i * d0i + d0j * d0j - dij * dij) / (2.0 * d0i * d0j + eps)\n    cos_ij = np.clip(cos_ij, -1.0, 1.0)\n\n    # Radial \"hourglass\" saving: big when both customers are far from depot\n    # but the angle between them is small (a true sector merge).\n    radial_term = 0.5 * (ri + rj) * (1.0 + cos_ij)\n\n    # Tightness of the instance: mean customer demand relative to capacity.\n    # When the instance is not tight, the capacity bias is damped so that\n    # geometry dominates and the partition is easy for relocate/2opt to repair.\n    q_cust = q[1:n + 1] if n > 0 else q[:0]\n    if q_cust.size > 0:\n        tightness = float(np.mean(q_cust)) / float(capacity)\n    else:\n        tightness = 0.0\n\n    qi = q[i_idx]\n    qj = q[j_idx]\n    qsum = qi + qj\n    slack = np.clip(1.0 - qsum / capacity, 0.0, 1.0)  # 1 = lots of room left\n    balance = 1.0 - np.abs(qi - qj) / (qsum + eps)\n\n    # Capacity preference only matters when the instance is tight.\n    # bounded multiplier keeps behavior dimensionless and stable.\n    tight_mult = 1.0 / (1.0 + 4.0 * tightness)\n    cap_term = tight_mult * (0.35 * slack + 0.15 * balance)\n\n    # Small geometric elongation reward: prefer linking the nearer customer\n    # first (classic CW \"endpoint\" intuition) without a hard directional bias.\n    elong = 0.10 * np.minimum(ri, rj) / (np.maximum(ri, rj) + eps)\n\n    score = radial_term + elong + cap_term\n    score = np.where(np.isfinite(score), score, -1e30)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "b253f2b18b9a2f88f0da8df5333a218ac375a48f6086a717405f91c8533468bd",
+  "design_sha256": "a3cadb292cd8a6bd310fece4b407d65cd016f690da4538b6a34077c5662215e1",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261125\\arm_m3_3_full_dynamic\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+  "cited_kb_ids": [
+    "method-cvrp-m2-l2a-generalized-savings",
+    "method-cvrp-inter-relocate",
+    "method-cvrp-intra-2opt"
+  ],
+  "diagnostic_ref": {
+    "path": "agent_artifacts/diagnostics/diag_0001.json",
+    "sha256": "e12ac4628e7e046bea42b21fa5675cab43ef405970831190f793fc20bb849c84",
+    "usage_role": "dev_selection"
+  },
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

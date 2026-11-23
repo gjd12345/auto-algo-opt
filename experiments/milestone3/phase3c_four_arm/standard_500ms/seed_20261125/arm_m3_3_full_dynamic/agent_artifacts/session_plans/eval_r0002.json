@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:288b909d1da147d5834c812ab460fc4f"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H1: On cvrp_dev_hetero_24, score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + gamma*(1 - |qi-qj|/(qi+qj)) with lam~1.05, mu~0.12, beta~0.10, gamma~0.05 (never per-pair normalization) will keep the merge layer near the 16.14 dev_24 level while the relocate_2opt postprocess removes residual inter-route fragmentation, so the combined solver beats the round-1 baseline mean objective 16.0798 (especially in the weakest regimes: tight capacity, eccentric depot, n=100) within 500 ms per instance.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:288b909d1da147d5834c812ab460fc4f"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Keep the L2a static parallel-merge skeleton but make the savings score a global-scale-normalized generalized savings with capacity-fill and endpoint-demand-balance terms, and close the documented 'no post-merge inter-route relocate' gap by pairing it with relocate_2opt polishing to repair residual route fragmentation on tight-capacity / eccentric-depot instances."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

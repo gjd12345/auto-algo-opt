@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:03c41cb94007405188d56ac6c4203193"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 with postprocess_mode=relocate_2opt, replacing the linear capacity-fill reward beta*clip((q_i+q_j)/Q,0,1) by a steepened (gamma>1) fill reward and widening the radial asymmetry coefficient mu reduces fragmented tail routes on capacity_level=tight instances and preserves far-radial merge priority on depot_style=eccentric instances, yielding a mean objective below the current 15.987976 without increasing p95 solve time materially; the per-pair normalization (d0i+d0j-dij)/(d0i+d0j) variant is predicted to degrade, confirming that only global depot-distance scaling is beneficial.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:03c41cb94007405188d56ac6c4203193"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the globally-normalized generalized-savings static merge hook, adding a capacity-saturation-aware term aimed at the observed weak regimes (capacity_level=tight, size=100, spatial=clustered, depot_style=eccentric). Evolve jointly over: edge penalty lambda in [1.00,1.30], radial asymmetry mu in [0.05,0.25] scaled by |d(0,i)-d(0,j)|, and a capacity-fill reward that switches from a linear clip((q_i+q_j)/Q,0,1) term (beta in [0.0,0.20]) to a concavity/steepness-controlled variant such as fill**gamma with gamma in [1.0,3.0], plus an optional endpoint-demand-balance term 1-|q_i-q_j|/(q_i+q_j+eps). Keep the single global depot-distance scale mean(d(0,1..n)) as the only denominator (never per-pair (d0i+d0j)), keep scoring fully vectorized/one-shot before the merge loop so p95 stays well under the 500 ms budget, and require a positive classical-savings precondition filter. The goal is to lower the number of fragmented tail-end routes on tight-capacity instances and to preserve far-radial merge priority for eccentric depots, while remaining complementary to the incumbent relocate_2opt postprocess."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

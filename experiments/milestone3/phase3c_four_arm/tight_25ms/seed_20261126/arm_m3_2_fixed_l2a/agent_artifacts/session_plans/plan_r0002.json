@@ -1,0 +1,38 @@
+{
+  "round_id": 2,
+  "direction": "进化 score_merge_static 广义节约量族（lam~1.00-1.15, mu~0.08-0.15, beta~0.05-0.15 + 端点需求均衡项），并把后处理从仅 intra_2opt 升级为 relocate_2opt 以补齐 KB 标注的 'no_post_merge_inter_route_relocate' 弱项，主攻 tight-capacity / size-100 / uniform / eccentric-depot 四个弱regime。",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "r1 已达到 dev_24=16.1345 / 2.13ms，仅占 25ms 预算的 ~8.5%（intra_2opt 后仍有 ~23ms 裕度），因此本轮把预算裕度投向两个互补方向：(1) 钩子侧按 KB 已验证的广义节约量族进化 lam/mu/beta 与端点需求均衡项，保持全局尺度归一化以守护远端径向优先序（反面教材明确逐对归一化会退化到 16.66~18.08）；(2) 骨架侧把 postprocess 从 intra_2opt 提升到 relocate_2opt —— L2a 条目自身把 'no_post_merge_inter_route_relocate' 列为唯一 weak_on，且 archive 反馈的弱 regime（capacity_level=tight, size=100, demand_dist=uniform, depot_style=eccentric）正是碎片尾程车次集中的场景，inter-route relocate 是唯一能打通这些车次的层。L2b 受控归因已证明动态候选刷新在 25ms 下会 40/120 触发预算耗尽降级，故本轮坚持静态一次性向量化打分（hook<0.4ms）把全部预算留给后处理，避免锁定 L2b 的接口粒度陷阱。"
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "在 cvrp_parallel_merge_static/v1 (25ms 预算) 下，若 score_merge_static 采用全局仓距尺度归一化 scale=mean(d[0,1:]) 的广义节约量 score=(d0i+d0j-lam*dij+mu*|d0i-d0j|)/scale + beta*clip((qi+qj)/Q,0,1)（lam∈[1.00,1.15], mu∈[0.08,0.15], beta∈[0.05,0.15]，严禁逐对 (d0i+d0j) 归一化），则 dev_24 上合并起点可稳定 ≤16.14（与 r1 的 16.1345 同量级），并且叠加 relocate_2opt 后能在 tight-capacity(12题) 与 size-100(12题) 子集上额外降低均长 ≥0.5%，因为合并骨架留下的碎片尾程路线只有 inter-route relocate 才能消除；若 relocate_2opt 使 p95 耗时突破 25ms 或出现 exhausted 实例，则该假设在紧预算下被部分否证。",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-cvrp-intra-2opt",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "r1 已达到 dev_24=16.1345 / 2.13ms，仅占 25ms 预算的 ~8.5%（intra_2opt 后仍有 ~23ms 裕度），因此本轮把预算裕度投向两个互补方向：(1) 钩子侧按 KB 已验证的广义节约量族进化 lam/mu/beta 与端点需求均衡项，保持全局尺度归一化以守护远端径向优先序（反面教材明确逐对归一化会退化到 16.66~18.08）；(2) 骨架侧把 postprocess 从 intra_2opt 提升到 relocate_2opt —— L2a 条目自身把 'no_post_merge_inter_route_relocate' 列为唯一 weak_on，且 archive 反馈的弱 regime（capacity_level=tight, size=100, demand_dist=uniform, depot_style=eccentric）正是碎片尾程车次集中的场景，inter-route relocate 是唯一能打通这些车次的层。L2b 受控归因已证明动态候选刷新在 25ms 下会 40/120 触发预算耗尽降级，故本轮坚持静态一次性向量化打分（hook<0.4ms）把全部预算留给后处理，避免锁定 L2b 的接口粒度陷阱。"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:73415bad75ab432fa3ca80ff2f110390"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "在 cvrp_parallel_merge_static/v1 (25ms 预算) 下，若 score_merge_static 采用全局仓距尺度归一化 scale=mean(d[0,1:]) 的广义节约量 score=(d0i+d0j-lam*dij+mu*|d0i-d0j|)/scale + beta*clip((qi+qj)/Q,0,1)（lam∈[1.00,1.15], mu∈[0.08,0.15], beta∈[0.05,0.15]，严禁逐对 (d0i+d0j) 归一化），则 dev_24 上合并起点可稳定 ≤16.14（与 r1 的 16.1345 同量级），并且叠加 relocate_2opt 后能在 tight-capacity(12题) 与 size-100(12题) 子集上额外降低均长 ≥0.5%，因为合并骨架留下的碎片尾程路线只有 inter-route relocate 才能消除；若 relocate_2opt 使 p95 耗时突破 25ms 或出现 exhausted 实例，则该假设在紧预算下被部分否证。",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:73415bad75ab432fa3ca80ff2f110390"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "进化 score_merge_static 广义节约量族（lam~1.00-1.15, mu~0.08-0.15, beta~0.05-0.15 + 端点需求均衡项），并把后处理从仅 intra_2opt 升级为 relocate_2opt 以补齐 KB 标注的 'no_post_merge_inter_route_relocate' 弱项，主攻 tight-capacity / size-100 / uniform / eccentric-depot 四个弱regime。"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

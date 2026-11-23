@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/intra_2opt.",
+      "evidence_refs": [
+        "evaluation:261d4cd61196422e8008fb13090791fe"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On dev_24 (cvrp_dev_hetero_24) at a 25 ms per-instance budget, a globally depot-scale-normalized generalized savings merge score (d0i+d0j-lam*dij+mu*|d0i-d0j|)/mean(d(0,1..n)) plus a dimensionless capacity-fill bonus, followed by deterministic intra-route 2-opt, will reach mean total tour length <= 16.20 (i.e. at least matching the KB L2a reference 16.1595 within noise) with p95 per-instance runtime well under 25 ms and zero budget-exhaustion fallbacks; it should strictly beat the same rule without postprocess, and should dominate any variant that uses per-pair local normalization (d0i+d0j-dij)/(d0i+d0j), which is predicted to degrade by >= 0.3 in mean tour length.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:261d4cd61196422e8008fb13090791fe"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the static pairwise merge score `score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx)` as a GLOBAL-DEPOT-SCALE-NORMALIZED generalized savings rule: with s = mean(d(0, 1..n)) computed once as a single global scalar, score = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/s + w_fill * f(load_i, load_j, capacity), where f is a dimensionless capacity-fill reward (e.g. f = (load_i+load_j)/capacity or -|capacity - load_i - load_j|/capacity) and (lam, mu, w_fill) are the only tunable knobs, evolved in ranges lam in [0.6,1.6], mu in [-0.3,0.3], w_fill in [0.0,0.6]. Vectorize the rule over the candidate pair index arrays (pure NumPy broadcasting, no per-pair Python loops, no per-pair local normalization, no coordinates). Add a deterministic intra-route 2-opt postprocess (O(1)-delta edge reversal per route, first-improvement, cheap) on top of the merged solution. Keep the whole pipeline strictly scale-invariant: every term must be divided by the same global depot-distance scalar s so coordinate scaling produces 0.00% drift and the radial \"close far-from-depot endpoints first\" ordering of Clarke-Wright is preserved."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

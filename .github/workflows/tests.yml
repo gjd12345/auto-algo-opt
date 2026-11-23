@@ -25,9 +25,10 @@ jobs:
       - run: python -m knowledge_tools validate-release --release knowledge_store/releases/20261121-main-audit-kb-v1
       - run: python -m knowledge_tools validate-release --release knowledge_store/releases/20261122-main-co-workbench-final
       - run: python -m knowledge_tools validate-release --release knowledge_store/releases/20261122-main-co-workbench-m15
+      - run: python -m knowledge_tools validate-release --release knowledge_store/releases/20261123-main-co-workbench-m2
       - run: python -m knowledge_tools validate-release --release knowledge_store/current
       - name: Resolve actual checkout current pointer
-        run: python -c "from pathlib import Path; from knowledge_tools.core import resolve_release; expected=Path('knowledge_store/releases/20261123-main-co-workbench-m2').resolve(); assert resolve_release(Path('knowledge_store')) == expected; assert resolve_release(Path('knowledge_store/current')) == expected"
+        run: python -c "from pathlib import Path; from knowledge_tools.core import resolve_release; expected=Path('knowledge_store/releases/20261123-main-co-workbench-m3').resolve(); assert resolve_release(Path('knowledge_store')) == expected; assert resolve_release(Path('knowledge_store/current')) == expected"
 
   kernel:
     runs-on: ubuntu-latest

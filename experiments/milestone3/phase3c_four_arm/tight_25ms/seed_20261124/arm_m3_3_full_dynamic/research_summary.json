@@ -1,0 +1,198 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261124",
+  "arm_id": "arm_m3_3_full_dynamic",
+  "problem_family": "cvrp",
+  "final_phase": "completed",
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "best_dev_objective": 16.127451,
+  "best_solver_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json",
+  "frozen_checkpoints": {
+    "18": "checkpoints/frozen_checkpoint_18.json",
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "budget_summary": {
+    "run_id": "m3_3c_tight_25ms_arm_m3_3_full_dynamic_s20261124",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261124\\arm_m3_3_full_dynamic\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 36,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "complete": 35,
+      "connectivity_failed": 1
+    },
+    "by_purpose": {
+      "planner": 12,
+      "eoh_probe": 3,
+      "eoh_generation": 18,
+      "reflection": 3
+    },
+    "input_tokens": 138252,
+    "output_tokens": 18538,
+    "total_tokens": 156790
+  },
+  "token_summary": {
+    "input_tokens": 138252,
+    "output_tokens": 18538,
+    "total_tokens": 156790,
+    "provider_elapsed_seconds": 283.236,
+    "outer_requests": 15,
+    "inner_eoh_requests": 21
+  },
+  "hypothesis_counts": {
+    "superseded": 0,
+    "testing": 0,
+    "supported": 0,
+    "proposed": 0,
+    "refuted": 0,
+    "abandoned": 0
+  },
+  "archive_summary": {
+    "solver_count": 3,
+    "pareto_frontier": [
+      {
+        "solver_id": "session_r0002_cvrp_parallel_merge_static_c9732832",
+        "template_id": "cvrp_parallel_merge_static",
+        "mean_objective": 16.127451,
+        "solve_ms_mean": 2.0114,
+        "arm_id": "arm_m3_3_full_dynamic"
+      },
+      {
+        "solver_id": "session_r0001_cvrp_parallel_merge_static_0406a657",
+        "template_id": "cvrp_parallel_merge_static",
+        "mean_objective": 16.199187,
+        "solve_ms_mean": 1.1287,
+        "arm_id": "arm_m3_3_full_dynamic"
+      }
+    ],
+    "portfolio": {
+      "suite_id": "cvrp_dev_hetero_24",
+      "solver_ids": [
+        "session_r0001_cvrp_parallel_merge_static_0406a657",
+        "session_r0002_cvrp_parallel_merge_static_c9732832",
+        "session_r0003_cvrp_parallel_merge_static_d1cb88f2"
+      ],
+      "common_completed_count": 24,
+      "mean_by_solver": {
+        "session_r0001_cvrp_parallel_merge_static_0406a657": 16.1992,
+        "session_r0002_cvrp_parallel_merge_static_c9732832": 16.1275,
+        "session_r0003_cvrp_parallel_merge_static_d1cb88f2": 16.2738
+      },
+      "sbs_solver": "session_r0002_cvrp_parallel_merge_static_c9732832",
+      "sbs_total": 387.0588,
+      "vbs_total": 385.0219,
+      "gap_over_sbs_pct": 0.5263,
+      "gap_over_vbs_pct": 0.529,
+      "win_counts": {
+        "session_r0001_cvrp_parallel_merge_static_0406a657": 9,
+        "session_r0002_cvrp_parallel_merge_static_c9732832": 13,
+        "session_r0003_cvrp_parallel_merge_static_d1cb88f2": 2
+      }
+    },
+    "weakest_regimes": [
+      {
+        "factor": "spatial",
+        "value": "clustered",
+        "instance_count": 8,
+        "vbs_mean_objective": 14.5294,
+        "vbs_rel_gap_pct": -19.1449,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "depot_style",
+        "value": "eccentric",
+        "instance_count": 12,
+        "vbs_mean_objective": 19.2141,
+        "vbs_rel_gap_pct": -19.6302,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "demand_dist",
+        "value": "uniform",
+        "instance_count": 12,
+        "vbs_mean_objective": 16.3829,
+        "vbs_rel_gap_pct": -20.8741,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "100",
+        "instance_count": 12,
+        "vbs_mean_objective": 20.7262,
+        "vbs_rel_gap_pct": -20.8788,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "capacity_level",
+        "value": "tight",
+        "instance_count": 12,
+        "vbs_mean_objective": 18.4671,
+        "vbs_rel_gap_pct": -22.0913,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      }
+    ],
+    "known_signatures_count": 3
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "arm_m3_3_full_dynamic",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.1992",
+      "delta_vs_prev": "",
+      "requests_used_total": 14,
+      "outer_requests_round": 6,
+      "inner_requests_round": 8,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "arm_m3_3_full_dynamic",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.1275",
+      "delta_vs_prev": "-0.0717",
+      "requests_used_total": 28,
+      "outer_requests_round": 5,
+      "inner_requests_round": 9,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "arm_m3_3_full_dynamic",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "16.2738",
+      "delta_vs_prev": "+0.1464",
+      "requests_used_total": 36,
+      "outer_requests_round": 4,
+      "inner_requests_round": 4,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-23T09:29:04Z"
+}

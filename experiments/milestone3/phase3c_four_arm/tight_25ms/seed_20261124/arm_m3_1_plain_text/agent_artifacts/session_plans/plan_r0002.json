@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Tune the static parallel-merge scoring rule to be capacity-aware: prioritize high distance-savings merges, penalize merges that leave residual capacity poorly matched to remaining demand, and use deterministic tie-breaking by route compactness. Explore a small grid of savings weight versus capacity-fit penalty within the existing static merge template.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The only permitted template is cvrp_parallel_merge_static with postprocess none, and round 1 already established a baseline. With no archive feedback and no open hypotheses, the safest next step is a controlled within-template variation of the merge scoring logic. Emphasizing capacity-aware merge ordering should improve route feasibility and utilization while retaining the static merge structure, allowing a clear comparison against the prior best objective."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Refining the static merge score to balance distance savings against capacity fit will reduce the CVRP objective below the round-1 best of 17.8570 without requiring postprocessing or a template change.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "The only permitted template is cvrp_parallel_merge_static with postprocess none, and round 1 already established a baseline. With no archive feedback and no open hypotheses, the safest next step is a controlled within-template variation of the merge scoring logic. Emphasizing capacity-aware merge ordering should improve route feasibility and utilization while retaining the static merge structure, allowing a clear comparison against the prior best objective."
+  }
+}

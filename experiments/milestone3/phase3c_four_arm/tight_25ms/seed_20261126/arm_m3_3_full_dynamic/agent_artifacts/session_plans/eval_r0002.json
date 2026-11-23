@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:63642a779471477caf57329cad91a5f9"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Adding a dimensionless endpoint demand-balance term (1 - |q_i-q_j|/(q_i+q_j)) on top of the scale-normalized generalized savings + capacity-fill score strictly improves dev_24 mean tour length relative to pure fill-weighted savings (16.1921), because it reduces tail-fragment routes by pairing comparable-demand endpoints; and EoH perturbing lam in [1.00,1.20], mu in [0.05,0.20], beta_fill in [0.0,0.20], beta_balance in [0.0,0.12] will find a strictly better static merge rule without any budget-exhaustion risk (p95 stays <5ms of 25ms).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:63642a779471477caf57329cad91a5f9"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the scale-normalized generalized savings merge score with the balanced-fill variant (lam≈1.08, mu≈0.12, beta_fill≈0.10, beta_balance≈0.05) and let EoH co-evolve the four dimensionless coefficients (lam, mu, beta_fill, beta_balance, plus scale divisor choice) rather than hard-coding, keeping the one-shot vectorized evaluation to preserve the sub-4ms p95 at the 25ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

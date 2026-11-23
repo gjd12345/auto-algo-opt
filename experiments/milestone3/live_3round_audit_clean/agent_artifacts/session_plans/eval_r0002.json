@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:70fa2781fcc9428db87118c29a2f7b3f"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under the 500 ms budget on cvrp_dev_hetero_24, a static merge scoring rule normalized by the global depot-distance scale mean(d[0,1:]) with radial-asymmetry term mu*|d0i-d0j| and dimensionless capacity-fill bonus beta*(qi+qj)/Q, when paired with relocate_2opt, will lower mean tour length below the current 16.083 baseline (target < 15.9) and specifically improve the weak regimes (tight capacity, clustered, eccentric depot) by reducing fragmented tail-end routes, without triggering any budget exhaustion (0 timeouts), because per-pair normalization by (d0i+d0j) destroys far-customer merge priority whereas global-scale normalization preserves it.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:70fa2781fcc9428db87118c29a2f7b3f"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the L2a score_merge_static hook toward a globally scale-normalized generalized savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0,1..n) + beta*clip((qi+qj)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; never normalize per-pair by (d0i+d0j). Keep relocate_2opt postprocessing to harvest residual gains from tight-capacity/eccentric-depot instances (the weakest regimes), and keep the hook a single fully vectorized pre-pass so p95 solve time stays well under the 500 ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

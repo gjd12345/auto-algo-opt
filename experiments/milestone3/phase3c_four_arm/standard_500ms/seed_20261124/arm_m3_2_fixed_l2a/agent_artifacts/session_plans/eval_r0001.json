@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:ebef61f538cd434b9d17757a49389ecc"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A single global depot-distance scale mean(d[0,1:]) preserves radial/remote-customer priority (hence 0.00% drift under 1e-3 coordinate scaling) and, with light edge-weight lam~1.0-1.15, radial asymmetry mu~0.08-0.15 and dimensionless fill bonus beta~0.05-0.15, gives a better merge sequence than bare Clarke-Wright; adding relocate_2opt on this evolved start yields further mean tour-length reduction on cvrp_dev_hetero_24 because the merge layer leaves capacity-feasible inter-route slack that local search can exploit (KB explicitly flags postprocess combination as an open question).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:ebef61f538cd434b9d17757a49389ecc"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the static pairwise merge score as a globally depot-distance-normalized generalized savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((q_i+q_j)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; forbid per-pair normalization by (d0i+d0j). Layer budgeted inter-route relocate + intra-route 2-opt postprocess on top of the evolved merge start to test residual gain of the construction layer (500 ms budget leaves large headroom: hook p50 sub-ms, full solve p95 ~10-12 ms at n=200)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

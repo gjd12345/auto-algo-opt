@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0002_cvrp_parallel_merge_static_4754dd65",
+  "display_name": "Session R2 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    i_idx = np.asarray(i_idx, dtype=np.int64)\n    j_idx = np.asarray(j_idx, dtype=np.int64)\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    savings = d0i + d0j - dij\n\n    scale = 0.5 * (d0i + d0j)\n    scale = np.where(scale > 0.0, scale, 1.0)\n\n    # Normalized savings, dominant term (range ~[-1, 1])\n    save_norm = savings / scale\n\n    # Capacity utilization (higher = better packing) in [0, 1]\n    dj = np.maximum(demands[i_idx], 0.0)\n    dk = np.maximum(demands[j_idx], 0.0)\n    merged_load = dj + dk\n    load_ratio = np.clip(merged_load / float(capacity), 0.0, 1.0)\n\n    # Proximity penalty: prefer geographically close endpoints\n    prox = np.clip(dij / scale, 0.0, 1.0)\n\n    # Soft feasibility decay for overloaded merges\n    excess = np.maximum(merged_load - float(capacity), 0.0) / float(capacity)\n    feas_term = np.exp(-4.0 * excess)\n\n    # Additive blend: savings dominates, utilization breaks ties, proximity small penalty\n    score = save_norm + 0.35 * load_ratio - 0.15 * prox\n    score = feas_term * score\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "4754dd65763929ef120378bbafa7efd0204f4506cbb9379712cd8153d0628fe9",
+  "design_sha256": "9662b95570a9a372b2926c23e35063219063e2bc0e782fd16a98b3a62c6b604a",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261124\\arm_m3_1_plain_text\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

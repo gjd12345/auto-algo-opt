@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:f7ba38e9303f47bdb34b222c96119091"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 under a 25 ms budget, a static vectorized savings hook normalized by the single global scale mean(d[0,1:]) with a mild edge penalty (lam≈1.0-1.15), radial asymmetry bonus (mu≈0.08-0.15) and dimensionless capacity-fill reward (beta≈0.05-0.15) will match or beat bare Clarke-Wright (dev_24 ≈16.2225) in mean tour length with zero postprocessing and zero timeout truncation, whereas per-pair local normalization ((d0i+d0j-dij)/(d0i+d0j)) would degrade to ~18.0.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:f7ba38e9303f47bdb34b222c96119091"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_merge_static as a globally scale-normalized generalized Clarke-Wright savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|) / mean(d[0,1:]) + beta*clip((q_i+q_j)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; keep a single global depot-distance scale (never per-pair (d0i+d0j) normalization) to preserve far-from-depot radial merge priority and exact 1e-3 coordinate scale invariance, and keep the hook a one-shot fully vectorized evaluation so the 25 ms budget retains large slack."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

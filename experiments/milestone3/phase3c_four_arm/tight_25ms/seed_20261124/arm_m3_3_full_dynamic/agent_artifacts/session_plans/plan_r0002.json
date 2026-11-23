@@ -1,0 +1,40 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the vectorized static merge scoring hook around the globally depot-distance-normalized generalized savings family: score(i,j) = [d0i + d0j - lam*dij + mu*|d0i - d0j|]/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1), searching lam in [1.00,1.20], mu in [0.05,0.18], beta in [0.05,0.20], allowing small bounded extra terms (endpoint demand balance 1-|qi-qj|/(qi+qj), and a mild far-customer retention weight on max(d0i,d0j)) but forbidding any pairwise (d0i+d0j) local normalization; keep a single fully vectorized hook evaluation which ended at ~1.4 ms p50 / 1.5 ms p95 so the 25 ms budget stays ~94% free and no instance degrades to exhausted-incumbent, and push mean dev_24 tour length below the 16.1992 archive incumbent while respecting all feasibility invariants.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Baseline replicate of the KB L2a rule re-scored at lam=1.00, mu=0.10, beta=0.10 gives 16.2276 mean on dev_24 at p50 1.44 ms with 24/24 completed and zero budget exhaustion, confirming the template is far from the 25 ms wall and that all remaining gain must come from the merge order rather than speed. The weakest regimes reported by the archive (clustered, eccentric depot, size 100, uniform demand, tight capacity) are precisely where savings-order distortions bite, and the KB documents that the family's lever set (lam, mu, beta, demand-balance term) moves dev_24 in the 16.14-16.23 band, so EoH should be steered inside that bounded region with the per-pair normalization pitfall explicitly excluded."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Global mean-depot-distance normalization plus a generalized savings correction (edge penalty lam, radial asymmetry mu) and a dimensionless capacity-fill reward beta yields a better static merge order than plain Clarke-Wright on dev_24 hetero regimes (tight capacity, eccentric depot, size 100), reaching mean tour length below 16.19 at <2 ms solve time with 100% completion, whereas pairwise (d0i+d0j) normalization destroys far-customer priority and regresses to ~18.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "4c9f962db8a6490c1fea14f5fd563874ee93858729e152f656aa7780d5f84ecf",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Baseline replicate of the KB L2a rule re-scored at lam=1.00, mu=0.10, beta=0.10 gives 16.2276 mean on dev_24 at p50 1.44 ms with 24/24 completed and zero budget exhaustion, confirming the template is far from the 25 ms wall and that all remaining gain must come from the merge order rather than speed. The weakest regimes reported by the archive (clustered, eccentric depot, size 100, uniform demand, tight capacity) are precisely where savings-order distortions bite, and the KB documents that the family's lever set (lam, mu, beta, demand-balance term) moves dev_24 in the 16.14-16.23 band, so EoH should be steered inside that bounded region with the per-pair normalization pitfall explicitly excluded."
+  }
+}

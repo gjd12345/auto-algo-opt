@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Refine the L2a static merge ranking (score_merge_static) so it is geometry-aware in the regimes where the archive is weakest — clustered spatial layouts, eccentric depots and tight capacity. Concretely: (1) replace the pure distance-gain term with a normalized gain that divides inter-route saving by the combined route radius, so compact clusters are merged before long thin chains; (2) add a depot-radial alignment term (|radial(centroid_a) - radial(centroid_b)| plus angle difference from the depot) to prefer angularly adjacent merges when the depot is eccentric; (3) add an explicit capacity-slack penalty on merged load fraction (heavier penalty when load/capacity exceeds ~0.85) to protect tight-capacity instances from greedy over-fill; (4) keep deterministic tie-breaking on route index for reproducibility. Keep relocate_2opt as the postprocess because it closes intra-route crossings cheaply and stays well inside the 500 ms budget (mean solve ~2.5 ms).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 established a single Pareto point at mean objective 16.0885 with relocate_2opt and only 2.53 ms mean solve time, so there is roughly two orders of magnitude of unused budget headroom and the binding constraint is solution quality, not time. The archive feedback pinpoints clustered spatial (-18.4% rel gap), eccentric depot (-19.7%), size 100 (-20.2%), uniform demand (-20.6%) and tight capacity (-21.8%) as the weakest regimes. All of these are precisely the cases where a pure distance-saving static merge score is known to mis-rank merges: it cannot see angular adjacency around an off-center depot and it ignores load fraction, so it fills routes to the brim early in clustered tight-capacity instances. Sharpening score_merge_static along geometry and capacity dimensions is therefore the highest-leverage, lowest-risk change: it preserves the exact template interface (L2a static merge), keeps determinism, adds no runtime cost of consequence, and leaves relocate_2opt free to fix the small residual intra-route crossings."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "The current static merge score is dominated by raw inter-route distance saving, which over-merges geographically elongated routes. On clustered / eccentric-depot / tight-capacity instances (the three weakest archive regimes), a geometry-normalized merge score (saving per combined route radius + depot-radial/angular alignment term + capacity-slack penalty) will lower mean objective versus the round-1 baseline of 16.0885 while keeping mean solve time far below 500 ms.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 established a single Pareto point at mean objective 16.0885 with relocate_2opt and only 2.53 ms mean solve time, so there is roughly two orders of magnitude of unused budget headroom and the binding constraint is solution quality, not time. The archive feedback pinpoints clustered spatial (-18.4% rel gap), eccentric depot (-19.7%), size 100 (-20.2%), uniform demand (-20.6%) and tight capacity (-21.8%) as the weakest regimes. All of these are precisely the cases where a pure distance-saving static merge score is known to mis-rank merges: it cannot see angular adjacency around an off-center depot and it ignores load fraction, so it fills routes to the brim early in clustered tight-capacity instances. Sharpening score_merge_static along geometry and capacity dimensions is therefore the highest-leverage, lowest-risk change: it preserves the exact template interface (L2a static merge), keeps determinism, adds no runtime cost of consequence, and leaves relocate_2opt free to fix the small residual intra-route crossings."
+  }
+}

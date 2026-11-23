@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/intra_2opt.",
+      "evidence_refs": [
+        "evaluation:2cc28d086c344b1d958d668f5aad7fbe"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Because the weakest regimes are capacity_level=tight (12/24 instances) and spatial=clustered/eccentric depot, adding a dimensionless capacity-fill reward beta*clip((q_i+q_j)/Q,0,1) with an endpoint imbalance term (1-|q_i-q_j|/(q_i+q_j)) and mild lambda>1 edge dampening inside the globally depot-scale-normalized static score will reduce terminal fragment routes under tight capacity and lower mean tour length on cvrp_dev_hetero_24 below the current SBS 16.1086, while remaining deterministic, scale-invariant, and fully convergent within the 25 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:2cc28d086c344b1d958d668f5aad7fbe"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the L2a static merge score for the tight-capacity / clustered-eccentric-depot weak regimes: keep global depot-scale normalization mean(d[0,1:]) as the single dimensional denominator, and evolve (lambda in 1.00-1.20, radial asymmetry mu in 0.08-0.20, dimensionless fill reward beta in 0.05-0.20) plus a symmetric endpoint-demand-balance term so that route-end merges pack loads closer to Q without destroying large-savings edges; keep the single vectorized pre-pass scoring (no per-merge rescoring) to preserve the ~2 ms budget margin at 25 ms."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,369 @@
+{
+  "type": "method",
+  "title": "EoH: Evolution of Heuristics via co-evolution of thoughts and code (ICML 2024)",
+  "category": "optimization_frameworks_experiments",
+  "problem_family": "unknown",
+  "tags": [
+    "eoh",
+    "llm-ahd",
+    "thought-code-coevolution",
+    "obp",
+    "tsp-gls",
+    "fssp",
+    "co-bench"
+  ],
+  "status": "reviewed",
+  "summary": "Evolution of Heuristics (Liu et al., ICML 2024) co-evolving natural-language algorithmic thoughts and executable Python code via E1/E2 exploration and M1/M2/M3 modification operators.",
+  "attributes": {
+    "method_family": "llm_ahd_framework",
+    "online_offline": "offline",
+    "objective": "cross-problem combinatorial optimization gap",
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "automated_heuristic_design",
+        "cross_problem_benchmarking"
+      ],
+      "weak_on": [
+        "zero_budget_single_pass_without_evolution"
+      ],
+      "scale_notes": "顶会 LLM-AHD 方法横向对比卡，严格分轨记录本机同协议复跑 (evidence_bindings) 与原论文发表成绩 (paper_reported_results)。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "维护含 (thought, code, fitness) 的精英种群，每代调用 E1/E2 交叉探索与 M1/M2/M3 局部/参数变异算子生成新启发式",
+      "evolvable_hook": "单入口启发式函数（OBP priority / TSP-GLS edge_penalty / CVRP select_next_node / FSSP ILS）",
+      "state_maintained": [
+        "population_thoughts_and_code",
+        "fitness_history",
+        "operator_schedule"
+      ],
+      "invariants_and_constraints": [
+        "每次变异必须同步输出算法思想摘要与可执行代码",
+        "按固定训练评测集淘汰低分个体"
+      ],
+      "typical_pitfalls": [
+        "易陷入单套训练分布过拟合或生成冗长难解释的启发式组合项",
+        "单规则输出难以覆盖强异构工况"
+      ]
+    },
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "eoh_cvrp_f1",
+        "metric": "mean_rel_gap",
+        "value": 0.276024,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, ok=256, mean=19.0576, solve_ms P50=4.3689/P95=10.0009",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "tsp_ext_eohs_128",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "eoh_tsp_f1",
+        "metric": "mean_rel_gap",
+        "value": 0.154924,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=128, ok=128, mean=4.0856, solve_ms P50=4.4647/P95=12.437",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "eoh_obp_f1",
+        "metric": "mean_rel_gap",
+        "value": 0.031915,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=173, ok=173, common_completed(143)_gap=0.034974, mean=566.3295, solve_ms P50=14.0748/P95=178.3198",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ],
+    "paper_reported_results": [
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 1 / Table 9 (Weibull 15-setting Avg)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_15_Avg",
+        "method_name": "First Fit",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 4.51,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 1 / Table 9 (Weibull 15-setting Avg)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_15_Avg",
+        "method_name": "Best Fit",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 4.13,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 1 / Table 9 (Weibull 15-setting Avg)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_15_Avg",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 2.23,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 1 / Table 9 (Weibull 15-setting Avg)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_15_Avg",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 1.18,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_1k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_1k_C100",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 2.24,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_1k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_1k_C100",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 3.78,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_5k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_5k_C100",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.8,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_5k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_5k_C100",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.8,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_10k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_10k_C100",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.61,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_10k_C100)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_10k_C100",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.33,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_1k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_1k_C500",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 2.13,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_1k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_1k_C500",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 6.75,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_5k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_5k_C500",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.78,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_5k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_5k_C500",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 1.47,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_10k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_10k_C500",
+        "method_name": "EoH",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.61,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-feiliu-2024-eoh",
+        "table_ref": "Table 9 (Weibull_10k_C500)",
+        "suite_id": "obp_ext_eoh_weibull",
+        "subset": "Weibull_10k_C500",
+        "method_name": "FunSearch",
+        "paradigm": "sequential_construct",
+        "metric": "excess_bins_pct_over_l1",
+        "value": 0.74,
+        "unit": "percent",
+        "reference_kind": "theoretical_lb",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "EoH ICML 2024 Table 1 / Table 9 OBP Weibull 超额箱数百分比（相对 L1 下界）。"
+      },
+      {
+        "paper_source_id": "src-sun-2025-cobench",
+        "table_ref": "Figure 3 (36 CO Problems Overall)",
+        "suite_id": "cobench_36co_paper_ref",
+        "subset": "COBench_36_Problems",
+        "method_name": "EoH (o3-mini-medium)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "normalized_avg_score",
+        "value": 0.84,
+        "unit": "score_0_1",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "CO-Bench 36 个真实 OR 问题归一化平均分（Avg Score in [0,1]，越大越好；LLM Agents 均基于 o3-mini-medium），直接核自 arXiv:2504.04310 Fig. 3 (p.5)。"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-tsp",
+      "problem-online-bin-packing"
+    ],
+    "sources": [
+      "src-cvrp-workbench-20261121",
+      "src-feiliu-2024-eoh"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-workbench-20261121",
+    "src-feiliu-2024-eoh"
+  ],
+  "evidence_refs": [
+    "report:docs/cvrp-kb-benchmark-frontend-final-plan.md"
+  ],
+  "code_refs": [],
+  "id": "method-lit-ahd-eoh",
+  "content_sha256": "1d9766789f3ef193c20837e49753ddd48fe5bfa3ace48694e93297f32488af01"
+}

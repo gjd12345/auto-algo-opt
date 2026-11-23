@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Tune the static merge scoring weights (e.g., balance distance savings vs. capacity utilization) and increase the number of parallel merge attempts to explore a wider set of route combinations.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The previous round achieved 17.7963 using the static merge template with no postprocessing. Since postprocessing is disallowed, the most direct improvement path is to refine the merge scoring and broaden the parallel search within that template. Static merge scoring typically has tunable weights; small adjustments can yield better route merges."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Adjusting the static merge scoring weights and increasing parallel merge trials will produce a lower objective than 17.7963 by better exploiting the merge structure without postprocessing.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "The previous round achieved 17.7963 using the static merge template with no postprocessing. Since postprocessing is disallowed, the most direct improvement path is to refine the merge scoring and broaden the parallel search within that template. Static merge scoring typically has tunable weights; small adjustments can yield better route merges."
+  }
+}

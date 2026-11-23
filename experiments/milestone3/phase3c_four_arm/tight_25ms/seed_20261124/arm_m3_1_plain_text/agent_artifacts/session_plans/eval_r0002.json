@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:42fde2f5944c418885647176065cfb29"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Refining the static merge score to balance distance savings against capacity fit will reduce the CVRP objective below the round-1 best of 17.8570 without requiring postprocessing or a template change.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:42fde2f5944c418885647176065cfb29"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Tune the static parallel-merge scoring rule to be capacity-aware: prioritize high distance-savings merges, penalize merges that leave residual capacity poorly matched to remaining demand, and use deterministic tie-breaking by route compactness. Explore a small grid of savings weight versus capacity-fit penalty within the existing static merge template."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

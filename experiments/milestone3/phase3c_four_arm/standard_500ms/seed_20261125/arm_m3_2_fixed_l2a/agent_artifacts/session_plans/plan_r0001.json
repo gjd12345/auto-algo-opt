@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the static pairwise merge score into a globally scale-normalized generalized savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0,1..n) + beta*clip((qi+qj)/Q,0,1) with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], optionally plus a dimensionless endpoint demand-balance term 1-|qi-qj|/(qi+qj); forbid per-pair normalization by (d0i+d0j).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB entry method-cvrp-m2-l2a-generalized-savings is the verified L2a artifact on the exact same template (source sha256 match 3bca783d...) and reports dev_24 = 16.1398 with postprocess_mode=none, beating bare CW (16.2225) and CW+Relocate+2opt (16.1549) while staying at ~2.45 ms p50, so the 500 ms budget is entirely headroom. The seed (lam=1, mu=0, beta=0, global scale) is exactly Clarke-Wright and is documented to reproduce the reference merge sequence with zero error, giving a safe, high-quality starting point for inner EoH evolution. The anti-pattern entry pins the failure mode to avoid (per-pair normalization) and the scaling-invariance invariant (0.00% drift at 1e-3). Postprocess is kept at 'none' for this round because it is the KB-verified configuration on this template and is gate-safe as the active mode; combining the evolved merge start with relocate_2opt is logged as a follow-up test (KB 'unconfirmed' item) once the constructor baseline is archived."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A single global depot-distance scale mean(d[0,1:]) normalizing a generalized Clarke-Wright savings score (edge-weight lam, radial asymmetry mu, dimensionless capacity-fill bonus beta) preserves the far-from-depot priority ordering while improving capacity packing, so the L2a static-merge template with postprocess_mode=none reaches mean tour length <= 16.14 on cvrp_dev_hetero_24 at 500 ms with 0 timeouts, whereas per-pair normalization (d0i+d0j-dij)/(d0i+d0j) degrades it to ~17.0-18.1.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m2-l2a-generalized-savings is the verified L2a artifact on the exact same template (source sha256 match 3bca783d...) and reports dev_24 = 16.1398 with postprocess_mode=none, beating bare CW (16.2225) and CW+Relocate+2opt (16.1549) while staying at ~2.45 ms p50, so the 500 ms budget is entirely headroom. The seed (lam=1, mu=0, beta=0, global scale) is exactly Clarke-Wright and is documented to reproduce the reference merge sequence with zero error, giving a safe, high-quality starting point for inner EoH evolution. The anti-pattern entry pins the failure mode to avoid (per-pair normalization) and the scaling-invariance invariant (0.00% drift at 1e-3). Postprocess is kept at 'none' for this round because it is the KB-verified configuration on this template and is gate-safe as the active mode; combining the evolved merge start with relocate_2opt is logged as a follow-up test (KB 'unconfirmed' item) once the constructor baseline is archived."
+  }
+}

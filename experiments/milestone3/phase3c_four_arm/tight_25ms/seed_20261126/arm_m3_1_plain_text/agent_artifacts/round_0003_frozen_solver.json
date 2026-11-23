@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0003_cvrp_parallel_merge_static_c5025a13",
+  "display_name": "Session R3 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    eps = 1e-12\n    ri = np.maximum(d0i, eps)\n    rj = np.maximum(d0j, eps)\n\n    savings = d0i + d0j - dij\n    geo = np.sqrt(ri * rj)\n    norm_savings = savings / np.maximum(geo, eps)\n    norm_savings = np.clip(norm_savings, 0.0, 1.0)\n\n    tight = dij / np.maximum(geo, eps)\n    tight_factor = 1.0 / (1.0 + tight)\n\n    # Small perturbation: weight normalized savings more than tightness.\n    a = np.log1p(norm_savings)\n    b = np.log1p(tight_factor)\n    base = 0.6 * a + 0.35 * b\n\n    combined = demands[i_idx] + demands[j_idx]\n    slack = np.clip(1.0 - combined / capacity, 0.0, 1.0)\n    slack_bonus = 0.15 * np.sqrt(slack)\n\n    score = base + slack_bonus\n\n    feasible = combined <= capacity + eps\n    fallback = -1.0 + 0.5 * np.log1p(norm_savings)\n    score = np.where(feasible, score, fallback)\n\n    score = np.where(np.isfinite(score), score, -1.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "c5025a13162d48613a68a06bcd17ff21db83d93d78dca6b8515b912186328900",
+  "design_sha256": "fb6ae71591bf85736b26843c6b29e17df9fee58bbddb46a11ea5a84f06e12aad",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261126\\arm_m3_1_plain_text\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

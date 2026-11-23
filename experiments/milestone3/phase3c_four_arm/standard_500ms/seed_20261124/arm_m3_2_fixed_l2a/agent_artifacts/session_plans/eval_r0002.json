@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:a13e8b70f68c47dba5113c758155b596"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The current static merge score is dominated by raw inter-route distance saving, which over-merges geographically elongated routes. On clustered / eccentric-depot / tight-capacity instances (the three weakest archive regimes), a geometry-normalized merge score (saving per combined route radius + depot-radial/angular alignment term + capacity-slack penalty) will lower mean objective versus the round-1 baseline of 16.0885 while keeping mean solve time far below 500 ms.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:a13e8b70f68c47dba5113c758155b596"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the L2a static merge ranking (score_merge_static) so it is geometry-aware in the regimes where the archive is weakest — clustered spatial layouts, eccentric depots and tight capacity. Concretely: (1) replace the pure distance-gain term with a normalized gain that divides inter-route saving by the combined route radius, so compact clusters are merged before long thin chains; (2) add a depot-radial alignment term (|radial(centroid_a) - radial(centroid_b)| plus angle difference from the depot) to prefer angularly adjacent merges when the depot is eccentric; (3) add an explicit capacity-slack penalty on merged load fraction (heavier penalty when load/capacity exceeds ~0.85) to protect tight-capacity instances from greedy over-fill; (4) keep deterministic tie-breaking on route index for reproducibility. Keep relocate_2opt as the postprocess because it closes intra-route crossings cheaply and stays well inside the 500 ms budget (mean solve ~2.5 ms)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

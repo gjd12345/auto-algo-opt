@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:a6c51e5576c14db6a60584d4e8475fe8"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Keeping the global depot-distance scale normalization and adding a dimensionless capacity-fill reward with endpoint-demand balance (score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + gamma*(1-|qi-qj|/(qi+qj))) yields a merge sequence that, followed by relocate_2opt, reduces dev_24 mean tour length below the round-2 baseline 16.0617, with the largest gains concentrated on tight-capacity and 100-node instances (the weakest regimes, vbs_rel_gap ~ -22.0%).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:a6c51e5576c14db6a60584d4e8475fe8"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the L2a static merge scoring hook under strict global-scale normalization: (1) keep denominator scale = mean(d[0,1:]) (never per-pair d0i+d0j, which KB shows degrades dev_24 from ~16.2 to ~18.0); (2) add a capacity-fill reward beta*clip((q_i+q_j)/Q,0,1) plus a dimensionless endpoint-demand balance term gamma*(1-|q_i-q_j|/(q_i+q_j)) to cut tail-route fragmentation — targeting the 'tight' capacity regime (12/24 instances, worst vbs_rel_gap -22.0%); (3) modulate lambda in [1.00,1.15] by demand tightness so tight-capacity instances favor bigger edge penalties; (4) since the current postprocess is relocate_2opt (active, mean 16.0617), the merge ordering only needs to be a good LS seed — bias scoring slightly toward spatially coherent endpoint merges rather than exhaustive savings magnitude, and verify relocate_2opt still gains residual benefit over the evolved start."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

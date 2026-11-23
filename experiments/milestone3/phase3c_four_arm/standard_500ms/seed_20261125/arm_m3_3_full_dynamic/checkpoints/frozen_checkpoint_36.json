@@ -1,0 +1,37 @@
+{
+  "checkpoint_budget": 36,
+  "triggered_at_used": 36,
+  "captured_at": "2026-11-23T09:11:42Z",
+  "best_dev_objective": 16.006666,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "session_r0002_cvrp_parallel_merge_static_24a40f3b",
+    "display_name": "Session R2 · cvrp_parallel_merge_static",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "relocate_2opt",
+    "template_options": {
+      "inject_static_kb_clues": false,
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    n = distance_matrix.shape[0] - 1\n    if n >= 1:\n        scale = float(np.mean(distance_matrix[0, 1:n + 1]))\n    else:\n        scale = 0.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    lam = 1.05\n    mu = 0.12\n    beta = 0.10\n    gamma = 0.05\n\n    savings = (d0i + d0j - lam * dij) / scale\n    balance = mu * np.abs(d0i - d0j) / scale\n\n    di = demands[i_idx]\n    dj = demands[j_idx]\n    combined = di + dj\n\n    fill = np.clip(combined / capacity, 0.0, 1.0)\n    fill_reward = beta * fill\n\n    sums = di + dj\n    safe_sums = np.where(sums > 0.0, sums, 1.0)\n    demand_balance = gamma * (1.0 - np.abs(di - dj) / safe_sums)\n    demand_balance = np.where(sums > 0.0, demand_balance, 0.0)\n\n    overflow = np.maximum(combined - capacity, 0.0) / capacity\n    overflow_pen = 1.0 * overflow\n\n    score = savings + balance + fill_reward + demand_balance - overflow_pen\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64, copy=False)",
+    "hook_code_sha256": "24a40f3b83e8fb9d8919719c1b5eaa44c8b94aab8c88fb3749e16e79561ff4df",
+    "design_sha256": "dabe4fcfe9fd817f41496c5f113f6fd3809cc654c4f78b241fd28c9f8866a1af",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261125\\arm_m3_3_full_dynamic\\session_run\\rounds\\round_0002\\eoh_run",
+    "kb_release_id": "20261123-main-co-workbench-m2",
+    "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+    "default_budget_ms": 500.0
+  }
+}

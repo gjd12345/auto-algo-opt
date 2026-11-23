@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:7bcebc72347f4e6d97b02d83aa03bdb7"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A globally depot-distance-normalized generalized savings score (with radial asymmetry term mu*|d0i-d0j| and dimensionless capacity-fill bonus beta) preserves far-customer radial merge priority and scale invariance, reaching ~16.14 mean tour length on cvrp_dev_hetero_24 with postprocess 'none'; layering relocate_2opt on top of that evolved merge start should strictly improve or tie per instance (descent-only local search) and approach or beat the 16.1398 no-postprocess incumbent as well as CW+relocate_2opt (16.1549), since the merged starting solution is of higher quality than bare CW while relocate_2opt removes residual inter-route waste that the static pairwise layer cannot see.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:7bcebc72347f4e6d97b02d83aa03bdb7"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the static pairwise merge score within the globally-normalized generalized-savings family: score(i,j) = (d0i + d0j - lam*d_ij + mu*|d0i - d0j|)/mean(d0[1:]) + beta*clip((q_i+q_j)/Q,0,1), searching lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], with mandatory single global depot-distance scale (strictly avoid per-pair (d0i+d0j) normalization), and combine the evolved merge starting point with a relocate_2opt descent postprocess (affordable because the vectorized hook runs in <0.4 ms, leaving the full 500 ms budget for local search)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

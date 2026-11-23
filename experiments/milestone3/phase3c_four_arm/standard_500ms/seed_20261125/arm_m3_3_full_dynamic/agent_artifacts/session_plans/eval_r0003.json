@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:0d94a64e48a44a8ab17ab9c6533e84ca"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Because the weakest dev_24 regimes are capacity_level=tight (vbs_rel_gap -22.2%) and spatial=clustered (-19.8%), residual error is dominated by tail-route fragmentation rather than bad long-edge ordering; therefore increasing the capacity-fill/balance reward (beta in [0.15,0.30] with demand-equilibrium term) while retaining the global depot-mean distance normalization will reduce mean objective below the current SBS 16.0067 on tight-capacity and clustered instances without degrading solve_ms beyond the ~3.6 ms already observed, since the hook stays a single vectorized scoring pass.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0d94a64e48a44a8ab17ab9c6533e84ca"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Strengthen the dimensionless capacity-fill reward and endpoint-demand-balance term in the globally depot-scale-normalized generalized savings score (lam~1.05, mu~0.12, beta~0.15-0.30 plus 1-|q_i-q_j|/(q_i+q_j) balance), keeping normalization fixed at mean(d[0,1:]), so that merge ordering packs tight-capacity and clustered instances into fewer fragmented routes before relocate_2opt polishing."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

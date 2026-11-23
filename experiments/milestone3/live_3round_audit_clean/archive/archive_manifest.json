@@ -1,0 +1,145 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T08:13:50Z",
+  "solver_count": 3,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_cvrp_parallel_merge_static_d290e41f",
+      "registered_at": "2026-11-23T08:05:27Z",
+      "arm_id": "arm_m3_3_full_dynamic",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "session_r0001_cvrp_parallel_merge_static_d290e41f",
+        "display_name": "Session R1 · cvrp_parallel_merge_static",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+        "template_id": "cvrp_parallel_merge_static",
+        "template_version": "v1",
+        "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+        "postprocess_mode": "relocate_2opt",
+        "template_options": {
+          "inject_static_kb_clues": false,
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_static",
+        "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    d0 = distance_matrix[0, 1:]\n    scale = float(np.mean(d0)) if d0.size > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    lam = 1.10\n    mu = 0.10\n    beta = 0.10\n    gamma = 0.02\n\n    qi = demands[i_idx]\n    qj = demands[j_idx]\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n    fill = beta * np.clip((qi + qj) / capacity, 0.0, 1.0)\n    balance = gamma * (1.0 - np.abs(qi - qj) / (capacity + 1e-12))\n\n    score = savings + fill + balance\n    return np.asarray(score, dtype=np.float64)",
+        "hook_code_sha256": "d290e41f09917f96893cffd3b63b5727d1ebd4a347d49aa7bd51e084586d5bea",
+        "design_sha256": "0999150357c3a483a1db4555b17f5061804ad81f1d84c6580a2311d64160ad2d",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\live_3round_audit_clean\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m2",
+        "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+        "cited_kb_ids": [
+          "method-cvrp-m2-l2a-generalized-savings",
+          "method-lit-cvrp-construct-clarke-wright-savings-merge",
+          "method-cvrp-m2-l2b-dynamic-state-merge"
+        ],
+        "diagnostic_ref": {
+          "path": "agent_artifacts/diagnostics/diag_0001.json",
+          "sha256": "881b96338672630c74934fa81367433a834aa9e997ffc233a0da53a94569d218",
+          "usage_role": "dev_selection"
+        },
+        "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "suite_id": "cvrp_dev_hetero_24",
+        "mean_tour_length": 16.08304,
+        "solve_ms_mean": 2.306
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_cvrp_parallel_merge_static_648554a3",
+      "registered_at": "2026-11-23T08:07:16Z",
+      "arm_id": "arm_m3_3_full_dynamic",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "session_r0002_cvrp_parallel_merge_static_648554a3",
+        "display_name": "Session R2 · cvrp_parallel_merge_static",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+        "template_id": "cvrp_parallel_merge_static",
+        "template_version": "v1",
+        "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+        "postprocess_mode": "relocate_2opt",
+        "template_options": {
+          "inject_static_kb_clues": false,
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_static",
+        "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0 = distance_matrix[0, 1:]\n    scale = float(np.mean(d0)) if d0.size > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    lam = 1.05\n    mu = 0.14\n    beta = 0.14\n    gamma = 0.03\n\n    qi = demands[i_idx]\n    qj = demands[j_idx]\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n    fill = beta * np.clip((qi + qj) / capacity, 0.0, 1.0)\n    balance = gamma * (1.0 - np.abs(qi - qj) / (capacity + 1e-12))\n\n    score = savings + fill + balance\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+        "hook_code_sha256": "648554a37aa7ae1f706bcb3907a02a4cb6d4fa08db21f24fbe24d920b3f41a37",
+        "design_sha256": "e761d9eec97659e9ccb2073dc593742bcb389835e70bd19ee68d03bc02802c51",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\live_3round_audit_clean\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m2",
+        "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+        "cited_kb_ids": [
+          "method-cvrp-m2-l2a-generalized-savings"
+        ],
+        "diagnostic_ref": {
+          "path": "agent_artifacts/diagnostics/diag_0001.json",
+          "sha256": "881b96338672630c74934fa81367433a834aa9e997ffc233a0da53a94569d218",
+          "usage_role": "dev_selection"
+        },
+        "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "suite_id": "cvrp_dev_hetero_24",
+        "mean_tour_length": 16.057263,
+        "solve_ms_mean": 4.0102
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0003_cvrp_parallel_merge_static_80d629c4",
+      "registered_at": "2026-11-23T08:13:50Z",
+      "arm_id": "arm_m3_3_full_dynamic",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "m2-frozen-interface-solver/v1",
+        "solver_id": "session_r0003_cvrp_parallel_merge_static_80d629c4",
+        "display_name": "Session R3 · cvrp_parallel_merge_static",
+        "problem_family": "cvrp",
+        "paradigm": "parallel_merge",
+        "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+        "template_id": "cvrp_parallel_merge_static",
+        "template_version": "v1",
+        "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+        "postprocess_mode": "relocate_2opt",
+        "template_options": {
+          "inject_static_kb_clues": false,
+          "positive_savings_only": true
+        },
+        "hook_name": "score_merge_static",
+        "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    n = distance_matrix.shape[0] - 1\n    if n <= 0:\n        return np.zeros(i_idx.shape, dtype=np.float64)\n\n    d0 = distance_matrix[0, 1:]\n    scale = float(np.mean(d0)) if d0.size > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Instance-level tightness tau in (0, 1]\n    total_demand = float(np.sum(demands[1:])) if n > 0 else 0.0\n    if capacity > 0.0 and total_demand > 0.0:\n        k = float(np.ceil(total_demand / capacity))\n        if k < 1.0:\n            k = 1.0\n        tau = total_demand / (k * capacity)\n    else:\n        tau = 0.5\n    if not np.isfinite(tau):\n        tau = 0.5\n    tau = float(np.clip(tau, 0.0, 1.0))\n\n    # Demand variance factor in [0, 1]: low variance => larger boost\n    if n > 1:\n        q_all = demands[1:]\n        q_mean = float(np.mean(q_all))\n        q_std = float(np.std(q_all))\n        if q_mean > 1e-12:\n            cv = q_std / q_mean\n            var_factor = 1.0 / (1.0 + cv)\n        else:\n            var_factor = 0.5\n    else:\n        var_factor = 0.5\n    if not np.isfinite(var_factor):\n        var_factor = 0.5\n    var_factor = float(np.clip(var_factor, 0.0, 1.0))\n\n    # Eccentricity of depot: mean depot-distance over radius proxy\n    if d0.size > 0:\n        d0_mean = float(np.mean(d0))\n        d0_max = float(np.max(d0))\n        if d0_max > 1e-12:\n            ecc = d0_mean / d0_max\n        else:\n            ecc = 0.0\n    else:\n        ecc = 0.0\n    if not np.isfinite(ecc):\n        ecc = 0.0\n    # Eccentric ~1 when depot is at edge (mean near max), central ~ smaller.\n    ecc = float(np.clip(ecc, 0.0, 1.0))\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    qi = demands[i_idx]\n    qj = demands[j_idx]\n\n    # Adaptive weights driven by tau, var_factor, ecc (all dimensionless)\n    lam = 1.00 + 0.15 * tau\n    mu = 0.08 + 0.10 * ecc\n    beta = 0.05 + 0.15 * (tau * var_factor)\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n\n    fill_ratio = np.clip((qi + qj) / capacity, 0.0, 1.0)\n    # Multiplicative fill gating rather than pure additive: emphasises near-full merges\n    fill_gate = 1.0 + beta * fill_ratio\n\n    # Demand balance as smooth multiplicative factor in [1 - delta, 1 + delta]\n    delta = 0.03\n    balance = 1.0 + delta * (1.0 - np.abs(qi - qj) / (capacity + 1e-12))\n\n    score = savings * fill_gate * balance\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+        "hook_code_sha256": "80d629c45916b52473be1cde2a50dd69678c4669b369f2bf44c8ff12e4d2d620",
+        "design_sha256": "419b2765c7b3f8584b067a0cd6af3f639331d42869bef914201ef079ebb7cff5",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\live_3round_audit_clean\\session_run\\rounds\\round_0003\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m2",
+        "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+        "cited_kb_ids": [
+          "method-cvrp-m2-l2a-generalized-savings",
+          "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+          "method-cvrp-m2-l2b-dynamic-state-merge"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+        "default_budget_ms": 500.0
+      },
+      "suite_metrics": {
+        "suite_id": "cvrp_dev_hetero_24",
+        "mean_tour_length": 16.081924,
+        "solve_ms_mean": 2.6613
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

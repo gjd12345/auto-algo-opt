@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Adaptive-tightness generalized savings on the L2a static merge hook: keep the single global depot-distance scale mean(d[0,1:]) as the only dimensional denominator, but make the dimensionless capacity-fill bonus beta scale up with instance tightness tau = sum(q)/(ceil(sum(q)/Q)*Q) (and with demand variance) so that tight-capacity/uniform-demand regimes pack routes more aggressively, while adding an eccentric-depot radial coupling term mu*|d(0,i)-d(0,j)|/scale that rewards pairing customers at similar depot radius when the depot is off-centre (eccentric regime) and suppressing it when the depot is central. Guard against the documented per-pair normalization antipattern; the hook must remain a one-shot fully vectorized evaluation so p95 stays in the low-ms range under the 500 ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB (method-cvrp-m2-l2a-generalized-savings) fixes the design space that already works on this exact template: score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d(0,1:)) + beta*clip((qi+qj)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], one-shot vectorized scoring giving ~0.4 ms hook time and ~2.4 ms median solve, i.e. huge headroom inside the 500 ms budget (dev_24 mean 16.1398 with no postprocess). Rounds 1-2 of this arm already pushed dev_24 to 16.083/16.057 with relocate_2opt, and the archive's SBS-vs-VBS gap is only 0.33%, with the two solvers splitting wins 15/9 - so per-instance gain must come from instance-adaptive weights rather than a global constant. evidence-cvrp-m2-perpair-scale-normalization-antipattern forbids per-pair (d0i+d0j) normalization, so the adaptation pressure is placed only on the dimensionless multipliers (beta, mu), which is scale-invariant by construction and keeps the 1e-3 coordinate-scaling invariance intact. L2b (method-cvrp-m2-l2b-dynamic-state-merge) shows dynamic candidate refresh is 3.7x slower at p95 with zero quality delta vs static CW at 500 ms, so staying in L2a with richer static features is the correct cost-benefit trade. Postprocess relocate_2opt is retained because it is the incumbent postprocess on the Pareto frontier and left zero measurable overhead at these sizes, while intra_2opt alone was not shown to help tight-capacity cases as much as relocate+2opt."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "The dev_24 weakest regimes (capacity_level=tight rel_gap -22.0%, demand_dist=uniform -21.1%, depot_style=eccentric -20.1%, spatial=clustered -19.2%) are dominated by residual route fragmentation caused by a fixed, instance-agnostic capacity-fill weight beta and by a fixed radial asymmetry mu. If beta is made monotone in instance tightness tau and mu is made monotone in depot eccentricity (mean d(0,i)/diameter), the merge sequence will close large-savings edges earlier and cut the number of under-filled routes, lowering mean objective below the current SBS 16.0573 in those regimes without increasing timeout risk, and without regressing the already-good non-tight/non-eccentric instances.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB (method-cvrp-m2-l2a-generalized-savings) fixes the design space that already works on this exact template: score = (d0i + d0j - lam*dij + mu*|d0i-d0j|)/mean(d(0,1:)) + beta*clip((qi+qj)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], one-shot vectorized scoring giving ~0.4 ms hook time and ~2.4 ms median solve, i.e. huge headroom inside the 500 ms budget (dev_24 mean 16.1398 with no postprocess). Rounds 1-2 of this arm already pushed dev_24 to 16.083/16.057 with relocate_2opt, and the archive's SBS-vs-VBS gap is only 0.33%, with the two solvers splitting wins 15/9 - so per-instance gain must come from instance-adaptive weights rather than a global constant. evidence-cvrp-m2-perpair-scale-normalization-antipattern forbids per-pair (d0i+d0j) normalization, so the adaptation pressure is placed only on the dimensionless multipliers (beta, mu), which is scale-invariant by construction and keeps the 1e-3 coordinate-scaling invariance intact. L2b (method-cvrp-m2-l2b-dynamic-state-merge) shows dynamic candidate refresh is 3.7x slower at p95 with zero quality delta vs static CW at 500 ms, so staying in L2a with richer static features is the correct cost-benefit trade. Postprocess relocate_2opt is retained because it is the incumbent postprocess on the Pareto frontier and left zero measurable overhead at these sizes, while intra_2opt alone was not shown to help tight-capacity cases as much as relocate+2opt."
+  }
+}

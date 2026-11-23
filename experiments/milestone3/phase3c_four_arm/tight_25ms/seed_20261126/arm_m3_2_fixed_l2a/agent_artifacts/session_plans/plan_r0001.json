@@ -1,0 +1,34 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the static pairwise merge score `score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx)` as a GLOBAL-DEPOT-SCALE-NORMALIZED generalized savings rule: with s = mean(d(0, 1..n)) computed once as a single global scalar, score = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/s + w_fill * f(load_i, load_j, capacity), where f is a dimensionless capacity-fill reward (e.g. f = (load_i+load_j)/capacity or -|capacity - load_i - load_j|/capacity) and (lam, mu, w_fill) are the only tunable knobs, evolved in ranges lam in [0.6,1.6], mu in [-0.3,0.3], w_fill in [0.0,0.6]. Vectorize the rule over the candidate pair index arrays (pure NumPy broadcasting, no per-pair Python loops, no per-pair local normalization, no coordinates). Add a deterministic intra-route 2-opt postprocess (O(1)-delta edge reversal per route, first-improvement, cheap) on top of the merged solution. Keep the whole pipeline strictly scale-invariant: every term must be divided by the same global depot-distance scalar s so coordinate scaling produces 0.00% drift and the radial \"close far-from-depot endpoints first\" ordering of Clarke-Wright is preserved.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The KB's strongest L2a artifact is exactly the global-depot-scale-normalized generalized savings rule (dev_24 = 16.1595, ~2.4 ms median, 0.00% coordinate-scaling drift), and the paired evidence entry shows that switching to per-pair local normalization destroys the radial priority order and costs 0.5-1.9 in dev_24 mean tour length — so the first round should (a) lock in the global-scalar normalization and (b) spend the large remaining time headroom (2.4 ms median vs 25 ms budget) on cheap deterministic intra-route 2-opt, which is O(1)-delta and was already shown in Milestone-1 to be a consistent gain on top of parallel Clarke-Wright merges. The L2b entry warns that dynamic/refresh interfaces blow up p95 (~3.7x) and cause budget-exhaustion degradation at 25 ms, so we deliberately stay on the STATIC (L2a) interface and keep the postprocess to the cheapest deterministic neighborhood. Searching only over three dimensionless knobs (lam, mu, w_fill) keeps the EoH search space small and keeps every candidate scale-invariant by construction."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On dev_24 (cvrp_dev_hetero_24) at a 25 ms per-instance budget, a globally depot-scale-normalized generalized savings merge score (d0i+d0j-lam*dij+mu*|d0i-d0j|)/mean(d(0,1..n)) plus a dimensionless capacity-fill bonus, followed by deterministic intra-route 2-opt, will reach mean total tour length <= 16.20 (i.e. at least matching the KB L2a reference 16.1595 within noise) with p95 per-instance runtime well under 25 ms and zero budget-exhaustion fallbacks; it should strictly beat the same rule without postprocess, and should dominate any variant that uses per-pair local normalization (d0i+d0j-dij)/(d0i+d0j), which is predicted to degrade by >= 0.3 in mean tour length.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "intra_2opt",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-intra-2opt",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "The KB's strongest L2a artifact is exactly the global-depot-scale-normalized generalized savings rule (dev_24 = 16.1595, ~2.4 ms median, 0.00% coordinate-scaling drift), and the paired evidence entry shows that switching to per-pair local normalization destroys the radial priority order and costs 0.5-1.9 in dev_24 mean tour length — so the first round should (a) lock in the global-scalar normalization and (b) spend the large remaining time headroom (2.4 ms median vs 25 ms budget) on cheap deterministic intra-route 2-opt, which is O(1)-delta and was already shown in Milestone-1 to be a consistent gain on top of parallel Clarke-Wright merges. The L2b entry warns that dynamic/refresh interfaces blow up p95 (~3.7x) and cause budget-exhaustion degradation at 25 ms, so we deliberately stay on the STATIC (L2a) interface and keep the postprocess to the cheapest deterministic neighborhood. Searching only over three dimensionless knobs (lam, mu, w_fill) keeps the EoH search space small and keeps every candidate scale-invariant by construction."
+  }
+}

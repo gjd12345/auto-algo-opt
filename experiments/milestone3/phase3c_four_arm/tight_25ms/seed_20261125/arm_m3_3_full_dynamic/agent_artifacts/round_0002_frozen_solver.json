@@ -1,0 +1,34 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0002_cvrp_parallel_merge_static_05376f56",
+  "display_name": "Session R2 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    i_idx = np.asarray(i_idx, dtype=np.int64)\n    j_idx = np.asarray(j_idx, dtype=np.int64)\n    d = np.asarray(distance_matrix, dtype=np.float64)\n    q = np.asarray(demands, dtype=np.float64)\n\n    n = d.shape[0] - 1\n    d0 = d[0, 1:n + 1]\n    scale = float(np.mean(d0)) if n > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = d[0, i_idx]\n    d0j = d[0, j_idx]\n    dij = d[i_idx, j_idx]\n\n    lam = 1.10\n    mu = 0.08\n    beta = 0.10\n    gamma = 0.03\n\n    saving = d0i + d0j - lam * dij\n    asym = mu * np.abs(d0i - d0j)\n\n    qi = q[i_idx]\n    qj = q[j_idx]\n    qsum = qi + qj\n    fill = np.clip(qsum / capacity, 0.0, 1.0)\n    fill2 = fill * fill\n\n    eps = 1e-12\n    balance = 1.0 - np.abs(qi - qj) / (qsum + eps)\n\n    score = (saving + asym) / scale + beta * fill + gamma * fill2 + 0.02 * balance\n    score = np.where(np.isfinite(score), score, -1e30)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "05376f56fd0e83162fbd988abc1988e8a8a4133b1d53ed02b6b3eb57106c52cc",
+  "design_sha256": "289026d7ba7507801500a6c3645659f4375c49a320fcf35660836e71df019350",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261125\\arm_m3_3_full_dynamic\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": {
+    "path": "agent_artifacts/diagnostics/diag_0001.json",
+    "sha256": "e12ac4628e7e046bea42b21fa5675cab43ef405970831190f793fc20bb849c84",
+    "usage_role": "dev_selection"
+  },
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

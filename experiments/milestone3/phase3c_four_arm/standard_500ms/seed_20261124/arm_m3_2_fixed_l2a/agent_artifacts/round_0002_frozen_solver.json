@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0002_cvrp_parallel_merge_static_dd329f11",
+  "display_name": "Session R2 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "relocate_2opt",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    d0 = distance_matrix[0]\n    # Global scale (dimensionless normalization of lengths).\n    scale = np.mean(d0[1:])\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = d0[i_idx]\n    d0j = d0[j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Base inter-route saving.\n    saving = d0i + d0j - dij\n\n    # Combined route-radius proxy: use radial extents to normalize elongated routes.\n    rad_a = d0i\n    rad_b = d0j\n    rad_sum = rad_a + rad_b\n    route_radius = np.maximum(rad_sum * 0.5, 1e-12)\n\n    # Normalized gain: saving per combined route radius (scale invariant).\n    gain_norm = saving / (route_radius + scale)\n\n    # Depot-radial alignment: prefer pairs with similar radial distance.\n    radial_diff = np.abs(d0i - d0j) / scale\n    radial_align = 1.0 / (1.0 + radial_diff)\n\n    # Angular alignment around depot (using coordinates implied by distances via law of cosines is unstable;\n    # use radial + inter-distance geometry for a dimensionless angular proxy).\n    # cos(angle between i and j as seen from depot) ~ (d0i^2 + d0j^2 - dij^2) / (2*d0i*d0j)\n    denom = 2.0 * np.maximum(d0i * d0j, 1e-12)\n    cosang = (d0i * d0i + d0j * d0j - dij * dij) / denom\n    cosang = np.clip(cosang, -1.0, 1.0)\n    ang_align = 0.5 * (cosang + 1.0)  # 1 when same direction, 0 when opposite\n\n    alignment = 0.6 * radial_align + 0.4 * ang_align\n\n    # Capacity slack penalty: merged load fraction, super-linear beyond ~0.85.\n    qsum = demands[i_idx] + demands[j_idx]\n    load_frac = qsum / capacity\n    load_frac_c = np.clip(load_frac, 0.0, 1.0)\n    soft = load_frac_c\n    # extra penalty above threshold\n    tight = np.clip((load_frac_c - 0.85) / 0.15, 0.0, 1.0)\n    cap_pen = 0.35 * soft + 0.9 * tight * tight\n\n    alpha = 1.0     # normalized gain weight\n    gamma = 0.25    # alignment bonus weight\n    delta = 0.55    # capacity penalty weight\n\n    score = alpha * gain_norm + gamma * alignment - delta * cap_pen\n\n    bad = ~np.isfinite(score)\n    if np.any(bad):\n        score = np.where(bad, gain_norm, score)\n    return score",
+  "hook_code_sha256": "dd329f11e61da4b7dab6f70aa05a7f63ad9b2dbee98532449580cfd154577ce9",
+  "design_sha256": "eb98fcaa3e3eef2ea6240bc85a26209b7d8afd4e316db6f348c0a91eb343e360",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261124\\arm_m3_2_fixed_l2a\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

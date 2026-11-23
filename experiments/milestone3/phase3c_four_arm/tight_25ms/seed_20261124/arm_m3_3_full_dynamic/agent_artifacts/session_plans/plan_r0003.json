@@ -1,0 +1,40 @@
+{
+  "round_id": 3,
+  "direction": "Extend the globally scale-normalized generalized savings score into a two-term family: (a) keep the scale-invariant radial savings core s_ij = (d0i + d0j - lam*dij + mu*|d0i - d0j|) / mean(d[0,1:]) with lam in [1.00,1.15], mu in [0.08,0.15], and (b) strengthen the dimensionless capacity-packing channel toward tight-capacity regimes by scoring post-merge fill fill_ij = clip((qi+qj)/Q,0,1) with a boosted beta in [0.10,0.30] plus a residual-slack penalty -gamma*clip((Q-(qi+qj))/Q,0,1) and an endpoint demand-imbalance term delta*(1-|qi-qj|/(qi+qj)). All terms remain dimensionless and scale-invariant (1e-3 rescale => 0.00% drift), computed in one fully vectorized pass before the merge loop so hook_ms stays < 0.5 ms and the 25 ms budget is never exhausted. No postprocess, to keep the pure constructive effect measurable.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The L2a entry confirms the scale-normalized generalized savings family (dev_24 16.1398–16.1595, 100% completion at both 500 ms and 25 ms) is the correct backbone and that per-pair normalization is an anti-pattern that destroys radial priority ordering; we therefore keep the single global scale denominator and only mutate the dimensionless capacity channel. Archive feedback shows the current SBS at 16.1275 with VBS gap only 0.46%, so gains must come from regime-specific weakness: tight capacity and n=100 clustered instances where fragmented tail routes dominate. The L2b entry documents that dynamic candidate refresh costs ~3.7x p95 latency and caused budget exhaustion at 25 ms, so we deliberately stay on the static one-shot vectorized hook and keep postprocess 'none' rather than risking 25 ms exhaustion with relocate_2opt. Expected outcome: modest but non-degrading improvement concentrated on the tight/100/clustered strata while preserving the ~2 ms mean solve time."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at the 25 ms budget, the current leader (16.1275) is limited by tail-trip fragmentation under tight capacity (vbs_rel_gap -22.02% on capacity_level=tight, -20.81% on size=100); adding a boosted dimensionless merge-fill reward with a residual-slack penalty and endpoint demand-imbalance term on top of the scale-normalized radial savings core will reduce the number of residual near-empty routes and lower mean tour length below 16.1275 without increasing hook cost beyond ~0.5 ms, so no budget-exhaustion degradation occurs.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "4c9f962db8a6490c1fea14f5fd563874ee93858729e152f656aa7780d5f84ecf",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "The L2a entry confirms the scale-normalized generalized savings family (dev_24 16.1398–16.1595, 100% completion at both 500 ms and 25 ms) is the correct backbone and that per-pair normalization is an anti-pattern that destroys radial priority ordering; we therefore keep the single global scale denominator and only mutate the dimensionless capacity channel. Archive feedback shows the current SBS at 16.1275 with VBS gap only 0.46%, so gains must come from regime-specific weakness: tight capacity and n=100 clustered instances where fragmented tail routes dominate. The L2b entry documents that dynamic candidate refresh costs ~3.7x p95 latency and caused budget exhaustion at 25 ms, so we deliberately stay on the static one-shot vectorized hook and keep postprocess 'none' rather than risking 25 ms exhaustion with relocate_2opt. Expected outcome: modest but non-degrading improvement concentrated on the tight/100/clustered strata while preserving the ~2 ms mean solve time."
+  }
+}

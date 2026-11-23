@@ -1,0 +1,40 @@
+{
+  "round_id": 3,
+  "direction": "Scale-normalized generalized savings with capacity-fill reward and asymmetric depot-distance penalty (tight-capacity / clustered focus)",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 3 continues on the only allowed template (cvrp_parallel_merge_static, hook score_merge_static) which is also the SBS in the archive (15.9930 mean, 3.81 ms) with gap over VBS only 0.11% — so gains must come from consistent small improvements rather than paradigm change. KB entry method-cvrp-m2-l2a-generalized-savings is the strongest verified static merge rule in this exact template (dev_24 16.1595, blind_120 24.2003, -6.44% vs prior pointwise rule, p=0), and confirms that the scale-normalized generalized savings term plus a dimensionless capacity-fill bonus is the dominant lever; the classic CW entry supplies the baseline savings term, and the L2b entry justifies staying on the static hook because dynamic candidate refresh costs ~3.7x p95 latency with zero accuracy gain at 500 ms and severe degradation under tight budgets. The weakest regimes reported in archive feedback (tight capacity, clustered spatial, eccentric depot, size 100) suggest that capacity-fill and depot-leg asymmetry are the remaining levers, so this round evolves lam, mu and the capacity-fill weight nu under scale normalization, keeping relocate_2opt postprocess (allowed) since it is applied per-route and is cheap relative to the 500 ms budget."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Normalizing the pairwise merge score by the global mean depot distance scale = mean(d(0,1..n)) — score = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/scale + nu*((load_i+load_j)/capacity)^2 — keeps the rule dimensionless and coordinate-scale invariant (0% scaling drift), while the capacity-fill reward (nu>0) and the asymmetry term mu>0 let the static merge prefer near-full routes and balanced depot legs. This should specifically reduce the relative gap in the weakest regimes (capacity_level=tight, spatial=clustered, depot_style=eccentric) that dominate the current VBS-vs-SBS gap, and preserve the ~2-4 ms median runtime so that relocate_2opt postprocess stays well inside the 500 ms budget.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "17da891220643a84db5969cf17582f4469ae6eded7077d5ba9b390cfa772bdb3",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Round 3 continues on the only allowed template (cvrp_parallel_merge_static, hook score_merge_static) which is also the SBS in the archive (15.9930 mean, 3.81 ms) with gap over VBS only 0.11% — so gains must come from consistent small improvements rather than paradigm change. KB entry method-cvrp-m2-l2a-generalized-savings is the strongest verified static merge rule in this exact template (dev_24 16.1595, blind_120 24.2003, -6.44% vs prior pointwise rule, p=0), and confirms that the scale-normalized generalized savings term plus a dimensionless capacity-fill bonus is the dominant lever; the classic CW entry supplies the baseline savings term, and the L2b entry justifies staying on the static hook because dynamic candidate refresh costs ~3.7x p95 latency with zero accuracy gain at 500 ms and severe degradation under tight budgets. The weakest regimes reported in archive feedback (tight capacity, clustered spatial, eccentric depot, size 100) suggest that capacity-fill and depot-leg asymmetry are the remaining levers, so this round evolves lam, mu and the capacity-fill weight nu under scale normalization, keeping relocate_2opt postprocess (allowed) since it is applied per-route and is cheap relative to the 500 ms budget."
+  }
+}

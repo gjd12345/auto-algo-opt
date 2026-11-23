@@ -1,0 +1,38 @@
+{
+  "checkpoint_budget": 36,
+  "triggered_at_used": 36,
+  "captured_at": "2026-11-23T09:29:31Z",
+  "best_dev_objective": 16.129874,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "session_r0003_cvrp_parallel_merge_static_31e86da8",
+    "display_name": "Session R3 · cvrp_parallel_merge_static",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "relocate_2opt",
+    "template_options": {
+      "inject_static_kb_clues": false,
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    d = np.asarray(distance_matrix, dtype=np.float64)\n    q = np.asarray(demands, dtype=np.float64)\n    Q = float(capacity)\n    i = np.asarray(i_idx, dtype=np.int64)\n    j = np.asarray(j_idx, dtype=np.int64)\n\n    d0i = d[0, i]\n    d0j = d[0, j]\n    dij = d[i, j]\n\n    # Global depot scale for coordinate-scale invariance.\n    n = d.shape[0] - 1\n    if n > 0:\n        scale = float(np.mean(d[0, 1:n + 1]))\n    else:\n        scale = 0.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        local = np.maximum(d0i, d0j)\n        scale = float(np.mean(local)) if local.size > 0 else 1.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    # Lower shape parameter: less long-edge exploitation, better L2 start.\n    lam = 1.05\n    # Mild polarization term (kept small).\n    mu = 0.08\n\n    savings = d0i + d0j - lam * dij\n    asym = np.abs(d0i - d0j)\n    base = (savings + mu * asym) / scale\n\n    # Distance-balance penalty: discourage merges between nodes at very\n    # unequal depot radii (dimensionless, bounded in [0, 1]).\n    radius_sum = d0i + d0j\n    balance = np.where(radius_sum > 0.0,\n                       np.abs(d0i - d0j) / np.maximum(radius_sum, 1e-12),\n                       0.0)\n    balance = np.clip(balance, 0.0, 1.0)\n\n    # Capacity-fill reward (dimensionless, bounded).\n    if Q > 0.0:\n        fill = (q[i] + q[j]) / Q\n    else:\n        fill = np.zeros_like(base)\n    fill = np.clip(fill, 0.0, 2.0)\n\n    # Higher fill weight to leave fewer, more balanced routes.\n    w_fill = 0.13\n    w_bal = 0.05\n\n    score = base + w_fill * fill - w_bal * balance\n    score = np.where(np.isfinite(score), score, -1e18)\n    return np.asarray(score, dtype=np.float64).ravel()",
+    "hook_code_sha256": "31e86da8b545ca5b3f05a455f0ce5c4907769341d203accd9cf1a47be7e2dadf",
+    "design_sha256": "aa43cff79048c5378a9704675bc4cf99ad2752827a05d480341c0b9b62c0d95f",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261124\\arm_m3_2_fixed_l2a\\session_run\\rounds\\round_0003\\eoh_run",
+    "kb_release_id": "20261123-main-co-workbench-m2",
+    "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-cvrp-inter-relocate",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+    "default_budget_ms": 25.0
+  }
+}

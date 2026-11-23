@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:34a8b09087e5479a9e027797bae216be"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Using a single GLOBAL depot-distance scale (mean over customers of d(0,.)) to normalize a generalized Clarke-Wright savings expression, plus a dimensionless capacity-fill bonus, preserves the radial priority ordering of far-edge customers while remaining exactly invariant to coordinate rescaling (0.00% drift), and therefore strictly dominates per-pair local normalization and plain CW savings on dev_24 (target ~16.0-16.2 mean tour length) at sub-3 ms median latency, leaving large time headroom under the 25 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:34a8b09087e5479a9e027797bae216be"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the L2a static merge hook into a globally depot-scale-normalized generalized savings rule: score = (d(0,i) + d(0,j) - lam*d(i,j) + mu*|d(0,i) - d(0,j)|)/scale + beta*min(1, (load_i+load_j)/capacity) fill bonus, with scale = mean(d(0, 1..n)) computed once globally, plus a hard feasibility mask (load_i + load_j <= capacity) and a tie-break that prefers pairing the more radially-distant endpoint. Explore lam in [0.7,1.6], mu in [0,0.3], beta in [0,0.3] under the 25 ms budget, keeping the hook fully vectorized (NumPy row/col broadcast over the route-endpoint pair matrix) so median runtime stays ~2-3 ms and no budget-exhaustion fallback can trigger."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

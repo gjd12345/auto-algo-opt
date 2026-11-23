@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Keep the L2a static parallel-merge skeleton but make the savings score a global-scale-normalized generalized savings with capacity-fill and endpoint-demand-balance terms, and close the documented 'no post-merge inter-route relocate' gap by pairing it with relocate_2opt polishing to repair residual route fragmentation on tight-capacity / eccentric-depot instances.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 (L2a + intra_2opt) reached 16.0798 mean at ~2.1 ms/instance, leaving ~497 ms of unused budget. The verified KB entry method-cvrp-m2-l2a-generalized-savings fixes the safe scoring family (global depot-distance scale, lam 1.00-1.15, mu 0.08-0.15, beta 0.05-0.15, dimensionless fill reward, explicit pitfall against per-pair normalization) and states its only weak regime is 'no post_merge_inter_route_relocate' — exactly the untested combination it lists under unconfirmed items (L2a + relocate_2opt). Since dev_24's weakest regimes are tight capacity (vbs -21.7%), size 100 (-20.9%) and eccentric depot (-19.3%), where merge construction tends to leave under-filled end routes, adding inter-route relocate + 2opt polishing after the evolved merge is the highest-leverage, time-affordable change; the L2b attribution evidence (dynamic refresh = zero objective gain but 3.7x p95 cost) tells us to spend the budget on postprocess moves rather than on dynamic candidate refresh."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "H1: On cvrp_dev_hetero_24, score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1) + gamma*(1 - |qi-qj|/(qi+qj)) with lam~1.05, mu~0.12, beta~0.10, gamma~0.05 (never per-pair normalization) will keep the merge layer near the 16.14 dev_24 level while the relocate_2opt postprocess removes residual inter-route fragmentation, so the combined solver beats the round-1 baseline mean objective 16.0798 (especially in the weakest regimes: tight capacity, eccentric depot, n=100) within 500 ms per instance.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 (L2a + intra_2opt) reached 16.0798 mean at ~2.1 ms/instance, leaving ~497 ms of unused budget. The verified KB entry method-cvrp-m2-l2a-generalized-savings fixes the safe scoring family (global depot-distance scale, lam 1.00-1.15, mu 0.08-0.15, beta 0.05-0.15, dimensionless fill reward, explicit pitfall against per-pair normalization) and states its only weak regime is 'no post_merge_inter_route_relocate' — exactly the untested combination it lists under unconfirmed items (L2a + relocate_2opt). Since dev_24's weakest regimes are tight capacity (vbs -21.7%), size 100 (-20.9%) and eccentric depot (-19.3%), where merge construction tends to leave under-filled end routes, adding inter-route relocate + 2opt polishing after the evolved merge is the highest-leverage, time-affordable change; the L2b attribution evidence (dynamic refresh = zero objective gain but 3.7x p95 cost) tells us to spend the budget on postprocess moves rather than on dynamic candidate refresh."
+  }
+}

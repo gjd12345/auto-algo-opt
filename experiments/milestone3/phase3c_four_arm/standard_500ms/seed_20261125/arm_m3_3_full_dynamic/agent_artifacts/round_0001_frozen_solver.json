@@ -1,0 +1,31 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_a0e32eb7",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "intra_2opt",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    n = distance_matrix.shape[0] - 1\n    # Global depot-distance scale (dimensionless normalization)\n    if n >= 1:\n        scale = float(np.mean(distance_matrix[0, 1:n + 1]))\n    else:\n        scale = 0.0\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Generalized Clarke-Wright savings, normalized\n    lam = 1.0\n    savings = (d0i + d0j - lam * dij) / scale\n\n    # Depot-distance balance: prefer merges between customers at similar\n    # depot radius (symmetric, dimensionless, scale-invariant)\n    mu = 0.15\n    balance = mu * np.abs(d0i - d0j) / scale\n\n    # Capacity-fill reward: dimensionless, only depends on demands/capacity\n    # Reward pairs whose combined demand fills vehicles nicely.\n    # Use load ratio; prefer merging pairs whose combined load is close to\n    # a nice fraction of capacity (encourage filling vehicles).\n    di = demands[i_idx]\n    dj = demands[j_idx]\n    combined = di + dj\n    # Normalized fill ratio in [0, ~2]; clip to [0,1] for a smooth reward\n    fill = np.clip(combined / capacity, 0.0, 1.0)\n    # Reward higher fill (saturating near 1) and penalize near-empty merges\n    nu = 0.25\n    fill_reward = nu * fill\n    # Small penalty for pairs that overflow capacity (infeasible, low priority)\n    overflow = np.maximum(combined - capacity, 0.0) / capacity\n    nu_pen = 1.0\n    overflow_pen = nu_pen * overflow\n\n    score = savings + balance + fill_reward - overflow_pen\n\n    # Ensure finite output\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64, copy=False)",
+  "hook_code_sha256": "a0e32eb78d92256b29c8134e801863ef28535f681c80e9735588f0c1fbc20c15",
+  "design_sha256": "f5f6adf82afd0ee305fe3fc26894b3090af0ef381fc37fa1f0be315f6d197486",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261125\\arm_m3_3_full_dynamic\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+  "cited_kb_ids": [
+    "method-cvrp-m2-l2a-generalized-savings",
+    "method-lit-cvrp-construct-clarke-wright-savings-merge",
+    "method-cvrp-m2-l2b-dynamic-state-merge"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 500.0
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:052efa45cf5047c781aa0dc17808ae49"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a strict 25 ms budget on cvrp_dev_hetero_24, a globally depot-scale-normalized generalized savings score with mild edge-length penalty (lam 1.0-1.15), radial asymmetry correction (mu 0.08-0.15) and a dimensionless capacity-fill / endpoint-balance bonus will beat plain Clarke-Wright savings (dev_24 ~16.22) and approach or improve the M2 verified L2a level (16.14) with zero timeout degradation, because per-pair local normalization destroys far-cluster merge priority (degrading to ~18.0) while global scaling preserves it.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:052efa45cf5047c781aa0dc17808ae49"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the generalized Clarke-Wright static merge score in a global depot-scale-normalized space: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0,1..n) + beta*clip((qi+qj)/Q,0,1) with lam ~1.00-1.15, mu ~0.08-0.15, beta ~0.05-0.15, plus an optional endpoint demand-balance term (1 - |qi-qj|/(qi+qj)) and a gentle superlinear fill reward clip(((qi+qj)/Q)^2,0,1) to suppress fragmented tail routes; keep the hook a single fully vectorized pass over the upper-triangle positive-savings candidate list so it stays well inside the 25 ms budget at n up to 200."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

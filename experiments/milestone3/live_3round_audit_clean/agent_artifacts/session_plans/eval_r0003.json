@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:89a36d6b0b6f487cafae48d2f91791d6"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The dev_24 weakest regimes (capacity_level=tight rel_gap -22.0%, demand_dist=uniform -21.1%, depot_style=eccentric -20.1%, spatial=clustered -19.2%) are dominated by residual route fragmentation caused by a fixed, instance-agnostic capacity-fill weight beta and by a fixed radial asymmetry mu. If beta is made monotone in instance tightness tau and mu is made monotone in depot eccentricity (mean d(0,i)/diameter), the merge sequence will close large-savings edges earlier and cut the number of under-filled routes, lowering mean objective below the current SBS 16.0573 in those regimes without increasing timeout risk, and without regressing the already-good non-tight/non-eccentric instances.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:89a36d6b0b6f487cafae48d2f91791d6"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Adaptive-tightness generalized savings on the L2a static merge hook: keep the single global depot-distance scale mean(d[0,1:]) as the only dimensional denominator, but make the dimensionless capacity-fill bonus beta scale up with instance tightness tau = sum(q)/(ceil(sum(q)/Q)*Q) (and with demand variance) so that tight-capacity/uniform-demand regimes pack routes more aggressively, while adding an eccentric-depot radial coupling term mu*|d(0,i)-d(0,j)|/scale that rewards pairing customers at similar depot radius when the depot is off-centre (eccentric regime) and suppressing it when the depot is central. Guard against the documented per-pair normalization antipattern; the hook must remain a one-shot fully vectorized evaluation so p95 stays in the low-ms range under the 500 ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

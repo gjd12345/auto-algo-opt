@@ -1,0 +1,37 @@
+{
+  "checkpoint_budget": 36,
+  "triggered_at_used": 36,
+  "captured_at": "2026-11-23T09:16:33Z",
+  "best_dev_objective": 16.061748,
+  "frozen_solver": {
+    "schema_version": "m2-frozen-interface-solver/v1",
+    "solver_id": "session_r0002_cvrp_parallel_merge_static_ccc54605",
+    "display_name": "Session R2 · cvrp_parallel_merge_static",
+    "problem_family": "cvrp",
+    "paradigm": "parallel_merge",
+    "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "postprocess_mode": "relocate_2opt",
+    "template_options": {
+      "inject_static_kb_clues": false,
+      "positive_savings_only": true
+    },
+    "hook_name": "score_merge_static",
+    "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0 = distance_matrix[0, 1:]\n    scale = float(np.mean(d0))\n    if not np.isfinite(scale) or scale <= 0.0:\n        scale = 1.0\n\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Different parameter settings: slightly weaker savings, stronger radial term,\n    # stronger capacity-fill reward.\n    lam = 1.045\n    mu = 0.145\n    beta = 0.150\n\n    savings = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale\n\n    fill = np.clip((demands[i_idx] + demands[j_idx]) / capacity, 0.0, 1.0)\n    score = savings + beta * fill\n\n    score = np.where(np.isfinite(score), score, 0.0).astype(np.float64)\n    return score",
+    "hook_code_sha256": "ccc54605c35349883b921ca88a101335e42de2898766960d419b6913dd5c1381",
+    "design_sha256": "b538879448f2663a4afd5bd834a6156c8ba37bba1d54e51e0040e738223e802b",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261126\\arm_m3_2_fixed_l2a\\session_run\\rounds\\round_0002\\eoh_run",
+    "kb_release_id": "20261123-main-co-workbench-m2",
+    "kb_entry_id": "method-cvrp-m2-l2a-generalized-savings",
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+    "default_budget_ms": 500.0
+  }
+}

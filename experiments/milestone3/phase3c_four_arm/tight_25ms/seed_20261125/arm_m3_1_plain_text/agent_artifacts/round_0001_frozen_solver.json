@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_9da38793",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    saving = d0i + d0j - dij\n    scale = np.maximum(d0i + d0j, 1e-12)\n    geo = saving / scale\n\n    load = demands[i_idx] + demands[j_idx]\n    fill = load / capacity\n    tight = np.minimum(fill, 1.0) ** 0.5\n    over = np.maximum(fill - 1.0, 0.0)\n    tight = tight * (1.0 - np.minimum(over, 1.0))\n\n    reach = np.maximum(np.maximum(d0i, d0j), 1e-12)\n    balance = 1.0 - 0.5 * np.abs(d0i - d0j) / reach\n\n    score = geo * (0.6 + 0.4 * tight) * balance\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.clip(score, -2.0, 2.0)",
+  "hook_code_sha256": "9da3879332f793cd15a846c73f8d96c6d00b4d7750747baaaf2e0d3eaf0c5765",
+  "design_sha256": "d45f98259b86cda9015b474edf3ef377ca9817fb01ec6d7f88440c5a7529fe3d",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261125\\arm_m3_1_plain_text\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

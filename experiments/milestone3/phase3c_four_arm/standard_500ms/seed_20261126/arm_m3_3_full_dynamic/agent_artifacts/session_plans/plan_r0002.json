@@ -1,0 +1,39 @@
+{
+  "round_id": 2,
+  "direction": "Tighten the tight-capacity / eccentric-depot / size-100 regimes by strengthening the dimensionless capacity-fill reward and radial asymmetry term inside the globally-scaled generalized savings score, while keeping a single one-shot vectorized evaluation and the immutable global scale normalizer.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Diagnostic probe of the KB blueprint (lam=1.08, mu=0.12, beta=0.10, global scale) on dev_24 with relocate_2opt reproduced the M2 L2a level at 16.0861 (p50 2.83 ms, p95 4.50 ms, 24/24 completed, 0 exhausted), i.e. essentially the round-1 SBS 16.0169 plateau and far below the 500 ms budget. Since time margin is ~100x, the free capacity is best spent on a richer static score rather than on L2b refresh, which KB shows costs ~3.7x p95 latency with zero objective change under ample budgets. The marginal objective structure on this suite is dominated by tight capacity (18.54 mean) and eccentric depot (19.26 mean) slices, both of which reward seat-filling merges rather than pure geometric savings; hence evolving beta/endpoint-balance/mu under the fixed global-scale invariant is the highest-leverage, AST-safe direction, with relocate_2opt retained to clean up the residual inter-route gains the static merge leaves (KB lists 'no_post_merge_inter_route_relocate' as L2a's documented weakness)."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "If the merge score keeps the global depot-distance scale (mean d[0,1:]) but increases the dimensionless fill reward beta (0.10 -> 0.15-0.25, clipped (q_i+q_j)/Q) and adds an endpoint demand-balance term (1 - |q_i-q_j|/(q_i+q_j)) together with a slightly higher radial asymmetry mu (0.12-0.18), then tight-capacity instances (12/24 of dev_24, worst VBS gap -21.9%) and eccentric-depot instances (-19.8%) will be served by fewer fragmented tail routes and mean dev_24 tour length will drop below the current 16.02-16.09 plateau without any budget-exhaustion regression (p95 solve time stays < 15 ms at 500 ms budget).",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "dc577e5b18aa0f78adaa022f0cea00b92488dd1c31421fe007debb1badf6ed34",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Diagnostic probe of the KB blueprint (lam=1.08, mu=0.12, beta=0.10, global scale) on dev_24 with relocate_2opt reproduced the M2 L2a level at 16.0861 (p50 2.83 ms, p95 4.50 ms, 24/24 completed, 0 exhausted), i.e. essentially the round-1 SBS 16.0169 plateau and far below the 500 ms budget. Since time margin is ~100x, the free capacity is best spent on a richer static score rather than on L2b refresh, which KB shows costs ~3.7x p95 latency with zero objective change under ample budgets. The marginal objective structure on this suite is dominated by tight capacity (18.54 mean) and eccentric depot (19.26 mean) slices, both of which reward seat-filling merges rather than pure geometric savings; hence evolving beta/endpoint-balance/mu under the fixed global-scale invariant is the highest-leverage, AST-safe direction, with relocate_2opt retained to clean up the residual inter-route gains the static merge leaves (KB lists 'no_post_merge_inter_route_relocate' as L2a's documented weakness)."
+  }
+}

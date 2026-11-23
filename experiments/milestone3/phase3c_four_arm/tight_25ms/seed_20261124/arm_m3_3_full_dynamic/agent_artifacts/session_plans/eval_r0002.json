@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:3af60bab47084892b06d9bace0fd273d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Global mean-depot-distance normalization plus a generalized savings correction (edge penalty lam, radial asymmetry mu) and a dimensionless capacity-fill reward beta yields a better static merge order than plain Clarke-Wright on dev_24 hetero regimes (tight capacity, eccentric depot, size 100), reaching mean tour length below 16.19 at <2 ms solve time with 100% completion, whereas pairwise (d0i+d0j) normalization destroys far-customer priority and regresses to ~18.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:3af60bab47084892b06d9bace0fd273d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the vectorized static merge scoring hook around the globally depot-distance-normalized generalized savings family: score(i,j) = [d0i + d0j - lam*dij + mu*|d0i - d0j|]/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1), searching lam in [1.00,1.20], mu in [0.05,0.18], beta in [0.05,0.20], allowing small bounded extra terms (endpoint demand balance 1-|qi-qj|/(qi+qj), and a mild far-customer retention weight on max(d0i,d0j)) but forbidding any pairwise (d0i+d0j) local normalization; keep a single fully vectorized hook evaluation which ended at ~1.4 ms p50 / 1.5 ms p95 so the 25 ms budget stays ~94% free and no instance degrades to exhausted-incumbent, and push mean dev_24 tour length below the 16.1992 archive incumbent while respecting all feasibility invariants."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

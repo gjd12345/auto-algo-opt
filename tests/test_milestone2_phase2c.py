@@ -107,8 +107,9 @@ def test_phase2c_kb_cards_and_m2_release_integrity() -> None:
         chk = validate_release(REPO / "knowledge_store" / "releases" / rel_name)
         assert chk["ok"] is True, f"{rel_name}: {chk['errors'][:10]}"
 
+    m2_dir = REPO / "knowledge_store" / "releases" / "20261123-main-co-workbench-m2"
     cur_dir = resolve_release(REPO / "knowledge_store" / "current")
-    assert cur_dir.name == "20261123-main-co-workbench-m2"
+    assert cur_dir.name in {"20261123-main-co-workbench-m2", "20261123-main-co-workbench-m3"}
 
     m2_card_ids = (
         "method-cvrp-m2-l2a-generalized-savings",
@@ -118,10 +119,10 @@ def test_phase2c_kb_cards_and_m2_release_integrity() -> None:
         "evidence-cvrp-m2-cross-paradigm-blind120-and-selection",
     )
     for cid in m2_card_ids:
-        entry = read_entry(cur_dir, cid)
+        entry = read_entry(m2_dir, cid)
         assert entry["id"] == cid
 
     # Ensure redacted cvrp_m2_blind_120 suite in release contains zero raw coordinates/demands/seeds
-    blind_suite_txt = (cur_dir / "suites" / "cvrp_m2_blind_120.json").read_text(encoding="utf-8")
+    blind_suite_txt = (m2_dir / "suites" / "cvrp_m2_blind_120.json").read_text(encoding="utf-8")
     assert "customer_coordinates" not in blind_suite_txt
     assert "sealed_seed_token" not in blind_suite_txt

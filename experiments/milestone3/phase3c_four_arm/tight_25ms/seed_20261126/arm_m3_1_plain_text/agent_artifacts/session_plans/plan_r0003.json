@@ -1,0 +1,32 @@
+{
+  "round_id": 3,
+  "direction": "Refine the static merge scoring and route selection order within the parallel merge framework, exploring small perturbations around the current best configuration.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The previous round achieved a modest improvement (-0.0358) using the same template. With remaining budget, continuing local exploration of the merge static parameters is the most direct path to incremental gains, as no other templates are allowed and postprocessing is disabled."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Adjusting the static merge score weights (e.g., emphasizing demand overlap or distance savings) and reordering merge candidates will yield a further reduction in total distance compared to the current best objective of 17.8612.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "The previous round achieved a modest improvement (-0.0358) using the same template. With remaining budget, continuing local exploration of the merge static parameters is the most direct path to incremental gains, as no other templates are allowed and postprocessing is disabled."
+  }
+}

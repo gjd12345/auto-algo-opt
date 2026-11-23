@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve score_merge_static as a globally scale-normalized generalized Clarke-Wright savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|) / mean(d[0,1:]) + beta*clip((q_i+q_j)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; keep a single global depot-distance scale (never per-pair (d0i+d0j) normalization) to preserve far-from-depot radial merge priority and exact 1e-3 coordinate scale invariance, and keep the hook a one-shot fully vectorized evaluation so the 25 ms budget retains large slack.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB entry method-cvrp-m2-l2a-generalized-savings binds this exact template (sha 3bca783d...) with dev_24 = 16.1398 at zero postprocessing, beating bare CW (16.2225) and CW+relocate+2opt (16.1549); the anti-pattern evidence entry forbids per-pair normalization. The L2b counter-evidence shows dynamic state refresh caused p95 blowup and budget-exhaustion degradation at 25 ms, so we stay on the static one-shot vectorized hook (hook p50 < 0.4 ms, whole-solve p95 ~10-12 ms at n=200) and use postprocess_mode='none' for round 1 to isolate pure constructive merge gains and guarantee no truncation, deferring relocate_2opt to a later controlled comparison."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On cvrp_dev_hetero_24 under a 25 ms budget, a static vectorized savings hook normalized by the single global scale mean(d[0,1:]) with a mild edge penalty (lam≈1.0-1.15), radial asymmetry bonus (mu≈0.08-0.15) and dimensionless capacity-fill reward (beta≈0.05-0.15) will match or beat bare Clarke-Wright (dev_24 ≈16.2225) in mean tour length with zero postprocessing and zero timeout truncation, whereas per-pair local normalization ((d0i+d0j-dij)/(d0i+d0j)) would degrade to ~18.0.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m2-l2a-generalized-savings binds this exact template (sha 3bca783d...) with dev_24 = 16.1398 at zero postprocessing, beating bare CW (16.2225) and CW+relocate+2opt (16.1549); the anti-pattern evidence entry forbids per-pair normalization. The L2b counter-evidence shows dynamic state refresh caused p95 blowup and budget-exhaustion degradation at 25 ms, so we stay on the static one-shot vectorized hook (hook p50 < 0.4 ms, whole-solve p95 ~10-12 ms at n=200) and use postprocess_mode='none' for round 1 to isolate pure constructive merge gains and guarantee no truncation, deferring relocate_2opt to a later controlled comparison."
+  }
+}

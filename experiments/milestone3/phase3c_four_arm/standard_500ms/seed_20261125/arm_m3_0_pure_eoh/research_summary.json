@@ -1,0 +1,105 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261125",
+  "arm_id": "arm_m3_0_pure_eoh",
+  "problem_family": "cvrp",
+  "final_phase": "completed",
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "best_dev_objective": 17.832675,
+  "best_solver_manifest_ref": "agent_artifacts/round_0003_frozen_solver.json",
+  "frozen_checkpoints": {
+    "18": "checkpoints/frozen_checkpoint_18.json"
+  },
+  "budget_summary": {
+    "run_id": "m3_3c_standard_500ms_arm_m3_0_pure_eoh_s20261125",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\standard_500ms\\seed_20261125\\arm_m3_0_pure_eoh\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 29,
+    "remaining": 7,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "complete": 18,
+      "connectivity_failed": 11
+    },
+    "by_purpose": {
+      "eoh_probe": 6,
+      "eoh_generation": 23
+    },
+    "input_tokens": 33025,
+    "output_tokens": 7365,
+    "total_tokens": 40390
+  },
+  "token_summary": {
+    "input_tokens": 33025,
+    "output_tokens": 7365,
+    "total_tokens": 40390,
+    "provider_elapsed_seconds": 178.062,
+    "outer_requests": 0,
+    "inner_eoh_requests": 29
+  },
+  "hypothesis_counts": {
+    "proposed": 0,
+    "testing": 0,
+    "superseded": 0,
+    "refuted": 0,
+    "abandoned": 0,
+    "supported": 0
+  },
+  "archive_summary": null,
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "18.0706",
+      "delta_vs_prev": "",
+      "requests_used_total": 12,
+      "outer_requests_round": 0,
+      "inner_requests_round": 0,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "",
+      "delta_vs_prev": "",
+      "requests_used_total": 17,
+      "outer_requests_round": 0,
+      "inner_requests_round": 5,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "17.8327",
+      "delta_vs_prev": "-0.2380",
+      "requests_used_total": 29,
+      "outer_requests_round": 0,
+      "inner_requests_round": 12,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0003_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-23T09:06:24Z"
+}

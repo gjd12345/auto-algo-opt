@@ -31,7 +31,9 @@
     neural_attention_reshaping: "NCO 注意力重塑",
     neural_local_search: "神经局部搜索",
     math_mechanism: "数学机理分析",
-    selector_portfolio: "算法选择组合"
+    selector_portfolio: "算法选择组合",
+    ruin_recreate: "破坏修复 (LNS)",
+    ruin_and_recreate: "破坏修复 (LNS)"
   };
 
   const TIER_LABELS = {
@@ -72,6 +74,8 @@
     cvrp_hist_p0_120: "P0 多规模盲测 (120 例)",
     cvrp_hist_hetero_288: "Hetero-288 多工况回归",
     cvrp_final_accept_120: "Final-Accept-120 独立验证",
+    cvrp_m2_blind_120: "M2 启封盲测 (120 例)",
+    cvrp_m3_blind_120: "M3 启封盲测 (120 例)",
     shared_diagnostic_6: "Shared-6 轨迹诊断集"
   };
 

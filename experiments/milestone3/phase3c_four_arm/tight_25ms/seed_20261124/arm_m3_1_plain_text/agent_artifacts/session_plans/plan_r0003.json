@@ -1,0 +1,32 @@
+{
+  "round_id": 3,
+  "direction": "Refine the static merge scoring to more heavily penalize distance increase while rewarding merges that improve capacity utilization and spatial overlap, keeping all other framework components unchanged.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 2 achieved a modest but consistent improvement (delta -0.0402) using the same static merge template, indicating that incremental tuning of the merge score is a productive direction. Since the postprocess mode must remain 'none', the remaining leverage lies in the merge scoring logic. The hypothesis targets the trade-off between route distance and capacity utilization, which is central to static merge decisions. With 11 requests remaining, this conservative refinement minimizes risk while allowing a measurable improvement."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Adjusting score_merge_static to use a stricter distance-increase penalty and a stronger reward for high capacity utilization will prevent suboptimal merges, leading to a further objective reduction of 0.03 to 0.06 versus the current best of 17.8168.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 2 achieved a modest but consistent improvement (delta -0.0402) using the same static merge template, indicating that incremental tuning of the merge score is a productive direction. Since the postprocess mode must remain 'none', the remaining leverage lies in the merge scoring logic. The hypothesis targets the trade-off between route distance and capacity utilization, which is central to static merge decisions. With 11 requests remaining, this conservative refinement minimizes risk while allowing a measurable improvement."
+  }
+}

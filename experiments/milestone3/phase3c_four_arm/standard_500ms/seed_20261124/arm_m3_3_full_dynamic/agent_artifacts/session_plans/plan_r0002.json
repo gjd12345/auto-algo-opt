@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Switch from the static parallel-merge (L2a) frontier solver to the anytime LNS ruin-recreate template (L3), evolving a Shaw-relatedness destroy hook with a demand/spatial-normalized relatedness R(i,j)=phi_d*(d(i,j)/d_max)+phi_q*(|q_i-q_j|/q_max)+phi_r*1[route(i)!=route(j)] plus a power-law (u^p) randomization exponent, combined with a Regret-2/cheapest re-insertion priority that prefers low-detour, capacity-filling repairs; keep destroy scale q adaptive in [max(4,0.08n), min(40,0.25n)] scaled inversely with remaining time so the loop always returns the incumbent best before the 500 ms cutoff, and apply relocate+2-opt polishing only to changed routes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 1 frozen the L2a static-merge solver at 16.004 mean with VBS==SBS and 2.6 ms mean solve time, i.e. only ~0.5% of the 500 ms budget is being used and there is zero intra-suite complementarity: all 24 instances win by the same solver, so further tuning of merge scoring has a low ceiling. KB method-cvrp-lns-shaw-regret documents that ruin-and-recreate is strong precisely on tight-capacity and deep-local-optima regimes (exactly this suite's weakest regimes at -19% to -22% rel gap) and is weak only sub-20 ms, a constraint we are nowhere near. KB method-cvrp-cheapest-regret-insertion supplies the Regret-k repair that makes the recreate step robust rather than greedy, and method-cvrp-intra-2opt / relocate_2opt provides cheap polishing whose AA-weighted lexicographic objective matches the suite metric (total distance), so the acceptance criterion (Record-to-Record on total distance) is aligned with the evaluated objective. Guardrails from the KB pitfalls: cap destroy ratio at 25% to avoid repair-time explosion, and include the u^p randomization exponent to avoid repeatedly destroying the same cluster and cycling."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Replacing the static parallel-merge construction with an anytime Shaw-relatedness ruin-and-recreate loop (Regret-2 repair + relocate_2opt polish of touched routes) reduces mean objective on cvrp_dev_hetero_24 below the current 16.004 frontier, with the largest gains in the weakest regimes (tight capacity, n=100, uniform demand, eccentric depot, clustered spatial) because whole-route restructuring escapes the local optima that pairwise savings merges cannot.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion",
+      "method-cvrp-intra-2opt"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 frozen the L2a static-merge solver at 16.004 mean with VBS==SBS and 2.6 ms mean solve time, i.e. only ~0.5% of the 500 ms budget is being used and there is zero intra-suite complementarity: all 24 instances win by the same solver, so further tuning of merge scoring has a low ceiling. KB method-cvrp-lns-shaw-regret documents that ruin-and-recreate is strong precisely on tight-capacity and deep-local-optima regimes (exactly this suite's weakest regimes at -19% to -22% rel gap) and is weak only sub-20 ms, a constraint we are nowhere near. KB method-cvrp-cheapest-regret-insertion supplies the Regret-k repair that makes the recreate step robust rather than greedy, and method-cvrp-intra-2opt / relocate_2opt provides cheap polishing whose AA-weighted lexicographic objective matches the suite metric (total distance), so the acceptance criterion (Record-to-Record on total distance) is aligned with the evaluated objective. Guardrails from the KB pitfalls: cap destroy ratio at 25% to avoid repair-time explosion, and include the u^p randomization exponent to avoid repeatedly destroying the same cluster and cycling."
+  }
+}

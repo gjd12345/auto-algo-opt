@@ -470,11 +470,20 @@ def test_knowledge_base_top_venue_cards_dual_track_and_release_integrity():
     assert abp_cw["exact_k_compliance_rate"] == round(48 / 74, 6)
     assert round(abp_cw["mean_rel_gap"] * 100, 2) == 4.85
     assert round(abp_cw["exact_k_mean_rel_gap"] * 100, 2) == 4.78
+    m15_abp = json.loads(
+        (REPO / "knowledge_store" / "releases" / "20261122-main-co-workbench-m15" / "results" / "summary.json").read_text(
+            encoding="utf-8"
+        )
+    )["suites"]["cvrp_ext_cvrplib_abp_74"]
+    assert sum((a["overall"]["lt_k_count"] + a["overall"]["gt_k_count"]) for a in m15_abp["algorithms"].values()) == 433
     total_abp_non_k = sum(
         (a_obj["overall"]["lt_k_count"] + a_obj["overall"]["gt_k_count"])
         for a_obj in abp_sum["algorithms"].values()
     )
-    assert total_abp_non_k == 433
+    assert total_abp_non_k >= 433
+    for a_obj in abp_sum["algorithms"].values():
+        ov = a_obj["overall"]
+        assert ov["exact_k_count"] + ov["lt_k_count"] + ov["gt_k_count"] == ov["ok_count"]
 
     # Synthetic unit test for aggregate_records with mixed ok-budget-exhausted and timeout rows
     synth_agg = aggregate_records([
@@ -527,7 +536,9 @@ def test_frontend_zero_broken_kb_links_js_syntax_and_bundle_parity(tmp_path: Pat
     cur_dir = resolve_release(repo / "knowledge_store/current")
     index_doc = json.loads((cur_dir / "index.json").read_text(encoding="utf-8"))
     valid_ids = {e["id"] for e in index_doc["entries"]}
-    assert len(valid_ids) == 345
+    assert len(valid_ids) >= 345
+    if cur_dir.name == "20261123-main-co-workbench-m3":
+        assert len(valid_ids) == 350
 
     # 1. Zero broken KB entry links across all frontend/src/*.js modules
     id_re = re.compile(r"\b(?:method|evidence|problem|impl|finding)-[a-z0-9-]+\b")

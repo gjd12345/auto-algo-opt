@@ -1,0 +1,40 @@
+{
+  "round_id": 2,
+  "direction": "进化 score_merge_static 广义节约量钩子（lam∈[1.00,1.20], mu∈[0.05,0.18], 全局仓距尺度归一化 + 无量纲容量填充奖 beta∈[0.05,0.20] 与端点需求均衡项），并叠加 relocate_2opt 后处理：构造层负责在 clustered / eccentric-depot / tight-capacity 切片上减少碎片车次，局部搜索层负责收紧跨路线与路线内边长；在 500 ms 预算下 p95 仅 ~1.7 ms，故后处理几乎零预算成本。",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "诊断基线（diag_0001）显示裸骨架 dev_24 均长 16.2225、p50 1.41 ms / p95 1.73 ms，500 ms 预算下存在约 280 倍时间裕度，因此接上 relocate_2opt 后处理不会造成预算耗尽降级（KB 指出只有在 25 ms 级紧预算下动态刷新才退化，静态钩子无此风险）。上一轮 archive 最优为 16.1205（postprocess=none），本轮同时推进两个正交杠杆：构造层沿用 KB 已验证的全局尺度归一化广义节约量（严禁逐对 (d0i+d0j) 归一化，避免退化至 ~18.0），并用 mu/beta 参数在无后处理下就能压碎片车次；后处理层用 relocate_2opt 直接针对最弱切片的跨路线边长冗余。弱切片（eccentric 19.4127、tight 18.5747、clustered 14.8335、size=100 20.9909）在构造阶段最容易产生孤立尾程车次，两种杠杆互补。"
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "在 cvrp_parallel_merge_static 骨架上，(a) 全局仓距尺度归一化 + 径向非对称修正 mu|d0i-d0j| + 容量填充奖的组合可把 dev_24 均长压到 <=16.10（优于裸 CW 16.2225 与上一轮 16.1205）；(b) 追加 relocate_2opt 后处理可在不触发预算耗尽的前提下进一步降低均长，且收益集中在 archive 最弱切片（eccentric depot 19.41、tight capacity 18.57、clustered 14.83）与 size=100 组（20.99）。",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m2-l2b-dynamic-state-merge",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "17da891220643a84db5969cf17582f4469ae6eded7077d5ba9b390cfa772bdb3",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "诊断基线（diag_0001）显示裸骨架 dev_24 均长 16.2225、p50 1.41 ms / p95 1.73 ms，500 ms 预算下存在约 280 倍时间裕度，因此接上 relocate_2opt 后处理不会造成预算耗尽降级（KB 指出只有在 25 ms 级紧预算下动态刷新才退化，静态钩子无此风险）。上一轮 archive 最优为 16.1205（postprocess=none），本轮同时推进两个正交杠杆：构造层沿用 KB 已验证的全局尺度归一化广义节约量（严禁逐对 (d0i+d0j) 归一化，避免退化至 ~18.0），并用 mu/beta 参数在无后处理下就能压碎片车次；后处理层用 relocate_2opt 直接针对最弱切片的跨路线边长冗余。弱切片（eccentric 19.4127、tight 18.5747、clustered 14.8335、size=100 20.9909）在构造阶段最容易产生孤立尾程车次，两种杠杆互补。"
+  }
+}

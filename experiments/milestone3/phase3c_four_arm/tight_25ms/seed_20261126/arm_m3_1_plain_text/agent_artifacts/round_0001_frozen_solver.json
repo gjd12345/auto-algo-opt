@@ -1,0 +1,30 @@
+{
+  "schema_version": "m2-frozen-interface-solver/v1",
+  "solver_id": "session_r0001_cvrp_parallel_merge_static_02775677",
+  "display_name": "Session R1 · cvrp_parallel_merge_static",
+  "problem_family": "cvrp",
+  "paradigm": "parallel_merge",
+  "interface": "cvrp_parallel_merge_static/v1:score_merge_static",
+  "template_id": "cvrp_parallel_merge_static",
+  "template_version": "v1",
+  "template_source_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false,
+    "positive_savings_only": true
+  },
+  "hook_name": "score_merge_static",
+  "hook_code": "import numpy as np\n\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n    \"\"\"Return a 1D array of finite float priority scores (higher = merge earlier).\"\"\"\n    d0i = distance_matrix[0, i_idx]\n    d0j = distance_matrix[0, j_idx]\n    dij = distance_matrix[i_idx, j_idx]\n\n    # Classic Clarke-Wright savings, made dimensionless by the local geometric scale.\n    savings = d0i + d0j - dij\n    scale = d0i + d0j\n    eps = 1e-12\n    norm_savings = savings / np.maximum(scale, eps)\n\n    # Capacity pressure: how much of capacity the merged pair would consume.\n    # Favor pairs that fill capacity (but never infeasible ones).\n    combined = demands[i_idx] + demands[j_idx]\n    fill = combined / capacity\n    feasible = combined <= capacity\n\n    # Squeeze fill into (0, 1]: mild preference for fuller merges.\n    fill_factor = np.clip(fill, 0.0, 1.0)\n\n    # Weighted blend: geometric savings dominate, capacity fills on top.\n    # A tiny tie-breaker on raw savings (scaled) keeps ordering stable.\n    tiny = 1e-6 * (savings / np.maximum(scale, eps))\n\n    score = norm_savings * (0.75 + 0.25 * fill_factor) + tiny\n\n    # Infeasible pairs pushed to very low finite score.\n    score = np.where(feasible, score, -1e6 + norm_savings)\n\n    # Guard against non-finite values.\n    score = np.where(np.isfinite(score), score, -1e6)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "02775677a62277aa5ff7bd623c39c7df561e641461266083dd7d8790868cbac5",
+  "design_sha256": "ba5f39baa1d599000a84501c7f46b0f3df5c80696b8373f3e7ba11786eb991ce",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261126\\arm_m3_1_plain_text\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m2",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel",
+    "method-cvrp-i605-tworegime-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_parallel_merge_static/v1:score_merge_static",
+  "default_budget_ms": 25.0
+}

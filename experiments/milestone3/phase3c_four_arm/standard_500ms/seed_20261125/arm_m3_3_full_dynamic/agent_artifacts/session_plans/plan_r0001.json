@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the static pairwise merge hook as a scale-invariant generalized Clarke-Wright savings rule: normalize by the global depot-distance scale scale=mean(d(0,1..n)), score pairs as s_ij = (d(0,i)+d(0,j)-lam*d(i,j))/scale + mu*|d(0,i)-d(0,j)|/scale + nu*capacity-fill reward depending only on demands/capacity (dimensionless), so the rule is invariant to coordinate rescaling and prefers balanced depot-facing merges while filling vehicles; then apply intra-route 2-opt to clean up each merged route within the 500ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "The archive is empty (solver_count=0), so the first stepping stone should be the strongest documented arm: the M2 L2a generalized-savings static merge rule, which is reported at dev_24 16.1595 with ~2.4ms median runtime and zero coordinate-scale drift, beating CW+Relocate+2opt. The L2b dynamic attribution result shows that dynamic candidate refresh costs ~3.7x p95 time and can trigger budget-exhaustion degradation under tight budgets, so at this round I stay on the L2a static hook (cheap, budget-safe) and spend the remaining headroom on intra_2opt postprocessing instead. This gives a low-risk, high-headroom baseline that the archive can later compare against dynamic merge and LNS ruin-recreate variants."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On cvrp_dev_hetero_24, a static merge score that is (a) divided by the global mean depot distance and (b) augmented with a dimensionless capacity-fill bonus plus a depot-distance-balance term |d(0,i)-d(0,j)| will produce a lower total route length than plain Clarke-Wright savings (lam=1, mu=0), because normalization removes instance-scale drift across heterogeneous dev instances and the fill/balance terms suppress the early merging of far-apart high-demand customers that CW tends to lock in; adding intra_2opt postprocessing should further reduce length without breaching the 500ms per-instance budget since static merge finishes in ~2.4ms median.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "intra_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "The archive is empty (solver_count=0), so the first stepping stone should be the strongest documented arm: the M2 L2a generalized-savings static merge rule, which is reported at dev_24 16.1595 with ~2.4ms median runtime and zero coordinate-scale drift, beating CW+Relocate+2opt. The L2b dynamic attribution result shows that dynamic candidate refresh costs ~3.7x p95 time and can trigger budget-exhaustion degradation under tight budgets, so at this round I stay on the L2a static hook (cheap, budget-safe) and spend the remaining headroom on intra_2opt postprocessing instead. This gives a low-risk, high-headroom baseline that the archive can later compare against dynamic merge and LNS ruin-recreate variants."
+  }
+}

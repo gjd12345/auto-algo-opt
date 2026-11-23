@@ -1,0 +1,33 @@
+{
+  "round_id": 1,
+  "direction": "Evolve `score_merge_static` as a global depot-distance-scale normalized generalized savings rule: score = (d0i+d0j - lam*dij + mu*|d0i-d0j|)/mean(d0[1:]) + beta*clip((qi+qj)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], plus an optional demand-balance term 1-|qi-qj|/(qi+qj). Forbid any per-pair local normalization (d0i+d0j-dij)/(d0i+d0j). Prefer a slightly more fill-aggressive variant than the M2 fixed-strong config since the cheap relocate_2opt post-pass can repair the tail fragments that aggressive capacity-fill merging creates.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB `method-cvrp-m2-l2a-generalized-savings` establishes the verified, scale-invariant (0.00% drift at 1e-3 rescaling) global-scale generalized savings form and bounds lam/mu/beta, plus its explicit unconfirmed item: L2a was always evaluated with postprocess_mode='none', so pairing the evolved merge start with relocate_2opt is an untested residual-gain question this round can answer. `evidence-cvrp-m2-perpair-scale-normalization-antipattern` hard-constrains the hook against per-pair normalization (which regressed dev_24 to 16.66-18.08 by destroying far-from-depot radial priority), so the direction keeps a single global denominator mean(d0[1:]). Since the hook costs <0.4 ms and full solves are ~10-12 ms at n=200, the 500 ms budget supports relocate_2opt without truncation risk, and the KB's L2a weak regime is exactly the missing inter-route relocate layer that the post-pass supplies."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Because the L2a hook is a single pre-loop vectorized scoring pass (p50 ~2.45 ms, 500 ms budget leaves >100x slack), combining an evolved global-scale generalized-savings merge order with a `relocate_2opt` post-pass will strictly improve on the M2 zero-postprocess dev_24 reference of 16.1398 and on the bare CW+relocate+2opt reference of 16.1549: the merge order builds long radial edges while the post-pass removes the inter-route waste that static pairwise scoring cannot see (KB flags 'no_post_merge_inter_route_relocate' as the L2a weak regime). Success criterion: mean tour length on cvrp_dev_hetero_24 < 16.1398 with zero scale-invariance drift (1e-3 rescaling) and no budget truncation.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-cvrp-intra-2opt",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB `method-cvrp-m2-l2a-generalized-savings` establishes the verified, scale-invariant (0.00% drift at 1e-3 rescaling) global-scale generalized savings form and bounds lam/mu/beta, plus its explicit unconfirmed item: L2a was always evaluated with postprocess_mode='none', so pairing the evolved merge start with relocate_2opt is an untested residual-gain question this round can answer. `evidence-cvrp-m2-perpair-scale-normalization-antipattern` hard-constrains the hook against per-pair normalization (which regressed dev_24 to 16.66-18.08 by destroying far-from-depot radial priority), so the direction keeps a single global denominator mean(d0[1:]). Since the hook costs <0.4 ms and full solves are ~10-12 ms at n=200, the 500 ms budget supports relocate_2opt without truncation risk, and the KB's L2a weak regime is exactly the missing inter-route relocate layer that the post-pass supplies."
+  }
+}

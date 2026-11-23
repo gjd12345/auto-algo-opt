@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Q3 generic elite: inverse residual with leftover=50 alignment",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Primary 1/residual (or 1e9 if exact), times bonus if leftover==50, times 0.1 if leftover<20, plus reverse-index tie-break.",
+  "attributes": {
+    "interface": "score(item, bins)",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/q3_v2/best_codes/bp_online_generic_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/q3_v2/best_codes/bp_online_generic_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/q3_v2/best_codes/bp_online_generic_best.py",
+      "sha256": "ba1edbb45af1c05084548a5cb4f1f3cda9c7040ebbb6fce7fa7ca54fecd74c01"
+    }
+  ],
+  "id": "impl-obp-q3-generic",
+  "content_sha256": "e62cf76f09d9a451e7cfb7c28fc01ab544c91b0d9dc2d7cb1812f15a21591fbc"
+}

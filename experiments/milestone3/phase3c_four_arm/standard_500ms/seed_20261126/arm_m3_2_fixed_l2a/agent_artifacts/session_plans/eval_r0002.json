@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:13f56d1690334f879644312b3684a8e8"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Normalizing the generalized savings by the single global depot-distance scale (never per-pair d0i+d0j) while adding a mild radial-asymmetry term mu*|d0i-d0j| and a dimensionless capacity-fill reward beta*(q_i+q_j)/Q will lower mean tour length on cvrp_dev_hetero_24 below the current 16.0861 (relocate_2opt), with the largest relative gains on tight-capacity and clustered instances where fragmented last-routes arise; per-pair local normalization would instead destroy the radial priority order and must be avoided.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:13f56d1690334f879644312b3684a8e8"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Adopt the KB-verified generalized Clarke-Wright scoring family: score(i,j) = (d0i + d0j - lam*d(i,j) + mu*|d0i - d0j|) / mean(d[0,1:]) + beta*clip((q_i+q_j)/Q,0,1) with lam~1.00-1.15, mu~0.08-0.15, beta~0.05-0.15, keeping relocate_2opt postprocess; search for a capacity-fill-aware radial correction that improves the tight-capacity clustered regimes."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:b7e6cbfd008446ec85469e3152e5a6f1"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H3 (residual-gain): Because the L2a static merge hook costs only ~0.3-1.3 ms of the 25 ms budget (p50 select_64 = 2.45 ms total, 100% completion at 25 ms per KB method-cvrp-m2-l2a-generalized-savings), the merged solution enters local search with >90% of the budget unused; therefore attaching relocate_2opt (capacity-guarded 1-0 inter-route relocate alternating with intra-route 2-opt) will recover the residual inter-route fragmentation that pure construction cannot fix, lowering dev_24 mean objective below the 16.1441 plateau — with the effect concentrated in the clustered, eccentric-depot and tight-capacity regimes — without triggering budget-exhaustion degradation of the kind seen for the L2b dynamic-refresh variant at 25 ms (method-cvrp-m2-l2b-dynamic-state-merge).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b7e6cbfd008446ec85469e3152e5a6f1"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Switch from pure construction (postprocess=\"none\", stuck at ~16.1441 mean across rounds r0001/r0002 with only 0.79% VBS gap and no SBS improvement) to post-merge inter-route local search: keep the global-scale normalized generalized savings hook (lam in [1.00,1.15], mu in [0.08,0.15], beta fill reward in [0.05,0.15]) but co-evolve it so it produces a merge sequence that is a *good L2 starting point* for relocate+2opt — i.e. slightly more capacity-filling merges (higher beta) and weaker triangle-inequality-exploiting long-edge preference (lower lam) to leave fewer, more balanced routes that inter-route 1-0 relocate can profitably fix, targeting the clustered / eccentric-depot / tight-capacity weak regimes."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

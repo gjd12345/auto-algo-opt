@@ -1,0 +1,40 @@
+{
+  "round_id": 3,
+  "direction": "Switch the zero-postprocess L2a pipeline to a budgeted `relocate_2opt` post-merge phase, and re-evolve the static hook toward smaller `lam`/`mu` (geometry-trusting) with a tightness-adaptive capacity term, so the merge layer supplies a diverse-but-competent starting partition that inter-route 1-0 relocate + intra-route 2-opt can polish within the 25 ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB `method-cvrp-m2-l2a-generalized-savings` fixes the L2a invariants (global depot-distance scale, one-shot vectorized scoring, no per-pair normalization) and explicitly lists `relocate_2opt` composition as its \"未确认项\": L2a was always evaluated with postprocess_mode=none, and CW+Relocate+2opt already scored 16.1549 on dev_24 versus bare CW 16.2225. Rounds 1-2 exploited only the scoring-function axis and hit a ceiling (16.1013 / 16.1978, VBS gap only 0.32%), and the r2 capacity-term hypothesis was refuted. The archive shows solves cost 1.73 ms mean, so ~23 ms of unused budget can fund a feasibility-guarded local search (method-cvrp-inter-relocate + method-cvrp-intra-2opt) instead of another score term. Expected structure of the win: the static savings layer keeps its large-saving edge ordering (so the tight-capacity and eccentric-depot regimes get a good skeleton), while relocate/2-opt removes the tail fragmentation that pure merging cannot fix without breaking the greedy sequence; hook evolution is then re-aimed at producing a partition that is *repairable* (slightly lower lam/mu, capacity term damped when the instance is not tight), which is a different objective than scoring for a good merge order alone. Risk control: postprocess stays wall-clock-bounded well inside 25 ms (target p95 < 12 ms), and the five-gate validator must confirm completion and determinism before the round's plan is frozen."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "L2a solve time is only ~1.7 ms mean at dev_24 (≈7% of the 25 ms budget), and round-2 evidence showed that adding more capacity-approximation terms (fill^2, endpoint balance) into the static score degrades the merge sequence (16.1978 vs 16.1013). Therefore the remaining headroom lies outside the scoring function: enabling bounded inter-route 1-0 relocate alternated with intra-route 2-opt on top of the generalized savings partition should reach mean objective <= 16.05 (beating the r1 SBS 16.1013) with p95 wall time < 12 ms and zero exhausted instances, because relocate repairs the tight-capacity (vbs_rel_gap -22.05%) and eccentric-depot (19.2451) regimes where pure savings leaves residual fragmentation.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-inter-relocate",
+      "method-cvrp-intra-2opt"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "e12ac4628e7e046bea42b21fa5675cab43ef405970831190f793fc20bb849c84",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "KB `method-cvrp-m2-l2a-generalized-savings` fixes the L2a invariants (global depot-distance scale, one-shot vectorized scoring, no per-pair normalization) and explicitly lists `relocate_2opt` composition as its \"未确认项\": L2a was always evaluated with postprocess_mode=none, and CW+Relocate+2opt already scored 16.1549 on dev_24 versus bare CW 16.2225. Rounds 1-2 exploited only the scoring-function axis and hit a ceiling (16.1013 / 16.1978, VBS gap only 0.32%), and the r2 capacity-term hypothesis was refuted. The archive shows solves cost 1.73 ms mean, so ~23 ms of unused budget can fund a feasibility-guarded local search (method-cvrp-inter-relocate + method-cvrp-intra-2opt) instead of another score term. Expected structure of the win: the static savings layer keeps its large-saving edge ordering (so the tight-capacity and eccentric-depot regimes get a good skeleton), while relocate/2-opt removes the tail fragmentation that pure merging cannot fix without breaking the greedy sequence; hook evolution is then re-aimed at producing a partition that is *repairable* (slightly lower lam/mu, capacity term damped when the instance is not tight), which is a different objective than scoring for a good merge order alone. Risk control: postprocess stays wall-clock-bounded well inside 25 ms (target p95 < 12 ms), and the five-gate validator must confirm completion and determinism before the round's plan is frozen."
+  }
+}

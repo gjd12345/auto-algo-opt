@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Establish a baseline run of the static parallel-merge construction using score_merge_static, measuring the score and runtime under the 500 ms budget before exploring parameter or merge-order variations.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "No archive feedback or previous-round summary is available, so the safest first step is to evaluate the only allowed template with its specified static merge scoring and no postprocessing. This creates a controlled baseline that can guide later changes in merge priority, parallelism, or scoring weights."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "The static parallel-merge CVRP construction will produce a feasible baseline solution within the per-instance budget; round-one score and timing will reveal whether merge decisions dominate solution quality or whether the limiting factor is construction/runtime overhead.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "No archive feedback or previous-round summary is available, so the safest first step is to evaluate the only allowed template with its specified static merge scoring and no postprocessing. This creates a controlled baseline that can guide later changes in merge priority, parallelism, or scoring weights."
+  }
+}

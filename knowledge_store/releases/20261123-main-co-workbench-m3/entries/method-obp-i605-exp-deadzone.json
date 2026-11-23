@@ -1,0 +1,122 @@
+{
+  "type": "method",
+  "title": "OBP 岛屿流派一：指数利用率 + 死区二次惩罚 (Island605 B1)",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "island605",
+    "i605_obp_b1_exp_deadzone",
+    "online-bin-packing",
+    "score",
+    "scale-invariant"
+  ],
+  "status": "reviewed",
+  "summary": "6 月岛屿模型装箱历史第 1 名：以指数利用率叠加残差死区二次惩罚，精确凑满（r=0）与对称配对（r=w）零惩罚，中间碎片残差受罚。同流控制消融证实：在完全相同的 5 条 Weibull-5000 流上，仅关闭主动开新箱就使 B1 从 0.006741 退化至 0.039038（+3.23pp，反落后于 B16 的 0.032196 与 B50 的 0.034309）；在相同 BPPLib 70 题上，允许主动开新箱更使 B1 暴涨至 +36.35%（仅评打开箱为 +10.80%）。 现行工作台 Weibull 共同交集差距 +3.53%（完成 173/173），BPPLib 70 例差距 +10.80%（完成 70/70）。",
+  "attributes": {
+    "method_family": "sequential_construct",
+    "online_offline": "online",
+    "interface": "score",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "online_bp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "online_weibull_streams",
+        "bpplib_generalization",
+        "capacity_scale_invariant"
+      ],
+      "weak_on": [
+        "protocol_shift_between_open_new_bin_and_open_only"
+      ],
+      "scale_notes": "旧 6 月允许开新箱协议精确复算 0.00674（Best-Fit 旧基线 0.039843）；现行工作台仅评已打开箱协议下 10× 箱容缩放漂移 0.00%。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "在线逐件装箱评分：现行工作台仅传入所有可行已打开箱剩余容量数组，无可行箱时才开新箱",
+      "evolvable_hook": "score(item, bins) -> np.ndarray",
+      "state_maintained": [
+        "open_bin_remaining_capacities"
+      ],
+      "invariants_and_constraints": [
+        "严禁硬编码箱容常数（如 50 或 100），全部阈值须相对 item 或 bins 无量纲化",
+        "旧协议与新协议成绩分轨报告"
+      ],
+      "typical_pitfalls": [
+        "在旧协议允许主动开新箱下最优的规则，迁移到仅评打开箱的现行协议时排名可能显著变化（如 B1 vs B50）"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "exp(w / b) - I[0 < r < 2w] * (r - w)^2 / w,   r = b - w",
+        "variables": {
+          "w": "当前到达物品大小 item",
+          "b": "候选箱当前剩余容量 bins",
+          "r": "装入后残差 b - w"
+        },
+        "preconditions": "所有输入箱满足 b >= w > 0"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/bp/bp_000_E2_highgen_g8_r27__6999b7b6.py",
+        "sha256": "6999b7b66c6c76b3ca5867a29b73dcdb0f90ca391ffaf4ed3c0e0c51e4688d88"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "obp_ext_eoh_weibull",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b1_exp_deadzone",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.035332,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[现行工作台仅评打开箱协议] Weibull 共同交集差距 +3.53%（完成 173/173）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "obp_ext_bpplib",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_obp_b1_exp_deadzone",
+        "metric": "mean_rel_gap",
+        "value": 0.107961,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[现行工作台仅评打开箱协议] BPPLib 70 例差距 +10.80%（完成 70/70）",
+        "artifact_path": "results/summary.json"
+      }
+    ],
+    "variant_adaptation_note": "一维在线装箱评分函数 score(item, bins)；须严格区分旧岛屿协议（允许主动开新箱）与现行工作台协议（仅在可行已打开箱中评分，装不下才开新箱）。"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "methods": [
+      "method-obp-best-fit",
+      "method-obp-first-fit",
+      "method-obp-residual-utilization"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json",
+    "report:experiments/milestone15/workbench_screening_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-obp-i605-exp-deadzone",
+  "content_sha256": "a2c5f9e840df871d5fc965dcfd1096216db861954ed70a1c9c8045c188e3ef8c"
+}

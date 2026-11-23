@@ -1,0 +1,38 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the L2a score_merge_static hook toward a globally scale-normalized generalized savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0,1..n) + beta*clip((qi+qj)/Q,0,1), with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15]; never normalize per-pair by (d0i+d0j). Keep relocate_2opt postprocessing to harvest residual gains from tight-capacity/eccentric-depot instances (the weakest regimes), and keep the hook a single fully vectorized pre-pass so p95 solve time stays well under the 500 ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 established a 16.083 mean with cvrp_parallel_merge_static + relocate_2opt (SBS/VBS on the only solver so far). The KB entry method-cvrp-m2-l2a-generalized-savings documents that the same template family reaches 16.1398 with NO postprocessing and 24.2003 on blind-120 when using global depot-distance-scale normalization with lambda/mu/beta corrections, and explicitly warns that per-pair local normalization degrades dev_24 from ~16.22 to ~18.0. Combining that geometry-corrected merge ordering with relocate_2opt (the KB's stated open question: residual gain of an evolved merge start point after local search) is the highest-expected-value move, and it is also targeted at the archive's weakest regimes (tight capacity, eccentric depot, clustered) where capacity-fill bonus and radial asymmetry matter most. Hook is a one-shot vectorized pass, so the 500 ms budget has large margin."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Under the 500 ms budget on cvrp_dev_hetero_24, a static merge scoring rule normalized by the global depot-distance scale mean(d[0,1:]) with radial-asymmetry term mu*|d0i-d0j| and dimensionless capacity-fill bonus beta*(qi+qj)/Q, when paired with relocate_2opt, will lower mean tour length below the current 16.083 baseline (target < 15.9) and specifically improve the weak regimes (tight capacity, clustered, eccentric depot) by reducing fragmented tail-end routes, without triggering any budget exhaustion (0 timeouts), because per-pair normalization by (d0i+d0j) destroys far-customer merge priority whereas global-scale normalization preserves it.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "relocate_2opt",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "diagnostic_ref": {
+      "path": "agent_artifacts/diagnostics/diag_0001.json",
+      "sha256": "881b96338672630c74934fa81367433a834aa9e997ffc233a0da53a94569d218",
+      "usage_role": "dev_selection"
+    },
+    "rationale": "Round 1 established a 16.083 mean with cvrp_parallel_merge_static + relocate_2opt (SBS/VBS on the only solver so far). The KB entry method-cvrp-m2-l2a-generalized-savings documents that the same template family reaches 16.1398 with NO postprocessing and 24.2003 on blind-120 when using global depot-distance-scale normalization with lambda/mu/beta corrections, and explicitly warns that per-pair local normalization degrades dev_24 from ~16.22 to ~18.0. Combining that geometry-corrected merge ordering with relocate_2opt (the KB's stated open question: residual gain of an evolved merge start point after local search) is the highest-expected-value move, and it is also targeted at the archive's weakest regimes (tight capacity, eccentric depot, clustered) where capacity-fill bonus and radial asymmetry matter most. Hook is a one-shot vectorized pass, so the 500 ms budget has large margin."
+  }
+}

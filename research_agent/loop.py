@@ -52,6 +52,15 @@ def _resolve_latest_evidence_refs(
     return resolved
 
 
+def _round_inner_requests(session_out: Mapping[str, Any], fallback_used: int) -> int:
+    """Return inner Session requests used without treating an initial 0 as missing."""
+    req_after = session_out.get("requests_after")
+    req_before = session_out.get("requests_before")
+    after_val = int(req_after) if req_after is not None else int(fallback_used)
+    before_val = int(req_before) if req_before is not None else int(fallback_used)
+    return max(0, after_val - before_val)
+
+
 def run_research_agent(
     config: AgentConfig,
     *,
@@ -377,9 +386,7 @@ def run_research_agent(
             )
             ckpt.session_initialized = True
             ckpt.round_prev_best_dev = prev_best_dev
-            ckpt.round_inner_requests = int(
-                (session_out.get("requests_after") or budget.used) - (session_out.get("requests_before") or budget.used)
-            )
+            ckpt.round_inner_requests = _round_inner_requests(session_out, budget.used)
 
             # Record best dev frozen solver + archive stepping stones (enforce completion rate & penalized score)
             frozen = session_out.get("frozen_solver")
@@ -564,7 +571,7 @@ def run_research_agent(
 
             h_counts = ledger_tool.counts()
             inner_used = (
-                int((session_out.get("requests_after") or budget.used) - (session_out.get("requests_before") or budget.used))
+                _round_inner_requests(session_out, budget.used)
                 if session_out
                 else int(ckpt.round_inner_requests or 0)
             )

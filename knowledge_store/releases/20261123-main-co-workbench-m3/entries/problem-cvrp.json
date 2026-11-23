@@ -1,0 +1,51 @@
+{
+  "type": "problem",
+  "title": "CVRP construct (next feasible customer)",
+  "category": "problem",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "Evolved select_next_node among capacity-feasible customers; evaluator owns capacity and depot restarts.",
+  "attributes": {
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "objective": "mean total distance",
+    "constraints": [
+      "capacity",
+      "cover each customer"
+    ]
+  },
+  "relations": {
+    "methods": [
+      "method-cvrp-nearest-feasible-construct",
+      "method-cvrp-savings-next-node",
+      "method-cvrp-far-regret-seed"
+    ],
+    "implementations": [
+      "impl-cvrp-official-construct",
+      "impl-cvrp-official-broad",
+      "impl-cvrp-final-batch-best",
+      "impl-cvrp-outcome-best",
+      "impl-cvrp-xfer-local",
+      "impl-cvrp-xfer-mixed"
+    ]
+  },
+  "source_refs": [
+    "src-clarke-wright"
+  ],
+  "evidence_refs": [
+    "code:official_eoh/examples/cvrp_construct/prob.py",
+    "code:evidence/final_batch_20260630/best_codes/cvrp_construct_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/cvrp_construct/prob.py",
+      "sha256": "aa8954d02d05949ab6425c592b073e834b7d46fe6a1111cbfa5ac8cad1ca81b7"
+    }
+  ],
+  "id": "problem-cvrp",
+  "content_sha256": "67dce10c4cca0c3a22b4bb1eacc108ae004af6c26848d5d254e166cc78ad776c"
+}

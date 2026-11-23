@@ -1,0 +1,33 @@
+{
+  "round_id": 1,
+  "direction": "Scale-invariant generalized savings merge score plus dimensionless capacity-fill bonus, then intra-route 2-opt polish within the 25 ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "KB entry method-cvrp-m2-l2a-generalized-savings is the direct prior for this exact template/hook (score_merge_static), reporting dev_24 = 16.1595 and blind_120 = 24.2003 with ~2.4 ms median runtime and 0.00% coordinate-scale drift; it also confirms that the static (non-refreshing) candidate set is the right interface granularity at tight budgets. method-cvrp-m2-l2b-dynamic-state-merge provides the negative control: dynamic per-merge candidate refresh (L2b-ctrl) is lossless in quality at 500 ms but caused 40/120 budget-exhaustion degradations at 25 ms (mean length blow-up to 55.44), so at our 25 ms budget we stay on the static L2a template rather than any dynamic variant. method-lit-cvrp-construct-clarke-wright-savings-merge supplies the baseline savings form that the generalized rule must beat. method-cvrp-intra-2opt supplies an independent, deterministic intra-route polish whose measured gains on top of parallel Clarke-Wright motivate postprocess_mode=intra_2opt; I choose intra_2opt over relocate_2opt because relocate neighborhoods are materially more expensive per pass and the 25 ms headroom after a ~2.4 ms construction is the binding constraint. Structural expectation: normalized-by-scale scoring preserves coordinate-scale invariance (no drift), and the capacity-fill term is dimensionless, so no unit-mismatch risk; the extra lam/mu/w parameters are the EoH search dimensions with lam anchored near the CW value of 1."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On cvrp_dev_hetero_24 under a 25 ms per-instance budget, a static merge score normalized by the global depot scale, score = (d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)|)/scale + w*((q_i+q_j)/Q)... , with lam in [0.8,1.6], mu small, and a dimensionless capacity-fill reward, will reach lower total tour length than plain Clarke-Wright static savings; because the static template stays ~2-3 ms, the residual budget can be spent on deterministic intra-route 2-opt, giving a further measurable reduction (expected ~1-3%) without any budget-exhaustion degradation.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "intra_2opt",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-intra-2opt",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m2-l2a-generalized-savings is the direct prior for this exact template/hook (score_merge_static), reporting dev_24 = 16.1595 and blind_120 = 24.2003 with ~2.4 ms median runtime and 0.00% coordinate-scale drift; it also confirms that the static (non-refreshing) candidate set is the right interface granularity at tight budgets. method-cvrp-m2-l2b-dynamic-state-merge provides the negative control: dynamic per-merge candidate refresh (L2b-ctrl) is lossless in quality at 500 ms but caused 40/120 budget-exhaustion degradations at 25 ms (mean length blow-up to 55.44), so at our 25 ms budget we stay on the static L2a template rather than any dynamic variant. method-lit-cvrp-construct-clarke-wright-savings-merge supplies the baseline savings form that the generalized rule must beat. method-cvrp-intra-2opt supplies an independent, deterministic intra-route polish whose measured gains on top of parallel Clarke-Wright motivate postprocess_mode=intra_2opt; I choose intra_2opt over relocate_2opt because relocate neighborhoods are materially more expensive per pass and the 25 ms headroom after a ~2.4 ms construction is the binding constraint. Structural expectation: normalized-by-scale scoring preserves coordinate-scale invariance (no drift), and the capacity-fill term is dimensionless, so no unit-mismatch risk; the extra lam/mu/w parameters are the EoH search dimensions with lam anchored near the CW value of 1."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Use the static score-based merge ordering (score_merge_static) to prioritize route pairs whose merge yields the smallest added distance, and keep the parallel merge schedule fixed rather than adaptive, so the 500 ms budget is spent on evaluating high-quality candidate merges.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 with no archive feedback or prior summary. Only cvrp_parallel_merge_static is allowed and postprocess must be none. The L2a static merge with score_merge_static is the sole available configuration, so the plan tests its core mechanism (static score-based merge prioritization) as the baseline direction; subsequent rounds can compare scalar scores to adjust merge granularity or tie-breaking."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Ranking candidate route merges by the static merge score before executing the parallel merge will produce lower total CVRP distance than unranked/naive merging, because costly merges are deferred and cheap feasible merges are applied first.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 with no archive feedback or prior summary. Only cvrp_parallel_merge_static is allowed and postprocess must be none. The L2a static merge with score_merge_static is the sole available configuration, so the plan tests its core mechanism (static score-based merge prioritization) as the baseline direction; subsequent rounds can compare scalar scores to adjust merge granularity or tie-breaking."
+  }
+}

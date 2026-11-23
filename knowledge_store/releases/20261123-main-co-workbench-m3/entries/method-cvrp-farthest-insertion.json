@@ -1,0 +1,122 @@
+{
+  "type": "method",
+  "title": "CVRP 经典最远客户最小代价插入法 (Farthest Insertion)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "farthest-insertion",
+    "insertion",
+    "classical-or",
+    "solve_cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "经典运筹学全局插入构造基线：按离仓库距离由远及近排序客户，逐个插入全车队容量可行且增量路程最小的位置（或新开路线）。EoH-S 256 例差距 +29.80%，CVRPLib A/B/P 差距 +32.69%。",
+  "attributes": {
+    "method_family": "insertion",
+    "online_offline": "offline",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "insertion",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "global_insertion_baseline",
+        "eccentric_customers",
+        "scale_invariant"
+      ],
+      "weak_on": [
+        "no_post_local_search",
+        "large_n_insertion_scan_cost"
+      ],
+      "scale_notes": "纯距离增量比较，0.00% 坐标缩放漂移；作为不含 2-opt 的纯粹插入构造基线，与 HeurAgenix 最小代价插入+2-opt 形成清晰对照。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "按 d(0,i) 降序遍历客户，扫描全车队所有容量可行插入切口 (prev, next)，取 argmin(d(prev,i)+d(i,next)-d(prev,next)) 与新开路线 2*d(0,i) 的较小者",
+      "evolvable_hook": "insertion_priority(node, route, pos)",
+      "state_maintained": [
+        "routes",
+        "route_loads",
+        "uninserted_order"
+      ],
+      "invariants_and_constraints": [
+        "每条路线起止于仓库 0",
+        "每次插入严格满足 load + q_i <= Q"
+      ],
+      "typical_pitfalls": [
+        "不含后续 2-opt/relocate 时，早期确定的路线骨架在末期可能出现次优交叉"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "delta(r, pos, i) = d(prev, i) + d(i, next) - d(prev, next);  open_new = 2 * d(0, i)",
+        "variables": {
+          "prev, next": "路线 r 在位置 pos 的前后节点（边界为仓库 0）"
+        },
+        "preconditions": "客户按 d(0, i) 降序处理，仅考察 load(r) + q_i <= Q 的可行路线"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_farthest_insertion",
+        "metric": "mean_rel_gap",
+        "value": 0.298009,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "EoH-S 256 例相对 LKH 差距 +29.80%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_farthest_insertion",
+        "metric": "mean_rel_gap",
+        "value": 0.326945,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib A/B/P 74 例相对 BKS 差距 +32.69%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "cvrp_farthest_insertion",
+        "metric": "mean_tour_length",
+        "value": 32.7629,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "final_accept_120 均长 32.7629",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-cheapest-regret-insertion",
+      "method-lit-ahd-heuragenix"
+    ],
+    "sources": [
+      "src-cvrp-workbench-20261121",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-workbench-20261121",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "code:agent_skill_loop/cvrp_workbench/solvers.py"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-farthest-insertion",
+  "content_sha256": "00e4b01dd02d05d78364fdaef228cff61e0f233434f421d66da1cdddb6a1fa0a"
+}

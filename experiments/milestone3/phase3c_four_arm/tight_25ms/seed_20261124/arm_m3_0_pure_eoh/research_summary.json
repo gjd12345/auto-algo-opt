@@ -1,0 +1,106 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261124",
+  "arm_id": "arm_m3_0_pure_eoh",
+  "problem_family": "cvrp",
+  "final_phase": "completed",
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "best_dev_objective": 17.753683,
+  "best_solver_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json",
+  "frozen_checkpoints": {
+    "18": "checkpoints/frozen_checkpoint_18.json",
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "budget_summary": {
+    "run_id": "m3_3c_tight_25ms_arm_m3_0_pure_eoh_s20261124",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3\\phase3c_four_arm\\tight_25ms\\seed_20261124\\arm_m3_0_pure_eoh\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 36,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "complete": 35,
+      "connectivity_failed": 1
+    },
+    "by_purpose": {
+      "eoh_probe": 3,
+      "eoh_generation": 33
+    },
+    "input_tokens": 108340,
+    "output_tokens": 15719,
+    "total_tokens": 124059
+  },
+  "token_summary": {
+    "input_tokens": 108340,
+    "output_tokens": 15719,
+    "total_tokens": 124059,
+    "provider_elapsed_seconds": 255.091,
+    "outer_requests": 0,
+    "inner_eoh_requests": 36
+  },
+  "hypothesis_counts": {
+    "refuted": 0,
+    "superseded": 0,
+    "abandoned": 0,
+    "proposed": 0,
+    "supported": 0,
+    "testing": 0
+  },
+  "archive_summary": null,
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "17.9113",
+      "delta_vs_prev": "",
+      "requests_used_total": 12,
+      "outer_requests_round": 0,
+      "inner_requests_round": 12,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "17.7537",
+      "delta_vs_prev": "-0.1576",
+      "requests_used_total": 25,
+      "outer_requests_round": 0,
+      "inner_requests_round": 13,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "arm_m3_0_pure_eoh",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_parallel_merge_static",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "17.8069",
+      "delta_vs_prev": "+0.0532",
+      "requests_used_total": 36,
+      "outer_requests_round": 0,
+      "inner_requests_round": 11,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-23T09:28:48Z"
+}

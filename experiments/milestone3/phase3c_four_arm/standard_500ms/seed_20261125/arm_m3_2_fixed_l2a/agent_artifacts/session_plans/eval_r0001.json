@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:91aa1e9534014cbfb9305cafc8452e7f"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A single global depot-distance scale mean(d[0,1:]) normalizing a generalized Clarke-Wright savings score (edge-weight lam, radial asymmetry mu, dimensionless capacity-fill bonus beta) preserves the far-from-depot priority ordering while improving capacity packing, so the L2a static-merge template with postprocess_mode=none reaches mean tour length <= 16.14 on cvrp_dev_hetero_24 at 500 ms with 0 timeouts, whereas per-pair normalization (d0i+d0j-dij)/(d0i+d0j) degrades it to ~17.0-18.1.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:91aa1e9534014cbfb9305cafc8452e7f"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the static pairwise merge score into a globally scale-normalized generalized savings rule: score(i,j) = (d0i + d0j - lam*dij + mu*|d0i - d0j|)/mean(d0,1..n) + beta*clip((qi+qj)/Q,0,1) with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], optionally plus a dimensionless endpoint demand-balance term 1-|qi-qj|/(qi+qj); forbid per-pair normalization by (d0i+d0j)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

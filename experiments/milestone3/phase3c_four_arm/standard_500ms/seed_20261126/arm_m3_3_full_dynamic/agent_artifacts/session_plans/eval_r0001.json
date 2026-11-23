@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/relocate_2opt.",
+      "evidence_refs": [
+        "evaluation:b7fdba1fb52042fe8d3870125e0df7bc"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H1: Normalizing the generalized Clarke-Wright savings by a single global depot-distance scale mean(d(0,1..n)) (instead of the per-pair (d0i+d0j) normalization that destroys far-edge radial priority) plus a dimensionless capacity-fill bonus produces a merge hook that beats plain CW on dev_24 (<=16.16 mean tour length at 0 ms hook overhead). H2: Because L2a's known weakness is 'no_post_merge_inter_route_relocate', layering relocate_2opt on top of the evolved merge start yields strictly lower mean tour length than the identical hook with postprocess 'none', at negligible risk of exceeding the 500 ms budget (merge p95 ~10-12 ms at n=200).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b7fdba1fb52042fe8d3870125e0df7bc"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the L2a static pairwise merge hook toward a globally depot-distance-normalized generalized savings family — score(i,j) = (d0i + d0j - lam*d_ij + mu*|d0i - d0j|) / mean(d(0,1..n)) + beta*clip((q_i+q_j)/Q,0,1) + optional endpoint-demand-balance term — with lam in [1.00,1.15], mu in [0.08,0.15], beta in [0.05,0.15], so radial far-customer priority is preserved under global (never per-pair) scaling; then apply relocate_2opt to close the documented inter-route relocate gap and clean residual 2-opt crossings."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_parallel_merge_static/none.",
+      "evidence_refs": [
+        "evaluation:87323852b5f746dd8fd3ed63b43bb714"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at the 25 ms budget, the current leader (16.1275) is limited by tail-trip fragmentation under tight capacity (vbs_rel_gap -22.02% on capacity_level=tight, -20.81% on size=100); adding a boosted dimensionless merge-fill reward with a residual-slack penalty and endpoint demand-imbalance term on top of the scale-normalized radial savings core will reduce the number of residual near-empty routes and lower mean tour length below 16.1275 without increasing hook cost beyond ~0.5 ms, so no budget-exhaustion degradation occurs.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:87323852b5f746dd8fd3ed63b43bb714"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Extend the globally scale-normalized generalized savings score into a two-term family: (a) keep the scale-invariant radial savings core s_ij = (d0i + d0j - lam*dij + mu*|d0i - d0j|) / mean(d[0,1:]) with lam in [1.00,1.15], mu in [0.08,0.15], and (b) strengthen the dimensionless capacity-packing channel toward tight-capacity regimes by scoring post-merge fill fill_ij = clip((qi+qj)/Q,0,1) with a boosted beta in [0.10,0.30] plus a residual-slack penalty -gamma*clip((Q-(qi+qj))/Q,0,1) and an endpoint demand-imbalance term delta*(1-|qi-qj|/(qi+qj)). All terms remain dimensionless and scale-invariant (1e-3 rescale => 0.00% drift), computed in one fully vectorized pass before the merge loop so hook_ms stays < 0.5 ms and the 25 ms budget is never exhausted. No postprocess, to keep the pure constructive effect measurable."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

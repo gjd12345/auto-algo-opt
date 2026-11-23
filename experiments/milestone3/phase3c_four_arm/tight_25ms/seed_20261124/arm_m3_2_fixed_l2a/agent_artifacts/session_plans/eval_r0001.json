@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_parallel_merge_static/intra_2opt.",
+      "evidence_refs": [
+        "evaluation:ec589b7680434d21baf3e8d71ae37a8d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 under a 25 ms per-instance budget, a static merge score normalized by the global depot scale, score = (d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)|)/scale + w*((q_i+q_j)/Q)... , with lam in [0.8,1.6], mu small, and a dimensionless capacity-fill reward, will reach lower total tour length than plain Clarke-Wright static savings; because the static template stays ~2-3 ms, the residual budget can be spent on deterministic intra-route 2-opt, giving a further measurable reduction (expected ~1-3%) without any budget-exhaustion degradation.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:ec589b7680434d21baf3e8d71ae37a8d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Scale-invariant generalized savings merge score plus dimensionless capacity-fill bonus, then intra-route 2-opt polish within the 25 ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

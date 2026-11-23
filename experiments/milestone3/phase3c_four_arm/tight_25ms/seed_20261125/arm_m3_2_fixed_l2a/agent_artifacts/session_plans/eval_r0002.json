@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_parallel_merge_static/intra_2opt.",
+      "evidence_refs": [
+        "evaluation:163c30f07df4420188bea8be99d92121"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Round-1 L2a reached dev_24 mean 16.1721 at 1.84 ms/instance, i.e. only ~7% of the 25 ms budget is consumed. Therefore (H1) appending deterministic intra-route 2-opt cannot trigger budget-exhaustion degradation (observed only for dynamic-refresh L2b-ctrl at 40/120 in the 25 ms regime) and should lower mean objective by at least ~1.5% versus postprocess=none; and (H2) since the weakest regime is capacity_level=tight (vbs_rel_gap −21.5%) plus size=100/uniform demand, re-weighting the generalized-savings score toward the dimensionless capacity-fill bonus and mu*|d(0,i)-d(0,j)| will improve the tight-capacity subset specifically without regressing clustered instances, because both terms remain scale-normalized by mean(d(0,1..n)) and thus stay coordinate-scaling invariant (0.00% drift).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:163c30f07df4420188bea8be99d92121"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the L2a static merge hook towards (a) stronger tight-capacity awareness — raise the dimensionless capacity-fill bonus weight and give the depot-distance-difference term mu a larger share when residual capacity is near one maximum demand — and (b) reclaim the timing headroom (median ≈2.4 ms vs the 25 ms budget) with a deterministic intra-route 2-opt postprocess, leaving relocate_2opt unused so the budget envelope stays safe."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

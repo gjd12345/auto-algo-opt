@@ -1,0 +1,33 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the L2a static merge hook into a globally depot-scale-normalized generalized savings rule: score = (d(0,i) + d(0,j) - lam*d(i,j) + mu*|d(0,i) - d(0,j)|)/scale + beta*min(1, (load_i+load_j)/capacity) fill bonus, with scale = mean(d(0, 1..n)) computed once globally, plus a hard feasibility mask (load_i + load_j <= capacity) and a tie-break that prefers pairing the more radially-distant endpoint. Explore lam in [0.7,1.6], mu in [0,0.3], beta in [0,0.3] under the 25 ms budget, keeping the hook fully vectorized (NumPy row/col broadcast over the route-endpoint pair matrix) so median runtime stays ~2-3 ms and no budget-exhaustion fallback can trigger.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_parallel_merge_static",
+      "mechanism": "Round 1 starts with an empty archive, so the highest-value first stepping stone is the KB-verified best-in-class L2a static merge rule rather than an unproven dynamic/ruin-recreate variant. KB method-cvrp-m2-l2a-generalized-savings reports dev_24 = 16.1595 (EoH best 16.1398), select_64 = 20.8236, blind_120 = 24.2003 with ~2.4 ms median runtime, which fits comfortably inside the 25 ms per-instance budget. The paired anti-pattern evidence (evidence-cvrp-m2-perpair-scale-normalization-antipattern) shows per-pair normalization destroys the far-edge radial ordering (dev_24 regression to 16.66-18.08), so the plan explicitly mandates one global scale. KB method-cvrp-m2-l2b-dynamic-state-merge documents that the dynamic-refresh interface inflates p95 latency ~3.7x and causes budget-exhaustion degradation at tight budgets, so postprocess_mode is kept 'none' this round to bank a low-latency, low-variance baseline before spending time headroom on intra_2opt/relocate_2opt in later rounds."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Using a single GLOBAL depot-distance scale (mean over customers of d(0,.)) to normalize a generalized Clarke-Wright savings expression, plus a dimensionless capacity-fill bonus, preserves the radial priority ordering of far-edge customers while remaining exactly invariant to coordinate rescaling (0.00% drift), and therefore strictly dominates per-pair local normalization and plain CW savings on dev_24 (target ~16.0-16.2 mean tour length) at sub-3 ms median latency, leaving large time headroom under the 25 ms budget.",
+  "interface_selection": {
+    "template_id": "cvrp_parallel_merge_static",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 25.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "evidence-cvrp-m2-perpair-scale-normalization-antipattern",
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2b-dynamic-state-merge"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 starts with an empty archive, so the highest-value first stepping stone is the KB-verified best-in-class L2a static merge rule rather than an unproven dynamic/ruin-recreate variant. KB method-cvrp-m2-l2a-generalized-savings reports dev_24 = 16.1595 (EoH best 16.1398), select_64 = 20.8236, blind_120 = 24.2003 with ~2.4 ms median runtime, which fits comfortably inside the 25 ms per-instance budget. The paired anti-pattern evidence (evidence-cvrp-m2-perpair-scale-normalization-antipattern) shows per-pair normalization destroys the far-edge radial ordering (dev_24 regression to 16.66-18.08), so the plan explicitly mandates one global scale. KB method-cvrp-m2-l2b-dynamic-state-merge documents that the dynamic-refresh interface inflates p95 latency ~3.7x and causes budget-exhaustion degradation at tight budgets, so postprocess_mode is kept 'none' this round to bank a low-latency, low-variance baseline before spending time headroom on intra_2opt/relocate_2opt in later rounds."
+  }
+}
