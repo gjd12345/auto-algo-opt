@@ -34,11 +34,6 @@ from .contracts import (
     classify_outcome,
 )
 from .diagnostics import run_gap_decomposition_diagnostic
-from .dynamic_eoh import (
-    DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE,
-    DynamicInterfaceProblem,
-    run_dynamic_eoh_evolution,
-)
 from .planner import (
     CANDIDATE_TEMPLATE_ORDER,
     M3_CANDIDATE_TEMPLATE_ORDER,
@@ -115,3 +110,15 @@ __all__ = [
     "validate_hook_ast",
     "verify_sealed_against_commitment",
 ]
+
+
+def __getattr__(name: str):
+    if name in {
+        "DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE",
+        "DynamicInterfaceProblem",
+        "run_dynamic_eoh_evolution",
+    }:
+        from . import dynamic_eoh
+
+        return getattr(dynamic_eoh, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -111,7 +111,7 @@ def run_research_agent(
         reconcile_inflight=True,
     )
 
-    kb_tool = KnowledgeBaseTool(run_dir)
+    kb_tool = KnowledgeBaseTool(run_dir, kb_store_path=config.kb_store_path)
     diag_tool = DiagnosticTool(run_dir, dev_suite_id=config.dev_suite_id, dev_split=config.dev_split)
     sandbox_tool = MathSandboxTool(run_dir, timeout_s=config.sandbox_timeout_s)
     iface_tool = InterfaceTool(
@@ -140,7 +140,7 @@ def run_research_agent(
     last_sandbox: dict[str, Any] | None = None
     last_diag: dict[str, Any] | None = None
     prev_best_dev: float | None = ckpt.best_dev_objective
-    round_summaries: list[dict[str, Any]] = []
+    round_summaries: list[dict[str, Any]] = list(ckpt.round_summaries)
 
     def _dispatch_tool(tool_name: str, args: Mapping[str, Any], round_id: int) -> dict[str, Any]:
         nonlocal last_sandbox, last_diag
@@ -250,6 +250,15 @@ def run_research_agent(
                     _save_ckpt()
                     break
 
+                if ckpt.round_outer_requests == config.outer_requests_per_round_cap - 1 and ckpt.round_outer_requests > 0:
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "FINAL allowed outer step in diagnose phase for this round. "
+                            "You MUST call `submit_plan_and_evolve` (or output strict JSON `submit_plan`) NOW."
+                        ),
+                    })
+
                 dec = driver.decide_step(
                     round_id=r_id,
                     phase="diagnose",
@@ -271,8 +280,24 @@ def run_research_agent(
                     except Exception as exc:
                         tres = {"error": f"{type(exc).__name__}: {exc}"}
                     last_tool_res = tres
-                    messages.append({"role": "assistant", "content": json.dumps(dec, ensure_ascii=False)})
-                    messages.append({"role": "user", "content": json.dumps({"tool": tname, "result": tres}, ensure_ascii=False, default=str)})
+                    if dec.get("tool_call_id"):
+                        messages.append({
+                            "role": "assistant",
+                            "content": "",
+                            "tool_calls": [{
+                                "id": str(dec["tool_call_id"]),
+                                "type": "function",
+                                "function": {"name": tname, "arguments": json.dumps(targs, ensure_ascii=False)},
+                            }],
+                        })
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": str(dec["tool_call_id"]),
+                            "content": json.dumps(tres, ensure_ascii=False, default=str),
+                        })
+                    else:
+                        messages.append({"role": "assistant", "content": json.dumps(dec, ensure_ascii=False)})
+                        messages.append({"role": "user", "content": json.dumps({"tool": tname, "result": tres}, ensure_ascii=False, default=str)})
                     ckpt.round_step_index += 1
                     _save_ckpt()
                     continue
@@ -291,11 +316,28 @@ def run_research_agent(
                         "cited_kb_ids": list(dec.get("cited_kb_ids") or []),
                         "rationale": str(dec.get("rationale") or ""),
                     }
+                    if dec.get("tool_call_id"):
+                        ckpt.pending_submit_tool_call = {
+                            "id": str(dec["tool_call_id"]),
+                            "type": "function",
+                            "function": {
+                                "name": "submit_plan_and_evolve",
+                                "arguments": json.dumps(ckpt.round_plan_args, ensure_ascii=False),
+                            },
+                        }
+                    else:
+                        ckpt.pending_submit_tool_call = None
                     ckpt.phase = "session_evolve"
                     ckpt.round_step_index += 1
                     _save_ckpt()
                     break
-                raise ValueError(f"unexpected_driver_action_in_diagnose:{act}")
+                messages.append({
+                    "role": "user",
+                    "content": f"Invalid action '{act}' in diagnose phase ({dec.get('error', '')}). Call a valid diagnose tool or submit_plan_and_evolve.",
+                })
+                ckpt.round_step_index += 1
+                _save_ckpt()
+                continue
 
             if ckpt.phase == "budget_stopped":
                 break
@@ -329,20 +371,31 @@ def run_research_agent(
                 diagnostic_ref=diag_ref_payload,
                 rationale=str(pargs.get("rationale") or ""),
                 is_final_round=(r_id >= config.max_rounds),
-                eval_dev_suite=True,
+                eval_dev_suite=bool(config.eval_dev_suite),
             )
             ckpt.session_initialized = True
 
-            # Record best dev frozen solver + archive stepping stones
+            # Record best dev frozen solver + archive stepping stones (enforce completion rate & penalized score)
             frozen = session_out.get("frozen_solver")
             dev_eval = session_out.get("dev_eval")
-            best_obj = dev_eval.get("mean_tour_length") if dev_eval else None
+            best_obj = dev_eval.get("penalized_mean_tour_length", dev_eval.get("mean_tour_length")) if dev_eval else None
             if frozen is not None:
                 snap_rel = f"agent_artifacts/round_{r_id:04d}_frozen_solver.json"
                 atomic_write_json(run_dir / snap_rel, frozen)
-                if ckpt.best_dev_objective is None or (best_obj is not None and float(best_obj) < float(ckpt.best_dev_objective)):
-                    ckpt.best_dev_objective = float(best_obj) if best_obj is not None else ckpt.best_dev_objective
-                    ckpt.best_solver_manifest_ref = snap_rel
+                if dev_eval is not None and best_obj is not None:
+                    cand_all_feasible = bool(dev_eval.get("all_feasible", False))
+                    cand_comp_rate = float(dev_eval.get("completion_rate") or 0.0)
+                    cand_key = (cand_all_feasible, cand_comp_rate, -float(best_obj))
+                    prev_key = (
+                        bool(ckpt.best_all_feasible),
+                        float(ckpt.best_completion_rate),
+                        -(float(ckpt.best_dev_objective) if ckpt.best_dev_objective is not None else float("inf")),
+                    )
+                    if ckpt.best_solver_manifest_ref is None or cand_key > prev_key:
+                        ckpt.best_all_feasible = cand_all_feasible
+                        ckpt.best_completion_rate = cand_comp_rate
+                        ckpt.best_dev_objective = float(best_obj)
+                        ckpt.best_solver_manifest_ref = snap_rel
                 if config.archive_feedback_enabled and dev_eval is not None:
                     archive_tool.register_solver_with_dev_records(
                         frozen_solver=frozen,
@@ -358,7 +411,16 @@ def run_research_agent(
             for cp in session_out.get("crossed_checkpoints") or ():
                 _freeze_checkpoint(int(cp), int(budget.used))
 
-            # Persist eval summary artifact so hypotheses can cite its SHA-256
+            # Persist eval summary artifact so hypotheses and reflection can inspect & cite exact SHA-256
+            regime_slices = None
+            if config.tools_enabled and dev_eval and dev_eval.get("records"):
+                from agent_skill_loop.interface_design.diagnostics import analyze_instance_records
+
+                regime_slices = analyze_instance_records(
+                    dev_eval["records"],
+                    instance_metadata=archive_tool._inst_meta,
+                )
+
             ev_art_rel = f"agent_artifacts/round_{r_id:04d}_dev_eval.json"
             ev_art_sha = atomic_write_json(
                 run_dir / ev_art_rel,
@@ -368,22 +430,65 @@ def run_research_agent(
                     "postprocess_mode": chosen_pp,
                     "session_status": session_out.get("session_status"),
                     "mean_tour_length": best_obj,
+                    "penalized_mean_tour_length": best_obj,
+                    "valid_only_mean_tour_length": dev_eval.get("valid_only_mean_tour_length") if dev_eval else None,
+                    "valid_count": dev_eval.get("valid_count") if dev_eval else None,
+                    "instance_count": dev_eval.get("instance_count") if dev_eval else None,
+                    "completion_rate": dev_eval.get("completion_rate") if dev_eval else None,
+                    "all_feasible": dev_eval.get("all_feasible") if dev_eval else None,
+                    "failure_penalty_policy": dev_eval.get("failure_penalty_policy") if dev_eval else None,
                     "solve_ms_mean": dev_eval.get("solve_ms_mean") if dev_eval else None,
                     "frozen_solver_id": frozen.get("solver_id") if frozen else None,
                 },
             )
-            last_tool_res = {
+            reflect_payload: dict[str, Any] = {
                 "round_id": r_id,
+                "template_id": chosen_tpl,
+                "postprocess_mode": chosen_pp,
                 "eval_artifact_ref": ev_art_rel,
                 "eval_artifact_sha256": ev_art_sha,
                 "mean_tour_length": best_obj,
+                "valid_only_mean_tour_length": dev_eval.get("valid_only_mean_tour_length") if dev_eval else None,
+                "valid_count": dev_eval.get("valid_count") if dev_eval else None,
+                "instance_count": dev_eval.get("instance_count") if dev_eval else None,
+                "completion_rate": dev_eval.get("completion_rate") if dev_eval else None,
+                "all_feasible": dev_eval.get("all_feasible") if dev_eval else None,
+                "solve_ms_mean": dev_eval.get("solve_ms_mean") if dev_eval else None,
+                "frozen_solver_id": frozen.get("solver_id") if frozen else None,
+                "evolved_hook_preview": str(frozen.get("hook_code") or "")[:1200] if frozen else None,
+                "regime_summary": (regime_slices or {}).get("by_factor") if isinstance(regime_slices, Mapping) else None,
             }
+            last_tool_res = reflect_payload
+            ckpt.pending_reflect_payload = reflect_payload
             ckpt.phase = "reflect"
             ckpt.round_reflect_requests = 0
             _save_ckpt()
 
         # Phase 3: Reflection & Hypothesis Ledger Update
         if ckpt.phase == "reflect":
+            reflect_payload_now = ckpt.pending_reflect_payload or last_tool_res
+            if reflect_payload_now is not None:
+                last_tool_res = dict(reflect_payload_now)
+                if ckpt.pending_submit_tool_call and ckpt.pending_submit_tool_call.get("id"):
+                    messages.append({
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [ckpt.pending_submit_tool_call],
+                    })
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": str(ckpt.pending_submit_tool_call["id"]),
+                        "content": json.dumps(reflect_payload_now, ensure_ascii=False, default=str),
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": "Review the round evaluation above. If any open hypothesis was tested, call `hypothesis_update` citing `eval_artifact_ref` + `eval_artifact_sha256`, then call `finish_round`.",
+                    })
+                else:
+                    messages.append({
+                        "role": "user",
+                        "content": json.dumps({"phase": "reflect", "round_evaluation_result": reflect_payload_now}, ensure_ascii=False, default=str),
+                    })
             reflect_step = 0
             while ckpt.round_reflect_requests < config.outer_reflect_cap and (budget.remaining is None or budget.remaining > 0):
                 dec = driver.decide_step(
@@ -397,15 +502,53 @@ def run_research_agent(
                 reflect_step += 1
                 act = str(dec.get("action") or "")
                 if act in {"finish_round", "budget_exhausted"}:
+                    for upd in dec.get("hypothesis_updates") or ():
+                        if isinstance(upd, Mapping):
+                            try:
+                                _dispatch_tool("hypothesis_update", upd, r_id)
+                            except Exception:
+                                pass
                     break
                 if act == "call_tool":
-                    tres = _dispatch_tool(str(dec["tool"]), dict(dec.get("arguments") or {}), r_id)
+                    tname = str(dec["tool"])
+                    targs = dict(dec.get("arguments") or {})
+                    try:
+                        tres = _dispatch_tool(tname, targs, r_id)
+                    except Exception as exc:
+                        tres = {"error": f"{type(exc).__name__}: {exc}"}
                     last_tool_res = tres
+                    if dec.get("tool_call_id"):
+                        messages.append({
+                            "role": "assistant",
+                            "content": "",
+                            "tool_calls": [{
+                                "id": str(dec["tool_call_id"]),
+                                "type": "function",
+                                "function": {"name": tname, "arguments": json.dumps(targs, ensure_ascii=False)},
+                            }],
+                        })
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": str(dec["tool_call_id"]),
+                            "content": json.dumps(tres, ensure_ascii=False, default=str),
+                        })
+                    else:
+                        messages.append({"role": "assistant", "content": json.dumps(dec, ensure_ascii=False)})
+                        messages.append({"role": "user", "content": json.dumps({"tool": tname, "result": tres}, ensure_ascii=False, default=str)})
+                    _save_ckpt()
+                    continue
+                if act == "invalid_response":
+                    messages.append({
+                        "role": "user",
+                        "content": f"Invalid response in reflect phase ({dec.get('error', '')}). Call hypothesis_update or finish_round.",
+                    })
                     _save_ckpt()
                     continue
                 break
 
-            dev_obj = (session_out.get("dev_eval") or {}).get("mean_tour_length") if session_out else None
+            dev_obj = (session_out.get("dev_eval") or {}).get("mean_tour_length") if session_out else (
+                (reflect_payload_now or {}).get("mean_tour_length")
+            )
             delta_str = ""
             if dev_obj is not None and prev_best_dev is not None:
                 delta_str = f"{float(dev_obj) - float(prev_best_dev):+.4f}"
@@ -432,6 +575,7 @@ def run_research_agent(
             }
             append_results_tsv_row(tsv_path, r_summary)
             round_summaries.append(r_summary)
+            ckpt.round_summaries.append(r_summary)
             ckpt.completed_rounds.append(r_id)
             ckpt.current_round += 1
             ckpt.phase = "diagnose"
@@ -439,11 +583,26 @@ def run_research_agent(
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
             ckpt.round_plan_args = None
+            ckpt.pending_reflect_payload = None
+            ckpt.pending_submit_tool_call = None
             _save_ckpt()
 
     if ckpt.phase != "budget_stopped":
         ckpt.phase = "completed"
     _save_ckpt()
+
+    req_rows = budget.request_records()
+    in_tokens_sum = sum(int(r.get("input_tokens") or 0) for r in req_rows)
+    out_tokens_sum = sum(int(r.get("output_tokens") or 0) for r in req_rows)
+    elapsed_sum = round(sum(float(r.get("elapsed_seconds") or 0.0) for r in req_rows), 3)
+    token_summary = {
+        "input_tokens": in_tokens_sum,
+        "output_tokens": out_tokens_sum,
+        "total_tokens": in_tokens_sum + out_tokens_sum,
+        "provider_elapsed_seconds": elapsed_sum,
+        "outer_requests": sum(1 for r in req_rows if r.get("purpose") in {"planner", "reflection"}),
+        "inner_eoh_requests": sum(1 for r in req_rows if r.get("purpose") not in {"planner", "reflection"}),
+    }
 
     final_summary = {
         "schema_version": "m3-research-summary/v1",
@@ -456,6 +615,7 @@ def run_research_agent(
         "best_solver_manifest_ref": ckpt.best_solver_manifest_ref,
         "frozen_checkpoints": dict(ckpt.frozen_checkpoints),
         "budget_summary": budget.summary(),
+        "token_summary": token_summary,
         "hypothesis_counts": ledger_tool.counts(),
         "archive_summary": archive_tool.summary() if config.archive_feedback_enabled else None,
         "round_summaries": round_summaries,

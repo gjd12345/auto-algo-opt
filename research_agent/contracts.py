@@ -100,11 +100,15 @@ class AgentConfig:
     search_seed: int = 20261124
     dev_suite_id: str = "cvrp_dev_hetero_24"
     dev_split: str = "dev_train"
+    use_benchmark_dev_suite: bool = False
+    eval_dev_suite: bool = True
     dev_instance_count: int = 12
     dev_instance_size: int = 50
+    agent_guidance: bool = True
     inject_static_kb_clues: bool = False
     tools_enabled: bool = True
     archive_feedback_enabled: bool = True
+    kb_store_path: str | None = None
     checkpoint_budgets: tuple[int, ...] = (36,)
     mode: str = "mock"  # "mock" | "live"
     request_timeout_s: float = 60.0
@@ -177,7 +181,12 @@ class AgentCheckpoint:
     active_postprocess_mode: str = "none"
     best_solver_manifest_ref: str | None = None
     best_dev_objective: float | None = None
+    best_all_feasible: bool = False
+    best_completion_rate: float = 0.0
     frozen_checkpoints: dict[str, str] = field(default_factory=dict)
+    round_summaries: list[dict[str, Any]] = field(default_factory=list)
+    pending_reflect_payload: dict[str, Any] | None = None
+    pending_submit_tool_call: dict[str, Any] | None = None
     updated_at_utc: str = field(default_factory=utc_now)
 
     def to_dict(self) -> dict[str, Any]:

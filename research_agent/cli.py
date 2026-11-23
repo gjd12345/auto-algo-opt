@@ -28,6 +28,9 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--api-key-env", default="DEEPSEEK_API_KEY")
     p_run.add_argument("--search-seed", type=int, default=20261124)
     p_run.add_argument("--disable-tools", action="store_true")
+    p_run.add_argument("--no-agent-guidance", action="store_true")
+    p_run.add_argument("--use-benchmark-dev-suite", action="store_true")
+    p_run.add_argument("--kb-store", type=Path, default=None)
 
     p_res = sub.add_parser("resume", help="Resume an interrupted autonomous research run.")
     p_res.add_argument("--output-dir", type=Path, required=True)
@@ -48,6 +51,9 @@ def main(argv: list[str] | None = None) -> int:
             api_key_env=args.api_key_env,
             search_seed=args.search_seed,
             tools_enabled=not args.disable_tools,
+            agent_guidance=not args.no_agent_guidance,
+            use_benchmark_dev_suite=bool(args.use_benchmark_dev_suite),
+            kb_store_path=str(args.kb_store.resolve()) if args.kb_store else None,
         )
         res = run_research_agent(cfg, resume=False)
     else:

@@ -157,6 +157,28 @@ AGENT_TOOL_SCHEMAS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "finish_round",
+            "description": "Conclude the reflection phase for the current round after any hypothesis ledger updates.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "summary": {"type": "string"},
+                    "hypothesis_updates": {"type": "array", "items": {"type": "object"}},
+                },
+                "required": ["summary"],
+            },
+        },
+    },
+]
+
+AGENT_DIAGNOSE_TOOL_SCHEMAS: list[dict[str, Any]] = [
+    t for t in AGENT_TOOL_SCHEMAS if t["function"]["name"] not in {"hypothesis_update", "finish_round"}
+]
+AGENT_REFLECT_TOOL_SCHEMAS: list[dict[str, Any]] = [
+    t for t in AGENT_TOOL_SCHEMAS if t["function"]["name"] in {"hypothesis_update", "archive_summary", "kb_read", "finish_round"}
 ]
 
 
@@ -176,12 +198,19 @@ def build_round_system_prompt(
         else "You are running in plain-text metacognitive reflection mode (NO external search, slicing, or Python sandbox tools). "
         "Reason strictly from the prior round summary, source code, and scalar scores."
     )
+    protocol_desc = (
+        "Prefer native OpenAI tool calls (`kb_search`, `diagnose_suite`, `run_math_sandbox`, `list_interfaces`, "
+        "`propose_and_validate_interface`, `archive_summary`, `hypothesis_propose`, `submit_plan_and_evolve` in diagnose; "
+        "`hypothesis_update`, `finish_round` in reflect). Or respond with one strict JSON object."
+        if tools_enabled
+        else "Respond with ONE strict JSON object only (`submit_plan` during diagnose phase, `finish_round` during reflect phase)."
+    )
     return (
         f"You are an autonomous combinatorial optimization research scientist (`{arm_id}`) working on `{problem_family}` "
         f"under a strict per-instance time budget of {instance_time_budget_ms:.1f} ms.\n"
         f"{mode_desc}\n"
         f"Allowed templates: {list(allowed_templates)}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
-        "You MUST either issue valid tool calls OR respond with a single strict JSON object matching one of:\n"
+        f"{protocol_desc}\n"
         '1) {"action":"call_tool","tool":"<name>","arguments":{...}}\n'
         '2) {"action":"submit_plan","template_id":"...","postprocess_mode":"...","direction":"...","hypothesis":"...","cited_kb_ids":[...],"rationale":"..."}\n'
         '3) {"action":"finish_round","summary":"...","hypothesis_updates":[...]}'

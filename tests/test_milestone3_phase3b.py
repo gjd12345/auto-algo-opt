@@ -51,6 +51,13 @@ def test_research_agent_3round_mock_autonomous_loop_and_evidenced_refutation(tmp
     assert (run_dir / "research_policy.md").is_file()
     assert (run_dir / "research_summary.json").is_file()
 
+    # P0-1 regression check: agent_guidance=True + inject_static_kb_clues=False passes agent hypothesis into EoH without static KB clues
+    r2_ctx = (run_dir / "session_run" / "rounds" / "round_0002" / "round_context.txt").read_text(encoding="utf-8")
+    r2_task = (run_dir / "session_run" / "rounds" / "round_0002" / "eoh_run" / "task_description.txt").read_text(encoding="utf-8")
+    assert "cvrp_ruin_recreate" in r2_ctx
+    assert "Neutral benchmark control" not in r2_ctx
+    assert "KB DOMAIN CLUES" not in r2_task
+
     # Results TSV has header + 3 round rows, showing L2a -> L3 upgrade
     tsv_lines = (run_dir / "results.tsv").read_text(encoding="utf-8").splitlines()
     assert tsv_lines[0] + "\n" == RESULTS_TSV_HEADER
@@ -343,11 +350,18 @@ def test_live_http_dual_protocol_and_arm_m3_1_plain_text_isolation(tmp_path: Pat
         drv = OpenAIAgentDriver(config=cfg, budget=b, session_dir=run_dir / "session_run")
         d1 = drv.decide_step(round_id=1, phase="diagnose", step_index=0, messages=[{"role": "user", "content": "{}"}], last_tool_result=None)
         d2 = drv.decide_step(round_id=1, phase="diagnose", step_index=1, messages=[{"role": "user", "content": "{}"}], last_tool_result=None)
-        d3 = drv.decide_step(round_id=1, phase="reflect", step_index=0, messages=[{"role": "user", "content": "{}"}], last_tool_result=None)
+        d3 = drv.decide_step(
+            round_id=1,
+            phase="reflect",
+            step_index=0,
+            messages=[{"role": "user", "content": "Reflect on round 1."}],
+            last_tool_result={"eval_artifact_sha256": "def456", "mean_tour_length": 15.99},
+        )
         assert d1 == {"action": "call_tool", "tool": "list_interfaces", "arguments": {}, "tool_call_id": "call_1"}
         assert d2["action"] == "submit_plan" and d2["template_id"] == "cvrp_parallel_merge_static"
         assert d3["action"] == "finish_round"
         assert len(calls) == 3 and "tools" in calls[0]
+        assert any("15.99" in str(m.get("content", "")) for m in calls[2]["messages"])
         assert b.used == 3 and all(r["response_sha256"] for r in b.request_records())
 
     # 2. Arm M3-1 plain-text reflection (tools_enabled=False) locks template & forbids switch/sandbox
@@ -375,3 +389,81 @@ def test_live_http_dual_protocol_and_arm_m3_1_plain_text_isolation(tmp_path: Pat
     assert not list((m31_dir / "agent_artifacts" / "sandbox").glob("*.json"))
     assert res_m31["archive_summary"] is None
     assert "cvrp_parallel_merge_static" in (m31_dir / "results.tsv").read_text(encoding="utf-8")
+
+
+def test_session_ahead_crash_resume_and_penalized_champion_selection(tmp_path: Path) -> None:
+    """Verify P1-3 (session ahead of outer checkpoint) and P1-5 (completion-aware penalized champion selection)."""
+    from research_agent.contracts import AgentCheckpoint
+    from research_agent.tools.session_tools import SessionRunnerTool
+
+    run_dir = tmp_path / "session_ahead_resume"
+    cfg = AgentConfig(
+        run_id="m3_ahead_resume",
+        output_dir=str(run_dir),
+        max_rounds=2,
+        total_request_cap=20,
+        eoh_pop_size=2,
+        eoh_n_pop=1,
+        eoh_max_sample_nums=2,
+        dev_instance_count=2,
+        dev_instance_size=12,
+        mode="mock",
+    )
+    # Run Round 1 inside Session manually via SessionRunnerTool so Session advances to Round 2 WAITING_FOR_PLAN
+    b = PersistentRequestBudget(run_dir / "agent_budget.sqlite3", max_requests=20, run_id=cfg.run_id)
+    st_tool = SessionRunnerTool(run_dir=run_dir, config=cfg, budget=b)
+    r1_out = st_tool.run_round(
+        round_id=1,
+        template_id="cvrp_parallel_merge_static",
+        postprocess_mode="none",
+        direction="R1 prior to outer crash",
+        hypothesis="H1",
+        is_final_round=False,
+        eval_dev_suite=False,
+    )
+    assert r1_out["round_id"] == 1
+    # Simulate outer crash BEFORE updating agent_checkpoint (still stuck at round=1, phase='session_evolve')
+    ckpt = AgentCheckpoint(
+        run_id=cfg.run_id,
+        current_round=1,
+        phase="session_evolve",
+        round_plan_args={
+            "template_id": "cvrp_parallel_merge_static",
+            "postprocess_mode": "none",
+            "direction": "R1 prior to outer crash",
+            "hypothesis": "H1",
+            "cited_kb_ids": [],
+            "rationale": "",
+        },
+        session_initialized=True,
+    )
+    (run_dir / "agent_checkpoint.json").write_text(json.dumps(ckpt.to_dict(), indent=2), encoding="utf-8")
+
+    # Resuming MUST recover Round 1 without launching Round 2 as Round 1, then run Round 2 cleanly
+    resumed = run_research_agent(cfg, resume=True)
+    assert resumed["completed_rounds"] == [1, 2]
+    tsv_rows = (run_dir / "results.tsv").read_text(encoding="utf-8").splitlines()[1:]
+    assert [int(r.split("\t")[0]) for r in tsv_rows] == [1, 2]
+
+    # Penalized champion scoring check: broken partial solver returning valid on only 1 instance must score worse than full valid baseline
+    bad_partial_solver = dict(r1_out["frozen_solver"])
+    bad_partial_solver["solver_id"] = "partial_fail_solver"
+    bad_partial_solver["hook_code"] = (
+        "import numpy as np\n\n"
+        "def score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\n"
+        "    if distance_matrix.shape[0] > 60:\n"
+        "        raise ValueError('fail on large')\n"
+        "    return distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]\n"
+    )
+    from agent_skill_loop.interface_design.contracts import sha256_text as _sha_txt
+
+    bad_partial_solver["hook_code_sha256"] = _sha_txt(bad_partial_solver["hook_code"])
+    eval_good = st_tool._evaluate_frozen_on_dev(r1_out["frozen_solver"])
+    eval_partial = st_tool._evaluate_frozen_on_dev(bad_partial_solver)
+    assert eval_good is not None and eval_partial is not None
+    assert eval_good["all_feasible"] is True and eval_partial["all_feasible"] is False
+    assert (eval_good["all_feasible"], eval_good["completion_rate"], -eval_good["penalized_mean_tour_length"]) > (
+        eval_partial["all_feasible"],
+        eval_partial["completion_rate"],
+        -eval_partial["penalized_mean_tour_length"],
+    )

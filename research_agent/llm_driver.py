@@ -7,12 +7,13 @@ import os
 import time
 import uuid
 from typing import Any, Mapping, Protocol, Sequence
+from urllib.parse import urlsplit
 
 from agent_skill_loop.client import ProviderFailure, http_post_with_deadline, load_local_env
 from agent_skill_loop.request_budget import PersistentRequestBudget
 from agent_skill_loop.session_actions import record_controller_usage
 from research_agent.contracts import AgentConfig, atomic_write_json
-from research_agent.prompts import AGENT_TOOL_SCHEMAS, build_round_system_prompt
+from research_agent.prompts import AGENT_DIAGNOSE_TOOL_SCHEMAS, AGENT_REFLECT_TOOL_SCHEMAS, build_round_system_prompt
 
 
 class AgentDriver(Protocol):
@@ -97,6 +98,8 @@ class OpenAIAgentDriver:
         self.budget = budget
         self.session_dir = session_dir
         self._attempt = 0
+        self._opencode_session_id = str(uuid.uuid4())
+        self._is_opencode = (urlsplit(config.endpoint).hostname or "").endswith("opencode.ai")
 
     def decide_step(
         self,
@@ -113,16 +116,6 @@ class OpenAIAgentDriver:
             raise RuntimeError(f"missing_api_key:{self.config.api_key_env}")
 
         purpose = "planner" if phase == "diagnose" else "reflection"
-        self._attempt += 1
-        slot = self.budget.reserve(
-            purpose=purpose,
-            problem=self.config.problem_family,
-            attempt=self._attempt,
-            model=self.config.planner_model,
-        )
-        if slot is None:
-            return {"action": "budget_exhausted"}
-
         sys_prompt = build_round_system_prompt(
             arm_id=self.config.arm_id,
             problem_family=self.config.problem_family,
@@ -132,91 +125,159 @@ class OpenAIAgentDriver:
             instance_time_budget_ms=self.config.instance_time_budget_ms,
         )
         full_msgs = [{"role": "system", "content": sys_prompt}, *[dict(m) for m in messages]]
+        if last_tool_result is not None:
+            last_m = full_msgs[-1] if full_msgs else {}
+            serialized_last = json.dumps(last_tool_result, ensure_ascii=False, sort_keys=True, default=str)
+            already_present = (
+                last_m.get("role") == "tool"
+                or (isinstance(last_m.get("content"), str) and (last_tool_result.get("eval_artifact_sha256") or serialized_last[:120]) in last_m.get("content", ""))
+            )
+            if not already_present:
+                full_msgs.append({
+                    "role": "user",
+                    "content": "[LATEST OBSERVATION / EVALUATION RESULT]\n" + json.dumps(last_tool_result, ensure_ascii=False, default=str),
+                })
         payload: dict[str, Any] = {
             "model": self.config.planner_model,
             "messages": full_msgs,
             "temperature": 0.2,
         }
         if self.config.tools_enabled:
-            allowed_tools = [t for t in AGENT_TOOL_SCHEMAS]
-            payload["tools"] = allowed_tools
+            payload["tools"] = list(AGENT_DIAGNOSE_TOOL_SCHEMAS if phase == "diagnose" else AGENT_REFLECT_TOOL_SCHEMAS)
             payload["tool_choice"] = "auto"
 
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "User-Agent": "eoh-frozen-bridge/0908" if self._is_opencode else "research-agent/1.0",
         }
-        t0 = time.monotonic()
-        try:
-            self.budget.mark_sent(slot)
-            status, raw = http_post_with_deadline(
-                self.config.endpoint,
-                headers,
-                json.dumps(payload).encode("utf-8"),
-                timeout=float(self.config.request_timeout_s),
-            )
-            elapsed = time.monotonic() - t0
-            parsed = json.loads(raw.decode("utf-8"))
-            usage = parsed.get("usage") if isinstance(parsed.get("usage"), dict) else {}
-            in_tok = int(usage.get("prompt_tokens") or 0)
-            out_tok = int(usage.get("completion_tokens") or 0)
-            choices = parsed.get("choices") or []
-            choice0 = choices[0] if choices else {}
-            msg = choice0.get("message") or {}
-            finish_reason = choice0.get("finish_reason")
-            raw_text = raw.decode("utf-8", errors="replace")
+        if self._is_opencode:
+            headers["x-opencode-session"] = self._opencode_session_id
 
-            self.budget.finish(
-                slot,
-                "complete",
-                status=status,
-                elapsed_seconds=elapsed,
-                input_tokens=in_tok,
-                output_tokens=out_tok,
-                finish_reason=finish_reason,
-                response_text=raw_text,
+        last_exc: Exception | None = None
+        for retry in range(3):
+            self._attempt += 1
+            slot = self.budget.reserve(
+                purpose=purpose,
+                problem=self.config.problem_family,
+                attempt=self._attempt,
+                model=self.config.planner_model,
             )
-            _record_usage_to_session(
-                config=self.config,
-                session_dir=self.session_dir,
-                round_id=round_id,
-                activity="plan" if phase == "diagnose" else "reflection",
-                input_tokens=in_tok,
-                output_tokens=out_tok,
-                elapsed_seconds=elapsed,
-                source="openai_agent_driver",
-            )
+            if slot is None:
+                return {"action": "budget_exhausted"}
 
-            tool_calls = msg.get("tool_calls") or []
-            if tool_calls and isinstance(tool_calls, list):
-                tc = tool_calls[0]
-                fn = tc.get("function") or {}
-                tname = str(fn.get("name") or "")
-                targs = json.loads(str(fn.get("arguments") or "{}"))
-                if tname == "submit_plan_and_evolve":
-                    return {"action": "submit_plan", **targs}
-                return {"action": "call_tool", "tool": tname, "arguments": targs, "tool_call_id": tc.get("id")}
+            t0 = time.monotonic()
+            try:
+                self.budget.mark_sent(slot)
+                status, raw = http_post_with_deadline(
+                    self.config.endpoint,
+                    headers,
+                    json.dumps(payload).encode("utf-8"),
+                    timeout=float(self.config.request_timeout_s),
+                )
+                elapsed = time.monotonic() - t0
+                parsed = json.loads(raw.decode("utf-8"))
+                usage = parsed.get("usage") if isinstance(parsed.get("usage"), dict) else {}
+                in_tok = int(usage.get("prompt_tokens") or 0)
+                out_tok = int(usage.get("completion_tokens") or 0)
+                choices = parsed.get("choices") or []
+                choice0 = choices[0] if choices else {}
+                msg = choice0.get("message") or {}
+                finish_reason = choice0.get("finish_reason")
+                raw_text = raw.decode("utf-8", errors="replace")
 
-            content = str(msg.get("content") or "")
-            return parse_strict_action_text(content)
-        except ProviderFailure as exc:
-            self.budget.finish(
-                slot,
-                "killed_unknown" if exc.error_code == "request_deadline" else "http_error",
-                status=exc.status,
-                error_code=exc.error_code,
-                elapsed_seconds=time.monotonic() - t0,
-            )
-            raise
-        except Exception as exc:
-            self.budget.finish(
-                slot,
-                "failed",
-                error_code=type(exc).__name__,
-                elapsed_seconds=time.monotonic() - t0,
-            )
-            raise
+                self.budget.finish(
+                    slot,
+                    "complete",
+                    status=status,
+                    elapsed_seconds=elapsed,
+                    input_tokens=in_tok,
+                    output_tokens=out_tok,
+                    finish_reason=finish_reason,
+                    response_text=raw_text,
+                )
+                _record_usage_to_session(
+                    config=self.config,
+                    session_dir=self.session_dir,
+                    round_id=round_id,
+                    activity="plan" if phase == "diagnose" else "reflection",
+                    input_tokens=in_tok,
+                    output_tokens=out_tok,
+                    elapsed_seconds=elapsed,
+                    source="openai_agent_driver",
+                )
+
+                tool_calls = msg.get("tool_calls") or []
+                if tool_calls and isinstance(tool_calls, list):
+                    tc = tool_calls[0]
+                    fn = tc.get("function") or {}
+                    tname = str(fn.get("name") or "")
+                    try:
+                        targs = json.loads(str(fn.get("arguments") or "{}"))
+                    except Exception as exc:
+                        decision: dict[str, Any] = {"action": "invalid_response", "error": f"malformed_tool_arguments:{exc}", "raw": str(fn.get("arguments") or "")[:300]}
+                    else:
+                        if not isinstance(targs, dict):
+                            decision = {"action": "invalid_response", "error": "tool_arguments_must_be_object", "raw": str(fn.get("arguments") or "")[:300]}
+                        elif tname == "submit_plan_and_evolve":
+                            decision = {"action": "submit_plan", **targs, "tool_call_id": tc.get("id")}
+                        elif tname == "finish_round":
+                            decision = {"action": "finish_round", **targs, "tool_call_id": tc.get("id")}
+                        else:
+                            decision = {"action": "call_tool", "tool": tname, "arguments": targs, "tool_call_id": tc.get("id")}
+                else:
+                    content = str(msg.get("content") or "")
+                    try:
+                        decision = parse_strict_action_text(content)
+                    except Exception as exc:
+                        decision = {"action": "invalid_response", "error": str(exc), "raw": content[:400]}
+
+                turn_log = self.session_dir.parent / "agent_artifacts" / "agent_turns.jsonl"
+                turn_log.parent.mkdir(parents=True, exist_ok=True)
+                with turn_log.open("a", encoding="utf-8", newline="\n") as fh:
+                    fh.write(json.dumps({
+                        "round_id": round_id,
+                        "phase": phase,
+                        "step_index": step_index,
+                        "request_id": slot.request_id,
+                        "model": self.config.planner_model,
+                        "input_tokens": in_tok,
+                        "output_tokens": out_tok,
+                        "elapsed_seconds": round(elapsed, 4),
+                        "messages": full_msgs,
+                        "decision": decision,
+                    }, ensure_ascii=False, default=str) + "\n")
+                return decision
+            except ProviderFailure as exc:
+                last_exc = exc
+                self.budget.finish(
+                    slot,
+                    "killed_unknown" if exc.error_code == "request_deadline" else "http_error",
+                    status=exc.status,
+                    error_code=exc.error_code,
+                    elapsed_seconds=time.monotonic() - t0,
+                )
+                transient = (
+                    exc.error_code in {"provider_connectivity_or_protocol_error", "request_deadline"}
+                    or exc.status == 429
+                    or (isinstance(exc.status, int) and 500 <= exc.status < 600)
+                )
+                if transient and retry < 2:
+                    time.sleep(2.0 * (retry + 1))
+                    continue
+                raise
+            except Exception as exc:
+                last_exc = exc
+                self.budget.finish(
+                    slot,
+                    "failed",
+                    error_code=type(exc).__name__,
+                    elapsed_seconds=time.monotonic() - t0,
+                )
+                raise
+        assert last_exc is not None
+        raise last_exc
 
 
 class ScriptedMockAgentDriver:

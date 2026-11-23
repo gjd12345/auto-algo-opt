@@ -33,7 +33,6 @@ from .contracts import (
     OUTCOME_TIMEOUT_OR_INFEASIBLE,
     InterfaceDesign,
 )
-from .dynamic_eoh import _summarize_request_log, run_dynamic_eoh_evolution
 from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
 from .templates import (
     build_classic_cw_static_design,
@@ -507,6 +506,8 @@ def run_short_pilot_racing(
       remaining request cap, seeded with its best valid pilot candidate(s) (``resume_from_pilot_seeds``).
     - Every pilot + continuation request and token is summed into one unified resource ledger.
     """
+    from .dynamic_eoh import _summarize_request_log, run_dynamic_eoh_evolution
+
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     if (output_dir / "frozen_solver_manifest.json").exists() or (output_dir / "racing_ledger.json").exists():

@@ -40,33 +40,86 @@ class SessionRunnerTool:
         if (self.session_dir / "session.sqlite3").is_file():
             return read_state(run=self.session_dir)
         eoh_endpoint = "mock://local" if self.config.mode == "mock" else self.config.endpoint
-        return initialize_session(
-            output=self.session_dir,
-            operation_id=f"init_{self.config.run_id}",
-            eoh_model=self.config.eoh_model,
-            eoh_endpoint=eoh_endpoint,
-            eoh_api_key_env=self.config.api_key_env,
-            eoh_max_requests=self.config.total_request_cap,
-            eoh_round_max_requests=None,
-            engine_wall_seconds=self.config.wall_seconds,
-            solver_timeout=self.config.candidate_timeout_s,
-            request_timeout=self.config.request_timeout_s,
-            memory_enabled=False,
-            agent_guidance=bool(self.config.inject_static_kb_clues),
-            seed=self.config.search_seed,
-            count=self.config.dev_instance_count,
-            size=self.config.dev_instance_size,
-            search_policy_defaults={
+        init_kwargs = {
+            "output": self.session_dir,
+            "operation_id": f"init_{self.config.run_id}",
+            "eoh_model": self.config.eoh_model,
+            "eoh_endpoint": eoh_endpoint,
+            "eoh_api_key_env": self.config.api_key_env,
+            "eoh_max_requests": self.config.total_request_cap,
+            "eoh_round_max_requests": None,
+            "engine_wall_seconds": self.config.wall_seconds,
+            "solver_timeout": self.config.candidate_timeout_s,
+            "request_timeout": self.config.request_timeout_s,
+            "memory_enabled": False,
+            "agent_guidance": bool(self.config.agent_guidance),
+            "seed": self.config.search_seed,
+            "max_rounds": max(1, int(self.config.max_rounds)),
+            "search_policy_defaults": {
                 "pop_size": self.config.eoh_pop_size,
                 "n_pop": self.config.eoh_n_pop,
                 "max_sample_nums": self.config.eoh_max_sample_nums,
             },
-            persistent_budget={
+            "persistent_budget": {
                 "ledger_path": str(self.budget.ledger_path),
                 "max_requests": self.budget.max_requests,
                 "run_id": self.budget.run_id,
             },
-        )
+        }
+        if self.config.use_benchmark_dev_suite:
+            init_kwargs["benchmark_id"] = BENCHMARK_ID
+            init_kwargs["benchmark_profile_name"] = self.config.dev_suite_id
+            init_kwargs["round_budget"] = max(32, int(self.config.eoh_max_sample_nums) + 16)
+        else:
+            init_kwargs["count"] = self.config.dev_instance_count
+            init_kwargs["size"] = self.config.dev_instance_size
+        return initialize_session(**init_kwargs)
+
+    def _evaluate_frozen_on_dev(self, frozen_solver: Mapping[str, Any] | None) -> dict[str, Any] | None:
+        if frozen_solver is None:
+            return None
+        assert_suite_allowed_for_interactive_role(self.config.dev_suite_id, role="diagnostic_interactive")
+        suite = load_profile_suite(BENCHMARK_ID, self.config.dev_suite_id, split=self.config.dev_split)
+        assert_suite_allowed_for_interactive_role(self.config.dev_suite_id, suite, role="diagnostic_interactive")
+        fs = FrozenInterfaceSolver.from_dict(frozen_solver)
+        dev_records = [
+            evaluate_frozen_interface_solver(
+                fs,
+                inst,
+                distance_convention=suite["distance_convention"],
+                vehicle_limit_policy=suite["vehicle_limit_policy"],
+                time_budget_ms=self.config.instance_time_budget_ms,
+            )
+            for inst in suite["instances"]
+        ]
+        valid_lens = [float(r["tour_length"]) for r in dev_records if r.get("valid") and r.get("tour_length") is not None]
+        penalized_lens: list[float] = []
+        for inst, rec in zip(suite["instances"], dev_records):
+            if rec.get("valid") and rec.get("tour_length") is not None:
+                penalized_lens.append(float(rec["tour_length"]))
+            else:
+                ref_obj = inst.get("reference_objective")
+                penalty = 2.0 * float(ref_obj) if isinstance(ref_obj, (int, float)) and float(ref_obj) > 0 else 100.0
+                penalized_lens.append(penalty)
+        solve_times = [float(r["solve_ms"]) for r in dev_records if r.get("solve_ms") is not None]
+        n_total = len(dev_records)
+        valid_count = len(valid_lens)
+        comp_rate = round(valid_count / max(1, n_total), 6)
+        valid_only_mean = round(sum(valid_lens) / valid_count, 6) if valid_lens else None
+        pen_mean = round(sum(penalized_lens) / max(1, n_total), 6)
+        return {
+            "suite_id": self.config.dev_suite_id,
+            "valid_count": valid_count,
+            "instance_count": n_total,
+            "completion_rate": comp_rate,
+            "all_feasible": bool(n_total > 0 and valid_count == n_total),
+            "failure_penalty_policy": "2x_reference_objective",
+            "valid_only_mean_tour_length": valid_only_mean,
+            "penalized_mean_tour_length": pen_mean,
+            "mean_tour_length": pen_mean,
+            "solve_ms_mean": round(sum(solve_times) / len(solve_times), 4) if solve_times else None,
+            "records": dev_records,
+        }
 
     def run_round(
         self,
@@ -91,10 +144,31 @@ class SessionRunnerTool:
         prev_used = self.budget.used
         st = read_state(run=self.session_dir)
 
-        # Resume-safe progression across SQLite round states
+        target_round = int(round_id)
         cur_round = int(st.get("round_id") or 1)
         round_state = str(st.get("state") or "")
         ver = int(st["state_version"])
+
+        # Crash-resume alignment: if Session already committed target_round and moved to cur_round > target_round
+        # (or already finalized target_round cleanly), recover target_round's exact artifacts without touching cur_round.
+        target_eval_path = self.session_dir / "rounds" / f"round_{target_round:04d}" / "evaluation_facts.json"
+        if cur_round > target_round or (st.get("run_state") in {"COMPLETED", "STOPPED", "FAILED"} and round_state == "ROUND_COMPLETED"):
+            ev_facts_rec = json.loads(target_eval_path.read_text(encoding="utf-8")) if target_eval_path.is_file() else {}
+            f_ref = ev_facts_rec.get("frozen_solver_ref")
+            frozen_rec = json.loads((self.session_dir / f_ref).read_text(encoding="utf-8")) if (f_ref and (self.session_dir / f_ref).is_file()) else None
+            dev_eval_rec = self._evaluate_frozen_on_dev(frozen_rec) if eval_dev_suite else None
+            return {
+                "round_id": target_round,
+                "session_status": st.get("run_state") or "already_completed",
+                "round_state": "ROUND_COMPLETED",
+                "evaluation_facts": ev_facts_rec,
+                "frozen_solver": frozen_rec,
+                "dev_eval": dev_eval_rec,
+                "crossed_checkpoints": [],
+                "requests_before": prev_used,
+                "requests_after": prev_used,
+                "recovered_completed_round": True,
+            }
 
         if st.get("run_state") in {"COMPLETED", "STOPPED", "FAILED"}:
             return {
@@ -227,32 +301,7 @@ class SessionRunnerTool:
         curr_used = self.budget.used
         crossed = self.budget.check_checkpoints(prev_used, curr_used)
 
-        dev_eval: dict[str, Any] | None = None
-        if eval_dev_suite and frozen_solver is not None:
-            assert_suite_allowed_for_interactive_role(self.config.dev_suite_id, role="diagnostic_interactive")
-            suite = load_profile_suite(BENCHMARK_ID, self.config.dev_suite_id, split=self.config.dev_split)
-            assert_suite_allowed_for_interactive_role(self.config.dev_suite_id, suite, role="diagnostic_interactive")
-            fs = FrozenInterfaceSolver.from_dict(frozen_solver)
-            dev_records = [
-                evaluate_frozen_interface_solver(
-                    fs,
-                    inst,
-                    distance_convention=suite["distance_convention"],
-                    vehicle_limit_policy=suite["vehicle_limit_policy"],
-                    time_budget_ms=self.config.instance_time_budget_ms,
-                )
-                for inst in suite["instances"]
-            ]
-            valid_lens = [float(r["tour_length"]) for r in dev_records if r.get("valid") and r.get("tour_length") is not None]
-            solve_times = [float(r["solve_ms"]) for r in dev_records if r.get("solve_ms") is not None]
-            dev_eval = {
-                "suite_id": self.config.dev_suite_id,
-                "valid_count": len(valid_lens),
-                "instance_count": len(dev_records),
-                "mean_tour_length": round(sum(valid_lens) / len(valid_lens), 6) if valid_lens else None,
-                "solve_ms_mean": round(sum(solve_times) / len(solve_times), 4) if solve_times else None,
-                "records": dev_records,
-            }
+        dev_eval = self._evaluate_frozen_on_dev(frozen_solver) if eval_dev_suite else None
 
         return {
             "round_id": cur_round,

@@ -36,16 +36,21 @@ def main():
         script = '''
 import json, sys
 from pathlib import Path
-import agent_skill_loop, algorithm_optimization_skill
+import agent_skill_loop, algorithm_optimization_skill, knowledge_tools, research_agent
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop.session_supervisor import run_startup_preflight
+from research_agent.tools.kb_tools import KnowledgeBaseTool
 prefix = Path(sys.prefix).resolve()
 assert Path(agent_skill_loop.__file__).resolve().is_relative_to(prefix)
+assert Path(knowledge_tools.__file__).resolve().is_relative_to(prefix)
+assert Path(research_agent.__file__).resolve().is_relative_to(prefix)
 skill = Path(algorithm_optimization_skill.__file__).resolve().parent
 assert skill.is_relative_to(prefix)
 assert (skill / 'references/benchmark.md').is_file()
 assert (skill / 'references/examples/two-round-run.md').is_file()
 assert db._skill_content_hash() == sys.argv[1]
+kb = KnowledgeBaseTool(Path('kb_run'), kb_store_path=Path(sys.argv[2]))
+assert kb.search(query='parallel merge', limit=2)['results']
 db.initialize_session(output=Path('run'), operation_id='init', eoh_model='offline-check', size=6, count=1)
 state = db.read_state(run=Path('run'))
 assert state['integrity']['skill_identity'] == 'ok'
@@ -65,7 +70,9 @@ finally:
 print(json.dumps({'wheel_install': 'passed', 'skill_sha256': db._skill_content_hash(),
                   'session_init_state': 'passed', 'worker_identity': 'passed', 'provider_requests': 0}))
 '''
-        print(run([str(python), "-c", script, expected], work).strip())
+        cli_help = run([str(python), "-m", "research_agent", "--help"], work)
+        assert "Autonomous CO Research Agent" in cli_help, cli_help
+        print(run([str(python), "-c", script, expected, str((repo / "knowledge_store").resolve())], work).strip())
 
 
 if __name__ == "__main__":
