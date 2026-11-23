@@ -348,6 +348,80 @@ def run_gap_decomposition_diagnostic(
     }
 
 
+def analyze_instance_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    instance_metadata: Mapping[str, Mapping[str, Any]] | None = None,
+    baseline_records: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Template-agnostic 5-factor slicing, headroom & win/tie/loss summary over instance records."""
+    base_by_id: dict[str, Mapping[str, Any]] = {
+        str(r.get("instance_id")): r for r in (baseline_records or ()) if r.get("instance_id")
+    }
+    valid_objs = [
+        float(r["tour_length"])
+        for r in records
+        if r.get("valid") and r.get("tour_length") is not None
+    ]
+    solve_times = sorted(float(r["solve_ms"]) for r in records if r.get("solve_ms") is not None)
+    outcomes = {"completed": 0, "budget_exhausted_feasible_incumbent": 0, "timeout_or_infeasible": 0}
+    for r in records:
+        oc = str(r.get("outcome_class") or "timeout_or_infeasible")
+        outcomes[oc] = outcomes.get(oc, 0) + 1
+
+    slices: dict[str, dict[str, Any]] = {}
+    for factor in ("size", "spatial", "depot_style", "capacity_level", "demand_dist"):
+        buckets: dict[str, list[Mapping[str, Any]]] = {}
+        for r in records:
+            iid = str(r.get("instance_id") or "")
+            meta = dict((instance_metadata or {}).get(iid) or r)
+            val = meta.get(factor)
+            if val is not None:
+                buckets.setdefault(str(val), []).append(r)
+        factor_summary: dict[str, Any] = {}
+        for key, group in sorted(buckets.items()):
+            objs = [float(x["tour_length"]) for x in group if x.get("valid") and x.get("tour_length") is not None]
+            paired_deltas: list[float] = []
+            wtl = {"wins": 0, "ties": 0, "losses": 0}
+            for x in group:
+                iid = str(x.get("instance_id") or "")
+                b = base_by_id.get(iid)
+                if b and x.get("valid") and b.get("valid") and x.get("tour_length") is not None and b.get("tour_length") is not None:
+                    xv, bv = float(x["tour_length"]), float(b["tour_length"])
+                    paired_deltas.append(100.0 * (xv - bv) / max(bv, 1e-12))
+                    if xv < bv - 1e-9:
+                        wtl["wins"] += 1
+                    elif xv > bv + 1e-9:
+                        wtl["losses"] += 1
+                    else:
+                        wtl["ties"] += 1
+            factor_summary[key] = {
+                "count": len(group),
+                "valid_count": len(objs),
+                "mean_tour_length": round(sum(objs) / len(objs), 4) if objs else None,
+                "mean_delta_vs_baseline_pct": round(sum(paired_deltas) / len(paired_deltas), 4) if paired_deltas else None,
+                "wtl_vs_baseline": wtl if paired_deltas else None,
+                "exhausted_count": sum(1 for x in group if x.get("outcome_class") == "budget_exhausted_feasible_incumbent"),
+            }
+        slices[factor] = factor_summary
+
+    def _pct(vals: list[float], p: float) -> float | None:
+        if not vals:
+            return None
+        pos = min(len(vals) - 1, max(0, int(round((p / 100.0) * (len(vals) - 1)))))
+        return round(vals[pos], 4)
+
+    return {
+        "instance_count": len(records),
+        "valid_count": len(valid_objs),
+        "mean_tour_length": round(sum(valid_objs) / len(valid_objs), 4) if valid_objs else None,
+        "solve_ms_p50": _pct(solve_times, 50.0),
+        "solve_ms_p95": _pct(solve_times, 95.0),
+        "outcome_counts": outcomes,
+        "slices": slices,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(

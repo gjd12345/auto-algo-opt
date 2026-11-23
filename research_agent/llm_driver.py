@@ -1,0 +1,382 @@
+"""Dual-protocol (Native Tools + Strict JSON-Action) & Mock LLM driver for Research Agent."""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+import uuid
+from typing import Any, Mapping, Protocol, Sequence
+
+from agent_skill_loop.client import ProviderFailure, http_post_with_deadline, load_local_env
+from agent_skill_loop.request_budget import PersistentRequestBudget
+from agent_skill_loop.session_actions import record_controller_usage
+from research_agent.contracts import AgentConfig, atomic_write_json
+from research_agent.prompts import AGENT_TOOL_SCHEMAS, build_round_system_prompt
+
+
+class AgentDriver(Protocol):
+    """Unified decision interface shared by Live HTTP and Offline Mock drivers."""
+
+    def decide_step(
+        self,
+        *,
+        round_id: int,
+        phase: str,
+        step_index: int,
+        messages: Sequence[Mapping[str, Any]],
+        last_tool_result: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        ...
+
+
+def _record_usage_to_session(
+    *,
+    config: AgentConfig,
+    session_dir: Any,
+    round_id: int,
+    activity: str,
+    input_tokens: int | None,
+    output_tokens: int | None,
+    elapsed_seconds: float,
+    source: str,
+) -> None:
+    sess_db = session_dir / "session.sqlite3"
+    if not sess_db.is_file():
+        return
+    usage_dir = session_dir.parent / "agent_artifacts" / "controller_usage"
+    usage_dir.mkdir(parents=True, exist_ok=True)
+    ev_id = f"ctrl_{config.run_id}_r{round_id}_{uuid.uuid4().hex[:8]}"
+    avail = "complete" if (input_tokens is not None and output_tokens is not None) else "unavailable"
+    payload: dict[str, Any] = {
+        "schema_version": "algorithm-optimization-controller-usage/v1",
+        "event_id": ev_id,
+        "round_id": int(round_id),
+        "treatment": config.arm_id,
+        "activity": activity,
+        "model": config.planner_model,
+        "input_tokens": int(input_tokens) if avail == "complete" else None,
+        "output_tokens": int(output_tokens) if avail == "complete" else None,
+        "elapsed_seconds": round(float(elapsed_seconds), 4),
+        "availability": avail,
+        "source": source,
+    }
+    if avail == "unavailable":
+        payload["unavailable_reason"] = "mock_or_unreported"
+    ev_path = usage_dir / f"{ev_id}.json"
+    atomic_write_json(ev_path, payload)
+    try:
+        record_controller_usage(run=session_dir, file=ev_path)
+    except Exception:
+        # Never abort research execution if treatment metadata is absent on custom sessions
+        pass
+
+
+def parse_strict_action_text(content: str) -> dict[str, Any]:
+    """Parse Strict JSON-Action text returned by a non-tool-calling LLM."""
+    text = str(content).strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if len(lines) >= 3:
+            text = "\n".join(lines[1:-1]).strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start < 0 or end <= start:
+        raise ValueError(f"strict_json_action_missing_braces:{text[:120]}")
+    obj = json.loads(text[start : end + 1])
+    if not isinstance(obj, dict) or "action" not in obj:
+        raise ValueError("strict_json_action_missing_action_field")
+    return obj
+
+
+class OpenAIAgentDriver:
+    """Real OpenAI-compatible HTTP driver with Native Tool-Calling and Strict JSON fallback."""
+
+    def __init__(self, *, config: AgentConfig, budget: PersistentRequestBudget, session_dir: Any) -> None:
+        self.config = config
+        self.budget = budget
+        self.session_dir = session_dir
+        self._attempt = 0
+
+    def decide_step(
+        self,
+        *,
+        round_id: int,
+        phase: str,
+        step_index: int,
+        messages: Sequence[Mapping[str, Any]],
+        last_tool_result: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        load_local_env()
+        api_key = os.environ.get(self.config.api_key_env, "").strip()
+        if not api_key:
+            raise RuntimeError(f"missing_api_key:{self.config.api_key_env}")
+
+        purpose = "planner" if phase == "diagnose" else "reflection"
+        self._attempt += 1
+        slot = self.budget.reserve(
+            purpose=purpose,
+            problem=self.config.problem_family,
+            attempt=self._attempt,
+            model=self.config.planner_model,
+        )
+        if slot is None:
+            return {"action": "budget_exhausted"}
+
+        sys_prompt = build_round_system_prompt(
+            arm_id=self.config.arm_id,
+            problem_family=self.config.problem_family,
+            tools_enabled=self.config.tools_enabled,
+            allowed_templates=self.config.allowed_templates,
+            allowed_postprocess_modes=self.config.allowed_postprocess_modes,
+            instance_time_budget_ms=self.config.instance_time_budget_ms,
+        )
+        full_msgs = [{"role": "system", "content": sys_prompt}, *[dict(m) for m in messages]]
+        payload: dict[str, Any] = {
+            "model": self.config.planner_model,
+            "messages": full_msgs,
+            "temperature": 0.2,
+        }
+        if self.config.tools_enabled:
+            allowed_tools = [t for t in AGENT_TOOL_SCHEMAS]
+            payload["tools"] = allowed_tools
+            payload["tool_choice"] = "auto"
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        t0 = time.monotonic()
+        try:
+            self.budget.mark_sent(slot)
+            status, raw = http_post_with_deadline(
+                self.config.endpoint,
+                headers,
+                json.dumps(payload).encode("utf-8"),
+                timeout=float(self.config.request_timeout_s),
+            )
+            elapsed = time.monotonic() - t0
+            parsed = json.loads(raw.decode("utf-8"))
+            usage = parsed.get("usage") if isinstance(parsed.get("usage"), dict) else {}
+            in_tok = int(usage.get("prompt_tokens") or 0)
+            out_tok = int(usage.get("completion_tokens") or 0)
+            choices = parsed.get("choices") or []
+            choice0 = choices[0] if choices else {}
+            msg = choice0.get("message") or {}
+            finish_reason = choice0.get("finish_reason")
+            raw_text = raw.decode("utf-8", errors="replace")
+
+            self.budget.finish(
+                slot,
+                "complete",
+                status=status,
+                elapsed_seconds=elapsed,
+                input_tokens=in_tok,
+                output_tokens=out_tok,
+                finish_reason=finish_reason,
+                response_text=raw_text,
+            )
+            _record_usage_to_session(
+                config=self.config,
+                session_dir=self.session_dir,
+                round_id=round_id,
+                activity="plan" if phase == "diagnose" else "reflection",
+                input_tokens=in_tok,
+                output_tokens=out_tok,
+                elapsed_seconds=elapsed,
+                source="openai_agent_driver",
+            )
+
+            tool_calls = msg.get("tool_calls") or []
+            if tool_calls and isinstance(tool_calls, list):
+                tc = tool_calls[0]
+                fn = tc.get("function") or {}
+                tname = str(fn.get("name") or "")
+                targs = json.loads(str(fn.get("arguments") or "{}"))
+                if tname == "submit_plan_and_evolve":
+                    return {"action": "submit_plan", **targs}
+                return {"action": "call_tool", "tool": tname, "arguments": targs, "tool_call_id": tc.get("id")}
+
+            content = str(msg.get("content") or "")
+            return parse_strict_action_text(content)
+        except ProviderFailure as exc:
+            self.budget.finish(
+                slot,
+                "killed_unknown" if exc.error_code == "request_deadline" else "http_error",
+                status=exc.status,
+                error_code=exc.error_code,
+                elapsed_seconds=time.monotonic() - t0,
+            )
+            raise
+        except Exception as exc:
+            self.budget.finish(
+                slot,
+                "failed",
+                error_code=type(exc).__name__,
+                elapsed_seconds=time.monotonic() - t0,
+            )
+            raise
+
+
+class ScriptedMockAgentDriver:
+    """Deterministic offline driver exhausting real PersistentRequestBudget slots cleanly."""
+
+    def __init__(self, *, config: AgentConfig, budget: PersistentRequestBudget, session_dir: Any) -> None:
+        self.config = config
+        self.budget = budget
+        self.session_dir = session_dir
+        self._attempt = 0
+
+    def decide_step(
+        self,
+        *,
+        round_id: int,
+        phase: str,
+        step_index: int,
+        messages: Sequence[Mapping[str, Any]],
+        last_tool_result: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        purpose = "planner" if phase == "diagnose" else "reflection"
+        self._attempt += 1
+        slot = self.budget.reserve(
+            purpose=purpose,
+            problem=self.config.problem_family,
+            attempt=self._attempt,
+            model=self.config.planner_model,
+        )
+        if slot is None:
+            return {"action": "budget_exhausted"}
+        self.budget.mark_sent(slot)
+
+        action_obj = self._next_scripted_action(
+            round_id=round_id,
+            phase=phase,
+            step_index=step_index,
+            last_tool_result=last_tool_result,
+        )
+        self.budget.finish(
+            slot,
+            "complete",
+            status=200,
+            elapsed_seconds=0.01,
+            input_tokens=64,
+            output_tokens=32,
+            finish_reason="stop",
+            response_text=json.dumps(action_obj, ensure_ascii=False, sort_keys=True),
+        )
+        return action_obj
+
+    def _next_scripted_action(
+        self,
+        *,
+        round_id: int,
+        phase: str,
+        step_index: int,
+        last_tool_result: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        if not self.config.tools_enabled:
+            if phase == "diagnose":
+                return {
+                    "action": "submit_plan",
+                    "template_id": self.config.initial_template_id,
+                    "postprocess_mode": self.config.initial_postprocess_mode,
+                    "direction": f"Plain-text reflection round {round_id} within locked template.",
+                    "hypothesis": f"Refine hook expression under {self.config.initial_template_id}.",
+                    "cited_kb_ids": [],
+                    "rationale": "Tools disabled (Arm M3-1 plain-text reflection baseline).",
+                }
+            return {"action": "finish_round", "summary": f"Plain-text reflection completed round {round_id}."}
+
+        if phase == "reflect":
+            if round_id == 1 and step_index == 0:
+                return {
+                    "action": "call_tool",
+                    "tool": "hypothesis_update",
+                    "arguments": {
+                        "hypothesis_id": "H_scale_bad_r1",
+                        "status": "refuted",
+                        "rationale": "Sandbox scale_invariance_audit confirmed non-zero scale drift from additive constant 1.0.",
+                        "evidence_artifacts": [{"kind": "sandbox", "use_latest_sandbox": True}],
+                    },
+                }
+            return {"action": "finish_round", "summary": f"Completed evidenced reflection for round {round_id}."}
+
+        # Diagnose & plan phase with full tool chain (<= 4 calls per round)
+        l3_allowed = "cvrp_ruin_recreate" in self.config.allowed_templates
+        if round_id == 1:
+            if step_index == 0:
+                return {"action": "call_tool", "tool": "kb_search", "arguments": {"query": "Clarke Wright parallel merge scale", "limit": 3}}
+            if step_index == 1:
+                return {
+                    "action": "call_tool",
+                    "tool": "run_math_sandbox",
+                    "arguments": {
+                        "script": (
+                            "inst = load_dev_suite(max_instances=1)[0]\n"
+                            "bad_code = 'import numpy as np\\ndef score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx):\\n    return (distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx]) / (1.0 + distance_matrix[0, i_idx])\\n'\n"
+                            "RESULT = scale_invariance_audit(bad_code, 'cvrp_parallel_merge_static', inst)\n"
+                        )
+                    },
+                }
+            if step_index == 2:
+                return {
+                    "action": "call_tool",
+                    "tool": "hypothesis_propose",
+                    "arguments": {
+                        "hypothesis_id": "H_scale_bad_r1",
+                        "statement": "Adding an unnormalized additive constant 1.0 in denominator preserves coordinate scale invariance.",
+                        "rationale": "Test scaling drift via math sandbox before EoH.",
+                    },
+                }
+            return {
+                "action": "submit_plan",
+                "template_id": self.config.initial_template_id,
+                "postprocess_mode": self.config.initial_postprocess_mode,
+                "direction": "Evolve scale-invariant scoring after auditing inhomogeneous normalization in sandbox.",
+                "hypothesis": "Global mean depot distance normalization preserves 0% scale drift across scales.",
+                "cited_kb_ids": [],
+                "rationale": "Round 1 KB search + sandbox audit prior to Session EoH.",
+            }
+
+        if round_id == 2:
+            if step_index == 0:
+                return {"action": "call_tool", "tool": "archive_summary", "arguments": {}}
+            target_tpl = "cvrp_ruin_recreate" if l3_allowed else self.config.initial_template_id
+            if step_index == 1:
+                return {
+                    "action": "call_tool",
+                    "tool": "propose_and_validate_interface",
+                    "arguments": {
+                        "template_id": target_tpl,
+                        "postprocess_mode": "none",
+                        "time_budget_ms": self.config.instance_time_budget_ms,
+                        "rationale": f"5-gate behavioral check before switching to {target_tpl}.",
+                    },
+                }
+            return {
+                "action": "submit_plan",
+                "template_id": target_tpl,
+                "postprocess_mode": "none",
+                "direction": f"Adopt verified {target_tpl} interface for Round 2 evolution.",
+                "hypothesis": f"{target_tpl} improves dev quality within {self.config.instance_time_budget_ms}ms.",
+                "cited_kb_ids": [],
+                "rationale": "Interface passed all 5 behavioral gates.",
+            }
+
+        target_tpl = "cvrp_ruin_recreate" if l3_allowed else self.config.initial_template_id
+        if step_index == 0:
+            return {
+                "action": "call_tool",
+                "tool": "diagnose_suite",
+                "arguments": {"template_id": target_tpl, "time_budget_ms": self.config.instance_time_budget_ms, "max_instances": 4},
+            }
+        return {
+            "action": "submit_plan",
+            "template_id": target_tpl,
+            "postprocess_mode": "none",
+            "direction": f"Continue refining evolved {target_tpl} hook on weakest regimes.",
+            "hypothesis": "Continued intra-template evolution improves dev objective.",
+            "cited_kb_ids": [],
+            "rationale": "Round 3 refinement backed by 5-factor slicing.",
+        }
