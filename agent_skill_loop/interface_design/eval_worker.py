@@ -131,14 +131,13 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def _process_request(raw: bytes, *, watch_parent: bool) -> dict[str, Any]:
     try:
-        raw = sys.stdin.buffer.read()
         request = json.loads(raw.decode("utf-8"))
         if not isinstance(request, dict):
             raise ValueError("request_must_be_object")
         parent_pid = request.get("parent_pid")
-        if isinstance(parent_pid, int):
+        if watch_parent and isinstance(parent_pid, int):
             threading.Thread(
                 target=_watch_parent,
                 args=(parent_pid,),
@@ -156,8 +155,16 @@ def main() -> int:
             "records": [],
             "inner_compute_ms": 0.0,
         }
-    sys.stdout.write(json.dumps(result, ensure_ascii=False, separators=(",", ":"), allow_nan=False))
-    sys.stdout.write("\n")
+    return result
+
+
+def main() -> int:
+    streaming = sys.argv[1:] == ["--stream"]
+    requests = sys.stdin.buffer if streaming else (sys.stdin.buffer.read(),)
+    for index, raw in enumerate(requests):
+        result = _process_request(raw, watch_parent=index == 0)
+        sys.stdout.write(json.dumps(result, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n")
+        sys.stdout.flush()
     return 0
 
 

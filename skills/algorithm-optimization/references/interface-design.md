@@ -66,7 +66,8 @@ When you run `session submit-plan`:
   `INTERFACE_VALIDATION_FAILED` and persists `rounds/round_XXXX/interface_validation.json`
   with exact `line_no`, `symbol`, and `fix_hint`.
 - If all 5 gates pass, `interface_design.json` and `interface_validation.json`
-  are frozen inside the round directory.
+  are frozen inside the round directory. Execute and collect bind both artifacts
+  to the successful plan receipt.
 
 ## 3. Execute, Collect, Evaluate, and Return Frozen Solvers to M1 Workbench
 
@@ -80,7 +81,10 @@ python -m agent_skill_loop session read-evaluation --run <run_dir>
 ```
 
 `evaluation_facts.json` includes `interface_selection` and `frozen_solver_ref`
-(`rounds/round_XXXX/eoh_run/frozen_solver_manifest.json`). To independently
+(`rounds/round_XXXX/eoh_run/frozen_solver_manifest.json`) when a generated
+candidate passes the gates again. Review `winner_validation_report.json` for
+the actual candidates checked. Review `interface_seed_receipt.json` for
+compatible inherited candidates and template baselines across rounds. To independently
 re-evaluate frozen round winners on the Milestone 1 Workbench:
 
 ```bash
@@ -96,3 +100,7 @@ python -m agent_skill_loop interface workbench-eval \
   Session rounds.
 - Omitting `interface_selection` keeps 100% legacy `FrozenProblem` behavior.
 - Never edit `eoh_frozen/` or registered template code from a Session plan.
+- Re-run experiments in a new output directory. Compare attempted requests
+  across planner, pilots, retries, and continuation using one arm-wide cap.
+- The [Milestone 2 runbook](../../../docs/milestone2-reliability.md) covers
+  custody, publication recovery, and historical comparison limits.

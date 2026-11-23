@@ -5,7 +5,7 @@ Protocol T1 vs T2 budget-adaptation verification, and Direction-2 cross-paradigm
 Audit & Blind-Test Discipline:
 1. ``freeze_pre_blind_protocol`` freezes and hashes the entire candidate solver roster,
    Direction-2 portfolios, failure-handling rules, denominators, and hypothesis tests
-   BEFORE ``.secrets/m2_blind/cvrp_m2_blind_120_sealed.json`` is loaded.
+   before the custody-held instance file is loaded.
 2. ``unseal_and_verify_m2_blind_suite`` verifies all 120 instance SHA-256 hashes and
    ``suite_content_sha256`` against the public commitment
    ``benchmarks/cvrp_workbench/manifests/cvrp_m2_blind_120_commitment.json``.
@@ -39,12 +39,14 @@ from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 
 from .blind_commitment import (
     BLIND_COMMITMENT_PATH,
-    DEFAULT_SEALED_BLIND_PATH,
     SEALED_BLIND_SUITE_ID,
-    verify_sealed_against_commitment,
+    read_public_blind_commitment,
+    read_verified_blind_payload,
+    require_external_custody_path,
 )
-from .contracts import FrozenInterfaceSolver, classify_outcome
+from .contracts import FrozenInterfaceSolver, canonical_json, classify_outcome, sha256_text
 from .runtime import evaluate_frozen_interface_solver
+from .templates import get_template_spec
 
 _REPO = Path(__file__).resolve().parents[2]
 
@@ -55,6 +57,23 @@ REFERENCE_BASELINE_IDS: tuple[str, ...] = (
     "i605_cvrp_c1_tworegime",
     "cw_parallel_merge",
     "cw_relocate_2opt",
+)
+STANDARD_ARM_SEED_IDS = {
+    arm: tuple(f"m2_2b_standard_500ms_{arm}_s{seed}" for seed in (20261122, 20261123))
+    for arm in ("fixed_pointwise", "dev_fixed_strong", "short_pilot_racing",
+                "diagnostic_rule_planner", "llm_diagnostic_planner")
+}
+TIGHT_SOLVER_IDS = (
+    "m2_2b_tight_25ms_fixed_pointwise_s20261122",
+    "m2_2b_tight_25ms_short_pilot_racing_s20261122",
+    "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
+    "m2_2b_tight_25ms_llm_diagnostic_planner_s20261122",
+    "m2_2b_standard_500ms_diagnostic_rule_planner_s20261122",
+    "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+    "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+    "m2_2b_l2b_ctrl_static_refresh",
+    "m2_2b_l2a_evolved_s20261122",
+    "m2_2b_l2b_evolved_s20261122",
 )
 
 
@@ -134,7 +153,7 @@ def paired_wilcoxon_signed_rank(x: Sequence[float], y: Sequence[float]) -> dict[
         "w_plus": round(w_plus, 4),
         "w_minus": round(w_minus, 4),
         "z_stat": round(float(z), 4),
-        "p_two_sided": round(float(p_two_sided), 8),
+        "p_two_sided": float(p_two_sided),
     }
 
 
@@ -187,19 +206,31 @@ def paired_bootstrap_comparison(
     }
 
 
-def load_phase2b_frozen_roster(repo_root: Path = _REPO) -> list[FrozenInterfaceSolver]:
+def load_phase2b_frozen_roster(
+    repo_root: Path = _REPO, *, archive_paths: Sequence[Path] = (),
+) -> list[FrozenInterfaceSolver]:
     """Load the complete deduplicated set of frozen M2 solvers from Phase 2B archives."""
     attr_arch = repo_root / "experiments" / "milestone2" / "phase2b_l2_attribution" / "archive" / "archive_manifest.json"
     four_arch = repo_root / "experiments" / "milestone2" / "phase2b_four_arm" / "archive" / "archive_manifest.json"
 
     by_id: dict[str, FrozenInterfaceSolver] = {}
-    for path in (attr_arch, four_arch):
+    for path in archive_paths or (attr_arch, four_arch):
         if not path.is_file():
             raise FileNotFoundError(f"missing_phase2b_archive:{path}")
         doc = json.loads(path.read_text(encoding="utf-8"))
         for row in doc.get("solvers", []):
             fs = FrozenInterfaceSolver.from_dict(row["frozen_solver"])
+            tpl = get_template_spec(fs.template_id, fs.template_version)
+            if (fs.template_source_sha256 != tpl.template_source_sha256 or fs.hook_name != tpl.hook_name
+                    or sha256_text(fs.hook_code) != fs.hook_code_sha256):
+                raise ValueError(f"invalid_frozen_solver_identity:{fs.solver_id}")
+            if fs.solver_id in by_id and by_id[fs.solver_id] != fs:
+                raise ValueError(f"conflicting_frozen_solver_id:{fs.solver_id}")
             by_id[fs.solver_id] = fs
+    required = {sid for pair in STANDARD_ARM_SEED_IDS.values() for sid in pair}
+    required.update(TIGHT_SOLVER_IDS)
+    if missing := required - by_id.keys():
+        raise ValueError(f"incomplete_phase2b_roster:{sorted(missing)}")
     return list(by_id.values())
 
 
@@ -208,11 +239,13 @@ def freeze_pre_blind_protocol(
     *,
     repo_root: Path = _REPO,
     commitment_path: Path = BLIND_COMMITMENT_PATH,
+    archive_paths: Sequence[Path] = (),
 ) -> dict[str, Any]:
     """Freeze and hash the entire Phase 2C evaluation & selection protocol BEFORE unsealing blind instances."""
     commitment_bytes = Path(commitment_path).read_bytes()
-    commitment_doc = json.loads(commitment_bytes.decode("utf-8"))
-    frozen_m2 = load_phase2b_frozen_roster(repo_root)
+    commitment_sha256 = _sha256_bytes(commitment_bytes)
+    commitment_doc = read_public_blind_commitment(commitment_path, expected_sha256=commitment_sha256)
+    frozen_m2 = load_phase2b_frozen_roster(repo_root, archive_paths=archive_paths)
 
     ref_specs = []
     for aid in REFERENCE_BASELINE_IDS:
@@ -237,6 +270,7 @@ def freeze_pre_blind_protocol(
             "template_source_sha256": fs.template_source_sha256,
             "hook_name": fs.hook_name,
             "hook_code_sha256": fs.hook_code_sha256,
+            "frozen_solver_sha256": _sha256_bytes(canonical_json(fs.to_dict()).encode("utf-8")),
             "postprocess_mode": fs.postprocess_mode,
             "design_sha256": fs.design_sha256,
             "default_budget_ms": fs.default_budget_ms,
@@ -279,7 +313,7 @@ def freeze_pre_blind_protocol(
         "blind_commitment": {
             "suite_id": commitment_doc["suite_id"],
             "instance_count": commitment_doc["instance_count"],
-            "commitment_file_sha256": _sha256_bytes(commitment_bytes),
+            "commitment_file_sha256": commitment_sha256,
             "suite_content_sha256": commitment_doc["suite_content_sha256"],
             "generator_version": commitment_doc["generator_version"],
             "generator_source_sha256": commitment_doc["generator_source_sha256"],
@@ -347,7 +381,8 @@ def freeze_pre_blind_protocol(
     out_path = Path(out_path).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(protocol_payload, ensure_ascii=False, indent=2) + "\n"
-    out_path.write_text(text, encoding="utf-8", newline="\n")
+    with out_path.open("x", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
     protocol_sha = _sha256_bytes(out_path.read_bytes())
     return {
         "protocol_path": str(out_path),
@@ -358,18 +393,17 @@ def freeze_pre_blind_protocol(
 
 def unseal_and_verify_m2_blind_suite(
     *,
-    sealed_path: Path = DEFAULT_SEALED_BLIND_PATH,
+    sealed_path: Path,
     commitment_path: Path = BLIND_COMMITMENT_PATH,
+    expected_commitment_sha256: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Verify the isolated sealed blind file against its public commitment and load instances in memory."""
-    verification = verify_sealed_against_commitment(
+    commitment_sha256 = expected_commitment_sha256 or _sha256_bytes(Path(commitment_path).read_bytes())
+    sealed_doc, commitment_doc, verification = read_verified_blind_payload(
         sealed_path=sealed_path,
         commitment_path=commitment_path,
+        expected_commitment_sha256=commitment_sha256,
     )
-    if not verification.get("ok"):
-        raise RuntimeError(f"m2_blind_commitment_verification_failed:{verification}")
-    sealed_doc = json.loads(Path(sealed_path).read_text(encoding="utf-8"))
-    commitment_doc = json.loads(Path(commitment_path).read_text(encoding="utf-8"))
     suite = {
         "suite_id": SEALED_BLIND_SUITE_ID,
         "benchmark_id": BENCHMARK_ID,
@@ -382,7 +416,7 @@ def unseal_and_verify_m2_blind_suite(
         "vehicle_limit_policy": sealed_doc["vehicle_limit_policy"],
         "data_manifest_hash": commitment_doc["suite_content_sha256"],
         "reference_manifest_hash": commitment_doc["suite_content_sha256"],
-        "benchmark_spec_hash": _sha256_bytes(Path(commitment_path).read_bytes()),
+        "benchmark_spec_hash": commitment_sha256,
         "selection_manifest_hash": None,
         "published_results_path": None,
         "published_results_hash": None,
@@ -405,13 +439,14 @@ def _evaluate_suite_roster(
     frozen_solvers: Sequence[FrozenInterfaceSolver],
     budget_id: str,
     time_budget_ms: float,
-) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
     """Evaluate reference + M2 frozen solvers on one suite and return (records, suite_summary, feature_rows)."""
     suite_id = str(suite.get("suite_id") or suite.get("profile"))
     dist_conv = str(suite["distance_convention"])
     veh_pol = str(suite["vehicle_limit_policy"])
     instances = list(suite["instances"])
     frozen_by_id = {fs.solver_id: fs for fs in frozen_solvers}
+    public_routes: dict[str, Any] = {}
     algs_order = [*list(reference_ids), *[fs.solver_id for fs in frozen_solvers]]
 
     records: list[dict[str, Any]] = []
@@ -509,9 +544,19 @@ def _evaluate_suite_roster(
                 "voluntary_early_return_count": res.get("voluntary_early_return_count", 0),
                 "forced_capacity_return_count": res.get("forced_capacity_return_count", 0),
                 "budget_exhausted": res["budget_exhausted"],
+                "stop_reason": res.get("stop_reason"),
                 "has_trace": False,
             }
             records.append(rec)
+            if suite_id != SEALED_BLIND_SUITE_ID and alg_id in frozen_by_id and rec["valid"]:
+                public_routes.setdefault(iid, {})[alg_id] = {
+                    "routes": res["routes"],
+                    "route_loads": res["route_loads"],
+                    "route_distances": res["route_distances"],
+                    "tour_length": rec["tour_length"],
+                    "rel_gap": rec["rel_gap"],
+                    "voluntary_early_return_count": rec["voluntary_early_return_count"],
+                }
             if res["valid"] and res["tour_length"] is not None:
                 frow["costs"][alg_id] = float(res["tour_length"])
                 frow["solve_ms"][alg_id] = float(res["solve_ms"])
@@ -577,7 +622,7 @@ def _evaluate_suite_roster(
         "strict_all_common_completed_count": len(common_ids),
         "algorithms": alg_summaries,
     }
-    return records, suite_summary, feature_rows
+    return records, suite_summary, feature_rows, public_routes
 
 
 def _enrich_portfolio_dual_denominators(analysis: dict[str, Any]) -> dict[str, Any]:
@@ -593,55 +638,80 @@ def execute_m2_blind_evaluation(
     out_dir: Path,
     *,
     repo_root: Path = _REPO,
-    sealed_path: Path = DEFAULT_SEALED_BLIND_PATH,
+    sealed_path: Path,
+    protocol_sha256: str,
     commitment_path: Path = BLIND_COMMITMENT_PATH,
+    archive_paths: Sequence[Path] = (),
 ) -> dict[str, Any]:
     """Execute the full Phase 2C pre-blind freeze, one-shot blind unsealing, statistical tests, and Direction-2 selection."""
     out_dir = Path(out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Freeze pre-blind protocol BEFORE touching sealed blind instances
-    pre_blind = freeze_pre_blind_protocol(
-        out_dir / "pre_blind_protocol.json",
-        repo_root=repo_root,
-        commitment_path=commitment_path,
-    )
+    # A separate custody step already froze the protocol; execution cannot rewrite it.
+    sealed_path = require_external_custody_path(sealed_path, repo_root)
+    protocol_bytes = (out_dir / "pre_blind_protocol.json").read_bytes()
+    if _sha256_bytes(protocol_bytes) != protocol_sha256:
+        raise ValueError("pre_blind_protocol_hash_mismatch")
+    protocol = json.loads(protocol_bytes)
+    commitment_sha256 = protocol["blind_commitment"]["commitment_file_sha256"]
+    commitment = read_public_blind_commitment(commitment_path, expected_sha256=commitment_sha256)
+    roster = {row["solver_id"]: row.get("frozen_solver_sha256") for row in protocol["frozen_m2_solvers"]}
+    frozen_m2 = load_phase2b_frozen_roster(repo_root, archive_paths=archive_paths)
+    if roster != {fs.solver_id: _sha256_bytes(canonical_json(fs.to_dict()).encode("utf-8")) for fs in frozen_m2}:
+        raise ValueError("pre_blind_frozen_roster_hash_mismatch")
+    for row in protocol["reference_baselines"]:
+        if SOLVER_CATALOG[row["algorithm_id"]].code_sha256 != row["code_sha256"]:
+            raise ValueError("pre_blind_reference_roster_hash_mismatch")
+    previous = repo_root / "experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json"
+    if previous.is_file() and json.loads(previous.read_bytes())["commitment_verification"]["suite_content_sha256"] == commitment["suite_content_sha256"]:
+        raise FileExistsError("blind_commitment_already_evaluated")
+    if any((out_dir / name).exists() for name in (
+        "blind_evaluation.started", "blind_120_evaluation_report.json", "publication_input.json",
+    )):
+        raise FileExistsError("blind_evaluation_output_already_used")
+    pre_blind = {"protocol_sha256": protocol_sha256, "protocol": protocol}
+
+    attempt = sealed_path.parent / f".{commitment['suite_content_sha256']}.blind-attempt"
+    with attempt.open("x", encoding="utf-8") as handle:
+        handle.write(protocol_sha256 + "\n")
+    with (out_dir / "blind_evaluation.started").open("x", encoding="utf-8") as handle:
+        handle.write(protocol_sha256 + "\n")
 
     # 2. Unseal and verify cvrp_m2_blind_120 against public commitment
     blind_suite, verification = unseal_and_verify_m2_blind_suite(
         sealed_path=sealed_path,
         commitment_path=commitment_path,
+        expected_commitment_sha256=commitment_sha256,
     )
     select64_suite = load_profile_suite(BENCHMARK_ID, "cvrp_select_multiscale_64", split="selection")
     final120_suite = load_profile_suite(BENCHMARK_ID, "cvrp_final_accept_120", split="heldout")
     dev24_suite = load_profile_suite(BENCHMARK_ID, "cvrp_dev_hetero_24", split="dev_train")
 
-    frozen_m2 = load_phase2b_frozen_roster(repo_root)
     frozen_by_id = {fs.solver_id: fs for fs in frozen_m2}
 
     # 3. Evaluate all reference + frozen M2 solvers under standard_500ms across dev_24, select_64, final_accept_120, and cvrp_m2_blind_120
-    recs_dev24_500, sum_dev24_500, _ = _evaluate_suite_roster(
+    recs_dev24_500, sum_dev24_500, _, routes_dev24 = _evaluate_suite_roster(
         dev24_suite,
         reference_ids=REFERENCE_BASELINE_IDS,
         frozen_solvers=frozen_m2,
         budget_id="standard_500ms",
         time_budget_ms=500.0,
     )
-    recs_sel64_500, sum_sel64_500, frows_sel64_500 = _evaluate_suite_roster(
+    recs_sel64_500, sum_sel64_500, frows_sel64_500, routes_sel64 = _evaluate_suite_roster(
         select64_suite,
         reference_ids=REFERENCE_BASELINE_IDS,
         frozen_solvers=frozen_m2,
         budget_id="standard_500ms",
         time_budget_ms=500.0,
     )
-    recs_fa120_500, sum_fa120_500, frows_fa120_500 = _evaluate_suite_roster(
+    recs_fa120_500, sum_fa120_500, frows_fa120_500, routes_fa120 = _evaluate_suite_roster(
         final120_suite,
         reference_ids=REFERENCE_BASELINE_IDS,
         frozen_solvers=frozen_m2,
         budget_id="standard_500ms",
         time_budget_ms=500.0,
     )
-    recs_blind120_500, sum_blind120_500, frows_blind120_500 = _evaluate_suite_roster(
+    recs_blind120_500, sum_blind120_500, frows_blind120_500, _ = _evaluate_suite_roster(
         blind_suite,
         reference_ids=REFERENCE_BASELINE_IDS,
         frozen_solvers=frozen_m2,
@@ -650,21 +720,8 @@ def execute_m2_blind_evaluation(
     )
 
     # 4. Evaluate under tight_25ms on cvrp_m2_blind_120 to test Protocol T1 vs Protocol T2
-    tight_roster_ids = (
-        "m2_2b_tight_25ms_fixed_pointwise_s20261122",
-        "m2_2b_tight_25ms_short_pilot_racing_s20261122",
-        "m2_2b_tight_25ms_diagnostic_rule_planner_s20261122",
-        "m2_2b_tight_25ms_llm_diagnostic_planner_s20261122",
-        # Zero-shot transferred 500ms solvers (Protocol T2) & 3-way attribution controls
-        "m2_2b_standard_500ms_diagnostic_rule_planner_s20261122",
-        "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
-        "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
-        "m2_2b_l2b_ctrl_static_refresh",
-        "m2_2b_l2a_evolved_s20261122",
-        "m2_2b_l2b_evolved_s20261122",
-    )
-    tight_frozen = [frozen_by_id[sid] for sid in tight_roster_ids if sid in frozen_by_id]
-    recs_blind120_25, sum_blind120_25, _ = _evaluate_suite_roster(
+    tight_frozen = [frozen_by_id[sid] for sid in TIGHT_SOLVER_IDS]
+    recs_blind120_25, sum_blind120_25, _, _ = _evaluate_suite_roster(
         blind_suite,
         reference_ids=("s2_r5_spiral", "i605_cvrp_c1_tworegime", "cw_parallel_merge"),
         frozen_solvers=tight_frozen,
@@ -678,22 +735,18 @@ def execute_m2_blind_evaluation(
 
     costs_25_by_alg: dict[str, list[float]] = {}
     for aid in ("s2_r5_spiral", "i605_cvrp_c1_tworegime", "cw_parallel_merge", *[fs.solver_id for fs in tight_frozen]):
-        costs_25_by_alg[aid] = [
-            float(r["tour_length"])
+        costs = {
+            r["instance_id"]: float(r["tour_length"])
             for r in recs_blind120_25
             if r["algorithm_id"] == aid and r["tour_length"] is not None
-        ]
+        }
+        if set(costs) != {r["instance_id"] for r in frows_blind120_500}:
+            raise ValueError(f"blind_paired_costs_incomplete:{aid}")
+        costs_25_by_alg[aid] = [costs[r["instance_id"]] for r in frows_blind120_500]
 
     # Paired seed average per instance for 500ms five-arm comparison on blind_120
-    arm_seed_pairs_500 = {
-        "fixed_pointwise": ("m2_2b_standard_500ms_fixed_pointwise_s20261122", "m2_2b_standard_500ms_fixed_pointwise_s20261123"),
-        "dev_fixed_strong": ("m2_2b_standard_500ms_dev_fixed_strong_s20261122", "m2_2b_standard_500ms_dev_fixed_strong_s20261123"),
-        "short_pilot_racing": ("m2_2b_standard_500ms_short_pilot_racing_s20261122", "m2_2b_standard_500ms_short_pilot_racing_s20261123"),
-        "diagnostic_rule_planner": ("m2_2b_standard_500ms_diagnostic_rule_planner_s20261122", "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123"),
-        "llm_diagnostic_planner": ("m2_2b_standard_500ms_llm_diagnostic_planner_s20261122", "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123"),
-    }
     arm_avg_costs_blind120: dict[str, list[float]] = {}
-    for arm_name, (s1_id, s2_id) in arm_seed_pairs_500.items():
+    for arm_name, (s1_id, s2_id) in STANDARD_ARM_SEED_IDS.items():
         c1 = np.asarray(_costs_map(frows_blind120_500, s1_id), dtype=np.float64)
         c2 = np.asarray(_costs_map(frows_blind120_500, s2_id), dtype=np.float64)
         arm_avg_costs_blind120[arm_name] = [float(x) for x in (0.5 * (c1 + c2))]
@@ -905,6 +958,11 @@ def execute_m2_blind_evaluation(
         },
         "records_25ms": {
             "cvrp_m2_blind_120": recs_blind120_25,
+        },
+        "public_routes_500ms": {
+            "cvrp_dev_hetero_24": routes_dev24,
+            "cvrp_select_multiscale_64": routes_sel64,
+            "cvrp_final_accept_120": routes_fa120,
         },
         "feature_rows_blind120_500": frows_blind120_500,
         "frozen_m2_solvers": frozen_m2,

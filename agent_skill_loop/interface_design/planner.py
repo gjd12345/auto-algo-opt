@@ -23,6 +23,7 @@ import numpy as np
 from agent_skill_loop.benchmark.catalog import load_profile_suite
 from agent_skill_loop.client import http_post_with_deadline, load_local_env
 from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
+from agent_skill_loop.request_budget import BudgetExhausted, RequestBudget
 from eoh_frozen.generation_contract import generation_parameters
 
 from .blind_commitment import assert_suite_not_m2_blind
@@ -32,7 +33,7 @@ from .contracts import (
     OUTCOME_TIMEOUT_OR_INFEASIBLE,
     InterfaceDesign,
 )
-from .dynamic_eoh import run_dynamic_eoh_evolution
+from .dynamic_eoh import _summarize_request_log, run_dynamic_eoh_evolution
 from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
 from .templates import (
     build_classic_cw_static_design,
@@ -325,8 +326,11 @@ def select_interface_by_llm_planner(
     api_key_env: str = "OPENCODE_GO_API_KEY",
     diagnostic_ref: dict[str, Any] | None = None,
     timeout_s: float = 60.0,
+    request_budget: RequestBudget | None = None,
 ) -> dict[str, Any]:
     """Arm 4b: LLM planning agent reading the exact same diagnostic & timing probe as Arm 4a (1 request)."""
+    budget = request_budget if request_budget is not None else RequestBudget(5)
+    initial_attempts = budget.used
     load_local_env()
     api_key = os.environ.get(api_key_env, "").strip()
     if not api_key:
@@ -385,24 +389,33 @@ def select_interface_by_llm_planner(
     backoff_schedule = (3.0, 6.0, 10.0, 15.0)
     max_attempts = len(backoff_schedule) + 1
     for attempt in range(max_attempts):
+        slot = budget.reserve(purpose="interface_planning", problem="cvrp", attempt=attempt + 1, model=model)
+        if slot is None:
+            raise BudgetExhausted("planning_request_budget_exhausted")
         try:
-            _, raw = http_post_with_deadline(endpoint, headers, json.dumps(payload).encode("utf-8"), timeout_s)
+            status, raw = http_post_with_deadline(endpoint, headers, json.dumps(payload).encode("utf-8"), timeout_s)
             last_exc = None
             break
         except Exception as exc:
+            budget.finish(slot, "failed", error_code=getattr(exc, "error_code", type(exc).__name__))
             last_exc = exc
-            if attempt < max_attempts - 1:
+            if attempt < max_attempts - 1 and budget.remaining != 0:
                 time.sleep(backoff_schedule[attempt])
                 continue
             raise
     if last_exc is not None:
         raise last_exc
     plan_ms = (time.perf_counter() - t0) * 1000.0
-    parsed = json.loads(raw.decode("utf-8"))
-    content = str(parsed["choices"][0]["message"]["content"] or "").strip()
-    usage = parsed.get("usage") or {}
-    in_tok = int(usage.get("prompt_tokens") or 0)
-    out_tok = int(usage.get("completion_tokens") or 0)
+    try:
+        parsed = json.loads(raw.decode("utf-8"))
+        content = str(parsed["choices"][0]["message"]["content"] or "").strip()
+        usage = parsed.get("usage") or {}
+        in_tok = int(usage.get("prompt_tokens") or 0)
+        out_tok = int(usage.get("completion_tokens") or 0)
+    except (ValueError, TypeError, KeyError, IndexError):
+        budget.finish(slot, "failed", status=status, error_code="invalid_provider_response")
+        raise
+    budget.finish(slot, "complete", status=status, input_tokens=in_tok, output_tokens=out_tok)
 
     # Extract JSON cleanly even if wrapped in markdown fences
     m = re.search(r"\{.*\}", content, flags=re.DOTALL)
@@ -433,6 +446,7 @@ def select_interface_by_llm_planner(
         "rationale": rationale,
         "raw_response": content,
         "planning_requests": 1,
+        "planning_request_attempts": budget.used - initial_attempts,
         "planning_input_tokens": in_tok,
         "planning_output_tokens": out_tok,
         "planning_wall_ms": round(plan_ms, 2),
@@ -475,6 +489,10 @@ def run_short_pilot_racing(
     """
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    if (output_dir / "frozen_solver_manifest.json").exists() or (output_dir / "racing_ledger.json").exists():
+        raise FileExistsError(f"racing_output_already_exists:{output_dir}")
+    with (output_dir / "racing.started").open("x", encoding="utf-8"):
+        pass
     t_wall0 = time.perf_counter()
 
     k = len(candidate_templates)
@@ -482,7 +500,10 @@ def run_short_pilot_racing(
     if pilot_total_samples >= total_sample_budget:
         raise ValueError(f"pilot_budget_exceeds_total:{pilot_total_samples}>={total_sample_budget}")
 
-    pilot_req_per_arm = max(pilot_samples_per_arm + 3, int(total_request_cap // (k + 1)))
+    if not k or pilot_samples_per_arm < 1 or total_request_cap < k + 1:
+        raise ValueError("racing_budget_must_cover_pilots_and_continuation")
+    budget = RequestBudget(total_request_cap)
+    pilot_req_per_arm = total_request_cap // (k + 1)
     pilot_results: list[dict[str, Any]] = []
     used_requests = 0
     pilot_in_tok = 0
@@ -516,6 +537,7 @@ def run_short_pilot_racing(
                 model=model,
                 api_key_env=api_key_env,
                 max_requests=pilot_req_per_arm,
+                request_budget=budget,
                 require_evolved=True,
                 round_context=KB_ROUND_CONTEXT_BY_TEMPLATE.get(tid),
             )
@@ -536,6 +558,10 @@ def run_short_pilot_racing(
                 "output_dir": str(p_dir),
             })
         except Exception as exc:
+            reqs = _summarize_request_log(p_dir / "results" / "requests.jsonl")
+            used_requests += int(reqs["completed_requests"])
+            pilot_in_tok += int(reqs["prompt_tokens"])
+            pilot_out_tok += int(reqs["completion_tokens"])
             pilot_results.append({
                 "template_id": tid,
                 "template_version": tver,
@@ -546,7 +572,7 @@ def run_short_pilot_racing(
                 "baseline_objective": None,
                 "evolved_count": 0,
                 "hook_code": None,
-                "requests": {},
+                "requests": reqs,
                 "output_dir": str(p_dir),
             })
 
@@ -559,7 +585,7 @@ def run_short_pilot_racing(
     win_tver = winner["template_version"]
 
     remaining_samples = total_sample_budget - pilot_total_samples
-    remaining_requests = max(remaining_samples + 4, total_request_cap - used_requests)
+    remaining_requests = budget.remaining
 
     win_design = build_design_for_template(
         win_tid,
@@ -591,6 +617,7 @@ def run_short_pilot_racing(
         model=model,
         api_key_env=api_key_env,
         max_requests=remaining_requests,
+        request_budget=budget,
         require_evolved=False,  # pilot winner already evolved & carried over as seed
         extra_seed_entries=[{"algorithm": "Best valid candidate from Racing pilot phase.", "code": winner["hook_code"]}],
         round_context=KB_ROUND_CONTEXT_BY_TEMPLATE.get(win_tid),
@@ -626,6 +653,10 @@ def run_short_pilot_racing(
         "selected_template_id": win_tid,
         "selected_template_version": win_tver,
         "requests": {
+            "attempted_requests": budget.used if mode == "live" else (
+                sum(int(p["requests"].get("attempted_requests", 0)) for p in pilot_results)
+                + int(cont_reqs.get("attempted_requests", 0))
+            ),
             "pilot_requests": used_requests,
             "continuation_requests": int(cont_reqs.get("completed_requests", 0)),
             "completed_requests": used_requests + int(cont_reqs.get("completed_requests", 0)),

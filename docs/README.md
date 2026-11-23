@@ -6,6 +6,7 @@
 |---|---|---|
 | CO / 官方 EoH | [algorithm-optimization Skill](../skills/algorithm-optimization/SKILL.md) | [CLI](cli-contract.md)、[协议](protocol.md)、[SQLite](sqlite-schema.md)、[基准与问题目录](benchmarks_and_problems.md) |
 | 离线知识库 | [知识库说明](knowledge_base.md) | [实现说明](kb_construct_implementation.md) |
+| 里程碑二 | [工程复审与运行规则](milestone2-reliability.md) | [接口编排](../skills/algorithm-optimization/references/interface-design.md) |
 
 ## 设计与计划
 

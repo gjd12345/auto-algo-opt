@@ -132,6 +132,10 @@ def main(argv: list[str] | None = None) -> int:
 
     out_root = args.out_root.resolve()
     out_root.mkdir(parents=True, exist_ok=True)
+    if any(out_root.iterdir()):
+        parser.error("--out-root must be a fresh experiment directory")
+    with (out_root / "multimodel.started").open("x", encoding="utf-8"):
+        pass
 
     diag_json = _REPO / "experiments" / "milestone2" / "diagnostics" / "gap_decomposition_2x3.json"
     diag_ref = None

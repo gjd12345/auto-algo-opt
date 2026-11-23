@@ -199,15 +199,19 @@
       const bestGap = algRows.length && algRows[0].st.mean_rel_gap !== null && sortBy === "mean_rel_gap" && sortDir === "asc" ? Number(algRows[0].st.mean_rel_gap) : null;
       const trs = algRows.map(function (r) {
         const kbId = L.resolveAlgKbId(core, r.aid);
-        const isPartial = r.ov.ok_count < r.ov.n_instances;
         const okBex = r.ov.ok_budget_exhausted_count !== undefined ? r.ov.ok_budget_exhausted_count : (r.ov.budget_exhausted_count || 0);
         const toCnt = r.ov.timeout_count !== undefined ? r.ov.timeout_count : (r.ov.n_instances - r.ov.ok_count);
-        const convRate = r.ov.local_opt_convergence_rate;
+        const fullRate = r.ov.full_completion_rate;
+        const isPartial = r.ov.ok_count < r.ov.n_instances || (fullRate != null && fullRate < 1);
+        const iterationLimit = r.ov.iteration_limit_count || 0;
+        const convRate = fullRate ?? r.ov.local_opt_convergence_rate;
         const convNote = (convRate !== null && convRate !== undefined && convRate < 1.0)
-          ? (" · 收敛 " + L.fmtRatioAsPctPlain(Math.max(0, convRate), 0))
+          ? (" · " + (fullRate != null ? "完整完成 " : "收敛 ") + L.fmtRatioAsPctPlain(Math.max(0, convRate), 0))
           : "";
-        const okText = r.ov.ok_count + "/" + r.ov.n_instances +
-          (toCnt > 0 ? " (超时 " + toCnt + ")" : okBex > 0 ? " (预算终止 " + okBex + ")" : "") +
+        const okText = (fullRate != null ? "可行 " : "") + r.ov.ok_count + "/" + r.ov.n_instances +
+          (toCnt > 0 ? " · 超时 " + toCnt : "") +
+          (okBex > 0 ? " · 预算终止 " + okBex : "") +
+          (iterationLimit > 0 ? " · 迭代上限 " + iterationLimit : "") +
           convNote;
         const isBest = bestGap !== null && r.st.mean_rel_gap !== null && Math.abs(Number(r.st.mean_rel_gap) - bestGap) < 1e-6;
         let exactKCell = "";

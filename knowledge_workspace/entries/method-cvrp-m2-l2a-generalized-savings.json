@@ -13,7 +13,7 @@
     "deepseek-v4.1-flash"
   ],
   "status": "reviewed",
-  "summary": "里程碑二在 cvrp_parallel_merge_static/v1 (L2a) 模板下经 EoH 进化的静态成对合并打分规则：以全局平均仓距 scale = mean(d(0, 1..n)) 归一化广义节约量 d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)| 并叠加无量纲容量填充奖，保持 0.00% 坐标缩放漂移与 ~2.4 ms 极低中位耗时；在 dev_24 达 16.1595（Arm2 最优 16.1398 超越 CW+Relocate+2opt）、select_64 达 20.8236，解封盲测 cvrp_m2_blind_120 达 24.2003（较 M1.5 最强逐点规则 C1 降低 6.44%, Wilcoxon p=0.00e+00）。",
+  "summary": "里程碑二在 cvrp_parallel_merge_static/v1 (L2a) 模板下经 EoH 进化的静态成对合并打分规则：以全局平均仓距 scale = mean(d(0, 1..n)) 归一化广义节约量 d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)| 并叠加无量纲容量填充奖，保持 0.00% 坐标缩放漂移与 ~2.4 ms 极低中位耗时；在 dev_24 达 16.1595（Arm2 最优 16.1398 超越 CW+Relocate+2opt）、select_64 达 20.8236，解封盲测 cvrp_m2_blind_120 达 24.2003（较 M1.5 最强逐点规则 C1 降低 6.44%，Wilcoxon p < 10⁻⁸）。",
   "attributes": {
     "method_family": "parallel_merge",
     "online_offline": "offline",
@@ -69,19 +69,19 @@
     "artifact_refs": [
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "agent_skill_loop/interface_design/templates.py",
         "sha256": "f9959bcda83e38c1fce75b9b96107e25309223a29a1ab98486ba18f47c073725"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "experiments/milestone2/phase2b_four_arm/standard_500ms/seed_20261123/llm_diagnostic_planner/frozen_solver_manifest.json",
         "sha256": "dc8837d4c034a8505902ea1af3fa36d5f634c2cc6200c73ce52eb499c114871d"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "experiments/milestone2/phase2b_four_arm/standard_500ms/seed_20261122/dev_fixed_strong/frozen_solver_manifest.json",
         "sha256": "9c1c95b60517501c235b8139dc6f1ef7c39d0d2f8249c8567dd34c2abef97eea"
       }
@@ -124,7 +124,7 @@
         "metric": "mean_tour_length",
         "value": 24.2003,
         "comparison_mode": "local_recomputed",
-        "reference_note": "解封盲测 120 题均长 24.2003（较 C1 降 6.44%, p=0.00e+00）",
+        "reference_note": "解封盲测 120 题均长 24.2003（较 C1 降 6.44%，p < 10⁻⁸）",
         "artifact_path": "results/summary.json"
       }
     ]
@@ -153,5 +153,5 @@
   ],
   "code_refs": [],
   "id": "method-cvrp-m2-l2a-generalized-savings",
-  "content_sha256": "746f5f1ba3418edcea48154883d3f00dc8d01e7c73a96eda5ea00fa9d6fb142f"
+  "content_sha256": "e120ab0a7f37cfdc94f074e63b269cb1c3a7afae0b22d3271ddc57fd51d85508"
 }

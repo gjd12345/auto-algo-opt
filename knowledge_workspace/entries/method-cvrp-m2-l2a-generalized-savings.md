@@ -16,7 +16,7 @@
 ## 来源及支持的具体结论
 
 - 五臂配对同预算实验：`experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json` 与 `four_arm_report_tight_25ms.json`。
-- 一次性解封盲测：`experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json`（在 `cvrp_m2_blind_120` 上均长 `24.2003`，较 M1.5 最强逐点规则 `i605_cvrp_c1_tworegime` 的 `25.8670` 显著降低 **`6.44%`**，Wilcoxon $p = 0.00e+00$）。
+- 一次性解封盲测：`experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json`（在 `cvrp_m2_blind_120` 上均长 `24.2003`，较 M1.5 最强逐点规则 `i605_cvrp_c1_tworegime` 的 `25.8670` 显著降低 **`6.44%`**，Wilcoxon p < 10⁻⁸）。
 
 ## 代码和评测关联
 

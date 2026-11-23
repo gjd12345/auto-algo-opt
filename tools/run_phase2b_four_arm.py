@@ -21,6 +21,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -33,6 +34,7 @@ if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
 from agent_skill_loop.cvrp_workbench.runner import run_frozen_workbench_bundle
+from agent_skill_loop.request_budget import RequestBudget
 from agent_skill_loop.interface_design.archive import ComplementaryArchive, compute_portfolio_complementarity
 from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
 from agent_skill_loop.interface_design.dynamic_eoh import run_dynamic_eoh_evolution
@@ -66,10 +68,8 @@ def _run_seed_arm(
     budget_probe: dict[str, Any],
 ) -> dict[str, Any]:
     arm_dir = out_root / budget_id / f"seed_{seed}" / arm_id
-    arm_dir.mkdir(parents=True, exist_ok=True)
+    arm_dir.mkdir(parents=True, exist_ok=False)
     arm_cache = arm_dir / "arm_result.json"
-    if arm_cache.is_file():
-        return json.loads(arm_cache.read_text(encoding="utf-8"))
     solver_id = f"m2_2b_{budget_id}_{arm_id}_s{seed}"
     t0 = time.perf_counter()
 
@@ -226,6 +226,7 @@ def _run_seed_arm(
         })
 
     if arm_id == "llm_diagnostic_planner":
+        request_budget = RequestBudget(total_request_cap)
         plan = select_interface_by_llm_planner(
             diagnostic_summary=diag_doc,
             budget_probe=budget_probe,
@@ -234,14 +235,17 @@ def _run_seed_arm(
             model=model,
             api_key_env=api_key_env,
             diagnostic_ref=diag_ref,
+            request_budget=request_budget,
         )
         (arm_dir / "plan_decision.json").write_text(
             json.dumps({k: v for k, v in plan.items() if k != "design"}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        # Charge the 1 LLM planning request against total sample/request budget fairly!
+        # Count planner retries against the same outbound request cap.
         rem_samples = max(1, total_samples - 1)
-        rem_requests = max(rem_samples + 3, total_request_cap - 1)
+        rem_requests = request_budget.remaining
+        if rem_requests == 0:
+            raise RuntimeError("planning_exhausted_arm_request_budget")
         res = run_dynamic_eoh_evolution(
             design=plan["design"],
             output_dir=arm_dir,
@@ -258,6 +262,7 @@ def _run_seed_arm(
             model=model,
             api_key_env=api_key_env,
             max_requests=rem_requests,
+            request_budget=request_budget,
             require_evolved=True,
             round_context=KB_ROUND_CONTEXT_BY_TEMPLATE.get(plan["design"].template_id),
         )
@@ -267,6 +272,7 @@ def _run_seed_arm(
             "selected_template_id": plan["selected_template_id"],
             "rationale": plan["rationale"],
             "planning_requests": plan["planning_requests"],
+            "planning_request_attempts": plan["planning_request_attempts"],
             "planning_input_tokens": plan["planning_input_tokens"],
             "planning_output_tokens": plan["planning_output_tokens"],
             "planning_wall_ms": plan["planning_wall_ms"],
@@ -303,6 +309,19 @@ def main(argv: list[str] | None = None) -> int:
 
     out_root = args.out_root.resolve()
     out_root.mkdir(parents=True, exist_ok=True)
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", args.budget_id):
+        parser.error("invalid budget ID")
+    allowed_arms = {"fixed_pointwise", "dev_fixed_strong", "short_pilot_racing",
+                    "diagnostic_rule_planner", "llm_diagnostic_planner"}
+    if set(args.arms) - allowed_arms or len(set(args.arms)) != len(args.arms) or len(set(args.seeds)) != len(args.seeds):
+        parser.error("arms and seeds must be valid and unique")
+    budget_outputs = (
+        f"budget_probe_{args.budget_id}.json", f"workbench_bundle_{args.budget_id}",
+        f"dashboard_{args.budget_id}", f"four_arm_report_{args.budget_id}.json",
+    )
+    if any((out_root / name).exists() for name in budget_outputs):
+        parser.error("budget outputs already exist; use a fresh --out-root")
+    (out_root / args.budget_id).mkdir(exist_ok=False)
     t_all0 = time.perf_counter()
 
     diag_json = _REPO / "experiments" / "milestone2" / "diagnostics" / "gap_decomposition_2x3.json"
@@ -373,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
     wb_sum = json.loads((bundle_dir / "results" / "summary.json").read_text(encoding="utf-8"))
     per_inst = json.loads((bundle_dir / "results" / "per_instance_records.json").read_text(encoding="utf-8"))["records"]
 
-    archive = ComplementaryArchive(out_root / "archive")
+    archive = ComplementaryArchive(out_root / args.budget_id / "archive")
     detailed_runs: list[dict[str, Any]] = []
     for r in run_outputs:
         sid = r["frozen_solver"]["solver_id"]
@@ -381,6 +400,9 @@ def main(argv: list[str] | None = None) -> int:
         sel_m = wb_sum["suites"]["cvrp_select_multiscale_64"]["algorithms"][sid]["overall"]
         eoh_req = r["eoh_requests"]
         tot_req = int(r["planning_requests"]) + int(eoh_req.get("completed_requests", 0))
+        tot_attempts = int(r.get("planning_request_attempts", r["planning_requests"])) + int(
+            eoh_req.get("attempted_requests", eoh_req.get("completed_requests", 0))
+        )
         tot_in = int(r["planning_input_tokens"]) + int(eoh_req.get("prompt_tokens", 0))
         tot_out = int(r["planning_output_tokens"]) + int(eoh_req.get("completion_tokens", 0))
         row = {
@@ -389,6 +411,7 @@ def main(argv: list[str] | None = None) -> int:
             "solver_id": sid,
             "selected_template_id": r["selected_template_id"],
             "total_requests": tot_req,
+            "total_request_attempts": tot_attempts,
             "planning_requests": r["planning_requests"],
             "total_input_tokens": tot_in,
             "total_output_tokens": tot_out,
@@ -426,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
             "select_64_completion_avg": round(float(np.mean([x["select_64_completion"] for x in rows])), 4),
             "select_64_solve_ms_p50_avg": round(float(np.mean([x["select_64_solve_ms_p50"] for x in rows])), 4),
             "total_requests_avg": round(float(np.mean([x["total_requests"] for x in rows])), 2),
+            "total_request_attempts_avg": round(float(np.mean([x["total_request_attempts"] for x in rows])), 2),
             "total_tokens_avg": round(float(np.mean([x["total_tokens"] for x in rows])), 1),
             "wall_s_avg": round(float(np.mean([x["wall_s"] for x in rows])), 2),
         }

@@ -33,9 +33,7 @@ from agent_skill_loop.cvrp_workbench.solvers import solve_cw_parallel_merge
 from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.interface_design.blind_commitment import (
     BLIND_COMMITMENT_PATH,
-    DEFAULT_SEALED_BLIND_PATH,
-    seal_m2_blind_120,
-    verify_sealed_against_commitment,
+    read_public_blind_commitment,
 )
 from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver, sha256_text
 from agent_skill_loop.interface_design.diagnostics import run_gap_decomposition_diagnostic
@@ -214,20 +212,13 @@ def main(argv: list[str] | None = None) -> int:
 
     out_root = args.out_root.resolve()
     out_root.mkdir(parents=True, exist_ok=True)
+    if any(out_root.iterdir()):
+        parser.error("--out-root must be a fresh experiment directory")
+    with (out_root / "phase2a.started").open("x", encoding="utf-8"):
+        pass
 
-    # 2A-1: Seal & verify blind commitment
-    if not (BLIND_COMMITMENT_PATH.is_file() and DEFAULT_SEALED_BLIND_PATH.is_file()):
-        seal_res = seal_m2_blind_120(
-            commitment_path=BLIND_COMMITMENT_PATH,
-            sealed_path=DEFAULT_SEALED_BLIND_PATH,
-            overwrite=False,
-        )
-    else:
-        seal_res = {"reused_existing": True}
-    verify_blind_res = verify_sealed_against_commitment(
-        sealed_path=DEFAULT_SEALED_BLIND_PATH,
-        commitment_path=BLIND_COMMITMENT_PATH,
-    )
+    # Development sees the commitment only. The independent custodian verifies its contents.
+    commitment = read_public_blind_commitment(BLIND_COMMITMENT_PATH)
 
     # 2A-2: Formal 2x3 exploratory diagnostic
     diag_dir = out_root / "diagnostics"
@@ -311,8 +302,9 @@ def main(argv: list[str] | None = None) -> int:
     report = {
         "ok": True,
         "step_2a1_blind_commitment": {
-            "seal": seal_res,
-            "verify": verify_blind_res,
+            "scope": "public_commitment_only",
+            "instance_count": commitment["instance_count"],
+            "suite_content_sha256": commitment["suite_content_sha256"],
             "commitment_path": str(BLIND_COMMITMENT_PATH),
         },
         "step_2a2_diagnostics": {

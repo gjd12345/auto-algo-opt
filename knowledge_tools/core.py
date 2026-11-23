@@ -1560,6 +1560,7 @@ def build_release(
     *,
     workbench_bundle: Path | None = None,
     dashboard_dir: Path | None = None,
+    activate: bool = True,
 ) -> dict[str, Any]:
     workspace = workspace.resolve()
     store = store.resolve()
@@ -1751,7 +1752,7 @@ def build_release(
             if not target.exists() or sha256_file(target) != item["sha256"]:
                 raise ValueError(f"staged file hash mismatch: {item['path']}")
         stage.rename(final)
-        pointer_mode = _atomic_pointer(store, final)
+        pointer_mode = _atomic_pointer(store, final) if activate else None
     except Exception:
         shutil.rmtree(stage, ignore_errors=True)
         raise
@@ -1764,6 +1765,18 @@ def build_release(
         "entry_count": len(entries),
         "source_count": len(source_doc.get("sources", [])),
     }
+
+
+def activate_verified_release(store: Path, release: Path) -> dict[str, Any]:
+    """Validate an immutable release before changing the store's active pointer."""
+    store = store.resolve()
+    release = release.resolve()
+    if release.parent != (store / "releases").resolve():
+        raise ValueError("release does not belong to this store")
+    result = validate_release(release)
+    if not result["ok"]:
+        raise ValueError(f"release validation failed: {result['errors'][:8]}")
+    return {**result, "pointer": _atomic_pointer(store, release)}
 
 
 def validate_release(release: Path) -> dict[str, Any]:

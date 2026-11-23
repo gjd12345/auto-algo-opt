@@ -12,8 +12,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import re
 import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -21,21 +25,23 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-from agent_skill_loop.interface_design.blind_eval import execute_m2_blind_evaluation
+from agent_skill_loop.interface_design.blind_commitment import BLIND_COMMITMENT_PATH
+from agent_skill_loop.interface_design.blind_eval import execute_m2_blind_evaluation, freeze_pre_blind_protocol
+from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
 from frontend.build_dashboard import build_dashboard
-from knowledge_tools.core import build_release, validate_release, validate_workspace
+from knowledge_tools.core import activate_verified_release, build_release, validate_workspace
 
 M2_RELEASE_ID = "20261123-main-co-workbench-m2"
 M15_RELEASE_ID = "20261122-main-co-workbench-m15"
-M2_BASE_COMMIT = "51c078ff"
+M2_BASE_COMMIT = "33b9cb74"
 
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _sha256_file_lf(path: Path) -> str:
-    return _sha256_bytes(path.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8"))
+def _p_value_text(p: float) -> str:
+    return "p < 10⁻⁸" if p == 0 else f"p = {p:.2e}"
 
 
 def _write_entry(entries_dir: Path, entry_id: str, metadata: dict[str, Any], markdown: str) -> None:
@@ -104,8 +110,9 @@ def sync_milestone2_kb(
     sources_path.write_bytes((json.dumps(sources_doc, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
 
     def _pin(rel: str) -> dict[str, Any]:
-        p = REPO / rel
-        return {"kind": "repo_code", "commit": M2_BASE_COMMIT, "path": rel, "sha256": _sha256_file_lf(p)}
+        evidence = subprocess.check_output(["git", "show", f"{M2_BASE_COMMIT}:{rel}"], cwd=REPO)
+        return {"kind": "repo_code", "commit": M2_BASE_COMMIT, "path": rel,
+                "sha256": _sha256_bytes(evidence.replace(b"\r\n", b"\n"))}
 
     sum500 = blind_report["suite_summaries_500ms"]
     sum25 = blind_report["suite_summaries_25ms"]["cvrp_m2_blind_120"]
@@ -147,7 +154,7 @@ def sync_milestone2_kb(
             f"里程碑二在 cvrp_parallel_merge_static/v1 (L2a) 模板下经 EoH 进化的静态成对合并打分规则："
             f"以全局平均仓距 scale = mean(d(0, 1..n)) 归一化广义节约量 d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)| 并叠加无量纲容量填充奖，"
             f"保持 0.00% 坐标缩放漂移与 ~2.4 ms 极低中位耗时；在 dev_24 达 {l2a_dev24:.4f}（Arm2 最优 16.1398 超越 CW+Relocate+2opt）、"
-            f"select_64 达 {l2a_sel64:.4f}，解封盲测 cvrp_m2_blind_120 达 {l2a_bl120:.4f}（较 M1.5 最强逐点规则 C1 降低 {h2_gain:.2f}%, Wilcoxon p={h2_p:.2e}）。"
+            f"select_64 达 {l2a_sel64:.4f}，解封盲测 cvrp_m2_blind_120 达 {l2a_bl120:.4f}（较 M1.5 最强逐点规则 C1 降低 {h2_gain:.2f}%，Wilcoxon {_p_value_text(h2_p)}）。"
         ),
         "attributes": {
             "method_family": "parallel_merge",
@@ -202,7 +209,7 @@ def sync_milestone2_kb(
                 _binding("cvrp_dev_hetero_24", l2a_dev_id, "mean_tour_length", _stat500("cvrp_dev_hetero_24", l2a_dev_id), "dev_24 零后处理达 16.1398，超越裸 CW (16.2225) 与 CW+Relocate+2opt (16.1549)"),
                 _binding("cvrp_select_multiscale_64", l2a_best_id, "mean_tour_length", l2a_sel64, "select_64 均长 20.8236（五臂第一，较 C1 22.4722 降 7.34%）"),
                 _binding("cvrp_final_accept_120", l2a_best_id, "mean_tour_length", l2a_fa120, f"final_accept_120 零样本迁移均长 {l2a_fa120:.4f}"),
-                _binding("cvrp_m2_blind_120", l2a_best_id, "mean_tour_length", l2a_bl120, f"解封盲测 120 题均长 {l2a_bl120:.4f}（较 C1 降 {h2_gain:.2f}%, p={h2_p:.2e}）"),
+                _binding("cvrp_m2_blind_120", l2a_best_id, "mean_tour_length", l2a_bl120, f"解封盲测 120 题均长 {l2a_bl120:.4f}（较 C1 降 {h2_gain:.2f}%，{_p_value_text(h2_p)}）"),
             ],
         },
         "relations": {
@@ -235,7 +242,7 @@ def sync_milestone2_kb(
 ## 来源及支持的具体结论
 
 - 五臂配对同预算实验：`experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json` 与 `four_arm_report_tight_25ms.json`。
-- 一次性解封盲测：`experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json`（在 `cvrp_m2_blind_120` 上均长 `{l2a_bl120:.4f}`，较 M1.5 最强逐点规则 `i605_cvrp_c1_tworegime` 的 `{c1_bl120:.4f}` 显著降低 **`{h2_gain:.2f}%`**，Wilcoxon $p = {h2_p:.2e}$）。
+- 一次性解封盲测：`experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json`（在 `cvrp_m2_blind_120` 上均长 `{l2a_bl120:.4f}`，较 M1.5 最强逐点规则 `i605_cvrp_c1_tworegime` 的 `{c1_bl120:.4f}` 显著降低 **`{h2_gain:.2f}%`**，Wilcoxon {_p_value_text(h2_p)}）。
 
 ## 代码和评测关联
 
@@ -480,7 +487,10 @@ def sync_milestone2_kb(
     h1 = ht["H1_llm_planner_vs_fixed_pointwise_500ms_paired_avg"]
     h3 = ht["H3_llm_planner_vs_rule_planner_500ms_paired_avg"]
     h4a = ht["H4a_protocol_t1_rule_25ms_vs_t2_rule_500ms_at_25ms"]
-    h4b = ht["H4b_protocol_t1_llm_25ms_vs_t2_rule_500ms_at_25ms"]
+    llm_arm = b500_arms["llm_diagnostic_planner"]
+    llm_blind_rank = 1 + sum(arm["paired_mean_avg"] < llm_arm["paired_mean_avg"] for arm in b500_arms.values())
+    h1_p = _p_value_text(h1["wilcoxon_signed_rank"]["p_two_sided"])
+    h3_p = _p_value_text(h3["wilcoxon_signed_rank"]["p_two_sided"])
 
     plan_ev_meta = {
         "type": "evidence",
@@ -490,10 +500,10 @@ def sync_milestone2_kb(
         "tags": ["cvrp", "milestone-2", "diagnostic-planning", "short-pilot-racing", "protocol-t1", "protocol-t2", "session-runtime"],
         "status": "reviewed",
         "summary": (
-            f"在统一模型 (deepseek-v4.1-flash) 与总搜索预算 (B=12) 下完成五臂配对对照与盲测验证："
-            f"① 500ms 下 LLM 诊断规划组 (Arm 4b) 以最低演化成本 (10.5 req / 17.1k tok / 92.5s) 取得 select_64 (20.8618) 与 blind_120 ({b500_arms['llm_diagnostic_planner']['paired_mean_avg']:.4f}) 双料第一，"
-            f"较固定逐点进化 (Arm 1) 在盲测集上降低 {h1['rel_gain_vs_baseline_pct']:.2f}% (120/120 全胜, p={h1['wilcoxon_signed_rank']['p_two_sided']:.2e})，并较机械阈值规则 (Arm 4a) 显著降低 {h3['rel_gain_vs_baseline_pct']:.2f}%；"
-            f"② 25ms 紧预算下 Protocol T1 诊断规划自动从 L2b 切换至 L2a，实现 blind_120 0/120 超时截断（对比 Protocol T2 直接迁移 500ms L2b 触发 40/120 题截断，路长降低 {h4a['rel_gain_vs_baseline_pct']:.2f}%）。"
+            f"历史五臂配对采用 deepseek-v4.1-flash，名义请求预算 B=12，实耗有超额。"
+            f"500 ms 下 LLM 诊断组在 select_64（20.8618）第一，盲测均长 {llm_arm['paired_mean_avg']:.4f}，排第 {llm_blind_rank}，"
+            f"较固定逐点进化降低 {h1['rel_gain_vs_baseline_pct']:.2f}%（120/120 全胜，{h1_p}）。"
+            f"25 ms 下确定性规划组从 L2b 切到 L2a，预算耗尽由 40/120 降至 0/120。LLM 规划组在两个预算下均选 L2a。"
         ),
         "attributes": {
             "knowledge_tier": "verified_experiment",
@@ -505,7 +515,7 @@ def sync_milestone2_kb(
                 "strong_on": ["plan_time_interface_selection", "budget_constrained_evolution", "cross_harness_skill_orchestration"],
                 "weak_on": ["single_fixed_interface_without_diagnostics"],
                 "scale_notes": (
-                    "2x3 差距分解（1,056 条逐例记录）+ 0.8s 预算裕度探针可在零/单次 LLM 请求内准确定位瓶颈并规避 n=200 超时陷阱，比 Short-Pilot Racing 节省 34% 请求与 38% 墙钟时间。"
+                    "4 个构造起点 × 3 种后处理，共 1,056 条开发/选优记录。25 ms 下确定性规则切换到 L2a，规避直接迁移 L2b 的 n=200 预算耗尽。"
                 ),
             },
             "artifact_refs": [
@@ -548,21 +558,22 @@ def sync_milestone2_kb(
 
 1. **2×3 探索性差距分解与预算裕度探针**：
    - 在 `dev_24` 与 `select_64`（显式标记 `usage_role="dev_selection"`）上运行 4 个代表构造起点 × 3 种后处理（`none / intra_2opt / relocate_2opt`，共 `1,056` 条逐例记录，见 `experiments/milestone2/diagnostics/gap_decomposition_2x3.json`）。结果显示同款 `Relocate+2opt` 虽弥合了 `R5` 和 `C1` 在 `select_64` 上原始差距的 `60.10%` 和 `70.36%`，但修补后仍分别长于裸 CW **`+4.05%`** 和 **`+2.41%`**，定位瓶颈在构造与路线划分层。
-2. **五臂配对同预算对照（`standard_500ms`，双种子 `20261122, 20261123`，总预算 $B=12$）**：
+2. **历史五臂配对（`standard_500ms`，双种子 `20261122, 20261123`，名义预算 $B=12$，实际请求见各组）**：
    - **Arm 1 (`fixed_pointwise`, L1)**：`select_64` 双种子均值 `24.2246`，盲测 `cvrp_m2_blind_120` 双种子均值 **`{b500_arms['fixed_pointwise']['paired_mean_avg']:.4f}`**（`8.5 req / 16.4k tok / 92.2s`）。
    - **Arm 2 (`dev_fixed_strong`, L2a)**：`dev_24` 创下 `16.1398`（超越 `CW+Relocate+2opt`），`select_64` 均值 `20.9039`，`blind_120` 双种子均值 **`{b500_arms['dev_fixed_strong']['paired_mean_avg']:.4f}`**（`13.0 req / 23.0k tok / 106.5s`）。
    - **Arm 3 (`short_pilot_racing`, 3×2 试跑 + 6 续跑)**：`select_64` 均值 `20.8948`，`blind_120` 双种子均值 **`{b500_arms['short_pilot_racing']['paired_mean_avg']:.4f}`**，但消耗 **`16.0 req / 24.2k tok / 150.3s`**。
    - **Arm 4a (`diagnostic_rule_planner`, 0-token 规则选 L2b)**：`select_64` 均值 `20.9721`，`blind_120` 双种子均值 **`{b500_arms['diagnostic_rule_planner']['paired_mean_avg']:.4f}`**（`13.0 req / 26.5k tok / 120.0s`）。
-   - **Arm 4b (`llm_diagnostic_planner`, 1 次规划请求扣除后剩 11 次演化，选 L2a)**：在 `select_64`（**`20.8618`**，最优种子 `20.8236`）与盲测 `cvrp_m2_blind_120`（双种子均值 **`{b500_arms['llm_diagnostic_planner']['paired_mean_avg']:.4f}`**，最优种子 **`{b500_arms['llm_diagnostic_planner']['best_seed_mean']:.4f}`**）上均居**五臂第一**，同时仅耗 **`10.5 req / 17.1k tok / 92.5s`**（较 Racing 省 **34% 请求、29% Tokens、38% 墙钟耗时**；在盲测 120 题上较 Arm 1 降低 **`{h1['rel_gain_vs_baseline_pct']:.2f}%`**，$120/120$ 全胜，Wilcoxon $p = {h1['wilcoxon_signed_rank']['p_two_sided']:.2e}$；较 Arm 4a 降低 **`{h3['rel_gain_vs_baseline_pct']:.2f}%`**，$p = {h3['wilcoxon_signed_rank']['p_two_sided']:.2e}$）。
+   - **Arm 4b（LLM 规划，L2a）**在 `select_64` 第一（`20.8618`），盲测双种子均值 `{llm_arm['paired_mean_avg']:.4f}`，排第 {llm_blind_rank}，落后于固定强接口组和 Racing。历史平均 `10.5 req / 17.1k tok / 92.5s`。盲测比固定逐点组降低 `{h1['rel_gain_vs_baseline_pct']:.2f}%`（120/120 全胜，Wilcoxon {h1_p}），比确定性规则组降低 `{h3['rel_gain_vs_baseline_pct']:.2f}%`（{h3_p}）。
 3. **Protocol T1（预算感知自适应）vs Protocol T2（零样本直接迁移）在 `tight_25ms` 盲测集上的验证**：
    - 当目标预算收紧至 `25 ms` 时，若按 **Protocol T2** 直接迁移 500ms 下 Arm 4a 选出的 L2b 求解器，在 `cvrp_m2_blind_120` 上有 **`{b25_arms['m2_2b_standard_500ms_diagnostic_rule_planner_s20261122']['ok_budget_exhausted_count']}/120`** 题（全部 40 道 `n=200` 算例）触发预算耗尽降级，盲测均长退化至 **`{b25_arms['m2_2b_standard_500ms_diagnostic_rule_planner_s20261122']['mean_tour_length']:.4f}`**（`n=200` 分档均长 `{b25_arms['m2_2b_standard_500ms_diagnostic_rule_planner_s20261122']['by_scale_n200_mean']:.4f}`）。
-   - 而按 **Protocol T1**，Arm 4a 与 Arm 4b 均根据 25ms 裕度探针自动切换至 `L2a`，在 `cvrp_m2_blind_120` 上实现 **`0/120` 预算耗尽、100% 完整收敛**，盲测均长分别为 **`{b25_arms['m2_2b_tight_25ms_diagnostic_rule_planner_s20261122']['mean_tour_length']:.4f}`** 与 **`{b25_arms['m2_2b_tight_25ms_llm_diagnostic_planner_s20261122']['mean_tour_length']:.4f}`**（较 Protocol T2 分别降低 **`{h4a['rel_gain_vs_baseline_pct']:.2f}%`** 与 **`{h4b['rel_gain_vs_baseline_pct']:.2f}%`**，95% Bootstrap CI `{h4a['rel_gain_ci95_pct']}`）。
+   - **Protocol T1 的确定性规划组（Arm 4a）**从 L2b 切到 L2a，预算耗尽 `0/120`，均长 `{b25_arms['m2_2b_tight_25ms_diagnostic_rule_planner_s20261122']['mean_tour_length']:.4f}`。与迁移同一组的 500 ms L2b 相比，均长降低 `{h4a['rel_gain_vs_baseline_pct']:.2f}%`（95% Bootstrap CI `{h4a['rel_gain_ci95_pct']}`）。LLM 组在 500 ms 和 25 ms 都选 L2a，直接迁移其 500 ms 最优种子也有 `0/120` 预算耗尽。
 4. **补充项 2B+（跨平台 / 跨 Harness Skill & Session Runtime 编排统一）**：
-   - 原有 `skills/algorithm-optimization/SKILL.md` 与 `session submit-plan → execute → collect → finish-round` 已原生打通 `interface_selection` 与五关校验器，支持 Claude Code / Codex / OpenCode / Antigravity 等任意外部 Agent 跨轮自主切接口与恢复。
+   - 原有 Skill 与 `session submit-plan → execute → collect → finish-round` 已接入 `interface_selection` 和五关校验。共享 CLI 用本地 mock 验收，具体外部宿主的实机兼容性需各自验证。
 
 ## 适用条件、假设与限制
 
 - 实验结论严格区分“确定性诊断规则的策略收益（Arm 4a）”与“LLM 综合权衡质量与延迟裕度的规划收益（Arm 4b vs Arm 4a）”。
+- 历史几组实际请求超过名义上限。统计比较以固定搜索种子的实例配对为单位，跨种子的稳定性仍需额外证据。
 
 ## 来源及支持的具体结论
 
@@ -699,9 +710,7 @@ def build_m2_unified_workbench_bundle(
     with M2 frozen solvers, M2 cross-paradigm Direction-2 selection analyses, and redacted-coordinate
     cvrp_m2_blind_120 results (preserving 100% of M1/M1.5 regression invariants and blind coordinate secrecy).
     """
-    if bundle_dir.exists():
-        shutil.rmtree(bundle_dir)
-    bundle_dir.mkdir(parents=True, exist_ok=True)
+    bundle_dir.mkdir(parents=True, exist_ok=False)
 
     for subdir in ("suites", "routes", "traces", "published_results", "results"):
         shutil.copytree(m15_release_dir / subdir, bundle_dir / subdir)
@@ -847,12 +856,6 @@ def build_m2_unified_workbench_bundle(
             "published_results_path": None,
             "metadata": blind_suite_payload["metadata"],
         })
-    (bundle_dir / "suites" / "index.json").write_text(
-        json.dumps(suites_idx, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-
     # 3. Merge M2 frozen solver summaries & records into results/summary.json and results/per_instance_records.json
     summary_doc = json.loads((bundle_dir / "results" / "summary.json").read_text(encoding="utf-8"))
     records_doc = json.loads((bundle_dir / "results" / "per_instance_records.json").read_text(encoding="utf-8"))
@@ -867,6 +870,31 @@ def build_m2_unified_workbench_bundle(
         # Append M2 per-instance records for this suite
         m2_recs = [r for r in recs_500[sid] if r["algorithm_id"] in m2_ids]
         records_doc["records"].extend(m2_recs)
+        new_ids = [fs.solver_id for fs in frozen_m2 if fs.solver_id in target_algs]
+        suite_file = bundle_dir / "suites" / f"{sid}.json"
+        suite_doc = json.loads(suite_file.read_bytes())
+        suite_doc["algorithms_evaluated"] = list(dict.fromkeys([*suite_doc["algorithms_evaluated"], *new_ids]))
+        suite_file.write_text(json.dumps(suite_doc, ensure_ascii=False, separators=(",", ":")) + "\n",
+                              encoding="utf-8", newline="\n")
+        suite_row = next(row for row in suites_idx["suites"] if row["suite_id"] == sid)
+        suite_row["algorithms_evaluated"] = suite_doc["algorithms_evaluated"]
+        suite_row["sha256"] = _sha256_bytes(suite_file.read_bytes())
+        routes_file = bundle_dir / "routes" / f"{sid}.json"
+        routes_doc = json.loads(routes_file.read_bytes())
+        new_routes = eval_out["public_routes_500ms"][sid]
+        for rec in m2_recs:
+            if rec["valid"]:
+                route = new_routes.get(rec["instance_id"], {}).get(rec["algorithm_id"])
+                if route is None or route["tour_length"] != rec["tour_length"]:
+                    raise ValueError(f"m2_route_record_mismatch:{sid}:{rec['instance_id']}:{rec['algorithm_id']}")
+        for iid, routes in new_routes.items():
+            routes_doc["routes_by_instance"].setdefault(iid, {}).update(routes)
+        routes_file.write_text(json.dumps(routes_doc, ensure_ascii=False, separators=(",", ":")) + "\n",
+                               encoding="utf-8", newline="\n")
+
+    (bundle_dir / "suites" / "index.json").write_text(
+        json.dumps(suites_idx, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
 
     # Add full cvrp_m2_blind_120 suite summary & records
     summary_doc["suites"]["cvrp_m2_blind_120"] = sum_blind500
@@ -929,10 +957,51 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", type=Path, default=REPO / "experiments" / "milestone2" / "phase2c_blind_eval")
     parser.add_argument("--release-id", default=M2_RELEASE_ID)
+    parser.add_argument("--commitment-path", type=Path, default=BLIND_COMMITMENT_PATH)
+    parser.add_argument("--phase2b-archive", type=Path, action="append", default=[])
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--freeze-only", action="store_true")
+    mode.add_argument("--publish-from-sha256", help="Resume publication from the public output left by a finished evaluation")
+    parser.add_argument("--protocol-sha256")
+    parser.add_argument("--sealed-path", type=Path)
     args = parser.parse_args(argv)
 
-    # 1. Execute pre-blind protocol freeze + one-shot cvrp_m2_blind_120 evaluation + Direction-2 selection
-    eval_out = execute_m2_blind_evaluation(args.out_dir, repo_root=REPO)
+    if args.freeze_only:
+        frozen = freeze_pre_blind_protocol(args.out_dir / "pre_blind_protocol.json", repo_root=REPO,
+                                           commitment_path=args.commitment_path,
+                                           archive_paths=args.phase2b_archive)
+        print(json.dumps({k: frozen[k] for k in ("protocol_path", "protocol_sha256")}, indent=2))
+        return 0
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", args.release_id):
+        parser.error("invalid release ID")
+    store = REPO / "knowledge_store"
+    if os.path.lexists(store / "releases" / args.release_id):
+        parser.error("release already exists and is immutable; choose a new release ID")
+    publication_input = args.out_dir / "publication_input.json"
+    if args.publish_from_sha256 is not None:
+        if args.sealed_path is not None:
+            parser.error("publication recovery does not take a custody path")
+        payload = publication_input.read_bytes()
+        if _sha256_bytes(payload) != args.publish_from_sha256:
+            parser.error("publication input SHA-256 mismatch")
+        eval_out = json.loads(payload)
+        eval_out["frozen_m2_solvers"] = [
+            FrozenInterfaceSolver.from_dict(row) for row in eval_out["frozen_m2_solvers"]
+        ]
+    else:
+        if args.sealed_path is None or args.protocol_sha256 is None:
+            parser.error("evaluation requires --sealed-path and --protocol-sha256 from a separately frozen protocol")
+        eval_out = execute_m2_blind_evaluation(
+            args.out_dir, repo_root=REPO, sealed_path=args.sealed_path, protocol_sha256=args.protocol_sha256,
+            commitment_path=args.commitment_path, archive_paths=args.phase2b_archive,
+        )
+        payload = json.dumps({
+            **eval_out,
+            "frozen_m2_solvers": [solver.to_dict() for solver in eval_out["frozen_m2_solvers"]],
+        }, ensure_ascii=False).encode("utf-8")
+        with publication_input.open("xb") as handle:
+            handle.write(payload)
+        print(json.dumps({"publication_input_sha256": _sha256_bytes(payload)}), file=sys.stderr, flush=True)
     blind_report = eval_out["blind_report"]
 
     # 2. Synchronize 5 Milestone 2 knowledge cards into knowledge_workspace/
@@ -943,10 +1012,11 @@ def main(argv: list[str] | None = None) -> int:
 
     # 3. Assemble unified M2 workbench bundle & dashboard
     m15_rel_dir = REPO / "knowledge_store" / "releases" / M15_RELEASE_ID
-    m2_bundle_dir = REPO / "build" / "workbench_m2_bundle"
-    m2_dash_dir = REPO / "build" / "dashboard_m2_release"
-    if m2_dash_dir.exists():
-        shutil.rmtree(m2_dash_dir)
+    build_dir = REPO / "build"
+    build_dir.mkdir(exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix="m2-release-", dir=build_dir))
+    m2_bundle_dir = staging / "workbench"
+    m2_dash_dir = staging / "dashboard"
 
     wb_info = build_m2_unified_workbench_bundle(m15_rel_dir, m2_bundle_dir, eval_out)
     dash_info = build_dashboard(
@@ -957,19 +1027,16 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # 4. Publish immutable release knowledge_store/releases/20261123-main-co-workbench-m2
-    rel_target = REPO / "knowledge_store" / "releases" / args.release_id
-    if rel_target.exists():
-        shutil.rmtree(rel_target)
     rel_info = build_release(
         REPO / "knowledge_workspace",
-        REPO / "knowledge_store",
+        store,
         args.release_id,
         workbench_bundle=m2_bundle_dir,
         dashboard_dir=m2_dash_dir,
+        activate=False,
     )
-    rel_val = validate_release(REPO / "knowledge_store" / "current")
-    if not rel_val["ok"]:
-        raise RuntimeError(f"m2_release_validation_failed:{rel_val['errors'][:10]}")
+    rel_val = activate_verified_release(store, Path(rel_info["release"]))
+    rel_info["pointer"] = rel_val["pointer"]
 
     summary_out = {
         "ok": True,

@@ -300,8 +300,10 @@ def _summarize_request_log(request_log: Path) -> dict[str, Any]:
     completion_tokens = 0
     total_tokens = 0
     completed_requests = 0
+    attempted_requests = 0
     if not request_log.is_file():
         return {
+            "attempted_requests": 0,
             "completed_requests": 0,
             "by_purpose": {},
             "prompt_tokens": 0,
@@ -313,6 +315,8 @@ def _summarize_request_log(request_log: Path) -> dict[str, Any]:
             continue
         row = json.loads(line)
         state = row.get("state")
+        if state == "reserved":
+            attempted_requests += 1
         if state is None or state in {"complete", "completed", "ok"}:
             purpose = str(row.get("purpose") or "unknown")
             counts_by_purpose[purpose] = counts_by_purpose.get(purpose, 0) + 1
@@ -324,6 +328,7 @@ def _summarize_request_log(request_log: Path) -> dict[str, Any]:
             completion_tokens += out_tok
             total_tokens += int(usage.get("total_tokens") or (in_tok + out_tok))
     return {
+        "attempted_requests": max(attempted_requests, completed_requests),
         "completed_requests": completed_requests,
         "by_purpose": counts_by_purpose,
         "prompt_tokens": prompt_tokens,
@@ -358,6 +363,7 @@ def run_dynamic_eoh_evolution(
     request_timeout_s: float = 90.0,
     wall_seconds: float = 300.0,
     require_evolved: bool = True,
+    request_budget: RequestBudget | None = None,
     extra_seed_entries: Sequence[Mapping[str, str]] | None = None,
     round_context: str | None = None,
 ) -> dict[str, Any]:
@@ -366,6 +372,12 @@ def run_dynamic_eoh_evolution(
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     results_dir = output_dir / "results"
+    if any((output_dir / p).exists() for p in (
+        "validation_report.json", "resource_ledger.json", "frozen_solver_manifest.json", "results",
+    )):
+        raise FileExistsError(f"experiment_output_already_exists:{output_dir}")
+    with (output_dir / "run.started").open("x", encoding="utf-8") as marker:
+        marker.write(_utc_now() + "\n")
     for sub in ("samples", "pops", "pops_best"):
         (results_dir / sub).mkdir(parents=True, exist_ok=True)
 
@@ -476,7 +488,7 @@ def run_dynamic_eoh_evolution(
         api_key = os.environ.get(api_key_env, "").strip()
         if not api_key:
             raise RuntimeError(f"missing_api_key:{api_key_env}")
-        budget = RequestBudget(max_requests)
+        budget = RequestBudget(max_requests, parent=request_budget)
         bridge = _ResilientM2Bridge(
             endpoint,
             api_key,

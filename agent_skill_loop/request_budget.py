@@ -41,8 +41,9 @@ class RequestBudget:
     reservation and every terminal state is appended to ``events``.
     """
 
-    def __init__(self, max_requests: int | None) -> None:
+    def __init__(self, max_requests: int | None, *, parent: RequestBudget | None = None) -> None:
         self.max_requests = max_requests
+        self._parent = parent
         self._lock = threading.Lock()
         self._used = 0
         self._rejected = 0
@@ -61,7 +62,11 @@ class RequestBudget:
     @property
     def remaining(self) -> int | None:
         with self._lock:
-            return None if self.max_requests is None else max(0, self.max_requests - self._used)
+            limits = [self.max_requests - self._used] if self.max_requests is not None else []
+            parent_remaining = self._parent.remaining if self._parent is not None else None
+            if parent_remaining is not None:
+                limits.append(parent_remaining)
+            return max(0, min(limits)) if limits else None
 
 
     def reserve(
@@ -76,14 +81,20 @@ class RequestBudget:
             if self.max_requests is not None and self._used >= self.max_requests:
                 self._rejected += 1
                 return None
+            if self._parent is not None:
+                slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model)
+                if slot is None:
+                    self._rejected += 1
+                    return None
+            else:
+                slot = RequestSlot(
+                    index=self._used + 1,
+                    purpose=purpose,
+                    problem=problem,
+                    attempt=attempt,
+                    model=model,
+                )
             self._used += 1
-            slot = RequestSlot(
-                index=self._used,
-                purpose=purpose,
-                problem=problem,
-                attempt=attempt,
-                model=model,
-            )
         event = self._make_event(slot, "reserved")
         slot.reserved_event = event
         with self._lock:
@@ -97,6 +108,11 @@ class RequestBudget:
         return event
 
     def finish(self, slot: RequestSlot, state: str, **fields: Any) -> dict[str, Any]:
+        if self._parent is not None:
+            event = self._parent.finish(slot, state, **fields)
+            with self._lock:
+                self.events.append(event)
+            return event
         if state == "killed_unknown":
             # A deadline-canceled request never produced token counts.
             fields["input_tokens"] = None

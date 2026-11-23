@@ -9,14 +9,17 @@ Single execution contract shared by:
 from __future__ import annotations
 
 import ast
+import atexit
 import contextlib
 import hashlib
 import io
 import json
 import math
 import os
+import queue
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
@@ -459,7 +462,9 @@ def evaluate_hook_on_instance_inprocess(
         if (verification["valid"] and verification["tour_length"] is not None and ref_val is not None)
         else None
     )
-    budget_exhausted = bool(meta.get("budget_exhausted", False))
+    stop_reason = meta.get("stop_reason")
+    # The v1 templates use this bit for both iteration and wall-clock limits.
+    budget_exhausted = bool(meta.get("budget_exhausted", False)) and stop_reason != "max_passes"
     outcome_class = classify_outcome(
         valid=bool(verification["valid"]),
         status=status,
@@ -510,6 +515,12 @@ def evaluate_hook_on_instance_inprocess(
     return out
 
 
+def _worker_environment(repo_root: Path) -> dict[str, str]:
+    names = ("PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL")
+    env = {name: os.environ[name] for name in names if name in os.environ}
+    return {**env, "PYTHONNOUSERSITE": "1", "PYTHONPATH": str(repo_root)}
+
+
 class DynamicSubprocessEvaluator:
     """Process-isolated evaluator for M2 templates & hooks with separate candidate timeout vs instance budget."""
 
@@ -547,9 +558,7 @@ class DynamicSubprocessEvaluator:
         payload_bytes = json.dumps(request, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
         repo_root = Path(__file__).resolve().parents[2]
-        env = os.environ.copy()
-        env["PYTHONNOUSERSITE"] = "1"
-        env["PYTHONPATH"] = str(repo_root) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        env = _worker_environment(repo_root)
 
         t0 = time.perf_counter()
         popen_kwargs: dict[str, Any] = {
@@ -628,7 +637,73 @@ class DynamicSubprocessEvaluator:
         return resp
 
 
-_FROZEN_HOOK_CACHE: dict[tuple[str, str, str], Callable[..., Any]] = {}
+class _FrozenEvaluationWorker:
+    """Reuse a worker on successful calls and replace it after a deadline or crash."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._proc: subprocess.Popen[bytes] | None = None
+        self._owner_pid = os.getpid()
+
+    def close(self) -> None:
+        proc, self._proc = self._proc, None
+        if proc is None or self._owner_pid != os.getpid():
+            return
+        if proc.poll() is None:
+            kill_process_tree(proc)
+        for pipe in (proc.stdin, proc.stdout):
+            if pipe is not None:
+                pipe.close()
+
+    def call(self, request: Mapping[str, Any], timeout_s: float) -> dict[str, Any]:
+        data = json.dumps(request, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8") + b"\n"
+        with self._lock:
+            if self._owner_pid != os.getpid():
+                self._proc = None
+                self._owner_pid = os.getpid()
+            if self._proc is None or self._proc.poll() is not None:
+                self.close()
+                repo_root = Path(__file__).resolve().parents[2]
+                self._proc = subprocess.Popen(
+                    [sys.executable, "-m", "agent_skill_loop.interface_design.eval_worker", "--stream"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    cwd=repo_root,
+                    env=_worker_environment(repo_root),
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    start_new_session=os.name != "nt",
+                )
+            proc = self._proc
+            response: queue.Queue[bytes] = queue.Queue(maxsize=1)
+
+            def exchange() -> None:
+                try:
+                    assert proc.stdin is not None and proc.stdout is not None
+                    proc.stdin.write(data)
+                    proc.stdin.flush()
+                    response.put(proc.stdout.readline())
+                except (OSError, ValueError):
+                    response.put(b"")
+
+            threading.Thread(target=exchange, daemon=True).start()
+            try:
+                raw = response.get(timeout=timeout_s)
+            except queue.Empty:
+                self.close()
+                return {"error_code": "candidate_timeout", "error_detail": f"Frozen worker exceeded {timeout_s:g}s"}
+            try:
+                decoded = json.loads(raw)
+                if not isinstance(decoded, dict):
+                    raise ValueError("worker response must be an object")
+                return decoded
+            except ValueError:
+                self.close()
+                return {"error_code": "worker_protocol", "error_detail": "Frozen worker returned no valid response"}
+
+
+_FROZEN_WORKER = _FrozenEvaluationWorker()
+atexit.register(_FROZEN_WORKER.close)
 
 
 def evaluate_frozen_interface_solver(
@@ -656,26 +731,52 @@ def evaluate_frozen_interface_solver(
     if frozen_solver.hook_name != tpl.hook_name:
         raise ValueError(f"hook_name_mismatch:{frozen_solver.hook_name}!={tpl.hook_name}")
 
-    cache_key = (frozen_solver.template_id, frozen_solver.template_version, frozen_solver.hook_code_sha256)
-    hook_fn = _FROZEN_HOOK_CACHE.get(cache_key)
-    if hook_fn is None:
-        hook_fn = compile_hook_function(
-            frozen_solver.hook_code,
-            hook_name=tpl.hook_name,
-            expected_args=tpl.hook_signature,
-        )
-        _FROZEN_HOOK_CACHE[cache_key] = hook_fn
-
     budget = time_budget_ms if time_budget_ms is not None else frozen_solver.default_budget_ms
-    return evaluate_hook_on_instance_inprocess(
-        template_id=frozen_solver.template_id,
-        template_version=frozen_solver.template_version,
-        hook_fn=hook_fn,
-        instance=instance,
-        postprocess_mode=frozen_solver.postprocess_mode,
-        template_options=frozen_solver.template_options,
-        distance_convention=distance_convention,
-        vehicle_limit_policy=vehicle_limit_policy,
-        time_budget_ms=budget,
-        capture_merge_sequence=capture_merge_sequence,
-    )
+    if not math.isfinite(budget) or budget <= 0:
+        raise ValueError("frozen_evaluation_budget_must_be_positive_and_finite")
+    started = time.perf_counter()
+    response = _FROZEN_WORKER.call({
+        "template_id": frozen_solver.template_id,
+        "template_version": frozen_solver.template_version,
+        "hook_code": frozen_solver.hook_code,
+        "instances": [dict(instance)],
+        "postprocess_mode": frozen_solver.postprocess_mode,
+        "template_options": dict(frozen_solver.template_options),
+        "distance_convention": distance_convention,
+        "vehicle_limit_policy": vehicle_limit_policy,
+        "time_budget_ms": budget,
+        "capture_merge_sequence": capture_merge_sequence,
+        "parent_pid": os.getpid(),
+    }, timeout_s=max(5.0, budget / 1000.0 + 2.0))
+    records = response.get("records")
+    if records:
+        if response.get("template_source_sha256") != frozen_solver.template_source_sha256:
+            raise ValueError(f"worker_template_source_sha256_mismatch:{frozen_solver.solver_id}")
+        return records[0]
+    code = response.get("error_code") or "worker_protocol"
+    status = "timeout" if code == "candidate_timeout" else "error"
+    return {
+        "status": status,
+        "valid": False,
+        "outcome_class": classify_outcome(valid=False, status=status, budget_exhausted=status == "timeout"),
+        "error_code": code,
+        "error_detail": response.get("error_detail"),
+        "budget_exhausted": status == "timeout",
+        "tour_length": None,
+        "routes": [],
+        "route_count": 0,
+        "route_loads": [],
+        "route_distances": [],
+        "max_utilization": None,
+        "mean_utilization": None,
+        "reference_objective": instance.get("reference_objective"),
+        "reference_kind": instance.get("reference_kind"),
+        "rel_gap": None,
+        "target_vehicles": instance.get("k_vehicles", instance.get("max_vehicles")),
+        "within_vehicle_limit": None,
+        "exact_vehicle_count": None,
+        "vehicle_count_delta": None,
+        "preprocess_ms": 0.0,
+        "solve_ms": round((time.perf_counter() - started) * 1000.0, 4),
+        "verify_ms": 0.0,
+    }

@@ -23,11 +23,12 @@ import numpy as np
 from agent_skill_loop.contracts import EOH_COMMIT, EvaluationResult, SkillVersion
 from agent_skill_loop.evaluator import evaluator_source_hash
 from agent_skill_loop.session_ledger import SessionRequestBudget, solver_event
-from agent_skill_loop.skill_store import _atomic_write_text, save_skill
+from agent_skill_loop.skill_store import _atomic_write_text, load_skill, save_skill
 
 from .contracts import ALLOWED_POSTPROCESS_MODES, FrozenInterfaceSolver, InterfaceDesign, sha256_text
 from .dynamic_eoh import DEFAULT_MOCK_MERGE_CANDIDATES, DynamicInterfaceProblem, MockEoHLLMServer
 from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template
+from .runtime import validate_hook_ast
 from .templates import TEMPLATE_REGISTRY, get_template_spec
 from .validator import InterfaceValidator
 
@@ -166,6 +167,30 @@ def _normalize_session_suite_instances(suite: Mapping[str, Any]) -> list[dict[st
     return out
 
 
+def load_verified_session_design(root: Path, receipt: Mapping[str, Any]) -> InterfaceDesign:
+    """Check files against the successful submit-plan receipt held in SQLite."""
+    def read(ref_key: str, hash_key: str) -> dict[str, Any]:
+        path = (root / receipt[ref_key]).resolve()
+        if not path.is_relative_to(root.resolve()):
+            raise ValueError("interface_receipt_path_outside_session")
+        text = path.read_text(encoding="utf-8")
+        if sha256_text(text) != receipt[hash_key]:
+            raise ValueError(f"interface_receipt_hash_mismatch:{ref_key}")
+        return json.loads(text)
+
+    design = InterfaceDesign.from_dict(read("design_ref", "design_file_sha256"))
+    validation = read("validation_ref", "validation_sha256")
+    template = get_template_spec(design.template_id, design.template_version)
+    if (
+        design.design_sha256 != receipt["design_sha256"]
+        or validation.get("design_sha256") != design.design_sha256
+        or validation.get("template_source_sha256") != template.template_source_sha256
+        or not validation.get("passed")
+    ):
+        raise ValueError("interface_design_validation_identity_mismatch")
+    return design
+
+
 class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
     """DynamicInterfaceProblem that mirrors every evaluation into Session SQLite & evaluations.jsonl."""
 
@@ -184,7 +209,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         self.session_problem_id = problem_id
         self.session_evaluator_hash = evaluator_hash
         self.session_metric_spec_hash = metric_spec_hash
-        self.origin = "generated"
+        self.seed_origins: dict[str, str] = {}
         self._seq = 0
 
     def evaluate_detailed(self, code_string: str) -> dict[str, Any]:
@@ -192,7 +217,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         eval_id = uuid.uuid4().hex
         code_str = str(code_string)
         code_sha = sha256_text(code_str)
-        origin = self.origin
+        origin = self.seed_origins.get(code_sha, "generated")
         cand_id = origin if origin in {"baseline", "explicit_parent"} else f"m2_cand_{self._seq}"
 
         start_payload = {
@@ -255,10 +280,14 @@ def execute_m2_session_task(
     rd: Mapping[str, Any],
     config: Mapping[str, Any],
     plan: Mapping[str, Any],
+    design: InterfaceDesign,
     suite: Mapping[str, Any],
     output: Path,
     wall_seconds: float,
     policy: Mapping[str, int],
+    parent_skill_path: str | None,
+    seed_selection_path: str | None,
+    previous_design: InterfaceDesign | None,
 ) -> None:
     """Execute one Session round using Milestone 2's validated dynamic interface inside Session authority."""
     from eoh import LLMConfig
@@ -268,9 +297,6 @@ def execute_m2_session_task(
     from agent_skill_loop.client import ProviderFailure, load_local_env
     from eoh_frozen.llm_bridge import OpenAIPathBridge
 
-    round_dir = root / f"rounds/round_{rd['round_id']:04d}"
-    design_path = round_dir / "interface_design.json"
-    design = InterfaceDesign.from_dict(json.loads(design_path.read_text(encoding="utf-8")))
     tpl = get_template_spec(design.template_id, design.template_version)
 
     output.mkdir(parents=True, exist_ok=True)
@@ -305,15 +331,47 @@ def execute_m2_session_task(
         round_context=combined_ctx,
     )
 
-    # Evaluate template baseline hook first
-    task.origin = "baseline"
+    seed_origin_by_hash = {design.baseline_hook_sha256: "baseline"}
+    seed_entries = [{"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.",
+                     "code": design.baseline_hook_code}]
+    inherited = []
+    if seed_selection_path:
+        seed_doc = json.loads(Path(seed_selection_path).read_text(encoding="utf-8"))
+        inherited = [(m["code"], m["code_sha256"], "population_seed") for m in seed_doc["selected_members"]]
+    elif parent_skill_path:
+        parent = load_skill(Path(parent_skill_path))
+        inherited = [(parent.code, parent.code_sha256, "explicit_parent")]
+    for code, checksum, origin in inherited:
+        if sha256_text(code) != checksum:
+            raise ValueError("interface_seed_code_hash_mismatch")
+        if checksum in seed_origin_by_hash:
+            continue
+        if seed_selection_path and previous_design is not None and (
+            previous_design.template_id, previous_design.template_version
+        ) != (design.template_id, design.template_version):
+            continue
+        gate1, gate2 = validate_hook_ast(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+        if gate1 or gate2:
+            continue
+        seed_origin_by_hash[checksum] = origin
+        seed_entries.append({"algorithm": f"Inherited {origin} ({checksum[:12]}).", "code": code})
+    _atomic_write_text(output / "interface_seed_receipt.json", json.dumps({
+        "requested_inherited_seeds": len(inherited),
+        "used_inherited_seeds": len(seed_entries) - 1,
+        "skipped_inherited_seeds": len(inherited) - len(seed_entries) + 1,
+        "previous_design_sha256": previous_design.design_sha256 if previous_design is not None else None,
+        "reason": "no_compatible_seed_restarted_from_template" if inherited and len(seed_entries) == 1 else None,
+        "seed_origins": seed_origin_by_hash,
+    }, indent=2) + "\n")
+    task.seed_origins = seed_origin_by_hash
     baseline_resp = task.evaluate_detailed(design.baseline_hook_code)
-    task.origin = "generated"
+    if not baseline_resp.get("valid"):
+        raise ValueError(f"interface_baseline_infeasible:{baseline_resp.get('error_code')}")
 
     seed_path = output / "seeds" / "baseline_seed.json"
     seed_path.parent.mkdir(parents=True, exist_ok=True)
     seed_path.write_text(
-        json.dumps([{"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.", "code": design.baseline_hook_code}], indent=2) + "\n",
+        json.dumps(seed_entries[1:] or seed_entries, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -425,8 +483,19 @@ def execute_m2_session_task(
     ]
     best_rel = None
     frozen_rel = None
-    if gen_valid:
-        best = min(gen_valid, key=lambda r: float(r["evaluation"]["objective"]))
+    validator = InterfaceValidator(candidate_timeout_s=float(row["solver_timeout"]), instance_time_budget_ms=500.0)
+    validated = []
+    best = None
+    for candidate in sorted(gen_valid, key=lambda r: float(r["evaluation"]["objective"])):
+        if any(r["code_sha256"] == candidate["code_sha256"] for r in validated):
+            continue
+        report = validator.validate(design, hook_code_override=str(candidate["code"]))
+        validated.append({"code_sha256": candidate["code_sha256"], "validation": report.as_dict()})
+        if report.passed:
+            best = candidate
+            break
+    _atomic_write_text(output / "winner_validation_report.json", json.dumps(validated, indent=2) + "\n")
+    if best is not None:
         ev = best["evaluation"]
         skill_dir = output / "skills" / "best_generated"
         sv = SkillVersion(

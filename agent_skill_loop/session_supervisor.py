@@ -431,6 +431,19 @@ def monitor_runner(runner, deadline, stopped, *, tree):
     return None if runner.returncode==0 else "FAILED"
 
 
+def _load_round_interface_design(root, con, rd):
+    from agent_skill_loop.interface_design.session_bridge import load_verified_session_design
+
+    receipt = con.execute(
+        "SELECT receipt_json FROM operations WHERE run_id=? AND round_id=? AND action='submit-plan' "
+        "AND status='SUCCEEDED' ORDER BY result_state_version DESC LIMIT 1",
+        (rd["run_id"], rd["round_id"]),
+    ).fetchone()
+    if receipt is None:
+        raise ValueError("interface_design_receipt_missing")
+    return load_verified_session_design(root, json.loads(receipt["receipt_json"])["result"]["interface_selection"])
+
+
 def execute_task(root, task_id):
     from eoh_frozen.__main__ import add_run_arguments, cmd_run
     con=db._connect(root/"session.sqlite3")
@@ -496,6 +509,13 @@ def execute_task(root, task_id):
             return
         if plan.get("interface_selection") is not None:
             from agent_skill_loop.interface_design.session_bridge import execute_m2_session_task
+            previous_design = None
+            if args.seed_codes and rd["previous_round_id"] is not None:
+                previous = con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",
+                                       (row["run_id"], rd["previous_round_id"])).fetchone()
+                previous_plan = json.loads((root / previous["normalized_plan_ref"]).read_text(encoding="utf-8"))
+                if previous_plan.get("interface_selection") is not None:
+                    previous_design = _load_round_interface_design(root, con, previous)
             execute_m2_session_task(
                 root=root,
                 task_id=task_id,
@@ -503,10 +523,14 @@ def execute_task(root, task_id):
                 rd=rd,
                 config=config,
                 plan=plan,
+                design=_load_round_interface_design(root, con, rd),
                 suite=suite,
                 output=output,
                 wall_seconds=wall,
                 policy=policy,
+                parent_skill_path=args.parent_skill,
+                seed_selection_path=args.seed_codes,
+                previous_design=previous_design,
             )
             return
         cmd_run(args)
@@ -574,9 +598,8 @@ def collect_facts(root, con, run, rd, task):
                     (population_snapshot["ref"], population_snapshot["sha256"], run["run_id"], rd["round_id"]))
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
     if m2_interface_sel is not None:
-        m2_des_path = root / f"rounds/round_{rd['round_id']:04d}/interface_design.json"
-        m2_expected_base = json.loads(m2_des_path.read_text(encoding="utf-8")).get("baseline_hook_sha256") if m2_des_path.is_file() else None
-        if baseline and m2_expected_base and baseline["code_sha256"] != m2_expected_base:
+        design = _load_round_interface_design(root, con, rd)
+        if baseline and baseline["code_sha256"] != design.baseline_hook_sha256:
             raise ValueError("baseline_identity_mismatch")
     elif baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()

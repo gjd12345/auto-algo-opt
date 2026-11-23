@@ -144,6 +144,13 @@ def aggregate_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "n_instances": n,
         "ok_count": len(ok_rows),
         "completion_rate": round(len(ok_rows) / n, 6),
+        **({
+            "full_completion_rate": round(sum(
+                not r.get("budget_exhausted") and r.get("stop_reason") != "max_passes" for r in ok_rows
+            ) / n, 6),
+            "feasible_return_rate": round(len(ok_rows) / n, 6),
+            "iteration_limit_count": sum(r.get("stop_reason") == "max_passes" for r in ok_rows),
+        } if any("stop_reason" in r for r in records) else {}),
         "mean_tour_length": round(float(np.mean(lengths)), 4) if lengths else None,
         "total_tour_length": round(float(np.sum(lengths)), 4) if lengths else None,
         "mean_rel_gap": round(float(np.mean(gaps)), 6) if gaps else None,
@@ -1137,6 +1144,7 @@ def run_frozen_workbench_bundle(
                     "voluntary_early_return_count": res.get("voluntary_early_return_count", 0),
                     "forced_capacity_return_count": res.get("forced_capacity_return_count", 0),
                     "budget_exhausted": res["budget_exhausted"],
+                    "stop_reason": res.get("stop_reason"),
                     "has_trace": bool(res.get("trace_steps")),
                 }
                 suite_records.append(record)

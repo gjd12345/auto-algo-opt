@@ -13,7 +13,7 @@
     "session-runtime"
   ],
   "status": "reviewed",
-  "summary": "在统一模型 (deepseek-v4.1-flash) 与总搜索预算 (B=12) 下完成五臂配对对照与盲测验证：① 500ms 下 LLM 诊断规划组 (Arm 4b) 以最低演化成本 (10.5 req / 17.1k tok / 92.5s) 取得 select_64 (20.8618) 与 blind_120 (24.2306) 双料第一，较固定逐点进化 (Arm 1) 在盲测集上降低 12.62% (120/120 全胜, p=0.00e+00)，并较机械阈值规则 (Arm 4a) 显著降低 0.31%；② 25ms 紧预算下 Protocol T1 诊断规划自动从 L2b 切换至 L2a，实现 blind_120 0/120 超时截断（对比 Protocol T2 直接迁移 500ms L2b 触发 40/120 题截断，路长降低 62.84%）。",
+  "summary": "历史五臂配对采用 deepseek-v4.1-flash，名义请求预算 B=12，实耗有超额。500 ms 下 LLM 诊断组在 select_64（20.8618）第一，盲测均长 24.2306，排第 3，较固定逐点进化降低 12.62%（120/120 全胜，p < 10⁻⁸）。25 ms 下确定性规划组从 L2b 切到 L2a，预算耗尽由 40/120 降至 0/120。LLM 规划组在两个预算下均选 L2a。",
   "attributes": {
     "knowledge_tier": "verified_experiment",
     "problem_variant": "standard_cvrp",
@@ -29,42 +29,42 @@
       "weak_on": [
         "single_fixed_interface_without_diagnostics"
       ],
-      "scale_notes": "2x3 差距分解（1,056 条逐例记录）+ 0.8s 预算裕度探针可在零/单次 LLM 请求内准确定位瓶颈并规避 n=200 超时陷阱，比 Short-Pilot Racing 节省 34% 请求与 38% 墙钟时间。"
+      "scale_notes": "4 个构造起点 × 3 种后处理，共 1,056 条开发/选优记录。25 ms 下确定性规则切换到 L2a，规避直接迁移 L2b 的 n=200 预算耗尽。"
     },
     "artifact_refs": [
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "agent_skill_loop/interface_design/diagnostics.py",
         "sha256": "0924b835246838f14b4850ab40753849a82ecbe8e5090260f7b6b6a55f443535"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "agent_skill_loop/interface_design/validator.py",
         "sha256": "8da8687665397cde75052ee15abfdf8f64d33d539669eb36121448c9bf79fa7b"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "agent_skill_loop/interface_design/planner.py",
         "sha256": "52b71f4600240e5f79034e5e80b235107c7e3d2cba8d49d54b30faa5e53ffbaa"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "agent_skill_loop/interface_design/session_bridge.py",
         "sha256": "8a6fc78cb567c790256c699d4615c28622695fef3d34d872935391be5012b00b"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json",
         "sha256": "f110ed6709628b22c93d2fedc755ddf6e6981546ab99938322849508664477df"
       },
       {
         "kind": "repo_code",
-        "commit": "51c078ff",
+        "commit": "33b9cb74",
         "path": "experiments/milestone2/phase2b_four_arm/four_arm_report_tight_25ms.json",
         "sha256": "7156df6f5f82a9a02e47990fc409e5d569a3492169915bf51ffa86ec46fbcd10"
       }
@@ -126,5 +126,5 @@
   ],
   "code_refs": [],
   "id": "evidence-cvrp-m2-diagnostic-planning-and-budget-adaptation",
-  "content_sha256": "734878bdddb91ef96a4b0c5ba08bf21b053386524a177d979c1928af9dda98fa"
+  "content_sha256": "f824997aa2eb44d0cedffc45c54ca3bcf85681f0b63830cee55b34dc6ffe02de"
 }

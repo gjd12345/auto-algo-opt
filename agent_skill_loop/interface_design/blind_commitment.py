@@ -132,13 +132,15 @@ def build_m2_blind_120_design() -> list[tuple[int, str, str, str, str]]:
 def seal_m2_blind_120(
     *,
     commitment_path: Path = BLIND_COMMITMENT_PATH,
-    sealed_path: Path = DEFAULT_SEALED_BLIND_PATH,
+    sealed_path: Path,
     seed_token: str | None = None,
     overwrite: bool = False,
 ) -> dict[str, Any]:
     """Generate ``cvrp_m2_blind_120``, write public commitment (hashes only) and isolated sealed file."""
     commitment_path = Path(commitment_path).resolve()
     sealed_path = Path(sealed_path).resolve()
+    if commitment_path == sealed_path:
+        raise ValueError("blind_commitment_and_private_paths_must_differ")
     if not overwrite and (commitment_path.exists() or sealed_path.exists()):
         raise FileExistsError(
             f"Blind commitment or sealed file already exists: commitment={commitment_path.exists()}, sealed={sealed_path.exists()}"
@@ -243,16 +245,11 @@ def seal_m2_blind_120(
 
     commitment_path.parent.mkdir(parents=True, exist_ok=True)
     sealed_path.parent.mkdir(parents=True, exist_ok=True)
-    commitment_path.write_text(
-        json.dumps(commitment_payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-    sealed_path.write_text(
-        json.dumps(sealed_payload, ensure_ascii=False, separators=(",", ":")) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    mode = "w" if overwrite else "x"
+    with sealed_path.open(mode, encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(sealed_payload, ensure_ascii=False, separators=(",", ":")) + "\n")
+    with commitment_path.open(mode, encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(commitment_payload, ensure_ascii=False, indent=2) + "\n")
 
     return {
         "ok": True,
@@ -265,14 +262,14 @@ def seal_m2_blind_120(
     }
 
 
-def verify_sealed_against_commitment(
-    *,
-    sealed_path: Path = DEFAULT_SEALED_BLIND_PATH,
-    commitment_path: Path = BLIND_COMMITMENT_PATH,
+def read_public_blind_commitment(
+    commitment_path: Path = BLIND_COMMITMENT_PATH, *, expected_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Verify an isolated sealed blind-test file matches its public commitment byte-for-byte."""
-    commitment = json.loads(Path(commitment_path).read_text(encoding="utf-8"))
-    sealed = json.loads(Path(sealed_path).read_text(encoding="utf-8"))
+    """Read and check the public commitment without opening the private instances."""
+    payload = Path(commitment_path).read_bytes()
+    if expected_sha256 is not None and hashlib.sha256(payload).hexdigest() != expected_sha256:
+        raise ValueError("pre_blind_commitment_file_hash_mismatch")
+    commitment = json.loads(payload)
 
     # Guardrail: public commitment must never leak raw instance data or seeds
     forbidden_public_keys = {"sealed_seed_token", "seed", "depot", "customer_coordinates", "demands"}
@@ -283,6 +280,37 @@ def verify_sealed_against_commitment(
         for key in ("depot", "customer_coordinates", "demands", "seed", "reference_objective"):
             if key in row:
                 raise ValueError(f"public_commitment_row_leaked_key:{key}")
+    if commitment.get("suite_id") != SEALED_BLIND_SUITE_ID or len(commitment["instances"]) != commitment["instance_count"]:
+        raise ValueError("invalid_blind_commitment")
+    return commitment
+
+
+def require_external_custody_path(path: Path, repo_root: Path = _REPO) -> Path:
+    path = Path(path).resolve()
+    if path.is_relative_to(Path(repo_root).resolve()):
+        raise ValueError("blind_custody_path_must_be_outside_repository")
+    return path
+
+
+def verify_sealed_against_commitment(
+    *,
+    sealed_path: Path,
+    commitment_path: Path = BLIND_COMMITMENT_PATH,
+) -> dict[str, Any]:
+    """Verify the private instances against their public content digests."""
+    _, _, verification = read_verified_blind_payload(sealed_path=sealed_path, commitment_path=commitment_path)
+    return verification
+
+
+def read_verified_blind_payload(
+    *, sealed_path: Path, commitment_path: Path, expected_commitment_sha256: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Return the exact private and public payloads used by verification."""
+    commitment = read_public_blind_commitment(commitment_path, expected_sha256=expected_commitment_sha256)
+    sealed = json.loads(Path(sealed_path).read_text(encoding="utf-8"))
+    for field in ("suite_id", "distance_convention", "vehicle_limit_policy"):
+        if sealed.get(field) != commitment.get(field):
+            raise ValueError(f"blind_protocol_field_mismatch:{field}")
 
     instances = sealed.get("instances", [])
     comm_rows = commitment.get("instances", [])
@@ -299,7 +327,7 @@ def verify_sealed_against_commitment(
         if _sha256_payload(inst) != comm["instance_sha256"]:
             raise ValueError(f"blind_instance_sha256_mismatch:{inst['instance_id']}")
 
-    return {
+    return sealed, commitment, {
         "ok": True,
         "suite_id": commitment["suite_id"],
         "instance_count": len(instances),
@@ -321,23 +349,21 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     p_seal = sub.add_parser("seal", help="Generate and seal cvrp_m2_blind_120")
     p_seal.add_argument("--commitment-path", type=Path, default=BLIND_COMMITMENT_PATH)
-    p_seal.add_argument("--sealed-path", type=Path, default=DEFAULT_SEALED_BLIND_PATH)
-    p_seal.add_argument("--overwrite", action="store_true")
+    p_seal.add_argument("--sealed-path", type=Path, required=True)
 
     p_ver = sub.add_parser("verify", help="Verify sealed blind file against public commitment")
     p_ver.add_argument("--commitment-path", type=Path, default=BLIND_COMMITMENT_PATH)
-    p_ver.add_argument("--sealed-path", type=Path, default=DEFAULT_SEALED_BLIND_PATH)
+    p_ver.add_argument("--sealed-path", type=Path, required=True)
 
     args = parser.parse_args(argv)
     if args.cmd == "seal":
         res = seal_m2_blind_120(
             commitment_path=args.commitment_path,
-            sealed_path=args.sealed_path,
-            overwrite=args.overwrite,
+            sealed_path=require_external_custody_path(args.sealed_path),
         )
     else:
         res = verify_sealed_against_commitment(
-            sealed_path=args.sealed_path,
+            sealed_path=require_external_custody_path(args.sealed_path),
             commitment_path=args.commitment_path,
         )
     print(json.dumps(res, ensure_ascii=False, indent=2))
