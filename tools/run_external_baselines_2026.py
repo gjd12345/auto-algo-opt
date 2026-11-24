@@ -388,7 +388,7 @@ class ParateraDriver:
             "messages": [{"role": "system", "content": "You design CVRP heuristic hooks. Return one JSON object."},
                          {"role": "user", "content": prompt}],
             "temperature": 0.5,
-            "max_tokens": 4000 if phase == "propose" else 1000,
+            "max_tokens": 16384 if phase == "propose" else 4096,
         }
         headers = {"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"}
         status, body = http_post_with_deadline(self.endpoint, headers, json.dumps(payload).encode(), self.timeout_s)
@@ -525,7 +525,16 @@ def _reply_field(content: str, key: str, max_length: int) -> str:
     if content.startswith("```") and content.endswith("```"):
         _, _, content = content.partition("\n")
         content = content.removesuffix("```").strip()
-    value = json.loads(content)[key]
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError:
+        start, end = content.find("{"), content.rfind("}")
+        if start < 0 or end <= start:
+            raise
+        parsed = json.loads(content[start : end + 1])
+    if not isinstance(parsed, Mapping):
+        raise ValueError("invalid_reply_object")
+    value = parsed[key]
     if not isinstance(value, str) or not value.strip() or len(value) > max_length:
         raise ValueError(f"invalid_reply_field:{key}")
     return value
@@ -805,7 +814,7 @@ def _run_evolution(args: argparse.Namespace) -> None:
 
 def build_mux_manifest(*, output_dir: Path, mode: str = "live", model: str = MODEL, budget_ms: int = 500,
                        request_cap: int = REQUEST_CAP, portfolio_size: int = 3,
-                       request_timeout_s: float = 90.0, stage: str = "evolution") -> dict[str, Any]:
+                       request_timeout_s: float = 120.0, stage: str = "evolution") -> dict[str, Any]:
     """Emit independent panes for evolution or for evaluation of finished arms."""
     command = [sys.executable, str(Path(__file__).resolve()), "--output-dir", str(Path(output_dir).resolve())]
     if stage == "benchmark":
@@ -832,7 +841,7 @@ def _driver_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mode", choices=("mock", "live"), default="mock")
     parser.add_argument("--model", default=MODEL)
     parser.add_argument("--request-cap", type=int, default=REQUEST_CAP)
-    parser.add_argument("--request-timeout-s", type=float, default=90.0)
+    parser.add_argument("--request-timeout-s", type=float, default=120.0)
     parser.add_argument("--portfolio-size", type=int, default=3)
     parser.add_argument("--budget-ms", type=int, choices=BUDGETS, default=BUDGETS[0])
 

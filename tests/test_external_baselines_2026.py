@@ -224,3 +224,21 @@ def test_mux_manifest_is_accepted_by_repository_mux(tmp_path: Path) -> None:
     for budget in ("500", "2000"):
         assert sum(budget in pane["command"] for pane in panes) == 3
     assert all("--with-evolution" in pane["command"] for pane in panes)
+
+
+def test_paratera_driver_budget_and_prose_json_reply(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PARATERA_ENDPOINT", "https://example.invalid/v1/chat/completions")
+    monkeypatch.setenv("PARATERA_API_KEY", "fixture-key")
+    payloads: list[dict] = []
+
+    def fake_post(url: str, headers: dict, body: bytes, timeout_s: float) -> tuple[int, bytes]:
+        payload = json.loads(body.decode("utf-8"))
+        payloads.append(payload)
+        return 200, json.dumps({"choices": [{"message": {"content": '{"ok": "yes"}'}}]}).encode("utf-8")
+
+    monkeypatch.setattr(runner, "http_post_with_deadline", fake_post)
+    driver = runner.ParateraDriver("DeepSeek-V4.1-Flash", 120.0)
+    assert driver.complete(phase="propose", prompt="p", template_id="cvrp_ruin_recreate", seed=1, request=1) == '{"ok": "yes"}'
+    assert driver.complete(phase="reflect_short", prompt="p", template_id="cvrp_ruin_recreate", seed=1, request=2) == '{"ok": "yes"}'
+    assert [p["max_tokens"] for p in payloads] == [16384, 4096]
+    assert runner._reply_field('Here is the hook:\n{"hook_code": "return x"}\nThanks.', "hook_code", 100) == "return x"
