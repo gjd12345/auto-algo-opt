@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agent_skill_loop import session_runtime as db
 from agent_skill_loop.memory import open_memory_backend
-from agent_skill_loop.memory.api import MemoryPublicationPending
+from agent_skill_loop.memory.api import MemoryPublicationPending, solution_execution_ast_sha256
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 from agent_skill_loop.session_contracts import MemoryAction, strict_json_object
@@ -173,7 +173,11 @@ def _commit_pending(root, operation_id):
                     "evaluator_hash": skill.evaluator_hash,
                 })
                 canonical_ast_hash = db._sha256(ast.unparse(ast.parse(skill.code)))
-                if matches[0].get("canonical_ast_sha256", canonical_ast_hash) != canonical_ast_hash:
+                anchor = expected.code_anchor or {}
+                if (matches[0].get("canonical_ast_sha256", canonical_ast_hash) != canonical_ast_hash
+                        or anchor.get("canonical_ast_sha256") != canonical_ast_hash
+                        or anchor.get("code_sha256", skill.code_sha256) != skill.code_sha256
+                        or solution_execution_ast_sha256(expected.body) != canonical_ast_hash):
                     raise ValueError("solution_canonical_ast_hash_mismatch")
                 provenance["canonical_ast_sha256"] = canonical_ast_hash
                 if skill.parent_version_id is not None:
@@ -193,7 +197,7 @@ def _commit_pending(root, operation_id):
             # The accepted operation owns a recoverable publication. Its next
             # replay settles the existing version before the round can finish.
             return
-        except (ValueError, OSError, KeyError, TypeError, SyntaxError) as exc:
+        except (ValueError, OSError, KeyError, TypeError, SyntaxError, RecursionError) as exc:
             error=str(exc)[:256]
         with db._transaction(con):
             _record_status(con,proposal,operation_id,status,error,reference)

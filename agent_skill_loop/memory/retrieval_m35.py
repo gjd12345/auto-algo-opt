@@ -142,7 +142,7 @@ def rerank_mmr(
     """Greedily maximize relevance minus redundancy with lexical tie breaks."""
     if type(mmr_lambda) not in (int, float) or not 0 <= mmr_lambda <= 1:
         raise ValueError("memory_mmr_lambda_invalid")
-    if type(max_solution_cards) is not int or not 0 <= max_solution_cards <= MAX_PACK_CARDS:
+    if type(max_solution_cards) is not int or not 0 <= max_solution_cards <= 1:
         raise ValueError("memory_max_solution_cards_invalid")
     _validate_round(round_id)
     query_terms = _tokens(query)

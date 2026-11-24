@@ -149,7 +149,7 @@ class AgentConfig:
             raise ValueError("memory_mode_invalid")
         if type(self.memory_enabled) is not bool or type(self.kb_enabled) is not bool:
             raise ValueError("memory_and_kb_enabled_must_be_boolean")
-        if type(self.memory_max_solution_cards) is not int or not 0 <= self.memory_max_solution_cards <= 3:
+        if type(self.memory_max_solution_cards) is not int or not 0 <= self.memory_max_solution_cards <= 1:
             raise ValueError("memory_max_solution_cards_out_of_range")
         if type(self.memory_mmr_lambda) not in (int, float) or not 0 <= self.memory_mmr_lambda <= 1:
             raise ValueError("memory_mmr_lambda_out_of_range")
@@ -228,6 +228,7 @@ class AgentCheckpoint:
     round_step_index: int = 0
     round_outer_requests: int = 0
     round_reflect_requests: int = 0
+    round_reflection_finished: bool = False
     round_inner_requests: int = 0
     round_prev_best_dev: float | None = None
     round_plan_args: dict[str, Any] | None = None
@@ -273,9 +274,6 @@ RESULTS_TSV_HEADER = (
 
 def append_results_tsv_row(tsv_path: Path, row: Mapping[str, Any]) -> None:
     tsv_path = Path(tsv_path)
-    tsv_path.parent.mkdir(parents=True, exist_ok=True)
-    if not tsv_path.is_file():
-        atomic_write_text(tsv_path, RESULTS_TSV_HEADER)
     cols = [
         str(row.get("round_id", "")),
         str(row.get("arm_id", "")),
@@ -293,6 +291,7 @@ def append_results_tsv_row(tsv_path: Path, row: Mapping[str, Any]) -> None:
         str(row.get("frozen_manifest_ref", "")),
     ]
     line = "\t".join(cols) + "\n"
-    with tsv_path.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(line)
-        handle.flush()
+    existing = tsv_path.read_text(encoding="utf-8") if tsv_path.is_file() else RESULTS_TSV_HEADER
+    # Reflection may resume after writing the TSV and before the checkpoint commits.
+    if not existing.endswith("\n" + line):
+        atomic_write_text(tsv_path, existing + line)

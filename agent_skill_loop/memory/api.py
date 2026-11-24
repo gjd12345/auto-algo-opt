@@ -8,6 +8,7 @@ workflow state.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import math
@@ -40,10 +41,46 @@ _EVIDENCE_TIERS = {"single_run", "common_fork_verified", "multi_seed_verified", 
 _ANTIPATTERN_SECTIONS = ("Root Cause", "Applicability Scope", "Guardrail & False-Positive Boundary")
 _MAX_SCOPE_LIFETIME = timedelta(days=365)
 _PENDING_SUFFIX = ".publish"
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+_HEADING = re.compile(r"^ {0,3}(#{1,2})[ \t]+(.*?)\s*#*\s*$")
 
 
 class MemoryPublicationPending(OSError):
     """A durable stage or visible publication exists and can be replayed."""
+
+
+def _markdown_lines(text: str) -> list[str]:
+    # Unicode separators inside Python string literals are source characters.
+    return text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+
+
+def solution_execution_ast_sha256(body: str) -> str:
+    """Hash the single fenced Python implementation under the execution heading."""
+    in_execution = False
+    fence = None
+    code = []
+    closed = False
+    for line in _markdown_lines(body):
+        marker = _FENCE.fullmatch(line)
+        if fence is not None:
+            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                closed = True
+                fence = None
+            else:
+                code.append(line)
+        elif marker:
+            if not in_execution or closed or marker[2].strip().casefold() not in {"python", "py"}:
+                raise ValueError("solution_execution_code_invalid")
+            fence = marker[1]
+        elif heading := _HEADING.fullmatch(line):
+            in_execution = heading[1] == "##" and heading[2] in {"Execution", "执行流程"}
+    if not closed:
+        raise ValueError("solution_execution_code_invalid")
+    try:
+        canonical = ast.unparse(ast.parse("\n".join(code)))
+    except (SyntaxError, RecursionError) as exc:
+        raise ValueError("solution_execution_code_invalid") from exc
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _scope_expiry(scope: Mapping[str, Any]) -> datetime | None:
@@ -278,7 +315,7 @@ def _render(entry: MemoryEntry) -> str:
 
 
 def _parse_text(text: str) -> MemoryEntry:
-    lines = text.splitlines()
+    lines = _markdown_lines(text)
     if len(lines) < 8 or lines[0] != "---":
         raise ValueError("memory_frontmatter_missing")
     try:
@@ -444,7 +481,7 @@ class MemoryAPI:
             result[key] = [{k: v for k, v in row.items() if k != "body"} for row in result[key]]
         return result
 
-    def read(self, query: str, *, project: str, scene: str | None = None, memory_type: str | None = None,
+    def read(self, query: str, *, project: str, scene: str | tuple[str, ...] | None = None, memory_type: str | None = None,
              limit: int = 8, include_cross_project: bool = False, offset: int = 0,
              include_shared: bool = True, applicability_context: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if limit < 0 or limit > 100:
@@ -452,6 +489,7 @@ class MemoryAPI:
         if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
             raise ValueError("memory_offset_invalid")
         terms = {item.lower() for item in re.findall(r"[\w-]+", query) if len(item) > 1}
+        scenes = (scene,) if scene and isinstance(scene, str) else scene
         local: list[dict[str, Any]] = []
         cross: list[dict[str, Any]] = []
         diagnostics: list[dict[str, str]] = []
@@ -464,7 +502,7 @@ class MemoryAPI:
                 continue
             if entry.project == "_shared" and not include_shared:
                 continue
-            if scene and entry.scene != scene and entry.project == project:
+            if scenes and entry.scene not in scenes and entry.project == project:
                 continue
             if memory_type and entry.type != memory_type:
                 continue

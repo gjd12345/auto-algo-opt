@@ -23,6 +23,7 @@ from .api import (
     _validate_entry,
     _validate_scope,
     memory_is_active,
+    solution_execution_ast_sha256,
 )
 from .problem_vocab import problem_family
 
@@ -312,15 +313,18 @@ def _entry(raw: Mapping[str, Any], claim: ClaimEvidence, candidate: Mapping[str,
             or provenance.get("evaluation_facts_sha256", claim.evaluation_facts_sha256) != claim.evaluation_facts_sha256
             or provenance.get("evidence_ref", claim.evidence_ref) != claim.evidence_ref):
         raise ValueError("auto_dream_source_evidence_mismatch")
-    if card.type == "solution" and (
-        reference is None or candidate.get("valid") is not True or not provenance.get("parent_version_id")
-        or provenance.get("candidate_code_sha256") != claim.code_anchor.get("code_sha256")
-        or provenance.get("canonical_ast_sha256") != claim.code_anchor.get("canonical_ast_sha256")
-        or not claim.code_anchor.get("canonical_ast_sha256")
-        or provenance.get("evaluator_hash") != scope["evaluator_version"]
-        or provenance.get("interface_id") not in supported_scenes
-    ):
-        raise ValueError("auto_dream_unverified_solution")
+    if card.type == "solution":
+        try:
+            canonical_ast_sha256 = solution_execution_ast_sha256(card.body)
+        except ValueError as exc:
+            raise ValueError("auto_dream_unverified_solution") from exc
+        if (reference is None or candidate.get("valid") is not True or not provenance.get("parent_version_id")
+                or provenance.get("candidate_code_sha256") != claim.code_anchor.get("code_sha256")
+                or canonical_ast_sha256 != claim.code_anchor.get("canonical_ast_sha256")
+                or canonical_ast_sha256 != provenance.get("canonical_ast_sha256")
+                or provenance.get("evaluator_hash") != scope["evaluator_version"]
+                or provenance.get("interface_id") not in supported_scenes):
+            raise ValueError("auto_dream_unverified_solution")
     if problem_family(card.project) == "online_obp":
         from .retrieval_m35 import admission_allowed
         metrics = candidate.get("metrics") or {}

@@ -8,6 +8,7 @@ import math
 import shutil
 import sqlite3
 import time
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -20,6 +21,7 @@ from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
 from agent_skill_loop.interface_design.dynamic_eoh import derive_effective_batch_timeout_s
 from agent_skill_loop.interface_design.runtime import evaluate_frozen_interface_solver
 from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
+from agent_skill_loop.interface_design.session_bridge import resolve_session_kb_release
 from agent_skill_loop.memory import open_memory_backend
 from agent_skill_loop.memory.api import _validate_entry
 from agent_skill_loop.memory.retrieval_m35 import CooldownLedger, admission_allowed, iter_attributed_outcomes, rerank_mmr
@@ -44,10 +46,15 @@ from agent_skill_loop.session_runtime import initialize_session, read_state
 from agent_skill_loop.session_contracts import MemoryAction
 from agent_skill_loop.skill_store import load_skill
 from research_agent.contracts import AgentConfig, atomic_write_json, sha256_text
+from research_agent.tools.kb_tools import KnowledgeBaseTool
 
 
 _SCOPED_MEMORY_MODES = frozenset({"m35_l12", "m35_full"})
 _SOLUTION_THRESHOLD = 0.01
+_SESSION_BUDGET_BLOCKERS = frozenset({
+    "DEADLINE_EXCEEDED", "PHASE_BUDGET_EXHAUSTED", "engine_wall_budget_exhausted",
+    "eoh_round_request_budget_exhausted", "wall_budget_exhausted",
+})
 
 
 class SessionRunnerTool:
@@ -60,6 +67,7 @@ class SessionRunnerTool:
         self.session_dir = self.run_dir / "session_run"
         self.plans_dir = self.run_dir / "agent_artifacts" / "session_plans"
         self.plans_dir.mkdir(parents=True, exist_ok=True)
+        self._kb_pin: dict[str, str] = {}
 
     @staticmethod
     def _session_has_provider_terminal(session_dir: Path) -> bool:
@@ -78,10 +86,10 @@ class SessionRunnerTool:
             con.close()
 
     @staticmethod
-    def _session_cannot_continue(session_dir: Path) -> bool:
+    def _session_continuation_blocker(session_dir: Path) -> str | None:
         db_path = session_dir / "session.sqlite3"
         if not db_path.is_file():
-            return False
+            return None
         con = sqlite3.connect(str(db_path), timeout=10.0)
         con.row_factory = sqlite3.Row
         try:
@@ -89,33 +97,90 @@ class SessionRunnerTool:
                 "SELECT run_id, eoh_round_max_requests, round_wall_seconds, engine_wall_seconds FROM runs LIMIT 1"
             ).fetchone()
             if run is None:
-                return False
-            if run["eoh_round_max_requests"] == 0 or run["round_wall_seconds"] == 0:
-                return True
+                return None
+            if run["eoh_round_max_requests"] == 0:
+                return "eoh_round_request_budget_exhausted"
+            if run["round_wall_seconds"] == 0:
+                return "wall_budget_exhausted"
             elapsed = con.execute(
                 "SELECT COALESCE(SUM(engine_elapsed_seconds), 0) FROM tasks WHERE run_id=?",
                 (run["run_id"],),
             ).fetchone()[0]
             if run["engine_wall_seconds"] is not None and float(elapsed) >= float(run["engine_wall_seconds"]):
-                return True
+                return "engine_wall_budget_exhausted"
             terminal = con.execute(
-                "SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN "
-                "('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED','PHASE_BUDGET_EXHAUSTED','DEADLINE_EXCEEDED') LIMIT 1",
+                "SELECT terminal_reason FROM tasks WHERE run_id=? AND terminal_reason IN "
+                "('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED','PHASE_BUDGET_EXHAUSTED','DEADLINE_EXCEEDED') "
+                "ORDER BY terminal_reason LIMIT 1",
                 (run["run_id"],),
             ).fetchone()
-            return terminal is not None
+            return str(terminal["terminal_reason"]) if terminal is not None else None
         except sqlite3.Error:
-            return False
+            return None
         finally:
             con.close()
+
+    @staticmethod
+    def _session_cannot_continue(session_dir: Path) -> bool:
+        return SessionRunnerTool._session_continuation_blocker(session_dir) is not None
+
+    @staticmethod
+    def _session_budget_completion_reason(state: Mapping[str, Any], blocker: str | None,
+                                          terminal_reason: str | None = None) -> str | None:
+        budgets = state.get("budgets") or {}
+        if budgets.get("eoh_requests_remaining") == 0:
+            return "eoh_request_budget_exhausted"
+        if budgets.get("solver_calls_remaining") == 0:
+            return "solver_budget_exhausted"
+        if terminal_reason in _SESSION_BUDGET_BLOCKERS:
+            return terminal_reason
+        return blocker if blocker in _SESSION_BUDGET_BLOCKERS else None
+
+    def _recorded_completion_reason(self, state: Mapping[str, Any], round_id: int) -> str | None:
+        status = state.get("run_state")
+        if state.get("round_id") != round_id or status not in {"COMPLETED", "STOPPED"}:
+            return None
+        action, field = ("finish-round", "completion_reason") if status == "COMPLETED" else ("stop", "reason")
+        db_path = self.session_dir / "session.sqlite3"
+        with closing(sqlite3.connect(f"{db_path.as_uri()}?mode=ro", uri=True)) as con:
+            record = con.execute(
+                "SELECT receipt_json FROM operations WHERE run_id=? AND round_id=? AND action=? AND status='SUCCEEDED'",
+                (state["run_id"], round_id, action),
+            ).fetchone()
+        result = json.loads(record[0])["result"] if record is not None else {}
+        if field in result or status == "STOPPED":
+            return result.get(field)
+        # Legacy receipts have no reason. Task and run budgets are durable Session evidence.
+        return self._session_budget_completion_reason(
+            state, self._session_continuation_blocker(self.session_dir),
+            (state.get("task") or {}).get("terminal_reason"),
+        )
 
     def ensure_initialized(self) -> dict[str, Any]:
         if self.config.memory_enabled:
             if self.config.dev_split not in {"dev", "dev_train"}:
                 raise ValueError("m35_memory_requires_dev_split")
             assert_milestone_suite_allowed_for_interactive_role(self.config.dev_suite_id, role="diagnostic_interactive")
+        if self.config.kb_enabled and self.config.pinned_kb_release_id is not None and not self._kb_pin:
+            kb = KnowledgeBaseTool(
+                self.run_dir, kb_store_path=self.config.kb_store_path,
+                pinned_release_id=self.config.pinned_kb_release_id,
+                pinned_manifest_sha256=self.config.pinned_kb_manifest_sha256,
+            )
+            self._kb_pin = {
+                "kb_release_path": str(kb.release_dir), "kb_release_id": kb.release_id,
+                "kb_manifest_sha256": kb.manifest_sha256,
+            }
         if (self.session_dir / "session.sqlite3").is_file():
             state = read_state(run=self.session_dir)
+            if self._kb_pin:
+                frozen = json.loads((self.session_dir / "config_frozen.json").read_text(encoding="utf-8"))
+                lock_path = self.session_dir / "kb_release_lock.json"
+                existing = resolve_session_kb_release(frozen, session_root=self.session_dir if lock_path.is_file() else None)
+                pinned = (self._kb_pin["kb_release_id"], self._kb_pin["kb_manifest_sha256"])
+                if existing != pinned or (frozen.get("kb_release_path") is not None
+                                          and frozen["kb_release_path"] != self._kb_pin["kb_release_path"]):
+                    raise ValueError("session_kb_pin_mismatch")
             rem = self.budget.remaining
             if (
                 state.get("run_state") in {"COMPLETED", "FAILED", "STOPPED"}
@@ -164,6 +229,7 @@ class SessionRunnerTool:
                 "max_sample_nums": self.config.eoh_max_sample_nums,
             },
             "persistent_budget": pb_cfg,
+            **self._kb_pin,
         }
         if self.config.memory_enabled:
             init_kwargs["memory_store"] = self.config.memory_store_path
@@ -310,10 +376,31 @@ class SessionRunnerTool:
         spec = get_problem(facts["problem"])
         direction = -1 if spec.objective_direction == "maximize" else 1
         candidate = min(candidates, key=lambda item: direction * item["objective"])
+        baseline = (facts.get("baseline") or {}).get("objective")
+        before = facts.get("incumbent_before") or {}
+        generated_ref = facts.get("best_generated_ref")
+        solution = None
+        if generated_ref and before.get("ref") and type(baseline) in (int, float):
+            try:
+                skill = load_skill(local(self.session_dir, generated_ref))
+                parent = load_skill(local(self.session_dir, before["ref"]))
+                exported = next((item for item in candidates if item["code_sha256"] == skill.code_sha256
+                                 and item["objective"] == skill.mean_objective
+                                 and f"evaluation:{item['evaluation_id']}" in facts.get("evidence_refs", ())), None)
+                improvement = spec.solution_improvement(baseline, skill.mean_objective) if exported is not None else None
+                if (improvement is not None and improvement > _SOLUTION_THRESHOLD and skill.valid
+                        and skill.parent_version_id == parent.version_id and len(skill.code) < 6500):
+                    code_ast = ast.unparse(ast.parse(skill.code))
+                    if code_ast != ast.unparse(ast.parse(parent.code)):
+                        solution = (skill, parent, sha256_text(code_ast))
+                        candidate = exported
+            except (ValueError, OSError, SyntaxError, RecursionError, session_db.SessionError):
+                # A missing or invalid export cannot back a solution. The verified
+                # evaluation still supports an observation without reusable code.
+                pass
         evidence_ref = f"evaluation:{candidate['evaluation_id']}"
         if evidence_ref not in facts.get("evidence_refs", ()):
             return {"kind": "none", "reason": "Generated evaluation has no verified evidence reference."}
-        baseline = (facts.get("baseline") or {}).get("objective")
         objective = candidate["objective"]
         selection = facts.get("interface_selection")
         action = {
@@ -337,26 +424,16 @@ class SessionRunnerTool:
                 action["applicability_scope"]["n_range"] = [min(context["n"]), max(context["n"])]
             action["applicability_scope"]["budget_ms_range"] = [context["budget_ms"], context["budget_ms"]]
 
-        before = facts.get("incumbent_before") or {}
-        generated_ref = facts.get("best_generated_ref")
-        improvement = spec.solution_improvement(baseline, objective) if type(baseline) in (int, float) else None
-        if improvement is not None and improvement > _SOLUTION_THRESHOLD and generated_ref and before.get("ref"):
-            skill = load_skill(local(self.session_dir, generated_ref))
-            parent = load_skill(local(self.session_dir, before["ref"]))
-            if (skill.parent_version_id == parent.version_id and skill.code_sha256 == candidate["code_sha256"]
-                    and skill.mean_objective == objective and len(skill.code) < 6500):
-                code_ast = ast.unparse(ast.parse(skill.code))
-                parent_ast = ast.unparse(ast.parse(parent.code))
-                if code_ast != parent_ast:
-                    action.update(kind="solution", source_skill_ref=generated_ref, body=(
-                        f"## Execution\n```python\n{skill.code}\n```\n"
-                        f"**Why:** This verified code differed from parent {parent.code_sha256} and reduced the dev "
-                        f"baseline objective from {baseline:.8g} to {objective:.8g}.\n"
-                        "**How to apply:** Verify the full replacement on the original interface and evaluator.\n"
-                        "**Reusable Experience:** Retest the complete transformation before retaining it."
-                    ))
-                    action["code_anchor"]["canonical_ast_sha256"] = sha256_text(code_ast)
-                    return self._checked_memory_action(action)
+        if solution is not None:
+            skill, parent, canonical_ast_sha256 = solution
+            action.update(kind="solution", source_skill_ref=generated_ref, body=(
+                f"## Execution\n```python\n{skill.code}\n```\n"
+                f"**Why:** This verified code differed from parent {parent.code_sha256} and reduced the dev "
+                f"baseline objective from {baseline:.8g} to {objective:.8g}.\n"
+                "**How to apply:** Verify the full replacement on the original interface and evaluator.\n"
+                "**Reusable Experience:** Retest the complete transformation before retaining it."
+            ), code_anchor={"code_sha256": sha256_text(skill.code), "canonical_ast_sha256": canonical_ast_sha256})
+            return self._checked_memory_action(action)
 
         scope = action.get("applicability_scope", {})
         if ("n_range" in scope and type(baseline) in (int, float) and math.isfinite(baseline)
@@ -520,6 +597,7 @@ class SessionRunnerTool:
                 "round_state": "ROUND_COMPLETED",
                 "evaluation_facts": ev_facts_rec,
                 "stop_reason": ev_facts_rec.get("stop_reason"),
+                "completion_reason": self._recorded_completion_reason(st, target_round),
                 "frozen_solver": frozen_rec,
                 "dev_eval": dev_eval_rec,
                 "crossed_checkpoints": [],
@@ -533,6 +611,7 @@ class SessionRunnerTool:
                 "round_id": cur_round,
                 "session_status": st.get("run_state"),
                 "round_state": round_state,
+                "completion_reason": self._recorded_completion_reason(st, cur_round),
                 "frozen_solver": None,
                 "dev_eval": None,
                 "crossed_checkpoints": [],
@@ -630,6 +709,7 @@ class SessionRunnerTool:
         frozen_solver: dict[str, Any] | None = None
         if round_state in {"WAITING_FOR_EVALUATION", "READY_TO_FINISH", "ROUND_COMPLETED"}:
             ev_facts = read_evaluation(run=self.session_dir)["result"]
+            terminal_reason = str(ev_facts.get("terminal_reason") or terminal_reason)
             f_ref = ev_facts.get("frozen_solver_ref")
             if f_ref and (self.session_dir / f_ref).is_file():
                 frozen_solver = json.loads((self.session_dir / f_ref).read_text(encoding="utf-8"))
@@ -701,6 +781,7 @@ class SessionRunnerTool:
         if terminal_reason in {"STARTUP_FAILED", "EVIDENCE_STORAGE_FAILED"} or st.get("run_state") == "FAILED":
             raise RuntimeError(f"session_task_terminal:{terminal_reason or st.get('run_state')}")
 
+        completion_reason = None
         if round_state == "READY_TO_FINISH":
             if self._session_has_provider_terminal(self.session_dir):
                 finish_round(
@@ -710,21 +791,23 @@ class SessionRunnerTool:
                     decision="complete",
                 )
                 raise ProviderFailure("session_provider_terminal:ready_to_finish_resume")
-            cannot_continue = (
-                is_final_round
-                or (self.budget.remaining is not None and self.budget.remaining <= 0)
-                or terminal_reason in {"DEADLINE_EXCEEDED", "PHASE_BUDGET_EXHAUSTED", "UNKNOWN"}
-                or self._session_cannot_continue(self.session_dir)
-            )
+            blocker = self._session_continuation_blocker(self.session_dir)
+            completion_reason = self._session_budget_completion_reason(st, blocker, terminal_reason)
+            if self.budget.remaining == 0:
+                completion_reason = "request_budget_exhausted"
+            cannot_continue = is_final_round or completion_reason is not None or blocker is not None or terminal_reason == "UNKNOWN"
             decision = "complete" if cannot_continue else "continue"
             fin = finish_round(
                 run=self.session_dir,
                 operation_id=f"fin_r{cur_round}_{self.config.run_id}",
                 expected_state_version=int(st["state_version"]),
                 decision=decision,
+                completion_reason=completion_reason,
             )
             st = fin
             self._record_memory_outcomes(cur_round, ev_facts)
+        elif st.get("run_state") == "STOPPED":
+            completion_reason = self._recorded_completion_reason(st, cur_round)
 
         curr_used = self.budget.used
         crossed = self.budget.check_checkpoints(prev_used, curr_used)
@@ -737,6 +820,7 @@ class SessionRunnerTool:
             "round_state": st.get("state"),
             "evaluation_facts": ev_facts,
             "stop_reason": ev_facts.get("stop_reason"),
+            "completion_reason": completion_reason,
             "frozen_solver": frozen_solver,
             "dev_eval": dev_eval,
             "crossed_checkpoints": crossed,

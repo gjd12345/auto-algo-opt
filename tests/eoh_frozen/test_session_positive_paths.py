@@ -90,7 +90,8 @@ def test_session_publishes_verified_solution_with_optional_repair(tmp_path,monke
         file.write_text(json.dumps(dict(plan_alignment="aligned",observations=[dict(claim="Improves this frozen development suite by over 1 percent.",evidence_refs=[evidence])],
             hypotheses=[],next_search_advice={},memory_action=dict(kind="solution",name="capacity-fixture",description="capacity fit on frozen fixture suite",
             project="cvrp_construct",scene="select_next_node",source_skill_ref=facts["best_generated_ref"],memory_based_on=previous["reference"],evidence_ref=evidence,
-            body=f"## Execution\nAsset: {facts['best_generated_ref']}\n**Why:** {evidence}; fixed development suite only.\n**How to apply:** Reevaluate on new data.\n**Reusable Experience:** Capacity fit scaling; no generalization claim."))))
+            code_anchor={"code_sha256": skill.code_sha256, "canonical_ast_sha256": db._sha256(ast.unparse(ast.parse(skill.code)))},
+            body=f"## Execution\n```python\n{skill.code}\n```\n**Why:** {evidence}; fixed development suite only.\n**How to apply:** Reevaluate on new data.\n**Reusable Experience:** Capacity fit scaling; no generalization claim."))))
         result=actions.submit_evaluation(run=root,operation_id="evaluate",expected_state_version=collected["state_version"],file=file)
         assert result["result"]["memory"]["status"]=="published"
         published=MemoryAPI(tmp_path/"memory").read_version(result["result"]["memory"]["reference"])

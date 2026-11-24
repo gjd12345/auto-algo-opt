@@ -1333,6 +1333,9 @@ def initialize_session(
     explicit_seed_set: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
     persistent_budget: Mapping[str, Any] | None = None,
     model_routing: Mapping[str, Any] | None = None,
+    kb_release_path: str | None = None,
+    kb_release_id: str | None = None,
+    kb_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     action = "init"
     if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
@@ -1624,6 +1627,22 @@ def initialize_session(
         round_budget=round_budget,
         explicit_seed_set_sha256=explicit_seed_set_sha256,
     )
+    kb_pin = {}
+    if any(value is not None for value in (kb_release_path, kb_release_id, kb_manifest_sha256)):
+        if not all(isinstance(value, str) and value.strip() for value in (kb_release_path, kb_release_id, kb_manifest_sha256)):
+            raise SessionError("INVALID_ARGUMENT", "kb_release_path_id_and_digest_required", action=action)
+        from agent_skill_loop.interface_design.session_bridge import resolve_session_kb_release
+
+        kb_pin = {
+            "kb_release_path": str(Path(kb_release_path).expanduser().resolve()),
+            "kb_release_id": kb_release_id,
+            "kb_manifest_sha256": kb_manifest_sha256,
+        }
+        try:
+            resolve_session_kb_release(kb_pin)
+        except (OSError, ValueError) as exc:
+            raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
+        input_payload.update(kb_pin)
     input_hash = _sha256(_json(input_payload))
 
     database = output / "session.sqlite3"
@@ -1814,6 +1833,7 @@ def initialize_session(
         config["persistent_budget"] = dict(persistent_budget)
     if model_routing is not None:
         config["model_routing"] = dict(model_routing)
+    config.update(kb_pin)
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
         staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.init-", dir=str(output.parent)))

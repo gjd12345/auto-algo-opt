@@ -102,8 +102,11 @@ def resolve_session_time_budget_ms(
         cfg_val = _validate_positive_budget_ms(config["instance_time_budget_ms"], field_name="instance_time_budget_ms")
     if isinstance(selection, Mapping) and selection.get("time_budget_ms") is not None:
         sel_val = _validate_positive_budget_ms(selection["time_budget_ms"], field_name="interface_selection_time_budget_ms")
-    if design is not None and design.template_options.get("time_budget_ms") is not None:
-        opt_val = _validate_positive_budget_ms(design.template_options["time_budget_ms"], field_name="template_options_time_budget_ms")
+    options = design.template_options if design is not None else None
+    if options is None and isinstance(selection, Mapping):
+        options = selection.get("template_options")
+    if isinstance(options, Mapping) and options.get("time_budget_ms") is not None:
+        opt_val = _validate_positive_budget_ms(options["time_budget_ms"], field_name="template_options_time_budget_ms")
 
     if cfg_val is not None and sel_val is not None and abs(cfg_val - sel_val) > 1e-6:
         raise ValueError(f"session_time_budget_mismatch:config={cfg_val}:selection={sel_val}")
@@ -123,8 +126,19 @@ def resolve_session_kb_release(
     repo_root: Path = _REPO_ROOT,
 ) -> tuple[str, str]:
     """Resolve and session-lock the active KB release ID and manifest SHA-256."""
-    if isinstance(config, Mapping) and config.get("kb_release_id") and config.get("kb_manifest_sha256"):
-        return str(config["kb_release_id"]), str(config["kb_manifest_sha256"])
+    pinned_id = config.get("kb_release_id") if isinstance(config, Mapping) else None
+    pinned_sha = config.get("kb_manifest_sha256") if isinstance(config, Mapping) else None
+    pinned_path = config.get("kb_release_path") if isinstance(config, Mapping) else None
+    if pinned_id and pinned_sha and not pinned_path:
+        return str(pinned_id), str(pinned_sha)
+    if pinned_path and pinned_id and pinned_sha:
+        release = resolve_release(Path(pinned_path))
+        manifest_bytes = (release / "manifest.json").read_bytes()
+        if hashlib.sha256(manifest_bytes).hexdigest() != pinned_sha:
+            raise ValueError("session_kb_manifest_sha256_mismatch")
+        if json.loads(manifest_bytes).get("release_id") != pinned_id:
+            raise ValueError("session_kb_release_id_mismatch")
+        return str(pinned_id), str(pinned_sha)
 
     lock_path = (Path(session_root) / "kb_release_lock.json") if session_root is not None else None
     if lock_path is not None and lock_path.is_file():
@@ -1416,13 +1430,24 @@ def execute_m2_session_task(
         best_rec, win_primary, win_impls = best
         ev = best_rec["evaluation"]
         skill_dir = output / "skills" / "best_generated"
+        parent_version_id = None
+        parent_ref = rd["incumbent_before_ref"]
+        if parent_ref:
+            incumbent_path = (root / parent_ref).resolve()
+            if not incumbent_path.is_relative_to(root.resolve()):
+                raise ValueError("session_incumbent_path_invalid")
+            try:
+                parent_version_id = load_skill(incumbent_path).version_id
+            except ValueError as exc:
+                if str(exc) != "skill_not_found":
+                    raise
         sv = SkillVersion(
             version_id=f"m2_r{rd['round_id']:04d}_{best_rec['code_sha256'][:10]}",
             problem=str(row["problem"]),
             entrypoint=design.hook_name,
             code=str(best_rec["code"]),
             code_sha256=str(best_rec["code_sha256"]),
-            parent_version_id=None,
+            parent_version_id=parent_version_id,
             suite_hash=suite_hash,
             evaluator_hash=eval_hash,
             valid=True,

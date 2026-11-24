@@ -659,6 +659,9 @@ def build_parser() -> argparse.ArgumentParser:
         command = memory_sub.add_parser(name)
         command.add_argument("--run", required=True)
         command.add_argument("--run-id")
+        scope = command.add_mutually_exclusive_group()
+        scope.add_argument("--template-id")
+        scope.add_argument("--interface-selection", type=json.loads, help="Plan interface_selection as a JSON object")
         if name == "search":
             command.add_argument("--query", default="")
             command.add_argument("--type", dest="memory_type", choices=["insight", "solution"])

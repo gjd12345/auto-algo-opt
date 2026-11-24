@@ -16,7 +16,9 @@ from agent_skill_loop.evidence.search_progress import build_search_progress, eva
 from agent_skill_loop.memory import MemoryAPI, MemoryEntry
 from agent_skill_loop.memory import api as memory_api
 from agent_skill_loop.session_contracts import MemoryAction, PlanDocument, compile_round_context
-from agent_skill_loop.skill_store import save_skill
+from agent_skill_loop.skill_store import load_skill, save_skill
+from research_agent import AgentConfig, run_research_agent
+from research_agent.tools.session_tools import SessionRunnerTool
 
 
 @pytest.mark.parametrize(("first", "last", "direction", "expected"), [
@@ -106,6 +108,65 @@ def test_controller_token_preflight_blocks_generation_before_post(tmp_path, monk
 def _initialize(root, **options):
     result = db.initialize_session(output=root, operation_id="init", eoh_model="fixture", size=6, count=1, **options)
     return result["run_id"]
+
+
+@pytest.mark.parametrize(("outcome", "final_phase"), [
+    ({"session_status": "COMPLETED", "stop_reason": "request_limit"}, "completed"),
+    ({"session_status": "STOPPED", "stop_reason": "operator_stop"}, "budget_stopped"),
+    ({"session_status": "COMPLETED", "completion_reason": "DEADLINE_EXCEEDED"}, "budget_stopped"),
+])
+def test_reflect_resume_preserves_session_terminal_phase(tmp_path, monkeypatch, outcome, final_phase):
+    from research_agent import loop
+
+    config = AgentConfig(run_id="reflect-resume", output_dir=str(tmp_path), max_rounds=3,
+                         archive_feedback_enabled=False, kb_enabled=False)
+    calls = []
+
+    def run_round(self, *, round_id, **kwargs):
+        calls.append(("session", round_id))
+        status = {"session_status": "RUNNING", "stop_reason": "request_limit"} if round_id == 1 else outcome
+        return {**status, "evaluation_facts": {"terminal_reason": "REQUEST_BUDGET_EXHAUSTED"},
+                "frozen_solver": {"solver_id": "fixture"}, "dev_eval": {
+                    "valid_count": 1, "all_feasible": True, "completion_rate": 1.0, "penalized_mean_objective": 0.0,
+                }}
+
+    class Driver:
+        def decide_step(self, *, phase, round_id, **kwargs):
+            calls.append((phase, round_id))
+            if phase == "reflect":
+                return {"action": "finish_round"}
+            return {"action": "submit_plan", "direction": "Check terminal state", "hypothesis": "Only one round runs"}
+
+    append_result = loop.append_results_tsv_row
+
+    def interrupt_after_reflection(path, row):
+        append_result(path, row)
+        if row["round_id"] == 2:
+            raise RuntimeError("interrupted before round checkpoint")
+
+    monkeypatch.setattr(SessionRunnerTool, "run_round", run_round)
+    with monkeypatch.context() as patch:
+        patch.setattr(loop, "append_results_tsv_row", interrupt_after_reflection)
+        with pytest.raises(RuntimeError, match="interrupted before round checkpoint"):
+            run_research_agent(config, driver=Driver())
+    checkpoint = json.loads((tmp_path / "agent_checkpoint.json").read_text(encoding="utf-8"))
+    assert checkpoint["phase"] == "reflect"
+    assert all(checkpoint["pending_reflect_payload"][key] == value for key, value in outcome.items())
+    summary = run_research_agent(config, driver=Driver(), resume=True)
+    assert summary["final_phase"] == final_phase
+    assert summary["completed_rounds"] == [1, 2]
+    assert all(summary["round_summaries"][-1][key] == value for key, value in outcome.items())
+    assert calls == [(phase, round_id) for round_id in (1, 2) for phase in ("diagnose", "session", "reflect")]
+    assert len((tmp_path / "results.tsv").read_text(encoding="utf-8").splitlines()) == 3
+
+
+def test_solution_card_limit_is_one_even_if_three_total_cards_fit(tmp_path):
+    from agent_skill_loop.memory.retrieval_m35 import rerank_mmr
+
+    with pytest.raises(ValueError, match="memory_max_solution_cards_out_of_range"):
+        AgentConfig(run_id="oversized", output_dir=str(tmp_path), memory_max_solution_cards=2)
+    with pytest.raises(ValueError, match="memory_max_solution_cards_invalid"):
+        rerank_mmr("ranking", [], context={}, max_solution_cards=2)
 
 
 @pytest.mark.parametrize("response_received", [False, True])
@@ -245,8 +306,13 @@ def test_revision_cannot_retarget_a_stale_card_head(tmp_path, monkeypatch):
     assert api.card_head(card) == latest
 
 
-@pytest.mark.parametrize(("threshold", "expected"), [(0.25, "rejected"), (0.24, "published")])
-def test_solution_threshold_is_strict_and_binds_verified_ast(tmp_path, threshold, expected):
+@pytest.mark.parametrize(("threshold", "submission", "error"), [
+    (0.25, "equivalent", "solution_threshold_not_met"),
+    (0.24, "equivalent", None),
+    (0.24, "substituted", "solution_canonical_ast_hash_mismatch"),
+    (0.24, "wrong_anchor", "solution_canonical_ast_hash_mismatch"),
+])
+def test_solution_threshold_is_strict_and_binds_verified_ast(tmp_path, threshold, submission, error):
     root = tmp_path / "run"
     src = "def select_next_node(current, candidates, remaining, demands, distances):\n    return 0\n"
     digest = db._sha256(src)
@@ -256,8 +322,11 @@ def test_solution_threshold_is_strict_and_binds_verified_ast(tmp_path, threshold
     facts = {"baseline": {"objective": 4}, "best_generated_ref": source, "evidence_refs": [evidence],
              "candidates": [{"evaluation_id": "fixture", "code_sha256": digest, "objective": 3.0,
                              "valid": True, "origin": "generated", "canonical_ast_sha256": ast_digest}]}
-    card = replace(_insight(), type="solution", body="## Execution\n**Reusable Experience:** Use the same interface.\n"
-                   "**Why:** Verified locally.\n**How to apply:** Confirm again.")
+    submitted_code = src.replace("return 0", "return 1" if submission == "substituted" else "return (0)  # same AST")
+    card = replace(_insight(), type="solution", body=(
+        f"## Execution\n```python\n{submitted_code}```\n**Reusable Experience:** Use the same interface.\n"
+        "**Why:** Verified locally.\n**How to apply:** Confirm again."
+    ), code_anchor={"code_sha256": digest, "canonical_ast_sha256": "b" * 64 if submission == "wrong_anchor" else ast_digest})
     store, file, _ = _evaluation(root, tmp_path, _action(card, source_skill_ref=source, evidence_ref=evidence),
                                  facts=facts, solution_threshold=threshold)
     config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
@@ -266,11 +335,51 @@ def test_solution_threshold_is_strict_and_binds_verified_ast(tmp_path, threshold
                                           evaluator_hash=config["evaluator_hash"], valid=True, mean_objective=3.0,
                                           instance_objectives=(3.0,), source_attempt_id=None))
     result = actions.submit_evaluation(run=root, operation_id="evaluate", expected_state_version=1, file=file)["result"]["memory"]
-    assert result["status"] == expected
-    if expected == "published":
-        assert MemoryAPI(store).read_version(result["reference"])["provenance"]["canonical_ast_sha256"] == ast_digest
+    if error:
+        assert result["status"] == "rejected"
+        assert result["error_code"] == error
     else:
-        assert result["error_code"] == "solution_threshold_not_met"
+        assert result["status"] == "published"
+        assert MemoryAPI(store).read_version(result["reference"])["provenance"]["canonical_ast_sha256"] == ast_digest
+
+
+def test_session_exports_parent_lineage_for_solution_proposal(tmp_path):
+    from agent_skill_loop.request_budget import PersistentRequestBudget
+    from research_agent.loop import _build_initial_baseline_solver
+
+    config = AgentConfig(run_id="lineage", output_dir=str(tmp_path), dev_instance_count=1, dev_instance_size=6,
+                         eoh_n_pop=1, eoh_max_sample_nums=3, early_stop_no_jump_requests=1, kb_enabled=False)
+    budget = PersistentRequestBudget(tmp_path / "agent_budget.sqlite3", config.total_request_cap, run_id=config.run_id)
+    runner = SessionRunnerTool(run_dir=tmp_path, config=config, budget=budget)
+    runner.ensure_initialized()
+    root = runner.session_dir
+    frozen_config = json.loads((root / "config_frozen.json").read_text(encoding="utf-8"))
+    parent_code = _build_initial_baseline_solver(config).hook_code
+    parent = SkillVersion(version_id="fixture-parent", problem="cvrp_construct", entrypoint="select_next_node",
+                          code=parent_code, code_sha256=db._sha256(parent_code), parent_version_id=None,
+                          suite_hash=frozen_config["suite_hash"], evaluator_hash=frozen_config["evaluator_hash"],
+                          valid=True, mean_objective=1000.0, instance_objectives=(1000.0,), source_attempt_id=None)
+    ref = "skills/fixture-parent"
+    save_skill(root / ref, parent)
+    con = db._connect(root / "session.sqlite3")
+    try:
+        con.execute("UPDATE rounds SET incumbent_before_ref=?,incumbent_before_objective=?", (ref, parent.mean_objective))
+    finally:
+        con.close()
+    run = runner.run_round(round_id=1, template_id=config.initial_template_id, postprocess_mode="none",
+                           direction="Test generated lineage", hypothesis="The exported hook keeps its parent",
+                           is_final_round=True, eval_dev_suite=False)
+    facts = run["evaluation_facts"]
+    exported = load_skill(root / facts["best_generated_ref"])
+    assert exported.parent_version_id == parent.version_id
+
+    # Isolate card proposal from route quality. The actual evaluation identity and export are unchanged.
+    facts = {**facts, "baseline": {"objective": 2 * exported.mean_objective}}
+    runner.config = replace(config, memory_enabled=True, memory_mode="m35_l12")
+    action = runner._memory_action(facts)
+    assert action["kind"] == "solution"
+    assert action["code_anchor"] == {"code_sha256": exported.code_sha256,
+                                     "canonical_ast_sha256": db._sha256(ast.unparse(ast.parse(exported.code)))}
 
 
 def test_sidecar_dual_reader_and_antipattern_contract(tmp_path):
@@ -384,6 +493,58 @@ def test_session_adopts_three_eligible_cards_and_rechecks_head(tmp_path):
         actions.submit_plan(run=other, operation_id="stale", expected_state_version=1, file=plan_text)
     with pytest.raises(db.SessionError, match="superseded"):
         actions.execute(run=root, operation_id="execute", expected_state_version=planned["state_version"])
+
+
+def test_online_session_plan_requires_verified_prefix_evidence(tmp_path):
+    from agent_skill_loop.problems import get_problem
+
+    root, store = tmp_path / "obp", tmp_path / "memory"
+    problem = "obp_online"
+    _initialize(root, problem=problem, memory_store=str(store))
+    api = MemoryAPI(store)
+    card = _insight("packing-ties", project=problem, scene=get_problem(problem).entrypoint)
+    unproven = api.write(card)["reference"]
+    verified = api.write(replace(card, name="verified-packing-ties"),
+                         provenance={"prefix_trace_equal": "true", "future_lookahead": "false"})["reference"]
+    file = tmp_path / "plan.json"
+    for ref in (unproven, verified):
+        assert actions.memory_read(run=root, reference=ref)["result"]["complete_memory_consumption"]
+        file.write_text(json.dumps(_plan([ref])), encoding="utf-8")
+        if ref == unproven:
+            with pytest.raises(db.SessionError, match="MEMORY_REFERENCE_INVALID|admission"):
+                actions.submit_plan(run=root, operation_id="unproven", expected_state_version=1, file=file)
+        else:
+            assert actions.submit_plan(run=root, operation_id="verified", expected_state_version=1, file=file)["state"] == "READY_TO_EXECUTE"
+
+
+def test_public_memory_lookup_allows_a_valid_template_but_plan_requires_exact_scope(tmp_path):
+    root, store = tmp_path / "run", tmp_path / "memory"
+    _initialize(root, memory_store=str(store))
+    template = "cvrp_sequential_construct"
+    scope = {"interface_id": template, "budget_ms_range": [500, 500]}
+    reference = MemoryAPI(store).write(replace(_insight(), applicability_scope=scope))["reference"]
+    assert actions.memory_search(run=root)["result"]["memories"] == []
+    assert [card["reference"] for card in actions.memory_search(run=root, template_id=template)["result"]["memories"]] == [reference]
+    assert actions.memory_read(run=root, reference=reference, template_id=template)["result"]["complete_memory_consumption"]
+    with pytest.raises(db.SessionError) as wrong_family:
+        actions.memory_read(run=root, reference=reference, template_id="tsp_constructive_step")
+    assert wrong_family.value.code == "INVALID_ARGUMENT"
+
+    file = tmp_path / "plan.json"
+    plan = _plan([reference])
+    file.write_text(json.dumps(plan), encoding="utf-8")
+    with pytest.raises(db.SessionError, match="memory_reference_inactive") as unscoped:
+        actions.submit_plan(run=root, operation_id="unscoped", expected_state_version=1, file=file)
+    assert unscoped.value.code == "MEMORY_REFERENCE_INVALID"
+    selection = {"template_id": template, "template_version": "v1", "postprocess_mode": "none"}
+    plan["interface_selection"] = {**selection, "template_options": {"time_budget_ms": 600}}
+    file.write_text(json.dumps(plan), encoding="utf-8")
+    with pytest.raises(db.SessionError, match="memory_reference_inactive") as different_budget:
+        actions.submit_plan(run=root, operation_id="different-budget", expected_state_version=1, file=file)
+    assert different_budget.value.code == "MEMORY_REFERENCE_INVALID"
+    plan["interface_selection"] = selection
+    file.write_text(json.dumps(plan), encoding="utf-8")
+    assert actions.submit_plan(run=root, operation_id="scoped", expected_state_version=1, file=file)["state"] == "READY_TO_EXECUTE"
 
 
 def test_startup_recovers_sidecar_orphan_and_replays_operation(tmp_path, monkeypatch):

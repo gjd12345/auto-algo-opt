@@ -22,6 +22,7 @@ from agent_skill_loop.session_contracts import (
 from agent_skill_loop.memory import open_memory_backend
 from agent_skill_loop.memory.api import MEMORY_CARD_TYPES, _validate_entry
 from agent_skill_loop.memory.problem_vocab import problem_family
+from agent_skill_loop.memory.retrieval_m35 import admission_allowed
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 
@@ -382,16 +383,29 @@ def _memory_applicability(root, row, action, selection=None):
     interface_id = spec.entrypoint
     if selection is not None:
         from agent_skill_loop.interface_design.session_bridge import resolve_session_time_budget_ms
+        from agent_skill_loop.interface_design.templates import get_template_spec
         interface_id = selection["template_id"]
+        template = get_template_spec(interface_id, selection.get("template_version", "v1"))
+        if problem_family(template.problem_family) != family:
+            fail("INVALID_ARGUMENT", action, f"template_not_allowed_for_problem:{interface_id}:{spec.problem_id}")
         budget_ms = resolve_session_time_budget_ms(selection, config)
     return {"problem": spec.problem_id, "interface_id": interface_id,
             "fleet_policy": suite.get("vehicle_limit_policy") or ("unconstrained" if family == "cvrp" else "not_applicable"),
             "evaluator_version": row["evaluator_hash"], "n": sizes, "budget_ms": budget_ms}
 
 
+def _memory_selection(interface_selection, template_id):
+    if interface_selection is None and template_id is None:
+        return None
+    if interface_selection is not None and template_id is not None:
+        raise ValueError("memory_interface_selection_ambiguous")
+    from agent_skill_loop.interface_design.session_bridge import parse_interface_selection
+    return parse_interface_selection(interface_selection if interface_selection is not None else {"template_id": template_id})
+
+
 def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
                   include_shared=False, include_cross_project=False, cursor=None,
-                  expected_run_id=None):
+                  expected_run_id=None, interface_selection=None, template_id=None):
     action = "memory_search"
     with opened(run, action, expected_run_id) as (root, con):
         row = db._require_run(con, action=action, run_id=None)
@@ -401,14 +415,18 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         offset = int(cursor or 0)
         if offset < 0:
             fail("INVALID_ARGUMENT", action)
+        selection = _memory_selection(interface_selection, template_id)
+        entrypoint = get_problem(row["problem"]).entrypoint
+        applicability = _memory_applicability(root, row, action, selection) if selection is not None else None
+        search_scene = scene or ((entrypoint, selection["template_id"]) if selection is not None else entrypoint)
         memories, error, diagnostics = [], None, []
         if row["memory_enabled"]:
             try:
                 backend_result = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(
-                    query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
+                    query, project=row["problem"], scene=search_scene,
                     memory_type=memory_type, limit=min(limit+1,100), offset=offset,
                     include_shared=include_shared, include_cross_project=include_cross_project,
-                    applicability_context=_memory_applicability(root, row, action))
+                    applicability_context=applicability if applicability is not None else _memory_applicability(root, row, action))
                 records = backend_result["memories"]
                 diagnostics = list(backend_result.get("diagnostics") or [])
                 records = [x for x in records if x["project"] == row["problem"]
@@ -436,7 +454,8 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
             with db._transaction(con):
                 con.execute("INSERT INTO memory_searches(run_id,round_id,query_sha256,filters_json,result_refs_json,status,error_code,searched_at_utc) VALUES (?,?,?,?,?,?,?,?)",
                             (row["run_id"], rd["round_id"], db._sha256(query),
-                             db._json({"memory_type":memory_type,"scene":scene or get_problem(row["problem"]).entrypoint,"limit":limit,"offset":offset,
+                             db._json({"memory_type":memory_type,"scene":search_scene,"limit":limit,"offset":offset,
+                                       **({"interface_id":selection["template_id"]} if selection is not None else {}),
                                        "include_shared":include_shared,"include_cross_project":include_cross_project}),
                              db._json([{"reference":x["reference"],"version":x["version"],"body_sha256":x["body_sha256"]} for x in memories[:limit]]),
                              "disabled" if not row["memory_enabled"] else "degraded" if result["degraded"] else "hit" if memories else "no_hits",
@@ -445,7 +464,8 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         return db._envelope(con, row, rd, action=action, result=result)
 
 
-def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None):
+def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None,
+                interface_selection=None, template_id=None):
     action = "memory_read"
     with opened(run, action, expected_run_id) as (root, con):
         with db._transaction(con):
@@ -454,10 +474,12 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None):
             require_state(row, rd, action, "WAITING_FOR_PLAN")
             if not row["memory_enabled"]:
                 fail("MEMORY_REFERENCE_INVALID", action)
+            selection = _memory_selection(interface_selection, template_id)
+            applicability = _memory_applicability(root, row, action, selection)
             try:
                 page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(
                     reference, max_chars=limit, offset=offset, require_active=True,
-                    applicability_context=_memory_applicability(root, row, action))
+                    applicability_context=applicability)
             except (ValueError, OSError) as exc:
                 con.execute("INSERT INTO memory_reads(run_id,round_id,reference,body_sha256,offset_chars,returned_chars,total_chars,read_at_utc,status,error_code) VALUES (?,?,?,?,?,?,?,?,?,?)",
                             (row["run_id"],rd["round_id"],reference,"",offset,0,0,db._utc_now(),"failed",type(exc).__name__))
@@ -515,6 +537,8 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                         fail("MEMORY_REFERENCE_INVALID", action, str(exc))
                     if body["body_sha256"] != reads[ref] or body["truncated"]:
                         fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
+                    if not admission_allowed(body, applicability):
+                        fail("MEMORY_REFERENCE_INVALID", action, "memory_reference_admission_failed")
                     if treatment == "reflection_with_online_memory":
                         provenance = body.get("provenance") if isinstance(body.get("provenance"), dict) else {}
                         source_round = provenance.get("round_id")
@@ -684,6 +708,8 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                                 fail("MEMORY_REFERENCE_INVALID", action, str(exc))
                             if current["body_sha256"] != item["body_sha256"]:
                                 fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
+                            if not admission_allowed(current, applicability):
+                                fail("MEMORY_REFERENCE_INVALID", action, "memory_reference_admission_failed")
                 fresh_template = (normalized_plan.get("interface_selection") or {}).get("fresh_template") is True
                 if fresh_template:
                     inheritance_mode = "fresh_template"
@@ -1084,11 +1110,16 @@ def submit_evaluation(*, run, operation_id, expected_state_version, file, expect
         return result
 
 
-def finish_round(*, run, operation_id, expected_state_version, decision, expected_run_id=None):
+def finish_round(*, run, operation_id, expected_state_version, decision, expected_run_id=None, completion_reason=None):
     action = "finish-round"
     with opened(run,action,expected_run_id) as (root,con):
         with db._transaction(con):
-            row,rd,ih,result = begin(con,action,operation_id,expected_state_version,{"decision":decision})
+            payload = {"decision": decision}
+            if completion_reason is not None:
+                if decision != "complete" or not isinstance(completion_reason, str) or not completion_reason.strip():
+                    fail("INVALID_ARGUMENT", action)
+                payload["completion_reason"] = completion_reason
+            row,rd,ih,result = begin(con,action,operation_id,expected_state_version,payload)
             if result is None:
                 require_state(row,rd,action,"READY_TO_FINISH")
                 if rd["memory_commit_status"] in {"proposed","accepted"}:
@@ -1145,7 +1176,8 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
                     con.execute("UPDATE runs SET active_round_id=? WHERE run_id=?",(rd["round_id"]+1,row["run_id"]))
                 else: con.execute("UPDATE runs SET state='COMPLETED',finished_at_utc=? WHERE run_id=?",(now,row["run_id"]))
                 result=receipt(con,row,rd,action,operation_id,ih,{"decision":decision,
-                    "memory_consumption_ref":memory_ref,"memory_consumption_sha256":memory_sha})
+                    "memory_consumption_ref":memory_ref,"memory_consumption_sha256":memory_sha,
+                    **({"completion_reason": completion_reason} if completion_reason is not None else {})})
         db.flush_audit(root)
         from agent_skill_loop.evidence.report import write_round_progress
         write_round_progress(root)

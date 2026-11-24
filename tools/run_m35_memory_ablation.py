@@ -10,6 +10,7 @@ import random
 import shutil
 import sqlite3
 import sys
+from tempfile import TemporaryDirectory
 from collections.abc import Mapping, Sequence
 from contextlib import ExitStack, closing
 from pathlib import Path
@@ -30,8 +31,10 @@ from agent_skill_loop.interface_design.blind_eval_m5 import build_m5_public_reco
 from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
 from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
 from agent_skill_loop.memory import MemoryAPI, MemoryEntry
+from agent_skill_loop.memory.api import solution_execution_ast_sha256
 from agent_skill_loop.memory.auto_dream import auto_dream
 from agent_skill_loop.problems.base import get_problem
+from knowledge_tools import SCHEMA_VERSION as KB_SCHEMA_VERSION
 from research_agent.contracts import AgentConfig, AgentCheckpoint, atomic_write_json, sha256_bytes, sha256_file, sha256_text
 from research_agent.loop import _build_initial_baseline_solver, run_research_agent
 from research_agent.tools.kb_tools import verify_pinned_release
@@ -59,6 +62,7 @@ ROSTER = "m35_fork_roster.json"
 CANDIDATES = "frozen_candidate_roster.json"
 EVALUATIONS = {"select": "select_evaluation.json", "external": "external_evaluation.json"}
 REPORT = "m35_ablation_report.json"
+L3_RELEASE_ROOT = "runs/dream/l3_release"
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -99,6 +103,7 @@ def _arm_configuration(root: Path, fork: Mapping[str, Any], arm: str) -> AgentCo
     mode = ARMS[arm]
     run_dir = _inside(root, f"runs/{seed}/{arm}")
     experiment = fork["agent"]
+    kb = fork["memory"].get("l3_release", fork["kb"]) if arm == ARM_3 else fork["kb"]
     return AgentConfig.from_dict({
         **experiment,
         "run_id": f"{arm}_s{seed}",
@@ -106,9 +111,9 @@ def _arm_configuration(root: Path, fork: Mapping[str, Any], arm: str) -> AgentCo
         "arm_id": arm,
         "search_seed": seed,
         "kb_enabled": arm != ARM_0,
-        "kb_store_path": fork["kb"]["release_dir"] if arm != ARM_0 else None,
-        "pinned_kb_release_id": fork["kb"]["release_id"] if arm != ARM_0 else None,
-        "pinned_kb_manifest_sha256": fork["kb"]["manifest_sha256"] if arm != ARM_0 else None,
+        "kb_store_path": kb["release_dir"] if arm != ARM_0 else None,
+        "pinned_kb_release_id": kb["release_id"] if arm != ARM_0 else None,
+        "pinned_kb_manifest_sha256": kb["manifest_sha256"] if arm != ARM_0 else None,
         "memory_enabled": arm != ARM_0,
         "memory_mode": mode,
         "memory_store_path": str(run_dir / "memory") if arm != ARM_0 else None,
@@ -164,9 +169,9 @@ def _common_start(settings: Mapping[str, Any], suite: Mapping[str, Any]) -> dict
     return {
         "frozen_solver": solver.to_dict(),
         "baseline_dev_eval": {
-            "instance_count": len(rows), "valid_count": len(valid), "completion_rate": len(valid) / len(rows),
-            "all_feasible": len(valid) == len(rows), "valid_only_mean_objective": sum(valid) / len(valid),
-            "penalized_mean_objective": sum(_penalized(row) for row in rows) / len(rows),
+            "instance_count": len(rows), "valid_count": len(valid), "completion_rate": round(len(valid) / len(rows), 6),
+            "all_feasible": len(valid) == len(rows), "valid_only_mean_objective": round(sum(valid) / len(valid), 6),
+            "penalized_mean_objective": round(sum(_penalized(row) for row in rows) / len(rows), 6),
         },
         "dev_suite_hash": _digest(suite["instances"]),
         "checkpoint": {
@@ -205,6 +210,82 @@ def _read_card(store: MemoryAPI, reference: str) -> dict[str, Any]:
         card["body"] += page["body"]
         offset = page["next_offset"]
     return card
+
+
+def _promote_dev_kb(root: Path, dream: Mapping[str, Any]) -> dict[str, str]:
+    """Publish only this fork's authorized dev cards in a standalone KB release."""
+    release_root = root / L3_RELEASE_ROOT
+    if release_root.resolve() != release_root:
+        raise ValueError("m35_l3_release_root_link")
+    dream_root = release_root.parent
+    manifest_sha = sha256_file(dream_root / "auto_dream_manifest.json")
+    staging_path = dream_root / "l3_promotion_candidates.json"
+    staging_bytes = staging_path.read_bytes()
+    staging = json.loads(staging_bytes)
+    if (staging.get("schema_version") != "m35-l3-promotion-candidates/v1"
+            or staging.get("source_split") != "dev" or staging.get("activation") != "staged"
+            or staging.get("auto_dream_manifest_sha256") != manifest_sha
+            or dream.get("source_split") != "dev" or staging.get("candidates") != dream["cards"]):
+        raise ValueError("m35_l3_promotion_evidence_mismatch")
+
+    candidates_sha = sha256_bytes(staging_bytes)
+    release_id = f"m35-dev-{candidates_sha[:24]}"
+    release_dir = release_root / release_id
+    release_root.mkdir(parents=True, exist_ok=True)
+    api = MemoryAPI(dream_root / "memory")
+    with TemporaryDirectory(prefix=".staging-", dir=release_root) as tmp:
+        stage = Path(tmp) / release_id
+        (stage / "entries").mkdir(parents=True)
+        (stage / staging_path.name).write_bytes(staging_bytes)
+        entries = []
+        for candidate in staging["candidates"]:
+            card = _read_card(api, candidate["reference"])
+            provenance = card["provenance"]
+            if (card["project"] != "cvrp_construct" or provenance.get("source_split") != "dev"
+                    or provenance.get("claim_evidence_manifest_sha256") != _digest(candidate["claim_evidence_manifest"])):
+                raise ValueError("m35_l3_card_evidence_mismatch")
+            claims = candidate["claim_evidence_manifest"]["claims"]
+            if card["type"] == "solution":
+                try:
+                    canonical_sha = solution_execution_ast_sha256(card["body"])
+                except (SyntaxError, ValueError) as exc:
+                    raise ValueError("m35_l3_solution_code_mismatch") from exc
+                if (not claims or (card.get("code_anchor") or {}).get("canonical_ast_sha256") != canonical_sha
+                        or any(claim["code_anchor"].get("canonical_ast_sha256") != canonical_sha for claim in claims)):
+                    raise ValueError("m35_l3_solution_code_mismatch")
+            entry_id = f"evidence-m35-{card['name']}"
+            rel = f"entries/{entry_id}.md"
+            body_bytes = card["body"].encode("utf-8")
+            if sha256_bytes(body_bytes) != card["body_sha256"]:
+                raise ValueError("m35_l3_card_digest_mismatch")
+            (stage / rel).write_bytes(body_bytes)
+            entries.append({
+                "id": entry_id, "path": rel, "title": card["description"], "summary": card["description"],
+                "type": "evidence", "category": "dev-memory", "problem_family": "cvrp",
+                "tags": ["m35", "auto-dream", "dev", card["type"]], "content_sha256": card["body_sha256"],
+                "evidence_refs": [claim["evidence_ref"] for claim in claims],
+                "attributes": {"knowledge_tier": "l3", "source_split": "dev", "memory_reference": card["reference"],
+                               "applicability_scope": card["applicability_scope"], "code_anchor": card["code_anchor"]},
+            })
+        atomic_write_json(stage / "index.json", {
+            "schema_version": KB_SCHEMA_VERSION, "release_id": release_id, "entries": entries,
+        })
+        files = [{"path": path.relative_to(stage).as_posix(), "sha256": sha256_file(path), "size": path.stat().st_size}
+                 for path in sorted(stage.rglob("*")) if path.is_file()]
+        digest = atomic_write_json(stage / "manifest.json", {
+            "schema_version": KB_SCHEMA_VERSION, "release_id": release_id, "files": files,
+            "self_hash_file": "manifest.sha256", "source_split": "dev", "content_digest": _digest(files),
+            "auto_dream_manifest_sha256": manifest_sha, "l3_promotion_candidates_sha256": candidates_sha,
+        })
+        (stage / "manifest.sha256").write_text(f"{digest}  manifest.json\n", encoding="utf-8", newline="\n")
+        if release_dir.resolve() != release_dir:
+            raise ValueError("m35_l3_release_link")
+        if not release_dir.exists():
+            verify_pinned_release(stage, release_id=release_id, manifest_sha256=digest)
+            stage.rename(release_dir)
+        else:
+            verify_pinned_release(release_dir, release_id=release_id, manifest_sha256=digest)
+    return {"release_dir": str(release_dir), "release_id": release_id, "manifest_sha256": digest}
 
 
 def _mock_memory(root: Path, start: Mapping[str, Any], suite: Mapping[str, Any]) -> tuple[list[Path], list[Path]]:
@@ -295,6 +376,7 @@ def _prepare_memory(root: Path, source_stores: Sequence[Path], dev_artifacts: Se
         "full": {"path": "dream/memory", "sha256": _store_digest(full)},
         "auto_dream_manifest_sha256": sha256_file(root / "dream" / "auto_dream_manifest.json"),
         "l3_promotion_candidates_sha256": sha256_file(root / "dream" / "l3_promotion_candidates.json"),
+        "l3_release": _promote_dev_kb(root.parent, dream),
     }
 
 
@@ -501,6 +583,7 @@ def _forks(root: Path) -> dict[int, dict[str, Any]]:
     if not entries or set(entries) - {str(seed) for seed in SEEDS}:
         raise ValueError("m35_invalid_fork_seeds")
     result = {}
+    checked_l3 = set()
     for seed, digest in entries.items():
         path = _inside(root, f"runs/{seed}/{FORK}")
         if sha256_file(path) != digest:
@@ -511,6 +594,23 @@ def _forks(root: Path) -> dict[int, dict[str, Any]]:
                 or fork["agent"]["mode"] != roster["mode"] or set(fork["arms"]) != set(ARMS)
                 or sorted(fork["arm_launch_order"]) != sorted(ARMS)):
             raise ValueError(f"m35_invalid_fork_manifest:{seed}")
+        l3 = fork["memory"].get("l3_release")
+        if l3 is not None:
+            release = root / L3_RELEASE_ROOT / l3["release_id"]
+            candidates_sha = fork["memory"]["l3_promotion_candidates_sha256"]
+            dream_sha = fork["memory"]["auto_dream_manifest_sha256"]
+            if (l3["release_id"] != f"m35-dev-{candidates_sha[:24]}" or Path(l3["release_dir"]) != release
+                    or _inside(root, f"{L3_RELEASE_ROOT}/{l3['release_id']}") != release):
+                raise ValueError("m35_l3_release_outside_fork")
+            pin = (release, l3["manifest_sha256"], candidates_sha, dream_sha)
+            if pin not in checked_l3:
+                verify_pinned_release(release, release_id=l3["release_id"], manifest_sha256=l3["manifest_sha256"])
+                manifest = _json(release / "manifest.json")
+                if (manifest.get("source_split") != "dev" or manifest.get("l3_promotion_candidates_sha256") != candidates_sha
+                        or manifest.get("auto_dream_manifest_sha256") != dream_sha
+                        or sha256_file(release / "l3_promotion_candidates.json") != candidates_sha):
+                    raise ValueError("m35_l3_release_evidence_mismatch")
+                checked_l3.add(pin)
         result[int(seed)] = fork
     return result
 
@@ -765,6 +865,31 @@ def _verified_evaluation(root: Path, kind: str, roster_sha: str,
     return suites
 
 
+def _verify_consumption_digest(session: Path, reference: str, evidence: Mapping[str, Any], data: bytes) -> bool:
+    ledger = session / "session.sqlite3"
+    if not ledger.is_file() or ledger.resolve() != ledger:
+        raise ValueError("m35_missing_memory_consumption_session_ledger")
+    with closing(sqlite3.connect(f"{ledger.as_uri()}?mode=ro", uri=True)) as con:
+        rows = con.execute(
+            "SELECT receipt_json FROM operations WHERE run_id=? AND round_id=? "
+            "AND action='finish-round' AND status='SUCCEEDED'", (evidence["run_id"], evidence["round_id"]),
+        ).fetchall()
+    if len(rows) != 1 or not rows[0][0]:
+        raise ValueError("m35_missing_memory_consumption_finish_receipt")
+    receipt = json.loads(rows[0][0])["result"]
+    if "memory_consumption_sha256" not in receipt:
+        # Legacy finishes can still substantiate a gateway attempt using its
+        # independent input and context hashes, but cannot certify delivery.
+        if receipt.get("memory_consumption_ref", reference) != reference:
+            raise ValueError("m35_memory_consumption_finish_reference_mismatch")
+        return False
+    if receipt.get("memory_consumption_ref") != reference:
+        raise ValueError("m35_memory_consumption_finish_reference_mismatch")
+    if receipt["memory_consumption_sha256"] != sha256_bytes(data):
+        raise ValueError("m35_memory_consumption_digest_mismatch")
+    return True
+
+
 def _verify_gateway(run_dir: Path, summary: Mapping[str, Any], *, enabled: bool) -> dict[str, Any]:
     feature_count = summary.get("feature_count", 0)
     if type(feature_count) is not int or feature_count < 0:
@@ -779,13 +904,20 @@ def _verify_gateway(run_dir: Path, summary: Mapping[str, Any], *, enabled: bool)
             if expected.get("injected_refs") or expected.get("gateway_refs"):
                 raise ValueError("m35_missing_memory_consumption_receipt")
             continue
-        path = _inside(run_dir, ref)
-        if path.name != "memory_consumption.json" or not path.parent.name.startswith("round_"):
+        round_id = expected["round_id"]
+        if type(round_id) is not int or round_id <= 0:
             raise ValueError("m35_invalid_memory_consumption_reference")
-        evidence = _json(path)
+        session = run_dir.resolve() / "session_run"
+        local_ref = f"rounds/round_{round_id:04d}/memory_consumption.json"
+        path = _inside(run_dir, ref)
+        if path != session / local_ref or ref != f"session_run/{local_ref}":
+            raise ValueError("m35_invalid_memory_consumption_reference")
+        data = path.read_bytes()
+        evidence = json.loads(data)
         if (evidence.get("schema_version") != MEMORY_RECEIPT_SCHEMA or evidence.get("memory_enabled") is not enabled
-                or evidence.get("round_id") != expected["round_id"] or ref in artifacts):
+                or evidence.get("round_id") != round_id or ref in artifacts):
             raise ValueError("m35_invalid_memory_consumption_receipt")
+        digest_verified = _verify_consumption_digest(session, local_ref, evidence, data)
         artifacts.append(ref)
         excerpts = {row["reference"]: row for row in evidence["compiled"]}
         if list(excerpts) != expected["injected_refs"] or len(excerpts) != len(evidence["compiled"]):
@@ -795,7 +927,6 @@ def _verify_gateway(run_dir: Path, summary: Mapping[str, Any], *, enabled: bool)
         context = None
         if evidence.get("context_manifest_ref") is not None:
             # Session evidence refs are relative to the Session root, not the outer run.
-            session = path.parents[2]
             manifest = _inside(session, evidence["context_manifest_ref"])
             if sha256_file(manifest) != evidence["context_manifest_sha256"]:
                 raise ValueError("m35_gateway_context_manifest_digest_mismatch")
@@ -808,7 +939,7 @@ def _verify_gateway(run_dir: Path, summary: Mapping[str, Any], *, enabled: bool)
                 continue
             if not request.get("input_ref") or request["transport_status"] not in {"attempted_send", "delivered"}:
                 raise ValueError("m35_invalid_gateway_request_receipt")
-            payload = _inside(path.parents[2], request["input_ref"])
+            payload = _inside(session, request["input_ref"])
             if sha256_file(payload) != request.get("input_sha256"):
                 raise ValueError("m35_gateway_input_digest_mismatch")
             messages = _json(payload)["messages"]
@@ -827,7 +958,7 @@ def _verify_gateway(run_dir: Path, summary: Mapping[str, Any], *, enabled: bool)
             if request_refs != set(excerpts):
                 raise ValueError("m35_gateway_card_set_mismatch")
             gateway.update(request_refs)
-            if request["transport_status"] == "delivered":
+            if digest_verified and request["transport_status"] == "delivered":
                 delivered.update(request_refs)
         if sorted(gateway) != expected["gateway_refs"]:
             raise ValueError("m35_gateway_reference_mismatch")

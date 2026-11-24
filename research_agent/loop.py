@@ -79,6 +79,24 @@ def _round_inner_requests(session_out: Mapping[str, Any], fallback_used: int) ->
     return max(0, after_val - before_val)
 
 
+_SESSION_TERMINATION_FIELDS = ("session_status", "completion_reason", "stop_reason", "termination_reason", "terminal_reason")
+_SESSION_BUDGET_REASONS = frozenset({
+    "budget_exhausted", "request_budget_exhausted", "eoh_request_budget_exhausted",
+    "eoh_round_request_budget_exhausted", "solver_budget_exhausted", "phase_budget_exhausted",
+    "deadline_exceeded", "wall_budget_exhausted", "wall_time_exhausted", "engine_wall_budget_exhausted",
+})
+
+
+def _session_terminal_phase(outcome: Mapping[str, Any]) -> str | None:
+    status = outcome.get("session_status")
+    if status == "STOPPED" or any(
+        str(outcome.get(key) or "").casefold() in _SESSION_BUDGET_REASONS
+        for key in _SESSION_TERMINATION_FIELDS[1:]
+    ):
+        return "budget_stopped"
+    return "completed" if status == "COMPLETED" else None
+
+
 def _extract_eval_objective(eval_obj: Mapping[str, Any] | None) -> float | None:
     if not isinstance(eval_obj, Mapping):
         return None
@@ -239,6 +257,8 @@ def run_research_agent(
                 raise ValueError(
                     f"resume_config_mismatch:{field_name}:{getattr(persisted_cfg, field_name)}!={getattr(config, field_name)}"
                 )
+        if config.pinned_kb_release_id is not None and persisted_cfg.kb_store_path != config.kb_store_path:
+            raise ValueError("resume_config_mismatch:kb_store_path")
         if int(config.total_request_cap) > int(persisted_cfg.total_request_cap):
             raise ValueError(
                 f"resume_config_mismatch:total_request_cap:{persisted_cfg.total_request_cap}<{config.total_request_cap}"
@@ -519,6 +539,7 @@ def run_research_agent(
             ckpt.round_step_index = 0
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
+            ckpt.round_reflection_finished = False
             ckpt.round_inner_requests = 0
             ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
@@ -807,13 +828,15 @@ def run_research_agent(
                 )
 
             ev_art_rel = f"agent_artifacts/round_{r_id:04d}_dev_eval.json"
+            # Task terminal facts can describe a round-local limit even when the Session continues.
+            session_outcome = {key: session_out[key] for key in _SESSION_TERMINATION_FIELDS if session_out.get(key)}
             ev_art_sha = atomic_write_json(
                 run_dir / ev_art_rel,
                 {
                     "round_id": r_id,
                     "template_id": chosen_tpl,
                     "postprocess_mode": chosen_pp,
-                    "session_status": session_out.get("session_status"),
+                    **session_outcome,
                     "mean_tour_length": best_obj,
                     "penalized_mean_tour_length": best_obj,
                     "valid_only_mean_tour_length": dev_eval.get("valid_only_mean_tour_length") if dev_eval else None,
@@ -828,6 +851,7 @@ def run_research_agent(
             )
             reflect_payload: dict[str, Any] = {
                 "round_id": r_id,
+                **session_outcome,
                 "template_id": chosen_tpl,
                 "postprocess_mode": chosen_pp,
                 "eval_artifact_ref": ev_art_rel,
@@ -843,8 +867,6 @@ def run_research_agent(
                 "evolved_hook_preview": str(frozen.get("hook_code") or "")[:1200] if frozen else None,
                 "regime_summary": (regime_slices or {}).get("by_factor") if isinstance(regime_slices, Mapping) else None,
             }
-            if session_out.get("stop_reason") == "stagnation_early_stop":
-                reflect_payload["stop_reason"] = "stagnation_early_stop"
             last_tool_res = reflect_payload
             ckpt.pending_reflect_payload = reflect_payload
             ckpt.phase = "reflect"
@@ -853,8 +875,18 @@ def run_research_agent(
 
         # Phase 3: Reflection & Hypothesis Ledger Update
         if ckpt.phase == "reflect":
-            reflect_payload_now = ckpt.pending_reflect_payload or last_tool_res
-            if reflect_payload_now is not None:
+            reflect_payload_now = ckpt.pending_reflect_payload or last_tool_res or {}
+            if "session_status" not in reflect_payload_now:
+                # Legacy reflect checkpoints recorded Session status only in the dev-eval artifact.
+                legacy_eval = run_dir / "agent_artifacts" / f"round_{r_id:04d}_dev_eval.json"
+                if legacy_eval.is_file():
+                    eval_text = legacy_eval.read_text(encoding="utf-8")
+                    if sha256_text(eval_text) == reflect_payload_now.get("eval_artifact_sha256"):
+                        outcome = json.loads(eval_text)
+                        reflect_payload_now = {**reflect_payload_now, **{
+                            key: outcome[key] for key in _SESSION_TERMINATION_FIELDS if key in outcome
+                        }}
+            if reflect_payload_now:
                 last_tool_res = dict(reflect_payload_now)
                 if ckpt.pending_submit_tool_call and ckpt.pending_submit_tool_call.get("id"):
                     messages.append({
@@ -876,8 +908,9 @@ def run_research_agent(
                         "role": "user",
                         "content": json.dumps({"phase": "reflect", "round_evaluation_result": reflect_payload_now}, ensure_ascii=False, default=str),
                     })
-            reflect_step = 0
-            while ckpt.round_reflect_requests < config.outer_reflect_cap and (budget.remaining is None or budget.remaining > 0):
+            reflect_step = ckpt.round_reflect_requests
+            while (not ckpt.round_reflection_finished and ckpt.round_reflect_requests < config.outer_reflect_cap
+                   and (budget.remaining is None or budget.remaining > 0)):
                 try:
                     dec = driver.decide_step(
                         round_id=r_id,
@@ -907,6 +940,8 @@ def run_research_agent(
                                 _dispatch_tool("hypothesis_update", upd, r_id)
                             except Exception:
                                 pass
+                    ckpt.round_reflection_finished = True
+                    _save_ckpt()
                     break
                 if act == "call_tool":
                     tname = str(dec["tool"])
@@ -945,17 +980,16 @@ def run_research_agent(
                     continue
                 break
 
-            dev_obj = _extract_eval_objective(session_out.get("dev_eval")) if session_out else (
-                _extract_eval_objective(reflect_payload_now)
-            )
-            prev_cmp = prev_best_dev if session_out else ckpt.round_prev_best_dev
+            dev_obj = _extract_eval_objective(reflect_payload_now)
+            prev_cmp = ckpt.round_prev_best_dev
             delta_str = ""
             if dev_obj is not None and prev_cmp is not None:
                 delta_str = f"{float(dev_obj) - float(prev_cmp):+.4f}"
             if dev_obj is not None and (prev_best_dev is None or float(dev_obj) < float(prev_best_dev)):
                 prev_best_dev = float(dev_obj)
 
-            inner_stopped = (reflect_payload_now or {}).get("stop_reason") == "stagnation_early_stop"
+            inner_stopped = reflect_payload_now.get("stop_reason") == "stagnation_early_stop"
+            terminal_phase = _session_terminal_phase(reflect_payload_now)
             if inner_stopped:
                 ckpt.trajectory_control_events.append({"round_id": r_id, "event": "stagnation_early_stop"})
             if track_round_stagnation:
@@ -976,23 +1010,19 @@ def run_research_agent(
                     ckpt.restart_eligible_round_id = None
 
             h_counts = ledger_tool.counts()
-            inner_used = (
-                _round_inner_requests(session_out, budget.used)
-                if session_out
-                else int(ckpt.round_inner_requests or 0)
-            )
             r_summary = {
                 "round_id": r_id,
                 "arm_id": config.arm_id,
                 "problem_family": config.problem_family,
                 "template_id": ckpt.active_template_id,
                 "postprocess_mode": ckpt.active_postprocess_mode,
-                "session_status": session_out.get("session_status") if session_out else "resumed",
+                "session_status": "resumed",
+                **{key: reflect_payload_now[key] for key in _SESSION_TERMINATION_FIELDS if key in reflect_payload_now},
                 "best_objective": f"{dev_obj:.4f}" if dev_obj is not None else "",
                 "delta_vs_prev": delta_str,
                 "requests_used_total": budget.used,
                 "outer_requests_round": ckpt.round_outer_requests + ckpt.round_reflect_requests,
-                "inner_requests_round": inner_used,
+                "inner_requests_round": ckpt.round_inner_requests,
                 "hypotheses_supported": h_counts.get("supported", 0),
                 "hypotheses_refuted": h_counts.get("refuted", 0),
                 "frozen_manifest_ref": ckpt.best_solver_manifest_ref or "",
@@ -1000,17 +1030,16 @@ def run_research_agent(
             consumption = session_tool.memory_consumption(r_id)
             r_summary["memory_consumption"] = consumption
             r_summary["feature_count"] = len(consumption["injected_refs"])
-            if inner_stopped:
-                r_summary["stop_reason"] = "stagnation_early_stop"
             append_results_tsv_row(tsv_path, r_summary)
             round_summaries.append(r_summary)
             ckpt.round_summaries.append(r_summary)
             ckpt.completed_rounds.append(r_id)
             ckpt.current_round += 1
-            ckpt.phase = "diagnose"
+            ckpt.phase = terminal_phase or "diagnose"
             ckpt.round_step_index = 0
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
+            ckpt.round_reflection_finished = False
             ckpt.round_inner_requests = 0
             ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
@@ -1018,10 +1047,6 @@ def run_research_agent(
             ckpt.round_diagnostic_blocks = 0
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None
-            if session_out and session_out.get("session_status") in {"COMPLETED", "STOPPED"}:
-                ckpt.phase = "budget_stopped"
-                _save_ckpt()
-                break
             _save_ckpt()
 
     if config.strict_checkpoint_barriers:

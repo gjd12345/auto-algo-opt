@@ -9,7 +9,7 @@ from .api import MemoryAPI, MemoryEntry
 
 
 class MemoryBackend(Protocol):
-    def read(self, query: str, *, project: str, scene: str | None = None,
+    def read(self, query: str, *, project: str, scene: str | tuple[str, ...] | None = None,
              memory_type: str | None = None, limit: int = 8,
              include_cross_project: bool = False, offset: int = 0,
              include_shared: bool = True,
