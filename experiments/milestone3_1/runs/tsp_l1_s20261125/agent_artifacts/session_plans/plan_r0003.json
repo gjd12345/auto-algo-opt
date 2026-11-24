@@ -1,0 +1,37 @@
+{
+  "round_id": 3,
+  "direction": "Blend dimensionless mean-isolation farness with linear destination (closing) pull in the next-node score, keeping the step O(n) vectorized so remaining budget is spent on better choices rather than lookahead.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "Archive shows the current best solver (93030.89 mean, 6.68 ms) is still ~0.46% off VBS and weakest at size 50/100/200, where NN-family constructions leave long late edges. KB entry method-tsp-i605-mean-farness reports mean-isolation farness as the best-performing fully-completing island rule (all 128 completed), method-tsp-i605-dest-pull shows the linear destination-pull form is algebraically a vectorized regret/insertion hybrid running at sub-millisecond cost, and method-tsp-i605-dimensionless-ratio shows max-normalized dimensionless features give strict scale invariance and full completion. Because both signals are O(n) per candidate step (O(n^2)-O(n^3) per instance) and our current solve time is only ~6.7 ms of a 500 ms budget, we can afford the richer score without any completion risk, and the per-step max-normalization keeps the two weights meaningful across the heterogeneous coordinate scales in the 36-instance suite."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Scoring candidate u from current node c as score(u) = d(c,u)/max_d - w_f * mean_{v unvisited}(d(v,u))/max_mean + w_d * d(u,start)/max_d (all terms divided by their current-step maximum, so the rule is scale-invariant) yields shorter tours than plain nearest-neighbour while staying well inside the 500 ms budget; the mean-farness term counteracts NN's early 'stranding' of isolated cities and the destination-pull term truncates the long closing edge, so the combined score should beat either alone, especially on the size=100/200 regimes where the archived portfolio shows the largest gaps.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-dimensionless-ratio",
+      "method-tsp-nearest-neighbor-construct"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows the current best solver (93030.89 mean, 6.68 ms) is still ~0.46% off VBS and weakest at size 50/100/200, where NN-family constructions leave long late edges. KB entry method-tsp-i605-mean-farness reports mean-isolation farness as the best-performing fully-completing island rule (all 128 completed), method-tsp-i605-dest-pull shows the linear destination-pull form is algebraically a vectorized regret/insertion hybrid running at sub-millisecond cost, and method-tsp-i605-dimensionless-ratio shows max-normalized dimensionless features give strict scale invariance and full completion. Because both signals are O(n) per candidate step (O(n^2)-O(n^3) per instance) and our current solve time is only ~6.7 ms of a 500 ms budget, we can afford the richer score without any completion risk, and the per-step max-normalization keeps the two weights meaningful across the heterogeneous coordinate scales in the 36-instance suite."
+  }
+}

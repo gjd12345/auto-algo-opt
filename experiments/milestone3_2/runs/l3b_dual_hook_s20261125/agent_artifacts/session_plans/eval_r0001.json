@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:c295280be87d493e9b02bfb324509e67"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H1 (from method-cvrp-m3-ruin-recreate-l3): the multiplicative-gated rank-power destroy rule beats zero-evolution Worst-Cost Removal (L3-ctrl, blind-120 23.3474) because stagnation-adaptive flattening of the rank exponent prevents the LNS from re-destroying the same worst-detour customers every iteration. H2 (from method-cvrp-cheapest-regret-insertion + method-cvrp-lns-shaw-regret): opening the second hook `score_recreate_action` as a cheapest-detour x Regret-2 blend with a capacity-fill gate strictly improves the fixed deterministic Regret-2 repair on heterogeneous-demand dev_24 instances, since high-regret-but-capacity-tight customers must be seated before cheap repeated re-insertions consume the residual capacity of the cheapest routes. Prediction: on cvrp_dev_hetero_24 at 500 ms, mean tour length improves vs the L3 single-hook control, with the largest relative gains on the high-demand-variance / tight-capacity regimes, and no regression on the mid-scale uniform regimes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c295280be87d493e9b02bfb324509e67"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the dual-hook L3b ruin+recreate LNS jointly: (1) `score_ruin_nodes` = multiplicative-gated rank-power removal priority — rank_power(|removal_savings|/scale, p(iter_frac, stagnation_ratio)) with load-saturation gate, depot-proximity gate and per-route-length gate, so that under stagnation the priority flattens toward uniform/random diversification while under early iterations it concentrates on worst-detour nodes; (2) `score_recreate_action` = cheapest-detour score blended with Regret-2 lookahead margin (second-best minus best insertion cost) and a capacity-fill residual gate, so that scarce-capacity customers with high regret are placed earlier (farther detour is penalized, high regret is rewarded), stabilizing deterministic replay."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

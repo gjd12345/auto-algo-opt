@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:6ac7e2e48a72438280d1fae474106c70"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a 500 ms per-instance budget on tsp_guided_insertion_2opt, replacing a single greedy cheapest-insertion + full-matrix 2-opt sweep with (a) regret-2 guided insertion over a k-nearest-neighbor candidate set and (b) first-improvement 2-opt restricted to those candidate lists, plus seed restarts, yields a shorter final tour length than the plain insertion/2-opt baseline while staying inside the deterministic time budget, because candidate-list restriction cuts per-move cost so many more improving moves are evaluated per millisecond.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:6ac7e2e48a72438280d1fae474106c70"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Use budget-adaptive construction (regret-2 / nearest-neighbor-guided insertion with k-nearest candidate seeding) followed by first-improvement 2-opt over truncated neighbor lists (k≈16-20), restarting construction from a different seed while time budget remains, so 500 ms is spent on repeated cheap improvement rather than one expensive full pass."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

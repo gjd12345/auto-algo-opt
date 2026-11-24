@@ -1,0 +1,112 @@
+{
+  "type": "evidence",
+  "title": "CVRP Frozen C series gate x O(1/s^2) payload scale-collapse mechanism (H-001)",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "h-001",
+    "frozen-c",
+    "scale-collapse",
+    "scaling",
+    "dimensionless",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Proves Frozen C's +207% collapse under s=1e-3 coordinate scaling is a series gate-x-payload mechanism: mixed-unit band=1e-3*(span+1.0) opens the gate (1.7% -> 84.3%) while cap_term/base explodes as O(1/s^2) (log-log slope -1.994).",
+  "attributes": {
+    "knowledge_tier": "math_observation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "O(1)",
+    "interface": "select_next_node",
+    "applicable_regimes": {
+      "strong_on": [
+        "diagnosing_unit_leakage",
+        "scale_invariance_auditing",
+        "cvrp_dev_hetero_24_stress"
+      ],
+      "weak_on": [
+        "rules_already_dimensionless"
+      ],
+      "scale_notes": "对任何将未归一化需求/常数项直接加到坐标距离上的启发式公式均具普适诊断意义；直接确立了本课题全部后续规则 0.00% 坐标缩放极差的硬性设计规范。"
+    },
+    "math_formulation": [
+      {
+        "expr": "band(s) / base(s) = 1e-3 * (span_1 + 1/s) / base_1  ~ O(1) + O(1/s)",
+        "variables": {
+          "s": "统一坐标缩放因子",
+          "span_1": "标称尺度极差"
+        },
+        "preconditions": "坐标整体乘以常数 s > 0 而需求与容量保持不变"
+      },
+      {
+        "expr": "cap_term(s) / base(s) = [0.01 * |rest_cap - q_j| / (s * d_1)] / (s * base_1) ~ O(1 / s^2)",
+        "variables": {
+          "cap_term(s)": "门控内容量匹配载荷",
+          "s": "坐标缩放因子"
+        },
+        "preconditions": "门控触发（mask.sum() >= 2 and current_node != depot）时实测 4 尺度对数斜率 = -1.994"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "experiments/cvrp_midterm/analysis/scale_term_audit.py",
+        "sha256": "f6a160a79ce0b4153c45205d11d290b5ff6269e3c9512dc5693b29508764f6b2"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "5215ebd",
+        "path": "reports/evidence/cvrp_p0_p1_p2_20261107/p0/frozen_code/C.py",
+        "sha256": "141d99b6f7c62e60313feb2c520889a957da9ae00fd5138798f4de3c30e25627"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "shared_diagnostic_6",
+        "run_id": "h001_scale_term_audit",
+        "algorithm_id": "c",
+        "metric": "scale_spread_pct_4scales",
+        "value": 206.99,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "C_full s=1: 10.9197 -> s=1e-3: 33.5221 (+206.99%); C_no_cap spread=0.18%; C_rel_band spread=0.40%",
+        "artifact_path": "experiments/cvrp_midterm/analysis/scale_term_audit.json"
+      },
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "cvrp_workbench_v2_scale_stress_1e-3",
+        "algorithm_id": "c",
+        "metric": "max_scale_drift_pct_at_1e-3",
+        "value": 263.8998,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "4 例 1e-3 压力抽检：Frozen C 最大漂移 263.90%，R5/R7/CW 漂移 0.00%",
+        "artifact_path": "results/scale_stress_records.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-frozen-c-near-tie",
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "sources": [
+      "src-cvrp-midterm-20261121",
+      "src-cvrp-workbench-20261121"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-midterm-20261121",
+    "src-cvrp-workbench-20261121"
+  ],
+  "evidence_refs": [
+    "report:experiments/cvrp_midterm/REPORT_MIDTERM_SYNTHESIS.md"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-scale-collapse-h001",
+  "content_sha256": "8b8ba96489f964cd60c4507f81215607a787da115c53d0a172a6ece549681e69"
+}

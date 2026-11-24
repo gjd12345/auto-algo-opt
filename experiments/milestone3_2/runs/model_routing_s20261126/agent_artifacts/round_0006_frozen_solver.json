@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0006_cvrp_ruin_recreate_b4c42eb8",
+  "display_name": "Session R6 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    D = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(np.asarray(route_ids).shape[0])\n    eps = 1e-12\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    sav = np.where(np.isfinite(sav), sav, 0.0)\n    cap = float(capacity) if np.isfinite(capacity) and capacity > 0.0 else 1.0\n\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # ---- normalized absolute savings ----\n    asav = np.abs(sav)\n    ms = float(np.mean(asav))\n    if (not np.isfinite(ms)) or ms <= eps:\n        ms = 1.0\n    s_term = np.clip(asav / (ms + eps), 0.0, 8.0)\n\n    # ---- asymmetric edge-fill gate (favor extremes under tight capacity) ----\n    fill = np.asarray(route_loads, dtype=np.float64) / cap\n    fill = np.where(np.isfinite(fill), fill, 0.0)\n    fill = np.clip(fill, 0.0, 1.5)\n    low_boost = np.clip((0.35 - fill) / 0.35, 0.0, 1.0)\n    high_boost = np.clip((fill - 0.65) / 0.35, 0.0, 1.0)\n    asym = 0.55 * low_boost + 0.95 * high_boost\n    edge = np.clip(np.abs(fill - 0.5) * 2.0, 0.0, 2.0)\n    fill_gate = np.clip(0.35 + 0.75 * edge + 0.70 * asym, 0.05, 4.0)\n\n    # ---- depot-distance gate scaled by route extension ----\n    depot_d = np.abs(D[0, 1:n + 1])\n    dd_mean = float(np.mean(depot_d))\n    if (not np.isfinite(dd_mean)) or dd_mean <= eps:\n        dd_mean = 1.0\n    dd_norm = np.clip(depot_d / dd_mean, 0.0, 4.0)\n\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd = np.where(np.isfinite(rd), rd, 0.0)\n    rd_med = float(np.median(rd))\n    if (not np.isfinite(rd_med)) or rd_med <= eps:\n        rd_med = 1.0\n    ext = np.clip(rd / rd_med, 0.0, 3.0)\n    depot_gate = np.clip(dd_norm * (0.5 + 1.15 * ext), 0.05, 10.0)\n\n    # ---- demand saturation gate (inverse: big demands get amplified mildly) ----\n    dem = np.asarray(demands, dtype=np.float64)[1:n + 1]\n    dem = np.where(np.isfinite(dem), dem, 0.0)\n    dm = float(np.mean(dem))\n    if (not np.isfinite(dm)) or dm <= eps:\n        dm = 1.0\n    dem_gate = np.clip(dem / (dm + eps), 0.0, 4.0)\n    dem_gate = 0.6 + 0.8 * dem_gate\n\n    # ---- multiplicative severity ----\n    sev = (0.9 + s_term) * fill_gate * (0.8 + 0.35 * depot_gate) * dem_gate\n    sev = np.where(np.isfinite(sev), sev, 1.0)\n\n    # ---- squared z-score smoothing ----\n    mu = float(np.mean(sev))\n    sd = float(np.std(sev))\n    if (not np.isfinite(sd)) or sd <= eps:\n        sd = 1.0\n    z = (sev - mu) / (sd + eps)\n    z = np.where(np.isfinite(z), z, 0.0)\n    smooth = z + 0.35 * z * np.abs(z)  # convex-concave smoothing\n    smooth = np.where(np.isfinite(smooth), smooth, 0.0)\n\n    # ---- exponential softmax-shaped weights (bounded) ----\n    T = 0.8 + 1.6 * it - 1.0 * st * (0.4 + 0.6 * it)\n    T = float(np.clip(T, 0.15, 3.5))\n    shifted = smooth - float(np.max(smooth))\n    expo = np.exp(np.clip(shifted / (T + eps), -20.0, 0.0))\n    ea_sum = float(np.sum(expo))\n    if not np.isfinite(ea_sum) or ea_sum <= eps:\n        weights = np.ones(n, dtype=np.float64) / float(n)\n    else:\n        weights = expo / ea_sum\n\n    # ---- deterministic iter/stagnation-driven sinusoid jitter ----\n    idx = np.arange(n, dtype=np.float64)\n    phase = 7.917 * idx + 41.233 * it + 19.877 * st\n    raw = np.sin(phase) * 31337.737\n    jitter = raw - np.floor(raw)\n    jitter = np.where(np.isfinite(jitter), jitter, 0.0)\n\n    amp = 0.45 * st + 0.35 * (1.0 - it)\n    amp = float(np.clip(amp, 0.0, 0.85))\n    score = (1.0 - amp) * weights + amp * (jitter / float(n))\n\n    # ---- elastic min-max normalize ----\n    smin = float(np.min(score))\n    smax = float(np.max(score))\n    rng = smax - smin\n    if rng > eps:\n        score = (score - smin) / rng\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "b4c42eb87f80e65b4f24cee00de3dced6fbccbf182d0ff79e763560d15746f90",
+  "design_sha256": "42a9298f87a16868b459931a438f745a20ac8b73cbc9997af09f7724e2ce2399",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261126\\session_run\\rounds\\round_0006\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

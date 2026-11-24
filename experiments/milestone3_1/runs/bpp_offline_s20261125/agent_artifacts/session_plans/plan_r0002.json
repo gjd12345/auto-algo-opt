@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Refine the offline `score_item` priority to break the 2-3% gap on the small/medium instances: prioritize large items (size descending) but perturb ties with a deterministic hashed jitter so that FFD-like packing explores alternative insertion orders, and let the repack pass relocate the smallest items of under-filled bins. Push toward reducing bin count on size=50 (13.0 mean) and size=100 (24.25 mean) regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "bpp_offline_reorder_repack",
+      "mechanism": "Round 1 produced a single solver at mean objective 28.1667 with zero VBS gap, so the only available signal is the per-size relative gap reported in archive feedback (size 50: 2.72%, size 100: 2.41%, size 200: 1.52%). KB search returned no entries for offline BPP priority heuristics in this release, so the plan is driven by the archive's weakest-regime evidence rather than literature. The dominant failure mode in decreasing-order bin packing is tie ambiguity among equal/large items, which changes whether the tail of small items fits into existing bins; adding a bounded deterministic secondary term to `score_item` is a low-risk, sub-millisecond change well inside the 500 ms budget and keeps postprocess `none` so the improvement is attributable to ordering alone."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1ade515adad97eb3fd0c0618e9a63a84eb5ea1464e241051377ed47be06cd026"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "If `score_item` is a lexicographic priority: (a) size descending as the base term, plus (b) a bounded deterministic tie-break term derived from a cheap residual-fit heuristic (e.g. item size modulo the dominant bin-fill quantum, or hash(size) so equal-size items are ordered consistently yet differently across bins), then the reorder-repack loop will close part of the ~2.4-2.7% relative gap on size 50/100 instances without regressing size 200, because FFD orderings tie on large items and the residual term drives the small-item placement that determines whether the last bin is needed.",
+  "interface_selection": {
+    "template_id": "bpp_offline_reorder_repack",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 produced a single solver at mean objective 28.1667 with zero VBS gap, so the only available signal is the per-size relative gap reported in archive feedback (size 50: 2.72%, size 100: 2.41%, size 200: 1.52%). KB search returned no entries for offline BPP priority heuristics in this release, so the plan is driven by the archive's weakest-regime evidence rather than literature. The dominant failure mode in decreasing-order bin packing is tie ambiguity among equal/large items, which changes whether the tail of small items fits into existing bins; adding a bounded deterministic secondary term to `score_item` is a low-risk, sub-millisecond change well inside the 500 ms budget and keeps postprocess `none` so the improvement is attributable to ordering alone."
+  }
+}

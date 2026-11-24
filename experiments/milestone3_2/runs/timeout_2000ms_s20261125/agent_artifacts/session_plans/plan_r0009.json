@@ -1,0 +1,35 @@
+{
+  "round_id": 9,
+  "direction": "Stagnation-adaptive multiplicative gating on the ruin score: score_i = rank_power(|removal_savings_i| * gate_load * gate_depot * gate_demand, p(iter_frac, stagnation_ratio)) with p swinging low (1.0, near-greedy worst-removal) early and high (2.0-3.0, uniformized) as stagnation_ratio grows, plus soft gates that up-weight customers in nearly-full routes (tight capacity regime) and in spatially clustered groups (dense removal for clustered instances). This replaces last round's flat score (which regressed to 16.0711 vs SBS 16.0496) with explicit stagnation-driven diversification so LNS escapes local optima on the tight-capacity / size-100 / clustered weak regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents the exact evolvable hook signature and the proven rank-power + multiplicative-gate formula family (gate_load/gate_depot/gate_demand/gate_rdist with p(iter_frac, stagnation_ratio)), which the M3-3 R2 arm evolved to beat the Worst-Removal L3-ctrl baseline (23.3186 vs 23.3474 blind-120) and to win 8/24 pairwise on dev_24. The archive shows the frontier is compressed (16.0496-16.0527, gap to VBS only 0.82%), so remaining gains must come from diversification quality, not from more iterations; stagnation-aware rank-power annealing is the documented lever for exactly that. 2000 ms budget is far above the 25 ms regime the KB flags as unsafe, so no budget-exhaustion pitfall applies."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 8,
+    "evaluation_ref": "rounds/round_0008/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at a 2000 ms budget, an evolved score_ruin_nodes that anneals the rank power from ~1 toward ~2.5 as stagnation_ratio increases, multiplied by soft route-load (tight-capacity) and removal-size gates, will lower mean objective below the current SBS 16.0496 by >=0.5% by increasing ruin-set diversity exactly when the search stalls, with no increase in mean solve_ms above 400 ms.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents the exact evolvable hook signature and the proven rank-power + multiplicative-gate formula family (gate_load/gate_depot/gate_demand/gate_rdist with p(iter_frac, stagnation_ratio)), which the M3-3 R2 arm evolved to beat the Worst-Removal L3-ctrl baseline (23.3186 vs 23.3474 blind-120) and to win 8/24 pairwise on dev_24. The archive shows the frontier is compressed (16.0496-16.0527, gap to VBS only 0.82%), so remaining gains must come from diversification quality, not from more iterations; stagnation-aware rank-power annealing is the documented lever for exactly that. 2000 ms budget is far above the 25 ms regime the KB flags as unsafe, so no budget-exhaustion pitfall applies."
+  }
+}

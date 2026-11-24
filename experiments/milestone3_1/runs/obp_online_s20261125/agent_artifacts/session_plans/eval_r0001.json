@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:98a50b5d3e7e4128a71042447d93ca97"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A dimensionless fill-ratio score combining an exponential reward above 0.90 utilization, a log-style symmetry preference near half-fill, and a residual deadzone quadratic that vanishes at exactly-full and exactly-symmetric residuals (r==0 and r==w), with new-bin opening suppressed when a feasible fitting bin exists, will beat Best-Fit/fill-after-placement baselines on cvrp_dev_hetero_24 (fewer bins, lower worst-case factor) while remaining 0% drift under 10x capacity rescaling.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:98a50b5d3e7e4128a71042447d93ca97"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Optimize a strictly prefix-causal score_bin hook for obp_online_priority: for each open bin compute normalized fill-after-placement u = (cap - r)/cap and residual ratio rho = r/cap. Build a dimensionless composite score = w1 * exp(k1 * u) * 1[u >= 0.90] (exponential cap-tightening reward) + w2 * (1 - |u - 0.5|/0.5)^2 (log/half-fill symmetry preference) + w3 * deadzone-quadratic penalty on rho in [0.02, 0.25] that vanishes at rho==0 and at rho==1. Keep everything scale-invariant (10x capacity scaling must be 0% drift) and use only the arriving item size plus current residuals; no lookahead, no batch reordering. Evolution should tune (k1, w1, w2, w3) and deadzone width while guarding the active-open-new-bin control: never open a new bin if any feasible bin exists and rho <= deadzone bound, since ablation shows aggressive opening degrades B1 from 0.006741 to 0.039038 (BPPLib +36.35%). Target: minimize bins on cvrp_dev_hetero_24 under 500 ms budget with stable worst-case factor behavior."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

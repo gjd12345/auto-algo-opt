@@ -1,0 +1,35 @@
+{
+  "round_id": 2,
+  "direction": "Stagnation-adaptive, scale-invariant multiplicative-gating ruin scoring paired with regret-driven recreate action scoring, tuned for the exhausted weak regimes (n=100, spatial=uniform, depot=eccentric, capacity=loose)",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round-1 baseline (session_r0001, cvrp_ruin_recreate_dual, postprocess none) reached mean objective 16.1493 at 341.3 ms mean on dev_24, comfortably inside the 500 ms budget and with zero failed instances, so the bottleneck is search quality per iteration rather than feasibility or budget exhaustion (KB method-cvrp-m3-ruin-recreate-l3 reports first_feasible_ms ~2-3 ms and full completion at 500 ms, while flagging tight-budget exhaustion only at 25 ms). Archive weakest regimes are n=100, spatial=uniform, depot_style=eccentric, demand=uniform, capacity=loose, all with negative VBS rel gap and 6-12 exhausted instances, which points to stall-prone ruin selection on large uniform instances with many near-degenerate removal savings and to route-count inefficiency when capacity is loose. KB's evolved L3 hook shape (rank_power of |removal_savings|/scale times gate_load, gate_depot, gate_demand, gate_rdist) is exactly the verified prior, and Shaw-relatedness/regret theory (method-cvrp-lns-shaw-regret) supports diversification when relatedness is uninformative and regret lookahead for repair. Hence the plan evolves along the multiplicative-gating + rank-power exponent axis, making the exponent explicitly a function of stagnation_ratio and iter_frac so the same hook behaves greedily early (sharpening worst-removal to exploit CW + intra_2opt quality) and diversifying late on n=100 uniform instances, while keeping outputs finite, deterministic in tie-breaking, and read-only over state so the 5-gate validator's dual-action causal probe stays satisfiable."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Under the 500 ms budget with mean solve time 341 ms (i.e. LNS loop is actually running, not budget-starved), the dev_24 residual gap (VBS rel gap ~ -20% on n=100, uniform-spatial, eccentric-depot, loose-capacity instances) comes mainly from ruin-set selection that is too uniform in effect: worst-cost removal alone concentrates removal in the same long-edge customers and re-inserts them into near-identical routes, so the LNS stalls early. A score_ruin_nodes that (a) normalizes removal_savings by a robust scale (mean/median of |removal_savings|) so it is scale-invariant across n=100 vs smaller instances, (b) applies multiplicative gates for route load slack (capacity=loose regimes reward removing from loaded routes), depot proximity (eccentric depot: customers far from depot carry large round-trip cost so their removal is worth more), demand magnitude, and route distance modulation, and (c) raises a rank-power exponent p(iter_frac, stagnation_ratio) so that as stagnation grows the score flattens toward diversification and as stagnation is low it sharpens toward greedy worst-removal, will lower mean tour length on dev_24 below the round-1 baseline 16.1493, with the largest gains on the n=100 / uniform / eccentric-depot / loose-capacity buckets. Paired with a recreate action score that prefers min-detour regret-2 insertion weighted by depot-distance asymmetry, this yields both deeper intra-route 2-opt-compatible removals and better route-count control under loose capacity.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-1 baseline (session_r0001, cvrp_ruin_recreate_dual, postprocess none) reached mean objective 16.1493 at 341.3 ms mean on dev_24, comfortably inside the 500 ms budget and with zero failed instances, so the bottleneck is search quality per iteration rather than feasibility or budget exhaustion (KB method-cvrp-m3-ruin-recreate-l3 reports first_feasible_ms ~2-3 ms and full completion at 500 ms, while flagging tight-budget exhaustion only at 25 ms). Archive weakest regimes are n=100, spatial=uniform, depot_style=eccentric, demand=uniform, capacity=loose, all with negative VBS rel gap and 6-12 exhausted instances, which points to stall-prone ruin selection on large uniform instances with many near-degenerate removal savings and to route-count inefficiency when capacity is loose. KB's evolved L3 hook shape (rank_power of |removal_savings|/scale times gate_load, gate_depot, gate_demand, gate_rdist) is exactly the verified prior, and Shaw-relatedness/regret theory (method-cvrp-lns-shaw-regret) supports diversification when relatedness is uninformative and regret lookahead for repair. Hence the plan evolves along the multiplicative-gating + rank-power exponent axis, making the exponent explicitly a function of stagnation_ratio and iter_frac so the same hook behaves greedily early (sharpening worst-removal to exploit CW + intra_2opt quality) and diversifying late on n=100 uniform instances, while keeping outputs finite, deterministic in tie-breaking, and read-only over state so the 5-gate validator's dual-action causal probe stays satisfiable."
+  }
+}

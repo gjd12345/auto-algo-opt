@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:b0d72bb6eb984e21a5f04bc51d1dab55"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under the 500 ms anytime LNS budget, on n=100 / uniform / eccentric-depot / loose-capacity CVRP instances the current fixed-size Worst-Cost removal wastes iterations on marginally-improving small neighborhoods and never escapes local optima within the deadline. A size-scaled hybrid destroy score (worst-cost z-score + Shaw relatedness to the route centroid, with |R| growing as ~sqrt(n) and time-decayed) will increase the count of accepted improving moves per unit time and yield >=1% lower mean objective on n=100 instances without regressing small-n (<=50) instances beyond 0.5%, since small-n keeps a near-fixed small removal set.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b0d72bb6eb984e21a5f04bc51d1dab55"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the `score_ruin_nodes` destruction-priority hook toward a size-aware hybrid: combine normalized worst-cost removal (high detour saving) with Shaw relatedness to the last-depot/route-centroid, and scale the per-iteration ruin fraction with instance size (larger n=100 gets a modestly larger removal set |R| ramping from ~4 to ~12 nodes) while keeping Regret-2 recreate and Record-to-Record acceptance untouched. Focus the reward shaping on the weakest regimes: n=100, uniform spatial, eccentric depot, uniform demand, loose capacity — where the archive shows the largest negative VBS gap (exhausted instances, ~-20% rel gap)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

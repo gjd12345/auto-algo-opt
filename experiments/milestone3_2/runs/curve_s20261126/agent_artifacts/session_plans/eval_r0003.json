@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:216756ec091a47c3b4dd1457b9cc5557"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Multiplicative gating of raw removal savings (route-load saturation, depot eccentricity, demand mass, route length) combined with an iter_frac/stagnation_ratio-annealed rank-power exponent yields a strictly stronger ruin priority than plain Worst-Cost Removal on cvrp_dev_hetero_24 at 500 ms, with the largest gains on the weakest regimes (tight capacity, size 100, eccentric depot, uniform demand), without regressing feasibility or mean solve time beyond the 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:216756ec091a47c3b4dd1457b9cc5557"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_ruin_nodes as a multiplicative gated rank-power removal score: score_i = (|removal_savings_i| / scale) ** p * gate_load * gate_depot * gate_demand * gate_rdist, with the exponent p annealed on (iter_frac, stagnation_ratio) so early iterations remove high-savings nodes broadly while stagnated late iterations concentrate on load-saturated, far-from-depot, high-demand nodes on long routes; all state arrays read-only, deterministic tie-breaking by customer index (no RNG)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

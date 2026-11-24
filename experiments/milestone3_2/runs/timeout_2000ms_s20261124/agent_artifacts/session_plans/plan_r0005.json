@@ -1,0 +1,36 @@
+{
+  "round_id": 5,
+  "direction": "Refine the round-4 champion destroy score from a multiplicative depot-load gate into a capacity-slack-aware, route-sparsity-normalized score with a three-phase stagnation clock: (1) exploit phase — concentrate removals on the smallest routes (fewest stops, highest residual capacity) to enable route-elimination moves; (2) neutral phase — flat rank power over normalized removal savings; (3) diversify phase — randomized mid-tail removal driven by Shaw relatedness to the last-improved incumbent. All gates remain scale-invariant (normalized by mean depot distance) and deterministic, with tie-breaks by index only.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-4 already validated the normalized-savings x depot-gate x route-load-gate core plus a two-phase rank schedule (mean 15.980136 vs SBS 16.078067, all 24/24 feasible, solve_ms 207.9 ms — only ~10% of the 2000 ms budget, so there is ample headroom for a richer hook without any timeout risk). Two structural weaknesses remain: (a) the load gate only penalizes near-capacity routes, giving no explicit bonus to the small/degenerate routes whose removal can eliminate a whole vehicle, which is where tight-capacity instances (vbs_rel_gap -22.7%) lose most; (b) the two-phase rank schedule jumps from greedy to mid-tail without an explicit relatedness term, so diversification is spatially blind. The KB L3 blueprint confirms the interface invariant (finite length-n float vector, read-only state, deterministic tie-breaks, no global RNG) and the Shaw entry supplies the relatedness metric, while the regret-insertion entry confirms the fixed Regret-2 repair stays untouched. Budget headroom (208 ms used of 2000 ms) means added per-call cost is safe; expect < 400 ms mean even with the extra vectorized terms. Postprocess stays none to preserve the 5-gate interface and avoid any extra unmapped stage."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms with cvrp_ruin_recreate/none, replacing the round-4 fixed depot+load gate with a capacity-slack x route-sparsity gate (score = |savings|/scale * (1 + alpha * slack_frac) * (1 + beta / n_stops) * depot_gate) and a three-phase stagnation clock (exploit -> neutral -> Shaw-diversify) will lower mean objective below the 15.9801 SBS, with the largest per-instance gains in the weakest regimes (tight capacity, size 100, eccentric depot, clustered spatial), because route-elimination-friendly removals are most valuable exactly where capacity is binding and geometry is clustered.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-4 already validated the normalized-savings x depot-gate x route-load-gate core plus a two-phase rank schedule (mean 15.980136 vs SBS 16.078067, all 24/24 feasible, solve_ms 207.9 ms — only ~10% of the 2000 ms budget, so there is ample headroom for a richer hook without any timeout risk). Two structural weaknesses remain: (a) the load gate only penalizes near-capacity routes, giving no explicit bonus to the small/degenerate routes whose removal can eliminate a whole vehicle, which is where tight-capacity instances (vbs_rel_gap -22.7%) lose most; (b) the two-phase rank schedule jumps from greedy to mid-tail without an explicit relatedness term, so diversification is spatially blind. The KB L3 blueprint confirms the interface invariant (finite length-n float vector, read-only state, deterministic tie-breaks, no global RNG) and the Shaw entry supplies the relatedness metric, while the regret-insertion entry confirms the fixed Regret-2 repair stays untouched. Budget headroom (208 ms used of 2000 ms) means added per-call cost is safe; expect < 400 ms mean even with the extra vectorized terms. Postprocess stays none to preserve the 5-gate interface and avoid any extra unmapped stage."
+  }
+}

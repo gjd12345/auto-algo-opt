@@ -1,0 +1,193 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m31_bpp_offline_s20261126",
+  "arm_id": "m31_bpp_offline",
+  "problem_family": "bpp",
+  "final_phase": "completed",
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "best_dev_objective": 27.527778,
+  "best_solver_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json",
+  "frozen_checkpoints": {
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "budget_summary": {
+    "run_id": "m31_bpp_offline_s20261126",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261126\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 36,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "complete": 36
+    },
+    "by_purpose": {
+      "planner": 12,
+      "eoh_probe": 3,
+      "eoh_generation": 18,
+      "reflection": 3
+    },
+    "input_tokens": 97942,
+    "output_tokens": 14532,
+    "total_tokens": 112474
+  },
+  "token_summary": {
+    "input_tokens": 97942,
+    "output_tokens": 14532,
+    "cached_tokens": 41600,
+    "cached_tokens_reported_count": 36,
+    "total_tokens": 112474,
+    "provider_elapsed_seconds": 345.67,
+    "outer_requests": 15,
+    "inner_eoh_requests": 21,
+    "state_counts": {
+      "complete": 36
+    },
+    "requested_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "barrier_rejections": 0
+  },
+  "cost_summary": {
+    "rate_card_version": "opencode-go-reference/v1",
+    "priced_cost_usd": null,
+    "priced_attempts": 0,
+    "unpriced_attempts": 36,
+    "unpriced_reasons": {
+      "missing_rate_card": 36
+    }
+  },
+  "milestone_status": null,
+  "hypothesis_counts": {
+    "testing": 0,
+    "supported": 0,
+    "proposed": 0,
+    "refuted": 0,
+    "superseded": 0,
+    "abandoned": 0
+  },
+  "archive_summary": {
+    "solver_count": 3,
+    "pareto_frontier": [
+      {
+        "solver_id": "session_r0003_bpp_offline_reorder_repack_e3707b7b",
+        "template_id": "bpp_offline_reorder_repack",
+        "mean_objective": 27.527778,
+        "solve_ms_mean": 0.3229,
+        "arm_id": "m31_bpp_offline"
+      }
+    ],
+    "portfolio": {
+      "suite_id": "bpp_m31_dev_36",
+      "solver_ids": [
+        "session_r0001_bpp_offline_reorder_repack_dd7153c0",
+        "session_r0002_bpp_offline_reorder_repack_6e21c8dc",
+        "session_r0003_bpp_offline_reorder_repack_e3707b7b"
+      ],
+      "common_completed_count": 36,
+      "mean_by_solver": {
+        "session_r0001_bpp_offline_reorder_repack_dd7153c0": 27.5278,
+        "session_r0002_bpp_offline_reorder_repack_6e21c8dc": 27.5278,
+        "session_r0003_bpp_offline_reorder_repack_e3707b7b": 27.5278
+      },
+      "sbs_solver": "session_r0001_bpp_offline_reorder_repack_dd7153c0",
+      "sbs_total": 991.0,
+      "vbs_total": 991.0,
+      "gap_over_sbs_pct": 0.0,
+      "gap_over_vbs_pct": 0.0,
+      "win_counts": {
+        "session_r0001_bpp_offline_reorder_repack_dd7153c0": 36,
+        "session_r0002_bpp_offline_reorder_repack_6e21c8dc": 0,
+        "session_r0003_bpp_offline_reorder_repack_e3707b7b": 0
+      }
+    },
+    "weakest_regimes": [
+      {
+        "factor": "size",
+        "value": "200",
+        "instance_count": 12,
+        "vbs_mean_objective": 46.4167,
+        "vbs_rel_gap_pct": 0.0,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "100",
+        "instance_count": 12,
+        "vbs_mean_objective": 23.5,
+        "vbs_rel_gap_pct": 0.0,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "50",
+        "instance_count": 12,
+        "vbs_mean_objective": 12.6667,
+        "vbs_rel_gap_pct": 0.0,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      }
+    ],
+    "known_signatures_count": 3
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m31_bpp_offline",
+      "problem_family": "bpp",
+      "template_id": "bpp_offline_reorder_repack",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "27.5278",
+      "delta_vs_prev": "",
+      "requests_used_total": 12,
+      "outer_requests_round": 5,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m31_bpp_offline",
+      "problem_family": "bpp",
+      "template_id": "bpp_offline_reorder_repack",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "27.5278",
+      "delta_vs_prev": "+0.0000",
+      "requests_used_total": 24,
+      "outer_requests_round": 5,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "m31_bpp_offline",
+      "problem_family": "bpp",
+      "template_id": "bpp_offline_reorder_repack",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "27.5278",
+      "delta_vs_prev": "+0.0000",
+      "requests_used_total": 36,
+      "outer_requests_round": 5,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-23T16:02:09Z"
+}

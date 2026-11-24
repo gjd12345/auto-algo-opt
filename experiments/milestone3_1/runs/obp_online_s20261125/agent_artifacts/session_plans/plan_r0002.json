@@ -1,0 +1,35 @@
+{
+  "round_id": 2,
+  "direction": "Replace worst-fit preference in score_bin with best-fit (tightest feasible residual) plus a residual-slack tie-break against opening a new bin.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "KB card method-obp-best-fit states the official Python template is Worst Fit (opposite preference) and that ScoreBin returns capacity-(rem-item) so argmax prefers tighter fills; this is a single-line, prefix-causal change that never inspects future items, so it stays inside the strict online contract and the 500ms budget, while the archive frontier shows headroom concentrated in the size=50/200 regimes where residual-preservation matters most."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "For strict prefix-causal online bin packing, scoring open bins by smallest feasible residual (Best Fit, score ~ capacity-(rem_item)) instead of the current worst-fit opposite preference reduces total bin count on cvrp_dev_hetero_24 (obp dev_36), since tighter fills preserve large residual bins for later items; the gain should grow with instance size (50 -> 200 items), where the archive shows the largest relative gaps.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-best-fit",
+      "method-obp-first-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB card method-obp-best-fit states the official Python template is Worst Fit (opposite preference) and that ScoreBin returns capacity-(rem-item) so argmax prefers tighter fills; this is a single-line, prefix-causal change that never inspects future items, so it stays inside the strict online contract and the 500ms budget, while the archive frontier shows headroom concentrated in the size=50/200 regimes where residual-preservation matters most."
+  }
+}

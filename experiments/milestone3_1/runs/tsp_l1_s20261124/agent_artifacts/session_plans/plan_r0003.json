@@ -1,0 +1,37 @@
+{
+  "round_id": 3,
+  "direction": "Evolve `select_next_node` as a pure vectorised O(n^2) closed-tour coarse-graining rule: score(u) = -d(cur,u)/med + w_rem * d(dest,u)/med + mu * meanfar(u)/med, where meanfar(u) = mean_j d(u,j) over unvisited j (未访点平均孤立度, Island605 T46) supplies global-insurance against stranding outliers, w_rem = remaining/(n-1) decays the endpoint pull (T69 linear destination gravity) so the rule ends as a natural NN closure instead of forced radial entry, and every term is divided by the median of the candidate distances (scale-free, so it behaves identically across n 50→1000 and on TSPLIB). Candidate-side cost is a single (m x m) masked row-mean plus two gathers per step → total O(n^2) ~ sub-ms at n=128, so 100% completion under the 500 ms budget is preserved by construction (no lookahead rollout). Secondary axis for inner evolution: cap the candidate pool to the K=15 nearest unvisited nodes (KB-declared O(n^2 K) compromise) to test whether a light 1-step lookahead tiebreak can be bought without losing completion rate.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "Archive is empty (0 solvers), so there is no incumbent to mutate against; the highest-value first stepping stone is a verified-experiment rule family that is provably safe on the 500 ms budget. KB T69 (dest-pull, 0.63 ms median, 128/128 completion, +15.55% / +16.49% gaps) and KB T46 (mean-farness, best gap +14.28% among full-completion rules) are complementary in exactly the failure mode that hurts NN: T69 near the depot-return end, T46 at picking isolated stragglers early. Both are the same O(n^2) select_next_node interface with no postprocess, so they compose into a single price. KB T1's rollout shows the opposite trap (O(n^4), only 44/128 completed, +9.58% gap) and mandates joint quality+completion reporting; the K=15 candidate-pool version is kept only as a bounded secondary axis so the 100% completion guarantee is never traded away silently. Median normalisation is added because a fixed coefficient set tuned at n=50 (the T69/T46 legacy protocol) is scale-sensitive when applied to the n=100+ regime."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Replacing pure nearest-neighbour scoring with a scale-free blend of (a) current-node proximity, (b) remaining-count-decayed destination attraction 0.7*d(dest,u)-d(cur,u), and (c) unvisited-set mean isolation (mean_j d(u,j)) will lower mean relative gap versus exact NN on tsp-style instances while keeping median per-instance time < 5 ms and completion 100/100 at n<=128 (all distances median-normalised, no per-candidate suffix rollout). Expected mechanism: term (c) is maximised at the centroid-distant hull/outlier cities, which NN tends to leave as high-cost late stragglers, and decaying term (b) avoids the T69-style premature return to the depot that wastes the final arc.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-1step-rollout",
+      "method-lit-tsp-euclidean-improved-nn"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive is empty (0 solvers), so there is no incumbent to mutate against; the highest-value first stepping stone is a verified-experiment rule family that is provably safe on the 500 ms budget. KB T69 (dest-pull, 0.63 ms median, 128/128 completion, +15.55% / +16.49% gaps) and KB T46 (mean-farness, best gap +14.28% among full-completion rules) are complementary in exactly the failure mode that hurts NN: T69 near the depot-return end, T46 at picking isolated stragglers early. Both are the same O(n^2) select_next_node interface with no postprocess, so they compose into a single price. KB T1's rollout shows the opposite trap (O(n^4), only 44/128 completed, +9.58% gap) and mandates joint quality+completion reporting; the K=15 candidate-pool version is kept only as a bounded secondary axis so the 100% completion guarantee is never traded away silently. Median normalisation is added because a fixed coefficient set tuned at n=50 (the T69/T46 legacy protocol) is scale-sensitive when applied to the n=100+ regime."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Harden the local-search half of the insertion/2-opt template: after each guided (cheapest/regret) insertion, run neighbor-restricted best-improvement 2-opt using a k-NN candidate graph (k≈min(10..16, n-1)) with a don't-look-bit activation queue instead of full-pair enumeration, and add a cheap Or-opt-2 segment relocation pass as a final VND stage. Use delta dist(a,c)+dist(b,d)-dist(a,b)-dist(c,d) with strict improvement only, and spend the remaining per-instance budget (≤500 ms) on iterated double-bridge restarts that keep only strict improvements, tightening the neighbor list and step caps for n=200 to stay inside budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "Round-1 archive shows a single solver at mean objective 87950.84 with mean solve_ms 21.0 — only ~4% of the 500 ms budget — so the dominant weakness (rel_gap ~-10% at n=200, ~-13% at n=50) is search quality, not time exhaustion. KB method-tsp-two-opt confirms the Croes delta and that neighbor-restricted 2-opt is a post-construct repair rather than a construction rule, so the fix belongs in the repair loop; method-tsp-or-opt-2 and method-tsp-double-bridge-ils supply the complementary VND/perturbation stages. Restricting candidate pairs to a k-NN graph keeps per-sweep cost O(n·k) and makes repeated restarts affordable well within 500 ms."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Switching the 2-opt repair from full-pair enumeration to a k-NN-restricted best-improvement sweep driven by don't-look bits (plus an Or-opt-2 VND stage and budget-aware double-bridge restarts) yields strictly lower mean tour cost than the round-1 insertion+2-opt solver at equal or lower mean solve_ms, with the largest relative gains on n=200 where the current relative gap is near -10%.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-two-opt",
+      "method-tsp-or-opt-2",
+      "method-tsp-double-bridge-ils"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-1 archive shows a single solver at mean objective 87950.84 with mean solve_ms 21.0 — only ~4% of the 500 ms budget — so the dominant weakness (rel_gap ~-10% at n=200, ~-13% at n=50) is search quality, not time exhaustion. KB method-tsp-two-opt confirms the Croes delta and that neighbor-restricted 2-opt is a post-construct repair rather than a construction rule, so the fix belongs in the repair loop; method-tsp-or-opt-2 and method-tsp-double-bridge-ils supply the complementary VND/perturbation stages. Restricting candidate pairs to a k-NN graph keeps per-sweep cost O(n·k) and makes repeated restarts affordable well within 500 ms."
+  }
+}

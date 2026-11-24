@@ -1,0 +1,157 @@
+{
+  "type": "method",
+  "title": "CVRP 全局仓距尺度归一化广义并行合并规则 (M2 L2a · score_merge_static)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-2",
+    "parallel-merge",
+    "l2a",
+    "score_merge_static",
+    "scale-invariant",
+    "deepseek-v4.1-flash"
+  ],
+  "status": "reviewed",
+  "summary": "里程碑二在 cvrp_parallel_merge_static/v1 (L2a) 模板下经 EoH 进化的静态成对合并打分规则：以全局平均仓距 scale = mean(d(0, 1..n)) 归一化广义节约量 d(0,i)+d(0,j)-lam*d(i,j)+mu*|d(0,i)-d(0,j)| 并叠加无量纲容量填充奖，保持 0.00% 坐标缩放漂移与 ~2.4 ms 极低中位耗时；在 dev_24 达 16.1595（Arm2 最优 16.1398 超越 CW+Relocate+2opt）、select_64 达 20.8236，解封盲测 cvrp_m2_blind_120 达 24.2003（较 M1.5 最强逐点规则 C1 降低 6.44%，Wilcoxon p < 10⁻⁸）。",
+  "attributes": {
+    "method_family": "parallel_merge",
+    "online_offline": "offline",
+    "interface": "score_merge_static",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score_merge_static"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "parallel_merge",
+    "complexity_class": "O(n^2 log n)",
+    "applicable_regimes": {
+      "strong_on": [
+        "multiscale_cvrp_50_to_200",
+        "tight_25ms_and_standard_500ms_budgets",
+        "complementary_to_classic_cw",
+        "scale_invariance_1e-3"
+      ],
+      "weak_on": [
+        "no_post_merge_inter_route_relocate"
+      ],
+      "scale_notes": "全局尺度因子 mean(d[0,1:]) 保证 1e-3 坐标缩放下 0.00% 漂移且完全保留远端客户优先权；500ms 与 25ms 双预算下均 100% 完成（select_64 p50=2.45 ms, blind_120 均长 24.2003 vs C1 25.8670 / R5 26.3973）。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "L2a 静态并行合并骨架（cvrp_parallel_merge_static/v1）：枚举上三角正节约量候选对 (i_idx, j_idx)，调用一次向量化钩子打分后按 mergesort 稳定降序执行可行端点合并",
+      "evolvable_hook": "score_merge_static(distance_matrix, demands, capacity, i_idx, j_idx) -> np.ndarray",
+      "state_maintained": [
+        "routes_by_owner",
+        "route_loads",
+        "endpoint_flags"
+      ],
+      "invariants_and_constraints": [
+        "必须使用全局距离尺度 np.mean(distance_matrix[0, 1:]) 归一化节约量，严禁除以逐对 (d0i+d0j)",
+        "经典节约量钩子在此骨架下与 solve_cw_parallel_merge 的合并序列、规范化路线及目标值 88/88 零误差全等"
+      ],
+      "typical_pitfalls": [
+        "逐对局部距离归一化 (d0i+d0j-dij)/(d0i+d0j) 会抹除远端边缘客户的径向合并优先级，使 dev_24 从 16.22 退化至 ~18.0"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score(i,j) = (d(0,i) + d(0,j) - lam*d(i,j) + mu*|d(0,i) - d(0,j)|) / mean(d(0, 1..n)) + beta * clip((q_i + q_j)/Q, 0, 1)",
+        "variables": {
+          "lam": "边长惩罚系数（进化收敛于 1.00~1.15）",
+          "mu": "径向非对称修正系数（0.08~0.15）",
+          "beta": "无量纲合并容量填充率权重（0.05~0.15）"
+        },
+        "preconditions": "1 <= i < j <= n 且 d(0,i)+d(0,j)-d(i,j) > 1e-12；一次性向量化打分"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "33b9cb74",
+        "path": "agent_skill_loop/interface_design/templates.py",
+        "sha256": "f9959bcda83e38c1fce75b9b96107e25309223a29a1ab98486ba18f47c073725"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "33b9cb74",
+        "path": "experiments/milestone2/phase2b_four_arm/standard_500ms/seed_20261123/llm_diagnostic_planner/frozen_solver_manifest.json",
+        "sha256": "dc8837d4c034a8505902ea1af3fa36d5f634c2cc6200c73ce52eb499c114871d"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "33b9cb74",
+        "path": "experiments/milestone2/phase2b_four_arm/standard_500ms/seed_20261122/dev_fixed_strong/frozen_solver_manifest.json",
+        "sha256": "9c1c95b60517501c235b8139dc6f1ef7c39d0d2f8249c8567dd34c2abef97eea"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_dev_fixed_strong_s20261122",
+        "metric": "mean_tour_length",
+        "value": 16.1398,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "dev_24 零后处理达 16.1398，超越裸 CW (16.2225) 与 CW+Relocate+2opt (16.1549)",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 20.8236,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "select_64 均长 20.8236（五臂第一，较 C1 22.4722 降 7.34%）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 24.4218,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "final_accept_120 零样本迁移均长 24.4218",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_llm_diagnostic_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 24.2003,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "解封盲测 120 题均长 24.2003（较 C1 降 6.44%，p < 10⁻⁸）",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-i605-tworegime-savings",
+      "method-cvrp-s2-r5-spiral"
+    ],
+    "sources": [
+      "src-clarke-wright",
+      "src-milestone2-interface-design-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-clarke-wright",
+    "src-milestone2-interface-design-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone2/phase2b_four_arm/four_arm_report_standard_500ms.json",
+    "report:experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-m2-l2a-generalized-savings",
+  "content_sha256": "e120ab0a7f37cfdc94f074e63b269cb1c3a7afae0b22d3271ddc57fd51d85508"
+}

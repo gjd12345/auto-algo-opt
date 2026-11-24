@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the select_next_node hook into a fully vectorized, dimensionlessly normalized \"farness-pull\" scoring rule: for unvisited set U, score(u) = -d(cur,u)/s1 + w * mean_{v in U\\{u}} d(u,v)/s2, where s1 = max_v d(cur,v) and s2 = max pairwise-scale proxy (mean of distance row maxima), plus a soft terminal-pull term toward destination 0 that grows with construction progress t (so the return leg does not get trapped). Keep all per-step work O(|U|) via precomputed column sums / row means of the distance matrix (no per-candidate suffix rollout) to guarantee 500 ms completion at n up to 1000.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "KB entry method-tsp-i605-mean-farness (Island605 T46) shows argmax(-d(cur,u) + 0.7*mean_{v in U} d(u,v)) achieves 128/128 completion with +14.28% gap on the screened set and +14.71% on TSPLIB (16/18), i.e. a strong full-completion constructive rule, while method-tsp-i605-1step-rollout documents that O(n^4) rollout strategies blow the 500 ms budget (44/128 completion). So I keep the farness idea but make it strictly O(|U|) per step using row-sum identities: mean_{v in U\\{u}} d(u,v) = (rowsum_U(u) - d(u,u)) / (|U|-1), maintained incrementally by subtracting the newly visited city's contributions. I also adopt the dimensionless normalization family of method-tsp-i605-dimensionless-ratio (divide by per-step max) so the weights transfer across coordinate scales, and add a progress-scheduled destination pull (a linear-classic 'look-ahead' via the given destination_node argument) to fix the closed-loop tail cost that 2-opt-free constructive rules are weak on."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Biasing the greedy step toward the most *isolated* remaining city (max mean distance to the other unvisited cities) while still penalizing travel from the current node, with both terms divided by per-step maximum scales, reduces tour length vs pure nearest neighbor by ~2-4% at full completion, because isolated cities visited late force long return edges (the 'tail' penalty). Adding a progress-scheduled pull toward the destination city removes the final-closure blowup without needing 2-opt, keeping mean relative gap well under the plain NN baseline while O(|U|) per-step cost preserves 100% completion under the 500 ms budget (contrast with the O(n^4) rollout island rule that timed out).",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dimensionless-ratio",
+      "method-lit-tsp-euclidean-improved-nn"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-tsp-i605-mean-farness (Island605 T46) shows argmax(-d(cur,u) + 0.7*mean_{v in U} d(u,v)) achieves 128/128 completion with +14.28% gap on the screened set and +14.71% on TSPLIB (16/18), i.e. a strong full-completion constructive rule, while method-tsp-i605-1step-rollout documents that O(n^4) rollout strategies blow the 500 ms budget (44/128 completion). So I keep the farness idea but make it strictly O(|U|) per step using row-sum identities: mean_{v in U\\{u}} d(u,v) = (rowsum_U(u) - d(u,u)) / (|U|-1), maintained incrementally by subtracting the newly visited city's contributions. I also adopt the dimensionless normalization family of method-tsp-i605-dimensionless-ratio (divide by per-step max) so the weights transfer across coordinate scales, and add a progress-scheduled destination pull (a linear-classic 'look-ahead' via the given destination_node argument) to fix the closed-loop tail cost that 2-opt-free constructive rules are weak on."
+  }
+}

@@ -10,6 +10,7 @@ Implements all 4+1 fair-budget experimental arms:
 
 from __future__ import annotations
 
+import ast
 import datetime as _dt
 import json
 import os
@@ -33,7 +34,7 @@ from .contracts import (
     OUTCOME_TIMEOUT_OR_INFEASIBLE,
     InterfaceDesign,
 )
-from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
+from .runtime import compile_hook_function, evaluate_hook_on_instance_inprocess, validate_hook_bundle
 from .templates import (
     build_classic_cw_static_design,
     build_parallel_merge_dynamic_design,
@@ -91,7 +92,7 @@ def _utc_now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def build_design_for_template(
+def build_interface_design(
     template_id: str,
     template_version: str = "v1",
     *,
@@ -128,7 +129,71 @@ def build_design_for_template(
             diagnostic_ref=diagnostic_ref,
             rationale=rationale or "L3 Ruin-and-Recreate LNS template.",
         )
-    raise KeyError(f"unsupported_template_builder:{template_id}/{template_version}")
+    template = get_template_spec(template_id, template_version)
+    if postprocess_mode not in template.allowed_postprocess_modes:
+        raise ValueError(f"unsupported_postprocess_mode:{postprocess_mode}")
+    specs = template.hook_specs
+    description = template.default_task_description
+    if len(specs) > 1:
+        signatures = ", ".join(f"{spec.name}({', '.join(spec.signature)})" for spec in specs)
+        description += (
+            f"\nReturn one Python program containing exactly these hooks: {signatures}. "
+            "Each hook must work independently with its own arguments."
+        )
+    return InterfaceDesign(
+        design_id=design_id or f"{template_id}_{template_version}",
+        problem_family=template.problem_family,
+        paradigm=template.paradigm,
+        template_id=template.template_id,
+        template_version=template.template_version,
+        postprocess_mode=postprocess_mode,
+        hook_name=template.hook_name,
+        hook_signature=template.hook_signature,
+        hook_task_description=description,
+        baseline_hook_code=template.default_baseline_hook_code,
+        diagnostic_ref=diagnostic_ref,
+        rationale=rationale,
+        protocol_id=template.protocol_id,
+        hook_specs=specs,
+        hook_implementations=template.baseline_implementations() if specs else {},
+    )
+
+
+# Existing Session and M2 runners import this name.
+build_design_for_template = build_interface_design
+
+
+def parse_hook_candidate(template_id: str, template_version: str, candidate: str | Mapping[str, str]) -> dict[str, str]:
+    """Split EoH Python source or take a named source map, then validate each hook.
+
+    Shared import statements from a Python program are copied into each unit.
+    Each unit compiles in its own namespace. Hooks communicate through the runner.
+    """
+    template = get_template_spec(template_id, template_version)
+    specs = template.effective_hook_specs
+    if isinstance(candidate, Mapping):
+        implementations = dict(candidate)
+    elif len(specs) == 1:
+        implementations = {specs[0].name: candidate}
+    else:
+        tree = ast.parse(candidate)
+        imports: list[str] = []
+        definitions: dict[str, str] = {}
+        for node in tree.body:
+            source = ast.get_source_segment(candidate, node)
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                imports.append(source)
+            elif isinstance(node, ast.FunctionDef) and not node.decorator_list and node.name not in definitions:
+                definitions[node.name] = source
+            else:
+                raise ValueError("invalid_hook_bundle_program")
+        implementations = {name: "\n".join([*imports, source]) + "\n" for name, source in definitions.items()}
+
+    first, second = validate_hook_bundle(specs, implementations)
+    if first or second:
+        failure = (first + second)[0]
+        raise ValueError(f"{failure.error_code}:{failure.symbol or failure.detail}")
+    return {spec.name: implementations[spec.name] for spec in specs}
 
 
 def probe_template_budget_headroom(

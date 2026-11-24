@@ -1,0 +1,64 @@
+{
+  "schema_version": "m3-research-agent-checkpoint/v1",
+  "run_id": "m31_tsp_l2_s20261126",
+  "current_round": 3,
+  "phase": "budget_stopped",
+  "round_step_index": 0,
+  "round_outer_requests": 0,
+  "round_reflect_requests": 0,
+  "round_inner_requests": 0,
+  "round_prev_best_dev": null,
+  "round_plan_args": null,
+  "last_diag_ref": null,
+  "session_initialized": true,
+  "completed_rounds": [
+    1,
+    2
+  ],
+  "active_template_id": "tsp_guided_insertion_2opt",
+  "active_postprocess_mode": "none",
+  "best_solver_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json",
+  "best_dev_objective": 84197.819976,
+  "best_all_feasible": true,
+  "best_completion_rate": 1.0,
+  "frozen_checkpoints": {
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m31_tsp_l2",
+      "problem_family": "tsp",
+      "template_id": "tsp_guided_insertion_2opt",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "84687.2414",
+      "delta_vs_prev": "",
+      "requests_used_total": 17,
+      "outer_requests_round": 6,
+      "inner_requests_round": 10,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m31_tsp_l2",
+      "problem_family": "tsp",
+      "template_id": "tsp_guided_insertion_2opt",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "84197.8200",
+      "delta_vs_prev": "-489.4214",
+      "requests_used_total": 35,
+      "outer_requests_round": 5,
+      "inner_requests_round": 10,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    }
+  ],
+  "pending_reflect_payload": null,
+  "pending_submit_tool_call": null,
+  "updated_at_utc": "2026-11-23T15:55:29Z"
+}

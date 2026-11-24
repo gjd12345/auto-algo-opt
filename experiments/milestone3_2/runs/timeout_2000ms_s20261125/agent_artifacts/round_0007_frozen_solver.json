@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0007_cvrp_ruin_recreate_c8a4db23",
+  "display_name": "Session R7 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n\n    mean_edge = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # --- Radius: saturating savings efficiency in scale-free units ---\n    eff = np.abs(sav) / (mean_edge * (1.0 + dem / mean_dem))\n    radius = eff / (1.0 + eff)  # bounded [0,1)\n\n    # --- Phase: geometry encodes which \"type\" of node we favor ---\n    # fill pressure in [0,1]\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    # route-distance pressure normalized\n    rdn = rd / (mean_rd + rd + 1e-12)  # in [0,1), monotone\n    # depot eccentricity: preference for mid-distance\n    ddep = d[0, 1:].astype(np.float64) / mean_edge\n    dep_pref = 1.0 / (1.0 + np.abs(ddep - 1.0))\n\n    # Compose phase angle from geometry (each in [0,1]) -> angle in [0, pi/2]\n    geom = 0.40 * fill + 0.25 * dep_pref + 0.20 * rdn + 0.15 * (dem / (mean_dem + dem))\n    phase0 = geom * (np.pi * 0.5)\n\n    # --- Stagnation rotates the phase: exploitation axis -> diversification axis ---\n    # Rotation amount: grows with stagnation, damped by early progress\n    rot = (0.35 + 1.25 * stag) * (1.0 + 0.6 * prog) * (np.pi * 0.5)\n    phase = phase0 + rot\n\n    # --- Project radius through phase: dot product with rotating unit axes ---\n    # Exercise both sin and cos so phase genuinely mixes exploitation (cos) and diversification (sin).\n    exploit = radius * np.cos(phase)\n    explore = (1.0 - radius) * np.sin(phase)\n\n    score = exploit + 0.85 * explore\n\n    # --- Late-stagnation flattening: soft floor to keep distribution spread under stagnation ---\n    floor_w = 0.25 * stag * prog\n    score = (1.0 - floor_w) * score + floor_w * 0.5\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "c8a4db230e39da4ce763277b49b7bfb26684ae412bd299c8069d5fe0be460ea0",
+  "design_sha256": "4b38c351d3e929dfc0cf9ac03a510d368e9c3c7bc6f3b511a99c641b41ed0a9f",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261125\\session_run\\rounds\\round_0007\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

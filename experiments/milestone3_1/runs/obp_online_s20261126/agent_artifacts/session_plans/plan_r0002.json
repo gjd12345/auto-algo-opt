@@ -1,0 +1,38 @@
+{
+  "round_id": 2,
+  "direction": "Refine the strict prefix-causal `score_bin` residual scoring toward a best-fit-dominant rule with a symmetric residual dead-zone: prefer bins whose post-placement residual is near 0 (exact fit) or near w (perfect complementary pairing), and strongly penalize mid-range fragment residuals, while keeping bin-open decisions strictly causal (only observe items already seen, never look ahead).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "Round 1 gave a single solver at mean objective 27.8333 (SBS=VBS, i.e. no complementary alternative exists yet), and the archive's weakest regimes are the small/medium sizes (50, 100) where VBS relative gaps are most negative — these are the instances where fragmentation from a plain fill-after-placement score hurts most, since a wrong early bin choice propagates over the whole prefix. KB island ablations show the dead-zone/exp-utilization family (B1) plus closing bonuses (B16, B50) beat plain Best Fit on Weibull and BPPLib streams, and all are dimensionless ratio formulas with 0.00% drift under 10x capacity scaling. So the plan is to keep the allowed template and `none` postprocess, and let the inner EoH evolution search the hook space around Best-Fit + residual dead-zone + 85-90% close bonus, which is a pure score_bin change that cannot break prefix-causality or the 500 ms budget (round-1 solve mean was only 1.2 ms, leaving large headroom)."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "For online bin packing with strict prefix-causal scoring (irrevocable placement, no future item information), the dominant driver of bin count is residual fragmentation: a score_bin that minimizes the arithmetic residual together with a dead-zone penalty on mid-range residuals (r in (eps, w-eps)) will match or beat pure Best Fit on dev_24, because it both packs tightly now and preserves a residual distribution that stays size-compatible with the empirical item-size distribution. Indexing the penalty by a scale-free ratio r/w keeps it robust to bin-capacity shifts (no 10x capacity drift), and an exponential closing bonus once a bin exceeds ~90% utilization should convert nearly-full bins into closed bins sooner.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-i605-exp-deadzone",
+      "method-obp-i605-log-half-symmetry",
+      "method-obp-i605-sqrt-close-bonus",
+      "method-obp-best-fit",
+      "method-lit-obp-1d-best-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 gave a single solver at mean objective 27.8333 (SBS=VBS, i.e. no complementary alternative exists yet), and the archive's weakest regimes are the small/medium sizes (50, 100) where VBS relative gaps are most negative — these are the instances where fragmentation from a plain fill-after-placement score hurts most, since a wrong early bin choice propagates over the whole prefix. KB island ablations show the dead-zone/exp-utilization family (B1) plus closing bonuses (B16, B50) beat plain Best Fit on Weibull and BPPLib streams, and all are dimensionless ratio formulas with 0.00% drift under 10x capacity scaling. So the plan is to keep the allowed template and `none` postprocess, and let the inner EoH evolution search the hook space around Best-Fit + residual dead-zone + 85-90% close bonus, which is a pure score_bin change that cannot break prefix-causality or the 500 ms budget (round-1 solve mean was only 1.2 ms, leaving large headroom)."
+  }
+}

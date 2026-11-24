@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:2b92a23fb9b646c483609581dcbe4a8d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "For tsp_guided_insertion_2opt on dev_24, scoring insertion candidates by a max-normalised linear destination pull plus a regret term over the two cheapest insertion positions, followed by exhaustive (not fixed-pass) 2-opt, will reduce mean tour length below the round-1 baseline of 84687.24 while keeping 36/36 feasibility and mean solve time under ~50 ms, because regret seeding avoids long-edge locking and exhaustive 2-opt removes the residual crossing structure that fixed-pass 2-opt leaves behind.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:2b92a23fb9b646c483609581dcbe4a8d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the 0.65/0.35 max-normalised nearest-distance/insertion-cost blend with a cheaper, better-conditioned score: a vectorised linear destination-pull term (w_dest * d(dest,u) - d(cur,u)) combined with regret-weighted insertion (prefer cities whose best and second-best insertion deltas are far apart), then run exhaustive 2-opt to full local optimality instead of a fixed pass count, with an early-exit guard so the 500 ms budget is never exhausted on size-200 instances."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

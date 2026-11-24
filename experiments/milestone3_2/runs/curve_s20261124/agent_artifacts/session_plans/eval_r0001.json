@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:994be4d8b6c847eb9c92dfecadb8fc33"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A rank-based (monotone-invariant) power transform of removal savings with multiplicative gating (gates on route load ratio, depot-adjacency, demand, and route distance) outperforms plain worst-removal scoring on dev_24 hetero instances at 500 ms, because rank normalization removes scale heterogeneity across instances while the stagnation-driven exponent switches from local (small exponent, exploit) to global (large exponent, diversify) destruction without introducing RNG nondeterminism.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:994be4d8b6c847eb9c92dfecadb8fc33"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Ruin-priority scoring as a stagnation-adaptive rank-power rule: normalize per-node removal savings by run-scale, multiply load/depot/demand/route-distance gating factors, then rank-transform and raise to an exponent that grows with stagnation_ratio (mild when improving, aggressive when stuck) to diversify destroy sets under the 500 ms anytime budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

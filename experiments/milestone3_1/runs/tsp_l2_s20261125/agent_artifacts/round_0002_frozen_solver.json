@@ -1,0 +1,50 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_tsp_guided_insertion_2opt_afac0afb",
+  "display_name": "Session R2 · tsp_guided_insertion_2opt",
+  "problem_family": "tsp",
+  "paradigm": "insertion",
+  "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+  "template_id": "tsp_guided_insertion_2opt",
+  "template_version": "v1",
+  "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_insertion",
+  "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    nd = [float(x) for x in nearest_tour_distances]\n    ic = [float(x) for x in insertion_costs]\n    max_nd = 0.0\n    max_ic = 0.0\n    for v in nd:\n        if v > max_nd:\n            max_nd = v\n    for v in ic:\n        if v > max_ic:\n            max_ic = v\n    inv_nd = 1.0 / max_nd if max_nd > 0.0 else 0.0\n    inv_ic = 1.0 / max_ic if max_ic > 0.0 else 0.0\n    scores = []\n    for i in range(n):\n        a = nd[i] * inv_nd\n        b = ic[i] * inv_ic\n        # geometric-mean-like multiplicative blend: reward far + cheap\n        s = (a + 1e-12) ** 0.5 * ((1.0 - b) + 1e-12) ** 0.5\n        # emphasize expensive-insertion avoidance with a mild penalty\n        s -= 0.15 * b * b\n        if nd[i] < 1e-12 and ic[i] < 1e-12:\n            s = 1.0\n        scores.append(s)\n    return scores",
+  "hook_code_sha256": "afac0afbbe2e43bf2d311eb589e6cd9402f530df9338bb9e88906bb441d12cd5",
+  "design_sha256": "bd219b541beff02e7d7e138bdb3b9df9b541ea31a4c8e2a1ed6ce3b1fba8dbdc",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-tsp-two-opt",
+  "cited_kb_ids": [
+    "method-tsp-two-opt",
+    "method-lit-tsp-euclidean-improved-nn",
+    "method-lit-tsp-tw-generalized-insertion-heuristic-tsptw"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+  "default_budget_ms": 500.0,
+  "protocol_id": "tsp/v1",
+  "hook_specs": [
+    {
+      "name": "score_insertion",
+      "signature": [
+        "unvisited_nodes",
+        "nearest_tour_distances",
+        "insertion_costs"
+      ],
+      "output_shape_arg": "unvisited_nodes"
+    }
+  ],
+  "hook_implementations": {
+    "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    nd = [float(x) for x in nearest_tour_distances]\n    ic = [float(x) for x in insertion_costs]\n    max_nd = 0.0\n    max_ic = 0.0\n    for v in nd:\n        if v > max_nd:\n            max_nd = v\n    for v in ic:\n        if v > max_ic:\n            max_ic = v\n    inv_nd = 1.0 / max_nd if max_nd > 0.0 else 0.0\n    inv_ic = 1.0 / max_ic if max_ic > 0.0 else 0.0\n    scores = []\n    for i in range(n):\n        a = nd[i] * inv_nd\n        b = ic[i] * inv_ic\n        # geometric-mean-like multiplicative blend: reward far + cheap\n        s = (a + 1e-12) ** 0.5 * ((1.0 - b) + 1e-12) ** 0.5\n        # emphasize expensive-insertion avoidance with a mild penalty\n        s -= 0.15 * b * b\n        if nd[i] < 1e-12 and ic[i] < 1e-12:\n            s = 1.0\n        scores.append(s)\n    return scores"
+  },
+  "hook_hashes": {
+    "score_insertion": "afac0afbbe2e43bf2d311eb589e6cd9402f530df9338bb9e88906bb441d12cd5"
+  },
+  "bundle_hash": "76b3ff0fec2ea955f780f7f1c39b5441f2efd558404706fd61656fd97323cf1b",
+  "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+}

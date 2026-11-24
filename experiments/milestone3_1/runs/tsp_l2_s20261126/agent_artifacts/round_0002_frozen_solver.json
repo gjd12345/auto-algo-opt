@@ -1,0 +1,50 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_tsp_guided_insertion_2opt_b743eded",
+  "display_name": "Session R2 · tsp_guided_insertion_2opt",
+  "problem_family": "tsp",
+  "paradigm": "insertion",
+  "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+  "template_id": "tsp_guided_insertion_2opt",
+  "template_version": "v1",
+  "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_insertion",
+  "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score",
+  "hook_code_sha256": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce",
+  "design_sha256": "2e721d54b241c12c7a94ffb5e8d4216365d057bb8ff373262a36eca5b53f0ad6",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-tsp-i605-dest-pull",
+  "cited_kb_ids": [
+    "method-tsp-i605-dest-pull",
+    "method-tsp-i605-mean-farness",
+    "method-tsp-i605-dimensionless-ratio"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+  "default_budget_ms": 500.0,
+  "protocol_id": "tsp/v1",
+  "hook_specs": [
+    {
+      "name": "score_insertion",
+      "signature": [
+        "unvisited_nodes",
+        "nearest_tour_distances",
+        "insertion_costs"
+      ],
+      "output_shape_arg": "unvisited_nodes"
+    }
+  ],
+  "hook_implementations": {
+    "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score"
+  },
+  "hook_hashes": {
+    "score_insertion": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce"
+  },
+  "bundle_hash": "5715b833c1f8ba86d02667f083efecc6d8de06ce2e4e46d7d58baf441968bb4d",
+  "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+}

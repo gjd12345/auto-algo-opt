@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:152eafa1506b479e8b4915ae4e0045df"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Combining the unfarness term (hug isolated unvisited cities early) with a mild residual pull toward the closing/anchor node, both normalized per-step by their maxima, reduces tour length versus pure nearest neighbor on Euclidean TSP without any runtime risk, since per-step cost stays O(|U|^2) and vectorized.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:152eafa1506b479e8b4915ae4e0045df"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Vectorized dimensionless farness + destination-pull scoring inside select_next_node: score(u) = -d(cur,u)/s1 + w_f * mean_{v in U\\{u}} d(u,v)/s1 + w_t * d(dest_anchor,u)/s1, with per-step max-normalization (dimensionless, scale-invariant) and all features computed with pure NumPy mask/index math in O(|U|^2) per step, keeping full construction within a few ms for n<=200 so 500 ms budget is never at risk."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

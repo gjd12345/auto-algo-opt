@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:061a035652674af2a77edffe187f62ce"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Pure nearest-neighbor greedy commits early to the nearest city and strands isolated clusters for costly late legs. Scoring candidates by distance-minus-mean-farness (prefer a city that is close to current but also isolated from the remaining unvisited set), with dimensionless per-step normalization and a progress-adaptive weight, yields a strictly lower mean tour length than argmin-distance NN on cvrp_dev_hetero_24 while keeping the same O(k) per-step cost and 100% completion at 500 ms.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:061a035652674af2a77edffe187f62ce"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the pure argmin-distance NN step with a vectorized, scale-invariant isolation-aware score inside select_next_node: for every unvisited candidate u, compute s(u) = d(cur,u) - w * mean_{v unvisited, v!=u} d(u,v), all features divided by their per-step maximum before blending, pick argmin over a k-NN truncated candidate list, and scale w with construction progress (small early, larger late so the terminal gap is closed). Optionally add a linear destination-pull term, keeping the whole step O(k) vectorized so every instance finishes well inside 500 ms."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

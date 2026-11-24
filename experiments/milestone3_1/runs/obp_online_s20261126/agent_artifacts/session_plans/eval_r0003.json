@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:c04475e1e71b4352a18df0376b69efbf"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Because the archive frontier is already saturated (SBS 1000 vs VBS 999, gap 0.1%, 33/3 win split), the remaining gains must come from bin-selection ties on size-100/200 instances. I claim that a purely dimensionless score_bin — f = u + a*log(1/(|u-0.5|+eps)) + b*exp(k*(u-0.9)) penalising the mid-fill dead zone and rewarding >90% close-out, minus c*(min(r_c, w-r_c)/w)^2 — will select strictly better bins than plain residual-best-fit at identical compute, and will lower mean objective on the 12 size-200 instances without any scale drift (ratio-only, so 10x capacity scaling leaves decisions invariant).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c04475e1e71b4352a18df0376b69efbf"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the residual-proximity score_bin with a purely dimensionless fill-ratio score combining (a) a log half-symmetry term that rewards balanced transition, (b) an exponential \"close-out\" bonus that fires above ~90% utilisation to seal near-full bins, and (c) a residual dead-zone quadratic term that zeroes the penalty at exact fit (r=0) and at the symmetric pair (r=w); keep active open-new-bin behaviour enabled so the priority score is compared against a fresh-bin option instead of only among existing bins."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

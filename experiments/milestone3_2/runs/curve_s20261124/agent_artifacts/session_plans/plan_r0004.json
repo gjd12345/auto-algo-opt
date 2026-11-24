@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Evolve the single hook `score_ruin_nodes` toward a stagnation-aware multiplicative-gate rank-power ruin priority: normalize |removal_savings| by a global depot-distance scale, then apply (a) a tight-capacity load-utilization gate that up-weights customers on near-full routes (route_loads/capacity -> 1) so tight-capacity instances (weakest regime, vbs_rel_gap -22.48%) get bolder ruin, (b) a demand-alignment gate biased toward demands comparable to residual slack, helping uniform-demand/eccentric-depot regimes, and (c) a rank-power exponent p(iter_frac, stagnation_ratio) that anneals from near-linear (broad diversification early) to sharply focused top-q removal when stagnation rises, so the LNS escapes local optima within the 500 ms budget instead of over-spending on the initial CW+2opt backbone.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents exactly this skeleton (CW + intra_2opt + Ruin(top-q) -> deterministic Regret-2 -> R2R) with `score_ruin_nodes` as the only evolvable hook, and its verified score form is score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)); the published evidence that a multiplicative-gated rank-power rule beat the CW+relocate_2opt champion on 8/24 dev_24 instances (and 23.3186 vs 23.3474 L3-ctrl on blind_120 at 500 ms) shows the gate/rank-power family is the productive neighborhood. Archive summary shows all three prior solvers within 0.03 objective units (16.0504/16.0804/16.0818) with VBS gap only 0.31%, so remaining headroom is per-instance specialization: the weakest regimes are tight capacity (12 instances, -22.48% vs VBS), n=100, uniform demand, and eccentric depot — motivating a load-utilization/slack-alignment gate targeting exactly those conditions. Stagnation-aware exponent annealing is the KB-listed 'strong_on' capability (stagnation_aware_diversification) and keeps first_feasible_ms at ~2-3 ms, so the 500 ms budget is safe (KB explicitly flags only the 25 ms regime as at risk, not our budget). Postprocess stays 'none' since no postprocess mode beyond none is allowed and the hook alone carries the signal."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0003/eoh_run/skills/best_generated",
+  "hypothesis": "If the ruin priority multiplies scale-normalized removal savings by a near-full-route load-utilization gate, a residual-slack demand-alignment gate, and a stagnation-scheduled rank-power exponent (p rising from ~1 to ~3 with stagnation_ratio, decaying with iter_frac), then dev_24 mean objective will improve beyond the round-3 incumbent 16.0504 without exceeding the 500 ms budget, because tight-capacity clustered instances gain from focused over-capacity-aware destruction while non-stagnant iterations stay diversified.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents exactly this skeleton (CW + intra_2opt + Ruin(top-q) -> deterministic Regret-2 -> R2R) with `score_ruin_nodes` as the only evolvable hook, and its verified score form is score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)); the published evidence that a multiplicative-gated rank-power rule beat the CW+relocate_2opt champion on 8/24 dev_24 instances (and 23.3186 vs 23.3474 L3-ctrl on blind_120 at 500 ms) shows the gate/rank-power family is the productive neighborhood. Archive summary shows all three prior solvers within 0.03 objective units (16.0504/16.0804/16.0818) with VBS gap only 0.31%, so remaining headroom is per-instance specialization: the weakest regimes are tight capacity (12 instances, -22.48% vs VBS), n=100, uniform demand, and eccentric depot — motivating a load-utilization/slack-alignment gate targeting exactly those conditions. Stagnation-aware exponent annealing is the KB-listed 'strong_on' capability (stagnation_aware_diversification) and keeps first_feasible_ms at ~2-3 ms, so the 500 ms budget is safe (KB explicitly flags only the 25 ms regime as at risk, not our budget). Postprocess stays 'none' since no postprocess mode beyond none is allowed and the hook alone carries the signal."
+  }
+}

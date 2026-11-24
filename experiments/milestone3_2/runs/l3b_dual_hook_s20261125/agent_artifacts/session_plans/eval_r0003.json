@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:e607c87c08d04defa22f2aeace4a70b8"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a 500 ms budget, the dev_24 loss is dominated by (i) ruin sets that are geometrically localized in uniform/eccentric-depot instances and (ii) regret-2 recreate decisions that ignore residual capacity slack. Adding a scale-invariant, size-aware route-coverage gate to `score_ruin_nodes` and a capacity-slack-weighted Regret-2/3 blend to `score_recreate_action` will lower mean objective on the n=100 / uniform / eccentric / loose-capacity slices by >=0.15 units versus the round-2 champion (16.1100) without increasing solve_ms beyond the 500 ms budget envelope.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:e607c87c08d04defa22f2aeace4a70b8"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Co-evolve the dual hooks for the weakest regimes (n=100, spatial=uniform, depot=eccentric, demand=uniform, capacity=loose): (a) make `score_ruin_nodes` scale-invariant by normalizing removal savings by the per-instance mean edge length and by multiplying in a mild size-aware priority term so that at n=100 the ruin set spans multiple routes (route-coverage/depot-integration gating) rather than concentrating inside one dense route; (b) make `score_recreate_action` a capacity-slack- and detour-regret-weighted regrank: prefer the (customer, position) action with the strongest second-best-minus-best detour regret (Regret-2/3 blend) while penalizing actions that consume a large fraction of residual route capacity under loose capacity, and mildly favor filling near-empty routes early (eccentric-depot respect). Keep both hooks deterministic, tie-break by index, and bounded to a small softmax/bonus magnitude so the LNS baseline behavior is preserved as iter_frac -> 1."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

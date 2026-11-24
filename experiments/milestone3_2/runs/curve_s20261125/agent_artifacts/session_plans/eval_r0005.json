@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:8bd184ab6de44b9bb2f287cd7c808fe6"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A multiplicative-gate rank-power ruin score whose rank exponent p grows with stagnation_ratio will reduce mean tour length on cvrp_dev_hetero_24 versus the W1-current champion (15.7435) by >=0.5% mean and win on >=6/24 instances, with the largest per-instance gains concentrated in the weakest regimes (capacity_level=tight, demand_dist=uniform, size=100, depot_style=eccentric, spatial=clustered), because rank-power compresses removal-savings scale differences (keeps destroy sets stable early) while the stagnation-driven exponent increase forces genuinely different (lower-savings, structure-breaking) destroy sets exactly when Regret-2 repair has stopped improving.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:8bd184ab6de44b9bb2f287cd7c808fe6"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the score_ruin_nodes hook toward a stagnation-adaptive, capacity-gated rank-power destroy priority that emphasizes tight-capacity / uniform-demand instances: score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), where the exponent p increases monotonically with stagnation_ratio (exploit near-zero stagnation, diversify when stalled), gate_load penalizes routes whose residual capacity is nearly a full customer demand (tight regimes), and gate_rdist softly favors customers on long, geographically-isolated route edges typical of clustered+eccentric-depot instances. Keep the deterministic Regret-2 repair, intra_2opt and R2R acceptance fixed (single-hook attribution)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

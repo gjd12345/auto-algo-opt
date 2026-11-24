@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Stagnation-adaptive rank-power ruin scoring with multiplicative capacity-tightness and depot-eccentricity gating: prioritize removing customers from nearly-full routes and from route segments far from an eccentric depot, decaying toward savings-dominant worst-removal as iterations stagnate.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive feedback shows a tiny SBS-VBS gap (0.134%) but uniformly ~20% relative gap across the five weakest factors, i.e. systematic under-optimisation on tight-capacity / large / clustered / eccentric instances rather than a single outlier regime. The L3 KB entry confirms score_ruin_nodes is the single evolvable hook, deterministic Regret-2 reinsertion plus intra_2opt and R2R acceptance are fixed, and that the verified multiplier-gated rank-power family (gate_load, gate_depot, gate_demand, gate_rdist combined with p(iter_frac, stagnation_ratio)) is exactly the variant that won in the blind-120 and select_64 evaluations. Its stated constraints — unified deadline clock, first feasible in ~2-3 ms, and no RNG in tie-breaking — match this 500 ms budget, so no interface change is required; only the hook's gate weighting and exponent schedule are evolved. Worst-removal (savings) alone is the controlled baseline, so gating savings by load utilisation and depot eccentricity is the specific causal lever aimed at the reported weak regimes, while the stagnation-driven exponent adds diversification only when R2R acceptance stalls."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 the weakest regimes are tight capacity (vbs_rel_gap -22.26%), size 100 (-21.02%), uniform demand (-20.42%), eccentric depot (-19.99%) and clustered spatial (-19.23%). Because tight-capacity instances make route loads the binding constraint and clustered+eccentric instances make far-from-depot detours expensive, a score_ruin_nodes hook that multiplies the normalized removal-savings rank by (a) a route-load utilisation gate (load/capacity squared) and (b) a depot-distance gate on the removed node, with a rank-power exponent that rises with stagnation_ratio and falls with iter_frac, should remove the customers whose relocation can actually unlock load rebalancing. This should lower mean objective below the r0001 SBS mean 16.0429 within the 500 ms budget without hurting the already-strong easy regimes, since the multiplicative gates are neutral when loads are slack and the savings rank still dominates early iterations.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive feedback shows a tiny SBS-VBS gap (0.134%) but uniformly ~20% relative gap across the five weakest factors, i.e. systematic under-optimisation on tight-capacity / large / clustered / eccentric instances rather than a single outlier regime. The L3 KB entry confirms score_ruin_nodes is the single evolvable hook, deterministic Regret-2 reinsertion plus intra_2opt and R2R acceptance are fixed, and that the verified multiplier-gated rank-power family (gate_load, gate_depot, gate_demand, gate_rdist combined with p(iter_frac, stagnation_ratio)) is exactly the variant that won in the blind-120 and select_64 evaluations. Its stated constraints — unified deadline clock, first feasible in ~2-3 ms, and no RNG in tie-breaking — match this 500 ms budget, so no interface change is required; only the hook's gate weighting and exponent schedule are evolved. Worst-removal (savings) alone is the controlled baseline, so gating savings by load utilisation and depot eccentricity is the specific causal lever aimed at the reported weak regimes, while the stagnation-driven exponent adds diversification only when R2R acceptance stalls."
+  }
+}

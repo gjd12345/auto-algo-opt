@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "CVRP construct elite: far-first seed then nearest-vs-far-from-depot blend",
+  "category": "implementation",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Header cites cards cvrp_far_first and cvrp_regret_insertion. The code: from depot pick max depot distance; on-route minimise normalised distance-to-current minus normalised distance-to-depot. No regret insertion into a p",
+  "attributes": {
+    "interface": "select_next_node far-first then norm(current)-norm(depot)",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "eoh_rag_workspace/reports/outcomes/cvrp_construct/best_code.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/reports/outcomes/cvrp_construct/best_code.py"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/reports/outcomes/cvrp_construct/best_code.py",
+      "sha256": "314bc10c14ee48ddbdf10d70b0bfc3750436638cc853a3189c1b2315e530a796"
+    }
+  ],
+  "id": "impl-cvrp-outcome-best",
+  "content_sha256": "7e04162b1e8e5a62454c76e49317a996110a7fb2fd232b3f78b0e93d13b99dde"
+}

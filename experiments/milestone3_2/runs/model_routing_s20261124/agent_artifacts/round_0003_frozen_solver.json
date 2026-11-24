@@ -1,0 +1,32 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_cvrp_ruin_recreate_9d5984a3",
+  "display_name": "Session R3 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = removal_savings.shape[0]\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-9)\n    cap = max(float(capacity), 1e-9)\n\n    # Normalized exact detour saving\n    raw_sav = np.abs(removal_savings) / scale\n    raw_sav = np.where(np.isfinite(raw_sav), raw_sav, 0.0)\n    # Rank-based robust exponential dominance\n    order = np.argsort(np.argsort(raw_sav))\n    rank_sav = order / max(n - 1, 1)\n    exp_sav = np.exp(rank_sav) - 1.0\n\n    # Overload and demand-weighted excess\n    route_load_frac = route_loads / cap\n    route_load_frac = np.where(np.isfinite(route_load_frac), route_load_frac, 0.0)\n    load_excess = np.maximum(route_load_frac - 1.0, 0.0)\n    dem = np.maximum(demands[1:n+1].astype(np.float64), 0.0)\n    dem_scale = np.mean(dem) if n > 0 and np.mean(dem) > 1e-9 else 1.0\n    load_sig = load_excess * (dem / max(dem_scale, 1e-9))\n\n    # Route distance share relative to global depot scale\n    route_dist_share = np.maximum(route_dists, 1e-9) / scale\n    route_dist_share = np.where(np.isfinite(route_dist_share), route_dist_share, 0.0)\n\n    # Compactness penalty: mean distance to same-route neighbors\n    dispersion = np.zeros(n, dtype=np.float64)\n    for c in range(1, n + 1):\n        idx = c - 1\n        same = np.where(route_ids == route_ids[idx])[0] + 1\n        if same.size > 1:\n            others = same[same != c]\n            if others.size > 0:\n                dispersion[idx] = np.mean(distance_matrix[c, others]) / scale\n    dispersion = np.where(np.isfinite(dispersion), dispersion, 0.0)\n\n    # Min-max normalization with small floor\n    def norm01(x):\n        if x.size == 0:\n            return np.zeros_like(x)\n        mx = np.max(x)\n        mn = np.min(x)\n        if not np.isfinite(mx) or not np.isfinite(mn) or (mx - mn) < 1e-9:\n            return np.zeros_like(x)\n        return (x - mn) / (mx - mn)\n\n    norm_exp = norm01(exp_sav)\n    norm_load = norm01(load_sig)\n    norm_dist = norm01(route_dist_share)\n    norm_disp = norm01(dispersion)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # Dynamic additive weights; savings dominate earlier, structure later/stagnation\n    w_sav = float(np.clip(1.0 - 0.4 * itf - 0.35 * stag, 0.4, 1.0))\n    w_load = float(np.clip(0.2 + 0.45 * stag + 0.3 * itf, 0.1, 0.85))\n    w_dist = float(np.clip(0.15 + 0.3 * itf + 0.35 * stag, 0.1, 0.8))\n    w_disp = float(np.clip(0.1 + 0.4 * stag + 0.25 * itf, 0.1, 0.7))\n\n    total_w = w_sav + w_load + w_dist + w_disp\n    if total_w < 1e-9:\n        total_w = 1.0\n\n    score = (w_sav * norm_exp + w_load * norm_load + w_dist * norm_dist + w_disp * norm_disp) / total_w\n\n    # Tiny deterministic tie-breaking based on customer index\n    eps = 1e-9\n    tie = np.arange(1, n + 1, dtype=np.float64) / n\n    score = score + eps * tie\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.maximum(score, 0.0)\n    max_score = np.max(score)\n    if max_score > 1e-12:\n        score = score / max_score\n    else:\n        score = tie\n    return score.astype(np.float64)",
+  "hook_code_sha256": "9d5984a361b680bfa1505083baebca989c8e65f6dea1f4fea6e6998e03fd639d",
+  "design_sha256": "3dc18c4c625671948b1f98724bb1430f480d3e493a33297278e75ba7f0145603",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261124\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-frozen-c-near-tie",
+    "method-cvrp-m2-l2a-generalized-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

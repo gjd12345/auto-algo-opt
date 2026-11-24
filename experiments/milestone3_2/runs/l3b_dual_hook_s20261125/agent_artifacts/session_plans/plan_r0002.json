@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the dual-hook L3b arm toward stagnation-aware, capacity/depot-gated ruin selection with a regret-weighting recreate hook, targeting the observed weak regimes (size=100, capacity_level=tight, depot_style=eccentric, spatial/demand=uniform) where the round-1 arm shows rel_gap ≈ -20% and 12/12 size-100 instances exhaust the 500 ms deadline.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 validates this exact skeleton: unified deadline clock over CW + initial intra_2opt + LNS, deterministic Regret-2 reinsertion with intra_2opt perturbation and R2R acceptance, first_feasible_ms ≈ 2–3 ms, so a feasible solution is guaranteed inside our 500 ms budget and the evolvable surface is confined to the destruction-priority hook. Its documented winning form is precisely multiplicative gating of a scale-normalized savings term with a rank-power exponent in (iter_frac, stagnation_ratio) with deterministic tie-breaking and a length-n finite output — the invariant the 5-gate validator checks (6-customer no-tie probe A={1,2,3,4} vs B={3,4,5,6}). Archive feedback shows all 24 dev instances currently owned by one signature at 16.1402 / 335 ms mean, i.e. ~165 ms of headroom per instance; the weakest regimes are capacity-tight (12 instances, rel_gap -21.8%), eccentric depot (-19.3%) and size=100 (-20.2% with 12/12 deadline-exhausted). Since deadline exhaustion means the iteration budget, not feasibility, is binding, the productive lever is per-iteration ruin quality rather than more construction: method-cvrp-lns-shaw-regret and method-cvrp-m2-l2a-generalized-savings both indicate that capacity-fill awareness and depot-distance normalization are the informative dimensionless signals, which motivates the load-fill and depot-proximity gates and keeps scoring scale-invariant. Horizontally, the round-1 arm is retained as the stepping stone so any regression is attributable to the hook change rather than to the skeleton; postprocess_mode stays 'none' since KB entry reports the evolved hook at 23.3186 blind-120 without post-processing and the L3 family is documented weak under tight budgets where postprocess would eat deadline slack."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Multiplicative gating of |removal_savings_i|/scale by route-load-fill, depot-proximity, demand-magnitude and route-distance terms, raised to a rank-power exponent that rises with both iter_frac and stagnation_ratio, yields a strictly better mean objective on dev_24 than the round-1 arm (16.1402), with the largest per-instance gains on tight-capacity and eccentric-depot size-100 instances, because it (a) removes customers whose deletion most reduces distance while keeping routes under-filled near the bin-packing boundary, and (b) rotates toward diversified removals exactly when the search stalls, so deadline-exhausted instances still spend their final iterations escaping local optima instead of re-selecting the same worst-cost nodes.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 validates this exact skeleton: unified deadline clock over CW + initial intra_2opt + LNS, deterministic Regret-2 reinsertion with intra_2opt perturbation and R2R acceptance, first_feasible_ms ≈ 2–3 ms, so a feasible solution is guaranteed inside our 500 ms budget and the evolvable surface is confined to the destruction-priority hook. Its documented winning form is precisely multiplicative gating of a scale-normalized savings term with a rank-power exponent in (iter_frac, stagnation_ratio) with deterministic tie-breaking and a length-n finite output — the invariant the 5-gate validator checks (6-customer no-tie probe A={1,2,3,4} vs B={3,4,5,6}). Archive feedback shows all 24 dev instances currently owned by one signature at 16.1402 / 335 ms mean, i.e. ~165 ms of headroom per instance; the weakest regimes are capacity-tight (12 instances, rel_gap -21.8%), eccentric depot (-19.3%) and size=100 (-20.2% with 12/12 deadline-exhausted). Since deadline exhaustion means the iteration budget, not feasibility, is binding, the productive lever is per-iteration ruin quality rather than more construction: method-cvrp-lns-shaw-regret and method-cvrp-m2-l2a-generalized-savings both indicate that capacity-fill awareness and depot-distance normalization are the informative dimensionless signals, which motivates the load-fill and depot-proximity gates and keeps scoring scale-invariant. Horizontally, the round-1 arm is retained as the stepping stone so any regression is attributable to the hook change rather than to the skeleton; postprocess_mode stays 'none' since KB entry reports the evolved hook at 23.3186 blind-120 without post-processing and the L3 family is documented weak under tight budgets where postprocess would eat deadline slack."
+  }
+}

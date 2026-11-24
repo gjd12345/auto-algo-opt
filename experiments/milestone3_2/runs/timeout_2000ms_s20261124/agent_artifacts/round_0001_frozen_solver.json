@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_b7f1f5bf",
+  "display_name": "Session R1 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    n = dm.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    cap = float(capacity) if capacity > 0 else 1.0\n    eps = 1e-12\n\n    d0 = dm[0, 1:].astype(np.float64)\n    scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n\n    # Rank-based base signal: absolute savings, rank-normalized to [0,1] so it is scale free.\n    s = np.abs(sav) / scale\n    order = np.argsort(np.argsort(s))\n    if n > 1:\n        base = order.astype(np.float64) / (n - 1)\n    else:\n        base = np.zeros(1, dtype=np.float64)\n\n    # Gates: all normalized to [0,1].\n    ut = np.clip(rload / cap, 0.0, 1.0)\n    gate_load = 1.0 - ut  # prefer near-empty routes for rebalancing opportunity\n\n    prox = 1.0 / (1.0 + d0 / scale)  # depot proximity\n    gate_depot = np.clip(prox, 0.0, 1.0)\n\n    max_dem = float(np.max(np.abs(dem[1:]))) if n > 0 else 1.0\n    max_dem = max(max_dem, eps)\n    gate_demand = np.clip(np.abs(dem[1:]) / max_dem, 0.0, 1.0)\n\n    route_sum_rd = np.zeros(n, dtype=np.float64)\n    for r in np.unique(rid):\n        m = (rid == r)\n        if np.any(m):\n            route_sum_rd[m] = float(np.sum(rdist[m]))\n    route_sum_rd = np.maximum(route_sum_rd, eps)\n    rdist_share = np.clip(rdist / route_sum_rd, 0.0, 1.0)\n    gate_rdist = np.clip(rdist_share * float(np.sum(rid >= 0)) if n > 0 else rdist_share, 0.0, 1.0)\n    gate_rdist = np.clip(rdist_share * (n if n > 0 else 1.0), 0.0, 1.0)\n\n    gate = (0.35 * gate_load + 0.25 * gate_depot + 0.20 * gate_demand + 0.20 * gate_rdist)\n    gate = np.clip(gate, 0.0, 1.0)\n    # Small positive floor so the gate never zeroes out a target entirely.\n    gate = 0.1 + 0.9 * gate\n\n    # State-adaptive rank-power exponent: small early (spread), large under stagnation (sharp).\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n    p = 0.6 + 1.4 * st + 0.4 * (1.0 - it) * (1.0 - st)\n    p = float(np.clip(p, 0.4, 2.2))\n\n    # Power applied to a shifted rank base in [0,1] to avoid degenerate zeros.\n    powered = np.power(base + 0.02, p)\n\n    raw = powered * gate\n    score = np.where(np.isfinite(raw), raw, 0.0)\n    score = np.maximum(score, 0.0)\n    mx = float(np.max(score)) if score.size else 0.0\n    if mx > eps:\n        score = score / mx\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "b7f1f5bf8e5d995cbd3ec2548d5d50216dc78a93c49e3ce84022f011003c00b6",
+  "design_sha256": "2d6a2a65b1a2ee19a83bd4cec131d53781424955e86ec7b1cac89f8bef53ce83",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

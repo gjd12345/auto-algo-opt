@@ -1,0 +1,30 @@
+{
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "default_budget_ms": 500.0,
+  "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+  "design_sha256": "925eb48f4304f7a9e692138ebc46c08a56bdba479f57b0082c3dcf89f6f55e0d",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate (22af9ec1)",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(dm.shape[0]) - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dmd = np.asarray(demands, dtype=np.float64).ravel()\n    rl = np.asarray(route_loads, dtype=np.float64).ravel()\n    rd = np.asarray(route_dists, dtype=np.float64).ravel()\n    rs = np.asarray(removal_savings, dtype=np.float64).ravel()\n\n    if dmd.shape[0] != n + 1:\n        dmd = np.zeros(n + 1, dtype=np.float64)\n    if rl.shape[0] != n:\n        rl = np.zeros(n, dtype=np.float64)\n    if rd.shape[0] != n:\n        rd = np.ones(n, dtype=np.float64)\n    if rs.shape[0] != n:\n        rs = np.zeros(n, dtype=np.float64)\n\n    cap = float(capacity)\n    if not np.isfinite(cap) or cap <= 0.0:\n        cap = 1.0\n\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = min(max(it, 0.0), 1.0)\n\n    rd_safe = np.where(np.isfinite(rd) & (rd > 1e-12), rd, 1.0)\n    rs_safe = np.clip(np.where(np.isfinite(rs), rs, 0.0), 0.0, None)\n    rl_safe = np.clip(np.where(np.isfinite(rl), rl, 0.0), 0.0, None)\n    dem_c = np.where(np.isfinite(dmd[1:n + 1]), np.clip(dmd[1:n + 1], 0.0, None), 0.0)\n\n    depot_d = np.abs(dm[0, 1:n + 1])\n    depot_d = np.where(np.isfinite(depot_d), depot_d, 0.0)\n    md = float(np.mean(depot_d)) if n > 0 else 1.0\n    if not np.isfinite(md) or md <= 1e-12:\n        md = 1.0\n\n    # --- Energy components (dimensionless, scale-free) ---\n    # detour fraction removed per unit route length\n    e_det = np.clip(rs_safe / np.maximum(rd_safe, 1e-9), 0.0, 1.0)\n    # depot eccentricity, saturating\n    e_ecc = depot_d / (depot_d + md)\n    # capacity pressure: high demand in a heavily loaded route\n    util = np.clip(rl_safe / max(cap, 1e-9), 0.0, 1.0)\n    e_cap = util * np.clip(dem_c / max(cap, 1e-9), 0.0, 1.0)\n\n    # Per-customer energy: lower = stronger candidate (like a cost to keep)\n    energy = -(0.50 * e_det + 0.30 * e_cap + 0.20 * e_ecc)\n\n    # --- Hash-driven folded perturbation (deterministic, stagnation/iter aware) ---\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    hp = np.sin(idx * 12.9898 + it * 78.233 + st * 37.719) * 43758.5453\n    hp = hp - np.floor(hp)\n    hq = np.cos(idx * 4.1414 + it * 23.1406 + st * 91.123) * 24634.6345\n    hq = hq - np.floor(hq)\n    fold = np.abs(hp + hq)\n    fold = fold - np.floor(fold)\n    fold = np.where(np.isfinite(fold), fold, 0.5)\n    fold = np.clip(fold, 1e-9, 1.0 - 1e-9)\n\n    # --- Inverse temperature: cold (greedy) early, hot (exploratory) late ---\n    beta = 1.0 / (0.15 + 0.60 * it + 0.85 * st)\n    beta = float(min(max(beta, 0.20), 8.0))\n\n    # Perturbed energy shifts toward hash as temperature rises\n    explore = 0.25 + 0.60 * it + 0.50 * st\n    explore = float(min(max(explore, 0.0), 1.0))\n    energy_pert = (1.0 - explore) * energy + explore * (energy - 1.5 * (fold - 0.5))\n\n    # --- Gibbs / softmax competitive distribution ---\n    logits = -beta * energy_pert\n    logits = logits - np.max(logits)\n    w = np.exp(np.clip(logits, -60.0, 0.0))\n    ssum = float(np.sum(w))\n    if not np.isfinite(ssum) or ssum <= 1e-300:\n        w = np.ones(n, dtype=np.float64)\n        ssum = float(n)\n    prob = w / ssum\n\n    # --- Quota-ladder survival: cumulative mass + tie-breaking folding ---\n    order = np.argsort(-prob)\n    ladder = np.zeros(n, dtype=np.float64)\n    csum = np.cumsum(prob[order])\n    ladder[order] = csum / max(csum[-1], 1e-300)\n\n    # Blend: probability mass primary, ladder as monotone survival weighting, tiny hash tie-break\n    score = 0.55 * prob / max(float(np.max(prob)), 1e-300) + 0.45 * ladder\n    score = score + 1e-6 * fold\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.clip(score, 0.0, 1.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "22af9ec1abf58196f2f7f069c76d39d1ea493bffb24a5f2ec3ceeda631feb609",
+  "hook_name": "score_ruin_nodes",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_curve_s20261126",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_22af9ec1ab",
+  "template_id": "cvrp_ruin_recreate",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "template_version": "v1"
+}

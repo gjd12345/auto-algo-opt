@@ -1,0 +1,35 @@
+{
+  "round_id": 5,
+  "direction": "Capacity-tightness-aware multiplicative gated rank-power ruin scoring (targeting the 'tight capacity' / eccentric-depot weak regime)",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 4 reached 16.0665, i.e. the frontier is flat (SBS 16.0496 vs VBS-derived gap-over-SBS only 0.56%), so single-digit-percent archetype changes are exhausted and progress must come from regime-targeted reweighting inside the single evolvable hook. The KB entry method-cvrp-m3-ruin-recreate-l3 documents the exact score_ruin_nodes math family (rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) and shows the evolved gated rank-power form beat the Worst-Removal L3-ctrl on both select_64 and blind_120, i.e. the multiplicative-gate + rank-power structure is the verified productive search neighborhood here rather than an untested invention. The KB also flags the failure mode to avoid: naive heavy per-iteration hooks collapse under small budgets (budget-exhaustion early stop), so I keep the hook O(n) vectorized (no per-node re-optimization) and keep the fixed deterministic Regret-2 repair, letting the 2000 ms budget be spent on LNS iterations rather than on scoring. The differentiated ingredient versus the archived solvers is that gate_load and gate_depot are conditioned on observed capacity slack and route depot-distance, which directly attacks the two weakest regimes instead of the already-saturated spatial/demand axes. Postprocess stays 'none' to preserve exact per-iteration attribution of the hook change."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Because the weakest regime reported by the archive is capacity_level=tight (12 instances, vbs_rel_gap_pct = -22.59%) and depot_style=eccentric (-20.35%), the current score_ruin_nodes ranking must be under-serving load-critical customers: it ranks mostly by removal savings, so in tight-capacity instances it repeatedly removes cheap-to-move low-demand nodes and leaves the bin-packing-like capacity structure (and the long depot legs of eccentric instances) untouched. Testable claim: scoring removal priority as a multiplicative gate of (a) normalized removal savings, (b) demand-to-residual-load pressure of the node's route, and (c) a depot-distance gate applied only when the route is far-loaded, combined through a stagnation-driven rank power, will lower mean tour length on dev_24 below the current SBS 16.0496, with the gain concentrated on the tight-capacity and eccentric-depot subsets (predicting subset mean improvement >= 0.05 while uniform-demand/spatial-random subsets stay within noise).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 4 reached 16.0665, i.e. the frontier is flat (SBS 16.0496 vs VBS-derived gap-over-SBS only 0.56%), so single-digit-percent archetype changes are exhausted and progress must come from regime-targeted reweighting inside the single evolvable hook. The KB entry method-cvrp-m3-ruin-recreate-l3 documents the exact score_ruin_nodes math family (rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) and shows the evolved gated rank-power form beat the Worst-Removal L3-ctrl on both select_64 and blind_120, i.e. the multiplicative-gate + rank-power structure is the verified productive search neighborhood here rather than an untested invention. The KB also flags the failure mode to avoid: naive heavy per-iteration hooks collapse under small budgets (budget-exhaustion early stop), so I keep the hook O(n) vectorized (no per-node re-optimization) and keep the fixed deterministic Regret-2 repair, letting the 2000 ms budget be spent on LNS iterations rather than on scoring. The differentiated ingredient versus the archived solvers is that gate_load and gate_depot are conditioned on observed capacity slack and route depot-distance, which directly attacks the two weakest regimes instead of the already-saturated spatial/demand axes. Postprocess stays 'none' to preserve exact per-iteration attribution of the hook change."
+  }
+}

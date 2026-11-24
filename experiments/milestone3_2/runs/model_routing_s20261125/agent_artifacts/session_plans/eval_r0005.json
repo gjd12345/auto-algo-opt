@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:0fd1b50a630642d28dc9d6da00c1893c"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The dev_24 residual error concentrates on tight-capacity, size-100, clustered instances with eccentric depots (per archive weakest_regimes). Hypothesis: gating ruin priority by route load utilization and depot-distance share, and raising the rank-power exponent with stagnation_ratio, will make the LNS ruin selection diversify into spatially coherent clusters at high stagnation while still removing cost-heavy nodes early, lowering mean objective below the 0.17% SBS/VBS band (i.e. beating 15.9328) without increasing per-instance solve time above the 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0fd1b50a630642d28dc9d6da00c1893c"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Capacity-tightness & clustered-geometry aware ruin scoring with stagnation-gated diversification: replace the plain |removal_savings| rank-power rule with a multiplicative gate chain sc = |sav|/scale * (0.5+load_util)^a * (1 + b*(d(0,i)/mean_depot_dist)) * (1 + c*route_dist_share), then apply rank-power p that grows from ~0.8 to ~2.5 as stagnation_ratio rises, and mix in a small fraction of relatedness-driven (Shaw-like) neighbourhood picks in the top-q so tight-capacity clustered instances escape depot-proximity bias rather than repeating near-identical ruins."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

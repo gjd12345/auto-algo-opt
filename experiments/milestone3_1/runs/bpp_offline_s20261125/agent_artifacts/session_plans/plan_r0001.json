@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Choose item priority score_item as a monotone decreasing-size key with a tightness tie-break: sort items primarily by descending size, and among near-equal sizes (within a small epsilon fraction of capacity) prefer items whose size is closest to a complementary fraction of bin capacity (i.e., large-residual-filling items first). This is an FFD-flavoured reordering for the offline reorder-repack template: largest-first reduces the number of residual bins, while the complement-awareness tie-break keeps sub-one-quarter leftovers packable instead of stranding them.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "bpp_offline_reorder_repack",
+      "mechanism": "Archive is empty (solver_count=0) and KB search returned no bpp entries, so this round establishes the baseline priority structure for the only allowed template. Literature-standard first-fit-decreasing ordering is the strongest known simple heuristic signal for bin count minimization; scoring by descending size is a safe, deterministic and cheap (O(n log n)) direction that also gives the inner evolution a well-shaped starting point to perturb (epsilon, complement weight, tie-break direction). Postprocess mode 'none' is the only allowed mode, so all gains must come from the score_item ordering."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A descending-size (FFD-like) item priority score strictly dominates ascending or random ordering for offline bin packing on heterogeneous item sizes, because placing large items first prevents the residual-fragmentation failure mode where many small bins end up with unusable gaps; adding a capacity-complement tie-break (prefer sizes near capacity/k for small k) further reduces bin count without changing the primary ordering.",
+  "interface_selection": {
+    "template_id": "bpp_offline_reorder_repack",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Archive is empty (solver_count=0) and KB search returned no bpp entries, so this round establishes the baseline priority structure for the only allowed template. Literature-standard first-fit-decreasing ordering is the strongest known simple heuristic signal for bin count minimization; scoring by descending size is a safe, deterministic and cheap (O(n log n)) direction that also gives the inner evolution a well-shaped starting point to perturb (epsilon, complement weight, tie-break direction). Postprocess mode 'none' is the only allowed mode, so all gains must come from the score_item ordering."
+  }
+}

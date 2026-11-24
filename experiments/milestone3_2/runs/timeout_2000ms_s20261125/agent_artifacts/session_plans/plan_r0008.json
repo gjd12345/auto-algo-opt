@@ -1,0 +1,34 @@
+{
+  "round_id": 8,
+  "direction": "Evolution of the multiplicative gate + rank-power ruin priority rule score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), tuned toward the weakest regimes of dev_24 (tight capacity, uniform demand, n=100, eccentric depot): strengthen gate_load with a fill-ratio term (route_load/capacity) so near-full routes are ruptured first, add a dimensionless demand-over-slack term (demands_i/(capacity - route_load + demands_i)) to target customers whose removal frees scarce slack on tight instances, and make the rank exponent p monotone increasing in stagnation_ratio so early iterations exploit high absolute savings while stagnating iterations flatten the ranking toward diversification. Keep deterministic tie-breaking (index order) and all state arrays read-only.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 is the verified parent of the active template: it fixes the LNS skeleton (CW + intra_2opt init, deterministic Regret-2 recreate, local intra_2opt, R2R acceptance, unified deadline clock) and reports that the evolved multiplicative-gate rank-power score_ruin_nodes beat the zero-evolution Worst-Cost-Removal control on blind_120 (23.3186 vs 23.3474). Since the archive shows all 7 candidates clustered within 0.09 objective units of the SBS, the remaining headroom is in stagnation-aware diversification (explicit 'strong_on: stagnation_aware_diversification') rather than in more LNS iterations; with a generous 2000 ms budget versus the KB's saturated 500 ms regime, more iterations are available to exploit adaptivity. Postprocess mode is kept 'none' as allowed, and only the whitelisted score_ruin_nodes hook is mutated."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 7,
+    "evaluation_ref": "rounds/round_0007/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On dev_24 with a 2000 ms budget, the current LNS skeleton is empirically saturated near mean objective 16.05 (SBS 16.0496 across 7 archived solvers, VBS gap only 0.82%), meaning gains must come from per-iteration diversification rather than more iterations. I therefore claim that replacing a static multiplicative-gate rank-power ruin score with a stagnation-adaptive exponent plus capacity-slack-aware gating will reduce mean objective by >= 0.02 (i.e. below 16.030) on cvrp_dev_hetero_24, with the largest gains concentrated in the 'tight' capacity and 'clustered' spatial regimes where the VBS relative gap is most negative (-22.7% and -19.6%).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 is the verified parent of the active template: it fixes the LNS skeleton (CW + intra_2opt init, deterministic Regret-2 recreate, local intra_2opt, R2R acceptance, unified deadline clock) and reports that the evolved multiplicative-gate rank-power score_ruin_nodes beat the zero-evolution Worst-Cost-Removal control on blind_120 (23.3186 vs 23.3474). Since the archive shows all 7 candidates clustered within 0.09 objective units of the SBS, the remaining headroom is in stagnation-aware diversification (explicit 'strong_on: stagnation_aware_diversification') rather than in more LNS iterations; with a generous 2000 ms budget versus the KB's saturated 500 ms regime, more iterations are available to exploit adaptivity. Postprocess mode is kept 'none' as allowed, and only the whitelisted score_ruin_nodes hook is mutated."
+  }
+}

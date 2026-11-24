@@ -156,6 +156,7 @@ def evaluator_source_hash() -> str:
     parts.append(parent.joinpath("problems", "tsp.py").read_bytes())
     parts.append(parent.joinpath("problems", "tsp_2opt.py").read_bytes())
     parts.append(parent.joinpath("problems", "obp.py").read_bytes())
+    parts.append(parent.joinpath("problems", "bpp_offline.py").read_bytes())
     parts.append(parent.joinpath("problems", "bp_island605.py").read_bytes())
     parts.append(parent.joinpath("problems", "base.py").read_bytes())
     parts.append(parent.joinpath("evidence", "behavior.py").read_bytes())
@@ -1220,4 +1221,45 @@ register_problem(_replace_spec(
     evaluate_instances=_island605.evaluate_instances,
     evaluate_with_behavior=_island605.evaluate_with_behavior,
     behavior_contract=_island605.BEHAVIOR_CONTRACT,
+))
+
+# --- Offline BPP independent spec registration -------------------------------
+from agent_skill_loop.problems import bpp_offline as _bpp_offline
+
+
+def _evaluate_bpp_offline_instances(fn: Any, instances: list[Mapping[str, Any]]) -> tuple[list[float], dict[str, Any]]:
+    import numpy as np
+    objectives: list[float] = []
+    for inst in instances:
+        weights, cap = _bpp_offline.prepare_packing_input(inst["items"], inst["capacity"])
+        raw = fn(np.asarray(weights, dtype=np.float64), cap)
+        scores = np.asarray(raw, dtype=np.float64)
+        if scores.shape != (len(weights),) or not np.all(np.isfinite(scores)):
+            raise EvalError("invalid_output_shape", "rank_items must return finite 1D scores per item")
+        order = sorted(range(len(weights)), key=scores.__getitem__, reverse=True)
+        bins = _bpp_offline.pack_item_order(weights, cap, order)
+        if bins is None:
+            raise EvalError("packing_failed", "offline BPP packing aborted")
+        ver = _bpp_offline.verify_bpp_solution(inst, bins)
+        if not ver.get("valid") or ver.get("bins_used") is None:
+            raise EvalError(str(ver.get("error_code") or "invalid_bpp_solution"))
+        objectives.append(float(ver["bins_used"]))
+    return objectives, {"protocol_id": "bpp_offline/v1"}
+
+
+register_problem(_replace_spec(
+    OBP_SPEC,
+    problem_id=_bpp_offline.PROBLEM_NAME,
+    entrypoint=_bpp_offline.ENTRYPOINT,
+    interface_version="v1",
+    task_description="Offline bin packing: rank full item list; trusted runner packs & verifies bins.",
+    template_program=_bpp_offline.BASELINE_CODE,
+    baseline_code=_bpp_offline.BASELINE_CODE,
+    baseline_description=_bpp_offline.BASELINE_DESCRIPTION,
+    split_offsets=_bpp_offline.SPLIT_OFFSETS,
+    build_suite=_bpp_offline.build_suite,
+    validate_suite=_bpp_offline.validate_suite,
+    evaluate_instances=_evaluate_bpp_offline_instances,
+    evaluate_with_behavior=None,
+    behavior_contract=None,
 ))

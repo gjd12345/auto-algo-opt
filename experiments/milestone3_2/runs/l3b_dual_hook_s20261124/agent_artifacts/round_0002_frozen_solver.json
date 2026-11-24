@@ -1,0 +1,70 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_cvrp_ruin_recreate_dual_4afbc072",
+  "display_name": "Session R2 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(np.asarray(route_ids).shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n    dep = np.asarray(distance_matrix[0, 1:], dtype=np.float64)\n    dep_scale = max(float(np.mean(dep)), 1e-12)\n    dep_hat = np.clip(dep / dep_scale, 0.0, None)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    q_scale = max(float(np.mean(q)), 1e-12)\n    q_hat = np.clip(q / q_scale, 0.0, None)\n    cap = max(float(capacity), 1e-12)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    u = np.clip(loads / cap, 0.0, 1.0)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd_scale = max(float(np.mean(rd)), 1e-12)\n    rd_hat = np.clip(rd / rd_scale, 0.0, None)\n    rs = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    rs_scale = max(float(np.mean(rs)), 1e-12)\n    rho = rs / rs_scale\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n    p_base = 1.10 + 0.60 * fr\n    p_sharp = 3.30\n    p = p_base + (p_sharp - p_base) * (1.0 - np.power(sr, 0.60))\n    exploit = np.power(np.log1p(rho) + eps, p)\n    exploit_scale = max(float(np.mean(np.abs(exploit))), 1e-12)\n    exploit = exploit / exploit_scale\n    divers = (0.55 * np.log1p(dep_hat) + 0.30 * np.log1p(q_hat) + 0.25 * np.log1p(rd_hat))\n    divers = divers - 0.35 * np.power(1.0 - u + eps, 0.75)\n    d_scale = max(float(np.mean(np.abs(divers))), 1e-12)\n    divers = divers / d_scale\n    mix = np.power(sr, 0.45)\n    score = (1.0 - mix) * exploit + mix * divers\n    return np.asarray(score, dtype=np.float64)\n",
+  "hook_code_sha256": "a3335cac9d7fa066847525dc974faa05fa314f83d0dece20d51f109191e88008",
+  "design_sha256": "40cdc1ebd3a8cfdd7f29ee85463f463f075e3a258324b4b6c6d87c89b43b48ae",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(np.asarray(route_ids).shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n    dep = np.asarray(distance_matrix[0, 1:], dtype=np.float64)\n    dep_scale = max(float(np.mean(dep)), 1e-12)\n    dep_hat = np.clip(dep / dep_scale, 0.0, None)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    q_scale = max(float(np.mean(q)), 1e-12)\n    q_hat = np.clip(q / q_scale, 0.0, None)\n    cap = max(float(capacity), 1e-12)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    u = np.clip(loads / cap, 0.0, 1.0)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd_scale = max(float(np.mean(rd)), 1e-12)\n    rd_hat = np.clip(rd / rd_scale, 0.0, None)\n    rs = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    rs_scale = max(float(np.mean(rs)), 1e-12)\n    rho = rs / rs_scale\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n    p_base = 1.10 + 0.60 * fr\n    p_sharp = 3.30\n    p = p_base + (p_sharp - p_base) * (1.0 - np.power(sr, 0.60))\n    exploit = np.power(np.log1p(rho) + eps, p)\n    exploit_scale = max(float(np.mean(np.abs(exploit))), 1e-12)\n    exploit = exploit / exploit_scale\n    divers = (0.55 * np.log1p(dep_hat) + 0.30 * np.log1p(q_hat) + 0.25 * np.log1p(rd_hat))\n    divers = divers - 0.35 * np.power(1.0 - u + eps, 0.75)\n    d_scale = max(float(np.mean(np.abs(divers))), 1e-12)\n    divers = divers / d_scale\n    mix = np.power(sr, 0.45)\n    score = (1.0 - mix) * exploit + mix * divers\n    return np.asarray(score, dtype=np.float64)\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    cid = np.asarray(customer_idx, dtype=np.float64)\n    n = int(cid.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n    delta = np.asarray(insert_delta, dtype=np.float64)\n    reg = np.asarray(regret2_margin, dtype=np.float64)\n    load_after = np.asarray(route_load_after, dtype=np.float64)\n    pos = np.asarray(insert_pos, dtype=np.float64)\n    tr = np.asarray(target_route_idx, dtype=np.float64)\n    d_scale = max(float(np.mean(np.abs(delta))), 1e-12)\n    detour = -delta / d_scale\n    reg_abs = np.abs(reg)\n    reg_scale = max(float(np.mean(reg_abs)), 1e-12)\n    reg_reward = 1.35 * (reg / reg_scale)\n    slack = np.clip(1.0 - load_after / cap, 0.0, 1.0)\n    slack_pen = 0.65 * np.power(slack + 1e-12, 1.10)\n    new_route_bonus = 0.18 * (tr < 0).astype(np.float64)\n    pos_max = float(np.max(pos)) + 1.0\n    pos_pen = 0.03 * (pos / pos_max)\n    return detour + reg_reward - slack_pen + new_route_bonus - pos_pen\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "a3335cac9d7fa066847525dc974faa05fa314f83d0dece20d51f109191e88008",
+    "score_recreate_action": "f85a3a185fa54822b03731afaf15e8b3f441a56d24011e43df67ea451b82d99b"
+  },
+  "bundle_hash": "ed3b52fdc6a6d4f6b2f1035bb062898e5caef056aeb825756592a846b5b283e8",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the step-wise selection score from pure nearest-neighbour toward a normalized linear endpoint-attraction (destination pull) score with progress-adaptive blending, plus a small variance/regret term to avoid creating long edges late in the tour. Keep everything vectorized over unvisited_nodes so each step is O(m) and total O(n^2), guaranteeing 100% completion within the 500 ms budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "Diagnostic probe on dev_24 revealed the template's actual entrypoint contract expects select_next_city rather than the select_next_node name shown in the KB blueprint, so the round-1 plan pins a concrete vectorized hook body to be resolved against the registered signature during validation. The KB dest-pull entry is the documented speed-quality Pareto knee for this interface (0.63 ms median, 128/128 completion) and its math reduces to a pure linear endpoint attraction, which is the cheapest possible non-NN signal to add under a 500 ms budget. The O(n^4) one-step-rollout entry is cited as the negative evidence motivating a hard O(n^2) vectorized design instead of per-candidate suffix simulation."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Replacing raw argmin(d(cur,u)) with the algebraically simplified endpoint-attraction score argmax_u (0.7*d(dest,u) - d(cur,u)) — scale-normalized by the mean/median of d(cur, ·) over unvisited nodes and blended with a normalized nearest-neighbour term via a progress-dependent weight w(t) — reduces mean relative tour gap vs pure NN on dev_24 while keeping median runtime sub-millisecond and completion at 24/24, because it reserves short edges for the closing phase instead of exhausting the nearest nodes early.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-dest-pull",
+      "method-lit-tsp-metric-nearest-neighbor",
+      "method-tsp-i605-1step-rollout"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Diagnostic probe on dev_24 revealed the template's actual entrypoint contract expects select_next_city rather than the select_next_node name shown in the KB blueprint, so the round-1 plan pins a concrete vectorized hook body to be resolved against the registered signature during validation. The KB dest-pull entry is the documented speed-quality Pareto knee for this interface (0.63 ms median, 128/128 completion) and its math reduces to a pure linear endpoint attraction, which is the cheapest possible non-NN signal to add under a 500 ms budget. The O(n^4) one-step-rollout entry is cited as the negative evidence motivating a hard O(n^2) vectorized design instead of per-candidate suffix simulation."
+  }
+}

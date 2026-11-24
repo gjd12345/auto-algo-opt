@@ -1,0 +1,38 @@
+{
+  "round_id": 3,
+  "direction": "Replace the residual-proximity score_bin with a purely dimensionless fill-ratio score combining (a) a log half-symmetry term that rewards balanced transition, (b) an exponential \"close-out\" bonus that fires above ~90% utilisation to seal near-full bins, and (c) a residual dead-zone quadratic term that zeroes the penalty at exact fit (r=0) and at the symmetric pair (r=w); keep active open-new-bin behaviour enabled so the priority score is compared against a fresh-bin option instead of only among existing bins.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "Round-2 improvement was small (-0.0556) and the two archived solvers are complementary (VBS only 1 unit better than SBS), so the highest-expected-value move is a scoring-formula change on the single action-selection surface the template exposes, not a search-budget change. KB entries method-obp-i605-{log-half-symmetry, sqrt-close-bonus, exp-deadzone} are the three proven island流派 with controlled ablations: the log half-symmetry form is protocol-robust (0.00% drift under 10x capacity scaling) and the exp-deadzone form is the historical #1 but critically depends on active new-bin opening, which the template already provides. Combining their dimensionless terms keeps decisions scale-invariant while the >90% close-out bonus addresses the observed size-200 regime where fragmentation accumulates (vbs_rel_gap -0.63%). Cost stays ~3 ms/instance, far inside the 500 ms budget, so no exhaustion risk."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Because the archive frontier is already saturated (SBS 1000 vs VBS 999, gap 0.1%, 33/3 win split), the remaining gains must come from bin-selection ties on size-100/200 instances. I claim that a purely dimensionless score_bin — f = u + a*log(1/(|u-0.5|+eps)) + b*exp(k*(u-0.9)) penalising the mid-fill dead zone and rewarding >90% close-out, minus c*(min(r_c, w-r_c)/w)^2 — will select strictly better bins than plain residual-best-fit at identical compute, and will lower mean objective on the 12 size-200 instances without any scale drift (ratio-only, so 10x capacity scaling leaves decisions invariant).",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-i605-log-half-symmetry",
+      "method-obp-i605-sqrt-close-bonus",
+      "method-obp-i605-exp-deadzone",
+      "method-obp-best-fit",
+      "method-obp-first-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-2 improvement was small (-0.0556) and the two archived solvers are complementary (VBS only 1 unit better than SBS), so the highest-expected-value move is a scoring-formula change on the single action-selection surface the template exposes, not a search-budget change. KB entries method-obp-i605-{log-half-symmetry, sqrt-close-bonus, exp-deadzone} are the three proven island流派 with controlled ablations: the log half-symmetry form is protocol-robust (0.00% drift under 10x capacity scaling) and the exp-deadzone form is the historical #1 but critically depends on active new-bin opening, which the template already provides. Combining their dimensionless terms keeps decisions scale-invariant while the >90% close-out bonus addresses the observed size-200 regime where fragmentation accumulates (vbs_rel_gap -0.63%). Cost stays ~3 ms/instance, far inside the 500 ms budget, so no exhaustion risk."
+  }
+}

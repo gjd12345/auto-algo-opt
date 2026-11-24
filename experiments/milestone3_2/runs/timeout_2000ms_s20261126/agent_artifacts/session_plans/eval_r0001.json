@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:c7c7f5d02e0b4f699b7e780e5f832efc"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "At a 2000 ms budget the L3 ruin-recreate skeleton performs many hundreds of destroy/repair iterations, so destroy selection quality dominates the incumbent. A scale-invariant, multiplicatively-gated rank-power score over removal_savings (gates: route load utilization, depot/route boundary proximity, and per-route average edge cost) with a stagnation-adaptive exponent p rising from ~1 to ~2.5 will lower mean tour length on dev_24 versus the plain worst-removal L3 control and versus an ungated rank-power variant, and will also tilt the anytime curve at 250/500/1000 ms without hurting first_feasible_ms (still ~2-3 ms).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c7c7f5d02e0b4f699b7e780e5f832efc"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_ruin_nodes into a multiplicative-gated rank-power destroy priority: normalize removal_savings by a robust scale (median absolute saving + epsilon), then gate by capacity slack (route_load/capacity near 1 -> prioritize), depot proximity of the removed pair's endpoints, and local route density (route_dist / customers_in_route); exponent p(iter_frac, stagnation_ratio) rising from ~1.0 (early, exploratory worst-removal) to ~2.5 (late/stagnant, aggressively sharpened) so that at 2000 ms budget the LNS exploits far past the initial CW+2opt construct."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

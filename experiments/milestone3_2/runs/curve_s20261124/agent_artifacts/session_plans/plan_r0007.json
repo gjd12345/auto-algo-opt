@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Refine the `score_ruin_nodes` destruction priority toward a stagnation-adaptive multiplicative gating + rank-power rule that (a) widens spatial cluster removal when `stagnation_ratio` is high and instances are clustered, and (b) tightens toward pure worst-cost/removal-savings descent when `iter_frac` is late — targeting the weakest regimes reported by the archive (spatial=clustered, capacity_level=loose, depot_style=eccentric, size=100) where the current SBS (session_r0006, mean 16.0134) still leaves a 0.357% gap to VBS.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the verified math form score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) for the exact window 'score_ruin_nodes' hook, with first_feasible_ms ~2-3 ms guaranteeing feasibility under the 500 ms budget and no exhaustion observed on the archive suite (0 exhausted/0 failed instances). The archive shows the r0006 evolved arm already dominates (11/24 wins, mean 16.0134 vs 16.0504-16.1332 for others), so the remaining leverage is regime-specific: weakest regimes are clustered spatial, loose capacity, eccentric depot, n=100 — all regimes where route-load slack is large (loose capacity) and spatial adjacency dominates savings, exactly the conditions where the gate_load/demand terms must be softened and the gating shifted toward spatial-cluster breadth (Shaw-relatedness style removal per method-cvrp-lns-shaw-regret) under high stagnation. The prior diagnose_suite attempt failed only on a harness signature mismatch (`extra_hooks`), not on the template/postprocess pair, so the plan stays on the already-validated cvrp_ruin_recreate + postprocess 'none' interface with a widened p range and softer load gating as the evolvable search space."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0006/eoh_run/skills/best_generated",
+  "hypothesis": "Multiplicative load/depot/demand/route-distance gates on normalized removal savings, raised to a stagnation-dependent power p(iter_frac, stagnation_ratio) in [1.0, 2.5] that grows with stagnation and decays with iter_frac, beats the incumbent r0006 scoring by >0.1% mean objective on dev_24 without increasing solve_ms_mean beyond ~110 ms, because high-stagnation phases need broad cluster-level diversification (top-q covering several spatially adjacent customers) while late iterations need sharp worst-removal exploitation.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the verified math form score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) for the exact window 'score_ruin_nodes' hook, with first_feasible_ms ~2-3 ms guaranteeing feasibility under the 500 ms budget and no exhaustion observed on the archive suite (0 exhausted/0 failed instances). The archive shows the r0006 evolved arm already dominates (11/24 wins, mean 16.0134 vs 16.0504-16.1332 for others), so the remaining leverage is regime-specific: weakest regimes are clustered spatial, loose capacity, eccentric depot, n=100 — all regimes where route-load slack is large (loose capacity) and spatial adjacency dominates savings, exactly the conditions where the gate_load/demand terms must be softened and the gating shifted toward spatial-cluster breadth (Shaw-relatedness style removal per method-cvrp-lns-shaw-regret) under high stagnation. The prior diagnose_suite attempt failed only on a harness signature mismatch (`extra_hooks`), not on the template/postprocess pair, so the plan stays on the already-validated cvrp_ruin_recreate + postprocess 'none' interface with a widened p range and softer load gating as the evolvable search space."
+  }
+}

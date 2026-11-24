@@ -14,7 +14,7 @@ import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -193,7 +193,7 @@ def solve_tsp_farthest_insertion(dmat: np.ndarray, *, time_budget_ms: float | No
     return tour, {"budget_exhausted": False}
 
 
-def solve_tsp_nn_2opt(dmat: np.ndarray, *, time_budget_ms: float | None = 500.0, max_passes: int = 200) -> tuple[list[int], dict[str, Any]]:
+def solve_tsp_nn_2opt(dmat: np.ndarray, *, time_budget_ms: float | None = None, max_passes: int = 200) -> tuple[list[int], dict[str, Any]]:
     t0 = time.perf_counter()
     deadline = (t0 + time_budget_ms / 1000.0) if time_budget_ms is not None else None
     tour, meta = solve_tsp_nn(dmat, time_budget_ms=time_budget_ms)
@@ -226,9 +226,13 @@ def solve_tsp_nn_2opt(dmat: np.ndarray, *, time_budget_ms: float | None = 500.0,
                     d_ab = float(dmat[a, b])
         if budget_exhausted or not improved:
             break
-    if not budget_exhausted and passes >= max_passes:
-        budget_exhausted = True
-    return tour, {"two_opt_moves": moves, "passes": passes, "budget_exhausted": budget_exhausted}
+    max_passes_reached = not budget_exhausted and passes >= max_passes and improved
+    return tour, {
+        "two_opt_moves": moves,
+        "passes": passes,
+        "max_passes_reached": max_passes_reached,
+        "budget_exhausted": budget_exhausted,
+    }
 
 
 def _compile_tsp_rule(code: str, name: str) -> Callable[..., Any]:
@@ -430,11 +434,11 @@ def evaluate_tsp_algorithm_on_instance(
     meta: dict[str, Any] = {}
     try:
         if algorithm_id == "tsp_nn":
-            tour, meta = solve_tsp_nn(dmat, time_budget_ms=time_budget_ms)
+            tour, meta = solve_tsp_nn(dmat, time_budget_ms=None)
         elif algorithm_id == "tsp_farthest_insertion":
-            tour, meta = solve_tsp_farthest_insertion(dmat, time_budget_ms=time_budget_ms)
+            tour, meta = solve_tsp_farthest_insertion(dmat, time_budget_ms=None)
         elif algorithm_id == "tsp_nn_2opt":
-            tour, meta = solve_tsp_nn_2opt(dmat, time_budget_ms=time_budget_ms)
+            tour, meta = solve_tsp_nn_2opt(dmat, time_budget_ms=None, max_passes=200)
         elif spec.interface == "select_next_node":
             fn = _TSP_COMPILED.get(algorithm_id)
             if fn is None:
@@ -451,6 +455,11 @@ def evaluate_tsp_algorithm_on_instance(
         error_code = "solver_exception"
         error_detail = f"{type(exc).__name__}: {exc}"
     solve_ms = (time.perf_counter() - t_sol0) * 1000.0
+    wall_budget_exhausted = bool(
+        algorithm_id in {"tsp_nn", "tsp_farthest_insertion", "tsp_nn_2opt"}
+        and time_budget_ms is not None
+        and solve_ms > float(time_budget_ms)
+    )
 
     if status == "ok":
         ver = verify_tsp_solution(instance, tour, distance_convention=distance_convention, expected_matrix=dmat)
@@ -482,7 +491,7 @@ def evaluate_tsp_algorithm_on_instance(
         "preprocess_ms": round(preprocess_ms, 4),
         "solve_ms": round(solve_ms, 4),
         "verify_ms": round(float(ver["verify_ms"]), 4),
-        "budget_exhausted": bool(meta.get("budget_exhausted", False)),
+        "budget_exhausted": bool(meta.get("budget_exhausted", False) or wall_budget_exhausted),
     }
 
 
@@ -547,6 +556,64 @@ OBP_FIRST_FIT_CODE = """def priority(item: float, bins: np.ndarray) -> np.ndarra
 OBP_BEST_FIT_CODE = """def priority(item: float, bins: np.ndarray) -> np.ndarray:
     return -bins
 """
+
+
+def run_obp_online_arrivals(
+    items: Iterable[float],
+    capacity: float,
+    score_feasible_bins: Callable[[float, np.ndarray], np.ndarray],
+    *,
+    solve_deadline_ms: float | None,
+    capture_trace: bool,
+) -> tuple[list[int] | None, dict[str, Any]]:
+    """Commit each arrival before reading the next one, using stable bin IDs."""
+    started = time.perf_counter()
+    deadline = math.inf if solve_deadline_ms is None else started + solve_deadline_ms / 1000.0
+    tolerance = capacity * 1e-12
+    remaining = np.empty(16, dtype=np.float64)
+    open_count = 0
+    assignments: list[int] = []
+    open_trace: list[bool] = []
+    hook_calls = 0
+    hook_seconds = 0.0
+
+    for item in items:
+        if time.perf_counter() >= deadline:
+            break
+        feasible = np.flatnonzero(remaining[:open_count] + tolerance >= item)
+        opened = not feasible.size
+        if opened:
+            if open_count == len(remaining):
+                remaining = np.resize(remaining, 2 * open_count)
+            selected = open_count
+            remaining[selected] = capacity - item
+            open_count += 1
+        else:
+            # Canonicalize roundoff at unit capacity so equal residuals keep
+            # their opening-order tie break after a change of weight units.
+            spaces = np.round(remaining[feasible] / capacity, decimals=14) * capacity
+            # An immutable backing buffer also prevents re-enabling writes.
+            readonly_spaces = np.frombuffer(spaces.tobytes(), dtype=np.float64)
+            hook_started = time.perf_counter()
+            scores = score_feasible_bins(item, readonly_spaces)
+            hook_seconds += time.perf_counter() - hook_started
+            hook_calls += 1
+            selected = int(feasible[int(np.argmax(scores))])
+            remaining[selected] -= item
+        assignments.append(selected)
+        if capture_trace:
+            open_trace.append(opened)
+
+    exhausted = time.perf_counter() >= deadline
+    meta: dict[str, Any] = {
+        "budget_exhausted": exhausted,
+        "stop_reason": "solve_deadline" if exhausted else "completed",
+        "hook_call_count": hook_calls,
+        "hook_ms": hook_seconds * 1000.0,
+    }
+    if capture_trace:
+        meta.update(decision_trace=assignments, bin_open_trace=open_trace)
+    return (None if exhausted else assignments), meta
 
 
 def _compile_obp_rule(code: str, name: str) -> Callable[..., Any]:

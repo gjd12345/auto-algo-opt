@@ -1,0 +1,32 @@
+{
+  "round_id": 3,
+  "direction": "Fallback plan for round 3 after reaching outer step cap.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "Outer round cap reached."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Evolve obp_online_priority within remaining EoH budget.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Outer round cap reached."
+  }
+}

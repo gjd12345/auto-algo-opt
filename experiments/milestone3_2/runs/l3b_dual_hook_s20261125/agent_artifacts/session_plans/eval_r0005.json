@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:8dc50531aeb5428a9e52601d47758db8"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Replacing the round-4 best ruin scoring with an explicit stagnation -> ruin-size (q) escalation plus an iter_frac-driven rank-power exponent (1.0 -> ~1.8) and a normalized depot-distance gate will push mean objective on cvrp_dev_hetero_24 below the round-4 Pareto leader 16.0565, with the gain concentrated in the weakest regimes (size=100, spatial=uniform, depot=eccentric) that currently sit ~20-24% above VBS and are budget-exhausted; degenerate ruin sets on the n=6 gate probe remain distinguishable (set A != set B).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:8dc50531aeb5428a9e52601d47758db8"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive ruin intensity + rank-power escalation on the dual hook: let the removal-count multiplier scale with stagnation_ratio and iter_frac (small q while improving, up to ~1.6-2.0x q once stagnating), raise the rank-power exponent p from ~1.0 toward ~1.8 as iter_frac grows, and keep a mild depot-distance gate (distance to depot normalized by mean depot distance) so high removal_savings/scale nodes on large traversal legs are preferred. For the recreate side, keep deterministic Regret-2 ordering but elevate the regret weight for customers whose best feasible insertion capacity slack is tight, so route-count reduction is favored on loose-capacity / uniform-demand instances. Preserve fully deterministic tie-breaks and O(n log n) per-iteration cost so the 500 ms budget still yields many LNS iterations."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

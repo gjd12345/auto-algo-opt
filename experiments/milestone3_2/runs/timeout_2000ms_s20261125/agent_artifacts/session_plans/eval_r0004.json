@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:b89231e7518a4e938a2553bd1d793a56"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H4: In `cvrp_ruin_recreate` (L3, Regret-2 recreate fixed, budget 2000 ms), an evolved `score_ruin_nodes` that (a) interpolates the rank-power exponent p from a low value (p~0.5, savings-dominated worst removal) at iter_frac<0.3 to a higher value (p~2) when stagnation_ratio>0.6 with a relatedness/reroute term, and (b) multiplies an extra capacity-saturation gate `exp(beta*(route_load/capacity))` with beta>0, will reduce mean objective on cvrp_dev_hetero_24 vs the current SBS mean 16.0496, with the largest per-instance gains concentrated in the capacity_level=tight and depot_style=eccentric subsets (>=1.0% improvement there) without regressing the clustered/spatial subset by more than 0.5%.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b89231e7518a4e938a2553bd1d793a56"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the single evolvable hook `score_ruin_nodes` toward stagnation-adaptive multiplicative gating: keep the proven multiplicative gate structure (|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist) but make the rank-power exponent p a monotone function of (iter_frac, stagnation_ratio) so that early iterations favour high-savings worst-removal while late/stagnant iterations shift to spatially-related (Shaw-like) diversified removal; additionally tighten the capacity gate toward routes with high utilization (`route_loads/capacity -> 1`) and up-weight depot-proximal savings for eccentric-depot instances, since the archive's weakest regimes are capacity_level=tight, size=100, depot_style=eccentric."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

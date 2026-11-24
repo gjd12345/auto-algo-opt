@@ -1,0 +1,36 @@
+{
+  "round_id": 8,
+  "direction": "Stagnation-adaptive rank-power ruin scoring with tight-capacity/eccentric-depot gating: evolve score_ruin_nodes as a multiplicative rule on normalized removal_savings (per-instance scale = mean of |removal_savings|), times a capacity-utilization gate that up-weights customers in lightly-loaded routes (high residual capacity => easy reinsertion freedom) and a demand gate favoring above-median demands, all raised to a rank-power exponent p(iter_frac, stagnation_ratio) that starts near 1 (pure worst-cost removal while descending) and rises to ~3 only when stagnation_ratio>0.5 to force diversification. Deterministic tie-breaking by index, no RNG.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that only score_ruin_nodes is evolvable in this L3 skeleton (Regret-2 repair + intra_2opt + R2R receive are fixed), that CW+2opt guarantees first_feasible_ms ~2-3 ms so budget safety is not the issue at 500 ms, and that the verified evolved rule form is score = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) with deterministic tie-breaking. The archive shows 7 solves spanning only 15.895-16.128 with SBS-VBS gap of 0.42%, so the remaining headroom must come from destroy-set selection: I keep the verified multiplicative gating + stagnation-aware exponent structure (which is the provenance-bound safe form, satisfying the 5-gate determinism/read-only/sensitivity constraints) but retarget the gates at the measured weakest regimes (tight capacity, size 100, eccentric depot, clustered) using route-slack and above-median-demand signals rather than the previous static weighting, so the round tests a falsifiable destroy-operator claim against the 15.8948 incumbent."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 7,
+    "evaluation_ref": "rounds/round_0007/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0006/eoh_run/skills/best_generated",
+  "hypothesis": "The current SBS (15.8948 mean) is stuck within 0.42% of VBS across 7 near-identical LNS variants, indicating the bottleneck is destroy-operator diversity rather than repair quality. Since weakest regimes are tightly-capacitated (rel_gap -23.27%), size-100 (-21.68%) and eccentric-depot instances where worst-cost removal repeatedly removes the same short-edge customers, a destroy rule that (a) sharpens toward worst-cost early and (b) switches to a diversification-heavy rank-power only under stagnation, while gating on route slack and above-median demand, will lower mean objective on tight/clustered/eccentric sub-suites versus the current incumbent without regressing uniform-demand instances.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that only score_ruin_nodes is evolvable in this L3 skeleton (Regret-2 repair + intra_2opt + R2R receive are fixed), that CW+2opt guarantees first_feasible_ms ~2-3 ms so budget safety is not the issue at 500 ms, and that the verified evolved rule form is score = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) with deterministic tie-breaking. The archive shows 7 solves spanning only 15.895-16.128 with SBS-VBS gap of 0.42%, so the remaining headroom must come from destroy-set selection: I keep the verified multiplicative gating + stagnation-aware exponent structure (which is the provenance-bound safe form, satisfying the 5-gate determinism/read-only/sensitivity constraints) but retarget the gates at the measured weakest regimes (tight capacity, size 100, eccentric depot, clustered) using route-slack and above-median-demand signals rather than the previous static weighting, so the round tests a falsifiable destroy-operator claim against the 15.8948 incumbent."
+  }
+}

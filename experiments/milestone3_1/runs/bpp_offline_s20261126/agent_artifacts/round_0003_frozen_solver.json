@@ -1,0 +1,45 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_bpp_offline_reorder_repack_e3707b7b",
+  "display_name": "Session R3 · bpp_offline_reorder_repack",
+  "problem_family": "bpp",
+  "paradigm": "reorder_repack",
+  "interface": "bpp_offline_reorder_repack/v1:rank_items",
+  "template_id": "bpp_offline_reorder_repack",
+  "template_version": "v1",
+  "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "rank_items",
+  "hook_code": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    half = 0.5 * cap\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: strictly descending size (dominant, lexicographic-like weight).\n        primary = s / cap if cap > 0 else s\n        # Fit-aware tie-break: prefer items whose size is closest to half capacity.\n        # Larger items win ties when equidistant from half.\n        dist = abs(s - half) / cap if cap > 0 else abs(s - half)\n        fit_bonus = -dist\n        # Secondary: multiples of capacity get a tiny structural bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + fit_bonus * 1.0e3 + mult * 1.0\n    return scores",
+  "hook_code_sha256": "e3707b7bc9916913bb6ec26d59bdfb31254cddd95eff9f93c140ffcb95802899",
+  "design_sha256": "28cf0917190bfbd14d39dcba34093834af4b3b38fa2d1f923b8837f88b8227ad",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261126\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": null,
+  "cited_kb_ids": [],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved bpp_offline_reorder_repack/v1:rank_items",
+  "default_budget_ms": 500.0,
+  "protocol_id": "bpp_offline/v1",
+  "hook_specs": [
+    {
+      "name": "rank_items",
+      "signature": [
+        "item_sizes",
+        "capacity"
+      ],
+      "output_shape_arg": "item_sizes"
+    }
+  ],
+  "hook_implementations": {
+    "rank_items": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    half = 0.5 * cap\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: strictly descending size (dominant, lexicographic-like weight).\n        primary = s / cap if cap > 0 else s\n        # Fit-aware tie-break: prefer items whose size is closest to half capacity.\n        # Larger items win ties when equidistant from half.\n        dist = abs(s - half) / cap if cap > 0 else abs(s - half)\n        fit_bonus = -dist\n        # Secondary: multiples of capacity get a tiny structural bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + fit_bonus * 1.0e3 + mult * 1.0\n    return scores"
+  },
+  "hook_hashes": {
+    "rank_items": "e3707b7bc9916913bb6ec26d59bdfb31254cddd95eff9f93c140ffcb95802899"
+  },
+  "bundle_hash": "45c91bea04a70fb94f5f13ede0cdd7902a033fbbd5d1f3960bd79929c8d39efd",
+  "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+}

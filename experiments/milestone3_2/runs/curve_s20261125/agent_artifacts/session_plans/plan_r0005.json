@@ -1,0 +1,35 @@
+{
+  "round_id": 5,
+  "direction": "Evolve the score_ruin_nodes hook toward a stagnation-adaptive, capacity-gated rank-power destroy priority that emphasizes tight-capacity / uniform-demand instances: score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), where the exponent p increases monotonically with stagnation_ratio (exploit near-zero stagnation, diversify when stalled), gate_load penalizes routes whose residual capacity is nearly a full customer demand (tight regimes), and gate_rdist softly favors customers on long, geographically-isolated route edges typical of clustered+eccentric-depot instances. Keep the deterministic Regret-2 repair, intra_2opt and R2R acceptance fixed (single-hook attribution).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-4 champion (session_r0004, 15.8105) regressed +0.0670, while r0002/r0003 stapled at 15.7435 with VBS gap only 0.36% -> the destroy-priority hook is the only evolvable degree of freedom, so refinement must come from sharper stagnation-adaptive ranking rather than new skeleton. KB entry method-cvrp-m3-ruin-recreate-l3 documents exactly this multiplicative gate x rank-power form as the surviving evolutionary winner (blind_120: 23.3186 vs L3-ctrl Worst-Removal 23.3474, +0.12%, p<1e-8) and confirms 500 ms budget is sufficient for many LNS iterations with first_feasible_ms ~2-3 ms, so a single-hook change is safe under the 500 ms deadline. Archive weakest_regimes point to tight capacity / uniform demand / n=100 / eccentric depot / clustered spatial, motivating the gate_load (residual-capacity slack) and gate_rdist (long isolated edges) terms so evolved destroy sets target over-packed routes and geographically stranded customers that Regret-2 cannot rescue. Postprocess stays 'none' per allowed modes."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "A multiplicative-gate rank-power ruin score whose rank exponent p grows with stagnation_ratio will reduce mean tour length on cvrp_dev_hetero_24 versus the W1-current champion (15.7435) by >=0.5% mean and win on >=6/24 instances, with the largest per-instance gains concentrated in the weakest regimes (capacity_level=tight, demand_dist=uniform, size=100, depot_style=eccentric, spatial=clustered), because rank-power compresses removal-savings scale differences (keeps destroy sets stable early) while the stagnation-driven exponent increase forces genuinely different (lower-savings, structure-breaking) destroy sets exactly when Regret-2 repair has stopped improving.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-4 champion (session_r0004, 15.8105) regressed +0.0670, while r0002/r0003 stapled at 15.7435 with VBS gap only 0.36% -> the destroy-priority hook is the only evolvable degree of freedom, so refinement must come from sharper stagnation-adaptive ranking rather than new skeleton. KB entry method-cvrp-m3-ruin-recreate-l3 documents exactly this multiplicative gate x rank-power form as the surviving evolutionary winner (blind_120: 23.3186 vs L3-ctrl Worst-Removal 23.3474, +0.12%, p<1e-8) and confirms 500 ms budget is sufficient for many LNS iterations with first_feasible_ms ~2-3 ms, so a single-hook change is safe under the 500 ms deadline. Archive weakest_regimes point to tight capacity / uniform demand / n=100 / eccentric depot / clustered spatial, motivating the gate_load (residual-capacity slack) and gate_rdist (long isolated edges) terms so evolved destroy sets target over-packed routes and geographically stranded customers that Regret-2 cannot rescue. Postprocess stays 'none' per allowed modes."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:0ee913d6381c410dafdc47cef2bb9286"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Biasing the greedy step toward the most *isolated* remaining city (max mean distance to the other unvisited cities) while still penalizing travel from the current node, with both terms divided by per-step maximum scales, reduces tour length vs pure nearest neighbor by ~2-4% at full completion, because isolated cities visited late force long return edges (the 'tail' penalty). Adding a progress-scheduled pull toward the destination city removes the final-closure blowup without needing 2-opt, keeping mean relative gap well under the plain NN baseline while O(|U|) per-step cost preserves 100% completion under the 500 ms budget (contrast with the O(n^4) rollout island rule that timed out).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0ee913d6381c410dafdc47cef2bb9286"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the select_next_node hook into a fully vectorized, dimensionlessly normalized \"farness-pull\" scoring rule: for unvisited set U, score(u) = -d(cur,u)/s1 + w * mean_{v in U\\{u}} d(u,v)/s2, where s1 = max_v d(cur,v) and s2 = max pairwise-scale proxy (mean of distance row maxima), plus a soft terminal-pull term toward destination 0 that grows with construction progress t (so the return leg does not get trapped). Keep all per-step work O(|U|) via precomputed column sums / row means of the distance matrix (no per-candidate suffix rollout) to guarantee 500 ms completion at n up to 1000."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

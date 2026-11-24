@@ -1,0 +1,349 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m32_model_routing_s20261124",
+  "arm_id": "m32_model_routing",
+  "problem_family": "cvrp",
+  "final_phase": "budget_stopped",
+  "completed_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "best_dev_objective": 15.993961,
+  "best_solver_manifest_ref": "agent_artifacts/round_0007_frozen_solver.json",
+  "frozen_checkpoints": {
+    "400": "checkpoints/frozen_checkpoint_400.json"
+  },
+  "budget_summary": {
+    "run_id": "m32_model_routing_s20261124",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261124\\agent_budget.sqlite3",
+    "max_requests": 400,
+    "attempted_requests": 400,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "http_error": 2,
+      "complete": 361,
+      "connectivity_failed": 37
+    },
+    "by_purpose": {
+      "planner": 30,
+      "eoh_probe": 7,
+      "eoh_generation": 356,
+      "reflection": 7
+    },
+    "input_tokens": 2103012,
+    "output_tokens": 339418,
+    "total_tokens": 2442430
+  },
+  "token_summary": {
+    "input_tokens": 2103012,
+    "output_tokens": 339418,
+    "cached_tokens": 1340288,
+    "cached_tokens_reported_count": 361,
+    "total_tokens": 2442430,
+    "provider_elapsed_seconds": 3629.798,
+    "outer_requests": 37,
+    "inner_eoh_requests": 363,
+    "state_counts": {
+      "http_error": 2,
+      "complete": 361,
+      "connectivity_failed": 37
+    },
+    "requested_models": {
+      "deepseek-v4.1-flash": 311,
+      "deepseek-v4-pro": 89
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 281,
+      "deepseek-v4-pro": 80
+    },
+    "barrier_rejections": 0
+  },
+  "cost_summary": {
+    "rate_card_version": "opencode-go-reference/v1",
+    "priced_cost_usd": 0.53130619,
+    "priced_attempts": 361,
+    "unpriced_attempts": 39,
+    "unpriced_reasons": {
+      "missing_token_usage": 39
+    }
+  },
+  "milestone_status": {
+    "run_id": "m32_model_routing_s20261124",
+    "attempted_requests": 400,
+    "checkpoints": [
+      {
+        "ckpt_budget": 400,
+        "state": "sealed",
+        "draining_started_ordinal": 400,
+        "settled_through_ordinal": 400,
+        "winner_source_ordinal": 398,
+        "winner_solver_sha256": "f37f87aec7684c03ba67354f7ca53fc53dda4659e4c1f17a42a01ed949e49093",
+        "payload_sha256": "599516baad0eeead12db12b34da2e1ebbfb5bf819fc8bd3bf760a91dc388ba97"
+      }
+    ],
+    "usage_eventual": {
+      "attempted_requests": 400,
+      "by_state": {
+        "http_error": 2,
+        "complete": 361,
+        "connectivity_failed": 37
+      },
+      "input_tokens": 2103012,
+      "output_tokens": 339418,
+      "cached_tokens": 1340288,
+      "provider_elapsed_seconds": 3629.798,
+      "priced_cost_usd": 0.53130619,
+      "priced_attempts": 361,
+      "unpriced_attempts": 39,
+      "requested_models": {
+        "deepseek-v4.1-flash": 311,
+        "deepseek-v4-pro": 89
+      },
+      "served_models": {
+        "deepseek-v4.1-flash": 281,
+        "deepseek-v4-pro": 80
+      },
+      "provenance_counts": {
+        "baseline_seed": 1,
+        "eoh_skipped": 34,
+        "invalid_candidate": 97,
+        "probe": 7,
+        "provider_failed": 37,
+        "valid_candidate": 188
+      }
+    }
+  },
+  "hypothesis_counts": {
+    "testing": 0,
+    "supported": 0,
+    "superseded": 0,
+    "proposed": 0,
+    "refuted": 0,
+    "abandoned": 0
+  },
+  "archive_summary": {
+    "solver_count": 7,
+    "pareto_frontier": [
+      {
+        "solver_id": "session_r0007_cvrp_ruin_recreate_0b7c6e8e",
+        "template_id": "cvrp_ruin_recreate",
+        "mean_objective": 15.993961,
+        "solve_ms_mean": 227.8693,
+        "arm_id": "m32_model_routing"
+      },
+      {
+        "solver_id": "session_r0002_cvrp_ruin_recreate_1c0cba8e",
+        "template_id": "cvrp_ruin_recreate",
+        "mean_objective": 16.020113,
+        "solve_ms_mean": 172.3168,
+        "arm_id": "m32_model_routing"
+      }
+    ],
+    "portfolio": {
+      "suite_id": "cvrp_dev_hetero_24",
+      "solver_ids": [
+        "session_r0001_cvrp_ruin_recreate_9545d9dc",
+        "session_r0002_cvrp_ruin_recreate_1c0cba8e",
+        "session_r0003_cvrp_ruin_recreate_9d5984a3",
+        "session_r0004_cvrp_ruin_recreate_ccd53fe1",
+        "session_r0005_cvrp_ruin_recreate_cc319d29",
+        "session_r0006_cvrp_ruin_recreate_576224b5",
+        "session_r0007_cvrp_ruin_recreate_0b7c6e8e"
+      ],
+      "common_completed_count": 24,
+      "mean_by_solver": {
+        "session_r0001_cvrp_ruin_recreate_9545d9dc": 16.0465,
+        "session_r0002_cvrp_ruin_recreate_1c0cba8e": 16.0201,
+        "session_r0003_cvrp_ruin_recreate_9d5984a3": 16.09,
+        "session_r0004_cvrp_ruin_recreate_ccd53fe1": 15.9986,
+        "session_r0005_cvrp_ruin_recreate_cc319d29": 16.1006,
+        "session_r0006_cvrp_ruin_recreate_576224b5": 15.9986,
+        "session_r0007_cvrp_ruin_recreate_0b7c6e8e": 15.994
+      },
+      "sbs_solver": "session_r0007_cvrp_ruin_recreate_0b7c6e8e",
+      "sbs_total": 383.8551,
+      "vbs_total": 381.5549,
+      "gap_over_sbs_pct": 0.5992,
+      "gap_over_vbs_pct": 0.6028,
+      "win_counts": {
+        "session_r0001_cvrp_ruin_recreate_9545d9dc": 4,
+        "session_r0002_cvrp_ruin_recreate_1c0cba8e": 5,
+        "session_r0003_cvrp_ruin_recreate_9d5984a3": 4,
+        "session_r0004_cvrp_ruin_recreate_ccd53fe1": 7,
+        "session_r0005_cvrp_ruin_recreate_cc319d29": 0,
+        "session_r0006_cvrp_ruin_recreate_576224b5": 0,
+        "session_r0007_cvrp_ruin_recreate_0b7c6e8e": 4
+      }
+    },
+    "weakest_regimes": [
+      {
+        "factor": "spatial",
+        "value": "clustered",
+        "instance_count": 8,
+        "vbs_mean_objective": 14.462,
+        "vbs_rel_gap_pct": -19.5076,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "depot_style",
+        "value": "eccentric",
+        "instance_count": 12,
+        "vbs_mean_objective": 19.0055,
+        "vbs_rel_gap_pct": -20.5772,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "demand_dist",
+        "value": "uniform",
+        "instance_count": 12,
+        "vbs_mean_objective": 16.2968,
+        "vbs_rel_gap_pct": -21.2885,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "100",
+        "instance_count": 12,
+        "vbs_mean_objective": 20.5571,
+        "vbs_rel_gap_pct": -21.5138,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "capacity_level",
+        "value": "tight",
+        "instance_count": 12,
+        "vbs_mean_objective": 18.3223,
+        "vbs_rel_gap_pct": -22.7608,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      }
+    ],
+    "known_signatures_count": 7
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0465",
+      "delta_vs_prev": "",
+      "requests_used_total": 65,
+      "outer_requests_round": 5,
+      "inner_requests_round": 58,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0201",
+      "delta_vs_prev": "-0.0263",
+      "requests_used_total": 124,
+      "outer_requests_round": 5,
+      "inner_requests_round": 54,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0900",
+      "delta_vs_prev": "+0.0699",
+      "requests_used_total": 188,
+      "outer_requests_round": 5,
+      "inner_requests_round": 59,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 4,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "15.9986",
+      "delta_vs_prev": "-0.0215",
+      "requests_used_total": 256,
+      "outer_requests_round": 5,
+      "inner_requests_round": 63,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0004_frozen_solver.json"
+    },
+    {
+      "round_id": 5,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.1006",
+      "delta_vs_prev": "+0.1020",
+      "requests_used_total": 328,
+      "outer_requests_round": 6,
+      "inner_requests_round": 66,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0004_frozen_solver.json"
+    },
+    {
+      "round_id": 6,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "15.9986",
+      "delta_vs_prev": "+0.0000",
+      "requests_used_total": 392,
+      "outer_requests_round": 5,
+      "inner_requests_round": 59,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0004_frozen_solver.json"
+    },
+    {
+      "round_id": 7,
+      "arm_id": "m32_model_routing",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "15.9940",
+      "delta_vs_prev": "-0.0047",
+      "requests_used_total": 400,
+      "outer_requests_round": 4,
+      "inner_requests_round": 4,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0007_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-24T00:16:07Z"
+}

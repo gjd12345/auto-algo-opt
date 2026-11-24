@@ -1,0 +1,35 @@
+{
+  "round_id": 4,
+  "direction": "Refine the round-2 champion destroy score (method-cvrp-m3-ruin-recreate-l3) into a scale-free, stagnation-phase-scheduled ruin rule: keep the multiplicative gates (normalized removal savings x depot-distance gate x route-load saturation gate) but (i) replace the single fixed rank exponent with a two-phase schedule that is near-linear-greedy at iter_frac<0.35 and transitions to a mid-tail power (p~0.5-0.7) plus a small deterministic jitter term later, (ii) add a 'route-sparsity' factor 1/(route_len) so short/degenerate routes are prioritized for rearrangement, and (iii) add a Shaw-relatedness term to the second ruin pass (customers near the already-selected seed customer score higher) so successive removals in the same iteration cluster geographically instead of scattering. Hyperparameter sensitivity (gate strengths, phase switch point, power bounds) is co-evolved, not hand-tuned.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows only 3 near-identical solvers (16.0781 / 16.0931 / 16.1297) with gap_over_vbs of just 0.37%, so the remaining headroom is small and must be won by fine-grained destroy-priority structure rather than a new paradigm. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the multiplicative gated-savings + stagnation rank-power rule is the verified-best hook for this exact interface (23.3186 vs 23.3474 L3-ctrl on blind_120) and lists 'stagnation_aware_diversification' as its strong regime, while method-cvrp-lns-shaw-regret establishes that relatedness-based destroy (Shaw) is the standard complementary diversification operator under LNS. Combining them inside the single allowed hook (score_ruin_nodes) keeps the deterministic Regret-2 recreate, intra_2opt and R2R acceptance untouched, so any measured delta is attributable to the destroy policy. Phase-scheduled greediness avoids the early-search waste of always randomized removal and the late-search trap of always-greedy removal, and the route-sparsity factor targets exactly the loose-capacity/size-100 regimes flagged as weakest in archive_feedback."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, replacing the round-2 fixed gate/rank-power destroy score with (a) an iter_frac-scheduled two-phase rank exponent, (b) a route-sparsity (short-route priority) factor and (c) a Shaw-relatedness second-pass term will lower mean objective below the current SBS 16.078067, with the largest per-instance gains on the weakest regimes (size 100, loose capacity, eccentric depot, uniform demand), because those instances have many partially-filled short routes whose customers are geographically interchangeable and thus need spatially coherent removal rather than globally top-savings removal.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows only 3 near-identical solvers (16.0781 / 16.0931 / 16.1297) with gap_over_vbs of just 0.37%, so the remaining headroom is small and must be won by fine-grained destroy-priority structure rather than a new paradigm. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the multiplicative gated-savings + stagnation rank-power rule is the verified-best hook for this exact interface (23.3186 vs 23.3474 L3-ctrl on blind_120) and lists 'stagnation_aware_diversification' as its strong regime, while method-cvrp-lns-shaw-regret establishes that relatedness-based destroy (Shaw) is the standard complementary diversification operator under LNS. Combining them inside the single allowed hook (score_ruin_nodes) keeps the deterministic Regret-2 recreate, intra_2opt and R2R acceptance untouched, so any measured delta is attributable to the destroy policy. Phase-scheduled greediness avoids the early-search waste of always randomized removal and the late-search trap of always-greedy removal, and the route-sparsity factor targets exactly the loose-capacity/size-100 regimes flagged as weakest in archive_feedback."
+  }
+}

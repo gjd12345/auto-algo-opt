@@ -1,0 +1,132 @@
+{
+  "schema_version": "algorithm-optimization-session-config/v1.1",
+  "run_id": "run_e9aa0bbe2ae24045b3ed086074687f8d",
+  "problem": "bpp_offline",
+  "problem_spec_hash": "ebe208935e89234563dbfee7a85593eedf9d12d3ef53892563d3694f368cb7e8",
+  "entrypoint": "rank_items",
+  "interface_version": "v1",
+  "suite_hash": "1ade515adad97eb3fd0c0618e9a63a84eb5ea1464e241051377ed47be06cd026",
+  "evaluator_hash": "883ca3abf893d3fd4b51a9bd02e768e21f937c00894c38a68200c55e44592ac1",
+  "objective_direction": "minimize",
+  "benchmark": {
+    "id": "cvrp_workbench_v1",
+    "profile": "bpp_m31_dev_36",
+    "problem_spec_hash": "ebe208935e89234563dbfee7a85593eedf9d12d3ef53892563d3694f368cb7e8",
+    "benchmark_spec_hash": "ce7256bad112c3771d161f6687f3b7d6869e994e6b3b2cac91c9f0b72328aa74",
+    "data_manifest_hash": "5e80e5d14d4ad1a3c46cb51bc84178c8e93cd6708872acf3870e4ca189507825",
+    "reference_manifest_hash": "5e80e5d14d4ad1a3c46cb51bc84178c8e93cd6708872acf3870e4ca189507825",
+    "metric_spec_hash": "c5e61fb9c6b486c26d841f1fdd64edfa71ffdcbb11d863967ce8a70f20915d41",
+    "reference_kind": "solver_reference"
+  },
+  "inheritance": {
+    "mode": "incumbent_only",
+    "population_snapshot_contract": "official_final_population_order_preserved",
+    "explicit_seed_set": null
+  },
+  "experiment": {
+    "max_rounds": 1,
+    "round_budget": 9
+  },
+  "search_progress": {
+    "policy": {
+      "schema_version": "algorithm-optimization-search-progress-policy/v1",
+      "enabled": false,
+      "window_evaluations": 40,
+      "min_absolute_gain": 0.0,
+      "min_relative_gain": 0.0,
+      "min_behavior_coverage": 0.0,
+      "phase_budgets": {},
+      "phase_schedule": [],
+      "enforce_subbudgets": false
+    }
+  },
+  "feedback": {
+    "mode": "runtime_facts",
+    "source": "runtime_facts"
+  },
+  "agent_guidance": true,
+  "experiment_manifest": null,
+  "baseline": {
+    "code_sha256": "26d281677ee2f6939cc1ee5aed6ec2b62a44eaaa2afe9e5c4548cf446820661f",
+    "description": "deterministic offline first-fit-decreasing (FFD) baseline"
+  },
+  "optimization_skill": {
+    "id": "algorithm-optimization",
+    "version": "v1.1",
+    "content_sha256": "86e350139124a4301e88fcbea0d5b2058b0318584796782d832a7b7ed76213cc"
+  },
+  "runtime": {
+    "version": "1.2.3",
+    "source_sha256": "f8b470f01e4a49ef402f6b96d3ba4a16482c02f058531d382b6cf6b509eda36d"
+  },
+  "loaded_identity": {
+    "schema_version": "algorithm-optimization-loaded-identity/v1",
+    "runtime_source_sha256": "f8b470f01e4a49ef402f6b96d3ba4a16482c02f058531d382b6cf6b509eda36d",
+    "optimization_skill_sha256": "86e350139124a4301e88fcbea0d5b2058b0318584796782d832a7b7ed76213cc",
+    "evaluator_sha256": "883ca3abf893d3fd4b51a9bd02e768e21f937c00894c38a68200c55e44592ac1",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "problem_spec_hash": "ebe208935e89234563dbfee7a85593eedf9d12d3ef53892563d3694f368cb7e8",
+    "verification_stage": "worker_startup_preflight"
+  },
+  "memory": {
+    "enabled": false,
+    "store": null,
+    "policy_id": null,
+    "policy_version": null
+  },
+  "eoh": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "model": "mock",
+    "endpoint": "mock://local",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "request_timeout": 180.0,
+    "thinking": "provider-default",
+    "search_policy_defaults": {
+      "max_sample_nums": 8,
+      "pop_size": 4,
+      "n_pop": 2
+    },
+    "search_policy_limits": {
+      "max_sample_nums": [
+        1,
+        16
+      ],
+      "pop_size": [
+        2,
+        8
+      ],
+      "n_pop": [
+        1,
+        5
+      ]
+    }
+  },
+  "evaluator": {
+    "solver_timeout": 20.0
+  },
+  "repair": {
+    "mode": "off",
+    "policy_version": null,
+    "max_requests": null
+  },
+  "budgets": {
+    "eoh_max_requests": 32,
+    "eoh_round_max_requests": null,
+    "max_solver_calls": null,
+    "engine_wall_seconds": 420.0,
+    "round_wall_seconds": null,
+    "solution_threshold": null
+  },
+  "suite_generation": {
+    "split": "dev_train",
+    "seed": 20260908,
+    "count": 3,
+    "size": 20
+  },
+  "search_seed": 20260908,
+  "search_seed_derivation": "base_plus_round_id_minus_one",
+  "init": {
+    "provider_requests": 0,
+    "solver_calls": 0
+  }
+}

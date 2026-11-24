@@ -1,0 +1,78 @@
+{
+  "best_dev_objective": 16.01339509,
+  "checkpoint_budget": 400,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58",
+    "penalized_mean_objective": 16.01339509,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 16.01339509
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [
+      "method-cvrp-cw-parallel"
+    ],
+    "default_budget_ms": 500.0,
+    "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+    "design_sha256": "08ba10e7dab2e2d6c11075e57184e4b8cf7575ff85931c83d12d144465c6f5eb",
+    "diagnostic_ref": null,
+    "display_name": "M3.2 Candidate cvrp_ruin_recreate (e4a1eb6c)",
+    "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    eps = 1e-12\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    rids = np.asarray(route_ids, dtype=np.int64).ravel()\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n    cap = max(float(capacity), eps)\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n    drive = float(np.clip(0.4 * s + 0.6 * p, 0.0, 1.0))\n    # cubic sharpen: strong switch from explore -> exploit\n    drive_c = drive * drive * (3.0 - 2.0 * drive)  # smoothstep\n    drive_c = drive_c ** 1.5\n\n    # --- detour pressure: normalized savings via L1-softmax-ish normalization ---\n    sav_sum = float(np.sum(sav)) + eps\n    sav_n = sav / sav_sum  # sums to ~1, scale-invariant\n    # rank-free but stable: log-scaled relative magnitude\n    sav_rel = sav_n / (float(np.mean(sav_n)) + eps)  # mean ~ 1\n    detour_p = sav_rel / (1.0 + sav_rel)  # bounded (0,1)\n\n    # --- depot angular / radial factor: inverse-normalized depot distance ---\n    d0_mean = float(np.mean(d0)) + eps\n    dep_inv = 1.0 / (1.0 + d0 / d0_mean)  # in (0,1], near 1 close to depot\n\n    # --- route distance rank via normalized inverse ---\n    rd_mean = float(np.mean(rdists)) + eps\n    rd_n = rdists / (rdists + rd_mean)\n\n    # --- capacity pressure: route load saturation ---\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    dem_util = np.clip(dem / cap, 0.0, 1.0)\n    tight = 0.55 * load_util + 0.45 * dem_util\n\n    # --- Hilbert-like combination: (x^2 + y^2)^0.5 style concat of two orthogonal signals ---\n    # explore term: spatial diversity emphasis (depot proximity + route dist)\n    explore = np.sqrt((0.6 * dep_inv) ** 2 + (0.4 * rd_n) ** 2)\n    # exploit term: capacity pressure + detour sav outliers\n    exploit = np.sqrt((0.5 * tight) ** 2 + (0.5 * detour_p) ** 2)\n\n    # --- gated convex monotone combination ---\n    core = (1.0 - drive_c) * explore + drive_c * exploit\n\n    # --- arctan compression to bound scale ---\n    shaped = (2.0 / np.pi) * np.arctan(core * 2.5)\n\n    # --- deterministic tie-break on normalized savings ---\n    tie = 1e-8 * (sav / (float(np.max(sav)) + eps))\n    result = shaped + tie\n\n    return np.where(np.isfinite(result), np.clip(result, 0.0, None), 0.0).astype(np.float64)",
+    "hook_code_sha256": "e4a1eb6c020059eedd9050791b12bce34ef95c9c7b684257af1847d9c68e1ef9",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": "method-cvrp-cw-parallel",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "origin_run": "m32_curve_s20261124",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "ckpt_cand_e4a1eb6c02",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_curve_s20261124",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 400,
+  "usage_cutoff": {
+    "attempted_requests": 400,
+    "by_state": {
+      "complete": 348,
+      "connectivity_failed": 31,
+      "http_error": 20,
+      "killed_unknown": 1
+    },
+    "cached_tokens": 1366144,
+    "input_tokens": 2032461,
+    "output_tokens": 326958,
+    "priced_attempts": 348,
+    "priced_cost_usd": 0.30022082,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "eoh_skipped": 6,
+      "invalid_candidate": 54,
+      "probe": 7,
+      "provider_failed": 32,
+      "valid_candidate": 246
+    },
+    "provider_elapsed_seconds": 3649.706,
+    "requested_models": {
+      "deepseek-v4.1-flash": 400
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 348
+    },
+    "unpriced_attempts": 52
+  },
+  "wall_elapsed_seconds_at_seal": 6558.0,
+  "winner_solver_sha256": "c606781f617c41b09e654ebf9b1c5bcafcf2731cef07174381ac4bd43736e95f",
+  "winner_source_ordinal": 319
+}

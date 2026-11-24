@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Capacity-slack-aware multi-scale ruin scope with cluster-coherent sector destruction and stagnation-triggered tail randomization, dedicated to tight-capacity / clustered / eccentric-depot / size-100 regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-5 confirmed (h_r2_ruin_depot_load_gate_rankpower supported) that normalized-savings x depot-gate x load/sparsity-gate with a stagnation rank schedule beats L3-ctrl (15.8374 vs 16.0781 SBS, all 24 feasible, 196 ms mean so ~10x headroom under the 2000 ms budget). Archive weakest regimes are tightly clustered: capacity_level=tight (rel gap -23.07%), size=100 (-21.78%), uniform demand (-21.53%), eccentric depot (-20.76%), clustered spatial (-19.98%), with zero exhausted/failed instances — so the loss is structural quality, not budget starvation. The KB L3 blueprint (method-cvrp-m3-ruin-recreate-l3) prescribes exactly the multiplicative gate x rank-power ruin score and lists stagnation-aware diversification as its strong regime, and Shaw-relatedness ruin (method-cvrp-lns-shaw-regret) motivates spatial contiguity of destroy sets for clustered instances. Therefore this round converts the regime-concentration clause into a testable, targeted mechanism: replace the binary load gate with a continuous capacity-slack exponent schedule and add angular/radial sector coherence, keeping the deterministic Regret-2 recreation, intra_2opt polish and R2R acceptance fixed so any delta is attributable to the destroy hook alone."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, a score_ruin_nodes that (a) rescales normalized removal savings by a capacity-slack factor raised to an iter_frac-scheduled exponent so that near-full routes (load/Q > 0.9) are progressively shielded while slack-rich routes stay destroyable early, (b) adds a sector-coherence term keyed on |cos(angle to depot)| and radial distance so ruin sets stay spatially contiguous on clustered geometries, and (c) injects a stagnation_ratio-driven randomized mid-tail component (rank exponent rising from ~0 to ~1.5 on stagnation) will lower the mean objective below the round-5 SBS of 15.8374, with the largest absolute reductions on tight-capacity, clustered-spatial, eccentric-depot and size-100 instances, since the existing rule's uniform load gating mis-sizes ruin scope when capacity slack is the binding constraint.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-5 confirmed (h_r2_ruin_depot_load_gate_rankpower supported) that normalized-savings x depot-gate x load/sparsity-gate with a stagnation rank schedule beats L3-ctrl (15.8374 vs 16.0781 SBS, all 24 feasible, 196 ms mean so ~10x headroom under the 2000 ms budget). Archive weakest regimes are tightly clustered: capacity_level=tight (rel gap -23.07%), size=100 (-21.78%), uniform demand (-21.53%), eccentric depot (-20.76%), clustered spatial (-19.98%), with zero exhausted/failed instances — so the loss is structural quality, not budget starvation. The KB L3 blueprint (method-cvrp-m3-ruin-recreate-l3) prescribes exactly the multiplicative gate x rank-power ruin score and lists stagnation-aware diversification as its strong regime, and Shaw-relatedness ruin (method-cvrp-lns-shaw-regret) motivates spatial contiguity of destroy sets for clustered instances. Therefore this round converts the regime-concentration clause into a testable, targeted mechanism: replace the binary load gate with a continuous capacity-slack exponent schedule and add angular/radial sector coherence, keeping the deterministic Regret-2 recreation, intra_2opt polish and R2R acceptance fixed so any delta is attributable to the destroy hook alone."
+  }
+}

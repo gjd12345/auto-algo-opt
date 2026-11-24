@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:00d29dd103284d2f9713180058e5d14d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If `score_bin` prefers the feasible bin with the smallest normalized residual after placement (Best Fit) instead of the largest residual (Worst Fit), the online bin count on obp_dev_hetero_24 will be strictly lower than the round-1 baseline of 27.8333 mean objective, because tighter fills concentrate slack into fewer bins and leave emptier bins available for later large items. Sub-clause: adding exact-fill bonuses and creation-index tie-breaks must not increase mean solve_ms above ~1 ms, since the scoring is O(open bins) per item.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:00d29dd103284d2f9713180058e5d14d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the default worst-fit residual preference in `score_bin` with a Best-Fit style preference on the residual after placement, normalized by bin capacity and item size, plus deterministic tie-breaking on prefix-causal statistics (bin creation index, count of exact fills already achieved in the prefix). Keep everything strictly prefix-causal: score depends only on already-opened bins, their residuals, and item quantities seen so far."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

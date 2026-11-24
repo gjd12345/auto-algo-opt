@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the score_ruin_nodes destroy-priority hook toward a scale-invariant, stagnation-adaptive hybrid: primary term = per-node removal savings normalized by that node's own round-trip cost (savings / (d(0,u)+d(0,v)) style dimensionless ratio) so scores transfer across size/capacity regimes; secondary term = Shaw-style relatedness to a randomly seeded anchor node (distance rank within the route's neighborhood) to create geographically coherent removal clusters; tertiary term = capacity-slack bias (prefer nodes in routes with high residual load or near-full load for repacking) plus small random tie-break jitter. Modulate the mix with stagnation_ratio and iter_frac: early iterations (low iter_frac) favor large coherent worst-cost clusters, later iterations shrink toward single-node savings-max removals and raise the random-diversity weight when stagnation_ratio is high (no recent Record-to-Record improvement). Target the observed weak regimes: size=100 (12/12 exhausted), uniform spatial, eccentric depot, uniform demand, loose capacity.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 1 established a single working solver at mean 16.0353 with all 24 instances exhausted at ~346 ms mean, so the bottleneck is search quality/time allocation, not feasibility. The archive weakest regimes are uniformly the large/uniform/eccentric/loose-capacity half of dev_24 (12 instances each, all exhausted, rel gaps ~ -20%), which points to destroy-operator scale sensitivity. KB method-cvrp-m3-ruin-recreate-l3 documents that the L3 template's only evolvable freedom is the score_ruin_nodes destroy priority (repair, intra_2opt and Record-to-Record acceptance are fixed and deterministic), so all improvement must be routed through that hook. method-cvrp-lns-shaw-regret motivates pairing relatedness-based destruction with the template's Regret-2 repair, and impl-cvrp-xfer-mixed shows a weighted multi-term normalized score (nearest + savings + depot-detour + demand/rest) transfers well, supporting a bounded linear blend with small coefficients rather than a single-term rule. The dimensionless savings normalization and stagnation-driven randomization are the two levers most likely to break out of local optima on n=100 instances while staying deterministic given the seed."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "A dimensionless (own-round-trip-normalized) removal-savings score blended with Shaw relatedness and modulated by stagnation_ratio will remove the coordinate-scale and capacity dependence of the baseline worst-cost score, and will improve mean objective on the exhausted size=100 / uniform-spatial / eccentric-depot / loose-capacity regimes versus the round-1 solver (16.0353 mean, 384.8474 SBS total) at equal 500 ms budget.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "impl-cvrp-xfer-mixed"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 established a single working solver at mean 16.0353 with all 24 instances exhausted at ~346 ms mean, so the bottleneck is search quality/time allocation, not feasibility. The archive weakest regimes are uniformly the large/uniform/eccentric/loose-capacity half of dev_24 (12 instances each, all exhausted, rel gaps ~ -20%), which points to destroy-operator scale sensitivity. KB method-cvrp-m3-ruin-recreate-l3 documents that the L3 template's only evolvable freedom is the score_ruin_nodes destroy priority (repair, intra_2opt and Record-to-Record acceptance are fixed and deterministic), so all improvement must be routed through that hook. method-cvrp-lns-shaw-regret motivates pairing relatedness-based destruction with the template's Regret-2 repair, and impl-cvrp-xfer-mixed shows a weighted multi-term normalized score (nearest + savings + depot-detour + demand/rest) transfers well, supporting a bounded linear blend with small coefficients rather than a single-term rule. The dimensionless savings normalization and stagnation-driven randomization are the two levers most likely to break out of local optima on n=100 instances while staying deterministic given the seed."
+  }
+}

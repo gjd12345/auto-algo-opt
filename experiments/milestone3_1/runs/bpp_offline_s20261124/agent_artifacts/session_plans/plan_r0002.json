@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Enrich the offline item-priority `score_item` from the pure size-descending control (BFD-like) into a composite score: w1*(normalized item size) + w2*(residual-capacity fit tightness term computed against the multiset of open-bin residuals) + w3*(awkwardness proxy for items whose size lies just above/k=2,3 resonant fractions of capacity), with a deterministic best-fit (minimum feasible residual) placement rule inside the repack pass and a descending-size tie-break. Keep the whole procedure O(n log n + n * #bins) so it stays far inside the 500 ms budget (round-1 used only 0.215 ms/solve).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "bpp_offline_reorder_repack",
+      "mechanism": "Round 1 realized only the size-descending control arm (mean 28.0833 bins over 36 dev instances, 36/36 feasible, 0.215 ms/solve mean) with an identical SBS/VBS set, so the residual-capacity term of the open testing hypothesis H-BPP-001 has never been measured. The weakest regimes are the small/medium instances (size 50: vbs_rel_gap 2.30%, size 100: 2.20%), where exact bin counts are low and fragmentation from poor ordering costs whole bins, so the tightness-aware score_item is expected to pay off most there. Runtime headroom is ~2000x, so a richer O(n log n) score_item plus best-fit placement is free in budget terms and introduces no interface risk (same template, postprocess none, no new dependency outside whitelisted NumPy math)."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1ade515adad97eb3fd0c0618e9a63a84eb5ea1464e241051377ed47be06cd026"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "H-BPP-001-priority-residual: replacing pure size-descending priority with a composite score_item that mixes item size (descending, BFD-like) with a residual-capacity-structure term will reduce bin count versus size-descending first-fit when repacking, because ordering large-but-awkward items (those leaving hard-to-fill residuals) first minimizes residual-capacity fragmentation in the open bins.",
+  "interface_selection": {
+    "template_id": "bpp_offline_reorder_repack",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 realized only the size-descending control arm (mean 28.0833 bins over 36 dev instances, 36/36 feasible, 0.215 ms/solve mean) with an identical SBS/VBS set, so the residual-capacity term of the open testing hypothesis H-BPP-001 has never been measured. The weakest regimes are the small/medium instances (size 50: vbs_rel_gap 2.30%, size 100: 2.20%), where exact bin counts are low and fragmentation from poor ordering costs whole bins, so the tightness-aware score_item is expected to pay off most there. Runtime headroom is ~2000x, so a richer O(n log n) score_item plus best-fit placement is free in budget terms and introduces no interface risk (same template, postprocess none, no new dependency outside whitelisted NumPy math)."
+  }
+}

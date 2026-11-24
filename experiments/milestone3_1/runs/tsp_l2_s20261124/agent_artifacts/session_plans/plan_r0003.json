@@ -1,0 +1,37 @@
+{
+  "round_id": 3,
+  "direction": "Improve the guided-insertion seed + 2-opt repair hook so that the 500 ms budget is spent where it pays: (1) build a k-NN candidate graph (k = min(20, n-1)) once and reuse it for both insertion scoring and move generation; (2) make the insertion phase regret-aware instead of pure best-insertion — score_insertion_move should return a lexicographic score (best insertion cost, then second-best minus best, i.e. regret) so high-regret cities are placed first, which fixes the chevron/stranded-city failures that dominate the size=50 and size=100 regimes; (3) follow with neighbor-restricted first-improvement 2-opt using don't-look bits plus an Or-opt (segment of 1-3 nodes) pass, restarting 2-opt only on nodes touched by an accepted move; (4) guard the total against the deadline with a decreasing-iteration check scaled by n (n<=60 -> full candidate sweep; n>=150 -> cap candidate width to ~8 and skip Or-opt when the remaining time fraction is low), so larger instances degrade gracefully rather than exhausting the budget mid-move.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "Round-2 solver cut mean objective from 87950.84 to 85145.85 (delta -2804.99) using the same template, so the template family is still on the improving side of the Pareto curve; the archive shows solver_count=2 with a 0.55% gap over SBS and only 6/36 instances won by the older variant, meaning the search-space around this template is not yet exhausted. All three weakest regimes are size-bucketed (50/100/200) with negative rel gaps and zero exhausted/failed instances, i.e. quality-limited, not budget-limited — so the lever is move-phase efficiency (candidate lists, don't-look bits, regret ordering) rather than raising raw iteration counts. KB entries confirm the official construct is a k-NN list plus nearest-neighbor argmin, and that neighbor-restricted 2-opt on a geometric k-nearest graph is the canonical repair, so the proposed hook stays inside the allowed template contract while changing only the scoring/ordering policy."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Regret-based (forced-early) insertion seeded from a k-NN candidate graph, followed by neighbor-restricted 2-opt with don't-look bits and an Or-opt segment pass, lowers mean tour length on tsp dev_24 relative to pure best-insertion + geometric 2-opt at the same ~500 ms budget, with the largest gain in the size=50 and size=100 regimes (current vbs_rel_gap of -16.06% and -14.31%), because regret ordering prevents expensive late insertions on nearly-closed tours while don't-look bits let the 2-opt phase exhaust improving moves on small n instead of spending the budget re-scanning all pairs.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-nearest-neighbor-construct",
+      "method-tsp-two-opt",
+      "impl-tsp-official-construct",
+      "method-lit-tsp-metric-nearest-neighbor"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-2 solver cut mean objective from 87950.84 to 85145.85 (delta -2804.99) using the same template, so the template family is still on the improving side of the Pareto curve; the archive shows solver_count=2 with a 0.55% gap over SBS and only 6/36 instances won by the older variant, meaning the search-space around this template is not yet exhausted. All three weakest regimes are size-bucketed (50/100/200) with negative rel gaps and zero exhausted/failed instances, i.e. quality-limited, not budget-limited — so the lever is move-phase efficiency (candidate lists, don't-look bits, regret ordering) rather than raising raw iteration counts. KB entries confirm the official construct is a k-NN list plus nearest-neighbor argmin, and that neighbor-restricted 2-opt on a geometric k-nearest graph is the canonical repair, so the proposed hook stays inside the allowed template contract while changing only the scoring/ordering policy."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Improve the insertion-move scoring so the guided insertion builds a tour that needs fewer/cheaper 2-opt repairs: score each candidate insertion by its immediate cost delta plus a k-nearest-neighbor-based lookahead penalty on the two edges it creates, and restrict the 2-opt repair to neighbor-induced pairs with a best-improvement first-improvement hybrid and a deterministic don't-look-bit skip list.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "KB method-tsp-two-opt documents the exact delta formula dist(a,c)+dist(b,d)-dist(a,b)-dist(c,d) for Croes-style 2-opt restricted to a k-nearest geometric graph, with a step cap that fits the 500 ms budget; it also warns that neighbor-restricted repair is a post-construct operator, which is why the change keeps construct (guided insertion via score_insertion_move) separate from repair and why insertion scoring gets a 2-opt-awareness lookahead penalty rather than absorbing the 2-opt search. Insertion construction guidance comes from the TSPTW generalized insertion entry (cheapest-insertion with reoptimization) and improved-NN entry (deterministic greedy ordering for reproducibility). Round 1 measured 10.2 ms mean solve time against a 500 ms budget, so roughly 50x headroom exists; spending it on more 2-opt sweeps with don't-look bits should convert to objective reduction rather than exhaust. Weakest regimes are size-sensitive (rel gap ~-15% at n=50 and n=100), so the plan emphasizes repair completeness on small/medium instances where extra sweeps are cheapest."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Under a 500 ms budget on dev_24 (n=50/100/200, mean objective ~84740), a neighbor-restricted best-improvement 2-opt with don't-look bits plus a lookahead-weighted insertion score (score_insertion_move penalizing long created edges) yields a lower mean tour cost than round 1's pure greedy-cheapest insertion + full-scan 2-opt, because the O(n) full neighborhood scan is replaced by O(n*k) neighbor pairs, freeing budget for more repair rounds and producing a better starting tour.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-two-opt",
+      "method-lit-tsp-euclidean-improved-nn",
+      "method-lit-tsp-tw-generalized-insertion-heuristic-tsptw"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-tsp-two-opt documents the exact delta formula dist(a,c)+dist(b,d)-dist(a,b)-dist(c,d) for Croes-style 2-opt restricted to a k-nearest geometric graph, with a step cap that fits the 500 ms budget; it also warns that neighbor-restricted repair is a post-construct operator, which is why the change keeps construct (guided insertion via score_insertion_move) separate from repair and why insertion scoring gets a 2-opt-awareness lookahead penalty rather than absorbing the 2-opt search. Insertion construction guidance comes from the TSPTW generalized insertion entry (cheapest-insertion with reoptimization) and improved-NN entry (deterministic greedy ordering for reproducibility). Round 1 measured 10.2 ms mean solve time against a 500 ms budget, so roughly 50x headroom exists; spending it on more 2-opt sweeps with don't-look bits should convert to objective reduction rather than exhaust. Weakest regimes are size-sensitive (rel gap ~-15% at n=50 and n=100), so the plan emphasizes repair completeness on small/medium instances where extra sweeps are cheapest."
+  }
+}

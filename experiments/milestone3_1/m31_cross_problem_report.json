@@ -1,0 +1,4673 @@
+{
+  "schema_version": "m31-cross-problem-report/v1",
+  "generated_at": "2026-11-23T17:20:14Z",
+  "selection_summary": {
+    "schema_version": "m31-selection-report/v1",
+    "generated_at": "2026-11-23T17:17:19Z",
+    "time_budget_ms": 500.0,
+    "lane_results": {
+      "tsp_l1": {
+        "problem_family": "tsp",
+        "protocol_id": "tsp/v1",
+        "select_suite_id": "tsp_m31_select_36",
+        "baselines": {
+          "tsp_nn_2opt": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 84668.594546,
+            "penalized_mean_objective": 84668.594546,
+            "solve_ms_mean": 8.6458,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 81848.53036,
+                  "penalized_mean_objective": 81848.53036
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 109240.420406,
+                  "penalized_mean_objective": 109240.420406
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62916.832873,
+                  "penalized_mean_objective": 62916.832873
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 72188.549522,
+                  "penalized_mean_objective": 72188.549522
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 91375.660216,
+                  "penalized_mean_objective": 91375.660216
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90441.573901,
+                  "penalized_mean_objective": 90441.573901
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84606.359994,
+                  "penalized_mean_objective": 84606.359994
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84730.829098,
+                  "penalized_mean_objective": 84730.829098
+                }
+              }
+            }
+          },
+          "tsp_nn": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 96897.212497,
+            "penalized_mean_objective": 96897.212497,
+            "solve_ms_mean": 0.1873,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 94257.127298,
+                  "penalized_mean_objective": 94257.127298
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 123821.155712,
+                  "penalized_mean_objective": 123821.155712
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 72613.354481,
+                  "penalized_mean_objective": 72613.354481
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 82008.22387,
+                  "penalized_mean_objective": 82008.22387
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 102475.839374,
+                  "penalized_mean_objective": 102475.839374
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 106207.574246,
+                  "penalized_mean_objective": 106207.574246
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 96215.712933,
+                  "penalized_mean_objective": 96215.712933
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 97578.712061,
+                  "penalized_mean_objective": 97578.712061
+                }
+              }
+            }
+          },
+          "tsp_farthest_insertion": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 85714.55839,
+            "penalized_mean_objective": 85714.55839,
+            "solve_ms_mean": 2.1657,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 83292.660496,
+                  "penalized_mean_objective": 83292.660496
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 111192.838287,
+                  "penalized_mean_objective": 111192.838287
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62658.176385,
+                  "penalized_mean_objective": 62658.176385
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 73570.550972,
+                  "penalized_mean_objective": 73570.550972
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 91570.889823,
+                  "penalized_mean_objective": 91570.889823
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 92002.234374,
+                  "penalized_mean_objective": 92002.234374
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 86208.356666,
+                  "penalized_mean_objective": 86208.356666
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 85220.760113,
+                  "penalized_mean_objective": 85220.760113
+                }
+              }
+            }
+          }
+        },
+        "candidates": [
+          {
+            "solver_id": "tsp_l1_s20261125_winner",
+            "template_id": "tsp_constructive_step",
+            "run_id": "m31_tsp_l1_s20261125",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 92520.239013,
+            "valid_only_mean_objective": 92520.239013,
+            "solve_ms_mean": 3.3989,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 89236.383721,
+                  "penalized_mean_objective": 89236.383721
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 118627.334212,
+                  "penalized_mean_objective": 118627.334212
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 69696.999104,
+                  "penalized_mean_objective": 69696.999104
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 78594.835254,
+                  "penalized_mean_objective": 78594.835254
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 100005.262039,
+                  "penalized_mean_objective": 100005.262039
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 98960.619744,
+                  "penalized_mean_objective": 98960.619744
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 93030.854871,
+                  "penalized_mean_objective": 93030.854871
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 92009.623154,
+                  "penalized_mean_objective": 92009.623154
+                }
+              }
+            }
+          }
+        ],
+        "excluded_runs": [
+          {
+            "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261124",
+            "lane": "tsp_l1",
+            "run_id": "m31_tsp_l1_s20261124",
+            "final_phase": "no_champion",
+            "best_dev_objective": null,
+            "reason": "no_champion"
+          },
+          {
+            "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261126",
+            "lane": "tsp_l1",
+            "run_id": "m31_tsp_l1_s20261126",
+            "final_phase": "no_champion",
+            "best_dev_objective": null,
+            "reason": "no_champion"
+          }
+        ],
+        "winner": {
+          "solver_id": "tsp_l1_s20261125_winner",
+          "template_id": "tsp_constructive_step",
+          "run_id": "m31_tsp_l1_s20261125",
+          "gate_passed": true,
+          "completion_rate": 1.0,
+          "penalized_mean_objective": 92520.239013,
+          "valid_only_mean_objective": 92520.239013,
+          "solve_ms_mean": 3.3989,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 89236.383721,
+                "penalized_mean_objective": 89236.383721
+              },
+              "200": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 118627.334212,
+                "penalized_mean_objective": 118627.334212
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 69696.999104,
+                "penalized_mean_objective": 69696.999104
+              }
+            },
+            "by_distribution": {
+              "clustered": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 78594.835254,
+                "penalized_mean_objective": 78594.835254
+              },
+              "grid": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 100005.262039,
+                "penalized_mean_objective": 100005.262039
+              },
+              "uniform": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 98960.619744,
+                "penalized_mean_objective": 98960.619744
+              }
+            },
+            "by_stratum": {
+              "high": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 93030.854871,
+                "penalized_mean_objective": 93030.854871
+              },
+              "low": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 92009.623154,
+                "penalized_mean_objective": 92009.623154
+              }
+            }
+          },
+          "frozen_solver": {
+            "schema_version": "frozen-interface-solver/v2",
+            "solver_id": "tsp_l1_s20261125_winner",
+            "display_name": "Session R2 · tsp_constructive_step",
+            "problem_family": "tsp",
+            "paradigm": "sequential_construct",
+            "interface": "tsp_constructive_step/v1:select_next_city",
+            "template_id": "tsp_constructive_step",
+            "template_version": "v1",
+            "template_source_sha256": "375d1c0196a8f5ad8beff8f8bcf11726078682eb39562ed060e1de87435fca87",
+            "postprocess_mode": "none",
+            "template_options": {
+              "inject_static_kb_clues": false
+            },
+            "hook_name": "select_next_city",
+            "hook_code": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score",
+            "hook_code_sha256": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0",
+            "design_sha256": "8f8936541f1b36793226303d4230001adfb9f5869381c647f5c7df7835a73228",
+            "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+            "kb_release_id": "20261123-main-co-workbench-m3",
+            "kb_entry_id": "method-tsp-i605-mean-farness",
+            "cited_kb_ids": [
+              "method-tsp-i605-mean-farness",
+              "method-tsp-i605-dest-pull",
+              "method-tsp-i605-dimensionless-ratio",
+              "method-tsp-nearest-neighbor-construct"
+            ],
+            "diagnostic_ref": null,
+            "description": "Session M2 evolved tsp_constructive_step/v1:select_next_city",
+            "default_budget_ms": 500.0,
+            "protocol_id": "tsp/v1",
+            "hook_specs": [
+              {
+                "name": "select_next_city",
+                "signature": [
+                  "current_node",
+                  "unvisited_nodes",
+                  "distance_matrix"
+                ],
+                "output_shape_arg": "unvisited_nodes"
+              }
+            ],
+            "hook_implementations": {
+              "select_next_city": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score"
+            },
+            "hook_hashes": {
+              "select_next_city": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0"
+            },
+            "bundle_hash": "e8b5c3a36a70d1dcffdcb426791ea00424bd55ee9561a8a7e1b318a634313a48",
+            "hook_contract_sha256": "b1b3d5443c26b634ec25ae449e9829b74695f4819f40103d5c8e006c6628a58d"
+          }
+        }
+      },
+      "tsp_l2": {
+        "problem_family": "tsp",
+        "protocol_id": "tsp/v1",
+        "select_suite_id": "tsp_m31_select_36",
+        "baselines": {
+          "tsp_nn_2opt": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 84668.594546,
+            "penalized_mean_objective": 84668.594546,
+            "solve_ms_mean": 8.1405,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 81848.53036,
+                  "penalized_mean_objective": 81848.53036
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 109240.420406,
+                  "penalized_mean_objective": 109240.420406
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62916.832873,
+                  "penalized_mean_objective": 62916.832873
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 72188.549522,
+                  "penalized_mean_objective": 72188.549522
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 91375.660216,
+                  "penalized_mean_objective": 91375.660216
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90441.573901,
+                  "penalized_mean_objective": 90441.573901
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84606.359994,
+                  "penalized_mean_objective": 84606.359994
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84730.829098,
+                  "penalized_mean_objective": 84730.829098
+                }
+              }
+            }
+          },
+          "tsp_nn": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 96897.212497,
+            "penalized_mean_objective": 96897.212497,
+            "solve_ms_mean": 0.1895,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 94257.127298,
+                  "penalized_mean_objective": 94257.127298
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 123821.155712,
+                  "penalized_mean_objective": 123821.155712
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 72613.354481,
+                  "penalized_mean_objective": 72613.354481
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 82008.22387,
+                  "penalized_mean_objective": 82008.22387
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 102475.839374,
+                  "penalized_mean_objective": 102475.839374
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 106207.574246,
+                  "penalized_mean_objective": 106207.574246
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 96215.712933,
+                  "penalized_mean_objective": 96215.712933
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 97578.712061,
+                  "penalized_mean_objective": 97578.712061
+                }
+              }
+            }
+          },
+          "tsp_farthest_insertion": {
+            "suite_id": "tsp_m31_select_36",
+            "protocol_id": "tsp/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 85714.55839,
+            "penalized_mean_objective": 85714.55839,
+            "solve_ms_mean": 2.1617,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 83292.660496,
+                  "penalized_mean_objective": 83292.660496
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 111192.838287,
+                  "penalized_mean_objective": 111192.838287
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62658.176385,
+                  "penalized_mean_objective": 62658.176385
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 73570.550972,
+                  "penalized_mean_objective": 73570.550972
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 91570.889823,
+                  "penalized_mean_objective": 91570.889823
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 92002.234374,
+                  "penalized_mean_objective": 92002.234374
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 86208.356666,
+                  "penalized_mean_objective": 86208.356666
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 85220.760113,
+                  "penalized_mean_objective": 85220.760113
+                }
+              }
+            }
+          }
+        },
+        "candidates": [
+          {
+            "solver_id": "tsp_l2_s20261124_winner",
+            "template_id": "tsp_guided_insertion_2opt",
+            "run_id": "m31_tsp_l2_s20261124",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 84623.581487,
+            "valid_only_mean_objective": 84623.581487,
+            "solve_ms_mean": 18.5437,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 82262.429612,
+                  "penalized_mean_objective": 82262.429612
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 108611.54002,
+                  "penalized_mean_objective": 108611.54002
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62996.77483,
+                  "penalized_mean_objective": 62996.77483
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 72974.690083,
+                  "penalized_mean_objective": 72974.690083
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90756.234616,
+                  "penalized_mean_objective": 90756.234616
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90139.819763,
+                  "penalized_mean_objective": 90139.819763
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84916.869421,
+                  "penalized_mean_objective": 84916.869421
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84330.293554,
+                  "penalized_mean_objective": 84330.293554
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "tsp_l2_s20261125_winner",
+            "template_id": "tsp_guided_insertion_2opt",
+            "run_id": "m31_tsp_l2_s20261125",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 85549.798209,
+            "valid_only_mean_objective": 85549.798209,
+            "solve_ms_mean": 8.9584,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 81995.275225,
+                  "penalized_mean_objective": 81995.275225
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 110551.471653,
+                  "penalized_mean_objective": 110551.471653
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 64102.64775,
+                  "penalized_mean_objective": 64102.64775
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 74283.664361,
+                  "penalized_mean_objective": 74283.664361
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90660.681917,
+                  "penalized_mean_objective": 90660.681917
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 91705.048349,
+                  "penalized_mean_objective": 91705.048349
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 86426.612061,
+                  "penalized_mean_objective": 86426.612061
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84672.984357,
+                  "penalized_mean_objective": 84672.984357
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "tsp_l2_s20261126_winner",
+            "template_id": "tsp_guided_insertion_2opt",
+            "run_id": "m31_tsp_l2_s20261126",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 84270.471778,
+            "valid_only_mean_objective": 84270.471778,
+            "solve_ms_mean": 7.0081,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 80610.365894,
+                  "penalized_mean_objective": 80610.365894
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 109370.962019,
+                  "penalized_mean_objective": 109370.962019
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 62830.087421,
+                  "penalized_mean_objective": 62830.087421
+                }
+              },
+              "by_distribution": {
+                "clustered": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 71795.190272,
+                  "penalized_mean_objective": 71795.190272
+                },
+                "grid": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90912.837175,
+                  "penalized_mean_objective": 90912.837175
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 90103.387887,
+                  "penalized_mean_objective": 90103.387887
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84392.639518,
+                  "penalized_mean_objective": 84392.639518
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 84148.304038,
+                  "penalized_mean_objective": 84148.304038
+                }
+              }
+            }
+          }
+        ],
+        "excluded_runs": [],
+        "winner": {
+          "solver_id": "tsp_l2_s20261126_winner",
+          "template_id": "tsp_guided_insertion_2opt",
+          "run_id": "m31_tsp_l2_s20261126",
+          "gate_passed": true,
+          "completion_rate": 1.0,
+          "penalized_mean_objective": 84270.471778,
+          "valid_only_mean_objective": 84270.471778,
+          "solve_ms_mean": 7.0081,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 80610.365894,
+                "penalized_mean_objective": 80610.365894
+              },
+              "200": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 109370.962019,
+                "penalized_mean_objective": 109370.962019
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 62830.087421,
+                "penalized_mean_objective": 62830.087421
+              }
+            },
+            "by_distribution": {
+              "clustered": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 71795.190272,
+                "penalized_mean_objective": 71795.190272
+              },
+              "grid": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 90912.837175,
+                "penalized_mean_objective": 90912.837175
+              },
+              "uniform": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 90103.387887,
+                "penalized_mean_objective": 90103.387887
+              }
+            },
+            "by_stratum": {
+              "high": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 84392.639518,
+                "penalized_mean_objective": 84392.639518
+              },
+              "low": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 84148.304038,
+                "penalized_mean_objective": 84148.304038
+              }
+            }
+          },
+          "frozen_solver": {
+            "schema_version": "frozen-interface-solver/v2",
+            "solver_id": "tsp_l2_s20261126_winner",
+            "display_name": "Session R2 · tsp_guided_insertion_2opt",
+            "problem_family": "tsp",
+            "paradigm": "insertion",
+            "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+            "template_id": "tsp_guided_insertion_2opt",
+            "template_version": "v1",
+            "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+            "postprocess_mode": "none",
+            "template_options": {
+              "inject_static_kb_clues": false
+            },
+            "hook_name": "score_insertion",
+            "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score",
+            "hook_code_sha256": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce",
+            "design_sha256": "2e721d54b241c12c7a94ffb5e8d4216365d057bb8ff373262a36eca5b53f0ad6",
+            "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+            "kb_release_id": "20261123-main-co-workbench-m3",
+            "kb_entry_id": "method-tsp-i605-dest-pull",
+            "cited_kb_ids": [
+              "method-tsp-i605-dest-pull",
+              "method-tsp-i605-mean-farness",
+              "method-tsp-i605-dimensionless-ratio"
+            ],
+            "diagnostic_ref": null,
+            "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+            "default_budget_ms": 500.0,
+            "protocol_id": "tsp/v1",
+            "hook_specs": [
+              {
+                "name": "score_insertion",
+                "signature": [
+                  "unvisited_nodes",
+                  "nearest_tour_distances",
+                  "insertion_costs"
+                ],
+                "output_shape_arg": "unvisited_nodes"
+              }
+            ],
+            "hook_implementations": {
+              "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score"
+            },
+            "hook_hashes": {
+              "score_insertion": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce"
+            },
+            "bundle_hash": "5715b833c1f8ba86d02667f083efecc6d8de06ce2e4e46d7d58baf441968bb4d",
+            "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+          }
+        }
+      },
+      "obp_online": {
+        "problem_family": "obp",
+        "protocol_id": "obp_online/v1",
+        "select_suite_id": "obp_m31_select_36",
+        "baselines": {
+          "obp_best_fit": {
+            "suite_id": "obp_m31_select_36",
+            "protocol_id": "obp_online/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 27.277778,
+            "penalized_mean_objective": 27.277778,
+            "solve_ms_mean": 0.521,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.666667,
+                  "penalized_mean_objective": 24.666667
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 44.833333,
+                  "penalized_mean_objective": 44.833333
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.333333,
+                  "penalized_mean_objective": 12.333333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.5,
+                  "penalized_mean_objective": 24.5
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.833333,
+                  "penalized_mean_objective": 22.833333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.5,
+                  "penalized_mean_objective": 34.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 17.777778,
+                  "penalized_mean_objective": 17.777778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 36.777778,
+                  "penalized_mean_objective": 36.777778
+                }
+              }
+            }
+          },
+          "obp_first_fit": {
+            "suite_id": "obp_m31_select_36",
+            "protocol_id": "obp_online/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 27.361111,
+            "penalized_mean_objective": 27.361111,
+            "solve_ms_mean": 0.227,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.75,
+                  "penalized_mean_objective": 24.75
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 45.0,
+                  "penalized_mean_objective": 45.0
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.333333,
+                  "penalized_mean_objective": 12.333333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.583333,
+                  "penalized_mean_objective": 24.583333
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.916667,
+                  "penalized_mean_objective": 22.916667
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.583333,
+                  "penalized_mean_objective": 34.583333
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 17.777778,
+                  "penalized_mean_objective": 17.777778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 36.944444,
+                  "penalized_mean_objective": 36.944444
+                }
+              }
+            }
+          }
+        },
+        "candidates": [
+          {
+            "solver_id": "obp_online_s20261124_winner",
+            "template_id": "obp_online_priority",
+            "run_id": "m31_obp_online_s20261124",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 27.277778,
+            "valid_only_mean_objective": 27.277778,
+            "solve_ms_mean": 0.9364,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.666667,
+                  "penalized_mean_objective": 24.666667
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 44.833333,
+                  "penalized_mean_objective": 44.833333
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.333333,
+                  "penalized_mean_objective": 12.333333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.5,
+                  "penalized_mean_objective": 24.5
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.833333,
+                  "penalized_mean_objective": 22.833333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.5,
+                  "penalized_mean_objective": 34.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 17.777778,
+                  "penalized_mean_objective": 17.777778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 36.777778,
+                  "penalized_mean_objective": 36.777778
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "obp_online_s20261125_winner",
+            "template_id": "obp_online_priority",
+            "run_id": "m31_obp_online_s20261125",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 27.277778,
+            "valid_only_mean_objective": 27.277778,
+            "solve_ms_mean": 1.8985,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.666667,
+                  "penalized_mean_objective": 24.666667
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 44.833333,
+                  "penalized_mean_objective": 44.833333
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.333333,
+                  "penalized_mean_objective": 12.333333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.5,
+                  "penalized_mean_objective": 24.5
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.833333,
+                  "penalized_mean_objective": 22.833333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.5,
+                  "penalized_mean_objective": 34.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 17.777778,
+                  "penalized_mean_objective": 17.777778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 36.777778,
+                  "penalized_mean_objective": 36.777778
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "obp_online_s20261126_winner",
+            "template_id": "obp_online_priority",
+            "run_id": "m31_obp_online_s20261126",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 27.361111,
+            "valid_only_mean_objective": 27.361111,
+            "solve_ms_mean": 1.1904,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.75,
+                  "penalized_mean_objective": 24.75
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 45.0,
+                  "penalized_mean_objective": 45.0
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.333333,
+                  "penalized_mean_objective": 12.333333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.5,
+                  "penalized_mean_objective": 24.5
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.916667,
+                  "penalized_mean_objective": 22.916667
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.666667,
+                  "penalized_mean_objective": 34.666667
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 17.833333,
+                  "penalized_mean_objective": 17.833333
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 36.888889,
+                  "penalized_mean_objective": 36.888889
+                }
+              }
+            }
+          }
+        ],
+        "excluded_runs": [],
+        "winner": {
+          "solver_id": "obp_online_s20261124_winner",
+          "template_id": "obp_online_priority",
+          "run_id": "m31_obp_online_s20261124",
+          "gate_passed": true,
+          "completion_rate": 1.0,
+          "penalized_mean_objective": 27.277778,
+          "valid_only_mean_objective": 27.277778,
+          "solve_ms_mean": 0.9364,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 24.666667,
+                "penalized_mean_objective": 24.666667
+              },
+              "200": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 44.833333,
+                "penalized_mean_objective": 44.833333
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 12.333333,
+                "penalized_mean_objective": 12.333333
+              }
+            },
+            "by_distribution": {
+              "bimodal": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 24.5,
+                "penalized_mean_objective": 24.5
+              },
+              "uniform": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 22.833333,
+                "penalized_mean_objective": 22.833333
+              },
+              "weibull": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 34.5,
+                "penalized_mean_objective": 34.5
+              }
+            },
+            "by_stratum": {
+              "high": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 17.777778,
+                "penalized_mean_objective": 17.777778
+              },
+              "low": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 36.777778,
+                "penalized_mean_objective": 36.777778
+              }
+            }
+          },
+          "frozen_solver": {
+            "schema_version": "frozen-interface-solver/v2",
+            "solver_id": "obp_online_s20261124_winner",
+            "display_name": "Session R1 · obp_online_priority",
+            "problem_family": "obp",
+            "paradigm": "sequential_construct",
+            "interface": "obp_online_priority/v1:priority",
+            "template_id": "obp_online_priority",
+            "template_version": "v1",
+            "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+            "postprocess_mode": "none",
+            "template_options": {
+              "inject_static_kb_clues": false
+            },
+            "hook_name": "priority",
+            "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities",
+            "hook_code_sha256": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656",
+            "design_sha256": "e09bc3f9f472422547094964fc91250c07f2e1e0a38a53ec8fb71becdad035e3",
+            "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0001\\eoh_run",
+            "kb_release_id": "20261123-main-co-workbench-m3",
+            "kb_entry_id": "impl-obp-go-solver",
+            "cited_kb_ids": [
+              "impl-obp-go-solver",
+              "method-obp-best-fit",
+              "method-obp-first-fit",
+              "method-lit-obp-worstfit-family-worst-fit"
+            ],
+            "diagnostic_ref": null,
+            "description": "Session M2 evolved obp_online_priority/v1:priority",
+            "default_budget_ms": 500.0,
+            "protocol_id": "obp_online/v1",
+            "hook_specs": [
+              {
+                "name": "priority",
+                "signature": [
+                  "current_item",
+                  "feasible_remaining_capacities"
+                ],
+                "output_shape_arg": "feasible_remaining_capacities"
+              }
+            ],
+            "hook_implementations": {
+              "priority": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities"
+            },
+            "hook_hashes": {
+              "priority": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656"
+            },
+            "bundle_hash": "da7d735fcb66621f1c789071b9b81464b7e8c6b0798e33eb327e64ffb6ab4ed8",
+            "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+          }
+        }
+      },
+      "bpp_offline": {
+        "problem_family": "bpp",
+        "protocol_id": "bpp_offline/v1",
+        "select_suite_id": "bpp_m31_select_36",
+        "baselines": {
+          "bpp_ffd": {
+            "suite_id": "bpp_m31_select_36",
+            "protocol_id": "bpp_offline/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 28.916667,
+            "penalized_mean_objective": 28.916667,
+            "solve_ms_mean": 0.1663,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 23.833333,
+                  "penalized_mean_objective": 23.833333
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 50.416667,
+                  "penalized_mean_objective": 50.416667
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.5,
+                  "penalized_mean_objective": 12.5
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 30.916667,
+                  "penalized_mean_objective": 30.916667
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.333333,
+                  "penalized_mean_objective": 22.333333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 33.5,
+                  "penalized_mean_objective": 33.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 20.277778,
+                  "penalized_mean_objective": 20.277778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 37.555556,
+                  "penalized_mean_objective": 37.555556
+                }
+              }
+            }
+          },
+          "bpp_bfd": {
+            "suite_id": "bpp_m31_select_36",
+            "protocol_id": "bpp_offline/v1",
+            "instance_count": 36,
+            "valid_count": 36,
+            "completion_rate": 1.0,
+            "all_completed": true,
+            "valid_only_mean_objective": 28.916667,
+            "penalized_mean_objective": 28.916667,
+            "solve_ms_mean": 0.263,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 23.833333,
+                  "penalized_mean_objective": 23.833333
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 50.416667,
+                  "penalized_mean_objective": 50.416667
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.5,
+                  "penalized_mean_objective": 12.5
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 30.916667,
+                  "penalized_mean_objective": 30.916667
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.333333,
+                  "penalized_mean_objective": 22.333333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 33.5,
+                  "penalized_mean_objective": 33.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 20.277778,
+                  "penalized_mean_objective": 20.277778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 37.555556,
+                  "penalized_mean_objective": 37.555556
+                }
+              }
+            }
+          }
+        },
+        "candidates": [
+          {
+            "solver_id": "bpp_offline_s20261124_winner",
+            "template_id": "bpp_offline_reorder_repack",
+            "run_id": "m31_bpp_offline_s20261124",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 29.722222,
+            "valid_only_mean_objective": 29.722222,
+            "solve_ms_mean": 0.1632,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.583333,
+                  "penalized_mean_objective": 24.583333
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 51.75,
+                  "penalized_mean_objective": 51.75
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.833333,
+                  "penalized_mean_objective": 12.833333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 32.166667,
+                  "penalized_mean_objective": 32.166667
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.833333,
+                  "penalized_mean_objective": 22.833333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.166667,
+                  "penalized_mean_objective": 34.166667
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 20.555556,
+                  "penalized_mean_objective": 20.555556
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 38.888889,
+                  "penalized_mean_objective": 38.888889
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "bpp_offline_s20261125_winner",
+            "template_id": "bpp_offline_reorder_repack",
+            "run_id": "m31_bpp_offline_s20261125",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 29.722222,
+            "valid_only_mean_objective": 29.722222,
+            "solve_ms_mean": 0.2585,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 24.583333,
+                  "penalized_mean_objective": 24.583333
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 51.75,
+                  "penalized_mean_objective": 51.75
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.833333,
+                  "penalized_mean_objective": 12.833333
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 32.166667,
+                  "penalized_mean_objective": 32.166667
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.833333,
+                  "penalized_mean_objective": 22.833333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 34.166667,
+                  "penalized_mean_objective": 34.166667
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 20.555556,
+                  "penalized_mean_objective": 20.555556
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 38.888889,
+                  "penalized_mean_objective": 38.888889
+                }
+              }
+            }
+          },
+          {
+            "solver_id": "bpp_offline_s20261126_winner",
+            "template_id": "bpp_offline_reorder_repack",
+            "run_id": "m31_bpp_offline_s20261126",
+            "gate_passed": true,
+            "completion_rate": 1.0,
+            "penalized_mean_objective": 28.916667,
+            "valid_only_mean_objective": 28.916667,
+            "solve_ms_mean": 0.2011,
+            "slices": {
+              "by_size": {
+                "100": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 23.833333,
+                  "penalized_mean_objective": 23.833333
+                },
+                "200": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 50.416667,
+                  "penalized_mean_objective": 50.416667
+                },
+                "50": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 12.5,
+                  "penalized_mean_objective": 12.5
+                }
+              },
+              "by_distribution": {
+                "bimodal": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 30.916667,
+                  "penalized_mean_objective": 30.916667
+                },
+                "uniform": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 22.333333,
+                  "penalized_mean_objective": 22.333333
+                },
+                "weibull": {
+                  "count": 12,
+                  "valid_count": 12,
+                  "completion_rate": 1.0,
+                  "mean_objective": 33.5,
+                  "penalized_mean_objective": 33.5
+                }
+              },
+              "by_stratum": {
+                "high": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 20.277778,
+                  "penalized_mean_objective": 20.277778
+                },
+                "low": {
+                  "count": 18,
+                  "valid_count": 18,
+                  "completion_rate": 1.0,
+                  "mean_objective": 37.555556,
+                  "penalized_mean_objective": 37.555556
+                }
+              }
+            }
+          }
+        ],
+        "excluded_runs": [],
+        "winner": {
+          "solver_id": "bpp_offline_s20261126_winner",
+          "template_id": "bpp_offline_reorder_repack",
+          "run_id": "m31_bpp_offline_s20261126",
+          "gate_passed": true,
+          "completion_rate": 1.0,
+          "penalized_mean_objective": 28.916667,
+          "valid_only_mean_objective": 28.916667,
+          "solve_ms_mean": 0.2011,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 23.833333,
+                "penalized_mean_objective": 23.833333
+              },
+              "200": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 50.416667,
+                "penalized_mean_objective": 50.416667
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 12.5,
+                "penalized_mean_objective": 12.5
+              }
+            },
+            "by_distribution": {
+              "bimodal": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 30.916667,
+                "penalized_mean_objective": 30.916667
+              },
+              "uniform": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 22.333333,
+                "penalized_mean_objective": 22.333333
+              },
+              "weibull": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 33.5,
+                "penalized_mean_objective": 33.5
+              }
+            },
+            "by_stratum": {
+              "high": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 20.277778,
+                "penalized_mean_objective": 20.277778
+              },
+              "low": {
+                "count": 18,
+                "valid_count": 18,
+                "completion_rate": 1.0,
+                "mean_objective": 37.555556,
+                "penalized_mean_objective": 37.555556
+              }
+            }
+          },
+          "frozen_solver": {
+            "schema_version": "frozen-interface-solver/v2",
+            "solver_id": "bpp_offline_s20261126_winner",
+            "display_name": "Session R1 · bpp_offline_reorder_repack",
+            "problem_family": "bpp",
+            "paradigm": "reorder_repack",
+            "interface": "bpp_offline_reorder_repack/v1:rank_items",
+            "template_id": "bpp_offline_reorder_repack",
+            "template_version": "v1",
+            "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+            "postprocess_mode": "none",
+            "template_options": {
+              "inject_static_kb_clues": false
+            },
+            "hook_name": "rank_items",
+            "hook_code": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: larger items first (dominant term).\n        primary = s / cap if cap > 0 else s\n        # Secondary: favor items whose size is close to a rational fill of capacity.\n        # This acts as a static residual-fit proxy without needing online bin state.\n        r = s % cap if cap > 0 else 0.0\n        fill = r / cap if cap > 0 else 0.0\n        # Tightness: prefer residues near 0 (exact fill) or near cap (leaves small gap),\n        # but monotonically break near-ties toward better packing density.\n        tight = 1.0 - min(fill, 1.0 - fill) if cap > 0 else 0.0\n        # Parity/complement structure: multiples of capacity get a small bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + tight * 1.0e3 + mult * 1.0 + (s / (cap + 1.0)) * 1.0e-3\n    return scores",
+            "hook_code_sha256": "dd7153c01bc67fd09037b4fb2a66421a49e43c7275ce43a1004a307313972724",
+            "design_sha256": "665a51dd1c2d48396ca1c5eb7aeab96b6c33ff5e202f9ff47386fc3914d94aa9",
+            "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+            "kb_release_id": "20261123-main-co-workbench-m3",
+            "kb_entry_id": null,
+            "cited_kb_ids": [],
+            "diagnostic_ref": null,
+            "description": "Session M2 evolved bpp_offline_reorder_repack/v1:rank_items",
+            "default_budget_ms": 500.0,
+            "protocol_id": "bpp_offline/v1",
+            "hook_specs": [
+              {
+                "name": "rank_items",
+                "signature": [
+                  "item_sizes",
+                  "capacity"
+                ],
+                "output_shape_arg": "item_sizes"
+              }
+            ],
+            "hook_implementations": {
+              "rank_items": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: larger items first (dominant term).\n        primary = s / cap if cap > 0 else s\n        # Secondary: favor items whose size is close to a rational fill of capacity.\n        # This acts as a static residual-fit proxy without needing online bin state.\n        r = s % cap if cap > 0 else 0.0\n        fill = r / cap if cap > 0 else 0.0\n        # Tightness: prefer residues near 0 (exact fill) or near cap (leaves small gap),\n        # but monotonically break near-ties toward better packing density.\n        tight = 1.0 - min(fill, 1.0 - fill) if cap > 0 else 0.0\n        # Parity/complement structure: multiples of capacity get a small bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + tight * 1.0e3 + mult * 1.0 + (s / (cap + 1.0)) * 1.0e-3\n    return scores"
+            },
+            "hook_hashes": {
+              "rank_items": "dd7153c01bc67fd09037b4fb2a66421a49e43c7275ce43a1004a307313972724"
+            },
+            "bundle_hash": "fc74ba8044caff4aef61949c5059ded5ba0b1b04202abe4fbf44ad7e28464672",
+            "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+          }
+        }
+      }
+    },
+    "excluded_runs": [
+      {
+        "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261124",
+        "lane": "tsp_l1",
+        "run_id": "m31_tsp_l1_s20261124",
+        "final_phase": "no_champion",
+        "best_dev_objective": null,
+        "reason": "no_champion"
+      },
+      {
+        "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261126",
+        "lane": "tsp_l1",
+        "run_id": "m31_tsp_l1_s20261126",
+        "final_phase": "no_champion",
+        "best_dev_objective": null,
+        "reason": "no_champion"
+      }
+    ],
+    "family_finalists": {
+      "bpp": {
+        "lane": "bpp_offline",
+        "solver_id": "bpp_offline_s20261126_winner",
+        "template_id": "bpp_offline_reorder_repack",
+        "run_id": "m31_bpp_offline_s20261126",
+        "gate_passed": true,
+        "completion_rate": 1.0,
+        "penalized_mean_objective": 28.916667,
+        "valid_only_mean_objective": 28.916667,
+        "solve_ms_mean": 0.2011,
+        "slices": {
+          "by_size": {
+            "100": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 23.833333,
+              "penalized_mean_objective": 23.833333
+            },
+            "200": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 50.416667,
+              "penalized_mean_objective": 50.416667
+            },
+            "50": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 12.5,
+              "penalized_mean_objective": 12.5
+            }
+          },
+          "by_distribution": {
+            "bimodal": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 30.916667,
+              "penalized_mean_objective": 30.916667
+            },
+            "uniform": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 22.333333,
+              "penalized_mean_objective": 22.333333
+            },
+            "weibull": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 33.5,
+              "penalized_mean_objective": 33.5
+            }
+          },
+          "by_stratum": {
+            "high": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 20.277778,
+              "penalized_mean_objective": 20.277778
+            },
+            "low": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 37.555556,
+              "penalized_mean_objective": 37.555556
+            }
+          }
+        },
+        "frozen_solver": {
+          "schema_version": "frozen-interface-solver/v2",
+          "solver_id": "bpp_offline_s20261126_winner",
+          "display_name": "Session R1 · bpp_offline_reorder_repack",
+          "problem_family": "bpp",
+          "paradigm": "reorder_repack",
+          "interface": "bpp_offline_reorder_repack/v1:rank_items",
+          "template_id": "bpp_offline_reorder_repack",
+          "template_version": "v1",
+          "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+          "postprocess_mode": "none",
+          "template_options": {
+            "inject_static_kb_clues": false
+          },
+          "hook_name": "rank_items",
+          "hook_code": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: larger items first (dominant term).\n        primary = s / cap if cap > 0 else s\n        # Secondary: favor items whose size is close to a rational fill of capacity.\n        # This acts as a static residual-fit proxy without needing online bin state.\n        r = s % cap if cap > 0 else 0.0\n        fill = r / cap if cap > 0 else 0.0\n        # Tightness: prefer residues near 0 (exact fill) or near cap (leaves small gap),\n        # but monotonically break near-ties toward better packing density.\n        tight = 1.0 - min(fill, 1.0 - fill) if cap > 0 else 0.0\n        # Parity/complement structure: multiples of capacity get a small bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + tight * 1.0e3 + mult * 1.0 + (s / (cap + 1.0)) * 1.0e-3\n    return scores",
+          "hook_code_sha256": "dd7153c01bc67fd09037b4fb2a66421a49e43c7275ce43a1004a307313972724",
+          "design_sha256": "665a51dd1c2d48396ca1c5eb7aeab96b6c33ff5e202f9ff47386fc3914d94aa9",
+          "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+          "kb_release_id": "20261123-main-co-workbench-m3",
+          "kb_entry_id": null,
+          "cited_kb_ids": [],
+          "diagnostic_ref": null,
+          "description": "Session M2 evolved bpp_offline_reorder_repack/v1:rank_items",
+          "default_budget_ms": 500.0,
+          "protocol_id": "bpp_offline/v1",
+          "hook_specs": [
+            {
+              "name": "rank_items",
+              "signature": [
+                "item_sizes",
+                "capacity"
+              ],
+              "output_shape_arg": "item_sizes"
+            }
+          ],
+          "hook_implementations": {
+            "rank_items": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity) if capacity else 1.0\n    scores = [0.0] * n\n    for i in range(n):\n        s = float(item_sizes[i])\n        # Primary: larger items first (dominant term).\n        primary = s / cap if cap > 0 else s\n        # Secondary: favor items whose size is close to a rational fill of capacity.\n        # This acts as a static residual-fit proxy without needing online bin state.\n        r = s % cap if cap > 0 else 0.0\n        fill = r / cap if cap > 0 else 0.0\n        # Tightness: prefer residues near 0 (exact fill) or near cap (leaves small gap),\n        # but monotonically break near-ties toward better packing density.\n        tight = 1.0 - min(fill, 1.0 - fill) if cap > 0 else 0.0\n        # Parity/complement structure: multiples of capacity get a small bonus.\n        mult = (s // cap) if cap > 0 else 0.0\n        scores[i] = primary * 1.0e6 + tight * 1.0e3 + mult * 1.0 + (s / (cap + 1.0)) * 1.0e-3\n    return scores"
+          },
+          "hook_hashes": {
+            "rank_items": "dd7153c01bc67fd09037b4fb2a66421a49e43c7275ce43a1004a307313972724"
+          },
+          "bundle_hash": "fc74ba8044caff4aef61949c5059ded5ba0b1b04202abe4fbf44ad7e28464672",
+          "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+        }
+      },
+      "obp": {
+        "lane": "obp_online",
+        "solver_id": "obp_online_s20261124_winner",
+        "template_id": "obp_online_priority",
+        "run_id": "m31_obp_online_s20261124",
+        "gate_passed": true,
+        "completion_rate": 1.0,
+        "penalized_mean_objective": 27.277778,
+        "valid_only_mean_objective": 27.277778,
+        "solve_ms_mean": 0.9364,
+        "slices": {
+          "by_size": {
+            "100": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 24.666667,
+              "penalized_mean_objective": 24.666667
+            },
+            "200": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 44.833333,
+              "penalized_mean_objective": 44.833333
+            },
+            "50": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 12.333333,
+              "penalized_mean_objective": 12.333333
+            }
+          },
+          "by_distribution": {
+            "bimodal": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 24.5,
+              "penalized_mean_objective": 24.5
+            },
+            "uniform": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 22.833333,
+              "penalized_mean_objective": 22.833333
+            },
+            "weibull": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 34.5,
+              "penalized_mean_objective": 34.5
+            }
+          },
+          "by_stratum": {
+            "high": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 17.777778,
+              "penalized_mean_objective": 17.777778
+            },
+            "low": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 36.777778,
+              "penalized_mean_objective": 36.777778
+            }
+          }
+        },
+        "frozen_solver": {
+          "schema_version": "frozen-interface-solver/v2",
+          "solver_id": "obp_online_s20261124_winner",
+          "display_name": "Session R1 · obp_online_priority",
+          "problem_family": "obp",
+          "paradigm": "sequential_construct",
+          "interface": "obp_online_priority/v1:priority",
+          "template_id": "obp_online_priority",
+          "template_version": "v1",
+          "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+          "postprocess_mode": "none",
+          "template_options": {
+            "inject_static_kb_clues": false
+          },
+          "hook_name": "priority",
+          "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities",
+          "hook_code_sha256": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656",
+          "design_sha256": "e09bc3f9f472422547094964fc91250c07f2e1e0a38a53ec8fb71becdad035e3",
+          "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0001\\eoh_run",
+          "kb_release_id": "20261123-main-co-workbench-m3",
+          "kb_entry_id": "impl-obp-go-solver",
+          "cited_kb_ids": [
+            "impl-obp-go-solver",
+            "method-obp-best-fit",
+            "method-obp-first-fit",
+            "method-lit-obp-worstfit-family-worst-fit"
+          ],
+          "diagnostic_ref": null,
+          "description": "Session M2 evolved obp_online_priority/v1:priority",
+          "default_budget_ms": 500.0,
+          "protocol_id": "obp_online/v1",
+          "hook_specs": [
+            {
+              "name": "priority",
+              "signature": [
+                "current_item",
+                "feasible_remaining_capacities"
+              ],
+              "output_shape_arg": "feasible_remaining_capacities"
+            }
+          ],
+          "hook_implementations": {
+            "priority": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities"
+          },
+          "hook_hashes": {
+            "priority": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656"
+          },
+          "bundle_hash": "da7d735fcb66621f1c789071b9b81464b7e8c6b0798e33eb327e64ffb6ab4ed8",
+          "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+        }
+      },
+      "tsp": {
+        "lane": "tsp_l2",
+        "solver_id": "tsp_l2_s20261126_winner",
+        "template_id": "tsp_guided_insertion_2opt",
+        "run_id": "m31_tsp_l2_s20261126",
+        "gate_passed": true,
+        "completion_rate": 1.0,
+        "penalized_mean_objective": 84270.471778,
+        "valid_only_mean_objective": 84270.471778,
+        "solve_ms_mean": 7.0081,
+        "slices": {
+          "by_size": {
+            "100": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 80610.365894,
+              "penalized_mean_objective": 80610.365894
+            },
+            "200": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 109370.962019,
+              "penalized_mean_objective": 109370.962019
+            },
+            "50": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 62830.087421,
+              "penalized_mean_objective": 62830.087421
+            }
+          },
+          "by_distribution": {
+            "clustered": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 71795.190272,
+              "penalized_mean_objective": 71795.190272
+            },
+            "grid": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 90912.837175,
+              "penalized_mean_objective": 90912.837175
+            },
+            "uniform": {
+              "count": 12,
+              "valid_count": 12,
+              "completion_rate": 1.0,
+              "mean_objective": 90103.387887,
+              "penalized_mean_objective": 90103.387887
+            }
+          },
+          "by_stratum": {
+            "high": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 84392.639518,
+              "penalized_mean_objective": 84392.639518
+            },
+            "low": {
+              "count": 18,
+              "valid_count": 18,
+              "completion_rate": 1.0,
+              "mean_objective": 84148.304038,
+              "penalized_mean_objective": 84148.304038
+            }
+          }
+        },
+        "frozen_solver": {
+          "schema_version": "frozen-interface-solver/v2",
+          "solver_id": "tsp_l2_s20261126_winner",
+          "display_name": "Session R2 · tsp_guided_insertion_2opt",
+          "problem_family": "tsp",
+          "paradigm": "insertion",
+          "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+          "template_id": "tsp_guided_insertion_2opt",
+          "template_version": "v1",
+          "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+          "postprocess_mode": "none",
+          "template_options": {
+            "inject_static_kb_clues": false
+          },
+          "hook_name": "score_insertion",
+          "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score",
+          "hook_code_sha256": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce",
+          "design_sha256": "2e721d54b241c12c7a94ffb5e8d4216365d057bb8ff373262a36eca5b53f0ad6",
+          "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+          "kb_release_id": "20261123-main-co-workbench-m3",
+          "kb_entry_id": "method-tsp-i605-dest-pull",
+          "cited_kb_ids": [
+            "method-tsp-i605-dest-pull",
+            "method-tsp-i605-mean-farness",
+            "method-tsp-i605-dimensionless-ratio"
+          ],
+          "diagnostic_ref": null,
+          "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+          "default_budget_ms": 500.0,
+          "protocol_id": "tsp/v1",
+          "hook_specs": [
+            {
+              "name": "score_insertion",
+              "signature": [
+                "unvisited_nodes",
+                "nearest_tour_distances",
+                "insertion_costs"
+              ],
+              "output_shape_arg": "unvisited_nodes"
+            }
+          ],
+          "hook_implementations": {
+            "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n\n    n = d.size\n    if n == 0:\n        return d\n\n    dmax = float(np.max(d))\n    cmax = float(np.max(c))\n\n    if dmax > 0.0:\n        dn = d / dmax\n    else:\n        dn = np.zeros_like(d)\n\n    if cmax > 0.0:\n        cn = c / cmax\n    else:\n        cn = np.zeros_like(c)\n\n    # Linear pull term: strongly favour cities far from the current tour.\n    pull = dn\n\n    # Cheapest-insertion preference with sign flipped: lower cost -> higher score.\n    regret = 1.0 - cn\n\n    # Interior 0.6/0.4 blend, then a stable monotone squashing to [0, 1].\n    raw = 0.6 * pull + 0.4 * regret\n    score = raw / (1.0 + np.abs(raw))\n\n    # Tiny ascending-ID tiebreak: earlier unvisited index wins ties.\n    order = np.arange(n, dtype=np.float64)\n    score = score - 1e-9 * order\n\n    return score"
+          },
+          "hook_hashes": {
+            "score_insertion": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce"
+          },
+          "bundle_hash": "5715b833c1f8ba86d02667f083efecc6d8de06ce2e4e46d7d58baf441968bb4d",
+          "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+        }
+      }
+    },
+    "gate_reports": {
+      "tsp_l1_s20261125_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "select_next_city": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0"
+            },
+            "bundle_hash": "e8b5c3a36a70d1dcffdcb426791ea00424bd55ee9561a8a7e1b318a634313a48",
+            "hook_contract_sha256": "b1b3d5443c26b634ec25ae449e9829b74695f4819f40103d5c8e006c6628a58d"
+          },
+          "gate2": {
+            "template_source_sha256": "375d1c0196a8f5ad8beff8f8bcf11726078682eb39562ed060e1de87435fca87",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 3,
+            "objective": 15.118073,
+            "outcomes": [
+              "completed",
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "instance_id": "tsp-probe-causal-6",
+            "prefer_A_first_action": 1,
+            "prefer_A_pre_postprocess_tour": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "prefer_B_first_action": 2,
+            "prefer_B_pre_postprocess_tour": [
+              0,
+              2,
+              1,
+              3,
+              4,
+              5
+            ],
+            "pre_postprocess_tours_differ": true,
+            "informative_hook_calls": 4
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 39.882115,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "stress_solve_ms": [
+              6.4258,
+              6.1147
+            ],
+            "solve_deadline_ms": 500.0,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_first_actions": [
+              12,
+              12,
+              12
+            ],
+            "scale_actions_match": true,
+            "scale_adjusted_lengths": [
+              39.60468766784161,
+              39.60468766784161,
+              39.60468766784162
+            ],
+            "scale_max_relative_drift": 1.794087461866414e-16
+          }
+        }
+      },
+      "tsp_l2_s20261124_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "score_insertion": "2e546bbd6759d490dffa6bb2596a096084286877b2ca424782ae7058fdb93b42"
+            },
+            "bundle_hash": "f678f1174b2633e84729c212c4b2550a6d8450a1151da00fb09f45a14125812e",
+            "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+          },
+          "gate2": {
+            "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 3,
+            "objective": 13.331451,
+            "outcomes": [
+              "completed",
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "instance_id": "tsp-probe-causal-6",
+            "prefer_A_first_action": [
+              1,
+              0,
+              5
+            ],
+            "prefer_A_pre_postprocess_tour": [
+              0,
+              1,
+              3,
+              4,
+              5,
+              2
+            ],
+            "prefer_B_first_action": [
+              4,
+              0,
+              5
+            ],
+            "prefer_B_pre_postprocess_tour": [
+              0,
+              2,
+              4,
+              5,
+              3,
+              1
+            ],
+            "pre_postprocess_tours_differ": true,
+            "informative_hook_calls": 3
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 35.25695,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "stress_solve_ms": [
+              34.2891,
+              34.2609
+            ],
+            "solve_deadline_ms": 500.0,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_first_actions": [
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ]
+            ],
+            "scale_actions_match": true,
+            "scale_adjusted_lengths": [
+              34.61429314166556,
+              34.61429314166557,
+              34.61429314166558
+            ],
+            "scale_max_relative_drift": 2.0527437404313562e-16
+          }
+        }
+      },
+      "tsp_l2_s20261125_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "score_insertion": "afac0afbbe2e43bf2d311eb589e6cd9402f530df9338bb9e88906bb441d12cd5"
+            },
+            "bundle_hash": "76b3ff0fec2ea955f780f7f1c39b5441f2efd558404706fd61656fd97323cf1b",
+            "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+          },
+          "gate2": {
+            "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 3,
+            "objective": 13.331451,
+            "outcomes": [
+              "completed",
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "instance_id": "tsp-probe-causal-6",
+            "prefer_A_first_action": [
+              1,
+              0,
+              5
+            ],
+            "prefer_A_pre_postprocess_tour": [
+              0,
+              1,
+              3,
+              4,
+              5,
+              2
+            ],
+            "prefer_B_first_action": [
+              4,
+              0,
+              5
+            ],
+            "prefer_B_pre_postprocess_tour": [
+              0,
+              2,
+              4,
+              5,
+              3,
+              1
+            ],
+            "pre_postprocess_tours_differ": true,
+            "informative_hook_calls": 3
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 35.955977,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "stress_solve_ms": [
+              22.8365,
+              21.841
+            ],
+            "solve_deadline_ms": 500.0,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_first_actions": [
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ]
+            ],
+            "scale_actions_match": true,
+            "scale_adjusted_lengths": [
+              34.61429314166556,
+              34.61429314166557,
+              34.61429314166558
+            ],
+            "scale_max_relative_drift": 2.0527437404313562e-16
+          }
+        }
+      },
+      "tsp_l2_s20261126_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "score_insertion": "b743ededb6b5cff327692101eab9cea105f13687c8fcfe58d80506da072029ce"
+            },
+            "bundle_hash": "5715b833c1f8ba86d02667f083efecc6d8de06ce2e4e46d7d58baf441968bb4d",
+            "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+          },
+          "gate2": {
+            "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 3,
+            "objective": 12.884077,
+            "outcomes": [
+              "completed",
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "instance_id": "tsp-probe-causal-6",
+            "prefer_A_first_action": [
+              1,
+              0,
+              5
+            ],
+            "prefer_A_pre_postprocess_tour": [
+              0,
+              1,
+              3,
+              4,
+              5,
+              2
+            ],
+            "prefer_B_first_action": [
+              4,
+              0,
+              5
+            ],
+            "prefer_B_pre_postprocess_tour": [
+              0,
+              2,
+              4,
+              5,
+              3,
+              1
+            ],
+            "pre_postprocess_tours_differ": true,
+            "informative_hook_calls": 3
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 35.857812,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "stress_solve_ms": [
+              15.0112,
+              14.4212
+            ],
+            "solve_deadline_ms": 500.0,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_first_actions": [
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ],
+              [
+                13,
+                0,
+                23
+              ]
+            ],
+            "scale_actions_match": true,
+            "scale_adjusted_lengths": [
+              34.702271598167044,
+              34.70227159816705,
+              34.70227159816705
+            ],
+            "scale_max_relative_drift": 2.0475395501129977e-16
+          }
+        }
+      },
+      "obp_online_s20261124_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "priority": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656"
+            },
+            "bundle_hash": "da7d735fcb66621f1c789071b9b81464b7e8c6b0798e33eb327e64ffb6ab4ed8",
+            "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+          },
+          "gate2": {
+            "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 2.5,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "prefer_first_decisions": [
+              0,
+              1,
+              0,
+              1
+            ],
+            "prefer_last_decisions": [
+              0,
+              1,
+              1,
+              0
+            ],
+            "prefix_length": 4,
+            "prefix_variants": 3,
+            "prefix_trace_equal": true
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 166.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      },
+      "obp_online_s20261125_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "priority": "08a717950fd5bfc75bccc76530b1b1a59ad8be2432483acefdea43a459881e4f"
+            },
+            "bundle_hash": "a3aa7473d200b0dac5d25952c3cc659c7ba3dbaed39671dc0bbd7da6a7b7b6c9",
+            "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+          },
+          "gate2": {
+            "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 2.5,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "prefer_first_decisions": [
+              0,
+              1,
+              0,
+              1
+            ],
+            "prefer_last_decisions": [
+              0,
+              1,
+              1,
+              0
+            ],
+            "prefix_length": 4,
+            "prefix_variants": 3,
+            "prefix_trace_equal": true
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 166.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      },
+      "obp_online_s20261126_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "priority": "38a001b9c5f76b32615b9f97507f22395a1cb87fbc79d44817301974b3dedb92"
+            },
+            "bundle_hash": "6fe34ea6dd271f8c1b0e8009912edc3f72b4b45ff8f7b42825175dfc86a0bfd5",
+            "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+          },
+          "gate2": {
+            "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 2.5,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "prefer_first_decisions": [
+              0,
+              1,
+              0,
+              1
+            ],
+            "prefer_last_decisions": [
+              0,
+              1,
+              1,
+              0
+            ],
+            "prefix_length": 4,
+            "prefix_variants": 3,
+            "prefix_trace_equal": true
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 166.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      },
+      "bpp_offline_s20261124_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "rank_items": "031dce4e4b550d1800889ff5f6ccecd01e82752d9f020edfab4ccf98b33ff7df"
+            },
+            "bundle_hash": "94bc09c74603b94e51128e775a2a2288ab4d7e534084c5c572adcb464ac70076",
+            "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+          },
+          "gate2": {
+            "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 3.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "first_orders": [
+              [
+                1,
+                3,
+                0,
+                2
+              ],
+              [
+                2,
+                0,
+                3,
+                1
+              ]
+            ],
+            "pre_repack_bins": [
+              [
+                [
+                  1
+                ],
+                [
+                  3,
+                  0
+                ],
+                [
+                  2
+                ]
+              ],
+              [
+                [
+                  2,
+                  0
+                ],
+                [
+                  3
+                ],
+                [
+                  1
+                ]
+              ]
+            ]
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 179.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      },
+      "bpp_offline_s20261125_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "rank_items": "21a9c538e59cb5667b6b9b2e68e2d4d83b3235b65a150abdfc1bfe27bd4a776e"
+            },
+            "bundle_hash": "eef052748785c367f869bc70dfb04f280692fe55f84445b0600b6e9df540736a",
+            "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+          },
+          "gate2": {
+            "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 3.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "first_orders": [
+              [
+                1,
+                3,
+                0,
+                2
+              ],
+              [
+                2,
+                0,
+                3,
+                1
+              ]
+            ],
+            "pre_repack_bins": [
+              [
+                [
+                  1
+                ],
+                [
+                  3,
+                  0
+                ],
+                [
+                  2
+                ]
+              ],
+              [
+                [
+                  2,
+                  0
+                ],
+                [
+                  3
+                ],
+                [
+                  1
+                ]
+              ]
+            ]
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 179.0,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      },
+      "bpp_offline_s20261126_winner": {
+        "passed": true,
+        "gates": [
+          {
+            "gate_id": 1,
+            "gate_name": "ast_whitelist",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 2,
+            "gate_name": "template_and_signature",
+            "passed": true,
+            "failure_count": 0
+          },
+          {
+            "gate_id": 3,
+            "gate_name": "subprocess_feasibility",
+            "passed": true
+          },
+          {
+            "gate_id": 4,
+            "gate_name": "dual_action_causal_sensitivity",
+            "passed": true
+          },
+          {
+            "gate_id": 5,
+            "gate_name": "budget_and_scale_diagnostics",
+            "passed": true
+          }
+        ],
+        "diagnostics": {
+          "candidate_timeout_s": 20.0,
+          "instance_time_budget_ms": 500.0,
+          "hook_bundle": {
+            "hook_hashes": {
+              "rank_items": "dd7153c01bc67fd09037b4fb2a66421a49e43c7275ce43a1004a307313972724"
+            },
+            "bundle_hash": "fc74ba8044caff4aef61949c5059ded5ba0b1b04202abe4fbf44ad7e28464672",
+            "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+          },
+          "gate2": {
+            "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+            "advisory_deadline_supported": true
+          },
+          "gate3": {
+            "n_instances": 2,
+            "objective": 2.5,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0
+          },
+          "gate4": {
+            "first_orders": [
+              [
+                1,
+                3,
+                0,
+                2
+              ],
+              [
+                2,
+                0,
+                3,
+                1
+              ]
+            ],
+            "pre_repack_bins": [
+              [
+                [
+                  1
+                ],
+                [
+                  3,
+                  0
+                ],
+                [
+                  2
+                ]
+              ],
+              [
+                [
+                  2,
+                  0
+                ],
+                [
+                  3
+                ],
+                [
+                  1
+                ]
+              ]
+            ]
+          },
+          "gate5": {
+            "n_instances": 2,
+            "objective": 165.5,
+            "outcomes": [
+              "completed",
+              "completed"
+            ],
+            "timeout_kind": null,
+            "outer_timeout_s": 20.0,
+            "solve_deadline_ms": 500.0,
+            "stress_completed": 2,
+            "scale_factors": [
+              0.001,
+              1.0,
+              1000.0
+            ],
+            "scale_equivalent": true,
+            "scale_bins_used": [
+              5,
+              5,
+              5
+            ]
+          }
+        }
+      }
+    }
+  },
+  "excluded_runs": [
+    {
+      "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261124",
+      "lane": "tsp_l1",
+      "run_id": "m31_tsp_l1_s20261124",
+      "final_phase": "no_champion",
+      "best_dev_objective": null,
+      "reason": "no_champion"
+    },
+    {
+      "run_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261126",
+      "lane": "tsp_l1",
+      "run_id": "m31_tsp_l1_s20261126",
+      "final_phase": "no_champion",
+      "best_dev_objective": null,
+      "reason": "no_champion"
+    }
+  ],
+  "blind_72_main_tsp_and_online_obp": {
+    "tsp": {
+      "protocol_id": "tsp/v1",
+      "strong_baseline": "tsp_nn_2opt",
+      "algorithms": {
+        "tsp_l2": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 83833.43404,
+          "penalized_mean_objective": 83833.43404
+        },
+        "tsp_l1": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 92970.553868,
+          "penalized_mean_objective": 92970.553868
+        },
+        "tsp_nn_2opt": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 84610.36812,
+          "penalized_mean_objective": 84610.36812
+        },
+        "tsp_nn": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 98818.429534,
+          "penalized_mean_objective": 98818.429534
+        },
+        "tsp_farthest_insertion": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 85588.150152,
+          "penalized_mean_objective": 85588.150152
+        }
+      },
+      "comparisons_vs_strong_baseline": {
+        "tsp_l2_vs_tsp_nn_2opt": {
+          "n_instances": 72,
+          "common_completed_count": 72,
+          "overall_delta_pct_vs_baseline": -0.9182,
+          "common_completed_delta_pct_vs_baseline": -0.9182,
+          "wilcoxon_p_two_sided": 0.020016046193902574,
+          "bootstrap": {
+            "n_instances": 72,
+            "candidate_mean": 83833.434,
+            "baseline_mean": 84610.3681,
+            "candidate_total": 6036007.2508,
+            "baseline_total": 6091946.5047,
+            "mean_diff_cand_minus_base": -776.9341,
+            "rel_gain_vs_baseline_pct": 0.9182,
+            "per_instance_mean_rel_gain_pct": 1.0835,
+            "rel_gain_ci95_pct": [
+              0.1766,
+              1.6619
+            ],
+            "p_boot_one_sided": 0.0075,
+            "wilcoxon_signed_rank": {
+              "n_pairs": 72,
+              "n_nonzero": 72,
+              "w_plus": 899.0,
+              "w_minus": 1729.0,
+              "z_stat": 2.326,
+              "p_two_sided": 0.020016046193902574
+            },
+            "wtl_candidate_vs_baseline": {
+              "wins": 43,
+              "ties": 0,
+              "losses": 29
+            }
+          },
+          "p_holm_wilcoxon": 0.04003209
+        },
+        "tsp_l1_vs_tsp_nn_2opt": {
+          "n_instances": 72,
+          "common_completed_count": 72,
+          "overall_delta_pct_vs_baseline": 9.8808,
+          "common_completed_delta_pct_vs_baseline": 9.8808,
+          "wilcoxon_p_two_sided": 5.90713644357016e-13,
+          "bootstrap": {
+            "n_instances": 72,
+            "candidate_mean": 92970.5539,
+            "baseline_mean": 84610.3681,
+            "candidate_total": 6693879.8785,
+            "baseline_total": 6091946.5047,
+            "mean_diff_cand_minus_base": 8360.1857,
+            "rel_gain_vs_baseline_pct": -9.8808,
+            "per_instance_mean_rel_gain_pct": -9.7089,
+            "rel_gain_ci95_pct": [
+              -11.1003,
+              -8.6233
+            ],
+            "p_boot_one_sided": 1.0,
+            "wilcoxon_signed_rank": {
+              "n_pairs": 72,
+              "n_nonzero": 72,
+              "w_plus": 2598.0,
+              "w_minus": 30.0,
+              "z_stat": 7.2026,
+              "p_two_sided": 5.90713644357016e-13
+            },
+            "wtl_candidate_vs_baseline": {
+              "wins": 5,
+              "ties": 0,
+              "losses": 67
+            }
+          },
+          "p_holm_wilcoxon": 0.0
+        }
+      }
+    },
+    "obp": {
+      "protocol_id": "obp_online/v1",
+      "strong_baseline": "obp_best_fit",
+      "algorithms": {
+        "obp_online": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 28.222222,
+          "penalized_mean_objective": 28.222222
+        },
+        "obp_best_fit": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 28.222222,
+          "penalized_mean_objective": 28.222222
+        },
+        "obp_first_fit": {
+          "instance_count": 72,
+          "valid_count": 72,
+          "completion_rate": 1.0,
+          "valid_only_mean_objective": 28.333333,
+          "penalized_mean_objective": 28.333333
+        }
+      },
+      "comparisons_vs_strong_baseline": {
+        "obp_online_vs_obp_best_fit": {
+          "n_instances": 72,
+          "common_completed_count": 72,
+          "overall_delta_pct_vs_baseline": 0.0,
+          "common_completed_delta_pct_vs_baseline": 0.0,
+          "wilcoxon_p_two_sided": 1.0,
+          "bootstrap": {
+            "n_instances": 72,
+            "candidate_mean": 28.2222,
+            "baseline_mean": 28.2222,
+            "candidate_total": 2032.0,
+            "baseline_total": 2032.0,
+            "mean_diff_cand_minus_base": 0.0,
+            "rel_gain_vs_baseline_pct": 0.0,
+            "per_instance_mean_rel_gain_pct": 0.0,
+            "rel_gain_ci95_pct": [
+              0.0,
+              0.0
+            ],
+            "p_boot_one_sided": 1.0,
+            "wilcoxon_signed_rank": {
+              "n_pairs": 72,
+              "n_nonzero": 0,
+              "w_plus": 0.0,
+              "w_minus": 0.0,
+              "z_stat": 0.0,
+              "p_two_sided": 1.0
+            },
+            "wtl_candidate_vs_baseline": {
+              "wins": 0,
+              "ties": 72,
+              "losses": 0
+            }
+          },
+          "p_holm_wilcoxon": 1.0
+        }
+      }
+    }
+  },
+  "blind_72_independent_offline_bpp": {
+    "protocol_id": "bpp_offline/v1",
+    "strong_baseline": "bpp_ffd",
+    "algorithms": {
+      "bpp_offline": {
+        "instance_count": 72,
+        "valid_count": 72,
+        "completion_rate": 1.0,
+        "valid_only_mean_objective": 27.75,
+        "penalized_mean_objective": 27.75
+      },
+      "bpp_ffd": {
+        "instance_count": 72,
+        "valid_count": 72,
+        "completion_rate": 1.0,
+        "valid_only_mean_objective": 27.75,
+        "penalized_mean_objective": 27.75
+      },
+      "bpp_bfd": {
+        "instance_count": 72,
+        "valid_count": 72,
+        "completion_rate": 1.0,
+        "valid_only_mean_objective": 27.763889,
+        "penalized_mean_objective": 27.763889
+      }
+    },
+    "comparisons_vs_strong_baseline": {
+      "bpp_offline_vs_bpp_ffd": {
+        "n_instances": 72,
+        "common_completed_count": 72,
+        "overall_delta_pct_vs_baseline": 0.0,
+        "common_completed_delta_pct_vs_baseline": 0.0,
+        "wilcoxon_p_two_sided": 1.0,
+        "bootstrap": {
+          "n_instances": 72,
+          "candidate_mean": 27.75,
+          "baseline_mean": 27.75,
+          "candidate_total": 1998.0,
+          "baseline_total": 1998.0,
+          "mean_diff_cand_minus_base": 0.0,
+          "rel_gain_vs_baseline_pct": 0.0,
+          "per_instance_mean_rel_gain_pct": 0.0,
+          "rel_gain_ci95_pct": [
+            0.0,
+            0.0
+          ],
+          "p_boot_one_sided": 1.0,
+          "wilcoxon_signed_rank": {
+            "n_pairs": 72,
+            "n_nonzero": 0,
+            "w_plus": 0.0,
+            "w_minus": 0.0,
+            "z_stat": 0.0,
+            "p_two_sided": 1.0
+          },
+          "wtl_candidate_vs_baseline": {
+            "wins": 0,
+            "ties": 72,
+            "losses": 0
+          }
+        },
+        "p_holm_wilcoxon": 1.0
+      }
+    }
+  },
+  "external_benchmarks": {
+    "tsp_ext_tsplib_euc2d": {
+      "suite_id": "tsp_ext_tsplib_euc2d",
+      "protocol_id": "tsp/v1",
+      "instance_count": 18,
+      "algorithms": {
+        "tsp_nn_2opt": {
+          "suite_id": "tsp_ext_tsplib_euc2d",
+          "protocol_id": "tsp/v1",
+          "instance_count": 18,
+          "valid_count": 18,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 2,
+          "valid_only_mean_objective": 54830.722222,
+          "penalized_mean_objective": 54830.722222,
+          "solve_ms_mean": 295.4003,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 19282.0,
+                "penalized_mean_objective": 19282.0
+              },
+              "1002": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 283645.0,
+                "penalized_mean_objective": 283645.0
+              },
+              "101": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 664.0,
+                "penalized_mean_objective": 664.0
+              },
+              "105": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 16195.0,
+                "penalized_mean_objective": 16195.0
+              },
+              "130": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 6742.0,
+                "penalized_mean_objective": 6742.0
+              },
+              "150": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 6646.0,
+                "penalized_mean_objective": 6646.0
+              },
+              "225": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 4257.0,
+                "penalized_mean_objective": 4257.0
+              },
+              "2392": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 408738.0,
+                "penalized_mean_objective": 408738.0
+              },
+              "280": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 2812.0,
+                "penalized_mean_objective": 2812.0
+              },
+              "442": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 54154.0,
+                "penalized_mean_objective": 54154.0
+              },
+              "51": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 438.0,
+                "penalized_mean_objective": 438.0
+              },
+              "52": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 8060.0,
+                "penalized_mean_objective": 8060.0
+              },
+              "70": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 726.0,
+                "penalized_mean_objective": 726.0
+              },
+              "76": {
+                "count": 2,
+                "valid_count": 2,
+                "completion_rate": 1.0,
+                "mean_objective": 58374.0,
+                "penalized_mean_objective": 58374.0
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "tsp_nn": {
+          "suite_id": "tsp_ext_tsplib_euc2d",
+          "protocol_id": "tsp/v1",
+          "instance_count": 18,
+          "valid_count": 18,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 0,
+          "valid_only_mean_objective": 64150.666667,
+          "penalized_mean_objective": 64150.666667,
+          "solve_ms_mean": 1.1465,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 22729.75,
+                "penalized_mean_objective": 22729.75
+              },
+              "1002": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 331103.0,
+                "penalized_mean_objective": 331103.0
+              },
+              "101": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 803.0,
+                "penalized_mean_objective": 803.0
+              },
+              "105": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 20356.0,
+                "penalized_mean_objective": 20356.0
+              },
+              "130": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 7579.0,
+                "penalized_mean_objective": 7579.0
+              },
+              "150": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 8191.0,
+                "penalized_mean_objective": 8191.0
+              },
+              "225": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 5030.0,
+                "penalized_mean_objective": 5030.0
+              },
+              "2392": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 461170.0,
+                "penalized_mean_objective": 461170.0
+              },
+              "280": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 3157.0,
+                "penalized_mean_objective": 3157.0
+              },
+              "442": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 61979.0,
+                "penalized_mean_objective": 61979.0
+              },
+              "51": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 511.0,
+                "penalized_mean_objective": 511.0
+              },
+              "52": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 8980.0,
+                "penalized_mean_objective": 8980.0
+              },
+              "70": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 830.0,
+                "penalized_mean_objective": 830.0
+              },
+              "76": {
+                "count": 2,
+                "valid_count": 2,
+                "completion_rate": 1.0,
+                "mean_objective": 77052.0,
+                "penalized_mean_objective": 77052.0
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "tsp_farthest_insertion": {
+          "suite_id": "tsp_ext_tsplib_euc2d",
+          "protocol_id": "tsp/v1",
+          "instance_count": 18,
+          "valid_count": 18,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 1,
+          "valid_only_mean_objective": 56434.333333,
+          "penalized_mean_objective": 56434.333333,
+          "solve_ms_mean": 66.3042,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 18965.75,
+                "penalized_mean_objective": 18965.75
+              },
+              "1002": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 285732.0,
+                "penalized_mean_objective": 285732.0
+              },
+              "101": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 670.0,
+                "penalized_mean_objective": 670.0
+              },
+              "105": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 15368.0,
+                "penalized_mean_objective": 15368.0
+              },
+              "130": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 6433.0,
+                "penalized_mean_objective": 6433.0
+              },
+              "150": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 7067.0,
+                "penalized_mean_objective": 7067.0
+              },
+              "225": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 4328.0,
+                "penalized_mean_objective": 4328.0
+              },
+              "2392": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 429845.0,
+                "penalized_mean_objective": 429845.0
+              },
+              "280": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 3003.0,
+                "penalized_mean_objective": 3003.0
+              },
+              "442": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 57735.0,
+                "penalized_mean_objective": 57735.0
+              },
+              "51": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 464.0,
+                "penalized_mean_objective": 464.0
+              },
+              "52": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 8307.0,
+                "penalized_mean_objective": 8307.0
+              },
+              "70": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 719.0,
+                "penalized_mean_objective": 719.0
+              },
+              "76": {
+                "count": 2,
+                "valid_count": 2,
+                "completion_rate": 1.0,
+                "mean_objective": 60142.0,
+                "penalized_mean_objective": 60142.0
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "tsp_l1": {
+          "suite_id": "tsp_ext_tsplib_euc2d",
+          "protocol_id": "tsp/v1",
+          "instance_count": 18,
+          "valid_count": 18,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 2,
+          "valid_only_mean_objective": 58916.166667,
+          "penalized_mean_objective": 58916.166667,
+          "solve_ms_mean": 64.4182,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 21222.75,
+                "penalized_mean_objective": 21222.75
+              },
+              "1002": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 363338.0,
+                "penalized_mean_objective": 363338.0
+              },
+              "101": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 685.0,
+                "penalized_mean_objective": 685.0
+              },
+              "105": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 17820.0,
+                "penalized_mean_objective": 17820.0
+              },
+              "130": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 7379.0,
+                "penalized_mean_objective": 7379.0
+              },
+              "150": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 7748.0,
+                "penalized_mean_objective": 7748.0
+              },
+              "225": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 4569.0,
+                "penalized_mean_objective": 4569.0
+              },
+              "2392": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 379132.0,
+                "penalized_mean_objective": 379132.0
+              },
+              "280": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 3206.0,
+                "penalized_mean_objective": 3206.0
+              },
+              "442": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 59855.0,
+                "penalized_mean_objective": 59855.0
+              },
+              "51": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 442.0,
+                "penalized_mean_objective": 442.0
+              },
+              "52": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 7912.0,
+                "penalized_mean_objective": 7912.0
+              },
+              "70": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 794.0,
+                "penalized_mean_objective": 794.0
+              },
+              "76": {
+                "count": 2,
+                "valid_count": 2,
+                "completion_rate": 1.0,
+                "mean_objective": 61360.0,
+                "penalized_mean_objective": 61360.0
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "tsp_l2": {
+          "suite_id": "tsp_ext_tsplib_euc2d",
+          "protocol_id": "tsp/v1",
+          "instance_count": 18,
+          "valid_count": 18,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 2,
+          "valid_only_mean_objective": 67421.055556,
+          "penalized_mean_objective": 67421.055556,
+          "solve_ms_mean": 71.3695,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 18638.75,
+                "penalized_mean_objective": 18638.75
+              },
+              "1002": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 438454.0,
+                "penalized_mean_objective": 438454.0
+              },
+              "101": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 676.0,
+                "penalized_mean_objective": 676.0
+              },
+              "105": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 15312.0,
+                "penalized_mean_objective": 15312.0
+              },
+              "130": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 6407.0,
+                "penalized_mean_objective": 6407.0
+              },
+              "150": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 6929.0,
+                "penalized_mean_objective": 6929.0
+              },
+              "225": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 4182.0,
+                "penalized_mean_objective": 4182.0
+              },
+              "2392": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 485474.0,
+                "penalized_mean_objective": 485474.0
+              },
+              "280": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 2847.0,
+                "penalized_mean_objective": 2847.0
+              },
+              "442": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 56515.0,
+                "penalized_mean_objective": 56515.0
+              },
+              "51": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 445.0,
+                "penalized_mean_objective": 445.0
+              },
+              "52": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 8174.0,
+                "penalized_mean_objective": 8174.0
+              },
+              "70": {
+                "count": 1,
+                "valid_count": 1,
+                "completion_rate": 1.0,
+                "mean_objective": 719.0,
+                "penalized_mean_objective": 719.0
+              },
+              "76": {
+                "count": 2,
+                "valid_count": 2,
+                "completion_rate": 1.0,
+                "mean_objective": 56445.0,
+                "penalized_mean_objective": 56445.0
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        }
+      }
+    },
+    "obp_ext_bpplib": {
+      "suite_id": "obp_ext_bpplib",
+      "protocol_id": "obp_online/v1",
+      "instance_count": 70,
+      "algorithms": {
+        "obp_best_fit": {
+          "suite_id": "obp_ext_bpplib",
+          "protocol_id": "obp_online/v1",
+          "instance_count": 70,
+          "valid_count": 70,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 0,
+          "valid_only_mean_objective": 72.914286,
+          "penalized_mean_objective": 72.914286,
+          "solve_ms_mean": 0.6906,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 36.916667,
+                "penalized_mean_objective": 36.916667
+              },
+              "160": {
+                "count": 5,
+                "valid_count": 5,
+                "completion_rate": 1.0,
+                "mean_objective": 64.0,
+                "penalized_mean_objective": 64.0
+              },
+              "180": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 77.75,
+                "penalized_mean_objective": 77.75
+              },
+              "200": {
+                "count": 25,
+                "valid_count": 25,
+                "completion_rate": 1.0,
+                "mean_objective": 69.08,
+                "penalized_mean_objective": 69.08
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 18.416667,
+                "penalized_mean_objective": 18.416667
+              },
+              "500": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 173.5,
+                "penalized_mean_objective": 173.5
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "obp_first_fit": {
+          "suite_id": "obp_ext_bpplib",
+          "protocol_id": "obp_online/v1",
+          "instance_count": 70,
+          "valid_count": 70,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 0,
+          "valid_only_mean_objective": 73.642857,
+          "penalized_mean_objective": 73.642857,
+          "solve_ms_mean": 0.4219,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 37.166667,
+                "penalized_mean_objective": 37.166667
+              },
+              "160": {
+                "count": 5,
+                "valid_count": 5,
+                "completion_rate": 1.0,
+                "mean_objective": 64.8,
+                "penalized_mean_objective": 64.8
+              },
+              "180": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 79.25,
+                "penalized_mean_objective": 79.25
+              },
+              "200": {
+                "count": 25,
+                "valid_count": 25,
+                "completion_rate": 1.0,
+                "mean_objective": 69.72,
+                "penalized_mean_objective": 69.72
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 18.666667,
+                "penalized_mean_objective": 18.666667
+              },
+              "500": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 175.083333,
+                "penalized_mean_objective": 175.083333
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        },
+        "obp_online": {
+          "suite_id": "obp_ext_bpplib",
+          "protocol_id": "obp_online/v1",
+          "instance_count": 70,
+          "valid_count": 70,
+          "completion_rate": 1.0,
+          "all_completed": true,
+          "budget_exhausted_count": 0,
+          "valid_only_mean_objective": 72.914286,
+          "penalized_mean_objective": 72.914286,
+          "solve_ms_mean": 1.4885,
+          "slices": {
+            "by_size": {
+              "100": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 36.916667,
+                "penalized_mean_objective": 36.916667
+              },
+              "160": {
+                "count": 5,
+                "valid_count": 5,
+                "completion_rate": 1.0,
+                "mean_objective": 64.0,
+                "penalized_mean_objective": 64.0
+              },
+              "180": {
+                "count": 4,
+                "valid_count": 4,
+                "completion_rate": 1.0,
+                "mean_objective": 77.75,
+                "penalized_mean_objective": 77.75
+              },
+              "200": {
+                "count": 25,
+                "valid_count": 25,
+                "completion_rate": 1.0,
+                "mean_objective": 69.08,
+                "penalized_mean_objective": 69.08
+              },
+              "50": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 18.416667,
+                "penalized_mean_objective": 18.416667
+              },
+              "500": {
+                "count": 12,
+                "valid_count": 12,
+                "completion_rate": 1.0,
+                "mean_objective": 173.5,
+                "penalized_mean_objective": 173.5
+              }
+            },
+            "by_distribution": {},
+            "by_stratum": {}
+          }
+        }
+      }
+    }
+  },
+  "added_adapter_template_loc": {
+    "tsp": {
+      "agent_skill_loop/interface_design/tsp_adapter.py": 82,
+      "agent_skill_loop/interface_design/tsp_templates.py": 238,
+      "agent_skill_loop/interface_design/tsp_probes.py": 148,
+      "total_loc": 468
+    },
+    "obp": {
+      "agent_skill_loop/interface_design/packing_adapters.py": 122,
+      "agent_skill_loop/interface_design/obp_templates.py": 69,
+      "agent_skill_loop/interface_design/packing_probes.py": 196,
+      "total_loc": 387
+    },
+    "bpp": {
+      "agent_skill_loop/problems/bpp_offline.py": 169,
+      "agent_skill_loop/interface_design/packing_adapters.py": 122,
+      "agent_skill_loop/interface_design/bpp_templates.py": 86,
+      "agent_skill_loop/interface_design/packing_probes.py": 196,
+      "total_loc": 573
+    }
+  }
+}

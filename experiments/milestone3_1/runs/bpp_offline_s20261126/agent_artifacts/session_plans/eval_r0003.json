@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under bpp_offline_reorder_repack/none.",
+      "evidence_refs": [
+        "evaluation:7949f7bdb33c48b38a10b5a8ede6d424"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The archive shows zero complementarity (gap_over_sbs = gap_over_vbs = 0.0, win_counts 36:0, identical mean 27.5278 for both solvers), so the current `score_item` produces an effectively invariant packing order and the evolution is stuck in a plateau. Because pure decreasing-size ordering is agnostic to residual capacity, a fit-aware tie-break plus a cheap intra-budget swap repack should strictly reduce bin count on size=200 instances without exhausting the 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:7949f7bdb33c48b38a10b5a8ede6d424"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Make `score_item` a *fit-aware decreasing* priority that packs by descending size with a residual-fit tie-break (prefer items whose size is closest to half the bin capacity, then largest), and follow the first-fit pass with a bounded pairwise swap/move repack limited to bins below the mean fill ratio. Target the largest regime (size=200, vbs_mean=46.42), where greedy order sensitivity is highest and the most bin slack remains."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

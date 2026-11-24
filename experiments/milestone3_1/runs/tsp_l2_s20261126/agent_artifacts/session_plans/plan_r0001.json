@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Fallback plan for round 1 after reaching outer step cap.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "Outer round cap reached."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Evolve tsp_guided_insertion_2opt within remaining EoH budget.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Outer round cap reached."
+  }
+}

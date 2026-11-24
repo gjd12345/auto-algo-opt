@@ -1,0 +1,132 @@
+{
+  "schema_version": "algorithm-optimization-session-config/v1.1",
+  "run_id": "run_b3f1dcdd885c4a0cacc34a1254eb3d61",
+  "problem": "tsp_construct",
+  "problem_spec_hash": "5874269a59ecf6eb8a4cf838dba205dd161e36cd676064a58e8a32c46e7a5fd0",
+  "entrypoint": "select_next_node",
+  "interface_version": "v1",
+  "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417",
+  "evaluator_hash": "883ca3abf893d3fd4b51a9bd02e768e21f937c00894c38a68200c55e44592ac1",
+  "objective_direction": "minimize",
+  "benchmark": {
+    "id": "cvrp_workbench_v1",
+    "profile": "tsp_m31_dev_36",
+    "problem_spec_hash": "5874269a59ecf6eb8a4cf838dba205dd161e36cd676064a58e8a32c46e7a5fd0",
+    "benchmark_spec_hash": "8566f1c84de8b0fa201acedfe9d7f239adfd6c750d1a1c872a8b9aa24374fe24",
+    "data_manifest_hash": "d001e32b5532294dbfb6a6411ae73d85308c9eef0cf0b20c57152379de5cc621",
+    "reference_manifest_hash": "d001e32b5532294dbfb6a6411ae73d85308c9eef0cf0b20c57152379de5cc621",
+    "metric_spec_hash": "31ceca1be96df65cb0dbd12676b07743b74907a582c043268510261b6640cedb",
+    "reference_kind": "solver_reference"
+  },
+  "inheritance": {
+    "mode": "incumbent_only",
+    "population_snapshot_contract": "official_final_population_order_preserved",
+    "explicit_seed_set": null
+  },
+  "experiment": {
+    "max_rounds": 1,
+    "round_budget": 9
+  },
+  "search_progress": {
+    "policy": {
+      "schema_version": "algorithm-optimization-search-progress-policy/v1",
+      "enabled": false,
+      "window_evaluations": 40,
+      "min_absolute_gain": 0.0,
+      "min_relative_gain": 0.0,
+      "min_behavior_coverage": 0.0,
+      "phase_budgets": {},
+      "phase_schedule": [],
+      "enforce_subbudgets": false
+    }
+  },
+  "feedback": {
+    "mode": "runtime_facts",
+    "source": "runtime_facts"
+  },
+  "agent_guidance": true,
+  "experiment_manifest": null,
+  "baseline": {
+    "code_sha256": "b7cd9f556d4c27298ed36ef35073d89ce2e96a0c498c2e50fc844a01dc163aeb",
+    "description": "deterministic nearest-neighbor baseline"
+  },
+  "optimization_skill": {
+    "id": "algorithm-optimization",
+    "version": "v1.1",
+    "content_sha256": "86e350139124a4301e88fcbea0d5b2058b0318584796782d832a7b7ed76213cc"
+  },
+  "runtime": {
+    "version": "1.2.3",
+    "source_sha256": "f8b470f01e4a49ef402f6b96d3ba4a16482c02f058531d382b6cf6b509eda36d"
+  },
+  "loaded_identity": {
+    "schema_version": "algorithm-optimization-loaded-identity/v1",
+    "runtime_source_sha256": "f8b470f01e4a49ef402f6b96d3ba4a16482c02f058531d382b6cf6b509eda36d",
+    "optimization_skill_sha256": "86e350139124a4301e88fcbea0d5b2058b0318584796782d832a7b7ed76213cc",
+    "evaluator_sha256": "883ca3abf893d3fd4b51a9bd02e768e21f937c00894c38a68200c55e44592ac1",
+    "eoh_commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "problem_spec_hash": "5874269a59ecf6eb8a4cf838dba205dd161e36cd676064a58e8a32c46e7a5fd0",
+    "verification_stage": "worker_startup_preflight"
+  },
+  "memory": {
+    "enabled": false,
+    "store": null,
+    "policy_id": null,
+    "policy_version": null
+  },
+  "eoh": {
+    "commit": "472545785c936dcfc863d2bc0d6109cf23c7ce62",
+    "model": "mock",
+    "endpoint": "mock://local",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "request_timeout": 180.0,
+    "thinking": "provider-default",
+    "search_policy_defaults": {
+      "max_sample_nums": 8,
+      "pop_size": 4,
+      "n_pop": 2
+    },
+    "search_policy_limits": {
+      "max_sample_nums": [
+        1,
+        16
+      ],
+      "pop_size": [
+        2,
+        8
+      ],
+      "n_pop": [
+        1,
+        5
+      ]
+    }
+  },
+  "evaluator": {
+    "solver_timeout": 20.0
+  },
+  "repair": {
+    "mode": "off",
+    "policy_version": null,
+    "max_requests": null
+  },
+  "budgets": {
+    "eoh_max_requests": 32,
+    "eoh_round_max_requests": null,
+    "max_solver_calls": null,
+    "engine_wall_seconds": 420.0,
+    "round_wall_seconds": null,
+    "solution_threshold": null
+  },
+  "suite_generation": {
+    "split": "dev_train",
+    "seed": 20260908,
+    "count": 3,
+    "size": 20
+  },
+  "search_seed": 20260908,
+  "search_seed_derivation": "base_plus_round_id_minus_one",
+  "init": {
+    "provider_requests": 0,
+    "solver_calls": 0
+  }
+}

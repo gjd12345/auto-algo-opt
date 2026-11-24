@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:170464090ee5429b95bf4e6c40b588f9"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 (online bin packing with strict prefix-causal score_bin), a tighter-fit ScoreBin — score = capacity - (remaining - item), i.e. higher score for the smallest residual after placement — packs at least as few bins as the Worst-Fit default and materially reduces bin count on heterogeneous item sequences, because Best-Fit preserves large residuals for large items without lookahead. Tie-breaking by bin creation order must keep the rule a pure function of the strict prefix (no future items, no global re-sorting) so the 5-gate interface validator passes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:170464090ee5429b95bf4e6c40b588f9"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the default Worst-Fit-style ScoreBin with a Best-Fit-style residual score: prefer the feasible open bin minimizing post-placement residual (equivalently maximizing fill), with deterministic tie-breaks on bin creation order and a bounded fallback to opening a new bin only when no feasible bin exists."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

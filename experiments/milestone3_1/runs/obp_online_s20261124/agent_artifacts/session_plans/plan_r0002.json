@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Replace the default worst-fit residual preference in `score_bin` with a Best-Fit style preference on the residual after placement, normalized by bin capacity and item size, plus deterministic tie-breaking on prefix-causal statistics (bin creation index, count of exact fills already achieved in the prefix). Keep everything strictly prefix-causal: score depends only on already-opened bins, their residuals, and item quantities seen so far.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "KB card `method-obp-best-fit` documents that in the reference Go OBP solver Best Fit tracks the feasible residual with minimum remaining capacity and `ScoreBin` returns capacity-(rem-item) so argmax prefers tighter fills; it also explicitly notes that the official Python template is Worst Fit, i.e. the opposite preference. The archive shows a single solver at 27.8333 with no complementarity (VBS == SBS, gap 0), so any improvement must come from a strictly better in-template score function rather than portfolio effects. The weakest regimes reported are size=200 (rel gap -0.1894) and size=50 (-0.8333), i.e. the mid/small regimes, which are exactly where residual-tightness policy matters most: with many open bins and moderate item sizes, choosing the tightest fit avoids fragmenting residual capacity. Hence flipping the sign of the residual preference and normalizing by capacity is the highest-expected-value, lowest-risk edit under the 500 ms budget, and remains fully prefix-causal so the 5-gate interface validator stays satisfied."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "If `score_bin` prefers the feasible bin with the smallest normalized residual after placement (Best Fit) instead of the largest residual (Worst Fit), the online bin count on obp_dev_hetero_24 will be strictly lower than the round-1 baseline of 27.8333 mean objective, because tighter fills concentrate slack into fewer bins and leave emptier bins available for later large items. Sub-clause: adding exact-fill bonuses and creation-index tie-breaks must not increase mean solve_ms above ~1 ms, since the scoring is O(open bins) per item.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-best-fit",
+      "method-lit-obp-1d-best-fit",
+      "method-obp-first-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB card `method-obp-best-fit` documents that in the reference Go OBP solver Best Fit tracks the feasible residual with minimum remaining capacity and `ScoreBin` returns capacity-(rem-item) so argmax prefers tighter fills; it also explicitly notes that the official Python template is Worst Fit, i.e. the opposite preference. The archive shows a single solver at 27.8333 with no complementarity (VBS == SBS, gap 0), so any improvement must come from a strictly better in-template score function rather than portfolio effects. The weakest regimes reported are size=200 (rel gap -0.1894) and size=50 (-0.8333), i.e. the mid/small regimes, which are exactly where residual-tightness policy matters most: with many open bins and moderate item sizes, choosing the tightest fit avoids fragmenting residual capacity. Hence flipping the sign of the residual preference and normalizing by capacity is the highest-expected-value, lowest-risk edit under the 500 ms budget, and remains fully prefix-causal so the 5-gate interface validator stays satisfied."
+  }
+}

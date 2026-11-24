@@ -1,0 +1,134 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T15:46:44Z",
+  "solver_count": 2,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_tsp_constructive_step_b5ed84d9",
+      "registered_at": "2026-11-23T15:44:27Z",
+      "arm_id": "m31_tsp_l1",
+      "search_seed": 20261125,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0001_tsp_constructive_step_b5ed84d9",
+        "display_name": "Session R1 · tsp_constructive_step",
+        "problem_family": "tsp",
+        "paradigm": "sequential_construct",
+        "interface": "tsp_constructive_step/v1:select_next_city",
+        "template_id": "tsp_constructive_step",
+        "template_version": "v1",
+        "template_source_sha256": "375d1c0196a8f5ad8beff8f8bcf11726078682eb39562ed060e1de87435fca87",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "select_next_city",
+        "hook_code": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -distance_matrix[current_node, u]\n    dest = u[-1]\n    d_cur = np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    d_dest = np.asarray(distance_matrix[dest, u], dtype=np.float64)\n    scale = np.mean(d_cur)\n    if scale <= 0:\n        scale = 1.0\n    nn_term = -d_cur / scale\n    dest_term = d_dest / scale\n    total = len(distance_matrix)\n    visited_estimate = total - m\n    progress = float(visited_estimate) / float(max(total - 1, 1))\n    w = 0.20 + 0.55 * progress\n    score = w * dest_term + (1.0 - w) * nn_term\n    if m > 1:\n        var_pen = np.std(d_dest) / scale\n        score = score - 0.06 * progress * var_pen * (d_cur / scale)\n    return score",
+        "hook_code_sha256": "b5ed84d953c037bd782d667bda312eca49b0059f97693eb79fcd89859719b762",
+        "design_sha256": "a3ced42123ca43109d37ffe25b4a07c388d6ae56b407566bf86bcce62b160292",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261125\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-tsp-i605-dest-pull",
+        "cited_kb_ids": [
+          "method-tsp-i605-dest-pull",
+          "method-lit-tsp-metric-nearest-neighbor",
+          "method-tsp-i605-1step-rollout"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved tsp_constructive_step/v1:select_next_city",
+        "default_budget_ms": 500.0,
+        "protocol_id": "tsp/v1",
+        "hook_specs": [
+          {
+            "name": "select_next_city",
+            "signature": [
+              "current_node",
+              "unvisited_nodes",
+              "distance_matrix"
+            ],
+            "output_shape_arg": "unvisited_nodes"
+          }
+        ],
+        "hook_implementations": {
+          "select_next_city": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -distance_matrix[current_node, u]\n    dest = u[-1]\n    d_cur = np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    d_dest = np.asarray(distance_matrix[dest, u], dtype=np.float64)\n    scale = np.mean(d_cur)\n    if scale <= 0:\n        scale = 1.0\n    nn_term = -d_cur / scale\n    dest_term = d_dest / scale\n    total = len(distance_matrix)\n    visited_estimate = total - m\n    progress = float(visited_estimate) / float(max(total - 1, 1))\n    w = 0.20 + 0.55 * progress\n    score = w * dest_term + (1.0 - w) * nn_term\n    if m > 1:\n        var_pen = np.std(d_dest) / scale\n        score = score - 0.06 * progress * var_pen * (d_cur / scale)\n    return score"
+        },
+        "hook_hashes": {
+          "select_next_city": "b5ed84d953c037bd782d667bda312eca49b0059f97693eb79fcd89859719b762"
+        },
+        "bundle_hash": "61ef1e77d69b9022cf29d146cc50db97a66b7a41ac312c1d000fe404522fd7d6",
+        "hook_contract_sha256": "b1b3d5443c26b634ec25ae449e9829b74695f4819f40103d5c8e006c6628a58d"
+      },
+      "suite_metrics": {
+        "suite_id": "tsp_m31_dev_36",
+        "mean_tour_length": 99900.079184,
+        "solve_ms_mean": 2.5928
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_tsp_constructive_step_039658c8",
+      "registered_at": "2026-11-23T15:46:44Z",
+      "arm_id": "m31_tsp_l1",
+      "search_seed": 20261125,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0002_tsp_constructive_step_039658c8",
+        "display_name": "Session R2 · tsp_constructive_step",
+        "problem_family": "tsp",
+        "paradigm": "sequential_construct",
+        "interface": "tsp_constructive_step/v1:select_next_city",
+        "template_id": "tsp_constructive_step",
+        "template_version": "v1",
+        "template_source_sha256": "375d1c0196a8f5ad8beff8f8bcf11726078682eb39562ed060e1de87435fca87",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "select_next_city",
+        "hook_code": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score",
+        "hook_code_sha256": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0",
+        "design_sha256": "8f8936541f1b36793226303d4230001adfb9f5869381c647f5c7df7835a73228",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-tsp-i605-mean-farness",
+        "cited_kb_ids": [
+          "method-tsp-i605-mean-farness",
+          "method-tsp-i605-dest-pull",
+          "method-tsp-i605-dimensionless-ratio",
+          "method-tsp-nearest-neighbor-construct"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved tsp_constructive_step/v1:select_next_city",
+        "default_budget_ms": 500.0,
+        "protocol_id": "tsp/v1",
+        "hook_specs": [
+          {
+            "name": "select_next_city",
+            "signature": [
+              "current_node",
+              "unvisited_nodes",
+              "distance_matrix"
+            ],
+            "output_shape_arg": "unvisited_nodes"
+          }
+        ],
+        "hook_implementations": {
+          "select_next_city": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score"
+        },
+        "hook_hashes": {
+          "select_next_city": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0"
+        },
+        "bundle_hash": "e8b5c3a36a70d1dcffdcb426791ea00424bd55ee9561a8a7e1b318a634313a48",
+        "hook_contract_sha256": "b1b3d5443c26b634ec25ae449e9829b74695f4819f40103d5c8e006c6628a58d"
+      },
+      "suite_metrics": {
+        "suite_id": "tsp_m31_dev_36",
+        "mean_tour_length": 93030.894146,
+        "solve_ms_mean": 6.68
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

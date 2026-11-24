@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:cba7e6fc8d554e60aabb0f58286e2d34"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H_r5_load_saturation_ruin: On cvrp_dev_hetero_24 at 500 ms, replacing the round-4 stagnation-adaptive rank-power schedule with a fixed-p rank power (p≈1.5) amplified by a load-saturation gate (route_load/capacity)^1.5 and a mild depot-eccentricity factor, plus a capacity-slack reward in score_recreate_action, will reduce mean tour length below the portfolio SBS 16.0597 (round-4 arm was 16.0887 with the refuted schedule), with the gain concentrated in the weak regimes size=100, capacity_level=tight, depot_style=eccentric and spatial=uniform.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:cba7e6fc8d554e60aabb0f58286e2d34"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Pivot away from the refuted stagnation-adaptive rank-power schedule (H_r4_stag_adaptive_dual_gate). Instead push capacity-tightness and depot-eccentricity exploitation: (1) score_ruin_nodes = rank_power(|removal_savings|/scale, p≈1.5 fixed with tiny stagnation nudge only) multiplied by a load-saturation gate g_load = (route_load/capacity)^{beta}, beta≈1.5, so ruins preferentially attack nearly-full routes (the tight-capacity weak regime) plus a depot-eccentricity term (d(0,i)/mean_d0)^{0.5} to break clusters far from an eccentric depot; (2) score_recreate_action adds a dimensionless capacity-slack reward (remaining slack after insertion / capacity) instead of any absolute depot-distance term, keeping both hooks scale-invariant and observational-noise free. Keep the Regret-2 deterministic recreate untouched."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Route level: replace the refuted node-level gating/rank-power reshaping with a route-length-conditioned magnitude score. Keep the pure monotone |removal_savings|/scale backbone (the axis that 6 sessions all cluster around, SBS 16.0293), but multiply it by a bounded, smooth route-complexity factor lam in [0.70, 1.30] derived from (route_dists[r] / mean_route_dist) and, as a secondary conserved term, route length in nodes (route_loads[r] / capacity) so that under-diversified, over-long routes are preferentially ruined. The factor is amplitude-bounded and strictly non-inverting, so within-route ordering is preserved and only cross-route removal priority shifts; no rank power, no depot-prominence gate, no demand gate (all previously refuted), and no stagnation-adaptive exponent.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Rounds 5 and 6 both reshaped the node-level magnitude rule (strong multiplicative gating: +0.0147; low-amplitude rank blend: +0.0565) and both landed above SBS 16.0293, so hypothesis h_r5_rankpower_gated_stagnation was abandoned and node-level amplitude response is refuted as a gradient direction. The archive shows a very flat portfolio (all six solvers within 0.13 of each other, VBS-SBS gap only 0.36%), i.e. the current bottleneck is not the value function shape but which neighbourhood gets explored. KB method-cvrp-m3-ruin-recreate-l3 fixes the repair side (deterministic Regret-2 + intra_2opt + R2R), so the only evolvable lever is removal priority; the LNS literature (method-cvrp-lns-shaw-regret) attributes most of the destroy-operator gain to route/region-level targeting rather than within-route reordering. Therefore this round isolates a genuinely new axis: cross-route prioritisation via route distance share and route cardinality, with an amplitude clip that provably preserves the winning monotone ordering inside each route. If mean objective does not fall below 16.0293, the claim that route-level targeting is a live gradient is refuted and the remaining budget should go to either (a) pure epsilon tie-breaking on the monotone rule or (b) the intra-route relocate/2-opt postprocess axis rather than further score reshaping."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 under the 2000 ms budget, keeping the monotone magnitude backbone intact and adding only a bounded cross-route multiplicative factor lam = clip(1 + 0.30*(rd_r/mean_rd - 1) + 0.15*(nl_r/mean_nl - 1), 0.70, 1.30) to score_ruin_nodes will lower the mean objective versus the current SBS 16.0293 by >= 0.05, primarily on the weakest regimes (capacity_level=loose, spatial=clustered, size=100) where a single over-long route dominates cost; because the perturbation never reorders nodes within a route, the early exploitation trajectory stays identical to the monotone champion and only the choice of which route to attack changes.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Rounds 5 and 6 both reshaped the node-level magnitude rule (strong multiplicative gating: +0.0147; low-amplitude rank blend: +0.0565) and both landed above SBS 16.0293, so hypothesis h_r5_rankpower_gated_stagnation was abandoned and node-level amplitude response is refuted as a gradient direction. The archive shows a very flat portfolio (all six solvers within 0.13 of each other, VBS-SBS gap only 0.36%), i.e. the current bottleneck is not the value function shape but which neighbourhood gets explored. KB method-cvrp-m3-ruin-recreate-l3 fixes the repair side (deterministic Regret-2 + intra_2opt + R2R), so the only evolvable lever is removal priority; the LNS literature (method-cvrp-lns-shaw-regret) attributes most of the destroy-operator gain to route/region-level targeting rather than within-route reordering. Therefore this round isolates a genuinely new axis: cross-route prioritisation via route distance share and route cardinality, with an amplitude clip that provably preserves the winning monotone ordering inside each route. If mean objective does not fall below 16.0293, the claim that route-level targeting is a live gradient is refuted and the remaining budget should go to either (a) pure epsilon tie-breaking on the monotone rule or (b) the intra-route relocate/2-opt postprocess axis rather than further score reshaping."
+  }
+}

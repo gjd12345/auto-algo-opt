@@ -1,0 +1,81 @@
+{
+  "best_dev_objective": 15.89475635,
+  "checkpoint_budget": 400,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58",
+    "penalized_mean_objective": 15.89475635,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 15.89475635
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "default_budget_ms": 500.0,
+    "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+    "design_sha256": "359d3d7e78170e11b5520bbd29bc6708e7029a6f6943882981ca8e3f4ac84ba2",
+    "diagnostic_ref": null,
+    "display_name": "M3.2 Candidate cvrp_ruin_recreate (4d2fd0b1)",
+    "hook_code": "import numpy as np\n\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dist = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n\n    cap = float(capacity) if capacity > 0 else 1e-12\n    n = int(sav.shape[0])\n    if n == 0:\n        return np.asarray(sav, dtype=np.float64)\n    eps = 1e-12\n\n    depot_d = dist[0, 1:].astype(np.float64)\n    depot_d = np.where(np.isfinite(depot_d), depot_d, 0.0)\n    mean_depot = float(np.mean(depot_d)) if n > 0 else 1.0\n    if (not np.isfinite(mean_depot)) or mean_depot <= eps:\n        mean_depot = 1.0\n    inv_scale = 1.0 / mean_depot\n\n    # Gate 1: savings relative to mean depot distance\n    g_sav = np.abs(sav) * inv_scale\n    g_sav = np.where(np.isfinite(g_sav), g_sav, 0.0)\n    g_sav = np.clip(g_sav, 0.0, 4.0)\n    g_sav = g_sav / (1.0 + g_sav)\n\n    # Gate 2: capacity pressure (sharper weighting on utilization + headroom)\n    util = np.clip(rl / cap, 0.0, 1.0)\n    dem_rel = np.clip(dem[1:] / cap, 0.0, 1.0)\n    residual = np.clip(1.0 - util, 0.0, 1.0)\n    headroom = np.clip(dem_rel / np.maximum(residual, eps), 0.0, 6.0)\n    headroom = headroom / (1.0 + headroom)\n    util_sharp = util * util\n    g_cap = 0.35 * util + 0.25 * util_sharp + 0.40 * headroom\n    g_cap = np.where(np.isfinite(g_cap), g_cap, 0.0)\n\n    # Gate 3: depot eccentricity (far nodes preferred)\n    ecc = np.clip(depot_d * inv_scale, 0.0, 5.0)\n    g_ecc = ecc / (1.0 + ecc)\n\n    # Gate 4: cheap re-insertability (small demand x short nn distance)\n    sub = dist[1:, 1:].astype(np.float64)\n    sub = np.where(np.isfinite(sub), sub, np.inf)\n    if n > 1:\n        sub = sub + np.eye(n, dtype=np.float64) * np.inf\n        nn = np.min(sub, axis=1)\n    else:\n        nn = np.zeros(n, dtype=np.float64)\n    nn = np.where(np.isfinite(nn), nn, mean_depot)\n    nn_n = np.clip(nn * inv_scale, 0.0, 4.0)\n    g_cheap = 1.0 / (1.0 + 1.5 * dem_rel + 1.5 * nn_n + 1e-6)\n    g_cheap = np.clip(1.4 * g_cheap, 0.0, 1.0)\n\n    # Gate 5: inter-route imbalance (nodes on long routes / congested clusters)\n    unique_routes, inv_idx = np.unique(rid, return_inverse=True)\n    R = int(unique_routes.shape[0])\n    if R > 0:\n        route_dist_sum = np.zeros(R, dtype=np.float64)\n        route_cnt = np.zeros(R, dtype=np.float64)\n        for c in range(n):\n            j = inv_idx[c]\n            route_dist_sum[j] += rd[c]\n            route_cnt[j] += 1.0\n        cnt_safe = np.maximum(route_cnt[inv_idx], 1.0)\n        mean_route_dist = route_dist_sum[inv_idx] / cnt_safe\n        global_mean_rd = float(np.mean(mean_route_dist)) if n > 0 else 1.0\n        if (not np.isfinite(global_mean_rd)) or global_mean_rd <= eps:\n            global_mean_rd = 1.0\n        imbal = mean_route_dist / global_mean_rd\n        imbal = np.clip(imbal, 0.0, 3.0)\n        g_imb = imbal / (1.0 + imbal)\n    else:\n        g_imb = np.zeros(n, dtype=np.float64)\n    g_imb = np.where(np.isfinite(g_imb), g_imb, 0.0)\n\n    # Combine multiplicatively with additive floors\n    gate = (1e-3 + g_sav) * (0.20 + g_cap) * (0.20 + g_ecc) * (0.25 + g_cheap) * (0.30 + g_imb)\n    gate = np.where(np.isfinite(gate), gate, 0.0)\n\n    # Rank-power exponent (aggressive growth for early diversification)\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n    alpha = 1.0 + 4.0 * stag + 2.5 * (itf * itf)\n    if (not np.isfinite(alpha)) or alpha <= 0.1:\n        alpha = 0.1\n\n    order = np.argsort(np.argsort(-gate))\n    ranks = order.astype(np.float64)\n    n_minus1 = float(max(n - 1, 1))\n    rank_weight = np.exp(-(ranks / n_minus1) * alpha * 4.0)\n    rank_weight = np.where(np.isfinite(rank_weight), rank_weight, 0.0)\n\n    # Deterministic low-discrepancy tie-break (bit-mixing)\n    idx = np.arange(1, n + 1, dtype=np.uint64)\n    mix = 0.5 * stag + 0.5 * itf\n    phase = np.uint64(int(np.floor(211.0 * mix)))\n    key = (idx * np.uint64(2654435761) + phase * np.uint64(40503)) % np.uint64(1000003)\n    v = np.zeros(n, dtype=np.float64)\n    x = key.copy()\n    for k in range(32):\n        v += ((x & np.uint64(1)).astype(np.float64)) * (0.5 ** (k + 1))\n        x = x >> np.uint64(1)\n    v = np.where(np.isfinite(v), v, 0.0)\n\n    jitter_w = 0.05 + 0.15 * mix\n    priority = gate * rank_weight + jitter_w * v\n    priority = np.where(np.isfinite(priority), priority, 0.0)\n    return np.asarray(priority, dtype=np.float64)",
+    "hook_code_sha256": "4d2fd0b1ff9c82dfdbe5616e32178727f2b152576adb01a2d879eab66ad3535c",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "origin_run": "m32_model_routing_s20261125",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "ckpt_cand_4d2fd0b1ff",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_model_routing_s20261125",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 400,
+  "usage_cutoff": {
+    "attempted_requests": 400,
+    "by_state": {
+      "complete": 355,
+      "connectivity_failed": 38,
+      "http_error": 7
+    },
+    "cached_tokens": 1282560,
+    "input_tokens": 2166915,
+    "output_tokens": 401457,
+    "priced_attempts": 355,
+    "priced_cost_usd": 0.61731874,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "eoh_skipped": 60,
+      "invalid_candidate": 97,
+      "probe": 8,
+      "provider_failed": 38,
+      "valid_candidate": 150
+    },
+    "provider_elapsed_seconds": 3993.136,
+    "requested_models": {
+      "deepseek-v4-pro": 86,
+      "deepseek-v4.1-flash": 314
+    },
+    "served_models": {
+      "deepseek-v4-pro": 76,
+      "deepseek-v4.1-flash": 279
+    },
+    "unpriced_attempts": 45
+  },
+  "wall_elapsed_seconds_at_seal": 6141.281,
+  "winner_solver_sha256": "ee4d24780d7cda19892062848a3942d02da1fe08d3aff878833304c71697ff2a",
+  "winner_source_ordinal": 318
+}

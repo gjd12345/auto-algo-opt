@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the single hook `score_ruin_nodes` as a multiplicative gated rank-power destroy-selection rule, with the rank exponent p made state-adaptive: p small (≈0.5–0.8, near-uniform randomized-agnostic spread) during early low-`iter_frac` exploration and p ramping up (≈1.5–2.0, sharp worst-removal focus) as `stagnation_ratio` grows. Gate by load utilization, depot proximity of the customer nearest in route, demand magnitude and route-length share, so that the ruin set prefers customers whose removal unlocks load re-balancing across routes. Keep the repair side fixed (deterministic Regret-2 + local intra_2opt + R2R acceptance) and keep the hook fully deterministic and state-only, so the gain is attributable to destroy prioritization alone under the 2000 ms budget where many more LNS iterations fit than the 500 ms reference.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive is empty (solver_count=0, no known signatures), so this round should establish the round-1 baseline on the mandated interface. The KB method entry (method-cvrp-m3-ruin-recreate-l3, content_sha256 94f7d539…) fixes the skeleton — CW + initial intra_2opt, Ruin(top-q) -> deterministic Regret-2 -> local intra_2opt -> R2R acceptance — and confirms `score_ruin_nodes` is the only evolvable hook with a multiplicative gate × rank-power form: score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)). Its blameworthy regime is the tight 25 ms budget (120/120 early-stop), and our target budget is 2000 ms — the mirror-image regime where first_feasible_ms ≈ 2–3 ms leaves nearly the whole budget for LNS iterations, so the anytime-curve payoff of a better destroy policy is maximal. Postprocess is fixed to `none` per the allowed set, and the repair layer stays untouched so any delta vs L3-ctrl is cleanly attributable to the evolved destroy score. Regret-2 feasibility handling follows method-cvrp-cheapest-regret-insertion, ensuring the 5-gate validator's dual-action probe (first_ruin_set A={1,2,3,4} vs B={3,4,5,6} on n=6, q=4) is satisfied by strict determinism and no global RNG."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Under a 2000 ms per-instance budget the L3 ruin-recreate skeleton performs far more iterations than at 500 ms; therefore a stagnation-adaptive rank-power destroy score (near-uniform ruin early to diversify, sharp worst-cost ruin under stagnation, multiplied by load/depot/demand/route-share gates) will beat the zero-evolution Worst-Cost-Removal control on cvrp_dev_hetero_24 by a larger margin than the +0.12% seen at 500 ms, because extra iterations amplify the value of a destroy policy that escapes local minima while never discarding high-`removal_savings` structural targets.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive is empty (solver_count=0, no known signatures), so this round should establish the round-1 baseline on the mandated interface. The KB method entry (method-cvrp-m3-ruin-recreate-l3, content_sha256 94f7d539…) fixes the skeleton — CW + initial intra_2opt, Ruin(top-q) -> deterministic Regret-2 -> local intra_2opt -> R2R acceptance — and confirms `score_ruin_nodes` is the only evolvable hook with a multiplicative gate × rank-power form: score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)). Its blameworthy regime is the tight 25 ms budget (120/120 early-stop), and our target budget is 2000 ms — the mirror-image regime where first_feasible_ms ≈ 2–3 ms leaves nearly the whole budget for LNS iterations, so the anytime-curve payoff of a better destroy policy is maximal. Postprocess is fixed to `none` per the allowed set, and the repair layer stays untouched so any delta vs L3-ctrl is cleanly attributable to the evolved destroy score. Regret-2 feasibility handling follows method-cvrp-cheapest-regret-insertion, ensuring the 5-gate validator's dual-action probe (first_ruin_set A={1,2,3,4} vs B={3,4,5,6} on n=6, q=4) is satisfied by strict determinism and no global RNG."
+  }
+}

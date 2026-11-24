@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve score_ruin_nodes as a multiplicative gating × rank-power ruin priority: base term = |removal_savings_i| normalized by route-scale, multiplied by (a) a load-utilization gate that relaxes for heavily loaded routes, (b) a depot-proximity gate that suppresses far-from-depot customers early, (c) a demand gate biasing toward medium-demand customers, and (d) a route-distance gate; then apply a rank transform with exponent p = p0 + dp*stagnation_ratio + dp2*iter_frac that sharpens toward top-removal under stagnation and flattens (more randomization-free diversification) early. Keep all outputs finite, length n, deterministic ties.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the exact L3 skeleleton: CW + intra_2opt construction, deterministic Regret-2 reinsertion, intra_2opt perturbation, Record-to-Record acceptance, with score_ruin_nodes as the sole evolvable hook, and reports the evolved multiplicative gate + rank-power rule beating L3-ctrl Worst Removal on blind_120 (23.3186 vs 23.3474) despite small margins. Stagnation-aware diversification is listed there as a strong-on regime. Shaw-regret LNS entry motivates relatedness-driven destruction but also notes pure worst-removal is a weak control; the cheapest/regret insertion entry justifies relying on the deterministic repair, so the evolution budget should be spent only on shaping which customers get removed. Hence this round starts with the documented winning shape (multiplicative gates × rank-power) and adds the explicitly-flagged-untested stagnation-adaptive exponent, which is the most plausible lever for further diversification once the incumbent stalls within 500 ms."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "H1: Because the LNS skeleton's fixed deterministic Regret-2 repair benefits from destroying a small, high-value cluster, a monotone increasing rank exponent p(iter_frac, stagnation_ratio) that sharpens the ruin priority distribution as stagnation grows (p ~ 1 early, rising to ~4-6 under sustained stagnation) will reduce mean tour length on cvrp_dev_hetero_24 versus the zero-evolution Worst-Cost-Removal L3-ctrl, whereas a static p will capture only part of the gain. Secondary claim: multiplicative load/depot/demand gates on |removal_savings| matter more than the exponent schedule on heterogeneous instances (mixed capacity demand) since they prevent destroying customers whose removal cannot be feasibly reinserted.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the exact L3 skeleleton: CW + intra_2opt construction, deterministic Regret-2 reinsertion, intra_2opt perturbation, Record-to-Record acceptance, with score_ruin_nodes as the sole evolvable hook, and reports the evolved multiplicative gate + rank-power rule beating L3-ctrl Worst Removal on blind_120 (23.3186 vs 23.3474) despite small margins. Stagnation-aware diversification is listed there as a strong-on regime. Shaw-regret LNS entry motivates relatedness-driven destruction but also notes pure worst-removal is a weak control; the cheapest/regret insertion entry justifies relying on the deterministic repair, so the evolution budget should be spent only on shaping which customers get removed. Hence this round starts with the documented winning shape (multiplicative gates × rank-power) and adds the explicitly-flagged-untested stagnation-adaptive exponent, which is the most plausible lever for further diversification once the incumbent stalls within 500 ms."
+  }
+}

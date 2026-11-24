@@ -1,0 +1,71 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_dual_4a1480dd",
+  "display_name": "Session R4 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(np.asarray(route_ids).shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rs = np.asarray(removal_savings, dtype=np.float64)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    dep = np.asarray(dm[0, 1:], dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n\n    # Robust positive scale for removal savings (median of positive savings).\n    pos = rs[rs > 0.0]\n    if pos.size > 0:\n        scale = float(np.median(pos))\n    else:\n        m = float(np.mean(np.abs(rs))) if rs.size > 0 else 0.0\n        scale = m if m > 0.0 else 1.0\n    rs_n = np.clip(rs / max(scale, eps), 0.0, None)\n\n    # Rank power: early breadth, late/stagnation depth.\n    order = np.argsort(np.argsort(rs_n))\n    rank = (order.astype(np.float64) + 0.5) / float(max(n, 1))\n    p = 0.55 + 1.15 * sr + 0.45 * fr\n    p = float(np.clip(p, 0.5, 2.1))\n    rank_score = np.power(rank + eps, p)\n\n    # Depot gate: down-weight depot-adjacent nodes (eccentric-depot robustness).\n    dep_scale = max(float(np.mean(dep)), eps)\n    dep_hat = np.clip(dep / dep_scale, 0.0, None)\n    dep_gate = 1.0 / (1.0 + 0.40 * dep_hat)\n\n    # Demand gate: prefer heavier customers modestly.\n    q_scale = max(float(np.mean(q)), eps)\n    q_gate = 1.0 + 0.20 * np.clip(q / q_scale, 0.0, None)\n\n    # Load gate: prefer customers on lighter routes (room to relocate).\n    u = np.clip(loads / cap, 0.0, 1.0)\n    load_gate = 0.88 + 0.24 * (1.0 - u)\n\n    # Route-distance gate: down-weight very long routes to rebalance.\n    rd_scale = max(float(np.mean(rd)), eps)\n    rd_gate = 1.0 / (1.0 + 0.18 * np.clip(rd / rd_scale, 0.0, None))\n\n    score = rank_score * dep_gate * q_gate * load_gate * rd_gate\n    s = max(float(np.mean(np.abs(score))), eps)\n    return np.asarray(score / s, dtype=np.float64)\n",
+  "hook_code_sha256": "5eccce57fe0e1d962dbec46f08a85fcec977cbef7fd41c002e903bf56f5b176b",
+  "design_sha256": "3ff929895d9acab5549fdab3ddd531fe0d058e8606b0d2e070e6c0274597d7b2",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261124\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(np.asarray(route_ids).shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rs = np.asarray(removal_savings, dtype=np.float64)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    dep = np.asarray(dm[0, 1:], dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n\n    # Robust positive scale for removal savings (median of positive savings).\n    pos = rs[rs > 0.0]\n    if pos.size > 0:\n        scale = float(np.median(pos))\n    else:\n        m = float(np.mean(np.abs(rs))) if rs.size > 0 else 0.0\n        scale = m if m > 0.0 else 1.0\n    rs_n = np.clip(rs / max(scale, eps), 0.0, None)\n\n    # Rank power: early breadth, late/stagnation depth.\n    order = np.argsort(np.argsort(rs_n))\n    rank = (order.astype(np.float64) + 0.5) / float(max(n, 1))\n    p = 0.55 + 1.15 * sr + 0.45 * fr\n    p = float(np.clip(p, 0.5, 2.1))\n    rank_score = np.power(rank + eps, p)\n\n    # Depot gate: down-weight depot-adjacent nodes (eccentric-depot robustness).\n    dep_scale = max(float(np.mean(dep)), eps)\n    dep_hat = np.clip(dep / dep_scale, 0.0, None)\n    dep_gate = 1.0 / (1.0 + 0.40 * dep_hat)\n\n    # Demand gate: prefer heavier customers modestly.\n    q_scale = max(float(np.mean(q)), eps)\n    q_gate = 1.0 + 0.20 * np.clip(q / q_scale, 0.0, None)\n\n    # Load gate: prefer customers on lighter routes (room to relocate).\n    u = np.clip(loads / cap, 0.0, 1.0)\n    load_gate = 0.88 + 0.24 * (1.0 - u)\n\n    # Route-distance gate: down-weight very long routes to rebalance.\n    rd_scale = max(float(np.mean(rd)), eps)\n    rd_gate = 1.0 / (1.0 + 0.18 * np.clip(rd / rd_scale, 0.0, None))\n\n    score = rank_score * dep_gate * q_gate * load_gate * rd_gate\n    s = max(float(np.mean(np.abs(score))), eps)\n    return np.asarray(score / s, dtype=np.float64)\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    cid = np.asarray(customer_idx, dtype=np.float64)\n    n = int(cid.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n    delta = np.asarray(insert_delta, dtype=np.float64)\n    reg = np.asarray(regret2_margin, dtype=np.float64)\n    load_after = np.asarray(route_load_after, dtype=np.float64)\n    pos = np.asarray(insert_pos, dtype=np.float64)\n    tr = np.asarray(target_route_idx, dtype=np.float64)\n\n    # Normalized detour disutility.\n    d_scale = max(float(np.mean(np.abs(delta))), 1e-12)\n    detour = -delta / d_scale\n\n    # Regret-2 reward (prefer actions that punish alternatives).\n    reg_scale = max(float(np.mean(np.abs(reg))), 1e-12)\n    reg_reward = 1.05 * (reg / reg_scale)\n\n    # Capacity tightness bonus (pack from bottom of capacity).\n    slack = np.clip(1.0 - load_after / cap, 0.0, 1.0)\n    tight = np.power(1.0 - slack + 1e-12, 0.75)\n    tight_bonus = 0.40 * tight\n\n    # Mild positional tie-break: earlier positions preferred.\n    pos_max = max(float(np.max(pos)) + 1.0, 1.0)\n    pos_pen = 0.05 * (pos / pos_max)\n\n    # New-route bonus for opening new routes when it helps.\n    new_route = (tr < 0).astype(np.float64)\n    new_bonus = 0.15 * new_route\n\n    return detour + reg_reward + tight_bonus - pos_pen + new_bonus\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "5eccce57fe0e1d962dbec46f08a85fcec977cbef7fd41c002e903bf56f5b176b",
+    "score_recreate_action": "b28d759e487ce63f149bfafdd1c2ddff952c97d6fd01e5e56bcd2a8f40c6a871"
+  },
+  "bundle_hash": "0f9366ed12319011df08ed5e389366a6800e55ca0567b3607be266ec08b04013",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

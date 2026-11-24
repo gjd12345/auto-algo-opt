@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:c490a686fc404d0d988e59706b967eb5"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a 500 ms unified-deadline LNS on cvrp_dev_hetero_24 (heterogeneous scales/geometry/capacity), the destruction hook should NOT use raw |removal_savings| greedily. Instead, score_i = T(r_i)^p * g_load * g_depot * g_demand * g_rdist, where r_i is the within-instance rank-normalised removal saving r_i = |s_i| / (1 + |s_i|) (scale-free, so uniform coordinates, clustered coordinates and mixed-demand instances contribute comparably), T(r) = r/(1-r) is a bounded rank-power transform, and the exponent p(iter_frac, stagnation_ratio) = p_lo + (p_hi - p_lo) * clip(stagnation_ratio,0,1) interpolates from p_lo ~ 1.0 (sharp, worst-first removal while improvements are still flowing) to p_hi > 1 flattening the top of the ranking (quasi-random removal) as stagnation_ratio -> 1. Rank-power flattening under stagnation is exactly the mechanism that escapes R2R local optima without an RNG, so it should beat the zero-evolution L3-ctrl Worst-Cost Removal skeleton and the plain rank-1 variant on the mean tour length, with the largest per-instance gains on the clustered/high-capacity-heterogeneity regime; conversely p_hi too large (fully uniform) must lose on uniform-random instances because destroying non-critical customers wastes the deterministic Regret-2 repair budget, so p_hi must be capped.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c490a686fc404d0d988e59706b967eb5"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "stagnation-adaptive gated rank-power ruin scoring on score_ruin_nodes"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

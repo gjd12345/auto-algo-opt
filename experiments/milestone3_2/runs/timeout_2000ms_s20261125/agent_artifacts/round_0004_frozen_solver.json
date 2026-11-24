@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_59fb91d1",
+  "display_name": "Session R4 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n\n    scale = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n    drive = 0.55 * stag + 0.45 * prog\n\n    # --- Savings log-odds: bounded monotone in |savings|/scale ---\n    s_abs = np.abs(sav)\n    s_abs = np.where(np.isfinite(s_abs), s_abs, 0.0)\n    eff = s_abs / (scale * (1.0 + dem / mean_dem))\n    eff = np.maximum(eff, 0.0)\n    b_eff = eff / (1.0 + eff)  # in [0,1)\n    # logit-style log-odds, clipped to keep finite\n    logit_eff = np.log((b_eff + 1e-9) / (1.0 - b_eff + 1e-9))\n\n    # --- Relatedness likelihood: Gaussian kernel over route-mates + depot ---\n    inv_mate = np.zeros(n, dtype=np.float64)\n    inv_dep = np.zeros(n, dtype=np.float64)\n    for i in range(n):\n        ci = i + 1\n        members = np.nonzero(rid == rid[i])[0]\n        if members.size > 1:\n            custs = members + 1\n            mask = custs != ci\n            if np.any(mask):\n                dd = d[ci, custs[mask]] / scale\n                dd = np.where(np.isfinite(dd), dd, 1e6)\n                # Gaussian kernel: near mates -> ~1\n                k = 3 if dd.size >= 3 else dd.size\n                g = np.exp(-0.5 * dd[:k] ** 2)\n                inv_mate[i] = float(np.mean(g))\n        ddep = float(d[0, ci]) / scale\n        if not np.isfinite(ddep):\n            ddep = 1e6\n        inv_dep[i] = float(np.exp(-0.5 * ddep ** 2))\n    relatedness = 0.6 * inv_mate + 0.4 * inv_dep\n    relatedness = np.clip(relatedness, 1e-9, 1.0 - 1e-9)\n    logit_rel = np.log(relatedness / (1.0 - relatedness))\n\n    # --- Stagnation-warped mixing in log-odds space ---\n    z = 5.0 * (drive - 0.38)\n    w_rel = 1.0 / (1.0 + np.exp(-z))  # ->1 late/stagnant (relatedness-dominant)\n    w_rel = float(np.clip(w_rel, 0.12, 0.88))\n    w_eff = 1.0 - w_rel\n\n    logit = w_eff * logit_eff + w_rel * logit_rel\n\n    # --- Capacity saturation as additive log-prior ---\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    logit = logit + (1.0 + 0.8 * stag) * (fill - 0.5)\n\n    # --- Route-distance prior: mild preference for long routes ---\n    rdn = rd / mean_rd\n    logit = logit + 0.25 * np.log(1.0 + np.maximum(rdn, 0.0))\n\n    # --- Convert to bounded score ---\n    score = 1.0 / (1.0 + np.exp(-np.clip(logit, -60.0, 60.0)))\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "59fb91d114f719ead659c497c2a908cc8a64c0b637c74d0300112c558a9403ca",
+  "design_sha256": "ffe6e23eded49c26dcd4893d3563f5aba7f070382716d311317c477a722f914b",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261125\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

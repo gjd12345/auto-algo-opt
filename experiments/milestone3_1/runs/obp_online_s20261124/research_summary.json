@@ -1,0 +1,197 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m31_obp_online_s20261124",
+  "arm_id": "m31_obp_online",
+  "problem_family": "obp",
+  "final_phase": "completed",
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "best_dev_objective": 27.833333,
+  "best_solver_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json",
+  "frozen_checkpoints": {
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "budget_summary": {
+    "run_id": "m31_obp_online_s20261124",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 36,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "complete": 31,
+      "http_error": 4,
+      "connectivity_failed": 1
+    },
+    "by_purpose": {
+      "planner": 16,
+      "eoh_probe": 4,
+      "eoh_generation": 14,
+      "reflection": 2
+    },
+    "input_tokens": 80575,
+    "output_tokens": 9768,
+    "total_tokens": 90343
+  },
+  "token_summary": {
+    "input_tokens": 80575,
+    "output_tokens": 9768,
+    "cached_tokens": 40192,
+    "cached_tokens_reported_count": 31,
+    "total_tokens": 90343,
+    "provider_elapsed_seconds": 329.224,
+    "outer_requests": 18,
+    "inner_eoh_requests": 18,
+    "state_counts": {
+      "complete": 31,
+      "http_error": 4,
+      "connectivity_failed": 1
+    },
+    "requested_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 31
+    },
+    "barrier_rejections": 0
+  },
+  "cost_summary": {
+    "rate_card_version": "opencode-go-reference/v1",
+    "priced_cost_usd": null,
+    "priced_attempts": 0,
+    "unpriced_attempts": 36,
+    "unpriced_reasons": {
+      "missing_rate_card": 36
+    }
+  },
+  "milestone_status": null,
+  "hypothesis_counts": {
+    "supported": 0,
+    "testing": 0,
+    "abandoned": 0,
+    "superseded": 0,
+    "refuted": 0,
+    "proposed": 0
+  },
+  "archive_summary": {
+    "solver_count": 3,
+    "pareto_frontier": [
+      {
+        "solver_id": "session_r0001_obp_online_priority_40469d8d",
+        "template_id": "obp_online_priority",
+        "mean_objective": 27.833333,
+        "solve_ms_mean": 0.9791,
+        "arm_id": "m31_obp_online"
+      }
+    ],
+    "portfolio": {
+      "suite_id": "obp_m31_dev_36",
+      "solver_ids": [
+        "session_r0001_obp_online_priority_40469d8d",
+        "session_r0002_obp_online_priority_2a5f4113",
+        "session_r0003_obp_online_priority_4283fa79"
+      ],
+      "common_completed_count": 36,
+      "mean_by_solver": {
+        "session_r0001_obp_online_priority_40469d8d": 27.8333,
+        "session_r0002_obp_online_priority_2a5f4113": 27.8333,
+        "session_r0003_obp_online_priority_4283fa79": 27.8333
+      },
+      "sbs_solver": "session_r0001_obp_online_priority_40469d8d",
+      "sbs_total": 1002.0,
+      "vbs_total": 1002.0,
+      "gap_over_sbs_pct": 0.0,
+      "gap_over_vbs_pct": 0.0,
+      "win_counts": {
+        "session_r0001_obp_online_priority_40469d8d": 36,
+        "session_r0002_obp_online_priority_2a5f4113": 0,
+        "session_r0003_obp_online_priority_4283fa79": 0
+      }
+    },
+    "weakest_regimes": [
+      {
+        "factor": "size",
+        "value": "100",
+        "instance_count": 12,
+        "vbs_mean_objective": 23.5833,
+        "vbs_rel_gap_pct": 0.0,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "200",
+        "instance_count": 12,
+        "vbs_mean_objective": 47.9167,
+        "vbs_rel_gap_pct": -0.1894,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "50",
+        "instance_count": 12,
+        "vbs_mean_objective": 12.0,
+        "vbs_rel_gap_pct": -0.8333,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      }
+    ],
+    "known_signatures_count": 3
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m31_obp_online",
+      "problem_family": "obp",
+      "template_id": "obp_online_priority",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "27.8333",
+      "delta_vs_prev": "",
+      "requests_used_total": 14,
+      "outer_requests_round": 5,
+      "inner_requests_round": 8,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m31_obp_online",
+      "problem_family": "obp",
+      "template_id": "obp_online_priority",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "27.8333",
+      "delta_vs_prev": "+0.0000",
+      "requests_used_total": 26,
+      "outer_requests_round": 5,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "m31_obp_online",
+      "problem_family": "obp",
+      "template_id": "obp_online_priority",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "27.8333",
+      "delta_vs_prev": "+0.0000",
+      "requests_used_total": 36,
+      "outer_requests_round": 4,
+      "inner_requests_round": 3,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-23T15:55:17Z"
+}

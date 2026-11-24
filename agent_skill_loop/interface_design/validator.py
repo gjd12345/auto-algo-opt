@@ -11,7 +11,8 @@ Gates:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import partial
 import hashlib
 import random
 from typing import Any, Callable, Mapping, Sequence
@@ -26,11 +27,13 @@ from .contracts import (
     OUTCOME_TIMEOUT_OR_INFEASIBLE,
     GateFailure,
     InterfaceDesign,
+    LEGACY_CVRP_PROTOCOL_ID,
     ValidationReport,
+    hook_bundle_metadata,
     sha256_text,
 )
-from .runtime import DynamicSubprocessEvaluator, validate_hook_ast
-from .templates import get_template_spec
+from .runtime import DynamicSubprocessEvaluator, validate_hook_ast, validate_hook_bundle
+from .templates import _load_interface_extensions, get_template_spec
 
 
 def build_gate4_dual_action_instance() -> dict[str, Any]:
@@ -306,7 +309,42 @@ class ProblemGateProbes:
     gate5_instances: Callable[[], tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]]
 
 
-PROBLEM_GATE_PROBES: dict[str, ProblemGateProbes] = {
+@dataclass(frozen=True)
+class GateProbeResult:
+    diagnostics: dict[str, Any] = field(default_factory=dict)
+    failures: tuple[GateFailure, ...] = ()
+
+
+@dataclass(frozen=True)
+class GateProbeContext:
+    """Run trusted fixtures through the same worker and protocol as the candidate."""
+
+    design: InterfaceDesign
+    protocol_id: str
+    solve_deadline_ms: float
+    evaluate: Callable[..., dict[str, Any]]
+
+
+@dataclass(frozen=True)
+class ProblemGateProbeSpec:
+    """Gate fixtures and checks for one protocol and optionally one template version.
+
+    Gate 4 owns action and prefix assertions. Gate 5 receives the ordered stress
+    records and may run further scale fixtures through the bound evaluator.
+    """
+
+    problem_family: str
+    protocol_id: str
+    gate3_instances: Callable[[InterfaceDesign], Sequence[Mapping[str, Any]]]
+    gate4: Callable[[GateProbeContext], GateProbeResult]
+    gate5_instances: Callable[[InterfaceDesign], Sequence[Mapping[str, Any]]]
+    gate5: Callable[[GateProbeContext, Sequence[Mapping[str, Any]]], GateProbeResult] | None = None
+    template_key: tuple[str, str] | None = None
+    distance_convention: str = "euc_2d_float"
+    vehicle_limit_policy: str = "unconstrained"
+
+
+PROBLEM_GATE_PROBES: dict[str | tuple[str, str] | tuple[str, str, tuple[str, str]], ProblemGateProbes | ProblemGateProbeSpec] = {
     "cvrp": ProblemGateProbes(
         problem_family="cvrp",
         gate3_instances=_default_gate3_instances,
@@ -314,6 +352,26 @@ PROBLEM_GATE_PROBES: dict[str, ProblemGateProbes] = {
         gate5_instances=_default_gate5_instances,
     ),
 }
+
+
+def register_problem_gate_probe(spec: ProblemGateProbeSpec) -> None:
+    if not spec.problem_family.strip() or not spec.protocol_id.strip():
+        raise ValueError("empty_problem_gate_probe_identity")
+    key = (spec.problem_family, spec.protocol_id)
+    if spec.template_key is not None:
+        key = (*key, spec.template_key)
+    if key in PROBLEM_GATE_PROBES:
+        raise ValueError(f"duplicate_problem_gate_probe:{key}")
+    PROBLEM_GATE_PROBES[key] = spec
+
+
+def _resolve_gate_probe(design: InterfaceDesign, protocol_id: str) -> ProblemGateProbeSpec | None:
+    key = (design.problem_family, protocol_id)
+    template_key = (*key, (design.template_id, design.template_version))
+    if design.protocol_id is not None or design.hook_specs:
+        _load_interface_extensions(probes=True)
+    probe = PROBLEM_GATE_PROBES.get(template_key, PROBLEM_GATE_PROBES.get(key))
+    return probe if isinstance(probe, ProblemGateProbeSpec) else None
 
 
 class InterfaceValidator:
@@ -325,9 +383,12 @@ class InterfaceValidator:
         candidate_timeout_s: float = 20.0,
         instance_time_budget_ms: float = 500.0,
         evaluator: DynamicSubprocessEvaluator | None = None,
+        solve_deadline_ms: float | None = None,
+        outer_timeout_s: float | None = None,
     ) -> None:
         self.candidate_timeout_s = float(candidate_timeout_s)
-        self.instance_time_budget_ms = float(instance_time_budget_ms)
+        self.instance_time_budget_ms = float(instance_time_budget_ms if solve_deadline_ms is None else solve_deadline_ms)
+        self.outer_timeout_s = outer_timeout_s
         self.evaluator = evaluator or DynamicSubprocessEvaluator(candidate_timeout_s=self.candidate_timeout_s)
 
     def validate(
@@ -338,6 +399,7 @@ class InterfaceValidator:
         gate5_n200_instances: Sequence[Mapping[str, Any]] | None = None,
         gate5_scale_pair: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
         hook_code_override: str | None = None,
+        hook_implementations: Mapping[str, str] | None = None,
     ) -> ValidationReport:
         """Run all 5 validation gates sequentially and return a structured ``ValidationReport``."""
         hook_code = hook_code_override if hook_code_override is not None else design.baseline_hook_code
@@ -348,6 +410,8 @@ class InterfaceValidator:
             "candidate_timeout_s": self.candidate_timeout_s,
             "instance_time_budget_ms": self.instance_time_budget_ms,
         }
+        if self.outer_timeout_s is not None:
+            diagnostics["outer_timeout_s"] = self.outer_timeout_s
 
         # Resolve template first (needed for Gate 2 signature & Gate 1 entrypoint check)
         tpl = None
@@ -370,11 +434,40 @@ class InterfaceValidator:
         expected_args = tpl.hook_signature if tpl is not None else design.hook_signature
 
         # --- Gate 1: AST Capability Whitelist ---
-        g1_failures, g2_sig_failures = validate_hook_ast(
-            hook_code,
-            hook_name=expected_hook_name,
-            expected_args=expected_args,
-        )
+        specs = tpl.effective_hook_specs if tpl is not None else design.hook_specs
+        implementations = hook_implementations
+        candidate_error: GateFailure | None = None
+        if implementations is None and hook_code_override is not None and len(specs) > 1 and tpl is not None:
+            from .planner import parse_hook_candidate
+
+            try:
+                implementations = parse_hook_candidate(tpl.template_id, tpl.template_version, hook_code_override)
+            except (ValueError, SyntaxError) as exc:
+                candidate_error = GateFailure(
+                    2, "template_and_signature", "invalid_hook_bundle_program", None, None,
+                    str(exc), "Provide one program with every declared hook or a named source map.",
+                )
+        if implementations is None and design.hook_specs:
+            implementations = dict(design.hook_implementations)
+            if hook_code_override is not None and len(specs) == 1:
+                implementations[design.hook_name] = hook_code_override
+        if implementations is not None:
+            g1_failures, g2_sig_failures = validate_hook_bundle(specs, implementations)
+            if not g2_sig_failures:
+                hook_sha = sha256_text(implementations[expected_hook_name])
+                diagnostics["hook_bundle"] = hook_bundle_metadata(specs, implementations)
+                if (hook_code_override is not None and hook_implementations is not None
+                        and implementations[expected_hook_name] != hook_code_override):
+                    g2_sig_failures.append(GateFailure(
+                        2, "template_and_signature", "primary_hook_mismatch", None, expected_hook_name,
+                        "The primary override differs from its named source.", "Supply matching sources.",
+                    ))
+        else:
+            g1_failures, g2_sig_failures = validate_hook_ast(
+                hook_code, hook_name=expected_hook_name, expected_args=expected_args,
+            )
+        if candidate_error is not None:
+            g2_sig_failures.append(candidate_error)
         gates_summary.append({
             "gate_id": 1,
             "gate_name": "ast_whitelist",
@@ -406,7 +499,8 @@ class InterfaceValidator:
                     detail=f"postprocess_mode='{design.postprocess_mode}' not allowed by template.",
                     fix_hint=f"Use one of: {sorted(tpl.allowed_postprocess_modes)}.",
                 ))
-            if design.hook_name != tpl.hook_name or tuple(design.hook_signature) != tuple(tpl.hook_signature):
+            if (design.hook_name != tpl.hook_name or tuple(design.hook_signature) != tuple(tpl.hook_signature)
+                    or design.hook_specs != tpl.hook_specs):
                 g2_failures.append(GateFailure(
                     gate_id=2,
                     gate_name="template_and_signature",
@@ -418,6 +512,13 @@ class InterfaceValidator:
                         f"does not match template `{tpl.hook_name}({', '.join(tpl.hook_signature)})`."
                     ),
                     fix_hint="Align design.hook_name and design.hook_signature with the registered TemplateSpec.",
+                ))
+            protocol_id = tpl.effective_protocol_id
+            if ((design.protocol_id is not None and design.protocol_id != protocol_id)
+                    or (tpl.protocol_id is not None and design.protocol_id != tpl.protocol_id)):
+                g2_failures.append(GateFailure(
+                    2, "template_and_signature", "protocol_id_mismatch", None, design.protocol_id,
+                    f"Expected protocol {protocol_id}.", "Use the protocol declared by the registered template.",
                 ))
             diagnostics["gate2"] = {
                 "template_source_sha256": tpl.template_source_sha256,
@@ -433,12 +534,9 @@ class InterfaceValidator:
         })
         failures.extend(g2_failures)
 
-        # Short-circuit execution gates if Gate 1 or Gate 2 failed
-        if failures or tpl is None:
-            for gid, gname in ((3, "subprocess_feasibility"), (4, "dual_action_causal_sensitivity"), (5, "budget_and_scale_diagnostics")):
-                gates_summary.append({"gate_id": gid, "gate_name": gname, "passed": False, "skipped": True})
+        def report() -> ValidationReport:
             return ValidationReport(
-                passed=False,
+                passed=not failures,
                 design_id=design.design_id,
                 design_sha256=design.design_sha256,
                 template_id=design.template_id,
@@ -450,19 +548,67 @@ class InterfaceValidator:
                 diagnostics=diagnostics,
             )
 
-        # --- Gate 3: Restricted Subprocess Execution & Baseline Feasibility ---
-        probe_family = PROBLEM_GATE_PROBES.get(design.problem_family)
-        if probe_family is None:
-            raise ValueError(f"unsupported_problem_family_gates:{design.problem_family}")
-        g3_insts = list(gate3_instances) if gate3_instances is not None else probe_family.gate3_instances()
-        g3_resp = self.evaluator.evaluate(
+        # Short-circuit execution gates if Gate 1 or Gate 2 failed
+        if failures or tpl is None:
+            for gid, gname in ((3, "subprocess_feasibility"), (4, "dual_action_causal_sensitivity"), (5, "budget_and_scale_diagnostics")):
+                gates_summary.append({"gate_id": gid, "gate_name": gname, "passed": False, "skipped": True})
+            return report()
+
+        protocol_id = tpl.effective_protocol_id
+        probe_spec = _resolve_gate_probe(design, protocol_id)
+        evaluator = partial(
+            self.evaluator.evaluate,
             template_id=design.template_id,
             template_version=design.template_version,
-            hook_code=hook_code,
-            instances=g3_insts,
             postprocess_mode=design.postprocess_mode,
             template_options=design.template_options,
+            protocol_id=protocol_id,
             instance_time_budget_ms=self.instance_time_budget_ms,
+            **({"outer_timeout_s": self.outer_timeout_s} if self.outer_timeout_s is not None else {}),
+        )
+        if probe_spec is not None:
+            def evaluate_probe(
+                instances: Sequence[Mapping[str, Any]], *,
+                hook_code: str | None = None,
+                hook_implementations: Mapping[str, str] | None = None,
+                capture_merge_sequence: bool = False,
+                distance_convention: str | None = None,
+            ) -> dict[str, Any]:
+                sources = implementations if hook_code is None and hook_implementations is None else hook_implementations
+                return evaluator(
+                    instances=instances,
+                    hook_code=hook_code if sources is not None or hook_code is not None else candidate_code,
+                    hook_implementations=sources,
+                    distance_convention=distance_convention or probe_spec.distance_convention,
+                    vehicle_limit_policy=probe_spec.vehicle_limit_policy,
+                    capture_merge_sequence=capture_merge_sequence,
+                )
+
+            candidate_code = hook_code
+            context = GateProbeContext(design, protocol_id, self.instance_time_budget_ms, evaluate_probe)
+            self._validate_registered_probes(
+                probe_spec, context, gate3_instances, gate5_n200_instances, gates_summary, failures, diagnostics,
+            )
+            return report()
+
+        # --- Gate 3: Restricted Subprocess Execution & Baseline Feasibility ---
+        probe_family = PROBLEM_GATE_PROBES.get(design.problem_family)
+        if (not isinstance(probe_family, ProblemGateProbes) or protocol_id != LEGACY_CVRP_PROTOCOL_ID
+                or design.template_id not in _GATE4_PROBES_BY_TEMPLATE):
+            failures.append(GateFailure(
+                3, "subprocess_feasibility", "missing_problem_gate_probe", None, protocol_id,
+                "No validation probes are registered for this template and protocol.", "Register ProblemGateProbeSpec.",
+            ))
+            gates_summary.extend([
+                {"gate_id": 3, "gate_name": "subprocess_feasibility", "passed": False},
+                {"gate_id": 4, "gate_name": "dual_action_causal_sensitivity", "passed": False, "skipped": True},
+                {"gate_id": 5, "gate_name": "budget_and_scale_diagnostics", "passed": False, "skipped": True},
+            ])
+            return report()
+        g3_insts = list(gate3_instances) if gate3_instances is not None else probe_family.gate3_instances()
+        g3_resp = evaluator(
+            hook_code=hook_code,
+            instances=g3_insts,
         )
         g3_failures: list[GateFailure] = []
         if not g3_resp.get("valid"):
@@ -516,55 +662,30 @@ class InterfaceValidator:
             raise ValueError(f"missing_gate4_probe_config:{design.template_id}")
         expected_a = probe_cfg["expected_A"]
         expected_b = probe_cfg["expected_B"]
-        probe_a = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        probe_a = evaluator(
             hook_code=probe_cfg["prefer_A"],
             instances=[g4_inst],
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
             capture_merge_sequence=True,
         )
-        probe_b = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        probe_b = evaluator(
             hook_code=probe_cfg["prefer_B"],
             instances=[g4_inst],
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
             capture_merge_sequence=True,
         )
         # Supplementary diagnostics on the actual candidate hook + negated + constant-zero
-        probe_base = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        probe_base = evaluator(
             hook_code=hook_code,
             instances=[g4_inst],
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
             capture_merge_sequence=True,
         )
-        probe_zero = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        probe_zero = evaluator(
             hook_code=probe_cfg["constant_zero"],
             instances=[g4_inst],
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
             capture_merge_sequence=True,
         )
-        probe_neg = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        probe_neg = evaluator(
             hook_code=probe_cfg["negated"],
             instances=[g4_inst],
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
             capture_merge_sequence=True,
         )
 
@@ -645,14 +766,9 @@ class InterfaceValidator:
             n200_list, nom_inst, scl_inst = probe_family.gate5_instances()
 
         g5_insts = [*n200_list, nom_inst, scl_inst]
-        g5_resp = self.evaluator.evaluate(
-            template_id=design.template_id,
-            template_version=design.template_version,
+        g5_resp = evaluator(
             hook_code=hook_code,
             instances=g5_insts,
-            postprocess_mode=design.postprocess_mode,
-            template_options=design.template_options,
-            instance_time_budget_ms=self.instance_time_budget_ms,
         )
 
         g5_failures: list[GateFailure] = []
@@ -731,15 +847,113 @@ class InterfaceValidator:
         }
         failures.extend(g5_failures)
 
-        return ValidationReport(
-            passed=len(failures) == 0,
-            design_id=design.design_id,
-            design_sha256=design.design_sha256,
-            template_id=design.template_id,
-            template_version=design.template_version,
-            template_source_sha256=template_sha,
-            hook_code_sha256=hook_sha,
-            gates=tuple(gates_summary),
-            failures=tuple(failures),
-            diagnostics=diagnostics,
-        )
+        return report()
+
+    def validate_evolved_hook_n200_latency(
+        self,
+        design: InterfaceDesign,
+        *,
+        hook_code_override: str | None = None,
+        hook_implementations: Mapping[str, str] | None = None,
+        gate5_n200_instances: Sequence[Mapping[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Screen an evolved candidate hook directly on n=200 Gate-5 stress probes.
+
+        Closes the inner-loop latency blind spot where Gate 5 was previously invoked
+        only on the template baseline hook during design submission.
+        """
+        n200_insts = list(gate5_n200_instances) if gate5_n200_instances is not None else _build_gate5_n200_stress_instances()
+        tpl = get_template_spec(design.template_id, design.template_version)
+        hook_code = hook_code_override if hook_code_override is not None else design.baseline_hook_code
+        eval_kwargs: dict[str, Any] = {
+            "template_id": design.template_id,
+            "template_version": design.template_version,
+            "postprocess_mode": design.postprocess_mode,
+            "template_options": design.template_options,
+            "protocol_id": tpl.effective_protocol_id,
+            "hook_code": hook_code,
+            "instances": n200_insts,
+            "instance_time_budget_ms": self.instance_time_budget_ms,
+        }
+        if hook_implementations is not None:
+            eval_kwargs["hook_implementations"] = dict(hook_implementations)
+        if self.outer_timeout_s is not None:
+            eval_kwargs["outer_timeout_s"] = self.outer_timeout_s
+        resp = self.evaluator.evaluate(**eval_kwargs)
+        records = list(resp.get("records") or [])
+        solve_times = [float(r["solve_ms"]) for r in records if isinstance(r.get("solve_ms"), (int, float))]
+        timeouts = sum(1 for r in records if r.get("budget_exhausted") is True or r.get("completed") is False)
+        feasible_count = sum(1 for r in records if r.get("valid") is True and r.get("objective") is not None)
+        max_solve_ms = max(solve_times) if solve_times else None
+        return {
+            "passed": bool(resp.get("valid") and len(records) == len(n200_insts) and timeouts == 0 and feasible_count == len(n200_insts)),
+            "budget_ms": self.instance_time_budget_ms,
+            "n_instances": len(n200_insts),
+            "feasible_count": feasible_count,
+            "timeout_count": timeouts,
+            "max_solve_ms": round(max_solve_ms, 4) if max_solve_ms is not None else None,
+            "budget_headroom_ms": round(self.instance_time_budget_ms - max_solve_ms, 4) if max_solve_ms is not None else None,
+            "error_code": resp.get("error_code"),
+        }
+
+    @staticmethod
+    def _validate_registered_probes(
+        spec: ProblemGateProbeSpec,
+        context: GateProbeContext,
+        gate3_override: Sequence[Mapping[str, Any]] | None,
+        gate5_override: Sequence[Mapping[str, Any]] | None,
+        gates: list[dict[str, Any]],
+        failures: list[GateFailure],
+        diagnostics: dict[str, Any],
+    ) -> None:
+        def add_gate(gate_id: int, name: str, result: GateProbeResult) -> None:
+            gates.append({"gate_id": gate_id, "gate_name": name, "passed": not result.failures})
+            diagnostics[f"gate{gate_id}"] = result.diagnostics
+            failures.extend(result.failures)
+
+        def evaluate_fixtures(
+            instances: Sequence[Mapping[str, Any]], gate_id: int, name: str,
+        ) -> tuple[GateProbeResult, Sequence[Mapping[str, Any]]]:
+            if not instances:
+                return GateProbeResult(failures=(GateFailure(
+                    gate_id, name, "missing_probe_instances", None, None,
+                    "The protocol gate has no fixtures.", "Register nonempty fixtures for this gate.",
+                ),)), ()
+            response = context.evaluate(instances)
+            records = response.get("records", [])
+            verified = (
+                response.get("valid") and len(records) == len(instances)
+                and all(record.get("valid") and record.get("objective") is not None for record in records)
+            )
+            errors = () if verified else (GateFailure(
+                gate_id, name, response.get("error_code") or "probe_evaluation_failed", None, None,
+                response.get("error_detail") or "The worker did not return verified objectives for all fixtures.",
+                "Check feasibility, score shape, and timeout diagnostics.",
+            ),)
+            return GateProbeResult({
+                "n_instances": len(instances),
+                "objective": response.get("objective"),
+                "outcomes": [record.get("outcome_class") for record in records],
+                "timeout_kind": response.get("timeout_kind"),
+                "outer_timeout_s": response.get("outer_timeout_s"),
+            }, errors), records
+
+        gate3_name = "subprocess_feasibility"
+        gate4_name = "dual_action_causal_sensitivity"
+        gate5_name = "budget_and_scale_diagnostics"
+        gate3_instances = spec.gate3_instances(context.design) if gate3_override is None else gate3_override
+        gate3, _ = evaluate_fixtures(gate3_instances, 3, gate3_name)
+        add_gate(3, gate3_name, gate3)
+        if gate3.failures:
+            gates.extend([
+                {"gate_id": 4, "gate_name": gate4_name, "passed": False, "skipped": True},
+                {"gate_id": 5, "gate_name": gate5_name, "passed": False, "skipped": True},
+            ])
+            return
+        add_gate(4, gate4_name, spec.gate4(context))
+        gate5_instances = spec.gate5_instances(context.design) if gate5_override is None else gate5_override
+        stress, records = evaluate_fixtures(gate5_instances, 5, gate5_name)
+        if not stress.failures and spec.gate5 is not None:
+            scale = spec.gate5(context, records)
+            stress = GateProbeResult({**stress.diagnostics, **scale.diagnostics}, scale.failures)
+        add_gate(5, gate5_name, stress)

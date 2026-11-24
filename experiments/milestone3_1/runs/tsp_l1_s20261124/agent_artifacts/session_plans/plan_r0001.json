@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Replace the pure argmin-distance NN step with a vectorized, scale-invariant isolation-aware score inside select_next_node: for every unvisited candidate u, compute s(u) = d(cur,u) - w * mean_{v unvisited, v!=u} d(u,v), all features divided by their per-step maximum before blending, pick argmin over a k-NN truncated candidate list, and scale w with construction progress (small early, larger late so the terminal gap is closed). Optionally add a linear destination-pull term, keeping the whole step O(k) vectorized so every instance finishes well inside 500 ms.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "KB evidence: method-tsp-nearest-neighbor-construct gives the official select_next_node contract (start at 0, mask visited, argmin over at most 50 nearest cities, last city forced), which is the baseline to beat. method-tsp-i605-mean-farness shows the mean-isolation blend reaches 128/128 completion with the best relative gap among full-completion rules; method-tsp-i605-dest-pull shows a purely vectorized linear scoring runs sub-millisecond and completes 128/128, i.e. the quality gain is available at negligible runtime. The rollout/pilot entry (method-tsp-i605-1step-rollout) is explicitly rejected as evidence for the alternative because it fails the 500 ms completion contract, so I stay with closed-form vectorized scoring rather than lookahead. Postprocess mode must be 'none' per allowed modes, so all gains must come from the constructive step itself."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Pure nearest-neighbor greedy commits early to the nearest city and strands isolated clusters for costly late legs. Scoring candidates by distance-minus-mean-farness (prefer a city that is close to current but also isolated from the remaining unvisited set), with dimensionless per-step normalization and a progress-adaptive weight, yields a strictly lower mean tour length than argmin-distance NN on cvrp_dev_hetero_24 while keeping the same O(k) per-step cost and 100% completion at 500 ms.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-nearest-neighbor-construct",
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dest-pull"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB evidence: method-tsp-nearest-neighbor-construct gives the official select_next_node contract (start at 0, mask visited, argmin over at most 50 nearest cities, last city forced), which is the baseline to beat. method-tsp-i605-mean-farness shows the mean-isolation blend reaches 128/128 completion with the best relative gap among full-completion rules; method-tsp-i605-dest-pull shows a purely vectorized linear scoring runs sub-millisecond and completes 128/128, i.e. the quality gain is available at negligible runtime. The rollout/pilot entry (method-tsp-i605-1step-rollout) is explicitly rejected as evidence for the alternative because it fails the 500 ms completion contract, so I stay with closed-form vectorized scoring rather than lookahead. Postprocess mode must be 'none' per allowed modes, so all gains must come from the constructive step itself."
+  }
+}

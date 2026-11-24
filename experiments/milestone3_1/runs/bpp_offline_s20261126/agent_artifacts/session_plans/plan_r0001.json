@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Implement `rank_items(items, capacity, ctx)` so the offline reorder+repack template places items in non-increasing size order (First-Fit-Decreasing style), breaking ties by descending remainder-fit to the current open bin, then run greedy FFD packing and attempt a local repack of partially filled bins.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "bpp_offline_reorder_repack",
+      "mechanism": "Round 1, empty archive and no KB evidence yet; the active template bpp_offline_reorder_repack exposes a `rank_items` entrypoint (previous diagnostic exposed the missing-entrypoint contract error, which pins the required symbol name). Best-known baseline for offline BPP is first-fit-decreasing, which corresponds exactly to sorting by descending size; adding a residual-capacity tie-break is a cheap, budget-safe refinement for the heterogeneous instance set. Postprocess must be 'none' per allowed modes, so all gains must come from the item priority function inside the template."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "For binary/bin-packing instances on cvrp_dev_hetero_24 style data, a score_item that is monotone decreasing in item size (plus a tie-break term favouring items that fill the residual capacity of an open bin most tightly) yields strictly lower bin count than insertion order or random order at a 500 ms budget, because large items have the fewest feasible placements and must be placed while slack is still large; the repack pass then recovers the residual waste that a pure FFD ordering leaves.",
+  "interface_selection": {
+    "template_id": "bpp_offline_reorder_repack",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1, empty archive and no KB evidence yet; the active template bpp_offline_reorder_repack exposes a `rank_items` entrypoint (previous diagnostic exposed the missing-entrypoint contract error, which pins the required symbol name). Best-known baseline for offline BPP is first-fit-decreasing, which corresponds exactly to sorting by descending size; adding a residual-capacity tie-break is a cheap, budget-safe refinement for the heterogeneous instance set. Postprocess must be 'none' per allowed modes, so all gains must come from the item priority function inside the template."
+  }
+}

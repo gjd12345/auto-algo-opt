@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under bpp_offline_reorder_repack/none.",
+      "evidence_refs": [
+        "evaluation:58e93f1e8cbb4f3487fe56c9c617aa0e"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-BPP-001-priority-residual: replacing pure size-descending priority with a composite score_item that mixes item size (descending, BFD-like) with a residual-capacity-structure term will reduce bin count versus size-descending first-fit when repacking, because ordering large-but-awkward items (those leaving hard-to-fill residuals) first minimizes residual-capacity fragmentation in the open bins.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:58e93f1e8cbb4f3487fe56c9c617aa0e"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Enrich the offline item-priority `score_item` from the pure size-descending control (BFD-like) into a composite score: w1*(normalized item size) + w2*(residual-capacity fit tightness term computed against the multiset of open-bin residuals) + w3*(awkwardness proxy for items whose size lies just above/k=2,3 resonant fractions of capacity), with a deterministic best-fit (minimum feasible residual) placement rule inside the repack pass and a descending-size tie-break. Keep the whole procedure O(n log n + n * #bins) so it stays far inside the 500 ms budget (round-1 used only 0.215 ms/solve)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

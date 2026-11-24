@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Tight-capacity-aware multiplicative ruin scoring: amplify load-utilization saturation and route-distance gates inside score_ruin_nodes, with iter_frac-driven rank-power sharpening that is shallow early (diversify) and steep late (intensify)",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-1 champion already uses the L3 skeleton (cvrp_ruin_recreate/none) with mean objective 16.0818 at 215 ms mean, so ~285 ms of the 500 ms budget per instance is unused slack on most instances; the archive shows no exhaustion/failure, so more LNS iterations are affordable. Archive weakest regimes are dominated by tight capacity and eccentric depots, exactly the regimes where pure detour-savings removal (Worst-Removal-like) is misaligned. The KB L3 entry documents that a evolved multiplicative 'gate + rank-power' ruin rule beat the zero-evolution Worst-Cost-Removal control on blind-120 (23.3186 vs 23.3474) and that the template's first_feasible_ms is ~2-3 ms, so the anytime floor is safe. I therefore keep the same template and postprocess mode (no interface switch, so no material validator risk) and evolve only the score_ruin_nodes hook: keep a bounded dynamic ruin size q (scaled with n and stagnation), and pursue a capacity-saturation gate (route_load/C and demand_i/C) plus a distance/spread gate and an iter_frac-dependent rank-power schedule. Deterministic tie-breaking is preserved to keep the 5-gate dual-action probe causal (distinct removal sets must respond to state changes), and all state arrays stay read-only."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Weakest regimes on dev_24 are capacity_level=tight (vbs_rel_gap -22.16%), depot_style=eccentric (-19.67%), and size=100 (-20.44%). Under tight capacity, single-client removal savings are dominated by the packing structure, not by geometric detour: removing a light customer from a near-full route frees usable load slack that enables profitable reinsertion, whereas removing a heavy customer from a slack route rarely opens new configurations. Therefore a multiplicative ruin score of the form score_i = rank_power(|removal_savings_i|/scale * gate_rdist * gate_load * gate_depot, p(iter_frac, stagnation_ratio)) with gate_load = (route_load/C + demand_i/C)^beta strongly favoring high-utilization routes, and exponent p rising from ~0.5 (near-uniform, exploratory) at early iter_frac to ≥1.5 late/stagnating, will lower the mean objective on the tight-capacity and eccentric-depot subsets relative to the round-1 champion (mean 16.0818, 215 ms mean, 24/24 wins) without exceeding the 500 ms deadline, since the O(n) scoring pass is negligible versus the deterministic Regret-2 reinsertion inner loop.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-1 champion already uses the L3 skeleton (cvrp_ruin_recreate/none) with mean objective 16.0818 at 215 ms mean, so ~285 ms of the 500 ms budget per instance is unused slack on most instances; the archive shows no exhaustion/failure, so more LNS iterations are affordable. Archive weakest regimes are dominated by tight capacity and eccentric depots, exactly the regimes where pure detour-savings removal (Worst-Removal-like) is misaligned. The KB L3 entry documents that a evolved multiplicative 'gate + rank-power' ruin rule beat the zero-evolution Worst-Cost-Removal control on blind-120 (23.3186 vs 23.3474) and that the template's first_feasible_ms is ~2-3 ms, so the anytime floor is safe. I therefore keep the same template and postprocess mode (no interface switch, so no material validator risk) and evolve only the score_ruin_nodes hook: keep a bounded dynamic ruin size q (scaled with n and stagnation), and pursue a capacity-saturation gate (route_load/C and demand_i/C) plus a distance/spread gate and an iter_frac-dependent rank-power schedule. Deterministic tie-breaking is preserved to keep the 5-gate dual-action probe causal (distinct removal sets must respond to state changes), and all state arrays stay read-only."
+  }
+}

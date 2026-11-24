@@ -1,0 +1,37 @@
+{
+  "round_id": 3,
+  "direction": "Evolve score_ruin_nodes toward a scale-normalized, capacity-and-stagnation-adaptive removal priority that targets nodes from over-full / long routes (tight-capacity regime) while decaying toward worst-cost removal when time is plentiful.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 2 already improved mean objective to 16.0201 ms=172ms of the 500ms budget, so there is ~3x time headroom but only 0.19% gap to VBS — the remaining gain must come from better ruin *targeting*, not more iterations. KB method-cvrp-m3-ruin-recreate-l3 confirms the evolved-hook (vs Worst-Cost L3-ctrl) route is the proven lever on this template, and method-cvrp-lns-shaw-regret supports mixing worst-cost (removal_savings) with relatedness/structure terms. The weakest regimes reported are capacity_level=tight, depot_style=eccentric and size=100, motivating explicit route_load_frac and route_dist_share features in the score. All terms are normalized by the global depot-distance scale per method-cvrp-m2-l2a-generalized-savings / method-cvrp-frozen-c-near-tie to guarantee scale invariance and avoid the documented mixed-unit near-tie blow-up. Postprocess stays 'none' as the only allowed mode."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "A removal priority of the form score_i = removal_savings_i/scale * (1 + beta*route_load_frac_i^2) * (1 + gamma*route_dist_share_i) with scale = mean(d(0,1..n)) keeps the hook dimensionless (no O(1/s^2) scale collapse, cf. method-cvrp-frozen-c-near-tie), and biasing toward routes with load near/over capacity plus high distance share removes the customers whose reinsertion Regret-2 can actually restructure — yielding lower mean objective on dev_24 (currently 16.0201) with emphasis on the weakest regimes (capacity_level=tight, size=100, depot_style=eccentric), because tight-capacity instances are exactly where load-aware ruin selection changes the repair outcome. Stagnation gating (stagnation_ratio, iter_frac) adds deterministic pseudo-noise only when the LNS is stalling, preserving early convergence.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-frozen-c-near-tie",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 2 already improved mean objective to 16.0201 ms=172ms of the 500ms budget, so there is ~3x time headroom but only 0.19% gap to VBS — the remaining gain must come from better ruin *targeting*, not more iterations. KB method-cvrp-m3-ruin-recreate-l3 confirms the evolved-hook (vs Worst-Cost L3-ctrl) route is the proven lever on this template, and method-cvrp-lns-shaw-regret supports mixing worst-cost (removal_savings) with relatedness/structure terms. The weakest regimes reported are capacity_level=tight, depot_style=eccentric and size=100, motivating explicit route_load_frac and route_dist_share features in the score. All terms are normalized by the global depot-distance scale per method-cvrp-m2-l2a-generalized-savings / method-cvrp-frozen-c-near-tie to guarantee scale invariance and avoid the documented mixed-unit near-tie blow-up. Postprocess stays 'none' as the only allowed mode."
+  }
+}

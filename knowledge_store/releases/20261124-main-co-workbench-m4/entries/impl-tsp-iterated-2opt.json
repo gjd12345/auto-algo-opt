@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Deterministic double-bridge then neighbor 2-opt restarts",
+  "category": "implementation",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Cuts four segments by a seeded RNG, swaps segment 2 with 4 (double-bridge), then reconverges with neighbor-restricted 2-opt. Restarts keep a strictly better tour.",
+  "attributes": {
+    "interface": "double_bridge(route) + nearest_two_opt",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "scripts/evaluate_tsp_iterated_nearest_two_opt.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_iterated_nearest_two_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_iterated_nearest_two_opt.py",
+      "sha256": "115b445c465aac7849ed5596994bec72028c3618d03f1c5a9fffae6fd27e71e8"
+    }
+  ],
+  "id": "impl-tsp-iterated-2opt",
+  "content_sha256": "674e78f8a31ecef604e5fb4adf148d78a74a51d97c638e05c4cf07c33bc5d2d3"
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:69b14fec56e3468cb053e7e5b57be94f"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The SBS (mean obj 15.788 at 217.7 ms) dominates the two slower variants (174.7 ms -> 16.0737, 16.1422), so within the 500 ms budget the objective is still monotonically decreasing in effective LNS iterations; therefore (a) reallocating the unused ~280 ms to additional ruin-recreate iterations and (b) making ruin size scale with residual capacity slack (bigger ruin depth on tight-capacity, clustered, eccentric-depot regimes, which are exactly the weakest factors at -20% to -23% VBS relative gap) will lower mean objective on cvrp_dev_hetero_24 by more than the round-4 best of 15.788, without any postprocess step.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:69b14fec56e3468cb053e7e5b57be94f"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Escalate anytime-LNS effort toward the full 500 ms budget with capacity-aware adaptive ruin sizing: scale the removed-customer count to instance size and residual capacity slack (larger removals ~15-25% of n on tight-capacity/eccentric-depot instances), bias ruin selection toward the depot-distant and clustered spatial segments, and keep the accept criterion non-worsening with best-solution restart between segments."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -4,6 +4,16 @@
 
 ## CO / benchmark
 
+### 里程碑三至四正式实证报告（M3.0–M4）
+
+- [M3.1 跨问题泛化与 Blind-72 报告](../experiments/milestone3_1/m31_cross_problem_report.md)：TSP (`tsp/v1`)、严格在线 OBP (`obp_online/v1`)、独立离线 BPP (`bpp_offline/v1`) 与 TSPLIB-18 / BPPLib-70 外部对照。
+- [M3.2 大预算 Scaling Law 与单因子对照报告](../experiments/milestone3_2/m32_scaling_report.md)：`36 -> 100 -> 200 -> 400` 曲线与 `model_routing / l3b_dual_hook / timeout_2000ms` 21 格锁盘与 `cvrp_m32_blind_120` 一次性盲测（含原始可行与硬截止双轨指标）。
+- [M3.2 交互式演化轨迹分析看板 (HTML)](../experiments/milestone3_2/m32_evolution_trajectory.html)：离线 `file://` 可打开的四视图交互分析页（400 请求搜索轨迹、延迟墙分位数、Bootstrap 森林图与 M4 算子解剖）。
+- [M4 数学理论闭环 Part 1](../experiments/milestone4/m4_math_closure_part1.md)：$2^5=32$ 精确 Shapley 与二阶交互矩阵、HRK 径向下界 `R(I)` 三池/纯几何外生互补分析、相似群/$E(2)$ 等距与 $\alpha=1$ 多规模分岔扫频。
+- [M4 冻结算子解剖与机理统一 Part 2](../experiments/milestone4/m4_math_closure_part2.md)：M3.2 全部 12 份 400 请求冻结冠军的 AST 与 `select_16` anytime 曲线剖析。
+
+### 历史阶段报告与验收证据
+
 - [CVRP Super Agent 搜索复盘](cvrp_super_agent_search_20261107.md)：三场真实运行，逐轮对照 Plan、EoH 实现、评测与 Memory。
 - [CVRP 后续验证 P0–P2](evidence/cvrp_p0_p1_p2_20261107/README.md)：独立留出、C6 机制消融与 Memory × 数学指导因子试跑。
 

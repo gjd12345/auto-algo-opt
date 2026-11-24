@@ -1,0 +1,49 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_obp_online_priority_4283fa79",
+  "display_name": "Session R3 · obp_online_priority",
+  "problem_family": "obp",
+  "paradigm": "sequential_construct",
+  "interface": "obp_online_priority/v1:priority",
+  "template_id": "obp_online_priority",
+  "template_version": "v1",
+  "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "priority",
+  "hook_code": "import numpy as np\n\ndef priority(current_item, feasible_remaining_capacities):\n    remaining = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    # Post-placement residual (smaller = tighter best-fit).\n    residual = remaining - float(current_item)\n    # Prefix-causal fill proxy: smaller remaining means fuller bin.\n    # Normalize residual by (remaining + 1) to keep scale invariant.\n    scale = remaining + 1.0\n    # Convex mixture: primary residual term (best-fit) plus a small\n    # convex fill/utilization correction (fuller bins favored slightly).\n    residual_term = -residual / scale\n    fill_term = -1.0 / scale\n    # Deterministic tie-break: reward larger current fill for equal residuals.\n    tie = fill_term * 1e-6\n    return residual_term + 0.25 * fill_term + tie",
+  "hook_code_sha256": "4283fa7919ae9450e0c32b8c6985ddec74858a5605ae6287849625b4e2d1547d",
+  "design_sha256": "d5897d89bbdb5e83fbb83086ad9ed5f2156591f4393cb37aa2dd1e8d3cade4fa",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-obp-best-fit",
+  "cited_kb_ids": [
+    "method-obp-best-fit",
+    "method-lit-obp-bestfit-family-best-fit-almost-best-fit",
+    "method-obp-first-fit"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved obp_online_priority/v1:priority",
+  "default_budget_ms": 500.0,
+  "protocol_id": "obp_online/v1",
+  "hook_specs": [
+    {
+      "name": "priority",
+      "signature": [
+        "current_item",
+        "feasible_remaining_capacities"
+      ],
+      "output_shape_arg": "feasible_remaining_capacities"
+    }
+  ],
+  "hook_implementations": {
+    "priority": "import numpy as np\n\ndef priority(current_item, feasible_remaining_capacities):\n    remaining = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    # Post-placement residual (smaller = tighter best-fit).\n    residual = remaining - float(current_item)\n    # Prefix-causal fill proxy: smaller remaining means fuller bin.\n    # Normalize residual by (remaining + 1) to keep scale invariant.\n    scale = remaining + 1.0\n    # Convex mixture: primary residual term (best-fit) plus a small\n    # convex fill/utilization correction (fuller bins favored slightly).\n    residual_term = -residual / scale\n    fill_term = -1.0 / scale\n    # Deterministic tie-break: reward larger current fill for equal residuals.\n    tie = fill_term * 1e-6\n    return residual_term + 0.25 * fill_term + tie"
+  },
+  "hook_hashes": {
+    "priority": "4283fa7919ae9450e0c32b8c6985ddec74858a5605ae6287849625b4e2d1547d"
+  },
+  "bundle_hash": "9a2903f6aa46baeedb3bc9b43d6eb5deb6a90bc58df882bb7b089dbeefaa4887",
+  "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+}

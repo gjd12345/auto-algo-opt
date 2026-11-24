@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from agent_skill_loop.interface_design.dynamic_eoh import derive_effective_batch_timeout_s
 from agent_skill_loop.interface_design.planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template
 from agent_skill_loop.interface_design.templates import TEMPLATE_REGISTRY
 from agent_skill_loop.interface_design.validator import InterfaceValidator
@@ -41,7 +42,7 @@ class InterfaceTool:
                 continue
             if self.allowed_templates and tid not in self.allowed_templates:
                 continue
-            items.append({
+            item = {
                 "template_id": tid,
                 "template_version": tver,
                 "paradigm": spec.paradigm,
@@ -49,7 +50,17 @@ class InterfaceTool:
                 "hook_signature": list(spec.hook_signature),
                 "template_source_sha256": spec.template_source_sha256,
                 "kb_clue_available": tid in KB_ROUND_CONTEXT_BY_TEMPLATE,
-            })
+            }
+            if spec.hook_specs:
+                item["hook_specs"] = [
+                    {
+                        "hook_name": hs.hook_name,
+                        "hook_signature": list(hs.hook_signature),
+                        "role": hs.role,
+                    }
+                    for hs in spec.hook_specs
+                ]
+            items.append(item)
         return {
             "problem_family": self.problem_family,
             "allowed_postprocess_modes": list(self.allowed_postprocess_modes),
@@ -78,8 +89,9 @@ class InterfaceTool:
             diagnostic_ref=dict(diagnostic_ref) if diagnostic_ref else None,
             rationale=rationale or f"Validated {template_id}/{template_version} under {budget_ms} ms.",
         )
+        eff_timeout_s = derive_effective_batch_timeout_s(12, budget_ms, floor_s=self.candidate_timeout_s)
         validator = InterfaceValidator(
-            candidate_timeout_s=self.candidate_timeout_s,
+            candidate_timeout_s=eff_timeout_s,
             instance_time_budget_ms=budget_ms,
         )
         report = validator.validate(design)

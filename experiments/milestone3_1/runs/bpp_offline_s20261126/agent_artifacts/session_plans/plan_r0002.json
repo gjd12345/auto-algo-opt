@@ -1,0 +1,32 @@
+{
+  "round_id": 2,
+  "direction": "Strengthen the offline item-priority score so descending-size first-fit is strictly dominated: rank items by a size-dominant score combined with a residual-fit-aware tie-break, then repack into the first bin whose remaining capacity matches the item best (best-fit-decreasing style placement over the reordered sequence).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "bpp_offline_reorder_repack",
+      "mechanism": "Round 1 produced a single Pareto point at 27.5278 mean objective with 0.62 ms mean runtime, leaving ~99.9% of the 500 ms budget unused, so the objective is clearly quality-limited rather than time-limited. The weakest regime reported is size=200 with vbs mean 46.4167, meaning aggregate bin count scales with n and small per-instance improvements there dominate the global mean. The only allowed template exposes an item priority hook (score_item), so the highest-leverage axis is to enrich that score from pure size-descending into a residual-fit-aware ordering and pair it with best-fit-style placement during repack; this is a strict generalization that degenerates to the archived behaviour if the added term carries no signal, which de-risks the round. Postprocess mode stays 'none' to keep the validated interface and behaviour deterministic."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1ade515adad97eb3fd0c0618e9a63a84eb5ea1464e241051377ed47be06cd026"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "With only one archived solver (mean objective 27.5278, 0.62 ms mean solve, no time pressure at all against the 500 ms budget), the bottleneck is packing quality, not speed. Claim: replacing a plain descending-size priority with a score of the form score_item = size (primary) + lambda * (fractional residual penalty) and switching the repack insertion rule from first-fit to best-fit-style placement over the reordered list will reduce bin count on the size=200 regime (vbs_mean 46.4167, currently the deepest objective scale) by at least 1 bin on average, i.e. mean objective under 27.5278, while remaining far inside the time budget (expected < 5 ms/instance). Rationale: FFD on heterogeneous items leaves slack fragmentation; best-fit placement plus a residual-aware priority preserves large-item openings for later fits.",
+  "interface_selection": {
+    "template_id": "bpp_offline_reorder_repack",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 produced a single Pareto point at 27.5278 mean objective with 0.62 ms mean runtime, leaving ~99.9% of the 500 ms budget unused, so the objective is clearly quality-limited rather than time-limited. The weakest regime reported is size=200 with vbs mean 46.4167, meaning aggregate bin count scales with n and small per-instance improvements there dominate the global mean. The only allowed template exposes an item priority hook (score_item), so the highest-leverage axis is to enrich that score from pure size-descending into a residual-fit-aware ordering and pair it with best-fit-style placement during repack; this is a strict generalization that degenerates to the archived behaviour if the added term carries no signal, which de-risks the round. Postprocess mode stays 'none' to keep the validated interface and behaviour deterministic."
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "run_id": "m32_l3b_dual_hook_s20261125",
+  "output_dir": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261125",
+  "problem_family": "cvrp",
+  "arm_id": "m32_l3b_dual_hook",
+  "max_rounds": 10,
+  "total_request_cap": 400,
+  "outer_requests_per_round_cap": 4,
+  "outer_reflect_cap": 2,
+  "eoh_pop_size": 4,
+  "eoh_n_pop": 2,
+  "eoh_max_sample_nums": 48,
+  "instance_time_budget_ms": 500.0,
+  "allowed_templates": [
+    "cvrp_ruin_recreate_dual"
+  ],
+  "allowed_postprocess_modes": [
+    "none"
+  ],
+  "initial_template_id": "cvrp_ruin_recreate_dual",
+  "initial_postprocess_mode": "none",
+  "planner_model": "deepseek-v4.1-flash",
+  "eoh_model": "deepseek-v4.1-flash",
+  "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+  "api_key_env": "OPENCODE_GO_API_KEY",
+  "search_seed": 20261125,
+  "dev_suite_id": "cvrp_dev_hetero_24",
+  "dev_split": "dev_train",
+  "use_benchmark_dev_suite": true,
+  "eval_dev_suite": true,
+  "dev_instance_count": 24,
+  "dev_instance_size": 50,
+  "agent_guidance": true,
+  "inject_static_kb_clues": false,
+  "tools_enabled": true,
+  "archive_feedback_enabled": true,
+  "kb_store_path": null,
+  "checkpoint_budgets": [
+    400
+  ],
+  "strict_checkpoint_barriers": true,
+  "model_routing_policy": {
+    "enabled": false,
+    "weak_model": "deepseek-v4.1-flash",
+    "strong_model": "deepseek-v4.1-flash",
+    "strong_every_n": 4,
+    "planner_model": null,
+    "repair_model": null,
+    "probe_model": null,
+    "rate_card_version": "opencode-go-reference/v1",
+    "rate_card": {
+      "deepseek-v4-pro": {
+        "input_per_m": 0.66,
+        "cache_read_per_m": 0.022,
+        "output_per_m": 1.98
+      },
+      "deepseek-v4.1-flash": {
+        "input_per_m": 0.15,
+        "cache_read_per_m": 0.003,
+        "output_per_m": 0.6
+      }
+    }
+  },
+  "rate_card": {
+    "deepseek-v4.1-flash": {
+      "input_per_m": 0.15,
+      "cache_read_per_m": 0.003,
+      "output_per_m": 0.6
+    },
+    "deepseek-v4-pro": {
+      "input_per_m": 0.66,
+      "cache_read_per_m": 0.022,
+      "output_per_m": 1.98
+    }
+  },
+  "rate_card_version": null,
+  "mode": "live",
+  "request_timeout_s": 90.0,
+  "wall_seconds": 14400.0,
+  "candidate_timeout_s": 20.0,
+  "sandbox_timeout_s": 15.0
+}

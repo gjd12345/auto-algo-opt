@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0007_cvrp_ruin_recreate_34a5be41",
+  "display_name": "Session R7 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = route_ids.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = float(capacity)\n    if not np.isfinite(cap) or cap <= 0.0:\n        cap = 1.0\n\n    st = float(stagnation_ratio)\n    if not np.isfinite(st):\n        st = 0.0\n    st = min(max(st, 0.0), 1.0)\n\n    it = float(iter_frac)\n    if not np.isfinite(it):\n        it = 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    # ---- normalized removal savings (worst-removal signal) ----\n    s = np.asarray(removal_savings, dtype=np.float64)\n    s = np.where(np.isfinite(s), np.abs(s), 0.0)\n    smax = float(np.max(s))\n    if not np.isfinite(smax) or smax <= 0.0:\n        smax = 1.0\n    zn_sav = np.clip(s / smax, 0.0, 1.0)\n\n    # ---- demands / capacity fill ----\n    d = np.asarray(demands[1:n + 1], dtype=np.float64)\n    d = np.where(np.isfinite(d), d, 0.0)\n    d = np.maximum(d, 0.0)\n    dsum = float(np.sum(d))\n    if not np.isfinite(dsum) or dsum <= 0.0:\n        dmean = 1.0\n    else:\n        dmean = dsum / n\n        if dmean <= 0.0:\n            dmean = 1.0\n    fill = np.clip(d / cap, 0.0, 1.0)\n\n    # ---- route utilization (tight-capacity signal) ----\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n    loads = np.maximum(loads, 0.0)\n    util = np.clip(loads / cap, 0.0, 1.0)\n\n    # ---- Shaw relatedness: truncated nearest-neighbor profile ----\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    sub = dm[1:n + 1, 1:n + 1]\n    sub = np.where(np.isfinite(sub), sub, 0.0)\n    sub = np.maximum(sub, 0.0)\n    sub = 0.5 * (sub + sub.T)  # enforce symmetry numerically\n\n    if n > 1:\n        big = float(np.max(sub)) + 1.0\n        if not np.isfinite(big) or big <= 0.0:\n            big = 1.0\n        sub_m = sub + np.eye(n, dtype=np.float64) * big\n        k = 6 if n >= 6 else max(1, n - 1)\n        # k-nearest (excluding self) distance profile via sorted partial rows\n        sorted_rows = np.sort(sub_m, axis=1)\n        prof = sorted_rows[:, :k]\n        # weight nearest neighbor most heavily (harmonic-like weighting)\n        w = 1.0 / (np.arange(1, k + 1, dtype=np.float64))\n        w = w / np.sum(w)\n        relatedness = prof @ w\n    else:\n        relatedness = np.zeros(n, dtype=np.float64)\n\n    rmean = float(np.mean(relatedness)) if n > 0 else 0.0\n    if not np.isfinite(rmean) or rmean <= 0.0:\n        rmean = 1.0\n    # small relatedness distance => tight cluster => high score\n    rel_ratio = np.clip(relatedness / rmean, 0.0, 8.0)\n    cluster = 1.0 / (1.0 + rel_ratio)\n\n    # ---- smooth gates (sigmoid) ----\n    def sig(x, k, t):\n        y = k * (x - t)\n        y = np.clip(y, -50.0, 50.0)\n        return 1.0 / (1.0 + np.exp(-y))\n\n    # tight-capacity gate: grows stronger as stagnation rises\n    g_util = sig(util, 3.0 + 3.0 * st, 0.85)\n    # demand-fill gate: prefer customers whose own demand matches capacity fill\n    g_fill = sig(fill, 3.0, 0.20)\n    # demand amplitude gate around mean (mild)\n    g_dem = sig(d / dmean, 1.5, 1.0)\n\n    # ---- channel constructions ----\n    # Cluster channel: dense neighborhood + tight capacity fill\n    chan_cluster = cluster * (0.30 + 0.70 * g_util) * (0.40 + 0.60 * g_fill)\n\n    # Savings channel: worst-removal flavored with demand/route weighting\n    chan_sav = zn_sav * (0.40 + 0.60 * g_util) * (0.50 + 0.50 * g_dem)\n\n    # ---- stagnation/iteration-scaled convex channel blend ----\n    # early search (low st, low it): savings-dominant; late: cluster-dominant\n    w_cluster = 0.25 + 0.55 * it + 0.45 * st\n    w_cluster = min(max(w_cluster, 0.0), 0.95)\n    w_sav = 1.0 - w_cluster\n\n    # multiplicative sharpening of the dominant signal via exponent factor\n    exp_c = 1.0 + 1.2 * w_cluster\n    exp_s = 1.0 + 1.2 * w_sav\n    a = np.power(np.clip(chan_cluster, 1e-12, 1.0), exp_c)\n    b = np.power(np.clip(chan_sav, 1e-12, 1.0), exp_s)\n\n    fusion = w_cluster * a + w_sav * b\n\n    # geometric-mean coupling term keeps scale invariance and rewards nodes\n    # strong in both channels (deterministic, bounded)\n    gm = np.sqrt(np.clip(a * b, 0.0, 1.0))\n    score = 0.75 * fusion + 0.25 * gm\n\n    # ---- deterministic diversification jitter (late-search tie-break) ----\n    idx = np.arange(n, dtype=np.float64)\n    jr = np.sin((idx + 1.0) * 72.9371 + st * 17.31 + it * 41.97) * 24634.6345\n    jr = jr - np.floor(jr)\n    jr = np.clip(jr, 0.0, 1.0 - 1e-12)\n\n    mix = 0.10 + 0.40 * st + 0.10 * it\n    if mix > 0.55:\n        mix = 0.55\n    score = (1.0 - mix) * score + mix * jr\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "34a5be412dc840e02d99422055d1a023e99b9becd8c00dcdf7e46e69f145c2c9",
+  "design_sha256": "ec74ec237c8d243e9ae44cb517144605e1bb5f1771a498815b9b8bc14c239e70",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261125\\session_run\\rounds\\round_0007\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

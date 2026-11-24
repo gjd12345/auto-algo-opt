@@ -1,0 +1,49 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_obp_online_priority_2a5f4113",
+  "display_name": "Session R2 · obp_online_priority",
+  "problem_family": "obp",
+  "paradigm": "sequential_construct",
+  "interface": "obp_online_priority/v1:priority",
+  "template_id": "obp_online_priority",
+  "template_version": "v1",
+  "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "priority",
+  "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n    r = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    item = float(current_item)\n    post = r - item\n    # Best-fit: smaller post-placement residual is better.\n    # Normalize residual by remaining capacity to keep scale invariance,\n    # with a small absolute term to reward exact/near-exact fills.\n    cap = np.maximum(r, 1e-12)\n    norm_post = post / cap\n    exact_bonus = np.where(np.abs(post) <= 1e-12, 1.0, 0.0)\n    # Tighter normalized residual => higher score; exact fill gets bonus.\n    return -norm_post + 1e-6 * exact_bonus",
+  "hook_code_sha256": "2a5f41133b0310286d1f97ea3d905f43fa03f44ddae514e2c96afc929312c802",
+  "design_sha256": "a00d488b76042255cec181fbfcbed0733ad04438a24a96a44fc6025163679b29",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-obp-best-fit",
+  "cited_kb_ids": [
+    "method-obp-best-fit",
+    "method-lit-obp-1d-best-fit",
+    "method-obp-first-fit"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved obp_online_priority/v1:priority",
+  "default_budget_ms": 500.0,
+  "protocol_id": "obp_online/v1",
+  "hook_specs": [
+    {
+      "name": "priority",
+      "signature": [
+        "current_item",
+        "feasible_remaining_capacities"
+      ],
+      "output_shape_arg": "feasible_remaining_capacities"
+    }
+  ],
+  "hook_implementations": {
+    "priority": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n    r = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    item = float(current_item)\n    post = r - item\n    # Best-fit: smaller post-placement residual is better.\n    # Normalize residual by remaining capacity to keep scale invariance,\n    # with a small absolute term to reward exact/near-exact fills.\n    cap = np.maximum(r, 1e-12)\n    norm_post = post / cap\n    exact_bonus = np.where(np.abs(post) <= 1e-12, 1.0, 0.0)\n    # Tighter normalized residual => higher score; exact fill gets bonus.\n    return -norm_post + 1e-6 * exact_bonus"
+  },
+  "hook_hashes": {
+    "priority": "2a5f41133b0310286d1f97ea3d905f43fa03f44ddae514e2c96afc929312c802"
+  },
+  "bundle_hash": "423965df28801e5e995c5819897f6190a6d36074bb9a6ae47305e09cbe8e75db",
+  "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+}

@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Mean-objective improvement on cvrp_dev_hetero_24 at 500 ms by re-inflating LNS throughput: hold the round-5 size-normalized multiplicative-gate rank-power ruin kernel fixed and change ONLY the ruin-set size q (q = clip(ceil(q0 + alpha*n/100), ...), q0 in [4..6], alpha ~ 0.06, capped at ~0.35n) so ~280 ms of idle budget from the round-6 early top-q shrink is re-spent on larger destroy-repair moves, with p(iter_frac, stagnation_ratio) kept on the round-5 schedule (p up with stagnation, annealed by iter_frac) and gates kept as scale-free products (removal_savings / (mean_savings*n) * load_fill_gate * depot_proximity_gate).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive: 6 solvers, SBS = round-5 kernel at 15.8445 (348.59 ms), round-6 edit regressed to 15.8983 at 221.81 ms; VBS 379.2047 vs SBS 380.2692 (gap 0.28%) shows the frontier is nearly saturated at the mean level, so the only cheap remaining lever is budget utilization, not a new scoring shape. H5 rationale explicitly prescribes: keep round-5 kernel as incumbent, restore/raise q to consume idle budget, and change one factor at a time. The KB L3 entry confirms the hook contract (score_ruin_nodes -> length-n float vector, read-only state, deterministic tie-break) and that at 500 ms the LNS loop is budget-complete rather than early-stopped (weak only at 25 ms), so q inflation is safe for the 500 ms gate. Weakest regimes (size=100 with 12/12 exhausted, capacity_level=tight, depot_style=eccentric, spatial=uniform) are exactly where larger destroy sets plus load-fill/depot-proximity gating should help most, and none of this touches the repair (fixed deterministic Regret-2 + intra_2opt + R2R) so attribution of any delta to q is clean."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "H7-cvrp-q-inflation: On cvrp_dev_hetero_24 (500 ms, cvrp_ruin_recreate + score_ruin_nodes, postprocess none), keeping the round-5 H5 ruin kernel (per-instance-normalized multiplicative gate x rank power with p rising in stagnation_ratio and annealed in iter_frac) and raising the ruin-set size q to ~25-35% of n (instead of the round-6 early shrink) yields mean objective < 15.8445 (the round-5 SBS/incumbent), because round-6's 348.59 -> 221.81 ms solve-time drop at identical 24/24 coverage shows the LNS loop terminated on shrinking destroy sets rather than on the deadline, so larger ruin sets convert unused time into strictly more escaping moves; secondary prediction: per-instance solve_ms_mean rises to >300 ms and gains concentrate on the weak regimes size=100 and capacity_level=tight where the round-5 kernel had the most headroom.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive: 6 solvers, SBS = round-5 kernel at 15.8445 (348.59 ms), round-6 edit regressed to 15.8983 at 221.81 ms; VBS 379.2047 vs SBS 380.2692 (gap 0.28%) shows the frontier is nearly saturated at the mean level, so the only cheap remaining lever is budget utilization, not a new scoring shape. H5 rationale explicitly prescribes: keep round-5 kernel as incumbent, restore/raise q to consume idle budget, and change one factor at a time. The KB L3 entry confirms the hook contract (score_ruin_nodes -> length-n float vector, read-only state, deterministic tie-break) and that at 500 ms the LNS loop is budget-complete rather than early-stopped (weak only at 25 ms), so q inflation is safe for the 500 ms gate. Weakest regimes (size=100 with 12/12 exhausted, capacity_level=tight, depot_style=eccentric, spatial=uniform) are exactly where larger destroy sets plus load-fill/depot-proximity gating should help most, and none of this touches the repair (fixed deterministic Regret-2 + intra_2opt + R2R) so attribution of any delta to q is clean."
+  }
+}

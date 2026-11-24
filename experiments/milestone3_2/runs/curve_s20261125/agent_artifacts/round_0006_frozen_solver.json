@@ -1,0 +1,32 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0006_cvrp_ruin_recreate_c5f0da7c",
+  "display_name": "Session R6 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(route_ids.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = float(capacity) if np.isfinite(capacity) and capacity > 0.0 else 1e-12\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    dist = np.asarray(distance_matrix, dtype=np.float64)\n    dist = np.where(np.isfinite(dist), dist, 0.0)\n\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    sav = np.where(np.isfinite(sav), np.abs(sav), 0.0)\n\n    dem = np.asarray(demands[1:n + 1], dtype=np.float64)\n    dem = np.where(np.isfinite(dem), dem, 0.0)\n\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n\n    rid = np.asarray(route_ids, dtype=np.int64)\n    depot_d = dist[0, 1:n + 1]\n    mean_depot = float(np.mean(depot_d))\n    if not (mean_depot > 1e-12) or not np.isfinite(mean_depot):\n        mean_depot = 1.0\n\n    def robust_z(x):\n        mu = float(np.mean(x))\n        sd = float(np.std(x))\n        if not (sd > 1e-12) or not np.isfinite(sd):\n            sd = 1.0\n        return (x - mu) / sd\n\n    z_sav = robust_z(sav)\n    util = np.clip(loads / cap, 0.0, 1.0)\n    relief = dem / (loads + 1e-9)\n    relief = np.where(np.isfinite(relief), relief, 0.0)\n    relief = np.clip(relief, 0.0, 1.0)\n    pressure = (0.35 + 0.65 * util) * relief\n    z_relief = robust_z(pressure)\n\n    max_r = int(np.max(rid)) if n > 0 else -1\n    nroutes = max(max_r + 1, 1)\n    rsum = np.zeros(nroutes, dtype=np.float64)\n    rcnt = np.zeros(nroutes, dtype=np.float64)\n    for c in range(n):\n        r = int(rid[c])\n        if 0 <= r < nroutes:\n            rsum[r] += float(depot_d[c])\n            rcnt[r] += 1.0\n    geo = np.zeros(n, dtype=np.float64)\n    for c in range(n):\n        r = int(rid[c])\n        if 0 <= r < nroutes and rcnt[r] > 1.0:\n            mean_other = (rsum[r] - float(depot_d[c])) / (rcnt[r] - 1.0)\n            geo[c] = abs(float(depot_d[c]) - mean_other) / mean_depot\n        else:\n            geo[c] = float(depot_d[c]) / mean_depot\n    z_geo = robust_z(geo)\n\n    w_sav = 1.15 * (1.0 - 0.5 * st) * (1.0 - 0.35 * it)\n    w_relief = 0.85 + 0.55 * st + 0.30 * it\n    w_geo = 0.75 + 0.20 * st\n\n    log_score = w_sav * z_sav + w_relief * z_relief + w_geo * z_geo\n    log_score = np.where(np.isfinite(log_score), log_score, 0.0)\n\n    lo = float(np.min(log_score))\n    hi = float(np.max(log_score))\n    if hi - lo > 1e-12:\n        base = (log_score - lo) / (hi - lo)\n    else:\n        base = np.full(n, 0.5, dtype=np.float64)\n\n    explore = min(max(0.20 * st + 0.60 * it + 0.10 * st * it, 0.0), 0.85)\n\n    idx = np.arange(n, dtype=np.float64) + 1.0\n    phase = 37.191 * st + 11.317 * it\n    h = np.sin(idx * 73.1567 + phase) * 41317.271\n    h = h - np.floor(h)\n    rank = np.argsort(np.argsort(h)).astype(np.float64)\n    rank_norm = rank / max(n - 1, 1)\n\n    score = (1.0 - explore) * base + explore * rank_norm\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "c5f0da7c6327d89443c5949eb50e761ea138b26280481aed8b33a25608cb5520",
+  "design_sha256": "e62b656ea403688cffc4ff7ab62aef67313add5fc68978d5e86a5298eaaa9577",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261125\\session_run\\rounds\\round_0006\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion",
+    "evidence-cvrp-m3-blind120-and-direction2"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

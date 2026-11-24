@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the multiplicative gated rank-power ruin priority score: seed the population with worst-removal (rank_power p=1, all gates=1) and with load/depot-balanced variants, then evolve gate exponents and a stagnation/iter_frac-adaptive rank power that concentrates on high removal savings early and diversifies (spatial-adjacency relatedness proxy) when stagnation_ratio rises.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that cvrp_ruin_recreate/v1 with score_ruin_nodes is a verified 500 ms-regime interface (first_feasible_ms ~2-3 ms, always-feasible fallback, completion rate 1.0 at 500 ms) and that an evolved multiplicative gated rank-power ruin rule beat the zero-evolution Worst-Cost Removal control on blind_120 (23.3186 vs 23.3474) while complementing construction-layer arms on dev_24 (8/24 head-to-head wins). The same entry flags the multiplicatively gated rank-power form score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) as the confirmed evolvable hook, so this round tests a sharper factorization: keep the proven load gate and adaptive rank power, and test whether the depot/demand/rdist gates are dead weight. Budget at 500 ms is well inside the L3 strong-on regime; the documented 25 ms budget-exhaustion weakness is irrelevant here, and postprocess is fixed to 'none' per the allowed mode list."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "In the L3 ruin-recreate skeleton (CW + intra_2opt build, deterministic Regret-2 reinsertion, intra_2opt per perturbed route, R2R acceptance), the mean tour length on cvrp_dev_hetero_24 at 500 ms is dominated by two controllable factors in score_ruin_nodes: (a) a load-utilization gate that preferentially destroys customers on under-filled routes (where removal_savings underestimates reinsertion gains), and (b) a rank-power exponent p that is high (p~2) in the early iter_frac regime to focus on the most removable customers and decays toward p~1 (or below) as stagnation_ratio crosses ~0.5 to diversify. Because Regret-2 reinsertion already exploits detour savings greedily, adding depot-distance and demand gates mostly injects noise; ablating them is expected to be neutral-to-positive.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that cvrp_ruin_recreate/v1 with score_ruin_nodes is a verified 500 ms-regime interface (first_feasible_ms ~2-3 ms, always-feasible fallback, completion rate 1.0 at 500 ms) and that an evolved multiplicative gated rank-power ruin rule beat the zero-evolution Worst-Cost Removal control on blind_120 (23.3186 vs 23.3474) while complementing construction-layer arms on dev_24 (8/24 head-to-head wins). The same entry flags the multiplicatively gated rank-power form score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) as the confirmed evolvable hook, so this round tests a sharper factorization: keep the proven load gate and adaptive rank power, and test whether the depot/demand/rdist gates are dead weight. Budget at 500 ms is well inside the L3 strong-on regime; the documented 25 ms budget-exhaustion weakness is irrelevant here, and postprocess is fixed to 'none' per the allowed mode list."
+  }
+}

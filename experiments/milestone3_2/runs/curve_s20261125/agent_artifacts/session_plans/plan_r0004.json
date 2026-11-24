@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Capacity-aware ruin scoring: reweight removal_savings by per-node demand fill (demands/capacity) and switch to stagnation-driven diversification when stagnation_ratio is high, targeting the weakest regimes (capacity_level=tight, size=100, demand_dist=uniform).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows all three solvers converge to ~15.74 with a 0.237% SBS-VBS gap, i.e. near-saturated gains from the current ruin score; wins are split 13/11/0 so a structural change in scoring (not just parameter tuning) is needed. KB documents that the L3 template's evolution lever is exactly score_ruin_nodes with deterministic Regret-2 repair and RTR acceptance, and that Shaw-style relatedness/worst removal plus capacity-feasible regret repair is the standard lever for tight-capacity instances. Hence I direct evolution toward a demand-saturation-aware, stagnation-adaptive ruin score while keeping postprocess_mode=none (only allowed mode) and the 500 ms anytime deadline intact."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 the weakest regimes are tight capacity (12 instances, vbs_rel_gap -23.60%), size=100 (-22.47%) and uniform demands (-22.49%), where removal by pure distance savings leaves routes near capacity that Regret-2 cannot refill feasibly. Therefore a hook that scores ruin candidates as removal_savings normalized by route_dists blended with demand saturation (demands/capacity) and that gradually shifts weight toward high-saturation nodes as stagnation_ratio grows will reduce mean objective below the current SBS 15.7435 while keeping solve_ms_mean under 500 ms.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows all three solvers converge to ~15.74 with a 0.237% SBS-VBS gap, i.e. near-saturated gains from the current ruin score; wins are split 13/11/0 so a structural change in scoring (not just parameter tuning) is needed. KB documents that the L3 template's evolution lever is exactly score_ruin_nodes with deterministic Regret-2 repair and RTR acceptance, and that Shaw-style relatedness/worst removal plus capacity-feasible regret repair is the standard lever for tight-capacity instances. Hence I direct evolution toward a demand-saturation-aware, stagnation-adaptive ruin score while keeping postprocess_mode=none (only allowed mode) and the 500 ms anytime deadline intact."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 7 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:6d4b064d0a5142de9678a5908e385b8a"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "In cvrp_ruin_recreate/v1 at 500 ms, the archive plateau at mean 15.9986 (identical for r0004 and r0006, VBS gap only 0.56%) indicates the LNS is converging to the same tight-capacity clustered local optimum across seeds; therefore a stagnation-gated shift from pure worst-removal priority (rank power on removal_savings) toward spatially-correlated (Shaw-like) removal when stagnation_ratio exceeds ~0.5 will lower mean objective on the tight-capacity / clustered / eccentric-depot instances by at least 0.5% relative, without regressing the uniform-demand regime (expected net dev_24 mean < 15.99 at ~250 ms mean solve time).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:6d4b064d0a5142de9678a5908e385b8a"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-triggered diversification in score_ruin_nodes: keep the multiplicative gating form (removal_savings/scale × load × depot × demand × route-dist) but make the rank power p(iter_frac, stagnation_ratio) saturate earlier and add a deterministic relate-gate that biases removal toward spatial neighbours of the last-removed customers once stagnation_ratio > 0.5, so ruin sets escape the clustered-region local optima that dominate the weakest regimes (spatial=clustered, depot_style=eccentric, capacity_level=tight, size=100)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

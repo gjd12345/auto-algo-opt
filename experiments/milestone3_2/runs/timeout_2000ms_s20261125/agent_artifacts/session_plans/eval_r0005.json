@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:04fabf9ce5ba4d0cbe3218d358729885"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Because the weakest regime reported by the archive is capacity_level=tight (12 instances, vbs_rel_gap_pct = -22.59%) and depot_style=eccentric (-20.35%), the current score_ruin_nodes ranking must be under-serving load-critical customers: it ranks mostly by removal savings, so in tight-capacity instances it repeatedly removes cheap-to-move low-demand nodes and leaves the bin-packing-like capacity structure (and the long depot legs of eccentric instances) untouched. Testable claim: scoring removal priority as a multiplicative gate of (a) normalized removal savings, (b) demand-to-residual-load pressure of the node's route, and (c) a depot-distance gate applied only when the route is far-loaded, combined through a stagnation-driven rank power, will lower mean tour length on dev_24 below the current SBS 16.0496, with the gain concentrated on the tight-capacity and eccentric-depot subsets (predicting subset mean improvement >= 0.05 while uniform-demand/spatial-random subsets stay within noise).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:04fabf9ce5ba4d0cbe3218d358729885"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Capacity-tightness-aware multiplicative gated rank-power ruin scoring (targeting the 'tight capacity' / eccentric-depot weak regime)"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

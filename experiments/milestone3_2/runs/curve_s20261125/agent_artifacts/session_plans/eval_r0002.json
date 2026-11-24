@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:95c891d3865a43879c1fed8a4ce87756"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "For cvrp_ruin_recreate at a 500 ms budget on cvrp_dev_hetero_24, a score_ruin_nodes hook of the form score_i = rank_power(|removal_savings_i|/scale, p(iter_frac, stagnation_ratio)) * gate_load * gate_depot * gate_demand * gate_rdist (with p decreasing from ~3 toward ~1 as stagnation_ratio grows) will reduce mean tour length by >=1.0% vs the round-1 incumbent (15.7584), and the gain will concentrate in the tight-capacity / eccentric-depot / n=100 regimes where the round-1 VBS relative gap is worst (-23.4%, -21.2%, -22.2%).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:95c891d3865a43879c1fed8a4ce87756"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the single hook `score_ruin_nodes` into a rank-power multiplicative gating rule that (a) ranks customers by normalized removal savings, (b) multiplies by capacity-tightness and depot-eccentricity gates, and (c) anneals the rank power p with `iter_frac` and `stagnation_ratio` so early iterations remove top-cost nodes and stagnating iterations broaden toward randomized mid-rank removal (diversification). Targets the measured weak regimes of dev_24: capacity_level=tight, depot_style=eccentric, size=100 (uniform demand, clustered spatial)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

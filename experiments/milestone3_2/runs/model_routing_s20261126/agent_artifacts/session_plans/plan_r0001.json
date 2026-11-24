@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Design score_ruin_nodes as a scale-invariant composite removal-priority score: normalize removal_savings by the per-instance mean/median of finite distance_matrix entries (s_hat = removal_savings / mean_d) so the term transfers across instance scale; add a stagnation-adaptive relatedness term that grows with stagnation_ratio (favouring nodes in geometrically tight, mutually-close clusters, computed from row-wise mean of the node's k nearest distances divided by mean_d) so early-LNS iterations behave like worst-cost removal (high savings, global) while stagnated iterations behave like Shaw removal (cohesive cluster rips); add a route-load-structure term using route_loads/route_dists so that nodes on under-filled or anomalously long routes are preferentially removed; add an inter-route redundancy term (min distance to any node NOT on the same route, normalized) that downscores nodes whose removal cannot help because they are already served by a nearby route; expose all mix weights as evolvable constants (w_savings, w_cluster, w_load, w_isolated) and include iter_frac as a linear anneal from savings-dominant to cluster-dominant. Avoid raw magnitude features (distances, demands) to keep scale invariance; keep all outputs monotone-safe and finite with eps floor.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 shows the L3 template's only evolvable degree of freedom is score_ruin_nodes, and reports the prior best evolved arm at 23.3186 vs 23.3474 control (+0.12%, p<1e-8) on the blind set, so improvements exist but are found in normalized composite scoring rather than in the repair operator (Regret-2 is fixed). method-cvrp-lns-shaw-regret supplies the standard operator mix (worst-cost, Shaw relatedness) whose complementary strengths are known to be regime-dependent, motivating an iter_frac/stagnation anneal instead of a single fixed criterion. method-cvrp-s2-r7-iso contributes the geometrically grounded isolation/coherence intuition (normalized nearest-neighbour urgency) reused here as an inter-route redundancy term. All features are computed from hook-visible arrays (distance_matrix, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac), so the hook stays inside the whitelisted signature, and normalization by mean distance keeps it scale-invariant across the heterogeneous dev_24 suite."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Replacing the zero-evolution worst-cost removal priority (L3-ctrl, 23.3474 on cvrp_m3_blind_120 at 500ms) with a scale-normalized composite ruin score that anneals from savings-dominant (early) to Shaw-relatedness/cluster-dominant (stagnated), plus a route-load and inter-route-redundancy correction, increases the removal efficiency per ruined node and lowers total cost by a small but statistically detectable margin (>0.05%, p<1e-6) at the same 500ms budget, without regressing feasibility or anytime curve.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-s2-r7-iso"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 shows the L3 template's only evolvable degree of freedom is score_ruin_nodes, and reports the prior best evolved arm at 23.3186 vs 23.3474 control (+0.12%, p<1e-8) on the blind set, so improvements exist but are found in normalized composite scoring rather than in the repair operator (Regret-2 is fixed). method-cvrp-lns-shaw-regret supplies the standard operator mix (worst-cost, Shaw relatedness) whose complementary strengths are known to be regime-dependent, motivating an iter_frac/stagnation anneal instead of a single fixed criterion. method-cvrp-s2-r7-iso contributes the geometrically grounded isolation/coherence intuition (normalized nearest-neighbour urgency) reused here as an inter-route redundancy term. All features are computed from hook-visible arrays (distance_matrix, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac), so the hook stays inside the whitelisted signature, and normalization by mean distance keeps it scale-invariant across the heterogeneous dev_24 suite."
+  }
+}

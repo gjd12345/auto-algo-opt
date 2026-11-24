@@ -1,0 +1,30 @@
+{
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "default_budget_ms": 500.0,
+  "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+  "design_sha256": "225e854c5695564fdcaaba435ee612624a1a866116e62262e36ac755c3b770ab",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate (f980ca87)",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = route_ids.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n\n    s_abs = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    s_abs = np.where(np.isfinite(s_abs), s_abs, 0.0)\n\n    d = np.asarray(demands[1:n + 1], dtype=np.float64)\n    d = np.where(np.isfinite(d), d, 0.0)\n\n    r = s_abs / (1.0 + s_abs)\n\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n    util = np.clip(loads / cap, 0.0, 1.0)\n\n    depot = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    depot = np.where(np.isfinite(depot), depot, 0.0)\n    ecc = depot / (depot.mean() + 1e-12)\n\n    dem_rel = d / (d.mean() + 1e-12)\n\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd = np.where(np.isfinite(rd), rd, 0.0)\n    rd_rel = rd / (rd.mean() + 1e-12)\n\n    def squash(x):\n        x = np.clip(x, 0.0, 50.0)\n        return x / (1.0 + x)\n\n    f_sav = np.clip(r, 0.0, 0.999)\n    f_load = squash(util)\n    f_depot = squash(ecc)\n    f_dem = squash(dem_rel)\n    f_rdist = squash(rd_rel)\n\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    eps = 1e-6\n\n    # sharpness: high early => savings dominates; low late/stagnant => flatten toward diversity\n    sharp = 1.0 + 6.0 * (1.0 - st) * (1.0 - 0.5 * it)\n    inv_sharp = 1.0 / sharp\n\n    # geometric-mean-style aggregation of softmaxed factors\n    w_sav = inv_sharp * 3.0\n    w_oth = inv_sharp\n\n    comp = (\n        w_sav * np.log(eps + f_sav)\n        + w_oth * np.log(eps + f_load)\n        + w_oth * np.log(eps + f_depot)\n        + w_oth * np.log(eps + f_dem)\n        + w_oth * np.log(eps + f_rdist)\n    ) / (w_sav + 4.0 * w_oth)\n\n    agg = np.exp(comp)\n\n    # stagnation-triggered diversity term: synthetic hash-based pseudo-noise\n    idx = np.arange(n, dtype=np.float64)\n    noise = np.sin((idx + 1.0) * 12.9898 + st * 78.233) * 43758.5453\n    noise = noise - np.floor(noise)\n    noise_term = np.power(np.clip(noise, 0.0, 0.999), 0.5)\n\n    # mixing weight for diversity term grows with stagnation\n    mix = 0.6 * st\n\n    score = (1.0 - mix) * agg + mix * noise_term\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "f980ca87ee8bb2b8eab6cc29030b8544053082bb8b457717e89acbe00d1356aa",
+  "hook_name": "score_ruin_nodes",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_curve_s20261125",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_f980ca87ee",
+  "template_id": "cvrp_ruin_recreate",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "template_version": "v1"
+}

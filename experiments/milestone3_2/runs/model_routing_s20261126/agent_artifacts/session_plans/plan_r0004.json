@@ -1,0 +1,37 @@
+{
+  "round_id": 4,
+  "direction": "Evolve the `score_ruin_nodes` destruction-priority hook toward a size-aware hybrid: combine normalized worst-cost removal (high detour saving) with Shaw relatedness to the last-depot/route-centroid, and scale the per-iteration ruin fraction with instance size (larger n=100 gets a modestly larger removal set |R| ramping from ~4 to ~12 nodes) while keeping Regret-2 recreate and Record-to-Record acceptance untouched. Focus the reward shaping on the weakest regimes: n=100, uniform spatial, eccentric depot, uniform demand, loose capacity — where the archive shows the largest negative VBS gap (exhausted instances, ~-20% rel gap).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 1-3 remains on a single Pareto solver (16.0353 mean, 345.7 ms mean, all 24/24 exhausted) with only 0.62% SBS-VBS spread across three signatures, indicating the bottleneck is per-instance anytime efficiency rather than inter-solver complementarity. The L3 KB entry establishes that the only evolvable degree of freedom in this template is `score_ruin_nodes` (Regret-2 recreate, intra_2opt, and RTR acceptance are fixed), and that zero-evolution Worst-Cost control reached 23.35 on blind-120 while evolution delivered only ~0.12% — so gains must come from a structurally different destroy priority, not parameter jitter. The standard LNS KB supports pairing worst-cost with Shaw relatedness, and the weakest-regime report concentrates all exhausted failures in n=100 / uniform / eccentric / loose-capacity, exactly the regime where a fixed removal cardinality is too small relative to route count. Unused budget headroom (345 ms used of 500 ms) also permits a larger removal set per iteration without violating the deadline, so the size-scaled hybrid is both theoretically and empirically affordable."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Under the 500 ms anytime LNS budget, on n=100 / uniform / eccentric-depot / loose-capacity CVRP instances the current fixed-size Worst-Cost removal wastes iterations on marginally-improving small neighborhoods and never escapes local optima within the deadline. A size-scaled hybrid destroy score (worst-cost z-score + Shaw relatedness to the route centroid, with |R| growing as ~sqrt(n) and time-decayed) will increase the count of accepted improving moves per unit time and yield >=1% lower mean objective on n=100 instances without regressing small-n (<=50) instances beyond 0.5%, since small-n keeps a near-fixed small removal set.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1-3 remains on a single Pareto solver (16.0353 mean, 345.7 ms mean, all 24/24 exhausted) with only 0.62% SBS-VBS spread across three signatures, indicating the bottleneck is per-instance anytime efficiency rather than inter-solver complementarity. The L3 KB entry establishes that the only evolvable degree of freedom in this template is `score_ruin_nodes` (Regret-2 recreate, intra_2opt, and RTR acceptance are fixed), and that zero-evolution Worst-Cost control reached 23.35 on blind-120 while evolution delivered only ~0.12% — so gains must come from a structurally different destroy priority, not parameter jitter. The standard LNS KB supports pairing worst-cost with Shaw relatedness, and the weakest-regime report concentrates all exhausted failures in n=100 / uniform / eccentric / loose-capacity, exactly the regime where a fixed removal cardinality is too small relative to route count. Unused budget headroom (345 ms used of 500 ms) also permits a larger removal set per iteration without violating the deadline, so the size-scaled hybrid is both theoretically and empirically affordable."
+  }
+}

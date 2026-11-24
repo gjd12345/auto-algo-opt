@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Dual-hook LNS: make score_ruin_nodes a scale-free blend of (a) normalized removal savings (d(prev,i)+d(i,next)-d(prev,next)) / scale, (b) route-length share of node i, and (c) a deterministic relatedness (proximity to the just-removed set) term so iterations alternate between cost-focused and cluster-focused ruin; make score_recreate_action a Regret-2 style insertion score = normalized detour - lambda * second-best-route detour gap + small load-fill bonus, i.e. prefer actions that are cheap AND whose alternative routes are much worse (low regret), while keeping all quantities dimensionless under coordinate scaling.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "First round on an empty archive: the L3b dual-hook template exposes both score_ruin_nodes and score_recreate_action, so the highest-leverage test is a joint, dimensionless redesign of both hooks rather than tuning one. KB method-cvrp-m3-ruin-recreate-l3 shows the L3 single-hook evolved arm only gained +0.12% over its zero-evolution worst-cost control at 500 ms, indicating the ruin hook alone has little headroom; KB method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion both identify the repair operator (Regret-k vs cheapest) and ruin-relatedness mixing as the dominant quality levers, so co-evolving the recreate hook should complement the ruin hook. Everything is expressed in units of mean depot distance / route length share to preserve scale invariance (a hard requirement given the M2 L2a evidence that normalized scores gave 0.00% coordinate-scale drift) and to keep p50 well inside the 500 ms budget."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On dev_24 hetero instances at 500 ms, replacing the control worst-cost ruin hook with a normalized 3-term ruin score (removal savings/mean depot distance + route-length share + relatedness) and replacing greedy-cheapest reinsertion with a normalized Regret-2-aware recreate score (detour/scale minus lambda*regret gap plus fill bonus) will lower mean total tour length versus the L3-ctrl worst-cost-removal + cheapest-insertion control, because LNS diversification improves when ruin targets both high-cost and clustered nodes and reinsertion defers nodes with small regret, and both scores are invariant to coordinate scaling so no drift is introduced.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "First round on an empty archive: the L3b dual-hook template exposes both score_ruin_nodes and score_recreate_action, so the highest-leverage test is a joint, dimensionless redesign of both hooks rather than tuning one. KB method-cvrp-m3-ruin-recreate-l3 shows the L3 single-hook evolved arm only gained +0.12% over its zero-evolution worst-cost control at 500 ms, indicating the ruin hook alone has little headroom; KB method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion both identify the repair operator (Regret-k vs cheapest) and ruin-relatedness mixing as the dominant quality levers, so co-evolving the recreate hook should complement the ruin hook. Everything is expressed in units of mean depot distance / route length share to preserve scale invariance (a hard requirement given the M2 L2a evidence that normalized scores gave 0.00% coordinate-scale drift) and to keep p50 well inside the 500 ms budget."
+  }
+}

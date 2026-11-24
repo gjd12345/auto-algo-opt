@@ -1,0 +1,71 @@
+{
+  "best_dev_objective": 16.142403,
+  "checkpoint_budget": 36,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "8b0045bce64c2ad43d27a33c4bd14283b45bae302931671674ab7af925d7f4ba",
+    "penalized_mean_objective": 16.142403,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 16.142403
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [],
+    "default_budget_ms": 500.0,
+    "description": "Verified ordinal-0 baseline for m32_curve_s20261126.",
+    "design_sha256": "49ddc6583347d8838e17937cc706869e8f11b4627e5835f1608a930db2090059",
+    "diagnostic_ref": null,
+    "display_name": "Baseline cvrp:cvrp_ruin_recreate/v1",
+    "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n    return removal_savings / scale\n",
+    "hook_code_sha256": "fadc010c7e3fd0446ececb0d3043382d88b4333079e3e01fd14f37f6c6e7fa5b",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": null,
+    "kb_release_id": "milestone_baseline_0",
+    "origin_run": "m32_curve_s20261126",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "m32_curve_s20261126_baseline_0",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_curve_s20261126",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 36,
+  "usage_cutoff": {
+    "attempted_requests": 36,
+    "by_state": {
+      "complete": 35,
+      "http_error": 1
+    },
+    "cached_tokens": 54144,
+    "input_tokens": 72590,
+    "output_tokens": 32152,
+    "priced_attempts": 35,
+    "priced_cost_usd": 0.02222058,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "invalid_candidate": 30,
+      "probe": 1
+    },
+    "provider_elapsed_seconds": 417.395,
+    "requested_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 35
+    },
+    "unpriced_attempts": 1
+  },
+  "wall_elapsed_seconds_at_seal": 460.641,
+  "winner_solver_sha256": "a62f0cf605273750a9fc88779dff40f0768d61631facc9e0272874e94cb7ef79",
+  "winner_source_ordinal": 0
+}

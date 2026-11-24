@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:ececf35833c6451b96054ef1f6104091"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Replacing pure nearest-neighbour scoring with a scale-free blend of (a) current-node proximity, (b) remaining-count-decayed destination attraction 0.7*d(dest,u)-d(cur,u), and (c) unvisited-set mean isolation (mean_j d(u,j)) will lower mean relative gap versus exact NN on tsp-style instances while keeping median per-instance time < 5 ms and completion 100/100 at n<=128 (all distances median-normalised, no per-candidate suffix rollout). Expected mechanism: term (c) is maximised at the centroid-distant hull/outlier cities, which NN tends to leave as high-cost late stragglers, and decaying term (b) avoids the T69-style premature return to the depot that wastes the final arc.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:ececf35833c6451b96054ef1f6104091"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve `select_next_node` as a pure vectorised O(n^2) closed-tour coarse-graining rule: score(u) = -d(cur,u)/med + w_rem * d(dest,u)/med + mu * meanfar(u)/med, where meanfar(u) = mean_j d(u,j) over unvisited j (未访点平均孤立度, Island605 T46) supplies global-insurance against stranding outliers, w_rem = remaining/(n-1) decays the endpoint pull (T69 linear destination gravity) so the rule ends as a natural NN closure instead of forced radial entry, and every term is divided by the median of the candidate distances (scale-free, so it behaves identically across n 50→1000 and on TSPLIB). Candidate-side cost is a single (m x m) masked row-mean plus two gathers per step → total O(n^2) ~ sub-ms at n=128, so 100% completion under the 500 ms budget is preserved by construction (no lookahead rollout). Secondary axis for inner evolution: cap the candidate pool to the K=15 nearest unvisited nodes (KB-declared O(n^2 K) compromise) to test whether a light 1-step lookahead tiebreak can be bought without losing completion rate."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

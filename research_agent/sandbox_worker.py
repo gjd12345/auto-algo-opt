@@ -17,15 +17,19 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
-from agent_skill_loop.benchmark.catalog import load_profile_suite
 from agent_skill_loop.cvrp_workbench.protocol import compute_distance_matrix
 from agent_skill_loop.cvrp_workbench.solvers import evaluate_algorithm_on_instance
-from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
+from agent_skill_loop.cvrp_workbench.tsp_obp import (
+    evaluate_obp_algorithm_on_instance,
+    evaluate_tsp_algorithm_on_instance,
+)
 from agent_skill_loop.eval_worker import _watch_parent
-from agent_skill_loop.interface_design.blind_commitment import assert_suite_allowed_for_interactive_role
+from agent_skill_loop.interface_design.blind_eval_m32 import assert_milestone_suite_allowed_for_interactive_role
 from agent_skill_loop.interface_design.diagnostics import analyze_instance_records
 from agent_skill_loop.interface_design.runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
+from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
 from agent_skill_loop.interface_design.templates import get_template_spec
+from agent_skill_loop.problems.bpp_offline import bpp_bfd, bpp_ffd, verify_bpp_solution
 
 _FORBIDDEN_IMPORTS = frozenset({
     "os", "sys", "subprocess", "socket", "pathlib", "shutil", "ctypes",
@@ -38,7 +42,13 @@ _FORBIDDEN_CALLS = frozenset({
     "delattr", "globals", "locals", "vars", "dir", "input", "breakpoint",
     "exit", "quit", "memoryview",
 })
-_FORBIDDEN_STRINGS = ("cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_select_multiscale_64", ".agent_skill_custody", ".secrets")
+_FORBIDDEN_STRINGS = (
+    "cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_select_multiscale_64",
+    "tsp_m31_select_36", "tsp_m31_blind_72",
+    "obp_m31_select_36", "obp_m31_blind_72",
+    "bpp_m31_select_36", "bpp_m31_blind_72",
+    ".agent_skill_custody", ".agent_skill_custody_m31", ".agent_skill_custody_m32", ".secrets",
+)
 
 
 def validate_sandbox_ast(script: str) -> None:
@@ -70,9 +80,9 @@ def validate_sandbox_ast(script: str) -> None:
 
 
 def _safe_load_dev_suite(suite_id: str = "cvrp_dev_hetero_24", max_instances: int | None = None) -> list[dict[str, Any]]:
-    assert_suite_allowed_for_interactive_role(suite_id, role="interactive_sandbox")
-    suite = load_profile_suite(BENCHMARK_ID, suite_id, split="dev_train")
-    assert_suite_allowed_for_interactive_role(suite_id, suite, role="interactive_sandbox")
+    assert_milestone_suite_allowed_for_interactive_role(suite_id, role="interactive_sandbox")
+    suite = load_dev_or_public_suite(suite_id, split="dev_train", role="interactive_sandbox")
+    assert_milestone_suite_allowed_for_interactive_role(suite_id, suite, role="interactive_sandbox")
     insts = list(suite["instances"])
     if max_instances is not None:
         insts = insts[: int(max_instances)]
@@ -89,20 +99,42 @@ def _safe_eval_hook(
 ) -> dict[str, Any]:
     tpl = get_template_spec(template_id, "v1")
     fn = compile_hook_function(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+    dist_conv = "not_applicable" if tpl.problem_family in {"obp", "bpp"} else "euc_2d_float"
+    veh_pol = "unconstrained" if tpl.problem_family == "cvrp" else "not_applicable"
     return evaluate_hook_on_instance_inprocess(
         template_id=template_id,
         template_version="v1",
         hook_fn=fn,
         instance=copy.deepcopy(dict(instance)),
         postprocess_mode=postprocess_mode,
+        distance_convention=dist_conv,
+        vehicle_limit_policy=veh_pol,
         time_budget_ms=time_budget_ms,
     )
 
 
 def _safe_eval_baseline(algorithm_id: str, instance: Mapping[str, Any], *, time_budget_ms: float = 500.0) -> dict[str, Any]:
+    inst = copy.deepcopy(dict(instance))
+    if algorithm_id.startswith("tsp_"):
+        return evaluate_tsp_algorithm_on_instance(
+            algorithm_id, inst, distance_convention="euc_2d_float", time_budget_ms=time_budget_ms,
+        )
+    if algorithm_id.startswith("obp_"):
+        return evaluate_obp_algorithm_on_instance(algorithm_id, inst, time_budget_ms=time_budget_ms)
+    if algorithm_id in {"bpp_ffd", "bpp_bfd"}:
+        t0 = time.perf_counter()
+        bins = bpp_bfd(inst["items"], inst["capacity"]) if algorithm_id == "bpp_bfd" else bpp_ffd(inst["items"], inst["capacity"])
+        ver = verify_bpp_solution(inst, bins)
+        return {
+            "algorithm_id": algorithm_id,
+            "valid": bool(ver.get("valid")),
+            "bins_used": ver.get("bins_used"),
+            "objective": ver.get("bins_used"),
+            "solve_ms": round((time.perf_counter() - t0) * 1000.0, 4),
+        }
     return evaluate_algorithm_on_instance(
         algorithm_id,
-        copy.deepcopy(dict(instance)),
+        inst,
         distance_convention="euc_2d_float",
         vehicle_limit_policy="unconstrained",
         time_budget_ms=time_budget_ms,
@@ -110,11 +142,20 @@ def _safe_eval_baseline(algorithm_id: str, instance: Mapping[str, Any], *, time_
     )
 
 
-def _scale_cvrp_instance(instance: Mapping[str, Any], s: float) -> dict[str, Any]:
+def _scale_instance_for_problem(instance: Mapping[str, Any], s: float, problem_family: str) -> tuple[dict[str, Any], bool]:
     scaled = copy.deepcopy(dict(instance))
-    scaled["depot"] = [float(x) * s for x in scaled["depot"]]
-    scaled["customer_coordinates"] = [[float(x) * s for x in pt] for pt in scaled["customer_coordinates"]]
-    return scaled
+    if problem_family == "cvrp":
+        scaled["depot"] = [float(x) * s for x in scaled["depot"]]
+        scaled["customer_coordinates"] = [[float(x) * s for x in pt] for pt in scaled["customer_coordinates"]]
+        return scaled, True
+    if problem_family == "tsp":
+        scaled["coordinates"] = [[float(x) * s for x in pt] for pt in scaled["coordinates"]]
+        return scaled, True
+    if problem_family in {"obp", "bpp"}:
+        scaled["capacity"] = float(scaled["capacity"]) * s
+        scaled["items"] = [float(x) * s for x in scaled["items"]]
+        return scaled, False
+    return scaled, True
 
 
 def scale_invariance_audit(
@@ -126,24 +167,32 @@ def scale_invariance_audit(
     scales: Sequence[float] = (1e-3, 1.0, 1e3),
     time_budget_ms: float = 500.0,
 ) -> dict[str, Any]:
-    """Fast (<10ms typical) similarity-group scale audit across s in {1e-3, 1, 1e3}."""
+    """Fast similarity-group scale audit across s in {1e-3, 1, 1e3}."""
     tpl = get_template_spec(template_id, "v1")
     fn = compile_hook_function(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+    dist_conv = "not_applicable" if tpl.problem_family in {"obp", "bpp"} else "euc_2d_float"
+    veh_pol = "unconstrained" if tpl.problem_family == "cvrp" else "not_applicable"
     by_scale: dict[str, dict[str, Any]] = {}
     normalized: list[float] = []
     for s in scales:
         s_val = float(s)
-        scaled = _scale_cvrp_instance(instance, s_val)
+        scaled, divide_obj = _scale_instance_for_problem(instance, s_val, tpl.problem_family)
         rec = evaluate_hook_on_instance_inprocess(
             template_id=template_id,
             template_version="v1",
             hook_fn=fn,
             instance=scaled,
             postprocess_mode=postprocess_mode,
+            distance_convention=dist_conv,
+            vehicle_limit_policy=veh_pol,
             time_budget_ms=time_budget_ms,
         )
-        obj = rec.get("tour_length")
-        norm_obj = (float(obj) / s_val) if (rec.get("valid") and obj is not None) else None
+        obj = rec.get("objective")
+        if obj is None:
+            obj = rec.get("tour_length")
+        if obj is None:
+            obj = rec.get("bins_used")
+        norm_obj = ((float(obj) / s_val) if divide_obj else float(obj)) if (rec.get("valid") and obj is not None) else None
         if norm_obj is not None:
             normalized.append(norm_obj)
         by_scale[str(s_val)] = {

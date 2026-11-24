@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:3922b61816904e4a8236094475c0fe37"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 500 ms, replacing the fixed worst-removal-style ruin priority with a stagnation-adaptive rank-power score that anneals its exponent from greedy (p high) toward diversification (p low) and softens the route-load gate under stagnation will lower mean tour length below the current 16.0597 baseline, with gains concentrated in the exhausted regimes (size=100, tight capacity, eccentric depot, uniform spatial/demand), by escaping R2R stagnation cycles while preserving destructive pressure on high-savings nodes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:3922b61816904e4a8236094475c0fe37"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive multiplicative-gate rank-power ruin scoring: score_i = rank_power(|removal_savings_i|/scale * gate_load^a * gate_depot^b * gate_demand^c * gate_rdist^d, p(iter_frac, stagnation_ratio)) where the rank exponent p sweeps from ~1.2 (early, greedy worst-removal) to ~0.4 (late/stagnant, near-uniform mixed removal), and the load gate is softened (smaller exponent) as stagnation rises to avoid repeatedly pulling from the same over-loaded route; tuned to the exhausted regimes size=100, tight capacity, eccentric depot, uniform spatial/demand."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

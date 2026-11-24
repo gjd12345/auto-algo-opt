@@ -1,0 +1,194 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T15:55:17Z",
+  "solver_count": 3,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_obp_online_priority_40469d8d",
+      "registered_at": "2026-11-23T15:50:16Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0001_obp_online_priority_40469d8d",
+        "display_name": "Session R1 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities",
+        "hook_code_sha256": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656",
+        "design_sha256": "e09bc3f9f472422547094964fc91250c07f2e1e0a38a53ec8fb71becdad035e3",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "impl-obp-go-solver",
+        "cited_kb_ids": [
+          "impl-obp-go-solver",
+          "method-obp-best-fit",
+          "method-obp-first-fit",
+          "method-lit-obp-worstfit-family-worst-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "def priority(current_item, feasible_remaining_capacities):\n    # feasible_remaining_capacities are read-only residuals after feasibility.\n    # Post-placement leftover = remaining - item. Prefer smallest leftover (Best-Fit).\n    # Equivalent monotone score: (remaining - item) minimized, i.e. remaining minimized.\n    # We also use remaining as prefix-causal tie-break (smaller remaining = fuller bin),\n    # and rely on evaluator's earliest-bin tie preference for equal scores.\n    # Score: -(remaining - item) = item - remaining; ranking by -remaining.\n    # Implement directly as -remaining (strictly Best-Fit-like, tie-stable).\n    return -feasible_remaining_capacities"
+        },
+        "hook_hashes": {
+          "priority": "40469d8dd99dbe3a76e6e7be86cfb814e99a361702ffc2c7c94ab8ca1b3dc656"
+        },
+        "bundle_hash": "da7d735fcb66621f1c789071b9b81464b7e8c6b0798e33eb327e64ffb6ab4ed8",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.833333,
+        "solve_ms_mean": 0.9791
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_obp_online_priority_2a5f4113",
+      "registered_at": "2026-11-23T15:52:29Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0002_obp_online_priority_2a5f4113",
+        "display_name": "Session R2 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n    r = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    item = float(current_item)\n    post = r - item\n    # Best-fit: smaller post-placement residual is better.\n    # Normalize residual by remaining capacity to keep scale invariance,\n    # with a small absolute term to reward exact/near-exact fills.\n    cap = np.maximum(r, 1e-12)\n    norm_post = post / cap\n    exact_bonus = np.where(np.abs(post) <= 1e-12, 1.0, 0.0)\n    # Tighter normalized residual => higher score; exact fill gets bonus.\n    return -norm_post + 1e-6 * exact_bonus",
+        "hook_code_sha256": "2a5f41133b0310286d1f97ea3d905f43fa03f44ddae514e2c96afc929312c802",
+        "design_sha256": "a00d488b76042255cec181fbfcbed0733ad04438a24a96a44fc6025163679b29",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-obp-best-fit",
+        "cited_kb_ids": [
+          "method-obp-best-fit",
+          "method-lit-obp-1d-best-fit",
+          "method-obp-first-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n    r = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    item = float(current_item)\n    post = r - item\n    # Best-fit: smaller post-placement residual is better.\n    # Normalize residual by remaining capacity to keep scale invariance,\n    # with a small absolute term to reward exact/near-exact fills.\n    cap = np.maximum(r, 1e-12)\n    norm_post = post / cap\n    exact_bonus = np.where(np.abs(post) <= 1e-12, 1.0, 0.0)\n    # Tighter normalized residual => higher score; exact fill gets bonus.\n    return -norm_post + 1e-6 * exact_bonus"
+        },
+        "hook_hashes": {
+          "priority": "2a5f41133b0310286d1f97ea3d905f43fa03f44ddae514e2c96afc929312c802"
+        },
+        "bundle_hash": "423965df28801e5e995c5819897f6190a6d36074bb9a6ae47305e09cbe8e75db",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.833333,
+        "solve_ms_mean": 2.6151
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0003_obp_online_priority_4283fa79",
+      "registered_at": "2026-11-23T15:55:17Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0003_obp_online_priority_4283fa79",
+        "display_name": "Session R3 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "import numpy as np\n\ndef priority(current_item, feasible_remaining_capacities):\n    remaining = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    # Post-placement residual (smaller = tighter best-fit).\n    residual = remaining - float(current_item)\n    # Prefix-causal fill proxy: smaller remaining means fuller bin.\n    # Normalize residual by (remaining + 1) to keep scale invariant.\n    scale = remaining + 1.0\n    # Convex mixture: primary residual term (best-fit) plus a small\n    # convex fill/utilization correction (fuller bins favored slightly).\n    residual_term = -residual / scale\n    fill_term = -1.0 / scale\n    # Deterministic tie-break: reward larger current fill for equal residuals.\n    tie = fill_term * 1e-6\n    return residual_term + 0.25 * fill_term + tie",
+        "hook_code_sha256": "4283fa7919ae9450e0c32b8c6985ddec74858a5605ae6287849625b4e2d1547d",
+        "design_sha256": "d5897d89bbdb5e83fbb83086ad9ed5f2156591f4393cb37aa2dd1e8d3cade4fa",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261124\\session_run\\rounds\\round_0003\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-obp-best-fit",
+        "cited_kb_ids": [
+          "method-obp-best-fit",
+          "method-lit-obp-bestfit-family-best-fit-almost-best-fit",
+          "method-obp-first-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "import numpy as np\n\ndef priority(current_item, feasible_remaining_capacities):\n    remaining = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    # Post-placement residual (smaller = tighter best-fit).\n    residual = remaining - float(current_item)\n    # Prefix-causal fill proxy: smaller remaining means fuller bin.\n    # Normalize residual by (remaining + 1) to keep scale invariant.\n    scale = remaining + 1.0\n    # Convex mixture: primary residual term (best-fit) plus a small\n    # convex fill/utilization correction (fuller bins favored slightly).\n    residual_term = -residual / scale\n    fill_term = -1.0 / scale\n    # Deterministic tie-break: reward larger current fill for equal residuals.\n    tie = fill_term * 1e-6\n    return residual_term + 0.25 * fill_term + tie"
+        },
+        "hook_hashes": {
+          "priority": "4283fa7919ae9450e0c32b8c6985ddec74858a5605ae6287849625b4e2d1547d"
+        },
+        "bundle_hash": "9a2903f6aa46baeedb3bc9b43d6eb5deb6a90bc58df882bb7b089dbeefaa4887",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.833333,
+        "solve_ms_mean": 3.2892
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import json
+import math
 import os
 import random
 import threading
@@ -29,19 +30,20 @@ from eoh import BaseProblem, LLMConfig
 from eoh.config import EoHConfig
 from eoh.eoh.eoh import EOH
 
-from agent_skill_loop.benchmark.catalog import load_profile_suite
 from agent_skill_loop.client import load_local_env
-from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.request_budget import RequestBudget
 
-from .blind_commitment import assert_suite_not_blind
+from .blind_eval_m32 import assert_milestone_suite_not_blind
 from .contracts import (
     FrozenInterfaceSolver,
     InterfaceDesign,
     ValidationReport,
+    hook_bundle_metadata,
     sha256_text,
 )
-from .runtime import DynamicSubprocessEvaluator, capability_contract_dict
+from .planner import parse_hook_candidate
+from .runtime import DynamicSubprocessEvaluator, capability_contract_dict, derive_outer_timeout_s, resolve_problem_adapter
+from .session_baseline import load_dev_or_public_suite
 from .templates import get_template_spec
 from .validator import InterfaceValidator
 
@@ -50,8 +52,42 @@ def _utc_now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def derive_effective_batch_timeout_s(
+    instance_count: int,
+    solve_deadline_ms: float | None,
+    *,
+    floor_s: float = 20.0,
+) -> float:
+    """Ensure serial batch evaluation & EoH outer timeouts never truncate N * solve_deadline_ms."""
+    base = float(floor_s)
+    if solve_deadline_ms is None:
+        return base
+    computed = math.ceil(10.0 + 1.25 * max(0, int(instance_count)) * float(solve_deadline_ms) / 1000.0)
+    return max(base, float(computed), derive_outer_timeout_s(instance_count, solve_deadline_ms, minimum_s=base))
+
+
+def _default_mock_candidates() -> dict[str, tuple[str, ...]]:
+    candidates = dict(DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE)
+    try:
+        from .tsp_templates import TSP_MOCK_CANDIDATES_BY_TEMPLATE
+        candidates.update(TSP_MOCK_CANDIDATES_BY_TEMPLATE)
+    except ImportError:
+        pass
+    try:
+        from .packing_probes import PACKING_MOCK_CANDIDATES_BY_TEMPLATE
+        candidates.update(PACKING_MOCK_CANDIDATES_BY_TEMPLATE)
+    except ImportError:
+        pass
+    try:
+        from .cvrp_l3b import L3B_MOCK_CANDIDATES
+        candidates["cvrp_ruin_recreate_dual"] = L3B_MOCK_CANDIDATES
+    except ImportError:
+        pass
+    return candidates
+
+
 class DynamicInterfaceProblem(BaseProblem):
-    """Official EoH ``BaseProblem`` bound to a validated Milestone 2 ``InterfaceDesign``."""
+    """Official EoH ``BaseProblem`` bound to a validated Milestone 2/3.1/3.2 ``InterfaceDesign``."""
 
     def __init__(
         self,
@@ -68,17 +104,23 @@ class DynamicInterfaceProblem(BaseProblem):
         round_context: str | None = None,
         n_processes: int = 1,
     ) -> None:
-        assert_suite_not_blind(suite_id)
-        # EoH outer process timeout receives a margin above our inner subprocess timeout
-        super().__init__(timeout=max(5, int(candidate_timeout_s) + 5), n_processes=n_processes)
+        assert_milestone_suite_not_blind(suite_id)
         self.design = design
         self.tpl = get_template_spec(design.template_id, design.template_version)
+        self.adapter = resolve_problem_adapter(
+            self.tpl, problem_family=design.problem_family, protocol_id=design.protocol_id,
+        )
+        effective_batch_timeout = derive_effective_batch_timeout_s(
+            len(instances), instance_time_budget_ms, floor_s=float(candidate_timeout_s),
+        )
+        # EoH outer process timeout receives >= 10s headroom above our inner serial batch subprocess timeout
+        super().__init__(timeout=max(10, int(math.ceil(effective_batch_timeout)) + 10), n_processes=n_processes)
         self.instances = [dict(inst) for inst in instances]
         self.suite_id = str(suite_id)
         self.suite_hash = suite_hash
         self.distance_convention = str(distance_convention)
         self.vehicle_limit_policy = str(vehicle_limit_policy)
-        self.candidate_timeout_s = float(candidate_timeout_s)
+        self.candidate_timeout_s = float(effective_batch_timeout)
         self.instance_time_budget_ms = float(instance_time_budget_ms)
         self.evaluation_log = str(evaluation_log) if evaluation_log is not None else None
         self.round_context = round_context.strip() if isinstance(round_context, str) and round_context.strip() else None
@@ -89,11 +131,15 @@ class DynamicInterfaceProblem(BaseProblem):
         state = self.__dict__.copy()
         state.pop("_log_lock", None)
         state.pop("tpl", None)
+        state.pop("adapter", None)
         return state
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
         self.tpl = get_template_spec(self.design.template_id, self.design.template_version)
+        self.adapter = resolve_problem_adapter(
+            self.tpl, problem_family=self.design.problem_family, protocol_id=self.design.protocol_id,
+        )
         self._log_lock = threading.Lock()
 
     @property
@@ -102,12 +148,22 @@ class DynamicInterfaceProblem(BaseProblem):
 
     @property
     def task_description(self) -> str:
-        contract = capability_contract_dict(
-            hook_name=self.design.hook_name,
-            hook_signature=self.design.hook_signature,
-            template_id=self.design.template_id,
-            template_version=self.design.template_version,
-        )
+        specs = self.tpl.effective_hook_specs
+        if len(specs) > 1:
+            contract = {
+                "schema_version": "interface-capability-bundle-contract/v1",
+                "template_id": self.design.template_id,
+                "template_version": self.design.template_version,
+                "protocol_id": self.adapter.protocol_id,
+                "hooks": [spec.to_dict() for spec in specs],
+            }
+        else:
+            contract = capability_contract_dict(
+                hook_name=self.design.hook_name,
+                hook_signature=self.design.hook_signature,
+                template_id=self.design.template_id,
+                template_version=self.design.template_version,
+            )
         text = (
             self.design.hook_task_description
             + "\n\nEVALUATOR CAPABILITY CONTRACT (machine-derived; mandatory):\n"
@@ -126,18 +182,47 @@ class DynamicInterfaceProblem(BaseProblem):
     def evaluate_program(self, program_str: str, callable_func: Any = None) -> float | None:
         return self.evaluate(program_str)
 
+    def _resolve_hook_payload(self, code_string: str) -> tuple[str | None, dict[str, str] | None]:
+        specs = self.tpl.effective_hook_specs
+        if len(specs) <= 1 and not self.design.hook_specs:
+            return str(code_string), None
+        implementations = parse_hook_candidate(self.design.template_id, self.design.template_version, str(code_string))
+        return implementations[self.tpl.hook_name], implementations
+
     def evaluate_detailed(self, code_string: str) -> dict[str, Any]:
         evaluator = DynamicSubprocessEvaluator(candidate_timeout_s=self.candidate_timeout_s)
+        try:
+            primary_code, implementations = self._resolve_hook_payload(str(code_string))
+        except (ValueError, SyntaxError) as exc:
+            resp = {
+                "valid": False,
+                "completed": False,
+                "protocol_id": self.adapter.protocol_id,
+                "objective": None,
+                "instance_objectives": [],
+                "error_code": "invalid_hook_bundle_program",
+                "error_detail": str(exc),
+                "failures": [],
+                "records": [],
+                "timeout_kind": None,
+                "outer_timeout_s": self.candidate_timeout_s,
+            }
+            self._append_eval_log(str(code_string), resp)
+            return resp
         resp = evaluator.evaluate(
             template_id=self.design.template_id,
             template_version=self.design.template_version,
-            hook_code=str(code_string),
+            hook_code=primary_code,
+            hook_implementations=implementations,
             instances=self.instances,
             postprocess_mode=self.design.postprocess_mode,
             template_options=self.design.template_options,
             distance_convention=self.distance_convention,
             vehicle_limit_policy=self.vehicle_limit_policy,
-            instance_time_budget_ms=self.instance_time_budget_ms,
+            problem_family=self.adapter.problem_family,
+            protocol_id=self.adapter.protocol_id,
+            solve_deadline_ms=self.instance_time_budget_ms,
+            outer_timeout_s=self.candidate_timeout_s,
         )
         self._append_eval_log(str(code_string), resp)
         return resp
@@ -441,7 +526,7 @@ def run_dynamic_eoh_evolution(
     display_name: str = "M2 EoH Static Merge (v1)",
     kb_release_id: str = "20261122-main-co-workbench-m15",
     mode: str = "mock",  # "mock" | "live"
-    mock_responses: Sequence[str] = DEFAULT_MOCK_MERGE_CANDIDATES,
+    mock_responses: Sequence[str] | None = None,
     endpoint: str = "https://api.deepseek.com/v1/chat/completions",
     model: str = "deepseek-chat",
     api_key_env: str = "DEEPSEEK_API_KEY",
@@ -454,7 +539,7 @@ def run_dynamic_eoh_evolution(
     round_context: str | None = None,
 ) -> dict[str, Any]:
     """Validate ``design``, run real upstream EoH on it, and export a ``FrozenInterfaceSolver`` manifest."""
-    assert_suite_not_blind(suite_id)
+    assert_milestone_suite_not_blind(suite_id)
     if kb_release_id == "20261122-main-co-workbench-m15":
         try:
             from knowledge_tools.core import resolve_release
@@ -475,9 +560,17 @@ def run_dynamic_eoh_evolution(
 
     t_wall0 = time.perf_counter()
 
+    # 2. Load dev suite (never blind!) before validation so batch timeout scales with N
+    suite = load_dev_or_public_suite(suite_id, split=split, role="interactive_sandbox")
+    assert_milestone_suite_not_blind(suite_id, suite)
+    instances = list(suite["instances"][:max_instances] if max_instances is not None else suite["instances"])
+    effective_timeout_s = derive_effective_batch_timeout_s(
+        len(instances), instance_time_budget_ms, floor_s=candidate_timeout_s,
+    )
+
     # 1. Validate design through all 5 gates BEFORE launching EoH
     validator = InterfaceValidator(
-        candidate_timeout_s=candidate_timeout_s,
+        candidate_timeout_s=effective_timeout_s,
         instance_time_budget_ms=instance_time_budget_ms,
     )
     validation: ValidationReport = validator.validate(design)
@@ -489,10 +582,6 @@ def run_dynamic_eoh_evolution(
     if not validation.passed:
         raise ValueError(f"interface_design_failed_validation:{[f.error_code for f in validation.failures]}")
 
-    # 2. Load dev suite (never blind!)
-    suite = load_profile_suite(BENCHMARK_ID, suite_id, split=split)
-    assert_suite_not_blind(suite_id, suite)
-    instances = list(suite["instances"][:max_instances] if max_instances is not None else suite["instances"])
     eval_log = results_dir / "evaluations.jsonl"
     req_log = results_dir / "requests.jsonl"
 
@@ -500,25 +589,26 @@ def run_dynamic_eoh_evolution(
         design=design,
         instances=instances,
         suite_id=suite_id,
-        suite_hash=suite.get("data_manifest_hash"),
-        distance_convention=suite["distance_convention"],
-        vehicle_limit_policy=suite["vehicle_limit_policy"],
-        candidate_timeout_s=candidate_timeout_s,
+        suite_hash=suite.get("data_manifest_hash") or suite.get("suite_content_sha256"),
+        distance_convention=suite.get("distance_convention", "euc_2d_float"),
+        vehicle_limit_policy=suite.get("vehicle_limit_policy", "unconstrained"),
+        candidate_timeout_s=effective_timeout_s,
         instance_time_budget_ms=instance_time_budget_ms,
         evaluation_log=eval_log,
         round_context=round_context,
     )
 
     # Evaluate baseline hook first so we have an exact same-skeleton baseline objective
-    baseline_eval = task.evaluate_detailed(design.baseline_hook_code)
+    baseline_code = task.tpl.default_template_program if len(task.tpl.effective_hook_specs) > 1 else design.baseline_hook_code
+    baseline_eval = task.evaluate_detailed(baseline_code)
     if not baseline_eval.get("valid") or baseline_eval.get("objective") is None:
         raise RuntimeError(f"baseline_hook_failed_on_suite:{baseline_eval.get('error_code')}")
 
     # Write seed file containing baseline hook (plus optional pilot resume seeds)
     seed_entries: list[dict[str, str]] = [
-        {"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.", "code": design.baseline_hook_code}
+        {"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.", "code": baseline_code}
     ]
-    seen_seed_shas = {design.baseline_hook_sha256}
+    seen_seed_shas = {sha256_text(baseline_code)}
     if extra_seed_entries:
         for item in extra_seed_entries:
             code = str(item.get("code") or "")
@@ -543,7 +633,8 @@ def run_dynamic_eoh_evolution(
     bridge = None
     mock_srv = None
     if mode == "mock":
-        mock_srv = MockEoHLLMServer(mock_responses, request_log=req_log)
+        mock_pool = mock_responses if mock_responses is not None else _default_mock_candidates().get(design.template_id, DEFAULT_MOCK_MERGE_CANDIDATES)
+        mock_srv = MockEoHLLMServer(mock_pool, request_log=req_log)
         local_url = mock_srv.start()
     elif mode == "live":
         from agent_skill_loop.client import ProviderFailure
@@ -643,7 +734,14 @@ def run_dynamic_eoh_evolution(
     best_row = min(pool, key=lambda r: float(r["objective"]))
 
     # Re-validate winning candidate hook through all 5 gates before freezing!
-    winner_validation = validator.validate(design, hook_code_override=str(best_row["hook_code"]))
+    tpl = get_template_spec(design.template_id, design.template_version)
+    adapter = resolve_problem_adapter(tpl, problem_family=design.problem_family, protocol_id=design.protocol_id)
+    win_primary, win_impls = task._resolve_hook_payload(str(best_row["hook_code"]))
+    winner_validation = validator.validate(
+        design,
+        hook_code_override=win_primary,
+        hook_implementations=win_impls,
+    )
     (output_dir / "winner_validation_report.json").write_text(
         json.dumps(winner_validation.as_dict(), ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -652,7 +750,6 @@ def run_dynamic_eoh_evolution(
     if not winner_validation.passed:
         raise RuntimeError(f"winning_candidate_failed_5gates:{[f.error_code for f in winner_validation.failures]}")
 
-    tpl = get_template_spec(design.template_id, design.template_version)
     frozen_solver = FrozenInterfaceSolver(
         solver_id=solver_id,
         display_name=display_name,
@@ -664,8 +761,8 @@ def run_dynamic_eoh_evolution(
         postprocess_mode=design.postprocess_mode,
         template_options=dict(design.template_options),
         hook_name=design.hook_name,
-        hook_code=str(best_row["hook_code"]),
-        hook_code_sha256=sha256_text(str(best_row["hook_code"])),
+        hook_code=win_primary or str(best_row["hook_code"]),
+        hook_code_sha256=sha256_text(win_primary or str(best_row["hook_code"])),
         design_sha256=design.design_sha256,
         origin_run=str(output_dir),
         kb_release_id=kb_release_id,
@@ -678,6 +775,9 @@ def run_dynamic_eoh_evolution(
             f"{suite_id} mean={float(best_row['objective']):.4f} vs baseline={float(baseline_eval['objective']):.4f}."
         ),
         default_budget_ms=instance_time_budget_ms,
+        protocol_id=adapter.protocol_id,
+        hook_specs=tpl.hook_specs,
+        hook_implementations=win_impls or {},
     )
 
     frozen_manifest_path = output_dir / "frozen_solver_manifest.json"

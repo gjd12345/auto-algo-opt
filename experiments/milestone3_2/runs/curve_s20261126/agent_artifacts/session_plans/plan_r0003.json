@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Evolve score_ruin_nodes as a multiplicative gated rank-power removal score: score_i = (|removal_savings_i| / scale) ** p * gate_load * gate_depot * gate_demand * gate_rdist, with the exponent p annealed on (iter_frac, stagnation_ratio) so early iterations remove high-savings nodes broadly while stagnated late iterations concentrate on load-saturated, far-from-depot, high-demand nodes on long routes; all state arrays read-only, deterministic tie-breaking by customer index (no RNG).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton (CW build + intra_2opt + deterministic Regret-2 recreate + R2R acceptance) is the backbone and the only evolvable surface is score_ruin_nodes; the verified M3-3 evolved arm used exactly a multiplicative gated rank-power rule and beat the zero-evolution Worst-Removal control on blind-120 (23.3186 vs 23.3474). Archive shows a single solver at 15.788 mean with the largest negative relative gaps on tight capacity (-23.4%), size 100 (-22.1%), eccentric depot (-20.9%), uniform demand (-21.9%) and clustered spatial (-20.0%) regimes, so the gating terms are aimed at precisely those regimes: load/demand gates exploit tight capacity, depot gate helps eccentric depots, route-dist gate helps large n. Regret-2 recreate stays fixed per method-cvrp-cheapest-regret-insertion to keep attribution clean; no postprocess mode is applied (allowed list is ['none'])."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Multiplicative gating of raw removal savings (route-load saturation, depot eccentricity, demand mass, route length) combined with an iter_frac/stagnation_ratio-annealed rank-power exponent yields a strictly stronger ruin priority than plain Worst-Cost Removal on cvrp_dev_hetero_24 at 500 ms, with the largest gains on the weakest regimes (tight capacity, size 100, eccentric depot, uniform demand), without regressing feasibility or mean solve time beyond the 500 ms budget.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton (CW build + intra_2opt + deterministic Regret-2 recreate + R2R acceptance) is the backbone and the only evolvable surface is score_ruin_nodes; the verified M3-3 evolved arm used exactly a multiplicative gated rank-power rule and beat the zero-evolution Worst-Removal control on blind-120 (23.3186 vs 23.3474). Archive shows a single solver at 15.788 mean with the largest negative relative gaps on tight capacity (-23.4%), size 100 (-22.1%), eccentric depot (-20.9%), uniform demand (-21.9%) and clustered spatial (-20.0%) regimes, so the gating terms are aimed at precisely those regimes: load/demand gates exploit tight capacity, depot gate helps eccentric depots, route-dist gate helps large n. Regret-2 recreate stays fixed per method-cvrp-cheapest-regret-insertion to keep attribution clean; no postprocess mode is applied (allowed list is ['none'])."
+  }
+}

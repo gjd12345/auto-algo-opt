@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:026069545b4e44828d36f36ef2139279"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A scale-invariant, capacity-slack-aware and depot-eccentricity-weighted `score_ruin_nodes` (all terms normalized by mean depot distance and by Q) will reduce mean objective on cvrp_dev_hetero_24 below the current SBS 16.0597, with the largest gains on the size=100, tight-capacity, uniform-demand and eccentric-depot regimes where 12/12 instances currently exhaust the 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:026069545b4e44828d36f36ef2139279"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve `score_ruin_nodes` as a scale-invariant, capacity-aware destroy priority, keeping Regret-2 recreate intact. (1) Normalize every ruin component by a global depot-distance scale mean(d(0,1..n)) so the hook is 0% drift under coordinate rescaling and behaves identically on size 24 vs size 100 (all size-100 instances report exhausted_instances=12, i.e. the budget is fully consumed, so per-node ranking must be cheap and decisive rather than amplitude-dependent). (2) Add a tight-capacity term: nodes in routes whose residual slack (Q - load)/Q is small and whose removal detour saving d(a,i)+d(i,b)-d(a,b) is large get priority, targeting the tight-capacity regime (12 instances, vbs_rel_gap -22.2%). (3) Add a route-imbalance / fill-ratio term (per-route load/Q, dimensionless) to break up over-full routes on uniform-demand instances (12 instances, gap -20.3%). (4) Add eccentric-depot correction: weight travel terms by relative depot distance d(0,i)/scale so far-away customers in the eccentric-depot regime (12 instances, gap -19.6%) are removed more often, damped by a bounded sigmoid to avoid emptying the far cluster entirely. (5) Couple a deterministic ruin-size schedule (ruin_k proportional to sqrt(n_clusters_est) or fixed fraction of n, clipped) driven only by instance size, so larger n gets proportional larger neighborhoods within 500 ms. Keep single-hook form (pure function of distances/demands/route state), no RNG, no postprocess."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

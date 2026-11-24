@@ -3,17 +3,40 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from agent_skill_loop.benchmark.catalog import load_profile_suite
 from agent_skill_loop.cvrp_workbench.solvers import evaluate_algorithm_on_instance
-from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
-from agent_skill_loop.interface_design.blind_commitment import assert_suite_allowed_for_interactive_role
+from agent_skill_loop.cvrp_workbench.tsp_obp import (
+    evaluate_obp_algorithm_on_instance,
+    evaluate_tsp_algorithm_on_instance,
+)
+from agent_skill_loop.interface_design.blind_eval_m32 import assert_milestone_suite_allowed_for_interactive_role
 from agent_skill_loop.interface_design.diagnostics import analyze_instance_records
 from agent_skill_loop.interface_design.runtime import compile_hook_function, evaluate_hook_on_instance_inprocess
+from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
 from agent_skill_loop.interface_design.templates import get_template_spec
+from agent_skill_loop.problems.bpp_offline import bpp_bfd, bpp_ffd, verify_bpp_solution
 from research_agent.contracts import atomic_write_json, utc_now
+
+_DEFAULT_BASELINES: dict[str, str] = {
+    "cvrp": "cw_parallel_merge",
+    "tsp": "tsp_nn_2opt",
+    "obp": "obp_best_fit",
+    "bpp": "bpp_ffd",
+}
+
+
+def _with_tour_length_alias(record: Mapping[str, Any]) -> dict[str, Any]:
+    out = dict(record)
+    if out.get("tour_length") is None:
+        for key in ("objective", "bins_used"):
+            val = out.get(key)
+            if val is not None and not isinstance(val, bool) and isinstance(val, (int, float)):
+                out["tour_length"] = float(val)
+                break
+    return out
 
 
 class DiagnosticTool:
@@ -29,18 +52,19 @@ class DiagnosticTool:
         self.run_dir = Path(run_dir).resolve()
         self.dev_suite_id = str(dev_suite_id)
         self.dev_split = str(dev_split)
-        assert_suite_allowed_for_interactive_role(self.dev_suite_id, role="diagnostic_interactive")
+        assert_milestone_suite_allowed_for_interactive_role(self.dev_suite_id, role="diagnostic_interactive")
         self.diag_dir = self.run_dir / "agent_artifacts" / "diagnostics"
         self.diag_dir.mkdir(parents=True, exist_ok=True)
         self._seq = 0
 
-    def _load_dev_instances(self, max_instances: int | None = None) -> tuple[list[dict[str, Any]], str, str]:
-        suite = load_profile_suite(BENCHMARK_ID, self.dev_suite_id, split=self.dev_split)
-        assert_suite_allowed_for_interactive_role(self.dev_suite_id, suite, role="diagnostic_interactive")
+    def _load_dev_instances(self, max_instances: int | None = None) -> tuple[list[dict[str, Any]], str, str, str]:
+        suite = load_dev_or_public_suite(self.dev_suite_id, split=self.dev_split, role="diagnostic_interactive")
+        assert_milestone_suite_allowed_for_interactive_role(self.dev_suite_id, suite, role="diagnostic_interactive")
         insts = list(suite["instances"])
         if max_instances is not None:
             insts = insts[: int(max_instances)]
-        return insts, str(suite["distance_convention"]), str(suite["vehicle_limit_policy"])
+        problem = str(suite.get("problem_family") or suite.get("problem_id") or "cvrp")
+        return insts, str(suite.get("distance_convention") or "not_applicable"), str(suite.get("vehicle_limit_policy") or "not_applicable"), problem
 
     def diagnose_suite(
         self,
@@ -50,41 +74,83 @@ class DiagnosticTool:
         hook_code: str | None = None,
         postprocess_mode: str = "none",
         time_budget_ms: float = 500.0,
-        baseline_algorithm: str = "cw_parallel_merge",
+        baseline_algorithm: str = "auto",
         max_instances: int | None = None,
     ) -> dict[str, Any]:
         self._seq += 1
-        insts, dist_conv, veh_pol = self._load_dev_instances(max_instances=max_instances)
+        insts, dist_conv, veh_pol, suite_problem = self._load_dev_instances(max_instances=max_instances)
         tpl = get_template_spec(template_id, template_version)
+        problem = tpl.problem_family or suite_problem
+        resolved_base = (
+            _DEFAULT_BASELINES.get(problem, "cw_parallel_merge")
+            if baseline_algorithm == "auto" or (problem != "cvrp" and baseline_algorithm == "cw_parallel_merge")
+            else baseline_algorithm
+        )
         code = hook_code if hook_code is not None else tpl.default_baseline_hook_code
         fn = compile_hook_function(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+        extra_hooks = {}
+        if tpl.hook_specs:
+            extra_hooks = {
+                hs.hook_name: compile_hook_function(
+                    tpl.baseline_implementations()[hs.hook_name],
+                    hook_name=hs.hook_name,
+                    expected_args=hs.hook_signature,
+                )
+                for hs in tpl.hook_specs[1:]
+                if hs.hook_name in tpl.baseline_implementations()
+            }
 
         meta_map = {str(inst["instance_id"]): inst for inst in insts}
         cand_records: list[dict[str, Any]] = []
         base_records: list[dict[str, Any]] = []
         for inst in insts:
-            cand_records.append(
-                evaluate_hook_on_instance_inprocess(
-                    template_id=template_id,
-                    template_version=template_version,
-                    hook_fn=fn,
-                    instance=inst,
-                    postprocess_mode=postprocess_mode,
+            cand_raw = evaluate_hook_on_instance_inprocess(
+                template_id=template_id,
+                template_version=template_version,
+                hook_fn=fn,
+                instance=inst,
+                postprocess_mode=postprocess_mode,
+                distance_convention=dist_conv,
+                vehicle_limit_policy=veh_pol,
+                time_budget_ms=time_budget_ms,
+                extra_hooks=extra_hooks or None,
+            )
+            cand_records.append(_with_tour_length_alias(cand_raw))
+            if problem == "tsp":
+                base_raw = evaluate_tsp_algorithm_on_instance(
+                    resolved_base,
+                    inst,
                     distance_convention=dist_conv,
-                    vehicle_limit_policy=veh_pol,
                     time_budget_ms=time_budget_ms,
                 )
-            )
-            base_records.append(
-                evaluate_algorithm_on_instance(
-                    baseline_algorithm,
+            elif problem == "obp":
+                base_raw = evaluate_obp_algorithm_on_instance(
+                    resolved_base,
+                    inst,
+                    time_budget_ms=time_budget_ms,
+                )
+            elif problem == "bpp":
+                t0 = time.perf_counter()
+                bins = bpp_bfd(inst["items"], inst["capacity"]) if resolved_base == "bpp_bfd" else bpp_ffd(inst["items"], inst["capacity"])
+                ver = verify_bpp_solution(inst, bins)
+                base_raw = {
+                    "instance_id": inst.get("instance_id"),
+                    "algorithm_id": resolved_base,
+                    "valid": bool(ver.get("valid")),
+                    "bins_used": ver.get("bins_used"),
+                    "objective": ver.get("bins_used"),
+                    "solve_ms": round((time.perf_counter() - t0) * 1000.0, 4),
+                }
+            else:
+                base_raw = evaluate_algorithm_on_instance(
+                    resolved_base,
                     inst,
                     distance_convention=dist_conv,
                     vehicle_limit_policy=veh_pol,
                     time_budget_ms=time_budget_ms,
                     record_trace=False,
                 )
-            )
+            base_records.append(_with_tour_length_alias({**dict(base_raw), "instance_id": inst.get("instance_id")}))
 
         analysis = analyze_instance_records(
             cand_records,
@@ -101,7 +167,7 @@ class DiagnosticTool:
             "template_version": template_version,
             "postprocess_mode": postprocess_mode,
             "time_budget_ms": float(time_budget_ms),
-            "baseline_algorithm": baseline_algorithm,
+            "baseline_algorithm": resolved_base,
             "analysis": analysis,
             "per_instance_records": cand_records,
         }

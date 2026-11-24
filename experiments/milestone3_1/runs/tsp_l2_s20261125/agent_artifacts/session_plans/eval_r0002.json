@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:1a9fad68624b4f9f97c5e25237be68c6"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a 500 ms budget on dev_24 (n=50/100/200, mean objective ~84740), a neighbor-restricted best-improvement 2-opt with don't-look bits plus a lookahead-weighted insertion score (score_insertion_move penalizing long created edges) yields a lower mean tour cost than round 1's pure greedy-cheapest insertion + full-scan 2-opt, because the O(n) full neighborhood scan is replaced by O(n*k) neighbor pairs, freeing budget for more repair rounds and producing a better starting tour.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:1a9fad68624b4f9f97c5e25237be68c6"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Improve the insertion-move scoring so the guided insertion builds a tour that needs fewer/cheaper 2-opt repairs: score each candidate insertion by its immediate cost delta plus a k-nearest-neighbor-based lookahead penalty on the two edges it creates, and restrict the 2-opt repair to neighbor-induced pairs with a best-improvement first-improvement hybrid and a deterministic don't-look-bit skip list."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

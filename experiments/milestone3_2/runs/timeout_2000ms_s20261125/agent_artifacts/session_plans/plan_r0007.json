@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Stagnation-adaptive multiplicative gating on removal savings (rank-power) targeting tight-capacity/size-100 clustered regimes",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the single evolvable hook score_ruin_nodes with deterministic Regret-2 reinsertion gives real net gain (23.3186 vs L3-ctrl 23.3474 on blind_120) and explicitly names stagnation_aware_diversification as a strong regime; archive shows current 6 solvers cluster within 0.09 objective (16.0496..16.1375) with VBS gap only 0.75%, i.e. the backbone is saturated and gains must come from destruction-policy diversification under stagnation rather than more iterations. Tight-capacity/100-node regimes leave least slack, so a load-awareness gate on which nodes to ruin (prefer nodes whose removal frees capacity bottleneck rather than highest absolute detour) should pay off there. Postprocess none keeps the anytime LNS skeleton untouched and stays within the 2000 ms budget (template's first_feasible_ms ~2-3 ms)."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Rewriting score_ruin_nodes as score_i = rank_power(|savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) where p rises with stagnation (encourages diversification by flattening/boosting spread) and gate_load penalizes removing customers from near-full routes will reduce mean objective on dev_24 below SBS 16.0496, since the weakest regimes are tight-capacity (12 inst), size 100 (12), uniform demand (12) and clustered (8) where worst-cost removal over-focuses on the same high-savings nodes and stalls early.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the single evolvable hook score_ruin_nodes with deterministic Regret-2 reinsertion gives real net gain (23.3186 vs L3-ctrl 23.3474 on blind_120) and explicitly names stagnation_aware_diversification as a strong regime; archive shows current 6 solvers cluster within 0.09 objective (16.0496..16.1375) with VBS gap only 0.75%, i.e. the backbone is saturated and gains must come from destruction-policy diversification under stagnation rather than more iterations. Tight-capacity/100-node regimes leave least slack, so a load-awareness gate on which nodes to ruin (prefer nodes whose removal frees capacity bottleneck rather than highest absolute detour) should pay off there. Postprocess none keeps the anytime LNS skeleton untouched and stays within the 2000 ms budget (template's first_feasible_ms ~2-3 ms)."
+  }
+}

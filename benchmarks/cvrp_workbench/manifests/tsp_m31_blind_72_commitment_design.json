@@ -1,0 +1,44 @@
+{
+  "suite_id": "tsp_m31_blind_72",
+  "problem_family": "tsp",
+  "problem_id": "tsp_construct",
+  "protocol_id": "tsp/v1",
+  "split": "blind",
+  "suite_role": "final_blind_acceptance",
+  "distance_convention": "euc_2d_float",
+  "vehicle_limit_policy": "not_applicable",
+  "generator_version": "m31_stratified/v1",
+  "instance_count": 72,
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_low": 4,
+      "n50_uniform_high": 4,
+      "n50_clustered_low": 4,
+      "n50_clustered_high": 4,
+      "n50_grid_low": 4,
+      "n50_grid_high": 4,
+      "n100_uniform_low": 4,
+      "n100_uniform_high": 4,
+      "n100_clustered_low": 4,
+      "n100_clustered_high": 4,
+      "n100_grid_low": 4,
+      "n100_grid_high": 4,
+      "n200_uniform_low": 4,
+      "n200_uniform_high": 4,
+      "n200_clustered_low": 4,
+      "n200_clustered_high": 4,
+      "n200_grid_low": 4,
+      "n200_grid_high": 4
+    },
+    "axis": "hull_boundary_ratio",
+    "strata": {
+      "low": 0.1,
+      "high": 0.3
+    }
+  },
+  "reference_baseline": "nearest_neighbor",
+  "input_visibility": "full_coordinates",
+  "exposure_status": "locked_m31_blind",
+  "schema_version": "milestone-blind-commitment-design/v1",
+  "commitment_status": "pending_external_seal"
+}

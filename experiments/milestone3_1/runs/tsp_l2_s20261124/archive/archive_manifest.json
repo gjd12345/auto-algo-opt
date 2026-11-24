@@ -1,0 +1,198 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T15:47:59Z",
+  "solver_count": 3,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_tsp_guided_insertion_2opt_b74223f3",
+      "registered_at": "2026-11-23T15:43:53Z",
+      "arm_id": "m31_tsp_l2",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0001_tsp_guided_insertion_2opt_b74223f3",
+        "display_name": "Session R1 · tsp_guided_insertion_2opt",
+        "problem_family": "tsp",
+        "paradigm": "insertion",
+        "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+        "template_id": "tsp_guided_insertion_2opt",
+        "template_version": "v1",
+        "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "score_insertion",
+        "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    max_d = max(nearest_tour_distances) if n else 1.0\n    max_c = max(insertion_costs) if n else 1.0\n    if max_d <= 0.0:\n        max_d = 1.0\n    if max_c <= 0.0:\n        max_c = 1.0\n    scores = []\n    for i in range(n):\n        d = nearest_tour_distances[i] / max_d\n        c = insertion_costs[i] / max_c\n        # Regret-style blend: proximity to current tour plus cheap insertion.\n        base = 0.55 * (1.0 - c) + 0.45 * (1.0 - d)\n        # Deterministic tiny ID-based diversity signal.\n        node = unvisited_nodes[i]\n        tie = ((node * 2654435761) & 0xFFFF) / 65535.0\n        scores.append(base + 0.001 * tie)\n    return scores",
+        "hook_code_sha256": "b74223f3ad5f447c4a6520e1de7baf50e5ecaf652588e259b127566acda675f4",
+        "design_sha256": "c4be3b86548fae796a7ec46198a6f2515e40309e57106ea1c7d461a98daf3e52",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261124\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-lit-tsp-construct-cheapest-insertion",
+        "cited_kb_ids": [
+          "method-lit-tsp-construct-cheapest-insertion",
+          "method-lit-tsp-large-lin-kernighan",
+          "method-lit-tsp-asymmetric-croes-2-opt-on-directed-distances",
+          "method-lit-tsp-clustered-intra-cluster-2-opt"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+        "default_budget_ms": 500.0,
+        "protocol_id": "tsp/v1",
+        "hook_specs": [
+          {
+            "name": "score_insertion",
+            "signature": [
+              "unvisited_nodes",
+              "nearest_tour_distances",
+              "insertion_costs"
+            ],
+            "output_shape_arg": "unvisited_nodes"
+          }
+        ],
+        "hook_implementations": {
+          "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    max_d = max(nearest_tour_distances) if n else 1.0\n    max_c = max(insertion_costs) if n else 1.0\n    if max_d <= 0.0:\n        max_d = 1.0\n    if max_c <= 0.0:\n        max_c = 1.0\n    scores = []\n    for i in range(n):\n        d = nearest_tour_distances[i] / max_d\n        c = insertion_costs[i] / max_c\n        # Regret-style blend: proximity to current tour plus cheap insertion.\n        base = 0.55 * (1.0 - c) + 0.45 * (1.0 - d)\n        # Deterministic tiny ID-based diversity signal.\n        node = unvisited_nodes[i]\n        tie = ((node * 2654435761) & 0xFFFF) / 65535.0\n        scores.append(base + 0.001 * tie)\n    return scores"
+        },
+        "hook_hashes": {
+          "score_insertion": "b74223f3ad5f447c4a6520e1de7baf50e5ecaf652588e259b127566acda675f4"
+        },
+        "bundle_hash": "ed9c891ea40925aa670e18d3f0f8c0350b29d10b5bf30942950a2c1679af1dc2",
+        "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+      },
+      "suite_metrics": {
+        "suite_id": "tsp_m31_dev_36",
+        "mean_tour_length": 87950.837819,
+        "solve_ms_mean": 21.0082
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_tsp_guided_insertion_2opt_44fdd5ba",
+      "registered_at": "2026-11-23T15:46:13Z",
+      "arm_id": "m31_tsp_l2",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0002_tsp_guided_insertion_2opt_44fdd5ba",
+        "display_name": "Session R2 · tsp_guided_insertion_2opt",
+        "problem_family": "tsp",
+        "paradigm": "insertion",
+        "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+        "template_id": "tsp_guided_insertion_2opt",
+        "template_version": "v1",
+        "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "score_insertion",
+        "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    max_d = max(nearest_tour_distances)\n    max_c = max(insertion_costs)\n    min_d = min(nearest_tour_distances)\n    min_c = min(insertion_costs)\n    span_d = max_d - min_d\n    span_c = max_c - min_c\n    if span_d <= 0.0:\n        span_d = 1.0\n    if span_c <= 0.0:\n        span_c = 1.0\n    alpha = 0.75\n    scores = []\n    for i in range(n):\n        c = (insertion_costs[i] - min_c) / span_c\n        d = (nearest_tour_distances[i] - min_d) / span_d\n        # Harmonic-style blend of cheapness and closeness, sharpened.\n        num = (1.0 - c) + (1.0 - d)\n        den = (1.0 - c) * (1.0 - d) + 1e-12\n        pri = (num / den) ** alpha\n        # Coarse quantized correlation tie-break.\n        node = unvisited_nodes[i]\n        h = (node * 2654435761) & 0xFFFFFFFF\n        h ^= (h >> 15)\n        h = (h * 40503) & 0xFFFFFFFF\n        bucket = (h >> 20) & 0xF\n        tie = bucket / 15.0\n        scores.append(pri + 0.0002 * tie)\n    return scores",
+        "hook_code_sha256": "44fdd5ba5a03b806d897505b68628f9e92bc261e19b6c797fe4a968cc98f9611",
+        "design_sha256": "54161b5035ed73670b3c51085767ad20c9a7e4311039f8e3fea828f5ecb88cb2",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-tsp-two-opt",
+        "cited_kb_ids": [
+          "method-tsp-two-opt",
+          "method-tsp-or-opt-2",
+          "method-tsp-double-bridge-ils"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+        "default_budget_ms": 500.0,
+        "protocol_id": "tsp/v1",
+        "hook_specs": [
+          {
+            "name": "score_insertion",
+            "signature": [
+              "unvisited_nodes",
+              "nearest_tour_distances",
+              "insertion_costs"
+            ],
+            "output_shape_arg": "unvisited_nodes"
+          }
+        ],
+        "hook_implementations": {
+          "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    max_d = max(nearest_tour_distances)\n    max_c = max(insertion_costs)\n    min_d = min(nearest_tour_distances)\n    min_c = min(insertion_costs)\n    span_d = max_d - min_d\n    span_c = max_c - min_c\n    if span_d <= 0.0:\n        span_d = 1.0\n    if span_c <= 0.0:\n        span_c = 1.0\n    alpha = 0.75\n    scores = []\n    for i in range(n):\n        c = (insertion_costs[i] - min_c) / span_c\n        d = (nearest_tour_distances[i] - min_d) / span_d\n        # Harmonic-style blend of cheapness and closeness, sharpened.\n        num = (1.0 - c) + (1.0 - d)\n        den = (1.0 - c) * (1.0 - d) + 1e-12\n        pri = (num / den) ** alpha\n        # Coarse quantized correlation tie-break.\n        node = unvisited_nodes[i]\n        h = (node * 2654435761) & 0xFFFFFFFF\n        h ^= (h >> 15)\n        h = (h * 40503) & 0xFFFFFFFF\n        bucket = (h >> 20) & 0xF\n        tie = bucket / 15.0\n        scores.append(pri + 0.0002 * tie)\n    return scores"
+        },
+        "hook_hashes": {
+          "score_insertion": "44fdd5ba5a03b806d897505b68628f9e92bc261e19b6c797fe4a968cc98f9611"
+        },
+        "bundle_hash": "0fd225c38666026fdbed00ed28fb4e9d747862f10146b0a66367c0fdae03046b",
+        "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+      },
+      "suite_metrics": {
+        "suite_id": "tsp_m31_dev_36",
+        "mean_tour_length": 85145.850107,
+        "solve_ms_mean": 41.5865
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0003_tsp_guided_insertion_2opt_2e546bbd",
+      "registered_at": "2026-11-23T15:47:59Z",
+      "arm_id": "m31_tsp_l2",
+      "search_seed": 20261124,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0003_tsp_guided_insertion_2opt_2e546bbd",
+        "display_name": "Session R3 · tsp_guided_insertion_2opt",
+        "problem_family": "tsp",
+        "paradigm": "insertion",
+        "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+        "template_id": "tsp_guided_insertion_2opt",
+        "template_version": "v1",
+        "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "score_insertion",
+        "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    \n    # Basic stats for normalization\n    max_d = max(nearest_tour_distances)\n    min_d = min(nearest_tour_distances)\n    max_c = max(insertion_costs)\n    min_c = min(insertion_costs)\n    span_d = max_d - min_d\n    span_c = max_c - min_c\n    if span_d <= 0.0:\n        span_d = 1.0\n    if span_c <= 0.0:\n        span_c = 1.0\n    \n    # Regret proxy: cities whose nearest-tour distance is large relative to\n    # their insertion cost are \"stranded\" and should be placed earlier.\n    # Compute per-city normalized regret = (norm_d - norm_c), clipped to [0,1].\n    scores = []\n    for i in range(n):\n        nc = (insertion_costs[i] - min_c) / span_c   # 0..1, 0=cheapest\n        nd = (nearest_tour_distances[i] - min_d) / span_d  # 0..1, 0=closest\n        \n        # Primary: regret-aware score. High when city is far but cheap to insert.\n        # regret = nd - nc, in [-1, 1]; shift to [0, 1].\n        regret = 0.5 * (nd - nc) + 0.5\n        \n        # Secondary: cheapness bonus (log-compressed).\n        cheap = 1.0 - nc\n        \n        # Combine: regret dominates, cheapness refines. Higher score wins.\n        pri = 3.0 * regret * regret + 1.0 * regret + 0.5 * cheap\n        \n        # Deterministic tie-break via hash of node id.\n        node = unvisited_nodes[i]\n        h = (int(node) * 2654435761) & 0xFFFFFFFF\n        h ^= (h >> 15)\n        h = (h * 40503) & 0xFFFFFFFF\n        bucket = (h >> 20) & 0xF\n        tie = bucket / 15.0\n        \n        scores.append(pri + 1e-6 * tie)\n    return scores",
+        "hook_code_sha256": "2e546bbd6759d490dffa6bb2596a096084286877b2ca424782ae7058fdb93b42",
+        "design_sha256": "c6c9a29ba2e489ed0b4291913b07388d2c9c0c694a44a8c029c543cde2570ad7",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261124\\session_run\\rounds\\round_0003\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-tsp-nearest-neighbor-construct",
+        "cited_kb_ids": [
+          "method-tsp-nearest-neighbor-construct",
+          "method-tsp-two-opt",
+          "impl-tsp-official-construct",
+          "method-lit-tsp-metric-nearest-neighbor"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+        "default_budget_ms": 500.0,
+        "protocol_id": "tsp/v1",
+        "hook_specs": [
+          {
+            "name": "score_insertion",
+            "signature": [
+              "unvisited_nodes",
+              "nearest_tour_distances",
+              "insertion_costs"
+            ],
+            "output_shape_arg": "unvisited_nodes"
+          }
+        ],
+        "hook_implementations": {
+          "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    n = len(unvisited_nodes)\n    if n == 0:\n        return []\n    \n    # Basic stats for normalization\n    max_d = max(nearest_tour_distances)\n    min_d = min(nearest_tour_distances)\n    max_c = max(insertion_costs)\n    min_c = min(insertion_costs)\n    span_d = max_d - min_d\n    span_c = max_c - min_c\n    if span_d <= 0.0:\n        span_d = 1.0\n    if span_c <= 0.0:\n        span_c = 1.0\n    \n    # Regret proxy: cities whose nearest-tour distance is large relative to\n    # their insertion cost are \"stranded\" and should be placed earlier.\n    # Compute per-city normalized regret = (norm_d - norm_c), clipped to [0,1].\n    scores = []\n    for i in range(n):\n        nc = (insertion_costs[i] - min_c) / span_c   # 0..1, 0=cheapest\n        nd = (nearest_tour_distances[i] - min_d) / span_d  # 0..1, 0=closest\n        \n        # Primary: regret-aware score. High when city is far but cheap to insert.\n        # regret = nd - nc, in [-1, 1]; shift to [0, 1].\n        regret = 0.5 * (nd - nc) + 0.5\n        \n        # Secondary: cheapness bonus (log-compressed).\n        cheap = 1.0 - nc\n        \n        # Combine: regret dominates, cheapness refines. Higher score wins.\n        pri = 3.0 * regret * regret + 1.0 * regret + 0.5 * cheap\n        \n        # Deterministic tie-break via hash of node id.\n        node = unvisited_nodes[i]\n        h = (int(node) * 2654435761) & 0xFFFFFFFF\n        h ^= (h >> 15)\n        h = (h * 40503) & 0xFFFFFFFF\n        bucket = (h >> 20) & 0xF\n        tie = bucket / 15.0\n        \n        scores.append(pri + 1e-6 * tie)\n    return scores"
+        },
+        "hook_hashes": {
+          "score_insertion": "2e546bbd6759d490dffa6bb2596a096084286877b2ca424782ae7058fdb93b42"
+        },
+        "bundle_hash": "f678f1174b2633e84729c212c4b2550a6d8450a1151da00fb09f45a14125812e",
+        "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+      },
+      "suite_metrics": {
+        "suite_id": "tsp_m31_dev_36",
+        "mean_tour_length": 84541.491785,
+        "solve_ms_mean": 25.4807
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

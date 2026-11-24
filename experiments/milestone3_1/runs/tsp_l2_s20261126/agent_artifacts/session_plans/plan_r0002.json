@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Replace the 0.65/0.35 max-normalised nearest-distance/insertion-cost blend with a cheaper, better-conditioned score: a vectorised linear destination-pull term (w_dest * d(dest,u) - d(cur,u)) combined with regret-weighted insertion (prefer cities whose best and second-best insertion deltas are far apart), then run exhaustive 2-opt to full local optimality instead of a fixed pass count, with an early-exit guard so the 500 ms budget is never exhausted on size-200 instances.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "Round-1 evidence: 36/36 feasible at 7.04 ms mean with a 0.65/0.35 blend hook, so there is ~490 ms of unused budget and the binding constraint is score design, not speed. KB method-tsp-i605-dest-pull shows that the apparent 'regret minus insertion cost' form algebraically collapses to 0.7*d(dest,u) - d(cur,u), a sub-millisecond 128/128-complete constructor — so the cheapest path to quality is this single-normalised linear pull rather than two separately normalised features (whose per-call max normalisation is scale-fragile, cf. method-tsp-i605-dimensionless-ratio). Remaining quality must then come from the 2-opt phase, which is why the plan spends the freed budget on exhaustive 2-opt with a time-guard early exit, addressing open hypothesis h1-regret-insertion-plus-full-2opt by actually implementing the regret term and testing the full-2-opt schedule. Both factors (constructor score, 2-opt termination rule) are separable in the hook, so the diagnose suite can attribute any delta."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "For tsp_guided_insertion_2opt on dev_24, scoring insertion candidates by a max-normalised linear destination pull plus a regret term over the two cheapest insertion positions, followed by exhaustive (not fixed-pass) 2-opt, will reduce mean tour length below the round-1 baseline of 84687.24 while keeping 36/36 feasibility and mean solve time under ~50 ms, because regret seeding avoids long-edge locking and exhaustive 2-opt removes the residual crossing structure that fixed-pass 2-opt leaves behind.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dimensionless-ratio"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-1 evidence: 36/36 feasible at 7.04 ms mean with a 0.65/0.35 blend hook, so there is ~490 ms of unused budget and the binding constraint is score design, not speed. KB method-tsp-i605-dest-pull shows that the apparent 'regret minus insertion cost' form algebraically collapses to 0.7*d(dest,u) - d(cur,u), a sub-millisecond 128/128-complete constructor — so the cheapest path to quality is this single-normalised linear pull rather than two separately normalised features (whose per-call max normalisation is scale-fragile, cf. method-tsp-i605-dimensionless-ratio). Remaining quality must then come from the 2-opt phase, which is why the plan spends the freed budget on exhaustive 2-opt with a time-guard early exit, addressing open hypothesis h1-regret-insertion-plus-full-2opt by actually implementing the regret term and testing the full-2-opt schedule. Both factors (constructor score, 2-opt termination rule) are separable in the hook, so the diagnose suite can attribute any delta."
+  }
+}

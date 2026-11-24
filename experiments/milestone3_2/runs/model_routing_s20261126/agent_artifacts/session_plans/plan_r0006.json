@@ -1,0 +1,35 @@
+{
+  "round_id": 6,
+  "direction": "Refine the size-aware rank-power ruin hook into a regime-adaptive variant: keep the normalized multiplicative gates (removal_savings / (mean_savings * n)) but re-balance them for the currently weakest regimes reported by the archive — size=100, spatial=uniform, depot_style=eccentric, demand_dist=uniform, capacity_level=tight. Concretely (a) make the load-fill gate asymmetric: strongly favor nearly-empty and nearly-full routes under tight capacity rather than symmetric fill alone; (b) scale the depot-distance gate with route extension so eccentric depots push far-flung customers out first; (c) schedule the rank exponent p so that iter_frac drives a monotone decrease (intensification late) while stagnation_ratio drives a larger increase (diversification on stall), with the two schedules composed multiplicatively and bounded to [0.5, 4.0]; (d) shrink the top-q ruin set size proxy when n is large so more LNS iterations fit in the 500 ms clock. All additions must remain deterministic (no RNG), keep the hook read-only over input state, and preserve the 6-customer dual-action probe separation.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents that the evolvable hook is exactly score_ruin_nodes with a rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) form, verified at 500 ms budgets (blind_120 mean 23.3186 vs L3-ctrl 23.3474), and explicitly flags stagnation-aware diversification as a strong regime and O(n^3) cost as the main budget risk — motivating the large-n q-shrink. Round-5 evidence (agent_artifacts/round_0005_dev_eval.json) already showed the multiplicative-gate rank-power family beats the round-1 SBS (15.8445 vs 16.0353, 24/24 feasible, 348.6 ms) but the archive's weakest regimes have shifted to capacity_level=tight (was loose in the round-5 claim), uniform spatial, eccentric depots and size=100 — so the next step is to re-target the gates to those regimes rather than to add new search machinery. The template remains cvrp_ruin_recreate with postprocess none, keeping the LNS backbone and Regret-2 repair fixed so any gain is attributable to the ruin-scoring hook alone."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "H6-cvrp-regime-adaptive-rankpower-ruin: On cvrp_dev_hetero_24 at 500 ms, replacing the symmetric load-fill gate with an asymmetric edge-fill gate (penalizing both under- and over-filled routes, favoring extreme fill fractions), coupling the depot-distance gate to route extension for eccentric depots, and composing a bounded p(iter_frac, stagnation_ratio) schedule (0.5–4.0) will lower the mean objective below the round-5 SBS of 15.8445, with the largest per-instance gains on size=100, spatial=uniform, depot_style=eccentric, demand_dist=uniform and capacity_level=tight instances.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents that the evolvable hook is exactly score_ruin_nodes with a rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) form, verified at 500 ms budgets (blind_120 mean 23.3186 vs L3-ctrl 23.3474), and explicitly flags stagnation-aware diversification as a strong regime and O(n^3) cost as the main budget risk — motivating the large-n q-shrink. Round-5 evidence (agent_artifacts/round_0005_dev_eval.json) already showed the multiplicative-gate rank-power family beats the round-1 SBS (15.8445 vs 16.0353, 24/24 feasible, 348.6 ms) but the archive's weakest regimes have shifted to capacity_level=tight (was loose in the round-5 claim), uniform spatial, eccentric depots and size=100 — so the next step is to re-target the gates to those regimes rather than to add new search machinery. The template remains cvrp_ruin_recreate with postprocess none, keeping the LNS backbone and Regret-2 repair fixed so any gain is attributable to the ruin-scoring hook alone."
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "type": "evidence",
+  "title": "里程碑四数学理论闭环证据：32 组合精确 Shapley 协同、HRK 三池/纯几何下界与多规模 alpha=1 相变",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-4",
+    "shapley",
+    "order2-interaction",
+    "hrk-lower-bound",
+    "group-invariance",
+    "alpha-bifurcation"
+  ],
+  "status": "reviewed",
+  "summary": "完成 M4 数学理论五维闭环复核：(1) s2_r5_spiral 2^5=32 精确 Shapley 全开比特差 0.0、效率残差 <=4.44e-16，揭示二阶交互 F1×F2 高达 +0.8141 (+3.9335%) 居十对之首；(2) HRK 径向下界 R(I) 在 CVRPLib A/B/P 74 与 288 题全库 0 违背，厘清 single_step_pool (n=200 差距 0.3881%)、constructive_pool (0.0000%)、full_pool (0.0000%) 三层池口径，并验证纯几何无算法分母回归 corr(eta_geom, raw_gap) 在 abp_74 达 -0.4385 / -0.4100；(3) 三域相似群与 E(2) 等距漂移 <=9.25e-16；完整 64 题多规模 alpha=1 扫频验证 64/64 真实算例出发步精确归零平手，跨过 1 (0.99->1.01) 均长由 26.6122 骤降至 23.3190 (-12.37%)、空驶回程占比由 34.13% 降至 26.26%。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "math_mechanism",
+    "complexity_class": "empirical",
+    "interface": "select_next_node",
+    "applicable_regimes": {
+      "strong_on": [
+        "non_additive_operator_attribution",
+        "exogenous_geometric_lower_bound",
+        "scale_and_isometry_verification"
+      ],
+      "weak_on": [
+        "integer_rounded_micro_coordinates_scale_equivariance"
+      ],
+      "scale_notes": "同步覆盖 cvrp_select_multiscale_64 (N=64)、cvrp_hist_p0_120 (N=120)、cvrp_hist_hetero_288 (N=288) 与 cvrp_ext_cvrplib_abp_74 (N=74)。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tools/run_m4_math_closure.py",
+        "sha256": "de957c036daa7b62e17bc8fae481f41d890ece04a7badf72a485e70be50e943d"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tests/test_m4_math_closure.py",
+        "sha256": "cb75c82995d70c8bf77a64dc4cbc7736e97b7a94d1f598d7bca7833396f9aaa5"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-tsp",
+      "problem-online-bin-packing"
+    ],
+    "methods": [
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone4-m31-m32-math-closure-20261124"
+    ]
+  },
+  "source_refs": [
+    "src-milestone4-m31-m32-math-closure-20261124"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone4/m4_math_closure_part1.json",
+    "report:experiments/milestone4/m4_math_closure_part1.md"
+  ],
+  "code_refs": [],
+  "id": "evidence-m4-shapley-hrk-invariance-closure-20261124",
+  "content_sha256": "8f0f76b6a5ace7500064fdca12265b628a88fc04f70fbce386da7e6ca2f081c1"
+}

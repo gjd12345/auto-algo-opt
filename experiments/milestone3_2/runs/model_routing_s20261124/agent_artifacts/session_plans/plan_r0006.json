@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Stagnation-adaptive multiplicative gating + regime-targeted diversification in score_ruin_nodes: normalize removal savings by a global depot-distance scale, then multiply by (i) a capacity-pressure gate that raises priority for nodes on near-full routes (targets weak regime capacity_level=tight), (ii) a depot-distance-balance gate that alternates between near-depot and far-depot nodes as iter_frac grows (targets weak regime depot_style=eccentric), (iii) a route-local-density gate that prefers nodes whose route neighbors are far (clustered spatial), and (iv) apply rank_power with exponent p that decreases from ~2.0 to ~0.7 as stagnation_ratio rises, so the policy is greedy-worst early and becomes diversification/random-ish when stuck. Preserve determinism (no RNG; ties broken by node index).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the only evolvable hook of cvrp_ruin_recreate/v1 is score_ruin_nodes with signature (distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac) -> np.ndarray, that the multi-gate product gated by a rank power p(iter_frac, stagnation_ratio) is exactly the form that beat the L3 Worst-Removal control (blind_120: 23.3186 vs 23.3474), and that strong regime is 500 ms with stagnation-aware diversification while the 25 ms regime exhausts budget (our budget is 500 ms, so full LNS is viable). Archive feedback shows a very flat portfolio (SBS 15.9986, VBS 381.8274 total, gap over SBS only 0.557%), so remaining headroom is regime-specific: the weakest regimes are clustered/eccentric/uniform/tight-capacity with vbs_rel_gap ~ -19.5% to -22.7%, and 12/24 instances are tight-capacity and size-100. Therefore the plan makes no new skeleton claim (postprocess stays 'none', template unchanged, skeleton invariants untouched: unified deadline clock, deterministic Regret-2 repair, no RNG) and instead reweights the ruin priority so that budget is spent on the hard tight-capacity, eccentric-depot and clustered subsets. Determinism is preserved by rank-based power transform and index tie-breaking, protecting the 4th-gate dual-action causal sensitivity probe required by the validator."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "Replacing a plain multiplicative gate product with a stagnation-adaptive rank-power exponent p(iter_frac, stagnation_ratio) that decays monotonically (≈2.0 greedy worst-removal -> ≈0.7 quasi-random diversification) will reduce mean objective on cvrp_dev_hetero_24 below the current SBS 15.9986, with the largest per-instance gains concentrated in the known weakest regimes (capacity_level=tight, size=100, demand_dist=uniform, depot_style=eccentric, spatial=clustered); the effect is attributed to escaping LNS stagnation within the 500 ms unified deadline rather than to extra iterations.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the only evolvable hook of cvrp_ruin_recreate/v1 is score_ruin_nodes with signature (distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac) -> np.ndarray, that the multi-gate product gated by a rank power p(iter_frac, stagnation_ratio) is exactly the form that beat the L3 Worst-Removal control (blind_120: 23.3186 vs 23.3474), and that strong regime is 500 ms with stagnation-aware diversification while the 25 ms regime exhausts budget (our budget is 500 ms, so full LNS is viable). Archive feedback shows a very flat portfolio (SBS 15.9986, VBS 381.8274 total, gap over SBS only 0.557%), so remaining headroom is regime-specific: the weakest regimes are clustered/eccentric/uniform/tight-capacity with vbs_rel_gap ~ -19.5% to -22.7%, and 12/24 instances are tight-capacity and size-100. Therefore the plan makes no new skeleton claim (postprocess stays 'none', template unchanged, skeleton invariants untouched: unified deadline clock, deterministic Regret-2 repair, no RNG) and instead reweights the ruin priority so that budget is spent on the hard tight-capacity, eccentric-depot and clustered subsets. Determinism is preserved by rank-based power transform and index tie-breaking, protecting the 4th-gate dual-action causal sensitivity probe required by the validator."
+  }
+}

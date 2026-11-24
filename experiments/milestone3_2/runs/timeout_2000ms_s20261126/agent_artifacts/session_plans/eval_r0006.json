@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:da518c9f8bbf41109f48aa94d4eef784"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 under a 2000 ms budget, the LNS plateau at ~16.029 (SBS session_r0002, mean 155 ms solve, 8.7x budget headroom) is exploitation-bound rather than diversification-bound; therefore a monotone magnitude-dominant ruin score with only mild rank-power annealing (p: 1.0 -> 1.4 driven by stagnation_ratio*iter_frac) plus a weak distance-to-seed coherence factor (alpha <= 0.5) will lower mean objective by >= 0.02 versus the 16.0293 SBS, while the previously proposed strong load/depot/route-distance gated rank-power family (p up to 2.0) stays worse — i.e. objective(response) is concave in diversification amplitude with optimum near zero-to-mild amplitude.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:da518c9f8bbf41109f48aa94d4eef784"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Exploitation-preserving, low-amplitude diversification of score_ruin_nodes: keep a monotone magnitude backbone (|removal_savings|/scale, i.e. the L3-ctrl worst-cost ordering) and add only (a) a smooth rank-power reshaping with exponent p annealing from ~1.0 toward ~1.4 as stagnation_ratio and iter_frac grow, and (b) a weak deterministic spatial-coherence factor exp(-alpha*d(i, seed)/dscale) with seed = argmax removal_savings and small alpha in [0.1, 0.5] (no RNG, no route-load/depot gates). Reject the round-5 regime of strong multiplicative load/depot/route-distance gating and steep exponents (~2.0), which measurably lost 0.0147. Keep output finite, length n, deterministic tie-breaking, and strictly read-only use of state arrays."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:65906cbb316d4ebea83e3538769de14a"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On the 24-node heterogeneous dev suite, a hooks-based solver that couples randomized-greedy guided-insertion construction (score_insertion_move with regret-based delta selection and tie randomization across restarts) with neighbor-list 2-opt + Or-opt under a don't-look-bit first-improvement schedule and double-bridge restarts will substantially lower mean tour cost versus a plain guided-insertion-plus-full-2-opt baseline at the same 500 ms budget, because candidate-list restriction keeps each local-search pass O(n) per improving move and frees budget for extra restarts, improving the worst-case regime (clustered/angular) without hurting uniform-random ones.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:65906cbb316d4ebea83e3538769de14a"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Strengthen the construction+improvement loop inside the hook: keep cheapest-insertion guided by score_insertion_move (regret/delta-based ordering with randomized tie-breaking to diversify restarts), then run a budget-aware 2-opt local search that (a) restricts candidate edges to a k-nearest-neighbor list built once from the distance matrix, (b) uses first-improvement with don't-look bits and a neighbor re-init queue, and (c) hands remaining time to repeated perturbation (double-bridge) + re-optimization, spending time proportional to n. Also add an Or-opt/segment-relocation pass on the same candidate lists since it is cheap and complements 2-opt on clustered/angular instances."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

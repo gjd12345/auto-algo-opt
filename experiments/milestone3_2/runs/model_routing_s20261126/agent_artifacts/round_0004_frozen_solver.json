@@ -1,0 +1,32 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_4059da4f",
+  "display_name": "Session R4 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    D = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(route_ids.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rid = np.asarray(route_ids, dtype=np.int64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)[1:n + 1]\n\n    # Global coordinate scale from depot distances\n    d0 = D[0, 1:n + 1]\n    mean_d0 = float(np.mean(d0))\n    if not np.isfinite(mean_d0) or mean_d0 <= 0.0:\n        mean_d0 = float(np.mean(D[1:n + 1, 1:n + 1])) if n > 1 else 1.0\n    mean_d0 = max(mean_d0, 1e-12)\n\n    # Customer coordinate block\n    cust = D[1:n + 1, 1:n + 1]\n\n    # Route centroids in distance-space (mean pairwise distance signature per route)\n    # Use centroid approximation via mean of coordinate vectors unavailable; instead use\n    # route-mean distance-to-members as relatedness proxy (scale invariant).\n    R = int(np.max(rid)) + 1 if n > 0 else 0\n\n    # Bucket customers per route\n    route_members = [[] for _ in range(R)]\n    for i in range(n):\n        ri = int(rid[i])\n        if 0 <= ri < R:\n            route_members[ri].append(i)\n\n    # Shaw relatedness to route centroid (mean pairwise distance within route)\n    relatedness = np.zeros(n, dtype=np.float64)\n    for i in range(n):\n        ri = int(rid[i])\n        members = route_members[ri] if 0 <= ri < R else []\n        others = [j for j in members if j != i]\n        if others:\n            ds = cust[i, others]\n            md = float(np.mean(ds))\n            # closer to route centroid (low mean dist) => higher relatedness\n            relatedness[i] = 1.0 / (1.0 + md / mean_d0)\n        else:\n            relatedness[i] = 1.0\n\n    # Worst-cost z-score within each route (or global if route too small)\n    rz = np.zeros(n, dtype=np.float64)\n    for ri in range(R):\n        members = route_members[ri]\n        if not members:\n            continue\n        vals = sav[np.asarray(members, dtype=np.int64)]\n        mu = float(np.mean(vals))\n        sd = float(np.std(vals))\n        if sd < 1e-12 * max(abs(mu), 1.0):\n            sd = 1.0\n        rz[np.asarray(members, dtype=np.int64)] = (vals - mu) / sd\n\n    # Saturate z-score to bounded worst-cost signal\n    worst = 1.0 / (1.0 + np.exp(-np.clip(rz, -8.0, 8.0)))\n\n    # Capacity consistency: high demand relative to capacity => high ruin value\n    cap_ratio = np.clip(dem / max(capacity, 1e-12), 0.0, 1.0)\n\n    # Stagnation and progress modulation\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # Early: savings-heavy; late: relatedness-heavy; stagnation: boost centroid-central nodes\n    w_sav = 1.0 - 0.5 * it\n    w_rel = 0.3 + 0.7 * it\n    w_st = 0.15 + 0.35 * st\n    w_cap = 0.10 + 0.20 * (1.0 - it)\n\n    score = (w_sav * worst\n             + w_rel * relatedness\n             + w_cap * cap_ratio)\n\n    # Stagnation-activated centrality bonus: reward nodes whose removal opens route structure\n    if st > 0.0:\n        score = score + w_st * relatedness * (1.0 + 0.2 * st)\n\n    # Size-aware normalization: keep score scale-free by bounding to [0, 2]\n    s_max = float(np.max(score)) if n > 0 else 0.0\n    if s_max > 0.0:\n        score = score / s_max\n\n    # Deterministic tiny tie-breaker\n    score = score + 1e-9 * (np.arange(n, dtype=np.float64) / max(n, 1))\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "4059da4f6c4a806dd29e296b2fc97451d29825bcf071df10320906283e4d0fb6",
+  "design_sha256": "f254816334c9a451fc94f5a01b3d206202039e61ee08b17851352511a5472cf0",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261126\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion",
+    "evidence-cvrp-m3-blind120-and-direction2"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

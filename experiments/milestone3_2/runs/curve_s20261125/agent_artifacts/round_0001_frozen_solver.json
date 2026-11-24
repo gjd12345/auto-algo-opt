@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_c9a8befc",
+  "display_name": "Session R1 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = route_ids.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n\n    # Stagnation and progress, clipped to [0,1]\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    # Scale-free savings ratio r_i = |s_i| / (1 + |s_i|) in [0,1)\n    s_abs = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    s_abs = np.where(np.isfinite(s_abs), s_abs, 0.0)\n    r = s_abs / (1.0 + s_abs)\n    r = np.clip(r, 0.0, 1.0 - 1e-9)\n\n    # Bounded rank-power transform T(r) = r / (1 - r); clip r to avoid blow-up\n    r_clip = np.clip(r, 1e-12, 0.999)\n    T = r_clip / (1.0 - r_clip)\n\n    # Stagnation-adaptive exponent: sharp early (savings dominates), flat under stagnation\n    p_lo = 1.0\n    p_hi = 3.0\n    p = p_lo + (p_hi - p_lo) * st\n    # Slight further sharpening early in search (progress low -> sharper)\n    p = p * (1.0 + 0.25 * (1.0 - it))\n\n    core = np.power(np.clip(T, 0.0, 1e6), p)\n\n    # Gate factors (all smooth, bounded, scale-normalized)\n    def safelog_mean(arr):\n        m = float(np.mean(arr))\n        return m if m > 0.0 and np.isfinite(m) else 1.0\n\n    # Route-load utilization\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n    util = np.clip(loads / cap, 0.0, 1.0)\n\n    # Depot eccentricity (normalized)\n    depot = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    depot = np.where(np.isfinite(depot), depot, 0.0)\n    ecc = depot / (safelog_mean(depot) + 1e-12)\n\n    # Relative demand\n    d = np.asarray(demands[1:n + 1], dtype=np.float64)\n    d = np.where(np.isfinite(d), d, 0.0)\n    dem_rel = d / (safelog_mean(d) + 1e-12)\n\n    # Relative route distance\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd = np.where(np.isfinite(rd), rd, 0.0)\n    rd_rel = rd / (safelog_mean(rd) + 1e-12)\n\n    def smooth_gate(x):\n        # Smooth bounded monotone in [0,1); soft-clip x to avoid saturation blow-up\n        x = np.clip(x, 0.0, 50.0)\n        return x / (1.0 + x)\n\n    g_load = smooth_gate(util)\n    g_depot = smooth_gate(ecc)\n    g_dem = smooth_gate(dem_rel)\n    g_rdist = smooth_gate(rd_rel)\n\n    score_core = core * g_load * g_depot * g_dem * g_rdist\n\n    # Stagnation-triggered pseudo-noise diversity term (deterministic hash on index)\n    idx = np.arange(n, dtype=np.float64)\n    noise = np.sin((idx + 1.0) * 12.9898 + st * 78.233 + it * 37.719) * 43758.5453\n    noise = noise - np.floor(noise)\n    noise_term = np.power(np.clip(noise, 0.0, 1.0 - 1e-12), 0.5)\n\n    mix = 0.55 * st\n\n    # Combine and normalize to stay scale-free and bounded\n    score = (1.0 - mix) * score_core + mix * noise_term\n\n    # Robust final normalization (guard against infinities)\n    score = np.where(np.isfinite(score), score, 0.0)\n\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "c9a8befc18f73dce948c184ffccf4b23470e2aaa7271f82705c3407d2021b914",
+  "design_sha256": "225e854c5695564fdcaaba435ee612624a1a866116e62262e36ac755c3b770ab",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261125\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

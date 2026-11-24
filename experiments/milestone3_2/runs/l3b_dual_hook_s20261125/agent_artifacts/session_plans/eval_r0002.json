@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:138174ad930f4b8699e4daee3c903b58"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Multiplicative gating of |removal_savings_i|/scale by route-load-fill, depot-proximity, demand-magnitude and route-distance terms, raised to a rank-power exponent that rises with both iter_frac and stagnation_ratio, yields a strictly better mean objective on dev_24 than the round-1 arm (16.1402), with the largest per-instance gains on tight-capacity and eccentric-depot size-100 instances, because it (a) removes customers whose deletion most reduces distance while keeping routes under-filled near the bin-packing boundary, and (b) rotates toward diversified removals exactly when the search stalls, so deadline-exhausted instances still spend their final iterations escaping local optima instead of re-selecting the same worst-cost nodes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:138174ad930f4b8699e4daee3c903b58"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the dual-hook L3b arm toward stagnation-aware, capacity/depot-gated ruin selection with a regret-weighting recreate hook, targeting the observed weak regimes (size=100, capacity_level=tight, depot_style=eccentric, spatial/demand=uniform) where the round-1 arm shows rel_gap ≈ -20% and 12/12 size-100 instances exhaust the 500 ms deadline."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

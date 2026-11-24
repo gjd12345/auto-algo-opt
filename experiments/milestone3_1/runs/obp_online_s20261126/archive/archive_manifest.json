@@ -1,0 +1,197 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T15:59:42Z",
+  "solver_count": 3,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_obp_online_priority_4904d7eb",
+      "registered_at": "2026-11-23T15:55:19Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261126,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0001_obp_online_priority_4904d7eb",
+        "display_name": "Session R1 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    # Best-Fit: prefer the bin with the smallest residual after placement.\n    # Higher priority = tighter fit. Ties (equal residual) favor earliest opened bin,\n    # since the runner selects the first bin attaining the max score.\n    best = None\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        if best is None or residual < best:\n            best = residual\n    # Return per-bin scores: negate residual so the smallest residual becomes the max score.\n    return [-(r - current_item) for r in feasible_remaining_capacities]",
+        "hook_code_sha256": "4904d7ebd4ca02b85faaf20b6b7f3d729b9c31de4d869b2d73ad2ff8226af4b9",
+        "design_sha256": "d0680a229954b7063aabacc11bea78822b37665124b87215dd293c300687bfd5",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "impl-obp-go-solver",
+        "cited_kb_ids": [
+          "impl-obp-go-solver",
+          "method-obp-best-fit",
+          "method-lit-obp-1d-best-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "def priority(current_item, feasible_remaining_capacities):\n    # Best-Fit: prefer the bin with the smallest residual after placement.\n    # Higher priority = tighter fit. Ties (equal residual) favor earliest opened bin,\n    # since the runner selects the first bin attaining the max score.\n    best = None\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        if best is None or residual < best:\n            best = residual\n    # Return per-bin scores: negate residual so the smallest residual becomes the max score.\n    return [-(r - current_item) for r in feasible_remaining_capacities]"
+        },
+        "hook_hashes": {
+          "priority": "4904d7ebd4ca02b85faaf20b6b7f3d729b9c31de4d869b2d73ad2ff8226af4b9"
+        },
+        "bundle_hash": "e948beebb7622348fd4cd6806057ecf042963ef765dc06822599e0619e939d5a",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.833333,
+        "solve_ms_mean": 1.2074
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_obp_online_priority_38a001b9",
+      "registered_at": "2026-11-23T15:57:38Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261126,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0002_obp_online_priority_38a001b9",
+        "display_name": "Session R2 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        x = residual / w  # in [0,1] since 0 <= residual <= r <= w\n        # Cauchy-like kernel peaking at x=0 (exact fit) and x=1 (perfect complement).\n        k0 = 1.0 / (1.0 + (x / 0.18) ** 2)\n        k1 = 1.0 / (1.0 + ((1.0 - x) / 0.18) ** 2)\n        kernel = k0 + 0.9 * k1\n        # Linear best-fit tilt (prefer smaller residual among exact-fit-like).\n        tilt = -x\n        # Utilization tier bonus (step-like, no exponential).\n        util = 1.0 - x\n        if util >= 0.92:\n            tier = 1.2\n        elif util >= 0.80:\n            tier = 0.5\n        else:\n            tier = 0.0\n        scores.append(1.0 * kernel + 0.35 * tilt + tier)\n    return scores",
+        "hook_code_sha256": "38a001b9c5f76b32615b9f97507f22395a1cb87fbc79d44817301974b3dedb92",
+        "design_sha256": "7c495396b18a639d8b54d2bb7e0c7d012226cd37fa56c1eefe2628b480b498a5",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-obp-i605-exp-deadzone",
+        "cited_kb_ids": [
+          "method-obp-i605-exp-deadzone",
+          "method-obp-i605-log-half-symmetry",
+          "method-obp-i605-sqrt-close-bonus",
+          "method-obp-best-fit",
+          "method-lit-obp-1d-best-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        x = residual / w  # in [0,1] since 0 <= residual <= r <= w\n        # Cauchy-like kernel peaking at x=0 (exact fit) and x=1 (perfect complement).\n        k0 = 1.0 / (1.0 + (x / 0.18) ** 2)\n        k1 = 1.0 / (1.0 + ((1.0 - x) / 0.18) ** 2)\n        kernel = k0 + 0.9 * k1\n        # Linear best-fit tilt (prefer smaller residual among exact-fit-like).\n        tilt = -x\n        # Utilization tier bonus (step-like, no exponential).\n        util = 1.0 - x\n        if util >= 0.92:\n            tier = 1.2\n        elif util >= 0.80:\n            tier = 0.5\n        else:\n            tier = 0.0\n        scores.append(1.0 * kernel + 0.35 * tilt + tier)\n    return scores"
+        },
+        "hook_hashes": {
+          "priority": "38a001b9c5f76b32615b9f97507f22395a1cb87fbc79d44817301974b3dedb92"
+        },
+        "bundle_hash": "6fe34ea6dd271f8c1b0e8009912edc3f72b4b45ff8f7b42825175dfc86a0bfd5",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.777778,
+        "solve_ms_mean": 2.7556
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0003_obp_online_priority_b4e81420",
+      "registered_at": "2026-11-23T15:59:42Z",
+      "arm_id": "m31_obp_online",
+      "search_seed": 20261126,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0003_obp_online_priority_b4e81420",
+        "display_name": "Session R3 · obp_online_priority",
+        "problem_family": "obp",
+        "paradigm": "sequential_construct",
+        "interface": "obp_online_priority/v1:priority",
+        "template_id": "obp_online_priority",
+        "template_version": "v1",
+        "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "priority",
+        "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    eps = 1e-12\n    a = 0.6\n    b = 1.0\n    k = 6.0\n    c = 0.8\n    for r in feasible_remaining_capacities:\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        u = current_item / w  # utilisation fraction in (0,1)\n        residual = r - current_item\n        # (a) log half-symmetry term: rewards balanced transition u ~ 0.5\n        half_sym = -abs(u - 0.5)\n        # (b) exponential close-out bonus above ~90% utilisation\n        close_out = 0.0\n        if u > 0.9:\n            close_out = b * (u - 0.9) * k + 0.0\n            close_out = b * (1.0 - 1.0) + (u - 0.9)  # placeholder guard\n        # recompute cleanly\n        bonus = 0.0\n        if u > 0.9:\n            excess = u - 0.9\n            bonus = (excess ** 0.5) * (1.0 + excess)\n        # (c) residual dead-zone quadratic term: zero at exact fit and at r=w\n        rc = min(residual, w - residual)\n        dead = -c * (rc / w) ** 2\n        score = a * half_sym + b * bonus + dead\n        scores.append(score)\n    return scores",
+        "hook_code_sha256": "b4e814209d9dfe9e0b11221d7f60fd3f558c631555d1da6c054d191d851f7e71",
+        "design_sha256": "e7d4301116623caeeb80cd85ec35d684bddfe1c78d0fd5f4c354728396784efc",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261126\\session_run\\rounds\\round_0003\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": "method-obp-i605-log-half-symmetry",
+        "cited_kb_ids": [
+          "method-obp-i605-log-half-symmetry",
+          "method-obp-i605-sqrt-close-bonus",
+          "method-obp-i605-exp-deadzone",
+          "method-obp-best-fit",
+          "method-obp-first-fit"
+        ],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved obp_online_priority/v1:priority",
+        "default_budget_ms": 500.0,
+        "protocol_id": "obp_online/v1",
+        "hook_specs": [
+          {
+            "name": "priority",
+            "signature": [
+              "current_item",
+              "feasible_remaining_capacities"
+            ],
+            "output_shape_arg": "feasible_remaining_capacities"
+          }
+        ],
+        "hook_implementations": {
+          "priority": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    eps = 1e-12\n    a = 0.6\n    b = 1.0\n    k = 6.0\n    c = 0.8\n    for r in feasible_remaining_capacities:\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        u = current_item / w  # utilisation fraction in (0,1)\n        residual = r - current_item\n        # (a) log half-symmetry term: rewards balanced transition u ~ 0.5\n        half_sym = -abs(u - 0.5)\n        # (b) exponential close-out bonus above ~90% utilisation\n        close_out = 0.0\n        if u > 0.9:\n            close_out = b * (u - 0.9) * k + 0.0\n            close_out = b * (1.0 - 1.0) + (u - 0.9)  # placeholder guard\n        # recompute cleanly\n        bonus = 0.0\n        if u > 0.9:\n            excess = u - 0.9\n            bonus = (excess ** 0.5) * (1.0 + excess)\n        # (c) residual dead-zone quadratic term: zero at exact fit and at r=w\n        rc = min(residual, w - residual)\n        dead = -c * (rc / w) ** 2\n        score = a * half_sym + b * bonus + dead\n        scores.append(score)\n    return scores"
+        },
+        "hook_hashes": {
+          "priority": "b4e814209d9dfe9e0b11221d7f60fd3f558c631555d1da6c054d191d851f7e71"
+        },
+        "bundle_hash": "3046b4f564d81609864875cacd87ab3e40917981a62e25d3e5323ee2d7ab726a",
+        "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+      },
+      "suite_metrics": {
+        "suite_id": "obp_m31_dev_36",
+        "mean_tour_length": 27.833333,
+        "solve_ms_mean": 2.1791
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Replace the default Worst-Fit-style ScoreBin with a Best-Fit-style residual score: prefer the feasible open bin minimizing post-placement residual (equivalently maximizing fill), with deterministic tie-breaks on bin creation order and a bounded fallback to opening a new bin only when no feasible bin exists.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "KB entry impl-obp-go-solver documents the reference implementation: packWithScore uses ScoreBin = capacity - (remaining - item), a fill-after-placement score where a higher value prefers a tighter fit (Best-Fit-like), and it is explicitly not the same as the official Python template default (Worst Fit). method-obp-best-fit and method-lit-obp-1d-best-fit corroborate that smallest-residual placement is the classical Best-Fit rule for online bin packing. The template is fixed to obp_online_priority with postprocess_mode=none, so the only legal leverage is the score_bin score function itself; we keep it a deterministic pure function of (item, remaining, capacity) plus prefix-only state to satisfy prefix causality, and bound runtime per decision to stay inside the 500 ms budget. Expected effect: fewer opened bins (lower objective) on heterogeneous streams; risk is tie-handling divergence, mitigated by deterministic creation-order tie-breaks."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On cvrp_dev_hetero_24 (online bin packing with strict prefix-causal score_bin), a tighter-fit ScoreBin — score = capacity - (remaining - item), i.e. higher score for the smallest residual after placement — packs at least as few bins as the Worst-Fit default and materially reduces bin count on heterogeneous item sequences, because Best-Fit preserves large residuals for large items without lookahead. Tie-breaking by bin creation order must keep the rule a pure function of the strict prefix (no future items, no global re-sorting) so the 5-gate interface validator passes.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "impl-obp-go-solver",
+      "method-obp-best-fit",
+      "method-lit-obp-1d-best-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry impl-obp-go-solver documents the reference implementation: packWithScore uses ScoreBin = capacity - (remaining - item), a fill-after-placement score where a higher value prefers a tighter fit (Best-Fit-like), and it is explicitly not the same as the official Python template default (Worst Fit). method-obp-best-fit and method-lit-obp-1d-best-fit corroborate that smallest-residual placement is the classical Best-Fit rule for online bin packing. The template is fixed to obp_online_priority with postprocess_mode=none, so the only legal leverage is the score_bin score function itself; we keep it a deterministic pure function of (item, remaining, capacity) plus prefix-only state to satisfy prefix causality, and bound runtime per decision to stay inside the 500 ms budget. Expected effect: fewer opened bins (lower objective) on heterogeneous streams; risk is tie-handling divergence, mitigated by deterministic creation-order tie-breaks."
+  }
+}

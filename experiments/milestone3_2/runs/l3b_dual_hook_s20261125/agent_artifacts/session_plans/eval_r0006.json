@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:222ab7047b6940b5833e27f64fa66120"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The Pareto frontier is saturated at mean objective ~16.05 with only 0.44% SBS-VBS gap, and every exhausted-trace weakness concentrates in n=100 / uniform-spatial / eccentric-depot / tight-capacity instances (12 of 24 exhausted). A hook that (a) normalizes removal priority by instance scale so the ruin set stays a fixed fraction of nodes at n=100 instead of degenerating into overly large destroys, and (b) adapts the recreate criterion to capacity slack rather than always using Regret-2, should lower mean objective on those four weak regimes while leaving small/loose instances unchanged, yielding mean objective below the current SBS 16.0549 without exceeding the 500 ms budget (mean solve ~390 ms leaves ~110 ms headroom).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:222ab7047b6940b5833e27f64fa66120"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Scale- and tightness-adaptive dual hook: make `score_ruin_nodes` a size-normalized blend of Shaw-relatedness removal and worst-cost removal (relatedness weight rising with n=100 / uniform-spatial instances, worst-cost weight rising for eccentric-depot instances), and make `score_recreate_action` switch from pure Regret-2 to a capacity-slack-aware Regret-2 + cheapest-detour hybrid when the residual capacity of routes is low (tight capacity regime)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

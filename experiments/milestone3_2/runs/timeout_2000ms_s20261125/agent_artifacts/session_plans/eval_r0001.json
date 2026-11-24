@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:adb047fa22f64f73b7c4577ec5f2bc8d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 2000 ms, a removal-priority score that mixes normalized removal savings with a route-capacity-pressure term and a Shaw-relatedness reinsertability term, with the relatedness weight increasing in stagnation_ratio and iter_frac, will beat the frozen L3-ctrl Worst-Cost removal skeleton (baseline 23.3474 on the M3 blind suite) by escaping local optima repeatedly; the capacity-pressure term specifically helps the heterogeneous-demand instances where worst-cost removal repeatedly destroys cheap-but-large nodes that cannot be reinserted feasibly, so effective improvement should be largest in the high-demand-variance regime.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:adb047fa22f64f73b7c4577ec5f2bc8d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the `score_ruin_nodes` removal-priority hook away from the pure Worst-Cost-removal control toward a stagnation-adaptive hybrid: node score = normalized removal_savings (detour cost saved / route distance) + a capacity-pressure term (demand / capacity times how full the node's route is) + a Shaw-relatedness term (average distance to the node's own route neighbours, i.e. how cheaply the node can be reinserted elsewhere), with the relatedness/mixing weight ramping up with stagnation_ratio and iter_frac so the LNS shifts from intensifying worst-cost destroy early to diversifying relatedness destroy when no improvement is found."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

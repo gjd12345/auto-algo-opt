@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 7 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:4a76b56ffd9a46afa5f6d87f94ccfab0"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Multiplicative load/depot/demand/route-distance gates on normalized removal savings, raised to a stagnation-dependent power p(iter_frac, stagnation_ratio) in [1.0, 2.5] that grows with stagnation and decays with iter_frac, beats the incumbent r0006 scoring by >0.1% mean objective on dev_24 without increasing solve_ms_mean beyond ~110 ms, because high-stagnation phases need broad cluster-level diversification (top-q covering several spatially adjacent customers) while late iterations need sharp worst-removal exploitation.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:4a76b56ffd9a46afa5f6d87f94ccfab0"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the `score_ruin_nodes` destruction priority toward a stagnation-adaptive multiplicative gating + rank-power rule that (a) widens spatial cluster removal when `stagnation_ratio` is high and instances are clustered, and (b) tightens toward pure worst-cost/removal-savings descent when `iter_frac` is late — targeting the weakest regimes reported by the archive (spatial=clustered, capacity_level=loose, depot_style=eccentric, size=100) where the current SBS (session_r0006, mean 16.0134) still leaves a 0.357% gap to VBS."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_cvrp_ruin_recreate_12af1f4d",
+  "display_name": "Session R3 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"\n    Return a length-n 1D finite float array of ruin priorities for customers 1..n\n    (higher = removed first). Scale-invariant, RNG-free, deterministic.\n    \"\"\"\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n\n    n = dm.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    cap = float(capacity) if capacity > 0 else 1.0\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # ---- scale estimates (coordinate-scale invariance) ----\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    depot_scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n    gscale = float(np.max(dm)) if dm.size else 1.0\n    if gscale <= eps:\n        gscale = 1.0\n\n    # ---------- Channel 1: savings-strength with route gates ----------\n    s_abs = np.abs(sav) / depot_scale\n    s_max = float(np.max(s_abs)) if n else 0.0\n    nsav = s_abs / s_max if s_max > eps else np.zeros(n, dtype=np.float64)\n    nsav = np.clip(nsav, 0.0, 1.0)\n\n    ut = np.clip(np.abs(rload) / cap, 0.0, 1.0)                     # load saturation\n    d0max = float(np.max(d0)) if n else 0.0\n    ndep = d0 / d0max if d0max > eps else np.zeros(n, dtype=np.float64)  # depot remoteness\n    rmax = max(float(np.max(np.abs(rdist))) if n else 1.0, eps)\n    burden = np.clip(np.abs(rdist) / rmax, 0.0, 1.0)                # route burden\n\n    gate = 0.55 + 0.25 * ut + 0.12 * ndep + 0.08 * burden\n    chan_sav = np.power(nsav + eps, 0.70) * gate\n\n    # ---------- Channel 2: Shaw kNN isolation ----------\n    cust = dm[1:, 1:]\n    if n > 1:\n        k = int(min(max(2, n // 8), n - 1))\n        off = cust.copy()\n        idx_diag = np.arange(n)\n        off[idx_diag, idx_diag] = np.inf\n        order_k = np.argsort(off, axis=1)\n        rows = np.arange(n)[:, None]\n        knn = off[rows, order_k[:, :k]]\n        mean_knn = np.mean(knn, axis=1)\n    else:\n        mean_knn = np.zeros(n, dtype=np.float64)\n    niso = np.clip(mean_knn / gscale, 0.0, 1.0)\n    chan_iso = np.power(niso + eps, 0.75) * (1.0 + 0.5 * (1.0 - ut))\n\n    # ---------- Channel 3: load-slack / freeing potential ----------\n    slack = np.clip(1.0 - ut, 0.0, 1.0)\n    chan_slack = np.power(slack + eps, 1.10) * (0.5 + 0.5 * ndep)\n\n    # ---------- Stagnation/iteration-driven 3-way blend ----------\n    # Early / non-stagnant: favor savings. Stagnant: re-balance toward isolation + slack.\n    w_sav = float(np.clip(0.55 + 0.30 * (1.0 - st) - 0.20 * it, 0.10, 0.85))\n    rem = 1.0 - w_sav\n    # Split remaining mass between isolation and slack, isolation dominates under stagnation.\n    iso_share = float(np.clip(0.45 + 0.35 * st + 0.10 * it, 0.20, 0.85))\n    w_iso = rem * iso_share\n    w_slk = rem * (1.0 - iso_share)\n\n    base = w_sav * chan_sav + w_iso * chan_iso + w_slk * chan_slack\n\n    # ---------- Anti-attractor tail boost: isolated AND low-savings nodes ----------\n    base = base + (0.10 + 0.22 * st) * niso * (1.0 - nsav)\n\n    # ---------- Deterministic index-hash jitter (RNG-free tie-break) ----------\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    hraw = np.sin(idx * 78.233 + 12.9898) * 43758.5453\n    h = hraw - np.floor(hraw)\n    jitter_amp = 0.014 + 0.022 * st\n    base = base + jitter_amp * (h - 0.5)\n\n    # ---------- Mild rank shaping modulated by stagnation ----------\n    pos = np.argsort(np.argsort(base))\n    rank = pos.astype(np.float64) / float(max(n - 1, 1))\n    expo = 1.0 + 0.65 * st\n    shaped = np.power(rank, expo)\n    score = 0.72 * shaped + 0.28 * base\n\n    # ---------- Sanitize + min-max normalize ----------\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.maximum(score, 0.0)\n    smin = float(np.min(score)) if score.size else 0.0\n    smax = float(np.max(score)) if score.size else 0.0\n    if smax - smin > eps:\n        score = (score - smin) / (smax - smin)\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "12af1f4d46960364644d578e54f8868c047dfc66b8f6980b1ceb11c0d47f220f",
+  "design_sha256": "030bcc77cf60d6576371754da2fcc1dc9610a2a6c1c75739860c0022efdcda5b",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

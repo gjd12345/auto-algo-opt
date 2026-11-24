@@ -1,0 +1,36 @@
+{
+  "round_id": 5,
+  "direction": "Evolve a cheap, scale-invariant dual hook that targets the two exhausted/weak regimes (size=100 uniform-clustered instances and eccentric-depot instances) without increasing per-iteration cost. (a) score_ruin_nodes: pure vectorized O(n) combination of normalized worst-cost removal (removal_gain / mean_depot_dist) with Shaw geographic relatedness to a seeded pivot (1/(1+ d_ij/mean_depot_dist)) and a depot-radial term sqrt(d_i0/mean_depot_dist) so that far/eccentric arcs are preferentially destroyed; every term divided by the global scale mean(d(0,1..n)) to keep 0% coordinate-scale drift. (b) score_recreate_action: Regret-2 insertion with a dimensionless capacity-fill bonus and a radial coherence penalty (|d_i0 - d_j0|/scale) to preserve route \"petal\" structure under eccentric depots. Keep all arithmetic pre-computed once per LNS iteration (no per-candidate Python loops, no O(n^2) rebuilds) so the 500 ms deadline is never consumed by hook overhead — the saved time is redirected to more ruin-recreate iterations on the large instances.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round 4 SBS is 16.0924 with VBS gap only 0.19%, so remaining headroom is in consistent per-instance gains rather than portfolio diversity. Archive weakest regimes are exactly length-100 (12/12 exhausted) and eccentric depot, i.e. budget-bound rather than search-space-bound; hence the hook must be O(n)-cheap and scale-invariant (KB method-cvrp-m2-l2a established scale normalization gives 0.00% coordinate drift, and method-cvrp-m3-ruin-recreate-l3 established normalized removal scoring as a robust evolvable hook). Shaw relatedness (method-cvrp-lns-shaw-regret) is orthogonal to worst-cost removal and complements eccentric-depot geometry via the radial term."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "If the ruin scoring is normalized by the global depot-distance scale and biased toward far/eccentric nodes while the recreate scoring adds a radial-coherence penalty, then large (n=100, exhausted) and eccentric-depot instances will gain more LNS iterations within the 500 ms budget and reduce objective by >=0.5% mean over dev_24 relative to the current SBS (16.0924), with zero coordinate-scale drift and no increase in p95 solve time.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 4 SBS is 16.0924 with VBS gap only 0.19%, so remaining headroom is in consistent per-instance gains rather than portfolio diversity. Archive weakest regimes are exactly length-100 (12/12 exhausted) and eccentric depot, i.e. budget-bound rather than search-space-bound; hence the hook must be O(n)-cheap and scale-invariant (KB method-cvrp-m2-l2a established scale normalization gives 0.00% coordinate drift, and method-cvrp-m3-ruin-recreate-l3 established normalized removal scoring as a robust evolvable hook). Shaw relatedness (method-cvrp-lns-shaw-regret) is orthogonal to worst-cost removal and complements eccentric-depot geometry via the radial term."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:172dcb03f5da4b2a8db3b16c337a0d28"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A dimensionless (own-round-trip-normalized) removal-savings score blended with Shaw relatedness and modulated by stagnation_ratio will remove the coordinate-scale and capacity dependence of the baseline worst-cost score, and will improve mean objective on the exhausted size=100 / uniform-spatial / eccentric-depot / loose-capacity regimes versus the round-1 solver (16.0353 mean, 384.8474 SBS total) at equal 500 ms budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:172dcb03f5da4b2a8db3b16c337a0d28"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the score_ruin_nodes destroy-priority hook toward a scale-invariant, stagnation-adaptive hybrid: primary term = per-node removal savings normalized by that node's own round-trip cost (savings / (d(0,u)+d(0,v)) style dimensionless ratio) so scores transfer across size/capacity regimes; secondary term = Shaw-style relatedness to a randomly seeded anchor node (distance rank within the route's neighborhood) to create geographically coherent removal clusters; tertiary term = capacity-slack bias (prefer nodes in routes with high residual load or near-full load for repacking) plus small random tie-break jitter. Modulate the mix with stagnation_ratio and iter_frac: early iterations (low iter_frac) favor large coherent worst-cost clusters, later iterations shrink toward single-node savings-max removals and raise the random-diversity weight when stagnation_ratio is high (no recent Record-to-Record improvement). Target the observed weak regimes: size=100 (12/12 exhausted), uniform spatial, eccentric depot, uniform demand, loose capacity."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

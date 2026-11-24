@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Exploitation-preserving, low-amplitude diversification of score_ruin_nodes: keep a monotone magnitude backbone (|removal_savings|/scale, i.e. the L3-ctrl worst-cost ordering) and add only (a) a smooth rank-power reshaping with exponent p annealing from ~1.0 toward ~1.4 as stagnation_ratio and iter_frac grow, and (b) a weak deterministic spatial-coherence factor exp(-alpha*d(i, seed)/dscale) with seed = argmax removal_savings and small alpha in [0.1, 0.5] (no RNG, no route-load/depot gates). Reject the round-5 regime of strong multiplicative load/depot/route-distance gating and steep exponents (~2.0), which measurably lost 0.0147. Keep output finite, length n, deterministic tie-breaking, and strictly read-only use of state arrays.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive feedback shows all five L3 solvers sit within a 0.13-objective band (16.0293-16.1603) yet VBS is only 0.34% better than SBS, so the frontier is nearly saturated and only tiny, targeted moves can win. KB method-cvrp-m3-ruin-recreate-l3 documents that the evolved multiplicative gated rank-power hook beat L3-ctrl by just +0.12% at 500 ms, i.e. the ruin-scoring hook has low marginal leverage and large amplitude changes risk regression (round 5: -0.0147). Weakest regimes (clustered spatial, eccentric depot, 100-node, loose capacity) are precisely where wrong removal sets destroy route structure, so diversification must be spatially coherent (Shaw-style relatedness, cf. method-cvrp-lns-shaw-regret) rather than globally randomized, and amplitudes must be small. Hence the plan searches a narrow neighborhood around the monotone worst-cost backbone: mild rank-power annealing plus a small distance-to-seed coherence term, keeping deterministic Regret-2 repair (method-cvrp-cheapest-regret-insertion) and postprocess=none."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 under a 2000 ms budget, the LNS plateau at ~16.029 (SBS session_r0002, mean 155 ms solve, 8.7x budget headroom) is exploitation-bound rather than diversification-bound; therefore a monotone magnitude-dominant ruin score with only mild rank-power annealing (p: 1.0 -> 1.4 driven by stagnation_ratio*iter_frac) plus a weak distance-to-seed coherence factor (alpha <= 0.5) will lower mean objective by >= 0.02 versus the 16.0293 SBS, while the previously proposed strong load/depot/route-distance gated rank-power family (p up to 2.0) stays worse — i.e. objective(response) is concave in diversification amplitude with optimum near zero-to-mild amplitude.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive feedback shows all five L3 solvers sit within a 0.13-objective band (16.0293-16.1603) yet VBS is only 0.34% better than SBS, so the frontier is nearly saturated and only tiny, targeted moves can win. KB method-cvrp-m3-ruin-recreate-l3 documents that the evolved multiplicative gated rank-power hook beat L3-ctrl by just +0.12% at 500 ms, i.e. the ruin-scoring hook has low marginal leverage and large amplitude changes risk regression (round 5: -0.0147). Weakest regimes (clustered spatial, eccentric depot, 100-node, loose capacity) are precisely where wrong removal sets destroy route structure, so diversification must be spatially coherent (Shaw-style relatedness, cf. method-cvrp-lns-shaw-regret) rather than globally randomized, and amplitudes must be small. Hence the plan searches a narrow neighborhood around the monotone worst-cost backbone: mild rank-power annealing plus a small distance-to-seed coherence term, keeping deterministic Regret-2 repair (method-cvrp-cheapest-regret-insertion) and postprocess=none."
+  }
+}

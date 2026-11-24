@@ -1,0 +1,43 @@
+{
+  "schema_version": "m31-public-suite/v1",
+  "suite_id": "bpp_m31_select_36",
+  "problem_family": "bpp",
+  "problem_id": "bpp_offline",
+  "protocol_id": "bpp_offline/v1",
+  "split": "select",
+  "suite_role": "selection_tuning",
+  "distance_convention": "not_applicable",
+  "vehicle_limit_policy": "not_applicable",
+  "generator_version": "m31_stratified/v1",
+  "instance_count": 36,
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_low": 2,
+      "n50_uniform_high": 2,
+      "n50_bimodal_low": 2,
+      "n50_bimodal_high": 2,
+      "n50_weibull_low": 2,
+      "n50_weibull_high": 2,
+      "n100_uniform_low": 2,
+      "n100_uniform_high": 2,
+      "n100_bimodal_low": 2,
+      "n100_bimodal_high": 2,
+      "n100_weibull_low": 2,
+      "n100_weibull_high": 2,
+      "n200_uniform_low": 2,
+      "n200_uniform_high": 2,
+      "n200_bimodal_low": 2,
+      "n200_bimodal_high": 2,
+      "n200_weibull_low": 2,
+      "n200_weibull_high": 2
+    },
+    "axis": "capacity_to_median_ratio",
+    "strata": {
+      "low": 4,
+      "high": 8
+    }
+  },
+  "reference_baseline": "first_fit_decreasing",
+  "input_visibility": "full_item_multiset",
+  "suite_content_sha256": "dffc1bdbb2f80c3862487e7deaeeb3b5567567df9c67a227854ab800ee20f415"
+}

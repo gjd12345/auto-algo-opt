@@ -1,0 +1,57 @@
+{
+  "checkpoint_budget": 36,
+  "triggered_at_used": 36,
+  "captured_at": "2026-11-23T15:59:42Z",
+  "best_dev_objective": 27.777778,
+  "frozen_solver": {
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "session_r0002_obp_online_priority_38a001b9",
+    "display_name": "Session R2 · obp_online_priority",
+    "problem_family": "obp",
+    "paradigm": "sequential_construct",
+    "interface": "obp_online_priority/v1:priority",
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+    "postprocess_mode": "none",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "hook_name": "priority",
+    "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        x = residual / w  # in [0,1] since 0 <= residual <= r <= w\n        # Cauchy-like kernel peaking at x=0 (exact fit) and x=1 (perfect complement).\n        k0 = 1.0 / (1.0 + (x / 0.18) ** 2)\n        k1 = 1.0 / (1.0 + ((1.0 - x) / 0.18) ** 2)\n        kernel = k0 + 0.9 * k1\n        # Linear best-fit tilt (prefer smaller residual among exact-fit-like).\n        tilt = -x\n        # Utilization tier bonus (step-like, no exponential).\n        util = 1.0 - x\n        if util >= 0.92:\n            tier = 1.2\n        elif util >= 0.80:\n            tier = 0.5\n        else:\n            tier = 0.0\n        scores.append(1.0 * kernel + 0.35 * tilt + tier)\n    return scores",
+    "hook_code_sha256": "38a001b9c5f76b32615b9f97507f22395a1cb87fbc79d44817301974b3dedb92",
+    "design_sha256": "7c495396b18a639d8b54d2bb7e0c7d012226cd37fa56c1eefe2628b480b498a5",
+    "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "kb_entry_id": "method-obp-i605-exp-deadzone",
+    "cited_kb_ids": [
+      "method-obp-i605-exp-deadzone",
+      "method-obp-i605-log-half-symmetry",
+      "method-obp-i605-sqrt-close-bonus",
+      "method-obp-best-fit",
+      "method-lit-obp-1d-best-fit"
+    ],
+    "diagnostic_ref": null,
+    "description": "Session M2 evolved obp_online_priority/v1:priority",
+    "default_budget_ms": 500.0,
+    "protocol_id": "obp_online/v1",
+    "hook_specs": [
+      {
+        "name": "priority",
+        "signature": [
+          "current_item",
+          "feasible_remaining_capacities"
+        ],
+        "output_shape_arg": "feasible_remaining_capacities"
+      }
+    ],
+    "hook_implementations": {
+      "priority": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    for r in feasible_remaining_capacities:\n        residual = r - current_item\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        x = residual / w  # in [0,1] since 0 <= residual <= r <= w\n        # Cauchy-like kernel peaking at x=0 (exact fit) and x=1 (perfect complement).\n        k0 = 1.0 / (1.0 + (x / 0.18) ** 2)\n        k1 = 1.0 / (1.0 + ((1.0 - x) / 0.18) ** 2)\n        kernel = k0 + 0.9 * k1\n        # Linear best-fit tilt (prefer smaller residual among exact-fit-like).\n        tilt = -x\n        # Utilization tier bonus (step-like, no exponential).\n        util = 1.0 - x\n        if util >= 0.92:\n            tier = 1.2\n        elif util >= 0.80:\n            tier = 0.5\n        else:\n            tier = 0.0\n        scores.append(1.0 * kernel + 0.35 * tilt + tier)\n    return scores"
+    },
+    "hook_hashes": {
+      "priority": "38a001b9c5f76b32615b9f97507f22395a1cb87fbc79d44817301974b3dedb92"
+    },
+    "bundle_hash": "6fe34ea6dd271f8c1b0e8009912edc3f72b4b45ff8f7b42825175dfc86a0bfd5",
+    "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+  }
+}

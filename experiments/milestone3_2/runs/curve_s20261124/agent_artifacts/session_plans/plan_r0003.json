@@ -1,0 +1,35 @@
+{
+  "round_id": 3,
+  "direction": "Exploit stagnation-aware multiplicative gating with load/depot-distance and route-distance gates, but simplify the gate set to reduce double-penalization and emphasize rank-power sharpening only as stagnation grows",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows a near-tie Pareto frontier (16.0804 vs 16.0818, solve ~216 ms of the 500 ms budget, 0 exhausted/failed) plus high per-instance complementarity (win counts 14/10, VBS gap only 0.19%), so residual error is instance-heterogeneity, not budget. KB method-cvrp-m3-ruin-recreate-l3 confirms the template is a single-hook score_ruin_nodes design with fixed deterministic Regret-2 repair and R2R acceptance, and that the evolved multiplicative-gate + rank-power rule (score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) is the verified evolvable form; its 25 ms pitfall does not apply since we run 500 ms. Weakest regimes (loose capacity -22.3%, size 100 -20.6%, eccentric depot -19.8%, uniform demand -20.5%, clustered -18.4%) all point at capacity/depot geometry rather than spatial clustering, so this round I anchor the gate product on gate_load and gate_depot, drop the redundant gate_demand / gate_rdist double-penalization, and make rank-power exponent a smooth function of iter_frac and stagnation_ratio. That is a single-hook edit inside the allowed template with postprocess none; the 5-gate validator was already clean for this (template, postprocess) pair in prior rounds, and the inner EoH loop will refine the exponents/gate widths."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 (500 ms), the round-2 elite regressed only -0.0014 vs round-1, so the LNS skeleton is near-saturated and objective gains must come from changing WHICH nodes are ruined. Specifically: (a) at low stagnation (iter_frac small, stagnation_ratio~0) the best ruin score is close to a pure removal-savings magnitude rank (cost-efficiency diversification is not yet needed), while (b) at high stagnation the score must shift toward tight-load routes and nodes far from the depot (loose-capacity instances with eccentric depots are the weakest regime at -19.8%/-22.3% VBS gap). A smooth iter_frac/stagnation-driven blend p(iter_frac) from rank-power ~1.0 to ~2.0 combined with gate_load*gate_depot (multiplicative, bounded, product not double-penalized) will beat the round-2 elite's mean objective 16.0804 on the 24 dev instances.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows a near-tie Pareto frontier (16.0804 vs 16.0818, solve ~216 ms of the 500 ms budget, 0 exhausted/failed) plus high per-instance complementarity (win counts 14/10, VBS gap only 0.19%), so residual error is instance-heterogeneity, not budget. KB method-cvrp-m3-ruin-recreate-l3 confirms the template is a single-hook score_ruin_nodes design with fixed deterministic Regret-2 repair and R2R acceptance, and that the evolved multiplicative-gate + rank-power rule (score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) is the verified evolvable form; its 25 ms pitfall does not apply since we run 500 ms. Weakest regimes (loose capacity -22.3%, size 100 -20.6%, eccentric depot -19.8%, uniform demand -20.5%, clustered -18.4%) all point at capacity/depot geometry rather than spatial clustering, so this round I anchor the gate product on gate_load and gate_depot, drop the redundant gate_demand / gate_rdist double-penalization, and make rank-power exponent a smooth function of iter_frac and stagnation_ratio. That is a single-hook edit inside the allowed template with postprocess none; the 5-gate validator was already clean for this (template, postprocess) pair in prior rounds, and the inner EoH loop will refine the exponents/gate widths."
+  }
+}

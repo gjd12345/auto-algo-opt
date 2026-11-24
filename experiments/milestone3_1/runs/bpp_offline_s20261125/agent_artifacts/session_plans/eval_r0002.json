@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under bpp_offline_reorder_repack/none.",
+      "evidence_refs": [
+        "evaluation:4af600246d054f4da6e1c09de8023ae7"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If `score_item` is a lexicographic priority: (a) size descending as the base term, plus (b) a bounded deterministic tie-break term derived from a cheap residual-fit heuristic (e.g. item size modulo the dominant bin-fill quantum, or hash(size) so equal-size items are ordered consistently yet differently across bins), then the reorder-repack loop will close part of the ~2.4-2.7% relative gap on size 50/100 instances without regressing size 200, because FFD orderings tie on large items and the residual term drives the small-item placement that determines whether the last bin is needed.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:4af600246d054f4da6e1c09de8023ae7"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the offline `score_item` priority to break the 2-3% gap on the small/medium instances: prioritize large items (size descending) but perturb ties with a deterministic hashed jitter so that FFD-like packing explores alternative insertion orders, and let the repack pass relocate the smallest items of under-filled bins. Push toward reducing bin count on size=50 (13.0 mean) and size=100 (24.25 mean) regimes."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

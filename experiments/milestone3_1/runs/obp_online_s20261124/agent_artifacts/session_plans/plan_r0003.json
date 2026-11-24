@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Refine the prefix-causal score_bin into a smooth best-fit-almost-best-fit hybrid: primary term = residual after placement (tightest feasible bin), with a small convex fill/utilization correction and a deterministic bin-age tie-break so residual ties break toward bins with larger current fill; when no bin fits, the new-bin decision must remain unchanged. Exploit the fact that archive shows zero portfolio diversity (both solvers 27.8333, 36/36 wins) so a strictly different residual-scoring shape is needed rather than parameter tuning.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "Archive feedback: two solvers with identical mean objective 27.8333 and 100% identical per-instance behaviour (win_counts 36/0, gap over VBS 0.0%) means round 2's variation added no behavioural diversity — the inner evolution is collapsing to the same best-fit scoring surface. KB entry method-obp-best-fit confirms ScoreBin is a fill-after-placement score with best-fit preference, and method-lit-obp-bestfit-family-best-fit-almost-best-fit gives the canonical evidence that near-best-fit relaxations (tie thresholds / residual-vs-fill mixtures) are the standard, low-risk way to escape pure best-fit fixed points. The proposal therefore changes the scoring shape (residual + fill convex mixture with deterministic tie-break) rather than magnitudes, keeps the single permitted template obp_online_priority and postprocess none, and stays within the 500 ms budget since score_bin remains O(#open bins) per item."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "8f8ee2cd34b4f15a89eb01a5bc4d1151696bc907b3a071a61ec634921c152b8f"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "A score_bin that is a smooth convex combination of post-placement residual (best-fit term) and a fill-ratio term with a deterministic residual-tie ordering will weakly dominate the current pure best-fit score on the hetero_24 dev suite, reducing mean objective in the large-size (200) and small-size (50) regimes where the archive reports VBS gaps of -0.19% and -0.83%, while keeping mean solve time under 500 ms and remaining strictly prefix-causal (score uses only the current item and already-open-bin statistics).",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-best-fit",
+      "method-lit-obp-bestfit-family-best-fit-almost-best-fit",
+      "method-obp-first-fit"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive feedback: two solvers with identical mean objective 27.8333 and 100% identical per-instance behaviour (win_counts 36/0, gap over VBS 0.0%) means round 2's variation added no behavioural diversity — the inner evolution is collapsing to the same best-fit scoring surface. KB entry method-obp-best-fit confirms ScoreBin is a fill-after-placement score with best-fit preference, and method-lit-obp-bestfit-family-best-fit-almost-best-fit gives the canonical evidence that near-best-fit relaxations (tie thresholds / residual-vs-fill mixtures) are the standard, low-risk way to escape pure best-fit fixed points. The proposal therefore changes the scoring shape (residual + fill convex mixture with deterministic tie-break) rather than magnitudes, keeps the single permitted template obp_online_priority and postprocess none, and stays within the 500 ms budget since score_bin remains O(#open bins) per item."
+  }
+}

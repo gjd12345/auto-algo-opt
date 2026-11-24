@@ -1,0 +1,37 @@
+{
+  "round_id": 6,
+  "direction": "Sharpen the ruin-selection priority hook for the documented weakest regimes (tight capacity, uniform demand, size 100, eccentric depot, clustered spatial): replace the current removal-savings-only ranking with a scale-invariant multiplicative blend of (a) per-node removal savings normalized by mean savings, (b) load-relief pressure (removed demand / route load, which matters most at tight capacity), and (c) Shaw-style geographic relatedness to the seed node's route centroid (clustered spatial), then anneal that blend toward a milder, stagnation-driven schedule as iter_frac grows so late LNS iterations explore rather than re-destroy the same high-savings nodes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 confirms the L3 template's only evolvable degree of freedom is score_ruin_nodes, with deterministic Regret-2 repair and Record-to-Record acceptance fixed, and that even the strongly-performing control (Worst-Cost Removal) leaves measurable headroom; method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion establish that destroy-operator choice (worst/related/random mix) is where LNS gains concentrate when repair is held fixed. Archive feedback shows the whole portfolio is compressed into a 0.43% band around SBS 15.7435 with complementary winners (r0001 wins 10 instances, r0004 wins 5), i.e. remaining signal is per-regime rather than global, and the weakest regimes are tight capacity, clustered spatiality, uniform demand and size 100 — exactly the regime where load-relief and relatedness terms should dominate raw savings. The annealed savings decay targets the known failure mode of re-destroying identical high-savings nodes under stagnation, keeping the anytime curve productive across the full 500 ms."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, a ruin priority that multiplies normalized removal savings by tight-capacity load relief (demand/route_load) and by within-route geographic compactness, with a stagnation_ratio- and iter_frac-driven decay of the savings term, will lower mean objective below the current SBS 15.7435 — because the portfolio's residual VBS gap (0.43%) and all five weakest regimes sit on tight-capacity, clustered, size-100 instances where pure savings ranking repeatedly removes the same long-detour nodes and leaves infeasible-ish, load-imbalanced routes for Regret-2 to repair.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 confirms the L3 template's only evolvable degree of freedom is score_ruin_nodes, with deterministic Regret-2 repair and Record-to-Record acceptance fixed, and that even the strongly-performing control (Worst-Cost Removal) leaves measurable headroom; method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion establish that destroy-operator choice (worst/related/random mix) is where LNS gains concentrate when repair is held fixed. Archive feedback shows the whole portfolio is compressed into a 0.43% band around SBS 15.7435 with complementary winners (r0001 wins 10 instances, r0004 wins 5), i.e. remaining signal is per-regime rather than global, and the weakest regimes are tight capacity, clustered spatiality, uniform demand and size 100 — exactly the regime where load-relief and relatedness terms should dominate raw savings. The annealed savings decay targets the known failure mode of re-destroying identical high-savings nodes under stagnation, keeping the anytime curve productive across the full 500 ms."
+  }
+}

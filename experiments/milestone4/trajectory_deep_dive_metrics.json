@@ -1,0 +1,5347 @@
+{
+  "schema_version": "m4-trajectory-deep-dive/v1",
+  "scope": {
+    "m30_runs": 18,
+    "m31_runs": 12,
+    "m32_runs": 12,
+    "total_outer_agent_runs": 42,
+    "total_outer_agent_turns": 791,
+    "m32_physical_requests": 4800
+  },
+  "m32_aggregate_funnel": {
+    "physical_request_states": {
+      "complete": 4257,
+      "http_error": 118,
+      "connectivity_failed": 422,
+      "killed_unknown": 3
+    },
+    "provenance_states": {
+      "baseline_seed": 12,
+      "probe": 85,
+      "invalid_candidate": 1040,
+      "valid_candidate": 2029,
+      "provider_failed": 425,
+      "eoh_skipped": 668
+    },
+    "error_codes": {
+      "forbidden_attribute": 775,
+      "invalid_hook_bundle_program": 224,
+      "forbidden_syntax": 15,
+      "hook_runtime_exception": 13,
+      "signature_mismatch": 6,
+      "invalid_code": 2,
+      "forbidden_rebinding": 2,
+      "nonfinite_objective": 1,
+      "invalid_return": 1,
+      "forbidden_import": 1
+    },
+    "error_details_top20": [
+      [
+        "Attribute 'np.empty' is not in the numpy/math whitelist.",
+        406
+      ],
+      [
+        "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+        100
+      ],
+      [
+        "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+        68
+      ],
+      [
+        "forbidden_attribute:np.empty",
+        47
+      ],
+      [
+        "forbidden_attribute:np.tanh",
+        45
+      ],
+      [
+        "hook_bundle_names_mismatch:Source units must match the declared hook names.",
+        42
+      ],
+      [
+        "Attribute 'np.sign' is not in the numpy/math whitelist.",
+        33
+      ],
+      [
+        "Attribute 'np.mod' is not in the numpy/math whitelist.",
+        30
+      ],
+      [
+        "Attribute 'np.stack' is not in the numpy/math whitelist.",
+        27
+      ],
+      [
+        "Attribute 'np.ix_' is not in the numpy/math whitelist.",
+        14
+      ],
+      [
+        "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+        12
+      ],
+      [
+        "forbidden_attribute:np.nan_to_num",
+        12
+      ],
+      [
+        "forbidden_attribute:np.sign",
+        12
+      ],
+      [
+        "Attribute 'np.at' is not in the numpy/math whitelist.",
+        10
+      ],
+      [
+        "forbidden_attribute:np.bincount",
+        10
+      ],
+      [
+        "Attribute 'np.vstack' is not in the numpy/math whitelist.",
+        9
+      ],
+      [
+        "forbidden_attribute:np.atleast_1d",
+        9
+      ],
+      [
+        "forbidden_attribute:np.stack",
+        8
+      ],
+      [
+        "Attribute 'np.percentile' is not in the numpy/math whitelist.",
+        7
+      ],
+      [
+        "forbidden_attribute:np.percentile",
+        7
+      ]
+    ],
+    "search_progress_total_events": 3239,
+    "search_progress_behavior_comparable_events": 0
+  },
+  "m32_jump_summary": {
+    "mean_peak_ordinal": 231.67,
+    "median_peak_ordinal": 268.5,
+    "min_peak_ordinal": 53,
+    "max_peak_ordinal": 398,
+    "runs_peaking_le_100": 4,
+    "runs_peaking_le_100_pct": 33.33,
+    "mean_post_peak_wasted_pct": 42.08
+  },
+  "m32_runs_detail": [
+    {
+      "run_name": "curve_s20261124",
+      "physical_requests_total": 400,
+      "request_states": {
+        "complete": 348,
+        "http_error": 20,
+        "connectivity_failed": 31,
+        "killed_unknown": 1
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 7,
+        "invalid_candidate": 54,
+        "valid_candidate": 246,
+        "provider_failed": 32,
+        "eoh_skipped": 6
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.013395,
+      "peak_ordinal": 319,
+      "post_peak_wasted_requests": 81,
+      "post_peak_wasted_pct": 20.25,
+      "jump_count": 12,
+      "inter_jump_waits": [
+        16,
+        1,
+        2,
+        7,
+        3,
+        12,
+        9,
+        1,
+        57,
+        26,
+        18,
+        167
+      ],
+      "jumps": [
+        {
+          "ordinal": 16,
+          "dev_obj": 16.141253,
+          "delta": 0.00115,
+          "loc": 65,
+          "ast_nodes": 684,
+          "branches": 6,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "10b9cac9682a"
+        },
+        {
+          "ordinal": 17,
+          "dev_obj": 16.136971,
+          "delta": 0.004282,
+          "loc": 57,
+          "ast_nodes": 534,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "acf37871c882"
+        },
+        {
+          "ordinal": 19,
+          "dev_obj": 16.123123,
+          "delta": 0.013847,
+          "loc": 79,
+          "ast_nodes": 760,
+          "branches": 4,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "140c9f508399"
+        },
+        {
+          "ordinal": 26,
+          "dev_obj": 16.116429,
+          "delta": 0.006695,
+          "loc": 63,
+          "ast_nodes": 630,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "11bf6b0f7bab"
+        },
+        {
+          "ordinal": 29,
+          "dev_obj": 16.089597,
+          "delta": 0.026832,
+          "loc": 68,
+          "ast_nodes": 654,
+          "branches": 3,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "698c67310d5b"
+        },
+        {
+          "ordinal": 41,
+          "dev_obj": 16.088159,
+          "delta": 0.001438,
+          "loc": 83,
+          "ast_nodes": 808,
+          "branches": 3,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "6d0c51adcb79"
+        },
+        {
+          "ordinal": 50,
+          "dev_obj": 16.082794,
+          "delta": 0.005365,
+          "loc": 79,
+          "ast_nodes": 726,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b7077d76e69d"
+        },
+        {
+          "ordinal": 51,
+          "dev_obj": 16.081807,
+          "delta": 0.000986,
+          "loc": 55,
+          "ast_nodes": 606,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "2985c0937b62"
+        },
+        {
+          "ordinal": 108,
+          "dev_obj": 16.080409,
+          "delta": 0.001399,
+          "loc": 66,
+          "ast_nodes": 680,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "3a1fc1d72554"
+        },
+        {
+          "ordinal": 134,
+          "dev_obj": 16.052289,
+          "delta": 0.028119,
+          "loc": 66,
+          "ast_nodes": 621,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "abec7cb4537a"
+        },
+        {
+          "ordinal": 152,
+          "dev_obj": 16.050432,
+          "delta": 0.001857,
+          "loc": 67,
+          "ast_nodes": 672,
+          "branches": 3,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "f233572fad2e"
+        },
+        {
+          "ordinal": 319,
+          "dev_obj": 16.013395,
+          "delta": 0.037037,
+          "loc": 62,
+          "ast_nodes": 614,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rids"
+          ],
+          "code_sha256": "e4a1eb6c0200"
+        }
+      ],
+      "intron_valid_count": 45,
+      "valid_count": 246,
+      "intron_rate": 0.1829,
+      "quartiles": {
+        "1-100": {
+          "valid": 59,
+          "attempted_gen": 74,
+          "valid_rate": 0.7973,
+          "mean_loc": 61.88,
+          "mean_ast_nodes": 619.6,
+          "mean_branches": 2.9,
+          "mean_loops": 0.08,
+          "intron_fraction": 0.0678
+        },
+        "101-200": {
+          "valid": 77,
+          "attempted_gen": 85,
+          "valid_rate": 0.9059,
+          "mean_loc": 60.19,
+          "mean_ast_nodes": 608.6,
+          "mean_branches": 2.44,
+          "mean_loops": 0,
+          "intron_fraction": 0.2987
+        },
+        "201-300": {
+          "valid": 51,
+          "attempted_gen": 64,
+          "valid_rate": 0.7969,
+          "mean_loc": 59.98,
+          "mean_ast_nodes": 590.0,
+          "mean_branches": 3.12,
+          "mean_loops": 0.04,
+          "intron_fraction": 0.1569
+        },
+        "301-400": {
+          "valid": 59,
+          "attempted_gen": 83,
+          "valid_rate": 0.7108,
+          "mean_loc": 70.88,
+          "mean_ast_nodes": 736.2,
+          "mean_branches": 3.24,
+          "mean_loops": 0.34,
+          "intron_fraction": 0.1695
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 53,
+        "hook_runtime_exception": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          16
+        ],
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          14
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          7
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.reduce' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.partition' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "Attribute 'np.quantile' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "Attribute 'np.var' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "NameError: name 'f_spr' is not defined",
+          1
+        ]
+      ],
+      "search_progress_events": 314,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 36,
+          "state": "sealed",
+          "draining_started_ordinal": 36,
+          "settled_through_ordinal": 36,
+          "winner_source_ordinal": 29,
+          "winner_solver_sha256": "bb91305a010321046d06b1d15db23d837641420a6653c1c4ac2fff98ba860352"
+        },
+        {
+          "ckpt_budget": 100,
+          "state": "sealed",
+          "draining_started_ordinal": 100,
+          "settled_through_ordinal": 100,
+          "winner_source_ordinal": 51,
+          "winner_solver_sha256": "7781fec2b0cef39e67d45dbc2fee08af10c48f4f94494bdd9233c175ed53b6d4"
+        },
+        {
+          "ckpt_budget": 200,
+          "state": "sealed",
+          "draining_started_ordinal": 200,
+          "settled_through_ordinal": 200,
+          "winner_source_ordinal": 152,
+          "winner_solver_sha256": "327fa6e5c5a880d77424d3fa16e33f63df5bd91503f9140d3e3d55ebca1f36bb"
+        },
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 319,
+          "winner_solver_sha256": "c606781f617c41b09e654ebf9b1c5bcafcf2731cef07174381ac4bd43736e95f"
+        }
+      ]
+    },
+    {
+      "run_name": "curve_s20261125",
+      "physical_requests_total": 400,
+      "request_states": {
+        "complete": 349,
+        "http_error": 15,
+        "connectivity_failed": 35,
+        "killed_unknown": 1
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 7,
+        "valid_candidate": 204,
+        "invalid_candidate": 97,
+        "eoh_skipped": 7,
+        "provider_failed": 36
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.7435,
+      "peak_ordinal": 96,
+      "post_peak_wasted_requests": 304,
+      "post_peak_wasted_pct": 76.0,
+      "jump_count": 3,
+      "inter_jump_waits": [
+        15,
+        34,
+        47
+      ],
+      "jumps": [
+        {
+          "ordinal": 15,
+          "dev_obj": 15.973864,
+          "delta": 0.168539,
+          "loc": 78,
+          "ast_nodes": 735,
+          "branches": 3,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "f980ca87ee8b"
+        },
+        {
+          "ordinal": 49,
+          "dev_obj": 15.75843,
+          "delta": 0.215434,
+          "loc": 86,
+          "ast_nodes": 734,
+          "branches": 4,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "c9a8befc18f7"
+        },
+        {
+          "ordinal": 96,
+          "dev_obj": 15.7435,
+          "delta": 0.01493,
+          "loc": 69,
+          "ast_nodes": 761,
+          "branches": 6,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "d6c597ab94b5"
+        }
+      ],
+      "intron_valid_count": 18,
+      "valid_count": 204,
+      "intron_rate": 0.0882,
+      "quartiles": {
+        "1-100": {
+          "valid": 52,
+          "attempted_gen": 77,
+          "valid_rate": 0.6753,
+          "mean_loc": 70.79,
+          "mean_ast_nodes": 703,
+          "mean_branches": 5.08,
+          "mean_loops": 0.04,
+          "intron_fraction": 0.0577
+        },
+        "101-200": {
+          "valid": 47,
+          "attempted_gen": 85,
+          "valid_rate": 0.5529,
+          "mean_loc": 78.43,
+          "mean_ast_nodes": 812.5,
+          "mean_branches": 6.13,
+          "mean_loops": 0.02,
+          "intron_fraction": 0.0638
+        },
+        "201-300": {
+          "valid": 51,
+          "attempted_gen": 69,
+          "valid_rate": 0.7391,
+          "mean_loc": 77.12,
+          "mean_ast_nodes": 805.3,
+          "mean_branches": 7.08,
+          "mean_loops": 0.02,
+          "intron_fraction": 0.0392
+        },
+        "301-400": {
+          "valid": 54,
+          "attempted_gen": 77,
+          "valid_rate": 0.7013,
+          "mean_loc": 94.91,
+          "mean_ast_nodes": 1048.7,
+          "mean_branches": 11.37,
+          "mean_loops": 1.17,
+          "intron_fraction": 0.1852
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 93,
+        "hook_runtime_exception": 1,
+        "forbidden_syntax": 3
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          63
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          7
+        ],
+        [
+          "Attribute 'np.mod' is not in the numpy/math whitelist.",
+          6
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Attribute 'np.ix_' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Syntax construct 'Lambda' is forbidden in candidate hooks.",
+          2
+        ],
+        [
+          "ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+          1
+        ],
+        [
+          "Attribute 'np.tanh_placeholder' is not in the numpy/math whitelist.",
+          1
+        ]
+      ],
+      "search_progress_events": 315,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 36,
+          "state": "sealed",
+          "draining_started_ordinal": 36,
+          "settled_through_ordinal": 36,
+          "winner_source_ordinal": 15,
+          "winner_solver_sha256": "93c1fb029a00503efca8a32955100ea55021668f55869f8090d074d247dee3dc"
+        },
+        {
+          "ckpt_budget": 100,
+          "state": "sealed",
+          "draining_started_ordinal": 100,
+          "settled_through_ordinal": 100,
+          "winner_source_ordinal": 96,
+          "winner_solver_sha256": "164b43b3f0f35aded3d0f85d4cc34cf4ccad75c30af76cceca1c86e0ee468cd2"
+        },
+        {
+          "ckpt_budget": 200,
+          "state": "sealed",
+          "draining_started_ordinal": 200,
+          "settled_through_ordinal": 200,
+          "winner_source_ordinal": 96,
+          "winner_solver_sha256": "164b43b3f0f35aded3d0f85d4cc34cf4ccad75c30af76cceca1c86e0ee468cd2"
+        },
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 96,
+          "winner_solver_sha256": "164b43b3f0f35aded3d0f85d4cc34cf4ccad75c30af76cceca1c86e0ee468cd2"
+        }
+      ]
+    },
+    {
+      "run_name": "curve_s20261126",
+      "physical_requests_total": 400,
+      "request_states": {
+        "complete": 354,
+        "http_error": 11,
+        "connectivity_failed": 34,
+        "killed_unknown": 1
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 7,
+        "invalid_candidate": 105,
+        "provider_failed": 35,
+        "valid_candidate": 204,
+        "eoh_skipped": 4
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.777281,
+      "peak_ordinal": 375,
+      "post_peak_wasted_requests": 25,
+      "post_peak_wasted_pct": 6.25,
+      "jump_count": 5,
+      "inter_jump_waits": [
+        63,
+        26,
+        11,
+        170,
+        105
+      ],
+      "jumps": [
+        {
+          "ordinal": 63,
+          "dev_obj": 16.020282,
+          "delta": 0.122121,
+          "loc": 100,
+          "ast_nodes": 933,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ],
+          "code_sha256": "37b71aa789af"
+        },
+        {
+          "ordinal": 89,
+          "dev_obj": 15.883634,
+          "delta": 0.136648,
+          "loc": 96,
+          "ast_nodes": 1053,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "feb293fa5bdb"
+        },
+        {
+          "ordinal": 100,
+          "dev_obj": 15.788032,
+          "delta": 0.095602,
+          "loc": 108,
+          "ast_nodes": 1112,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "4bddddc9aa8f"
+        },
+        {
+          "ordinal": 270,
+          "dev_obj": 15.780731,
+          "delta": 0.007301,
+          "loc": 140,
+          "ast_nodes": 1540,
+          "branches": 14,
+          "loops": 2,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "dmd"
+          ],
+          "code_sha256": "cd431018987c"
+        },
+        {
+          "ordinal": 375,
+          "dev_obj": 15.777281,
+          "delta": 0.00345,
+          "loc": 98,
+          "ast_nodes": 1163,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "22af9ec1abf5"
+        }
+      ],
+      "intron_valid_count": 38,
+      "valid_count": 204,
+      "intron_rate": 0.1863,
+      "quartiles": {
+        "1-100": {
+          "valid": 23,
+          "attempted_gen": 78,
+          "valid_rate": 0.2949,
+          "mean_loc": 103.09,
+          "mean_ast_nodes": 1099.7,
+          "mean_branches": 12.65,
+          "mean_loops": 0.17,
+          "intron_fraction": 0.3043
+        },
+        "101-200": {
+          "valid": 67,
+          "attempted_gen": 85,
+          "valid_rate": 0.7882,
+          "mean_loc": 93.25,
+          "mean_ast_nodes": 1048.8,
+          "mean_branches": 13.18,
+          "mean_loops": 0.04,
+          "intron_fraction": 0.1642
+        },
+        "201-300": {
+          "valid": 41,
+          "attempted_gen": 62,
+          "valid_rate": 0.6613,
+          "mean_loc": 108.59,
+          "mean_ast_nodes": 1184.1,
+          "mean_branches": 12.76,
+          "mean_loops": 0.41,
+          "intron_fraction": 0.2195
+        },
+        "301-400": {
+          "valid": 73,
+          "attempted_gen": 88,
+          "valid_rate": 0.8295,
+          "mean_loc": 106.21,
+          "mean_ast_nodes": 1225.5,
+          "mean_branches": 12.85,
+          "mean_loops": 0.14,
+          "intron_fraction": 0.1507
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 102,
+        "forbidden_syntax": 2,
+        "hook_runtime_exception": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          78
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          10
+        ],
+        [
+          "Attribute 'np.mod' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Syntax construct 'With' is forbidden in candidate hooks.",
+          2
+        ],
+        [
+          "Attribute 'np.ix_' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "NameError: name 'h_dep' is not defined",
+          1
+        ],
+        [
+          "Attribute 'np.percentile' is not in the numpy/math whitelist.",
+          1
+        ]
+      ],
+      "search_progress_events": 323,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 36,
+          "state": "sealed",
+          "draining_started_ordinal": 36,
+          "settled_through_ordinal": 36,
+          "winner_source_ordinal": 0,
+          "winner_solver_sha256": "a62f0cf605273750a9fc88779dff40f0768d61631facc9e0272874e94cb7ef79"
+        },
+        {
+          "ckpt_budget": 100,
+          "state": "sealed",
+          "draining_started_ordinal": 100,
+          "settled_through_ordinal": 100,
+          "winner_source_ordinal": 100,
+          "winner_solver_sha256": "bf430728c373293c8e31add45cfe89d623b9a7fdc03d19f357e7c96b3ff5aa9d"
+        },
+        {
+          "ckpt_budget": 200,
+          "state": "sealed",
+          "draining_started_ordinal": 200,
+          "settled_through_ordinal": 200,
+          "winner_source_ordinal": 100,
+          "winner_solver_sha256": "bf430728c373293c8e31add45cfe89d623b9a7fdc03d19f357e7c96b3ff5aa9d"
+        },
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 375,
+          "winner_solver_sha256": "76ab3c810a32af88af5401b4b0ac35bb963a7e15e940fe87bdc059ff091cef30"
+        }
+      ]
+    },
+    {
+      "run_name": "l3b_dual_hook_s20261124",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 8,
+        "complete": 360,
+        "connectivity_failed": 32
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 6,
+        "valid_candidate": 78,
+        "invalid_candidate": 75,
+        "eoh_skipped": 170,
+        "provider_failed": 32
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.092414,
+      "peak_ordinal": 281,
+      "post_peak_wasted_requests": 119,
+      "post_peak_wasted_pct": 29.75,
+      "jump_count": 3,
+      "inter_jump_waits": [
+        95,
+        24,
+        162
+      ],
+      "jumps": [
+        {
+          "ordinal": 95,
+          "dev_obj": 16.138028,
+          "delta": 0.004375,
+          "loc": 51,
+          "ast_nodes": 755,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "6425ef263103"
+        },
+        {
+          "ordinal": 119,
+          "dev_obj": 16.122665,
+          "delta": 0.015363,
+          "loc": 60,
+          "ast_nodes": 875,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "4afbc072e9a6"
+        },
+        {
+          "ordinal": 281,
+          "dev_obj": 16.092414,
+          "delta": 0.030251,
+          "loc": 90,
+          "ast_nodes": 931,
+          "branches": 5,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "4a1480dd8fe7"
+        }
+      ],
+      "intron_valid_count": 4,
+      "valid_count": 78,
+      "intron_rate": 0.0513,
+      "quartiles": {
+        "1-100": {
+          "valid": 22,
+          "attempted_gen": 72,
+          "valid_rate": 0.3056,
+          "mean_loc": 65.77,
+          "mean_ast_nodes": 797,
+          "mean_branches": 4.23,
+          "mean_loops": 0,
+          "intron_fraction": 0.0455
+        },
+        "101-200": {
+          "valid": 22,
+          "attempted_gen": 89,
+          "valid_rate": 0.2472,
+          "mean_loc": 77.14,
+          "mean_ast_nodes": 901.5,
+          "mean_branches": 2.59,
+          "mean_loops": 0.14,
+          "intron_fraction": 0.0909
+        },
+        "201-300": {
+          "valid": 20,
+          "attempted_gen": 84,
+          "valid_rate": 0.2381,
+          "mean_loc": 83.8,
+          "mean_ast_nodes": 931.8,
+          "mean_branches": 3.65,
+          "mean_loops": 0,
+          "intron_fraction": 0.0
+        },
+        "301-400": {
+          "valid": 14,
+          "attempted_gen": 78,
+          "valid_rate": 0.1795,
+          "mean_loc": 87.93,
+          "mean_ast_nodes": 914.1,
+          "mean_branches": 4.29,
+          "mean_loops": 0.07,
+          "intron_fraction": 0.0714
+        }
+      },
+      "error_codes": {
+        "invalid_hook_bundle_program": 74,
+        "hook_runtime_exception": 1
+      },
+      "error_details_top10": [
+        [
+          "forbidden_attribute:np.tanh",
+          20
+        ],
+        [
+          "forbidden_attribute:np.empty",
+          17
+        ],
+        [
+          "hook_bundle_names_mismatch:Source units must match the declared hook names.",
+          13
+        ],
+        [
+          "forbidden_attribute:np.nan_to_num",
+          4
+        ],
+        [
+          "forbidden_attribute:np.sign",
+          4
+        ],
+        [
+          "forbidden_attribute:np.resize",
+          3
+        ],
+        [
+          "forbidden_attribute:np.percentile",
+          3
+        ],
+        [
+          "forbidden_attribute:np.fill_diagonal",
+          3
+        ],
+        [
+          "forbidden_attribute:np.stack",
+          2
+        ],
+        [
+          "forbidden_attribute:np.atleast_1d",
+          1
+        ]
+      ],
+      "search_progress_events": 165,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 281,
+          "winner_solver_sha256": "0dacf1e29d77ea1932b5cca7accbbc55dd580f3fc1aaf1efbdaa11e2c2dac12f"
+        }
+      ]
+    },
+    {
+      "run_name": "l3b_dual_hook_s20261125",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 8,
+        "complete": 356,
+        "connectivity_failed": 36
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 6,
+        "invalid_candidate": 88,
+        "eoh_skipped": 159,
+        "valid_candidate": 73,
+        "provider_failed": 36
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.052648,
+      "peak_ordinal": 314,
+      "post_peak_wasted_requests": 86,
+      "post_peak_wasted_pct": 21.5,
+      "jump_count": 9,
+      "inter_jump_waits": [
+        18,
+        34,
+        62,
+        1,
+        54,
+        63,
+        35,
+        14,
+        33
+      ],
+      "jumps": [
+        {
+          "ordinal": 18,
+          "dev_obj": 16.140772,
+          "delta": 0.001631,
+          "loc": 47,
+          "ast_nodes": 518,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b8bde76924b0"
+        },
+        {
+          "ordinal": 52,
+          "dev_obj": 16.13342,
+          "delta": 0.007352,
+          "loc": 75,
+          "ast_nodes": 849,
+          "branches": 6,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "e3badaf45897"
+        },
+        {
+          "ordinal": 114,
+          "dev_obj": 16.129858,
+          "delta": 0.003562,
+          "loc": 81,
+          "ast_nodes": 882,
+          "branches": 7,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "76a2f9038c37"
+        },
+        {
+          "ordinal": 115,
+          "dev_obj": 16.109509,
+          "delta": 0.02035,
+          "loc": 75,
+          "ast_nodes": 912,
+          "branches": 8,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "55dfb2ba4a8f"
+        },
+        {
+          "ordinal": 169,
+          "dev_obj": 16.108274,
+          "delta": 0.001235,
+          "loc": 111,
+          "ast_nodes": 1136,
+          "branches": 10,
+          "loops": 2,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "consume"
+          ],
+          "code_sha256": "9ce7ff7f0eba"
+        },
+        {
+          "ordinal": 232,
+          "dev_obj": 16.091635,
+          "delta": 0.016639,
+          "loc": 120,
+          "ast_nodes": 1225,
+          "branches": 11,
+          "loops": 2,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b25df47d0ba1"
+        },
+        {
+          "ordinal": 267,
+          "dev_obj": 16.060564,
+          "delta": 0.031071,
+          "loc": 126,
+          "ast_nodes": 1340,
+          "branches": 12,
+          "loops": 2,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "6b3d02522a6d"
+        },
+        {
+          "ordinal": 281,
+          "dev_obj": 16.0538,
+          "delta": 0.006763,
+          "loc": 123,
+          "ast_nodes": 1335,
+          "branches": 12,
+          "loops": 2,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "a7e1e58ab139"
+        },
+        {
+          "ordinal": 314,
+          "dev_obj": 16.052648,
+          "delta": 0.001153,
+          "loc": 120,
+          "ast_nodes": 1411,
+          "branches": 12,
+          "loops": 2,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "96095da4f5ce"
+        }
+      ],
+      "intron_valid_count": 13,
+      "valid_count": 73,
+      "intron_rate": 0.1781,
+      "quartiles": {
+        "1-100": {
+          "valid": 19,
+          "attempted_gen": 74,
+          "valid_rate": 0.2568,
+          "mean_loc": 82.68,
+          "mean_ast_nodes": 816.5,
+          "mean_branches": 6.21,
+          "mean_loops": 0.16,
+          "intron_fraction": 0.0526
+        },
+        "101-200": {
+          "valid": 14,
+          "attempted_gen": 92,
+          "valid_rate": 0.1522,
+          "mean_loc": 99,
+          "mean_ast_nodes": 1017.7,
+          "mean_branches": 7.29,
+          "mean_loops": 0.86,
+          "intron_fraction": 0.0714
+        },
+        "201-300": {
+          "valid": 20,
+          "attempted_gen": 77,
+          "valid_rate": 0.2597,
+          "mean_loc": 116.25,
+          "mean_ast_nodes": 1249.8,
+          "mean_branches": 11.25,
+          "mean_loops": 1.5,
+          "intron_fraction": 0.2
+        },
+        "301-400": {
+          "valid": 20,
+          "attempted_gen": 77,
+          "valid_rate": 0.2597,
+          "mean_loc": 130.65,
+          "mean_ast_nodes": 1449.6,
+          "mean_branches": 9.85,
+          "mean_loops": 1.9,
+          "intron_fraction": 0.35
+        }
+      },
+      "error_codes": {
+        "invalid_hook_bundle_program": 84,
+        "hook_runtime_exception": 4
+      },
+      "error_details_top10": [
+        [
+          "forbidden_attribute:np.empty",
+          15
+        ],
+        [
+          "forbidden_attribute:np.tanh",
+          15
+        ],
+        [
+          "hook_bundle_names_mismatch:Source units must match the declared hook names.",
+          13
+        ],
+        [
+          "forbidden_attribute:np.bincount",
+          9
+        ],
+        [
+          "forbidden_attribute:np.atleast_1d",
+          6
+        ],
+        [
+          "forbidden_attribute:np.sign",
+          5
+        ],
+        [
+          "forbidden_attribute:np.at",
+          4
+        ],
+        [
+          "forbidden_attribute:np.stack",
+          3
+        ],
+        [
+          "forbidden_attribute:np.nan_to_num",
+          3
+        ],
+        [
+          "forbidden_attribute:np.percentile",
+          2
+        ]
+      ],
+      "search_progress_events": 173,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 314,
+          "winner_solver_sha256": "78a65858895e4b7707b5ced1a0c3b63d7526608e3e311613b2980715fbac1932"
+        }
+      ]
+    },
+    {
+      "run_name": "l3b_dual_hook_s20261126",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 2,
+        "complete": 365,
+        "connectivity_failed": 33
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 5,
+        "invalid_candidate": 67,
+        "valid_candidate": 100,
+        "eoh_skipped": 168,
+        "provider_failed": 33
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.056005,
+      "peak_ordinal": 60,
+      "post_peak_wasted_requests": 340,
+      "post_peak_wasted_pct": 85.0,
+      "jump_count": 4,
+      "inter_jump_waits": [
+        10,
+        3,
+        32,
+        15
+      ],
+      "jumps": [
+        {
+          "ordinal": 10,
+          "dev_obj": 16.069162,
+          "delta": 0.073241,
+          "loc": 63,
+          "ast_nodes": 492,
+          "branches": 1,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "n"
+          ],
+          "code_sha256": "c0d3364cf23e"
+        },
+        {
+          "ordinal": 13,
+          "dev_obj": 16.062449,
+          "delta": 0.006713,
+          "loc": 52,
+          "ast_nodes": 478,
+          "branches": 1,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "n"
+          ],
+          "code_sha256": "f99f2023e589"
+        },
+        {
+          "ordinal": 45,
+          "dev_obj": 16.058182,
+          "delta": 0.004268,
+          "loc": 52,
+          "ast_nodes": 478,
+          "branches": 1,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "n"
+          ],
+          "code_sha256": "a3f9cfff2315"
+        },
+        {
+          "ordinal": 60,
+          "dev_obj": 16.056005,
+          "delta": 0.002177,
+          "loc": 52,
+          "ast_nodes": 484,
+          "branches": 1,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "n"
+          ],
+          "code_sha256": "501be7ec5ede"
+        }
+      ],
+      "intron_valid_count": 28,
+      "valid_count": 100,
+      "intron_rate": 0.28,
+      "quartiles": {
+        "1-100": {
+          "valid": 28,
+          "attempted_gen": 83,
+          "valid_rate": 0.3373,
+          "mean_loc": 66.18,
+          "mean_ast_nodes": 608.8,
+          "mean_branches": 1.75,
+          "mean_loops": 0,
+          "intron_fraction": 0.5714
+        },
+        "101-200": {
+          "valid": 22,
+          "attempted_gen": 89,
+          "valid_rate": 0.2472,
+          "mean_loc": 98,
+          "mean_ast_nodes": 972.9,
+          "mean_branches": 9.14,
+          "mean_loops": 0,
+          "intron_fraction": 0.0909
+        },
+        "201-300": {
+          "valid": 30,
+          "attempted_gen": 78,
+          "valid_rate": 0.3846,
+          "mean_loc": 78.9,
+          "mean_ast_nodes": 792.0,
+          "mean_branches": 5,
+          "mean_loops": 0.13,
+          "intron_fraction": 0.3333
+        },
+        "301-400": {
+          "valid": 20,
+          "attempted_gen": 85,
+          "valid_rate": 0.2353,
+          "mean_loc": 63.4,
+          "mean_ast_nodes": 636.8,
+          "mean_branches": 2.95,
+          "mean_loops": 0,
+          "intron_fraction": 0.0
+        }
+      },
+      "error_codes": {
+        "invalid_hook_bundle_program": 66,
+        "nonfinite_objective": 1
+      },
+      "error_details_top10": [
+        [
+          "hook_bundle_names_mismatch:Source units must match the declared hook names.",
+          16
+        ],
+        [
+          "forbidden_attribute:np.empty",
+          15
+        ],
+        [
+          "forbidden_attribute:np.tanh",
+          10
+        ],
+        [
+          "forbidden_attribute:np.nan_to_num",
+          5
+        ],
+        [
+          "forbidden_attribute:np.fill_diagonal",
+          3
+        ],
+        [
+          "forbidden_attribute:np.sign",
+          3
+        ],
+        [
+          "forbidden_attribute:np.stack",
+          3
+        ],
+        [
+          "forbidden_attribute:np.percentile",
+          2
+        ],
+        [
+          "forbidden_attribute:np.cbrt",
+          2
+        ],
+        [
+          "forbidden_attribute:np.at",
+          2
+        ]
+      ],
+      "search_progress_events": 177,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 60,
+          "winner_solver_sha256": "99892939387c6b7296904ff678fd0e626113215d19e9c17c4f26f899a54a3cb3"
+        }
+      ]
+    },
+    {
+      "run_name": "model_routing_s20261124",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 2,
+        "complete": 361,
+        "connectivity_failed": 37
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 7,
+        "invalid_candidate": 97,
+        "valid_candidate": 188,
+        "eoh_skipped": 34,
+        "provider_failed": 37
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.993961,
+      "peak_ordinal": 398,
+      "post_peak_wasted_requests": 2,
+      "post_peak_wasted_pct": 0.5,
+      "jump_count": 5,
+      "inter_jump_waits": [
+        17,
+        9,
+        63,
+        165,
+        144
+      ],
+      "jumps": [
+        {
+          "ordinal": 17,
+          "dev_obj": 16.1076,
+          "delta": 0.034803,
+          "loc": 67,
+          "ast_nodes": 614,
+          "branches": 5,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "6d6d013fdf76"
+        },
+        {
+          "ordinal": 26,
+          "dev_obj": 16.046457,
+          "delta": 0.061143,
+          "loc": 55,
+          "ast_nodes": 573,
+          "branches": 2,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "9545d9dcbafc"
+        },
+        {
+          "ordinal": 89,
+          "dev_obj": 16.020113,
+          "delta": 0.026344,
+          "loc": 62,
+          "ast_nodes": 535,
+          "branches": 4,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "1c0cba8e42b5"
+        },
+        {
+          "ordinal": 254,
+          "dev_obj": 15.998635,
+          "delta": 0.021477,
+          "loc": 75,
+          "ast_nodes": 806,
+          "branches": 2,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "ccd53fe13241"
+        },
+        {
+          "ordinal": 398,
+          "dev_obj": 15.993961,
+          "delta": 0.004675,
+          "loc": 110,
+          "ast_nodes": 1079,
+          "branches": 4,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "0b7c6e8ed1cd"
+        }
+      ],
+      "intron_valid_count": 25,
+      "valid_count": 188,
+      "intron_rate": 0.133,
+      "quartiles": {
+        "1-100": {
+          "valid": 49,
+          "attempted_gen": 84,
+          "valid_rate": 0.5833,
+          "mean_loc": 51.96,
+          "mean_ast_nodes": 493.3,
+          "mean_branches": 2.35,
+          "mean_loops": 0.8,
+          "intron_fraction": 0.1224
+        },
+        "101-200": {
+          "valid": 55,
+          "attempted_gen": 82,
+          "valid_rate": 0.6707,
+          "mean_loc": 67.18,
+          "mean_ast_nodes": 646.1,
+          "mean_branches": 5.02,
+          "mean_loops": 0.73,
+          "intron_fraction": 0.2182
+        },
+        "201-300": {
+          "valid": 43,
+          "attempted_gen": 85,
+          "valid_rate": 0.5059,
+          "mean_loc": 78.26,
+          "mean_ast_nodes": 775.0,
+          "mean_branches": 4.4,
+          "mean_loops": 0.91,
+          "intron_fraction": 0.0698
+        },
+        "301-400": {
+          "valid": 41,
+          "attempted_gen": 68,
+          "valid_rate": 0.6029,
+          "mean_loc": 78.93,
+          "mean_ast_nodes": 767.9,
+          "mean_branches": 2.88,
+          "mean_loops": 0.98,
+          "intron_fraction": 0.0976
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 89,
+        "signature_mismatch": 4,
+        "forbidden_syntax": 3,
+        "hook_runtime_exception": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          47
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          11
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          5
+        ],
+        [
+          "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Expected signature `(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnatio",
+          4
+        ],
+        [
+          "Attribute 'np.vstack' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.empty_like' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.ix_' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          2
+        ]
+      ],
+      "search_progress_events": 299,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 398,
+          "winner_solver_sha256": "f37f87aec7684c03ba67354f7ca53fc53dda4659e4c1f17a42a01ed949e49093"
+        }
+      ]
+    },
+    {
+      "run_name": "model_routing_s20261125",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 7,
+        "complete": 355,
+        "connectivity_failed": 38
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 8,
+        "valid_candidate": 150,
+        "eoh_skipped": 60,
+        "invalid_candidate": 97,
+        "provider_failed": 38
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.894756,
+      "peak_ordinal": 318,
+      "post_peak_wasted_requests": 82,
+      "post_peak_wasted_pct": 20.5,
+      "jump_count": 7,
+      "inter_jump_waits": [
+        24,
+        1,
+        15,
+        156,
+        2,
+        1,
+        119
+      ],
+      "jumps": [
+        {
+          "ordinal": 24,
+          "dev_obj": 16.137703,
+          "delta": 0.0047,
+          "loc": 81,
+          "ast_nodes": 820,
+          "branches": 16,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "09285ede3003"
+        },
+        {
+          "ordinal": 25,
+          "dev_obj": 16.132862,
+          "delta": 0.004841,
+          "loc": 85,
+          "ast_nodes": 870,
+          "branches": 17,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "8fc320973a33"
+        },
+        {
+          "ordinal": 40,
+          "dev_obj": 16.042937,
+          "delta": 0.089925,
+          "loc": 94,
+          "ast_nodes": 1025,
+          "branches": 9,
+          "loops": 3,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "v2"
+          ],
+          "code_sha256": "d61ac2f44fe8"
+        },
+        {
+          "ordinal": 196,
+          "dev_obj": 15.996593,
+          "delta": 0.046345,
+          "loc": 95,
+          "ast_nodes": 1004,
+          "branches": 7,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "4d00cbe9a040"
+        },
+        {
+          "ordinal": 198,
+          "dev_obj": 15.955094,
+          "delta": 0.041499,
+          "loc": 97,
+          "ast_nodes": 1041,
+          "branches": 6,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "ea7ad3450091"
+        },
+        {
+          "ordinal": 199,
+          "dev_obj": 15.932808,
+          "delta": 0.022286,
+          "loc": 102,
+          "ast_nodes": 1098,
+          "branches": 6,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b51c7ef91566"
+        },
+        {
+          "ordinal": 318,
+          "dev_obj": 15.894756,
+          "delta": 0.038052,
+          "loc": 113,
+          "ast_nodes": 1328,
+          "branches": 9,
+          "loops": 2,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "4d2fd0b1ff9c"
+        }
+      ],
+      "intron_valid_count": 47,
+      "valid_count": 150,
+      "intron_rate": 0.3133,
+      "quartiles": {
+        "1-100": {
+          "valid": 33,
+          "attempted_gen": 80,
+          "valid_rate": 0.4125,
+          "mean_loc": 72.52,
+          "mean_ast_nodes": 751.2,
+          "mean_branches": 10.24,
+          "mean_loops": 0.15,
+          "intron_fraction": 0.2424
+        },
+        "101-200": {
+          "valid": 39,
+          "attempted_gen": 74,
+          "valid_rate": 0.527,
+          "mean_loc": 76.87,
+          "mean_ast_nodes": 767.5,
+          "mean_branches": 8.54,
+          "mean_loops": 0.15,
+          "intron_fraction": 0.1282
+        },
+        "201-300": {
+          "valid": 38,
+          "attempted_gen": 80,
+          "valid_rate": 0.475,
+          "mean_loc": 91.5,
+          "mean_ast_nodes": 1034.6,
+          "mean_branches": 7.63,
+          "mean_loops": 1.24,
+          "intron_fraction": 0.5263
+        },
+        "301-400": {
+          "valid": 40,
+          "attempted_gen": 73,
+          "valid_rate": 0.5479,
+          "mean_loc": 100.42,
+          "mean_ast_nodes": 1087.9,
+          "mean_branches": 7.3,
+          "mean_loops": 1.02,
+          "intron_fraction": 0.35
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 93,
+        "invalid_code": 1,
+        "invalid_return": 1,
+        "forbidden_rebinding": 1,
+        "hook_runtime_exception": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          52
+        ],
+        [
+          "Attribute 'np.mod' is not in the numpy/math whitelist.",
+          12
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          11
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          7
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          6
+        ],
+        [
+          "Attribute 'np.percentile' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.vstack' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "SyntaxError: unindent does not match any outer indentation level",
+          1
+        ],
+        [
+          "ValueError: invalid_return:expected_shape=(50,)_got=()",
+          1
+        ],
+        [
+          "Attribute 'np.RandomState' is not in the numpy/math whitelist.",
+          1
+        ]
+      ],
+      "search_progress_events": 263,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 318,
+          "winner_solver_sha256": "ee4d24780d7cda19892062848a3942d02da1fe08d3aff878833304c71697ff2a"
+        }
+      ]
+    },
+    {
+      "run_name": "model_routing_s20261126",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 4,
+        "complete": 358,
+        "connectivity_failed": 38
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 7,
+        "invalid_candidate": 84,
+        "eoh_skipped": 54,
+        "valid_candidate": 177,
+        "provider_failed": 38
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.845195,
+      "peak_ordinal": 256,
+      "post_peak_wasted_requests": 144,
+      "post_peak_wasted_pct": 36.0,
+      "jump_count": 7,
+      "inter_jump_waits": [
+        20,
+        17,
+        5,
+        7,
+        150,
+        49,
+        8
+      ],
+      "jumps": [
+        {
+          "ordinal": 20,
+          "dev_obj": 16.092511,
+          "delta": 0.049892,
+          "loc": 125,
+          "ast_nodes": 922,
+          "branches": 10,
+          "loops": 1,
+          "unused_vars": 3,
+          "unused_var_names": [
+            "depot_d",
+            "inter_route_penalty",
+            "iso_score"
+          ],
+          "code_sha256": "4ed50717a48c"
+        },
+        {
+          "ordinal": 37,
+          "dev_obj": 16.090962,
+          "delta": 0.001549,
+          "loc": 81,
+          "ast_nodes": 847,
+          "branches": 9,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "1a8aee4798e6"
+        },
+        {
+          "ordinal": 42,
+          "dev_obj": 16.037344,
+          "delta": 0.053618,
+          "loc": 57,
+          "ast_nodes": 561,
+          "branches": 4,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "72d9ab100068"
+        },
+        {
+          "ordinal": 49,
+          "dev_obj": 16.035307,
+          "delta": 0.002036,
+          "loc": 80,
+          "ast_nodes": 806,
+          "branches": 6,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "f8ccdec191e1"
+        },
+        {
+          "ordinal": 199,
+          "dev_obj": 16.021109,
+          "delta": 0.014198,
+          "loc": 81,
+          "ast_nodes": 901,
+          "branches": 7,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "8c96ad673be1"
+        },
+        {
+          "ordinal": 248,
+          "dev_obj": 16.000098,
+          "delta": 0.021012,
+          "loc": 77,
+          "ast_nodes": 919,
+          "branches": 7,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "205cdaec6233"
+        },
+        {
+          "ordinal": 256,
+          "dev_obj": 15.845195,
+          "delta": 0.154903,
+          "loc": 74,
+          "ast_nodes": 907,
+          "branches": 8,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "cff5042a7dae"
+        }
+      ],
+      "intron_valid_count": 45,
+      "valid_count": 177,
+      "intron_rate": 0.2542,
+      "quartiles": {
+        "1-100": {
+          "valid": 31,
+          "attempted_gen": 84,
+          "valid_rate": 0.369,
+          "mean_loc": 81.97,
+          "mean_ast_nodes": 831.5,
+          "mean_branches": 6.74,
+          "mean_loops": 1.23,
+          "intron_fraction": 0.2903
+        },
+        "101-200": {
+          "valid": 38,
+          "attempted_gen": 65,
+          "valid_rate": 0.5846,
+          "mean_loc": 83.66,
+          "mean_ast_nodes": 906.2,
+          "mean_branches": 6.71,
+          "mean_loops": 0.87,
+          "intron_fraction": 0.2895
+        },
+        "201-300": {
+          "valid": 47,
+          "attempted_gen": 87,
+          "valid_rate": 0.5402,
+          "mean_loc": 85.11,
+          "mean_ast_nodes": 951.2,
+          "mean_branches": 7.51,
+          "mean_loops": 0.72,
+          "intron_fraction": 0.234
+        },
+        "301-400": {
+          "valid": 61,
+          "attempted_gen": 79,
+          "valid_rate": 0.7722,
+          "mean_loc": 83.41,
+          "mean_ast_nodes": 927.6,
+          "mean_branches": 7.44,
+          "mean_loops": 0.34,
+          "intron_fraction": 0.2295
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 81,
+        "forbidden_syntax": 2,
+        "signature_mismatch": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          30
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          18
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          8
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Attribute 'np.ix_' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.mod' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute 'np.partition' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.vstack' is not in the numpy/math whitelist.",
+          2
+        ]
+      ],
+      "search_progress_events": 275,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 256,
+          "winner_solver_sha256": "d70d48559f772e71a44f5d36e2de34b4d4810976f2c1e569a56ac5d6e29d36dd"
+        }
+      ]
+    },
+    {
+      "run_name": "timeout_2000ms_s20261124",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 14,
+        "complete": 349,
+        "connectivity_failed": 37
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 8,
+        "invalid_candidate": 90,
+        "valid_candidate": 202,
+        "provider_failed": 37,
+        "eoh_skipped": 4
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 15.837376,
+      "peak_ordinal": 242,
+      "post_peak_wasted_requests": 158,
+      "post_peak_wasted_pct": 39.5,
+      "jump_count": 9,
+      "inter_jump_waits": [
+        17,
+        7,
+        18,
+        17,
+        9,
+        3,
+        15,
+        87,
+        69
+      ],
+      "jumps": [
+        {
+          "ordinal": 17,
+          "dev_obj": 16.13007,
+          "delta": 0.012333,
+          "loc": 61,
+          "ast_nodes": 748,
+          "branches": 8,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "2aa9f3c8ef54"
+        },
+        {
+          "ordinal": 24,
+          "dev_obj": 16.129713,
+          "delta": 0.000357,
+          "loc": 69,
+          "ast_nodes": 757,
+          "branches": 10,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b7f1f5bf8e5d"
+        },
+        {
+          "ordinal": 42,
+          "dev_obj": 16.116046,
+          "delta": 0.013667,
+          "loc": 62,
+          "ast_nodes": 651,
+          "branches": 9,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ],
+          "code_sha256": "3c9ffb662470"
+        },
+        {
+          "ordinal": 59,
+          "dev_obj": 16.106272,
+          "delta": 0.009774,
+          "loc": 71,
+          "ast_nodes": 812,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ],
+          "code_sha256": "6bc2e86da4eb"
+        },
+        {
+          "ordinal": 68,
+          "dev_obj": 16.102172,
+          "delta": 0.0041,
+          "loc": 65,
+          "ast_nodes": 628,
+          "branches": 9,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "f7f3708133e6"
+        },
+        {
+          "ordinal": 71,
+          "dev_obj": 16.092681,
+          "delta": 0.00949,
+          "loc": 71,
+          "ast_nodes": 774,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ],
+          "code_sha256": "090f65ef44d9"
+        },
+        {
+          "ordinal": 86,
+          "dev_obj": 16.078067,
+          "delta": 0.014615,
+          "loc": 75,
+          "ast_nodes": 851,
+          "branches": 15,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "b99553081ba0"
+        },
+        {
+          "ordinal": 173,
+          "dev_obj": 15.980136,
+          "delta": 0.097931,
+          "loc": 78,
+          "ast_nodes": 795,
+          "branches": 11,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ],
+          "code_sha256": "cd8aaa033dd5"
+        },
+        {
+          "ordinal": 242,
+          "dev_obj": 15.837376,
+          "delta": 0.14276,
+          "loc": 103,
+          "ast_nodes": 1159,
+          "branches": 15,
+          "loops": 1,
+          "unused_vars": 2,
+          "unused_var_names": [
+            "rdist",
+            "rload"
+          ],
+          "code_sha256": "8c4dfb41aa5f"
+        }
+      ],
+      "intron_valid_count": 115,
+      "valid_count": 202,
+      "intron_rate": 0.5693,
+      "quartiles": {
+        "1-100": {
+          "valid": 45,
+          "attempted_gen": 66,
+          "valid_rate": 0.6818,
+          "mean_loc": 72.96,
+          "mean_ast_nodes": 774.4,
+          "mean_branches": 9.82,
+          "mean_loops": 0.38,
+          "intron_fraction": 0.3333
+        },
+        "101-200": {
+          "valid": 54,
+          "attempted_gen": 83,
+          "valid_rate": 0.6506,
+          "mean_loc": 92.76,
+          "mean_ast_nodes": 999.5,
+          "mean_branches": 12.74,
+          "mean_loops": 0.11,
+          "intron_fraction": 0.6481
+        },
+        "201-300": {
+          "valid": 46,
+          "attempted_gen": 64,
+          "valid_rate": 0.7188,
+          "mean_loc": 103.28,
+          "mean_ast_nodes": 1066.6,
+          "mean_branches": 15.61,
+          "mean_loops": 1.43,
+          "intron_fraction": 0.8043
+        },
+        "301-400": {
+          "valid": 57,
+          "attempted_gen": 83,
+          "valid_rate": 0.6867,
+          "mean_loc": 84.58,
+          "mean_ast_nodes": 907.8,
+          "mean_branches": 11.88,
+          "mean_loops": 0.74,
+          "intron_fraction": 0.4912
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 85,
+        "hook_runtime_exception": 3,
+        "forbidden_syntax": 2
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          44
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          10
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          9
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          7
+        ],
+        [
+          "Attribute 'np.mod' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.take_along_axis' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "TypeError: only 0-dimensional arrays can be converted to Python scalars",
+          1
+        ],
+        [
+          "Attribute 'np.partition' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "Attribute 'np.bincount' is not in the numpy/math whitelist.",
+          1
+        ]
+      ],
+      "search_progress_events": 308,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 242,
+          "winner_solver_sha256": "f246e3ca0a9e23a33f207c59890fd123754fee8a322e78b6b2973b7f85a664f6"
+        }
+      ]
+    },
+    {
+      "run_name": "timeout_2000ms_s20261125",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 20,
+        "complete": 347,
+        "connectivity_failed": 33
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 9,
+        "invalid_candidate": 96,
+        "valid_candidate": 194,
+        "provider_failed": 33
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.049591,
+      "peak_ordinal": 53,
+      "post_peak_wasted_requests": 347,
+      "post_peak_wasted_pct": 86.75,
+      "jump_count": 3,
+      "inter_jump_waits": [
+        14,
+        37,
+        2
+      ],
+      "jumps": [
+        {
+          "ordinal": 14,
+          "dev_obj": 16.139136,
+          "delta": 0.003267,
+          "loc": 58,
+          "ast_nodes": 507,
+          "branches": 5,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "c0cb225074da"
+        },
+        {
+          "ordinal": 51,
+          "dev_obj": 16.111878,
+          "delta": 0.027258,
+          "loc": 73,
+          "ast_nodes": 665,
+          "branches": 7,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "1e99bc99fc5c"
+        },
+        {
+          "ordinal": 53,
+          "dev_obj": 16.049591,
+          "delta": 0.062287,
+          "loc": 81,
+          "ast_nodes": 729,
+          "branches": 5,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "31c4a39eb6da"
+        }
+      ],
+      "intron_valid_count": 64,
+      "valid_count": 194,
+      "intron_rate": 0.3299,
+      "quartiles": {
+        "1-100": {
+          "valid": 38,
+          "attempted_gen": 66,
+          "valid_rate": 0.5758,
+          "mean_loc": 76,
+          "mean_ast_nodes": 731.7,
+          "mean_branches": 5.76,
+          "mean_loops": 1.18,
+          "intron_fraction": 0.2105
+        },
+        "101-200": {
+          "valid": 52,
+          "attempted_gen": 71,
+          "valid_rate": 0.7324,
+          "mean_loc": 74.4,
+          "mean_ast_nodes": 694.2,
+          "mean_branches": 4.69,
+          "mean_loops": 0.62,
+          "intron_fraction": 0.3654
+        },
+        "201-300": {
+          "valid": 51,
+          "attempted_gen": 75,
+          "valid_rate": 0.68,
+          "mean_loc": 66.24,
+          "mean_ast_nodes": 633.1,
+          "mean_branches": 3.96,
+          "mean_loops": 0.08,
+          "intron_fraction": 0.3725
+        },
+        "301-400": {
+          "valid": 53,
+          "attempted_gen": 78,
+          "valid_rate": 0.6795,
+          "mean_loc": 71.34,
+          "mean_ast_nodes": 674.5,
+          "mean_branches": 4.08,
+          "mean_loops": 0.42,
+          "intron_fraction": 0.3396
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 93,
+        "forbidden_syntax": 2,
+        "forbidden_rebinding": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          64
+        ],
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          10
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          3
+        ],
+        [
+          "Attribute '.items' is not allowed.",
+          2
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "Syntax construct 'Try' is forbidden in candidate hooks.",
+          1
+        ],
+        [
+          "Attribute 'np.bincount' is not in the numpy/math whitelist.",
+          1
+        ],
+        [
+          "Attribute assignment to '.fill_diagonal_ok' is forbidden.",
+          1
+        ]
+      ],
+      "search_progress_events": 308,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 53,
+          "winner_solver_sha256": "04e8d74aad96f3ddd98dc5567de8a427a9820779818d77dddd9b7d0d91534cff"
+        }
+      ]
+    },
+    {
+      "run_name": "timeout_2000ms_s20261126",
+      "physical_requests_total": 400,
+      "request_states": {
+        "http_error": 7,
+        "complete": 355,
+        "connectivity_failed": 38
+      },
+      "provenance_states": {
+        "baseline_seed": 1,
+        "probe": 8,
+        "invalid_candidate": 90,
+        "valid_candidate": 213,
+        "provider_failed": 38,
+        "eoh_skipped": 2
+      },
+      "duplicate_valid_code_sha": 0,
+      "baseline_dev": 16.142403,
+      "peak_dev": 16.029261,
+      "peak_ordinal": 68,
+      "post_peak_wasted_requests": 332,
+      "post_peak_wasted_pct": 83.0,
+      "jump_count": 4,
+      "inter_jump_waits": [
+        43,
+        2,
+        15,
+        8
+      ],
+      "jumps": [
+        {
+          "ordinal": 43,
+          "dev_obj": 16.126666,
+          "delta": 0.015737,
+          "loc": 62,
+          "ast_nodes": 614,
+          "branches": 6,
+          "loops": 1,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "55f2e33118b2"
+        },
+        {
+          "ordinal": 45,
+          "dev_obj": 16.083431,
+          "delta": 0.043235,
+          "loc": 45,
+          "ast_nodes": 389,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 0,
+          "unused_var_names": [],
+          "code_sha256": "e5cc9259f287"
+        },
+        {
+          "ordinal": 60,
+          "dev_obj": 16.059975,
+          "delta": 0.023456,
+          "loc": 64,
+          "ast_nodes": 603,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "scale_s"
+          ],
+          "code_sha256": "0ffbb7dba3b8"
+        },
+        {
+          "ordinal": 68,
+          "dev_obj": 16.029261,
+          "delta": 0.030714,
+          "loc": 56,
+          "ast_nodes": 486,
+          "branches": 2,
+          "loops": 0,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "scale_s"
+          ],
+          "code_sha256": "dfda91b73b7d"
+        }
+      ],
+      "intron_valid_count": 58,
+      "valid_count": 213,
+      "intron_rate": 0.2723,
+      "quartiles": {
+        "1-100": {
+          "valid": 44,
+          "attempted_gen": 68,
+          "valid_rate": 0.6471,
+          "mean_loc": 63.05,
+          "mean_ast_nodes": 571.1,
+          "mean_branches": 3.41,
+          "mean_loops": 0.39,
+          "intron_fraction": 0.2727
+        },
+        "101-200": {
+          "valid": 54,
+          "attempted_gen": 89,
+          "valid_rate": 0.6067,
+          "mean_loc": 66.91,
+          "mean_ast_nodes": 640.2,
+          "mean_branches": 2.81,
+          "mean_loops": 0.07,
+          "intron_fraction": 0.2407
+        },
+        "201-300": {
+          "valid": 58,
+          "attempted_gen": 74,
+          "valid_rate": 0.7838,
+          "mean_loc": 59.21,
+          "mean_ast_nodes": 543.0,
+          "mean_branches": 2.47,
+          "mean_loops": 0.34,
+          "intron_fraction": 0.3793
+        },
+        "301-400": {
+          "valid": 57,
+          "attempted_gen": 74,
+          "valid_rate": 0.7703,
+          "mean_loc": 53.26,
+          "mean_ast_nodes": 482.8,
+          "mean_branches": 3.02,
+          "mean_loops": 0.26,
+          "intron_fraction": 0.193
+        }
+      },
+      "error_codes": {
+        "forbidden_attribute": 86,
+        "invalid_code": 1,
+        "signature_mismatch": 1,
+        "forbidden_syntax": 1,
+        "forbidden_import": 1
+      },
+      "error_details_top10": [
+        [
+          "Attribute 'np.tanh' is not in the numpy/math whitelist.",
+          18
+        ],
+        [
+          "Attribute 'np.empty' is not in the numpy/math whitelist.",
+          14
+        ],
+        [
+          "Attribute 'np.sign' is not in the numpy/math whitelist.",
+          14
+        ],
+        [
+          "Attribute 'np.fill_diagonal' is not in the numpy/math whitelist.",
+          11
+        ],
+        [
+          "Attribute 'np.at' is not in the numpy/math whitelist.",
+          6
+        ],
+        [
+          "Attribute 'np.stack' is not in the numpy/math whitelist.",
+          5
+        ],
+        [
+          "Attribute 'np.bincount' is not in the numpy/math whitelist.",
+          4
+        ],
+        [
+          "Attribute 'np.nan_to_num' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.quantile' is not in the numpy/math whitelist.",
+          2
+        ],
+        [
+          "Attribute 'np.linspace' is not in the numpy/math whitelist.",
+          2
+        ]
+      ],
+      "search_progress_events": 319,
+      "search_progress_behavior_comparable_events": 0,
+      "checkpoints": [
+        {
+          "ckpt_budget": 400,
+          "state": "sealed",
+          "draining_started_ordinal": 400,
+          "settled_through_ordinal": 400,
+          "winner_source_ordinal": 68,
+          "winner_solver_sha256": "8bd52e4abe2456f9cb848ec744b75795e7a406f4c3af25038ea95ab51a8dd767"
+        }
+      ]
+    }
+  ],
+  "m32_dev_vs_blind_checkpoints": {
+    "curve_36": {
+      "blind_penalized_mean": 36.214032,
+      "completion_rate_mean": 0.747222,
+      "exact_k_rate_mean": 0.683333,
+      "timeout_count_mean": 30.333,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 16.089597,
+          "winner_source_ordinal": 29,
+          "blind_penalized_mean": 40.889954,
+          "blind_valid_only_mean": 23.216191,
+          "blind_completion_rate": 0.658333,
+          "blind_exact_k_rate": 0.683333,
+          "blind_timeout_count": 41,
+          "blind_solve_ms_p50": 378.3208
+        },
+        "20261125": {
+          "dev_penalized_mean": 15.973864,
+          "winner_source_ordinal": 15,
+          "blind_penalized_mean": 40.591476,
+          "blind_valid_only_mean": 23.140076,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.691667,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 365.73
+        },
+        "20261126": {
+          "dev_penalized_mean": 16.142403,
+          "winner_source_ordinal": 0,
+          "blind_penalized_mean": 27.160665,
+          "blind_valid_only_mean": 23.223039,
+          "blind_completion_rate": 0.916667,
+          "blind_exact_k_rate": 0.675,
+          "blind_timeout_count": 10,
+          "blind_solve_ms_p50": 284.1875
+        }
+      }
+    },
+    "curve_100": {
+      "blind_penalized_mean": 38.899798,
+      "completion_rate_mean": 0.691667,
+      "exact_k_rate_mean": 0.738889,
+      "timeout_count_mean": 37.0,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 16.081807,
+          "winner_source_ordinal": 51,
+          "blind_penalized_mean": 40.644384,
+          "blind_valid_only_mean": 23.211431,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.675,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 336.0839
+        },
+        "20261125": {
+          "dev_penalized_mean": 15.7435,
+          "winner_source_ordinal": 96,
+          "blind_penalized_mean": 40.475351,
+          "blind_valid_only_mean": 22.972705,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.766667,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 383.8444
+        },
+        "20261126": {
+          "dev_penalized_mean": 15.788032,
+          "winner_source_ordinal": 100,
+          "blind_penalized_mean": 35.579659,
+          "blind_valid_only_mean": 22.972219,
+          "blind_completion_rate": 0.741667,
+          "blind_exact_k_rate": 0.775,
+          "blind_timeout_count": 31,
+          "blind_solve_ms_p50": 210.7345
+        }
+      }
+    },
+    "curve_200": {
+      "blind_penalized_mean": 38.754455,
+      "completion_rate_mean": 0.694445,
+      "exact_k_rate_mean": 0.761111,
+      "timeout_count_mean": 36.667,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 16.050432,
+          "winner_source_ordinal": 152,
+          "blind_penalized_mean": 40.599126,
+          "blind_valid_only_mean": 23.167397,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.741667,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 305.3871
+        },
+        "20261125": {
+          "dev_penalized_mean": 15.7435,
+          "winner_source_ordinal": 96,
+          "blind_penalized_mean": 40.475351,
+          "blind_valid_only_mean": 22.972179,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.766667,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 382.4512
+        },
+        "20261126": {
+          "dev_penalized_mean": 15.788032,
+          "winner_source_ordinal": 100,
+          "blind_penalized_mean": 35.188887,
+          "blind_valid_only_mean": 22.97198,
+          "blind_completion_rate": 0.75,
+          "blind_exact_k_rate": 0.775,
+          "blind_timeout_count": 30,
+          "blind_solve_ms_p50": 201.4431
+        }
+      }
+    },
+    "curve_400": {
+      "blind_penalized_mean": 39.199941,
+      "completion_rate_mean": 0.686111,
+      "exact_k_rate_mean": 0.791667,
+      "timeout_count_mean": 37.667,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 16.013395,
+          "winner_source_ordinal": 319,
+          "blind_penalized_mean": 40.612824,
+          "blind_valid_only_mean": 23.169589,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.8,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 298.5256
+        },
+        "20261125": {
+          "dev_penalized_mean": 15.7435,
+          "winner_source_ordinal": 96,
+          "blind_penalized_mean": 40.475351,
+          "blind_valid_only_mean": 22.964538,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.766667,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 319.526
+        },
+        "20261126": {
+          "dev_penalized_mean": 15.777281,
+          "winner_source_ordinal": 375,
+          "blind_penalized_mean": 36.511647,
+          "blind_valid_only_mean": 22.943004,
+          "blind_completion_rate": 0.725,
+          "blind_exact_k_rate": 0.808333,
+          "blind_timeout_count": 33,
+          "blind_solve_ms_p50": 205.0323
+        }
+      }
+    },
+    "model_routing": {
+      "blind_penalized_mean": 40.543384,
+      "completion_rate_mean": 0.666667,
+      "exact_k_rate_mean": 0.705555,
+      "timeout_count_mean": 40.0,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 15.993961,
+          "winner_source_ordinal": 398,
+          "blind_penalized_mean": 40.601661,
+          "blind_valid_only_mean": 23.155473,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.683333,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 432.3641
+        },
+        "20261125": {
+          "dev_penalized_mean": 15.894756,
+          "winner_source_ordinal": 318,
+          "blind_penalized_mean": 40.528891,
+          "blind_valid_only_mean": 23.047677,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.7,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 357.3445
+        },
+        "20261126": {
+          "dev_penalized_mean": 15.845195,
+          "winner_source_ordinal": 256,
+          "blind_penalized_mean": 40.499599,
+          "blind_valid_only_mean": 23.012318,
+          "blind_completion_rate": 0.666667,
+          "blind_exact_k_rate": 0.733333,
+          "blind_timeout_count": 40,
+          "blind_solve_ms_p50": 355.1495
+        }
+      }
+    },
+    "l3b_dual_hook": {
+      "blind_penalized_mean": 48.856536,
+      "completion_rate_mean": 0.397222,
+      "exact_k_rate_mean": 0.716667,
+      "timeout_count_mean": 72.333,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 16.092414,
+          "winner_source_ordinal": 281,
+          "blind_penalized_mean": 50.929743,
+          "blind_valid_only_mean": 23.215206,
+          "blind_completion_rate": 0.333333,
+          "blind_exact_k_rate": 0.691667,
+          "blind_timeout_count": 80,
+          "blind_solve_ms_p50": 500.2044
+        },
+        "20261125": {
+          "dev_penalized_mean": 16.052648,
+          "winner_source_ordinal": 314,
+          "blind_penalized_mean": 50.908015,
+          "blind_valid_only_mean": 23.168713,
+          "blind_completion_rate": 0.333333,
+          "blind_exact_k_rate": 0.7,
+          "blind_timeout_count": 80,
+          "blind_solve_ms_p50": 500.2362
+        },
+        "20261126": {
+          "dev_penalized_mean": 16.056005,
+          "winner_source_ordinal": 60,
+          "blind_penalized_mean": 44.731849,
+          "blind_valid_only_mean": 23.162848,
+          "blind_completion_rate": 0.525,
+          "blind_exact_k_rate": 0.758333,
+          "blind_timeout_count": 57,
+          "blind_solve_ms_p50": 489.567
+        }
+      }
+    },
+    "timeout_2000ms": {
+      "blind_penalized_mean": 23.111075,
+      "completion_rate_mean": 1.0,
+      "exact_k_rate_mean": 0.783333,
+      "timeout_count_mean": 0.0,
+      "per_seed": {
+        "20261124": {
+          "dev_penalized_mean": 15.837376,
+          "winner_source_ordinal": 242,
+          "blind_penalized_mean": 22.979597,
+          "blind_valid_only_mean": 22.979597,
+          "blind_completion_rate": 1.0,
+          "blind_exact_k_rate": 0.85,
+          "blind_timeout_count": 0,
+          "blind_solve_ms_p50": 375.5573
+        },
+        "20261125": {
+          "dev_penalized_mean": 16.049591,
+          "winner_source_ordinal": 53,
+          "blind_penalized_mean": 23.186064,
+          "blind_valid_only_mean": 23.186064,
+          "blind_completion_rate": 1.0,
+          "blind_exact_k_rate": 0.741667,
+          "blind_timeout_count": 0,
+          "blind_solve_ms_p50": 530.1292
+        },
+        "20261126": {
+          "dev_penalized_mean": 16.029261,
+          "winner_source_ordinal": 68,
+          "blind_penalized_mean": 23.167565,
+          "blind_valid_only_mean": 23.167565,
+          "blind_completion_rate": 1.0,
+          "blind_exact_k_rate": 0.758333,
+          "blind_timeout_count": 0,
+          "blind_solve_ms_p50": 166.9515
+        }
+      }
+    }
+  },
+  "m31_aggregate_error_details": [
+    [
+      "forbidden_attribute:np.ix_",
+      26
+    ],
+    [
+      "forbidden_syntax:Lambda",
+      23
+    ],
+    [
+      "forbidden_attribute:np.empty",
+      6
+    ],
+    [
+      "forbidden_attribute:np.fill_diagonal",
+      3
+    ],
+    [
+      "forbidden_attribute:np.lexsort",
+      2
+    ],
+    [
+      "ValueError: invalid_return:select_next_city:expected_finite_numeric_shape=(49,)",
+      2
+    ],
+    [
+      "forbidden_attribute:get",
+      1
+    ],
+    [
+      "forbidden_attribute:np.mod",
+      1
+    ],
+    [
+      "ValueError: nonfinite_hook_scores:priority",
+      1
+    ]
+  ],
+  "m31_runs_detail": [
+    {
+      "run_name": "bpp_offline_s20261124",
+      "rounds": 2,
+      "valid_candidates": 8,
+      "invalid_candidates": 8,
+      "error_codes": {
+        "invalid_hook_bundle_program": 8
+      },
+      "error_details_top5": [
+        [
+          "forbidden_syntax:Lambda",
+          7
+        ],
+        [
+          "forbidden_attribute:np.lexsort",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "bpp_offline_s20261125",
+      "rounds": 3,
+      "valid_candidates": 13,
+      "invalid_candidates": 5,
+      "error_codes": {
+        "invalid_hook_bundle_program": 5
+      },
+      "error_details_top5": [
+        [
+          "forbidden_syntax:Lambda",
+          4
+        ],
+        [
+          "forbidden_attribute:get",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "bpp_offline_s20261126",
+      "rounds": 3,
+      "valid_candidates": 19,
+      "invalid_candidates": 5,
+      "error_codes": {
+        "invalid_hook_bundle_program": 5
+      },
+      "error_details_top5": [
+        [
+          "forbidden_syntax:Lambda",
+          5
+        ]
+      ]
+    },
+    {
+      "run_name": "obp_online_s20261124",
+      "rounds": 3,
+      "valid_candidates": 19,
+      "invalid_candidates": 1,
+      "error_codes": {
+        "invalid_hook_bundle_program": 1
+      },
+      "error_details_top5": [
+        [
+          "forbidden_attribute:np.mod",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "obp_online_s20261125",
+      "rounds": 3,
+      "valid_candidates": 18,
+      "invalid_candidates": 1,
+      "error_codes": {
+        "nonfinite_objective": 1
+      },
+      "error_details_top5": [
+        [
+          "ValueError: nonfinite_hook_scores:priority",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "obp_online_s20261126",
+      "rounds": 3,
+      "valid_candidates": 24,
+      "invalid_candidates": 0,
+      "error_codes": {},
+      "error_details_top5": []
+    },
+    {
+      "run_name": "tsp_l1_s20261124",
+      "rounds": 3,
+      "valid_candidates": 6,
+      "invalid_candidates": 15,
+      "error_codes": {
+        "invalid_hook_bundle_program": 14,
+        "invalid_return": 1
+      },
+      "error_details_top5": [
+        [
+          "forbidden_attribute:np.ix_",
+          11
+        ],
+        [
+          "forbidden_attribute:np.fill_diagonal",
+          2
+        ],
+        [
+          "ValueError: invalid_return:select_next_city:expected_finite_numeric_shape=(49,)",
+          1
+        ],
+        [
+          "forbidden_attribute:np.empty",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "tsp_l1_s20261125",
+      "rounds": 3,
+      "valid_candidates": 11,
+      "invalid_candidates": 7,
+      "error_codes": {
+        "invalid_return": 1,
+        "invalid_hook_bundle_program": 6
+      },
+      "error_details_top5": [
+        [
+          "forbidden_attribute:np.ix_",
+          5
+        ],
+        [
+          "ValueError: invalid_return:select_next_city:expected_finite_numeric_shape=(49,)",
+          1
+        ],
+        [
+          "forbidden_attribute:np.empty",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "tsp_l1_s20261126",
+      "rounds": 2,
+      "valid_candidates": 4,
+      "invalid_candidates": 12,
+      "error_codes": {
+        "invalid_hook_bundle_program": 12
+      },
+      "error_details_top5": [
+        [
+          "forbidden_attribute:np.ix_",
+          10
+        ],
+        [
+          "forbidden_attribute:np.lexsort",
+          1
+        ],
+        [
+          "forbidden_attribute:np.fill_diagonal",
+          1
+        ]
+      ]
+    },
+    {
+      "run_name": "tsp_l2_s20261124",
+      "rounds": 3,
+      "valid_candidates": 16,
+      "invalid_candidates": 5,
+      "error_codes": {
+        "invalid_hook_bundle_program": 5
+      },
+      "error_details_top5": [
+        [
+          "forbidden_attribute:np.empty",
+          3
+        ],
+        [
+          "forbidden_syntax:Lambda",
+          2
+        ]
+      ]
+    },
+    {
+      "run_name": "tsp_l2_s20261125",
+      "rounds": 3,
+      "valid_candidates": 16,
+      "invalid_candidates": 3,
+      "error_codes": {
+        "invalid_hook_bundle_program": 3
+      },
+      "error_details_top5": [
+        [
+          "forbidden_syntax:Lambda",
+          3
+        ]
+      ]
+    },
+    {
+      "run_name": "tsp_l2_s20261126",
+      "rounds": 2,
+      "valid_candidates": 13,
+      "invalid_candidates": 3,
+      "error_codes": {
+        "invalid_hook_bundle_program": 3
+      },
+      "error_details_top5": [
+        [
+          "forbidden_syntax:Lambda",
+          2
+        ],
+        [
+          "forbidden_attribute:np.empty",
+          1
+        ]
+      ]
+    }
+  ],
+  "outer_agent_pathology": {
+    "aggregate_tool_totals": {
+      "submit_plan": 162,
+      "kb_search": 161,
+      "finish_round": 121,
+      "kb_read": 113,
+      "archive_summary": 93,
+      "list_interfaces": 75,
+      "hypothesis_update": 34,
+      "diagnose_suite": 18,
+      "hypothesis_propose": 11,
+      "run_math_sandbox": 2,
+      "submit_plan_and_evolve": 1
+    },
+    "M3_0": {
+      "label": "M3.0",
+      "runs_count": 18,
+      "total_turns": 190,
+      "runs_with_sandbox": 0,
+      "runs_with_diag": 7,
+      "runs_with_hyp_propose": 1,
+      "runs_with_propose_and_validate_interface": 0,
+      "runs_with_upd_without_propose": 3,
+      "tool_totals": {
+        "submit_plan": 47,
+        "finish_round": 35,
+        "kb_search": 34,
+        "kb_read": 27,
+        "archive_summary": 19,
+        "list_interfaces": 15,
+        "diagnose_suite": 7,
+        "hypothesis_update": 5,
+        "hypothesis_propose": 1
+      },
+      "top_transitions": [
+        {
+          "from": "kb_search",
+          "to": "kb_read",
+          "count": 27
+        },
+        {
+          "from": "submit_plan",
+          "to": "finish_round",
+          "count": 26
+        },
+        {
+          "from": "kb_read",
+          "to": "submit_plan",
+          "count": 18
+        },
+        {
+          "from": "archive_summary",
+          "to": "kb_search",
+          "count": 13
+        },
+        {
+          "from": "list_interfaces",
+          "to": "kb_search",
+          "count": 12
+        },
+        {
+          "from": "finish_round",
+          "to": "archive_summary",
+          "count": 10
+        },
+        {
+          "from": "finish_round",
+          "to": "submit_plan",
+          "count": 8
+        },
+        {
+          "from": "finish_round",
+          "to": "kb_search",
+          "count": 7
+        },
+        {
+          "from": "kb_read",
+          "to": "diagnose_suite",
+          "count": 7
+        },
+        {
+          "from": "kb_search",
+          "to": "submit_plan",
+          "count": 6
+        },
+        {
+          "from": "diagnose_suite",
+          "to": "submit_plan",
+          "count": 5
+        },
+        {
+          "from": "finish_round",
+          "to": "finish_round",
+          "count": 5
+        },
+        {
+          "from": "archive_summary",
+          "to": "list_interfaces",
+          "count": 3
+        },
+        {
+          "from": "finish_round",
+          "to": "list_interfaces",
+          "count": 3
+        },
+        {
+          "from": "list_interfaces",
+          "to": "archive_summary",
+          "count": 3
+        },
+        {
+          "from": "submit_plan",
+          "to": "hypothesis_update",
+          "count": 3
+        },
+        {
+          "from": "hypothesis_update",
+          "to": "finish_round",
+          "count": 3
+        },
+        {
+          "from": "submit_plan",
+          "to": "submit_plan",
+          "count": 2
+        },
+        {
+          "from": "kb_read",
+          "to": "archive_summary",
+          "count": 2
+        },
+        {
+          "from": "archive_summary",
+          "to": "submit_plan",
+          "count": 2
+        }
+      ],
+      "runs": [
+        {
+          "run_name": "standard_500ms/seed_20261124/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 3,
+            "finish_round": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 2,
+              "finish_round": 1
+            },
+            "reflect": {
+              "finish_round": 1,
+              "submit_plan": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261124/arm_m3_2_fixed_l2a",
+          "turns": 9,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 2,
+            "kb_read": 2,
+            "submit_plan": 2,
+            "finish_round": 1,
+            "diagnose_suite": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 2,
+              "kb_read": 2,
+              "submit_plan": 2,
+              "diagnose_suite": 1
+            },
+            "reflect": {
+              "finish_round": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261124/arm_m3_3_full_dynamic",
+          "turns": 10,
+          "tool_counts": {
+            "archive_summary": 3,
+            "kb_search": 2,
+            "kb_read": 2,
+            "submit_plan": 2,
+            "finish_round": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 2,
+              "kb_search": 2,
+              "kb_read": 2,
+              "submit_plan": 2
+            },
+            "reflect": {
+              "archive_summary": 1,
+              "finish_round": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261125/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 2,
+            "finish_round": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 2,
+              "finish_round": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261125/arm_m3_2_fixed_l2a",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "kb_search": 3,
+            "kb_read": 2,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "diagnose_suite": 1,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "kb_search": 3,
+              "kb_read": 2,
+              "submit_plan": 3,
+              "diagnose_suite": 1,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261125/arm_m3_3_full_dynamic",
+          "turns": 14,
+          "tool_counts": {
+            "archive_summary": 3,
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "kb_read": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 3,
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "submit_plan": 3,
+              "kb_read": 2
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261126/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 3,
+            "finish_round": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 3
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261126/arm_m3_2_fixed_l2a",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "kb_search": 3,
+            "kb_read": 3,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "kb_search": 3,
+              "kb_read": 3,
+              "submit_plan": 3,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "standard_500ms/seed_20261126/arm_m3_3_full_dynamic",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "kb_read": 3,
+            "submit_plan": 4,
+            "diagnose_suite": 1,
+            "finish_round": 1,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "kb_read": 3,
+              "submit_plan": 3,
+              "diagnose_suite": 1,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "submit_plan": 1,
+              "finish_round": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261124/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 3,
+            "finish_round": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 3
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261124/arm_m3_2_fixed_l2a",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "archive_summary": 2,
+            "kb_search": 3,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "kb_read": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "archive_summary": 2,
+              "kb_search": 3,
+              "submit_plan": 3,
+              "kb_read": 2
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261124/arm_m3_3_full_dynamic",
+          "turns": 15,
+          "tool_counts": {
+            "archive_summary": 2,
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "submit_plan": 3,
+            "hypothesis_update": 2,
+            "kb_read": 2,
+            "diagnose_suite": 1,
+            "finish_round": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 2,
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "submit_plan": 3,
+              "kb_read": 2,
+              "diagnose_suite": 1
+            },
+            "reflect": {
+              "hypothesis_update": 2,
+              "finish_round": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261125/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 2,
+            "finish_round": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 2,
+              "finish_round": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261125/arm_m3_2_fixed_l2a",
+          "turns": 15,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "kb_search": 3,
+            "kb_read": 2,
+            "submit_plan": 3,
+            "hypothesis_update": 1,
+            "finish_round": 2,
+            "archive_summary": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "kb_search": 3,
+              "kb_read": 2,
+              "submit_plan": 3,
+              "archive_summary": 2
+            },
+            "reflect": {
+              "hypothesis_update": 1,
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261125/arm_m3_3_full_dynamic",
+          "turns": 15,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "kb_read": 3,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "diagnose_suite": 1,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 1,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "kb_read": 3,
+              "submit_plan": 2,
+              "diagnose_suite": 1,
+              "hypothesis_propose": 1,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 2,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "refuted": 1
+          }
+        },
+        {
+          "run_name": "tight_25ms/seed_20261126/arm_m3_1_plain_text",
+          "turns": 5,
+          "tool_counts": {
+            "submit_plan": 2,
+            "finish_round": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "submit_plan": 2,
+              "finish_round": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261126/arm_m3_2_fixed_l2a",
+          "turns": 13,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "archive_summary": 2,
+            "kb_search": 3,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "kb_read": 2,
+            "diagnose_suite": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "archive_summary": 2,
+              "kb_search": 3,
+              "submit_plan": 2,
+              "kb_read": 2,
+              "diagnose_suite": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tight_25ms/seed_20261126/arm_m3_3_full_dynamic",
+          "turns": 13,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "kb_read": 2,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "diagnose_suite": 1,
+            "hypothesis_update": 1,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "kb_read": 2,
+              "submit_plan": 2,
+              "diagnose_suite": 1,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        }
+      ]
+    },
+    "M3_1": {
+      "label": "M3.1",
+      "runs_count": 12,
+      "total_turns": 166,
+      "runs_with_sandbox": 1,
+      "runs_with_diag": 5,
+      "runs_with_hyp_propose": 4,
+      "runs_with_propose_and_validate_interface": 0,
+      "runs_with_upd_without_propose": 1,
+      "tool_totals": {
+        "kb_search": 37,
+        "submit_plan": 31,
+        "list_interfaces": 28,
+        "finish_round": 23,
+        "kb_read": 16,
+        "archive_summary": 15,
+        "diagnose_suite": 7,
+        "hypothesis_propose": 4,
+        "hypothesis_update": 4,
+        "run_math_sandbox": 1
+      },
+      "top_transitions": [
+        {
+          "from": "submit_plan",
+          "to": "finish_round",
+          "count": 19
+        },
+        {
+          "from": "list_interfaces",
+          "to": "kb_search",
+          "count": 12
+        },
+        {
+          "from": "kb_search",
+          "to": "kb_read",
+          "count": 12
+        },
+        {
+          "from": "finish_round",
+          "to": "kb_search",
+          "count": 11
+        },
+        {
+          "from": "kb_search",
+          "to": "list_interfaces",
+          "count": 8
+        },
+        {
+          "from": "kb_read",
+          "to": "submit_plan",
+          "count": 8
+        },
+        {
+          "from": "archive_summary",
+          "to": "kb_search",
+          "count": 7
+        },
+        {
+          "from": "kb_search",
+          "to": "submit_plan",
+          "count": 7
+        },
+        {
+          "from": "finish_round",
+          "to": "list_interfaces",
+          "count": 6
+        },
+        {
+          "from": "kb_search",
+          "to": "archive_summary",
+          "count": 6
+        },
+        {
+          "from": "list_interfaces",
+          "to": "submit_plan",
+          "count": 6
+        },
+        {
+          "from": "hypothesis_update",
+          "to": "finish_round",
+          "count": 4
+        },
+        {
+          "from": "list_interfaces",
+          "to": "archive_summary",
+          "count": 4
+        },
+        {
+          "from": "diagnose_suite",
+          "to": "submit_plan",
+          "count": 4
+        },
+        {
+          "from": "finish_round",
+          "to": "archive_summary",
+          "count": 4
+        },
+        {
+          "from": "kb_search",
+          "to": "kb_search",
+          "count": 3
+        },
+        {
+          "from": "archive_summary",
+          "to": "submit_plan",
+          "count": 3
+        },
+        {
+          "from": "kb_read",
+          "to": "list_interfaces",
+          "count": 3
+        },
+        {
+          "from": "list_interfaces",
+          "to": "hypothesis_propose",
+          "count": 2
+        },
+        {
+          "from": "hypothesis_propose",
+          "to": "hypothesis_update",
+          "count": 2
+        }
+      ],
+      "runs": [
+        {
+          "run_name": "bpp_offline_s20261124",
+          "turns": 15,
+          "tool_counts": {
+            "kb_search": 4,
+            "list_interfaces": 3,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 2,
+            "finish_round": 2,
+            "archive_summary": 2,
+            "submit_plan": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 4,
+              "list_interfaces": 3,
+              "hypothesis_propose": 1,
+              "archive_summary": 2,
+              "submit_plan": 1
+            },
+            "reflect": {
+              "hypothesis_update": 2,
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 5,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "testing": 4
+          }
+        },
+        {
+          "run_name": "bpp_offline_s20261125",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "archive_summary": 2,
+            "kb_search": 5,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "hypothesis_propose": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "archive_summary": 2,
+              "kb_search": 5,
+              "submit_plan": 2,
+              "hypothesis_propose": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 1,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1
+          }
+        },
+        {
+          "run_name": "bpp_offline_s20261126",
+          "turns": 15,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "diagnose_suite": 2,
+            "submit_plan": 3,
+            "finish_round": 3,
+            "archive_summary": 2,
+            "kb_search": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "diagnose_suite": 2,
+              "submit_plan": 3,
+              "archive_summary": 2,
+              "kb_search": 2
+            },
+            "reflect": {
+              "finish_round": 3
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "obp_online_s20261124",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "kb_search": 3,
+            "kb_read": 2,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "kb_search": 3,
+              "kb_read": 2,
+              "submit_plan": 3,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "obp_online_s20261125",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "kb_search": 3,
+            "archive_summary": 1,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "kb_read": 2,
+            "hypothesis_propose": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "kb_search": 3,
+              "archive_summary": 1,
+              "submit_plan": 2,
+              "kb_read": 2,
+              "hypothesis_propose": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 1,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1
+          }
+        },
+        {
+          "run_name": "obp_online_s20261126",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "kb_search": 3,
+            "kb_read": 1,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "archive_summary": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "kb_search": 3,
+              "kb_read": 1,
+              "submit_plan": 3,
+              "archive_summary": 2
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l1_s20261124",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "kb_search": 3,
+            "kb_read": 4,
+            "submit_plan": 3,
+            "finish_round": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "kb_search": 3,
+              "kb_read": 4,
+              "submit_plan": 3
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l1_s20261125",
+          "turns": 14,
+          "tool_counts": {
+            "kb_search": 3,
+            "kb_read": 2,
+            "diagnose_suite": 1,
+            "submit_plan": 3,
+            "finish_round": 2,
+            "list_interfaces": 2,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 3,
+              "kb_read": 2,
+              "diagnose_suite": 1,
+              "submit_plan": 3,
+              "list_interfaces": 2,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l1_s20261126",
+          "turns": 12,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 3,
+            "kb_read": 3,
+            "submit_plan": 2,
+            "finish_round": 2,
+            "run_math_sandbox": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 3,
+              "kb_read": 3,
+              "submit_plan": 2,
+              "run_math_sandbox": 1
+            },
+            "reflect": {
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l2_s20261124",
+          "turns": 15,
+          "tool_counts": {
+            "kb_search": 3,
+            "archive_summary": 3,
+            "diagnose_suite": 1,
+            "submit_plan": 3,
+            "hypothesis_update": 1,
+            "finish_round": 2,
+            "kb_read": 1,
+            "list_interfaces": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 3,
+              "archive_summary": 3,
+              "diagnose_suite": 1,
+              "submit_plan": 3,
+              "kb_read": 1,
+              "list_interfaces": 1
+            },
+            "reflect": {
+              "hypothesis_update": 1,
+              "finish_round": 2
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l2_s20261125",
+          "turns": 14,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "diagnose_suite": 2,
+            "submit_plan": 4,
+            "kb_search": 3,
+            "kb_read": 1,
+            "finish_round": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "diagnose_suite": 2,
+              "submit_plan": 3,
+              "kb_search": 3,
+              "kb_read": 1
+            },
+            "reflect": {
+              "submit_plan": 1,
+              "finish_round": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "tsp_l2_s20261126",
+          "turns": 11,
+          "tool_counts": {
+            "archive_summary": 1,
+            "kb_search": 2,
+            "list_interfaces": 2,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 1,
+            "finish_round": 1,
+            "diagnose_suite": 1,
+            "submit_plan": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 1,
+              "kb_search": 2,
+              "list_interfaces": 2,
+              "hypothesis_propose": 1,
+              "diagnose_suite": 1,
+              "submit_plan": 1
+            },
+            "reflect": {
+              "hypothesis_update": 1,
+              "finish_round": 1,
+              "submit_plan": 1
+            }
+          },
+          "hypotheses_total_rows": 3,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "testing": 2
+          }
+        }
+      ]
+    },
+    "M3_2": {
+      "label": "M3.2",
+      "runs_count": 12,
+      "total_turns": 435,
+      "runs_with_sandbox": 1,
+      "runs_with_diag": 3,
+      "runs_with_hyp_propose": 5,
+      "runs_with_propose_and_validate_interface": 0,
+      "runs_with_upd_without_propose": 5,
+      "tool_totals": {
+        "kb_search": 90,
+        "submit_plan": 84,
+        "kb_read": 70,
+        "finish_round": 63,
+        "archive_summary": 59,
+        "list_interfaces": 32,
+        "hypothesis_update": 25,
+        "hypothesis_propose": 6,
+        "diagnose_suite": 4,
+        "run_math_sandbox": 1,
+        "submit_plan_and_evolve": 1
+      },
+      "top_transitions": [
+        {
+          "from": "kb_search",
+          "to": "kb_read",
+          "count": 69
+        },
+        {
+          "from": "submit_plan",
+          "to": "finish_round",
+          "count": 46
+        },
+        {
+          "from": "kb_read",
+          "to": "submit_plan",
+          "count": 37
+        },
+        {
+          "from": "archive_summary",
+          "to": "kb_search",
+          "count": 37
+        },
+        {
+          "from": "finish_round",
+          "to": "archive_summary",
+          "count": 31
+        },
+        {
+          "from": "finish_round",
+          "to": "kb_search",
+          "count": 20
+        },
+        {
+          "from": "list_interfaces",
+          "to": "kb_search",
+          "count": 18
+        },
+        {
+          "from": "submit_plan",
+          "to": "hypothesis_update",
+          "count": 16
+        },
+        {
+          "from": "hypothesis_update",
+          "to": "finish_round",
+          "count": 16
+        },
+        {
+          "from": "kb_search",
+          "to": "submit_plan",
+          "count": 16
+        },
+        {
+          "from": "archive_summary",
+          "to": "submit_plan",
+          "count": 15
+        },
+        {
+          "from": "kb_read",
+          "to": "archive_summary",
+          "count": 14
+        },
+        {
+          "from": "finish_round",
+          "to": "list_interfaces",
+          "count": 11
+        },
+        {
+          "from": "list_interfaces",
+          "to": "submit_plan",
+          "count": 8
+        },
+        {
+          "from": "archive_summary",
+          "to": "list_interfaces",
+          "count": 7
+        },
+        {
+          "from": "kb_read",
+          "to": "list_interfaces",
+          "count": 6
+        },
+        {
+          "from": "list_interfaces",
+          "to": "archive_summary",
+          "count": 5
+        },
+        {
+          "from": "kb_read",
+          "to": "hypothesis_propose",
+          "count": 5
+        },
+        {
+          "from": "submit_plan",
+          "to": "submit_plan",
+          "count": 4
+        },
+        {
+          "from": "kb_read",
+          "to": "kb_search",
+          "count": 4
+        }
+      ],
+      "runs": [
+        {
+          "run_name": "curve_s20261124",
+          "turns": 35,
+          "tool_counts": {
+            "list_interfaces": 1,
+            "kb_search": 8,
+            "kb_read": 7,
+            "submit_plan": 8,
+            "archive_summary": 3,
+            "finish_round": 5,
+            "hypothesis_update": 1,
+            "run_math_sandbox": 1,
+            "diagnose_suite": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 1,
+              "kb_search": 8,
+              "kb_read": 7,
+              "submit_plan": 7,
+              "archive_summary": 3,
+              "run_math_sandbox": 1,
+              "diagnose_suite": 1
+            },
+            "reflect": {
+              "submit_plan": 1,
+              "finish_round": 5,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "curve_s20261125",
+          "turns": 34,
+          "tool_counts": {
+            "archive_summary": 6,
+            "kb_search": 7,
+            "kb_read": 5,
+            "submit_plan": 7,
+            "finish_round": 6,
+            "list_interfaces": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 6,
+              "kb_search": 7,
+              "kb_read": 5,
+              "submit_plan": 7,
+              "list_interfaces": 3
+            },
+            "reflect": {
+              "finish_round": 6
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "curve_s20261126",
+          "turns": 34,
+          "tool_counts": {
+            "list_interfaces": 3,
+            "kb_search": 7,
+            "kb_read": 4,
+            "submit_plan": 7,
+            "finish_round": 6,
+            "diagnose_suite": 2,
+            "archive_summary": 5
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 3,
+              "kb_search": 7,
+              "kb_read": 4,
+              "submit_plan": 7,
+              "diagnose_suite": 2,
+              "archive_summary": 5
+            },
+            "reflect": {
+              "finish_round": 6
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "l3b_dual_hook_s20261124",
+          "turns": 31,
+          "tool_counts": {
+            "kb_search": 8,
+            "kb_read": 5,
+            "list_interfaces": 3,
+            "submit_plan": 6,
+            "hypothesis_update": 3,
+            "finish_round": 4,
+            "archive_summary": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 8,
+              "kb_read": 5,
+              "list_interfaces": 3,
+              "submit_plan": 6,
+              "archive_summary": 2
+            },
+            "reflect": {
+              "hypothesis_update": 3,
+              "finish_round": 4
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "l3b_dual_hook_s20261125",
+          "turns": 30,
+          "tool_counts": {
+            "kb_search": 8,
+            "kb_read": 5,
+            "submit_plan": 6,
+            "finish_round": 5,
+            "list_interfaces": 4,
+            "hypothesis_update": 1,
+            "archive_summary": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 8,
+              "kb_read": 5,
+              "submit_plan": 6,
+              "list_interfaces": 4,
+              "archive_summary": 1
+            },
+            "reflect": {
+              "finish_round": 5,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "l3b_dual_hook_s20261126",
+          "turns": 25,
+          "tool_counts": {
+            "list_interfaces": 4,
+            "archive_summary": 3,
+            "kb_search": 5,
+            "submit_plan": 5,
+            "finish_round": 3,
+            "kb_read": 3,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 4,
+              "archive_summary": 3,
+              "kb_search": 5,
+              "submit_plan": 4,
+              "kb_read": 3,
+              "hypothesis_propose": 1
+            },
+            "reflect": {
+              "finish_round": 3,
+              "submit_plan": 1,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 3,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "refuted": 2
+          }
+        },
+        {
+          "run_name": "model_routing_s20261124",
+          "turns": 35,
+          "tool_counts": {
+            "kb_search": 7,
+            "kb_read": 5,
+            "list_interfaces": 3,
+            "submit_plan": 6,
+            "finish_round": 6,
+            "archive_summary": 6,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 7,
+              "kb_read": 5,
+              "list_interfaces": 3,
+              "submit_plan": 6,
+              "archive_summary": 6,
+              "hypothesis_propose": 1
+            },
+            "reflect": {
+              "finish_round": 6,
+              "hypothesis_update": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "model_routing_s20261125",
+          "turns": 40,
+          "tool_counts": {
+            "list_interfaces": 2,
+            "kb_search": 8,
+            "kb_read": 7,
+            "submit_plan": 8,
+            "hypothesis_update": 1,
+            "finish_round": 7,
+            "archive_summary": 7
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "list_interfaces": 2,
+              "kb_search": 8,
+              "kb_read": 7,
+              "submit_plan": 8,
+              "archive_summary": 7
+            },
+            "reflect": {
+              "hypothesis_update": 1,
+              "finish_round": 7
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "model_routing_s20261126",
+          "turns": 36,
+          "tool_counts": {
+            "archive_summary": 6,
+            "list_interfaces": 3,
+            "kb_search": 7,
+            "submit_plan": 7,
+            "finish_round": 4,
+            "kb_read": 4,
+            "diagnose_suite": 1,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 6,
+              "list_interfaces": 3,
+              "kb_search": 7,
+              "submit_plan": 6,
+              "kb_read": 4,
+              "diagnose_suite": 1,
+              "hypothesis_propose": 1
+            },
+            "reflect": {
+              "finish_round": 4,
+              "submit_plan": 1,
+              "hypothesis_update": 3
+            }
+          },
+          "hypotheses_total_rows": 4,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "supported": 2,
+            "testing": 1
+          }
+        },
+        {
+          "run_name": "timeout_2000ms_s20261124",
+          "turns": 45,
+          "tool_counts": {
+            "archive_summary": 5,
+            "kb_search": 8,
+            "kb_read": 8,
+            "submit_plan": 6,
+            "finish_round": 6,
+            "list_interfaces": 3,
+            "hypothesis_propose": 1,
+            "hypothesis_update": 7,
+            "submit_plan_and_evolve": 1
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 5,
+              "kb_search": 8,
+              "kb_read": 8,
+              "submit_plan": 6,
+              "list_interfaces": 3,
+              "hypothesis_propose": 1,
+              "submit_plan_and_evolve": 1
+            },
+            "reflect": {
+              "finish_round": 6,
+              "hypothesis_update": 7
+            }
+          },
+          "hypotheses_total_rows": 12,
+          "hypotheses_distinct_ids": 1,
+          "hypotheses_status_counts": {
+            "proposed": 1,
+            "supported": 11
+          }
+        },
+        {
+          "run_name": "timeout_2000ms_s20261125",
+          "turns": 48,
+          "tool_counts": {
+            "archive_summary": 8,
+            "list_interfaces": 2,
+            "kb_search": 9,
+            "submit_plan": 12,
+            "finish_round": 5,
+            "kb_read": 9,
+            "hypothesis_update": 3
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "archive_summary": 8,
+              "list_interfaces": 2,
+              "kb_search": 9,
+              "submit_plan": 9,
+              "kb_read": 8
+            },
+            "reflect": {
+              "finish_round": 5,
+              "hypothesis_update": 3,
+              "submit_plan": 3,
+              "kb_read": 1
+            }
+          },
+          "hypotheses_total_rows": 0,
+          "hypotheses_distinct_ids": 0,
+          "hypotheses_status_counts": {}
+        },
+        {
+          "run_name": "timeout_2000ms_s20261126",
+          "turns": 42,
+          "tool_counts": {
+            "kb_search": 8,
+            "kb_read": 8,
+            "archive_summary": 7,
+            "submit_plan": 6,
+            "hypothesis_update": 4,
+            "finish_round": 6,
+            "list_interfaces": 1,
+            "hypothesis_propose": 2
+          },
+          "phase_tool_counts": {
+            "diagnose": {
+              "kb_search": 8,
+              "kb_read": 8,
+              "archive_summary": 7,
+              "submit_plan": 6,
+              "list_interfaces": 1,
+              "hypothesis_propose": 2
+            },
+            "reflect": {
+              "hypothesis_update": 4,
+              "finish_round": 6
+            }
+          },
+          "hypotheses_total_rows": 6,
+          "hypotheses_distinct_ids": 2,
+          "hypotheses_status_counts": {
+            "proposed": 2,
+            "refuted": 1,
+            "superseded": 1,
+            "abandoned": 2
+          }
+        }
+      ]
+    }
+  },
+  "champion_genealogy_timeout_2000ms_s20261124": {
+    "rounds": [
+      {
+        "round_id": "1",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "resumed",
+        "best_objective": "16.1297",
+        "delta_vs_prev": "",
+        "requests_used_total": "35",
+        "outer_requests_round": "5",
+        "inner_requests_round": "23",
+        "hypotheses_supported": "0",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+      },
+      {
+        "round_id": "2",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "16.0781",
+        "delta_vs_prev": "-0.0516",
+        "requests_used_total": "100",
+        "outer_requests_round": "6",
+        "inner_requests_round": "59",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+      },
+      {
+        "round_id": "3",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "16.0931",
+        "delta_vs_prev": "+0.0150",
+        "requests_used_total": "157",
+        "outer_requests_round": "6",
+        "inner_requests_round": "51",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+      },
+      {
+        "round_id": "4",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "15.9801",
+        "delta_vs_prev": "-0.0979",
+        "requests_used_total": "208",
+        "outer_requests_round": "6",
+        "inner_requests_round": "43",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0004_frozen_solver.json"
+      },
+      {
+        "round_id": "5",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "15.8374",
+        "delta_vs_prev": "-0.1428",
+        "requests_used_total": "269",
+        "outer_requests_round": "6",
+        "inner_requests_round": "55",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0005_frozen_solver.json"
+      },
+      {
+        "round_id": "6",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "15.9166",
+        "delta_vs_prev": "+0.0792",
+        "requests_used_total": "301",
+        "outer_requests_round": "6",
+        "inner_requests_round": "21",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0005_frozen_solver.json"
+      },
+      {
+        "round_id": "7",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "RUNNING",
+        "best_objective": "15.8554",
+        "delta_vs_prev": "+0.0181",
+        "requests_used_total": "361",
+        "outer_requests_round": "6",
+        "inner_requests_round": "54",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0005_frozen_solver.json"
+      },
+      {
+        "round_id": "8",
+        "arm_id": "m32_timeout_2000ms",
+        "problem_family": "cvrp",
+        "template_id": "cvrp_ruin_recreate",
+        "postprocess_mode": "none",
+        "session_status": "COMPLETED",
+        "best_objective": "16.0597",
+        "delta_vs_prev": "+0.2223",
+        "requests_used_total": "400",
+        "outer_requests_round": "4",
+        "inner_requests_round": "35",
+        "hypotheses_supported": "1",
+        "hypotheses_refuted": "0",
+        "frozen_manifest_ref": "agent_artifacts/round_0005_frozen_solver.json"
+      }
+    ],
+    "plans": [
+      {
+        "plan_file": "plan_r0001.json",
+        "round_id": 1,
+        "direction": "Evolve the single hook `score_ruin_nodes` as a multiplicative gated rank-power destroy-selection rule, with the rank exponent p made state-adaptive: p small (≈0.5–0.8, near-uniform randomized-agnostic spread) during early low-`iter_frac` exploration and p ramping up (≈1.5–2.0, sharp worst-removal focus) as `stagnation_ratio` grows. Gate by load utilization, depot proximity of the customer nearest in route, demand magnitude and route-length share, so that the ruin set prefers customers whose removal unlocks load re-balancing across routes. Keep the repair side fixed (deterministic Regret-2 + local intra_2opt + R2R acceptance) and keep the hook fully deterministic and state-only, so the gain is attributable to destroy prioritization alone under the 2000 ms budget where many more LNS iterations fit than the 500 ms reference.",
+        "hypothesis": "Under a 2000 ms per-instance budget the L3 ruin-recreate skeleton performs far more iterations than at 500 ms; therefore a stagnation-adaptive rank-power destroy score (near-uniform ruin early to diversify, sharp worst-cost ruin under stagnation, multiplied by load/depot/demand/route-share gates) will beat the zero-evolution Worst-Cost-Removal control on cvrp_dev_hetero_24 by a larger margin than the +0.12% seen at 500 ms, because extra iterations amplify the value of a destroy policy that escapes local minima while never discarding high-`removal_savings` structural targets.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Archive is empty (solver_count=0, no known signatures), so this round should establish the round-1 baseline on the mandated interface. The KB method entry (method-cvrp-m3-ruin-recreate-l3, content_sha256 94f7d539…) fixes the skeleton — CW + initial intra_2opt, Ruin(top-q) -> deterministic Regret-2 -> local intra_2opt -> R2R acceptance — and confirms `score_ruin_nodes` is the only evolvable hook with a multiplicative gate × rank-power form: score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)). Its blameworthy regime is the tight 25 ms budget (120/120 early-stop), and our target budget is 2000 ms — the mirror-image regime where first_feasible_ms ≈ 2–3 ms leaves nearly the whole budget for LNS iterations, so the anytime-curve payoff of a better destroy policy is maximal. Postprocess is fixed to `none` per the allowed set, and the repair layer stays untouched so any delta vs L3-ctrl is cleanly attributable to the evolved destroy score. Regret-2 feasibility handling follows method-cvrp-cheapest-regret-insertion, ensuring the 5-gate validator's dual-action probe (first_ruin_set A={1,2,3,4} vs B={3,4,5,6} on n=6, q=4) is satisfied by strict determinism and no global RNG."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0002.json",
+        "round_id": 2,
+        "direction": "Fallback plan for round 2 after reaching outer step cap.",
+        "hypothesis": "Evolve cvrp_ruin_recreate within remaining EoH budget.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Outer round cap reached."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0003.json",
+        "round_id": 3,
+        "direction": "Densify the destroy score into a two-component mixed operator: keep the round-2 multiplicative gates (removal savings / depot-distance / route-load saturation) but add a Shaw-style spatial-relatedness term (customer's mean distance to the k nearest other customers, normalized — high for isolated customers, low inside tight clusters) plus a deterministic index-hash jitter, so that on clustered/loose-capacity instances removal alternates between isolated outliers and cluster interiors instead of repeatedly picking the same high-savings ring, with the stagnation-driven rank exponent now modulating the savings-vs-relatedness mix ratio rather than only the tail rank.",
+        "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, augmenting the round-2 supported destroy score with a normalized Shaw spatial-relatedness term and a deterministic index-hash jitter, with the stagnation-driven rank power re-pointed at modulating the savings-vs-relatedness blend (diversified mid-tail removal under stagnation) will lower mean objective below the round-2 record 16.078067, with the largest per-instance gains on the reported weakest regimes (spatial=clustered, depot_style=eccentric, size=100, capacity_level=loose), because the round-2 gains came from gate concentration and now saturate (round-2 vs round-1 delta only -0.0516, archive gap_over_sbs 0.19%), so the remaining headroom is in removal-set diversity rather than in severity of savings ranking.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Archive shows two nearly identical L3 solvers (16.1297 / 16.0781) with vbs-sbs gap of only 0.1937%, i.e. the current destroy rule is near a local attractor and further pure re-weighting of savings gates yields diminishing returns; the round-2 hypothesis already confirmed that gated ranking + stagnation rank power works, so round 3 attacks removal-SET diversity (Shaw relatedness mixing + deterministic jitter, RNG-free to keep determinism) which the KB entry method-cvrp-lns-shaw-regret identifies as the standard complement to worst-removal in LNS, while keeping the fixed Regret-2 repair and unified deadline invariants of the verified L3 skeleton (first_feasible_ms ~2-3 ms, solve_ms_mean 108 ms leaves ample headroom within 2000 ms)."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0004.json",
+        "round_id": 4,
+        "direction": "Refine the round-2 champion destroy score (method-cvrp-m3-ruin-recreate-l3) into a scale-free, stagnation-phase-scheduled ruin rule: keep the multiplicative gates (normalized removal savings x depot-distance gate x route-load saturation gate) but (i) replace the single fixed rank exponent with a two-phase schedule that is near-linear-greedy at iter_frac<0.35 and transitions to a mid-tail power (p~0.5-0.7) plus a small deterministic jitter term later, (ii) add a 'route-sparsity' factor 1/(route_len) so short/degenerate routes are prioritized for rearrangement, and (iii) add a Shaw-relatedness term to the second ruin pass (customers near the already-selected seed customer score higher) so successive removals in the same iteration cluster geographically instead of scattering. Hyperparameter sensitivity (gate strengths, phase switch point, power bounds) is co-evolved, not hand-tuned.",
+        "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, replacing the round-2 fixed gate/rank-power destroy score with (a) an iter_frac-scheduled two-phase rank exponent, (b) a route-sparsity (short-route priority) factor and (c) a Shaw-relatedness second-pass term will lower mean objective below the current SBS 16.078067, with the largest per-instance gains on the weakest regimes (size 100, loose capacity, eccentric depot, uniform demand), because those instances have many partially-filled short routes whose customers are geographically interchangeable and thus need spatially coherent removal rather than globally top-savings removal.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Archive shows only 3 near-identical solvers (16.0781 / 16.0931 / 16.1297) with gap_over_vbs of just 0.37%, so the remaining headroom is small and must be won by fine-grained destroy-priority structure rather than a new paradigm. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the multiplicative gated-savings + stagnation rank-power rule is the verified-best hook for this exact interface (23.3186 vs 23.3474 L3-ctrl on blind_120) and lists 'stagnation_aware_diversification' as its strong regime, while method-cvrp-lns-shaw-regret establishes that relatedness-based destroy (Shaw) is the standard complementary diversification operator under LNS. Combining them inside the single allowed hook (score_ruin_nodes) keeps the deterministic Regret-2 recreate, intra_2opt and R2R acceptance untouched, so any measured delta is attributable to the destroy policy. Phase-scheduled greediness avoids the early-search waste of always randomized removal and the late-search trap of always-greedy removal, and the route-sparsity factor targets exactly the loose-capacity/size-100 regimes flagged as weakest in archive_feedback."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0005.json",
+        "round_id": 5,
+        "direction": "Refine the round-4 champion destroy score from a multiplicative depot-load gate into a capacity-slack-aware, route-sparsity-normalized score with a three-phase stagnation clock: (1) exploit phase — concentrate removals on the smallest routes (fewest stops, highest residual capacity) to enable route-elimination moves; (2) neutral phase — flat rank power over normalized removal savings; (3) diversify phase — randomized mid-tail removal driven by Shaw relatedness to the last-improved incumbent. All gates remain scale-invariant (normalized by mean depot distance) and deterministic, with tie-breaks by index only.",
+        "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms with cvrp_ruin_recreate/none, replacing the round-4 fixed depot+load gate with a capacity-slack x route-sparsity gate (score = |savings|/scale * (1 + alpha * slack_frac) * (1 + beta / n_stops) * depot_gate) and a three-phase stagnation clock (exploit -> neutral -> Shaw-diversify) will lower mean objective below the 15.9801 SBS, with the largest per-instance gains in the weakest regimes (tight capacity, size 100, eccentric depot, clustered spatial), because route-elimination-friendly removals are most valuable exactly where capacity is binding and geometry is clustered.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Round-4 already validated the normalized-savings x depot-gate x route-load-gate core plus a two-phase rank schedule (mean 15.980136 vs SBS 16.078067, all 24/24 feasible, solve_ms 207.9 ms — only ~10% of the 2000 ms budget, so there is ample headroom for a richer hook without any timeout risk). Two structural weaknesses remain: (a) the load gate only penalizes near-capacity routes, giving no explicit bonus to the small/degenerate routes whose removal can eliminate a whole vehicle, which is where tight-capacity instances (vbs_rel_gap -22.7%) lose most; (b) the two-phase rank schedule jumps from greedy to mid-tail without an explicit relatedness term, so diversification is spatially blind. The KB L3 blueprint confirms the interface invariant (finite length-n float vector, read-only state, deterministic tie-breaks, no global RNG) and the Shaw entry supplies the relatedness metric, while the regret-insertion entry confirms the fixed Regret-2 repair stays untouched. Budget headroom (208 ms used of 2000 ms) means added per-call cost is safe; expect < 400 ms mean even with the extra vectorized terms. Postprocess stays none to preserve the 5-gate interface and avoid any extra unmapped stage."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0006.json",
+        "round_id": 6,
+        "direction": "Capacity-slack-aware multi-scale ruin scope with cluster-coherent sector destruction and stagnation-triggered tail randomization, dedicated to tight-capacity / clustered / eccentric-depot / size-100 regimes.",
+        "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, a score_ruin_nodes that (a) rescales normalized removal savings by a capacity-slack factor raised to an iter_frac-scheduled exponent so that near-full routes (load/Q > 0.9) are progressively shielded while slack-rich routes stay destroyable early, (b) adds a sector-coherence term keyed on |cos(angle to depot)| and radial distance so ruin sets stay spatially contiguous on clustered geometries, and (c) injects a stagnation_ratio-driven randomized mid-tail component (rank exponent rising from ~0 to ~1.5 on stagnation) will lower the mean objective below the round-5 SBS of 15.8374, with the largest absolute reductions on tight-capacity, clustered-spatial, eccentric-depot and size-100 instances, since the existing rule's uniform load gating mis-sizes ruin scope when capacity slack is the binding constraint.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Round-5 confirmed (h_r2_ruin_depot_load_gate_rankpower supported) that normalized-savings x depot-gate x load/sparsity-gate with a stagnation rank schedule beats L3-ctrl (15.8374 vs 16.0781 SBS, all 24 feasible, 196 ms mean so ~10x headroom under the 2000 ms budget). Archive weakest regimes are tightly clustered: capacity_level=tight (rel gap -23.07%), size=100 (-21.78%), uniform demand (-21.53%), eccentric depot (-20.76%), clustered spatial (-19.98%), with zero exhausted/failed instances — so the loss is structural quality, not budget starvation. The KB L3 blueprint (method-cvrp-m3-ruin-recreate-l3) prescribes exactly the multiplicative gate x rank-power ruin score and lists stagnation-aware diversification as its strong regime, and Shaw-relatedness ruin (method-cvrp-lns-shaw-regret) motivates spatial contiguity of destroy sets for clustered instances. Therefore this round converts the regime-concentration clause into a testable, targeted mechanism: replace the binary load gate with a continuous capacity-slack exponent schedule and add angular/radial sector coherence, keeping the deterministic Regret-2 recreation, intra_2opt polish and R2R acceptance fixed so any delta is attributable to the destroy hook alone."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0007.json",
+        "round_id": 7,
+        "direction": "Fallback plan for round 7 after reaching outer step cap.",
+        "hypothesis": "Evolve cvrp_ruin_recreate within remaining EoH budget.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Outer round cap reached."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      },
+      {
+        "plan_file": "plan_r0008.json",
+        "round_id": 8,
+        "direction": "Refine the round-7 supported destroy score into a saturation-normalized form: keep the multiplicative depot-distance gate and stale-route load gate but (a) rescale each route's load gate by the *instance-observed* mean route saturation (mean(route_loads)/capacity) so the gate's slope adapts to tight-capacity instances instead of using a fixed exponent, and (b) drive the rank exponent from stagnation only (p = 1.25 + 1.0*stagnation_ratio, no additive slack term, no sector-coherence term). Target: cut the tight-capacity / size-100 / eccentric-depot residual gap (currently ~21-23% VBS-relative) without perturbing the clustered regime where round-7 is already SBS-co-equal.",
+        "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, replacing the fixed load-saturation gate exponent with a self-normalizing exponent gamma = 1 + clip(mean_route_saturation - 0.5, 0, 0.4), applied as gate_load = (1 - route_loads/capacity)^gamma * (1 + 0.5*route_dists/mean(route_dists)), and setting the stagnation rank power to p = 1.25 + 1.0*stagnation_ratio with no additive slack term, will lower mean objective below the round-7 SBS 15.8554 (and the round-5 15.8374 frontier) because tight-capacity instances (12/24 of the suite) receive a steeper under-load emphasis that concentrates ruin on degenerate near-empty routes, while clustered/eccentric instances are unaffected by the exponent change since their mean saturation is near 0.5.",
+        "operations": [
+          {
+            "type": "replace",
+            "target": "cvrp_ruin_recreate",
+            "mechanism": "Round-7 (agent_artifacts/round_0007_dev_eval.json, sha256 29d2981...) confirmed the multiplicative depot-gate x load-gate x rank-power rule at 15.8554, statistically co-equal with the round-5 frontier 15.8374 and clearly above the 16.078 L3-ctrl baseline; that round also proved that adding engine terms (round-6 additive slack exponent + sector gate) costs 0.061. KB method-cvrp-m3-ruin-recreate-l3 documents the hook contract (score_ruin_nodes -> rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) with output-length-n finite float invariant, so this proposal only re-parameterizes two multiplicative factors inside that verified skeleton. The change is a one-parameter-per-gate perturbation rather than a structural addition, so it is falsifiable: if mean objective does not drop below 15.8374 the self-normalizing saturation exponent claim fails and we revert to the frozen round-5/7 form. Weakest regimes from archive feedback (capacity_level=tight 12 instances, size=100 12 instances, eccentric depot 12 instances, clustered 8 instances) motivate the saturation-adaptive slope as the highest-leverage remaining knob."
+          }
+        ],
+        "preserve": "Route feasibility, strict time budget, and scale invariance."
+      }
+    ],
+    "jumps": [
+      {
+        "jump_index": 0,
+        "ordinal": 0,
+        "dev_obj": 16.142403,
+        "delta": 0.0,
+        "note": "L3 Worst-Cost Removal baseline"
+      },
+      {
+        "jump_index": 1,
+        "ordinal": 17,
+        "dev_obj": 16.13007,
+        "delta": 0.012333,
+        "code_sha256": "2aa9f3c8ef5414a93215bf84fc647ab4c499bcf99684a3e953fd6546b189e10a",
+        "ast_metrics": {
+          "loc": 61,
+          "ast_nodes": 748,
+          "branches": 8,
+          "loops": 1,
+          "calls": 49,
+          "binops": 37,
+          "unused_vars": 0,
+          "unused_var_names": []
+        }
+      },
+      {
+        "jump_index": 2,
+        "ordinal": 24,
+        "dev_obj": 16.129713,
+        "delta": 0.000357,
+        "code_sha256": "b7f1f5bf8e5d995cbd3ec2548d5d50216dc78a93c49e3ce84022f011003c00b6",
+        "ast_metrics": {
+          "loc": 69,
+          "ast_nodes": 757,
+          "branches": 10,
+          "loops": 1,
+          "calls": 50,
+          "binops": 32,
+          "unused_vars": 0,
+          "unused_var_names": []
+        }
+      },
+      {
+        "jump_index": 3,
+        "ordinal": 42,
+        "dev_obj": 16.116046,
+        "delta": 0.013667,
+        "code_sha256": "3c9ffb662470cea0a5fd2411039b565a312303c944c9242a304c56451104d0cf",
+        "ast_metrics": {
+          "loc": 62,
+          "ast_nodes": 651,
+          "branches": 9,
+          "loops": 0,
+          "calls": 38,
+          "binops": 42,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ]
+        }
+      },
+      {
+        "jump_index": 4,
+        "ordinal": 59,
+        "dev_obj": 16.106272,
+        "delta": 0.009774,
+        "code_sha256": "6bc2e86da4eb705439240b3514632dab5a54da8179b313dd9c7111b2b8ba3d7f",
+        "ast_metrics": {
+          "loc": 71,
+          "ast_nodes": 812,
+          "branches": 11,
+          "loops": 0,
+          "calls": 60,
+          "binops": 31,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ]
+        }
+      },
+      {
+        "jump_index": 5,
+        "ordinal": 68,
+        "dev_obj": 16.102172,
+        "delta": 0.0041,
+        "code_sha256": "f7f3708133e66bca0cd429b8c1c42710270842e9016f8286d6cccb6bb930d53d",
+        "ast_metrics": {
+          "loc": 65,
+          "ast_nodes": 628,
+          "branches": 9,
+          "loops": 0,
+          "calls": 39,
+          "binops": 37,
+          "unused_vars": 0,
+          "unused_var_names": []
+        }
+      },
+      {
+        "jump_index": 6,
+        "ordinal": 71,
+        "dev_obj": 16.092681,
+        "delta": 0.00949,
+        "code_sha256": "090f65ef44d9f9191fa4e91aaddefe59f8f6e18e05d9781e98c4323d965d3883",
+        "ast_metrics": {
+          "loc": 71,
+          "ast_nodes": 774,
+          "branches": 11,
+          "loops": 0,
+          "calls": 61,
+          "binops": 24,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ]
+        }
+      },
+      {
+        "jump_index": 7,
+        "ordinal": 86,
+        "dev_obj": 16.078067,
+        "delta": 0.014615,
+        "code_sha256": "b99553081ba08532d12885545b060cbc99ee3cb17cd6caedc7eb16eca84d3de7",
+        "ast_metrics": {
+          "loc": 75,
+          "ast_nodes": 851,
+          "branches": 15,
+          "loops": 0,
+          "calls": 60,
+          "binops": 39,
+          "unused_vars": 0,
+          "unused_var_names": []
+        }
+      },
+      {
+        "jump_index": 8,
+        "ordinal": 173,
+        "dev_obj": 15.980136,
+        "delta": 0.097931,
+        "code_sha256": "cd8aaa033dd5c8f1eac69bf73d1c15806f55468faedcf7e4269d0e493e03615f",
+        "ast_metrics": {
+          "loc": 78,
+          "ast_nodes": 795,
+          "branches": 11,
+          "loops": 0,
+          "calls": 51,
+          "binops": 49,
+          "unused_vars": 1,
+          "unused_var_names": [
+            "rid"
+          ]
+        }
+      },
+      {
+        "jump_index": 9,
+        "ordinal": 242,
+        "dev_obj": 15.837376,
+        "delta": 0.14276,
+        "code_sha256": "8c4dfb41aa5f96ff76b871ab910ade1d12cca457412941266644dca779180c28",
+        "ast_metrics": {
+          "loc": 103,
+          "ast_nodes": 1159,
+          "branches": 15,
+          "loops": 1,
+          "calls": 68,
+          "binops": 84,
+          "unused_vars": 2,
+          "unused_var_names": [
+            "rdist",
+            "rload"
+          ]
+        }
+      }
+    ],
+    "jump8_clamping_verification": {
+      "test_instance_id": "dev24_n50_uniform_centre_loose_uniform-00",
+      "n_customers": 50,
+      "nonzero_count_early_it01_st00": 0,
+      "nonzero_count_mid_it05_st02": 0,
+      "nonzero_count_late_it09_st05": 0,
+      "explanation": "log_s, log_p, log_l, log_sp, log_r are all <= 0 (arguments in (0, 1]), so weighted sum score <= 0 and np.maximum(score, 0.0) clamps all or nearly all entries to 0.0.",
+      "all_zero_score_ruin_nodes_dev24_mean": 15.980136,
+      "jump8_dev24_mean": 15.980136,
+      "exact_parity_with_all_zero": true
+    },
+    "jump9_dead_temp_verification": {
+      "temp_store_lines": [
+        78,
+        79
+      ],
+      "temp_load_lines": [
+        79
+      ],
+      "temp_assigned_but_unused": false,
+      "sample_output_finite_minmax": [
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "m32_quartile_aggregate": {
+    "1-100": {
+      "mean_valid_rate": 0.4947,
+      "mean_loc": 72.4,
+      "mean_ast_nodes": 733.2,
+      "mean_loops": 0.38,
+      "mean_intron_fraction": 0.2142
+    },
+    "101-200": {
+      "mean_valid_rate": 0.5555,
+      "mean_loc": 80.65,
+      "mean_ast_nodes": 834.6,
+      "mean_loops": 0.3,
+      "mean_intron_fraction": 0.2225
+    },
+    "201-300": {
+      "mean_valid_rate": 0.5653,
+      "mean_loc": 84.02,
+      "mean_ast_nodes": 879.7,
+      "mean_loops": 0.57,
+      "mean_intron_fraction": 0.2779
+    },
+    "301-400": {
+      "mean_valid_rate": 0.5813,
+      "mean_loc": 85.49,
+      "mean_ast_nodes": 904.9,
+      "mean_loops": 0.61,
+      "mean_intron_fraction": 0.219
+    }
+  }
+}

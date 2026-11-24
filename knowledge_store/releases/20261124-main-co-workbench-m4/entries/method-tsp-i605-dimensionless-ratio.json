@@ -1,0 +1,120 @@
+{
+  "type": "method",
+  "title": "TSP 岛屿流派四：无量纲最大归一化平滑度 (Island605 T81)",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "island605",
+    "i605_tsp_t81_norm_smooth",
+    "sequential-construct",
+    "select_next_node"
+  ],
+  "status": "reviewed",
+  "summary": "全部特征均先除以当步最大值归一化，再辅以无量纲分段平滑奖励（<0.3 奖、>0.7 罚），天生对任意坐标尺度变换严格不变，128/128 满完成。 EoH-S TSP 128（选优集）完成 128/128（差距 +15.48%）；外部标准库 TSPLIB 18 例完成 16/18（总差距 +14.12%，共同交集差距 +14.12%）。",
+  "attributes": {
+    "method_family": "sequential_construct",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_tsp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^3)",
+    "applicable_regimes": {
+      "strong_on": [
+        "tsp_constructive_benchmark",
+        "tsplib_external_validation"
+      ],
+      "weak_on": [
+        "vs_2opt_local_search"
+      ],
+      "scale_notes": "旧 6 月协议（8×n50 seed=2024）精确复算 6.20007（旧精确 NN 基线 6.6079）；注：tsp_ext_eohs_128 用于本次 206 条规则代表筛选，其 128 题成绩标为选优结果，外部泛化以 TSPLIB 18 例为准。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "闭环 TSP 顺序构造骨架，从城市 0 出发逐步选择下一未访城市直至收环",
+      "evolvable_hook": "select_next_node(current_node, destination_node, unvisited_nodes, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "visited_mask",
+        "tour"
+      ],
+      "invariants_and_constraints": [
+        "返回值必须属于 unvisited_nodes 且禁止原地重复",
+        "受 500 ms 单实例预算约束，超预算记 timeout"
+      ],
+      "typical_pitfalls": [
+        "对每个候选模拟完整最近邻后缀导致单步 O(m^3)、全构造 O(n^4)，在 n>=100/TSPLIB 上极易触发 500 ms 超时，必须同时报告完成率"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "(1 - d(cur,u)/max_d) + 0.5*(avg_far(u)/max_far) + 0.2*I[d<0.3*max_d] - 0.1*I[d>0.7*max_d]",
+        "variables": {
+          "d(cur,u)": "当前城市到候选 u 距离",
+          "d(dest,u)": "候选 u 到终点 0 距离"
+        },
+        "preconditions": "欧氏对称 TSP 距离矩阵"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/tsp/tsp_080_E2_highgen_g8_r12__6c1fc51c.py",
+        "sha256": "6c1fc51cc30b677b24e8d8a3e1c4f381635fdddc8daa870d8a992ff6ae807e5d"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "tsp_ext_eohs_128",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_tsp_t81_norm_smooth",
+        "metric": "mean_rel_gap",
+        "value": 0.154828,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[选优筛选集] EoH-S TSP 128 完成 128/128，相对 LKH 差距 +15.48%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "tsp_ext_tsplib_euc2d",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_tsp_t81_norm_smooth",
+        "metric": "mean_rel_gap",
+        "value": 0.141226,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "[外部验证集] TSPLIB 18 例完成 16/18，相对 OPT 差距 +14.12%",
+        "artifact_path": "results/summary.json"
+      }
+    ],
+    "variant_adaptation_note": "标准欧氏对称旅行商闭环构造（无容量与车队约束），直接复用 select_next_node(current, destination, unvisited, dist) 接口。"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "methods": [
+      "method-tsp-nearest-neighbor-construct",
+      "method-tsp-two-opt"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json",
+    "report:experiments/milestone15/workbench_screening_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-tsp-i605-dimensionless-ratio",
+  "content_sha256": "11637c7ec90f2a785980094a8184937ee9fb60f0df370e0932eed7e8ef9418da"
+}

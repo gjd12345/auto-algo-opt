@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:75de19ffa04a437e897d32ec2b88a0e9"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A rank-power monotone reshuffling of |removal_savings_i|/median(|savings|), gated multiplicatively by load-tightness, depot-distance and demand-share terms, will outperform the plain worst-cost removal (L3-ctrl) destroy policy on the heterogeneous-capacity dev_24 suite at 500 ms, because heterogeneous instances need stagnation-adaptive diversification (high p) rather than always-greedy removal (low p); the effect should be visible as a strictly lower mean tour length with the gain concentrated in high-demand-variance instances.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:75de19ffa04a437e897d32ec2b88a0e9"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_ruin_nodes toward a multiplicative-gating + rank-power destroy rule: raw removal_savings_i normalized by a robust scale (median |savings|) then gated by load tightness (route_load/capacity), depot proximity (d(i,0)/mean depot dist), and demand share (demand_i/capacity), with the rank exponent p(iter_frac, stagnation_ratio) increasing from ~0.7 (exploitative, low stagnation) to ~2.0 (diversifying, high stagnation) so early iterations remove high-savings-cost customers and stagnating iterations randomize the ruin set toward spatially dispersed, low-demand customers."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

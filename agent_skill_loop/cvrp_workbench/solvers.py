@@ -1188,10 +1188,12 @@ def evaluate_algorithm_on_instance(
     vehicle_limit_policy: str = "unconstrained",
     time_budget_ms: float | None = None,
     record_trace: bool = True,
+    enforce_wall_deadline: bool = True,
 ) -> dict[str, Any]:
     """Evaluate any registered CVRP solver on one instance under unified timing."""
     spec = get_solver_spec(algorithm_id)
     budget = time_budget_ms if time_budget_ms is not None else spec.default_budget_ms
+    solve_budget = budget if enforce_wall_deadline else None
 
     if spec.kind == "pointwise":
         fn = _get_compiled_pointwise(spec)
@@ -1205,13 +1207,15 @@ def evaluate_algorithm_on_instance(
                 distance_convention=distance_convention,
                 vehicle_limit_policy=vehicle_limit_policy,
                 record_trace=record_trace,
-                time_budget_ms=budget,
+                time_budget_ms=solve_budget,
             )
+        if not enforce_wall_deadline and budget is not None and float(res.get("solve_ms") or 0.0) > float(budget):
+            res["budget_exhausted"] = True
     elif spec.kind == "pointwise_set":
         # Run all 10 EoH-S set members under the shared budget and return per-instance CPI best
         fns = _get_eohs_set10_compiled()
         t_start = time.perf_counter()
-        deadline = (t_start + budget / 1000.0) if budget is not None else None
+        deadline = (t_start + solve_budget / 1000.0) if solve_budget is not None else None
         best_res: dict[str, Any] | None = None
         best_member_idx: int | None = None
         total_pre = 0.0
@@ -1244,6 +1248,8 @@ def evaluate_algorithm_on_instance(
                 if best_res is None or float(r_m["tour_length"]) < float(best_res["tour_length"]):
                     best_res = r_m
                     best_member_idx = m_idx + 1
+        if not enforce_wall_deadline and budget is not None and total_sol > float(budget):
+            any_timeout = True
         if best_res is None:
             res = {
                 "status": "timeout" if any_timeout else "error",
@@ -1289,13 +1295,13 @@ def evaluate_algorithm_on_instance(
         routes: list[list[int]] = []
         try:
             if algorithm_id == "cw_parallel_merge":
-                routes, meta = solve_cw_parallel_merge(matrix, demands, capacity, time_budget_ms=budget)
+                routes, meta = solve_cw_parallel_merge(matrix, demands, capacity, time_budget_ms=solve_budget)
             elif algorithm_id == "cw_2opt":
-                routes, meta = solve_cw_2opt(matrix, demands, capacity, time_budget_ms=budget)
+                routes, meta = solve_cw_2opt(matrix, demands, capacity, time_budget_ms=solve_budget)
             elif algorithm_id == "cw_relocate_2opt":
-                routes, meta = solve_cw_relocate_2opt(matrix, demands, capacity, time_budget_ms=budget)
+                routes, meta = solve_cw_relocate_2opt(matrix, demands, capacity, time_budget_ms=solve_budget)
             elif algorithm_id == "heuragenix_min_cost_ins":
-                routes, meta = solve_heuragenix_min_cost_ins(matrix, demands, capacity, time_budget_ms=budget)
+                routes, meta = solve_heuragenix_min_cost_ins(matrix, demands, capacity, time_budget_ms=solve_budget)
             elif algorithm_id == "cvrp_sweep_2opt":
                 routes, meta = solve_cvrp_sweep_2opt(
                     matrix,
@@ -1303,10 +1309,10 @@ def evaluate_algorithm_on_instance(
                     capacity,
                     depot_coord=instance["depot"],
                     customer_coords=instance["customer_coordinates"],
-                    time_budget_ms=budget,
+                    time_budget_ms=solve_budget,
                 )
             elif algorithm_id == "cvrp_farthest_insertion":
-                routes, meta = solve_cvrp_farthest_insertion(matrix, demands, capacity, time_budget_ms=budget)
+                routes, meta = solve_cvrp_farthest_insertion(matrix, demands, capacity, time_budget_ms=solve_budget)
             else:
                 raise ValueError(f"unsupported_full_route_solver:{algorithm_id}")
         except Exception as exc:
@@ -1371,7 +1377,10 @@ def evaluate_algorithm_on_instance(
             "voluntary_early_return_count": 0,
             "forced_capacity_return_count": 0,
             "trace_steps": None,
-            "budget_exhausted": bool(meta.get("budget_exhausted", False)),
+            "budget_exhausted": bool(
+                meta.get("budget_exhausted", False)
+                or (not enforce_wall_deadline and budget is not None and solve_ms > float(budget))
+            ),
             "solver_meta": meta,
         }
 

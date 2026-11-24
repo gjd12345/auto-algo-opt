@@ -1,0 +1,71 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_dual_4223e94c",
+  "display_name": "Session R5 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    rids = np.asarray(route_ids)\n    n = int(rids.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rs = np.asarray(removal_savings, dtype=np.float64)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    dep = np.asarray(dm[0, 1:], dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n\n    scale = max(float(np.mean(dep)), eps)\n    dep_hat = dep / scale\n\n    # Normalized removal gain: exact detour saved per unit scale.\n    rs_scale = max(float(np.mean(np.abs(rs))), eps)\n    rs_n = np.clip(rs / rs_scale, 0.0, None)\n\n    # Shaw geographic relatedness to a deterministic seeded pivot: pick the\n    # customer with the largest removal gain (ties broken by smallest index).\n    pivot = int(np.argmax(rs))\n    d_to_pivot = dm[1:, 1:][pivot, :]\n    shaw = 1.0 / (1.0 + d_to_pivot / scale)\n\n    # Depot-radial eccentricity term: favors far arcs in eccentric setups.\n    radial = np.sqrt(np.clip(dep_hat, 0.0, None))\n\n    # Weighting schedule: early exploration rewards geographic coherence;\n    # stagnation/progress shifts weight toward worst-removal depth.\n    w_rs = 1.0 + 0.60 * sr + 0.30 * fr\n    w_shaw = 0.95 - 0.35 * sr\n    w_radial = 0.55 + 0.30 * sr + 0.20 * fr\n\n    # Load gate: prefer customers on lighter routes (more relocation freedom).\n    u = np.clip(loads / cap, 0.0, 1.0)\n    load_gate = 0.90 + 0.20 * (1.0 - u)\n\n    # Demand gate: modest preference for heavier customers.\n    q_scale = max(float(np.mean(q)), eps)\n    q_gate = 1.0 + 0.15 * np.clip(q / q_scale, 0.0, None)\n\n    # Route-distance gate: gently rebalance long routes.\n    rd_scale = max(float(np.mean(rd)), eps)\n    rd_gate = 1.0 / (1.0 + 0.15 * np.clip(rd / rd_scale, 0.0, None))\n\n    score = (\n        (w_rs * rs_n + w_shaw * shaw + w_radial * radial)\n        * load_gate * q_gate * rd_gate\n    )\n    s = max(float(np.mean(np.abs(score))), eps)\n    return np.asarray(score / s, dtype=np.float64)\n",
+  "hook_code_sha256": "e4d683d2bb786cf338f0a79b2f93e8a34c77d0f099509bc8d8ff5220deebde6d",
+  "design_sha256": "4f378cca5f197d76c520bb66fbd1161f2bb162685f0d1ba0f7c19ad86502e3e7",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261124\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-m2-l2a-generalized-savings"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    rids = np.asarray(route_ids)\n    n = int(rids.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rs = np.asarray(removal_savings, dtype=np.float64)\n    q = np.asarray(demands[1:], dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    dep = np.asarray(dm[0, 1:], dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n    sr = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    fr = float(np.clip(iter_frac, 0.0, 1.0))\n    eps = 1e-12\n\n    scale = max(float(np.mean(dep)), eps)\n    dep_hat = dep / scale\n\n    # Normalized removal gain: exact detour saved per unit scale.\n    rs_scale = max(float(np.mean(np.abs(rs))), eps)\n    rs_n = np.clip(rs / rs_scale, 0.0, None)\n\n    # Shaw geographic relatedness to a deterministic seeded pivot: pick the\n    # customer with the largest removal gain (ties broken by smallest index).\n    pivot = int(np.argmax(rs))\n    d_to_pivot = dm[1:, 1:][pivot, :]\n    shaw = 1.0 / (1.0 + d_to_pivot / scale)\n\n    # Depot-radial eccentricity term: favors far arcs in eccentric setups.\n    radial = np.sqrt(np.clip(dep_hat, 0.0, None))\n\n    # Weighting schedule: early exploration rewards geographic coherence;\n    # stagnation/progress shifts weight toward worst-removal depth.\n    w_rs = 1.0 + 0.60 * sr + 0.30 * fr\n    w_shaw = 0.95 - 0.35 * sr\n    w_radial = 0.55 + 0.30 * sr + 0.20 * fr\n\n    # Load gate: prefer customers on lighter routes (more relocation freedom).\n    u = np.clip(loads / cap, 0.0, 1.0)\n    load_gate = 0.90 + 0.20 * (1.0 - u)\n\n    # Demand gate: modest preference for heavier customers.\n    q_scale = max(float(np.mean(q)), eps)\n    q_gate = 1.0 + 0.15 * np.clip(q / q_scale, 0.0, None)\n\n    # Route-distance gate: gently rebalance long routes.\n    rd_scale = max(float(np.mean(rd)), eps)\n    rd_gate = 1.0 / (1.0 + 0.15 * np.clip(rd / rd_scale, 0.0, None))\n\n    score = (\n        (w_rs * rs_n + w_shaw * shaw + w_radial * radial)\n        * load_gate * q_gate * rd_gate\n    )\n    s = max(float(np.mean(np.abs(score))), eps)\n    return np.asarray(score / s, dtype=np.float64)\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    cid = np.asarray(customer_idx, dtype=np.float64)\n    n = int(cid.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n    delta = np.asarray(insert_delta, dtype=np.float64)\n    reg = np.asarray(regret2_margin, dtype=np.float64)\n    load_after = np.asarray(route_load_after, dtype=np.float64)\n    pos = np.asarray(insert_pos, dtype=np.float64)\n    tr = np.asarray(target_route_idx, dtype=np.float64)\n\n    # Detour disutility normalized by mean |delta| within the action set.\n    d_scale = max(float(np.mean(np.abs(delta))), 1e-12)\n    detour = -delta / d_scale\n\n    # Regret-2 dominance: prefer joins with large second-best margin.\n    reg_scale = max(float(np.mean(np.abs(reg))), 1e-12)\n    reg_reward = 1.10 * (reg / reg_scale)\n\n    # Capacity-fill bonus: dimensionless, rewards packing routes near full.\n    slack = np.clip(1.0 - load_after / cap, 0.0, 1.0)\n    fill = np.power(1.0 - slack + 1e-12, 0.60)\n    fill_bonus = 0.35 * fill\n\n    # Radial coherence: penalize large depot-radius change relative to the\n    # average insertion detour scale to preserve \"petal\" structure.\n    radial_coherence = -0.25 * np.clip(delta / d_scale, 0.0, None)\n\n    # Mild positional tie-break: earlier actions preferred.\n    pos_max = max(float(np.max(pos)) + 1.0, 1.0)\n    pos_pen = 0.04 * (pos / pos_max)\n\n    # Small bonus for opening a brand-new route.\n    new_route = (tr < 0).astype(np.float64)\n    new_bonus = 0.10 * new_route\n\n    return detour + reg_reward + fill_bonus + radial_coherence - pos_pen + new_bonus\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "e4d683d2bb786cf338f0a79b2f93e8a34c77d0f099509bc8d8ff5220deebde6d",
+    "score_recreate_action": "cbfd88bbfb67fec79095e9b5dacef05c9f4288910fe9afe6a5e34eed639a13d9"
+  },
+  "bundle_hash": "9a635f5e81462d01c0c4845dff81d4488ca73a7724118f13fce6cc684451e832",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

@@ -1,0 +1,28 @@
+{
+  "round_id": 1,
+  "direction": "Use budget-adaptive construction (regret-2 / nearest-neighbor-guided insertion with k-nearest candidate seeding) followed by first-improvement 2-opt over truncated neighbor lists (k≈16-20), restarting construction from a different seed while time budget remains, so 500 ms is spent on repeated cheap improvement rather than one expensive full pass.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "The active template is tsp_guided_insertion_2opt with postprocess 'none'; only the interior hook (score_insertion_move and neighbor evaluation) is tunable this round. Diagnostic hook evaluation failed on tool-side signature/code errors rather than solver evidence, so the first round should establish a clean, self-contained hook that (1) is non-empty valid UTF-8 source, (2) exploits candidate lists to make 2-opt moves O(1)-ish in practice, and (3) uses elapsed-time checks for safe restarts — the standard mechanism for converting extra budget into tour-length gains on TSP. This also produces the reference signature needed to populate the currently empty archive frontier and gives a measurable baseline for later neighbour-list size and regret-k ablations."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Under a 500 ms per-instance budget on tsp_guided_insertion_2opt, replacing a single greedy cheapest-insertion + full-matrix 2-opt sweep with (a) regret-2 guided insertion over a k-nearest-neighbor candidate set and (b) first-improvement 2-opt restricted to those candidate lists, plus seed restarts, yields a shorter final tour length than the plain insertion/2-opt baseline while staying inside the deterministic time budget, because candidate-list restriction cuts per-move cost so many more improving moves are evaluated per millisecond.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "The active template is tsp_guided_insertion_2opt with postprocess 'none'; only the interior hook (score_insertion_move and neighbor evaluation) is tunable this round. Diagnostic hook evaluation failed on tool-side signature/code errors rather than solver evidence, so the first round should establish a clean, self-contained hook that (1) is non-empty valid UTF-8 source, (2) exploits candidate lists to make 2-opt moves O(1)-ish in practice, and (3) uses elapsed-time checks for safe restarts — the standard mechanism for converting extra budget into tour-length gains on TSP. This also produces the reference signature needed to populate the currently empty archive frontier and gives a measurable baseline for later neighbour-list size and regret-k ablations."
+  }
+}

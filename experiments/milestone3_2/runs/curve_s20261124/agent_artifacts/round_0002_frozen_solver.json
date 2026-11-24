@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_cvrp_ruin_recreate_3a1fc1d7",
+  "display_name": "Session R2 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n    cap = max(float(capacity), 1e-12)\n    eps = 1e-12\n\n    def rank01(x):\n        order = np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\").astype(np.float64)\n        return order / (n - 1)\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n    drive = float(np.clip(0.55 * s + 0.45 * p, 0.0, 1.0))\n\n    # Scale-free normalized feature ratios (quantile-friendly via rank01).\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    dem_util = np.clip(dem / cap, 0.0, 1.0)\n\n    sav_scale = max(float(np.mean(sav)), eps)\n    sav_ratio = sav / (sav + sav_scale)\n\n    rd_scale = max(float(np.mean(rdists)), eps)\n    rd_ratio = rdists / (rdists + rd_scale)\n\n    d0_scale = max(float(np.mean(d0)), eps)\n    dep_ratio = d0 / (d0 + d0_scale)\n\n    # Hysteretic sliding thresholds: permissive early (low), strict late (high).\n    tau_sat = 0.35 + 0.45 * drive\n    tau_heavy = 0.20 + 0.40 * drive\n    tau_rd = 0.30 + 0.45 * drive\n    tau_dep = 0.30 + 0.50 * drive\n    tau_sav = 0.35 + 0.50 * drive\n\n    # Crisp gates in {0, 1}. Each is a boolean-satisfaction field.\n    g_sat = (load_util >= tau_sat).astype(np.float64)\n    g_heavy = (dem_util >= tau_heavy).astype(np.float64)\n    g_rd = (rd_ratio >= tau_rd).astype(np.float64)\n    g_dep = (dep_ratio >= tau_dep).astype(np.float64)\n    g_sav = (sav_ratio >= tau_sav).astype(np.float64)\n\n    # Fixed lexicographic priority weights over gates (savings + saturation dominate).\n    w = np.array([3.0, 2.0, 1.0, 1.0, 1.5], dtype=np.float64)\n\n    gates = np.column_stack([g_sav, g_sat, g_heavy, g_rd, g_dep])\n    gate_score = np.dot(gates, w)  # discrete in {0, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7.5, 8.5}\n\n    # Progress-driven rank-power sharpening (shallow early, steep late).\n    r = rank01(gate_score)\n    gamma = 0.50 + 1.75 * drive\n    sharpened = np.power(np.clip(r, 0.0, 1.0), gamma)\n\n    # Deterministic tie-break that preserves broad covariance with savings magnitude.\n    result = rank01(sharpened) + 1e-6 * rank01(sav)\n    return np.where(np.isfinite(result), np.clip(result, 0.0, None), 0.0).astype(np.float64)",
+  "hook_code_sha256": "3a1fc1d725541e4b062cac04640a1c0165e76b67d1436aa2f23652d97cd07557",
+  "design_sha256": "8b3636db45409f4cdf8c9972196fb20f23ebfe1f4f2b50a9a5da1b5af0293dfd",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

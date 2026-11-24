@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Stagnation-adaptive multiplicative-gate rank-power ruin scoring: score_i = rank_power(|removal_savings_i|/scale * gate_load^a * gate_depot^b * gate_demand^c * gate_rdist^d, p(iter_frac, stagnation_ratio)) where the rank exponent p sweeps from ~1.2 (early, greedy worst-removal) to ~0.4 (late/stagnant, near-uniform mixed removal), and the load gate is softened (smaller exponent) as stagnation rises to avoid repeatedly pulling from the same over-loaded route; tuned to the exhausted regimes size=100, tight capacity, eccentric depot, uniform spatial/demand.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents that score_ruin_nodes is the single evolvable hook of cvrp_ruin_recreate/v1 and that the strongest verified variant was a multiplicative gate + rank-power rule, with regime notes that it is strong at 500 ms budget and specifically complementary through stagnation-aware diversification; the archive's weakest regimes (size=100 uniform eccentric tight-capacity, all marked exhausted) indicate the current single search trajectory stalls rather than lacking time, so shifting destruction diversity as a function of stagnation_ratio/iter_frac directly targets that failure mode while keeping the Regret-2 recreate, intra_2opt and R2R acceptance from the LNS family (method-cvrp-lns-shaw-regret, method-cvrp-cheapest-regret-insertion) untouched. The dual-hook interface keeps recreate scoring as the second evolvable entry point, allowing the later inner EoH generations to co-evolve insertion preference (regret lookahead weight) against the new ruin distribution rather than being locked to one objective shape."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, replacing the fixed worst-removal-style ruin priority with a stagnation-adaptive rank-power score that anneals its exponent from greedy (p high) toward diversification (p low) and softens the route-load gate under stagnation will lower mean tour length below the current 16.0597 baseline, with gains concentrated in the exhausted regimes (size=100, tight capacity, eccentric depot, uniform spatial/demand), by escaping R2R stagnation cycles while preserving destructive pressure on high-savings nodes.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents that score_ruin_nodes is the single evolvable hook of cvrp_ruin_recreate/v1 and that the strongest verified variant was a multiplicative gate + rank-power rule, with regime notes that it is strong at 500 ms budget and specifically complementary through stagnation-aware diversification; the archive's weakest regimes (size=100 uniform eccentric tight-capacity, all marked exhausted) indicate the current single search trajectory stalls rather than lacking time, so shifting destruction diversity as a function of stagnation_ratio/iter_frac directly targets that failure mode while keeping the Regret-2 recreate, intra_2opt and R2R acceptance from the LNS family (method-cvrp-lns-shaw-regret, method-cvrp-cheapest-regret-insertion) untouched. The dual-hook interface keeps recreate scoring as the second evolvable entry point, allowing the later inner EoH generations to co-evolve insertion preference (regret lookahead weight) against the new ruin distribution rather than being locked to one objective shape."
+  }
+}

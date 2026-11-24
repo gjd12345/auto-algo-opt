@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_8c4dfb41",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n\n    n = int(dm.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    cap = float(capacity) if capacity > 0 else 1.0\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n\n    s = np.abs(sav).astype(np.float64)\n    smax = float(np.max(s)) if s.size else 0.0\n    if smax > eps:\n        snorm = s / (smax + eps)\n    else:\n        snorm = np.zeros(n, dtype=np.float64)\n\n    R = int(np.max(rid)) + 1 if n > 0 else 0\n    if R <= 0:\n        return np.zeros(n, dtype=np.float64)\n\n    n_stops = np.zeros(R, dtype=np.float64)\n    route_used = np.zeros(R, dtype=np.float64)\n    dem_c = dem[1:]\n    for r in range(R):\n        mask = (rid == r)\n        cnt = float(np.sum(mask))\n        n_stops[r] = cnt\n        if cnt > 0:\n            route_used[r] = float(np.sum(dem_c[mask]))\n\n    slack_r = np.clip((cap - route_used) / max(cap, eps), 0.0, 1.0)\n    sparse_r = np.where(n_stops > 0, 1.0 / np.maximum(n_stops, 1.0), 0.0)\n    spmax = float(np.max(sparse_r)) if sparse_r.size else 0.0\n    if spmax > eps:\n        sparse_r_n = sparse_r / (spmax + eps)\n    else:\n        sparse_r_n = np.zeros(R, dtype=np.float64)\n\n    cust_slack = slack_r[rid]\n    cust_sparse = sparse_r_n[rid]\n\n    if smax > eps:\n        seed_idx = int(np.argmax(s))\n    else:\n        seed_idx = int(np.argmax(d0)) if d0.size else 0\n    seed_d = dm[seed_idx + 1, 1:]\n    rel = 1.0 / (1.0 + (seed_d / scale) ** 2)\n\n    # three-phase temperature: hot (explore) -> cool (neutral) -> warm (diversify)\n    exploit_w = float(np.clip(1.0 - 2.0 * it, 0.0, 1.0))\n    diversify_w = float(np.clip(2.0 * it - 1.0, 0.0, 1.0))\n    neutral_w = max(0.0, 1.0 - exploit_w - diversify_w)\n\n    # phase-blended logit bank (each feature in [0,1])\n    mid_tail = np.exp(-8.0 * np.power(snorm - 0.5, 2.0))\n\n    logit = (\n        exploit_w * (2.0 * cust_slack + 2.0 * cust_sparse + 1.0 * snorm)\n        + neutral_w * (2.5 * snorm + 1.0 * cust_slack + 0.75 * cust_sparse)\n        + diversify_w * (2.5 * rel + 1.5 * mid_tail + 0.75 * (1.0 - cust_sparse))\n    )\n\n    # temperature schedule: high st or early/mid it -> warmer\n    # base temp scales from ~0.15 (exploit) to ~1.2 (diversify)\n    temp = 0.15 + 1.05 * diversify_w + 0.85 * st * (0.5 + 0.5 * exploit_w)\n    temp = float(np.clip(temp, 0.05, 2.0))\n\n    # deterministic pseudo-random Gumbel perturbation (hash of index + st + it)\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    h1 = np.sin(idx * 12.9898 + st * 78.233 + it * 37.719)\n    h2 = np.sin(idx * 39.3467 + st * 11.135 + it * 83.155)\n    u = 0.5 + 0.5 * np.sin(idx * 4.1234 + st * 27.17 + it * 51.33) * h1\n    u = np.clip(u, 1e-6, 1.0 - 1e-6)\n    # map toward Gumbel-like noise: -log(-log(U))\n    gumbel = -np.log(-np.log(u))\n    # bias noise magnitude by phase: more noise when exploiting (to break argmax plateaus)\n    # and slight negative correlation with st to reward diverse picks under stagnation\n    noise_amp = 0.55 * exploit_w + 0.25 * neutral_w + 0.15 * diversify_w\n    noise = noise_amp * gumbel + 0.10 * h2 * st\n\n    score = logit + noise\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    smin = float(np.min(score)) if score.size else 0.0\n    smx = float(np.max(score)) if score.size else 0.0\n    if smx - smin > eps:\n        score = (score - smin) / (smx - smin)\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "8c4dfb41aa5f96ff76b871ab910ade1d12cca457412941266644dca779180c28",
+  "design_sha256": "2b4f20ce806a06f7c2f68afec2653b360655494ab760fca208d0890d5af60800",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

@@ -1,0 +1,31 @@
+{
+  "round_id": 1,
+  "direction": "stagnation-adaptive gated rank-power ruin scoring on score_ruin_nodes",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive is empty (0 solvers, no known signatures) so there is no incumbent to complement; the only allowed template is cvrp_ruin_recreate (L3 anytime LNS, single evolvable hook score_ruin_nodes) with postprocess none, so the round must be spent establishing the destruction-policy backbone. KB entry method-cvrp-m3-ruin-recreate-l3 gives the verified backbone facts I rely on: (a) the LW skeleton with CW + intra_2opt init and fixed deterministic Regret-2 reinsertion + intra_2opt + R2R acceptance already yields mean 23.3474 on blind-120 at 500 ms with p50 first-feasible ~2-3 ms, so 500 ms is the compatible budget and the hook is the only lever; (b) its documented math_formulation is precisely rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), i.e. the gated rank-power family, and its verified evolved arm improved to 23.3186 with stagnation_ratio explicitly in the exponent, which is why I make the stagnation-adaptive exponent the primary novelty axis rather than inventing a new score family; (c) the entry flags the L3 backbone as strong on stagnation_aware_diversification, which is what the flat-top exponent under stagnation targets. I add scale-freeness (|s|/(1+|s|)) because dev_24 is explicitly heterogeneous in scale/geometry and an absolute savings scale would let large-coordinate instances dominate the removal set, and I cap p_hi because the entry's weaknesses note warns the deterministic Regret-2 repair has a real per-step cost at tight budgets, so fully uniform destruction wastes repair budget."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "Under a 500 ms unified-deadline LNS on cvrp_dev_hetero_24 (heterogeneous scales/geometry/capacity), the destruction hook should NOT use raw |removal_savings| greedily. Instead, score_i = T(r_i)^p * g_load * g_depot * g_demand * g_rdist, where r_i is the within-instance rank-normalised removal saving r_i = |s_i| / (1 + |s_i|) (scale-free, so uniform coordinates, clustered coordinates and mixed-demand instances contribute comparably), T(r) = r/(1-r) is a bounded rank-power transform, and the exponent p(iter_frac, stagnation_ratio) = p_lo + (p_hi - p_lo) * clip(stagnation_ratio,0,1) interpolates from p_lo ~ 1.0 (sharp, worst-first removal while improvements are still flowing) to p_hi > 1 flattening the top of the ranking (quasi-random removal) as stagnation_ratio -> 1. Rank-power flattening under stagnation is exactly the mechanism that escapes R2R local optima without an RNG, so it should beat the zero-evolution L3-ctrl Worst-Cost Removal skeleton and the plain rank-1 variant on the mean tour length, with the largest per-instance gains on the clustered/high-capacity-heterogeneity regime; conversely p_hi too large (fully uniform) must lose on uniform-random instances because destroying non-critical customers wastes the deterministic Regret-2 repair budget, so p_hi must be capped.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive is empty (0 solvers, no known signatures) so there is no incumbent to complement; the only allowed template is cvrp_ruin_recreate (L3 anytime LNS, single evolvable hook score_ruin_nodes) with postprocess none, so the round must be spent establishing the destruction-policy backbone. KB entry method-cvrp-m3-ruin-recreate-l3 gives the verified backbone facts I rely on: (a) the LW skeleton with CW + intra_2opt init and fixed deterministic Regret-2 reinsertion + intra_2opt + R2R acceptance already yields mean 23.3474 on blind-120 at 500 ms with p50 first-feasible ~2-3 ms, so 500 ms is the compatible budget and the hook is the only lever; (b) its documented math_formulation is precisely rank_power(|removal_savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), i.e. the gated rank-power family, and its verified evolved arm improved to 23.3186 with stagnation_ratio explicitly in the exponent, which is why I make the stagnation-adaptive exponent the primary novelty axis rather than inventing a new score family; (c) the entry flags the L3 backbone as strong on stagnation_aware_diversification, which is what the flat-top exponent under stagnation targets. I add scale-freeness (|s|/(1+|s|)) because dev_24 is explicitly heterogeneous in scale/geometry and an absolute savings scale would let large-coordinate instances dominate the removal set, and I cap p_hi because the entry's weaknesses note warns the deterministic Regret-2 repair has a real per-step cost at tight budgets, so fully uniform destruction wastes repair budget."
+  }
+}

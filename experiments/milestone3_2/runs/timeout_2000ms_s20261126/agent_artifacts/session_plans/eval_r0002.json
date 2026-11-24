@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:e6da2020fa16490db7a70156915e2a17"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under the 2000 ms anytime budget (mean solve ~190 ms on dev_24, so ample iteration headroom), a stagnation-adaptive rank-power exponent over multiplicatively gated removal savings will beat the round-1 fixed worst-cost-style score: when stagnation_ratio is low the rank exponent stays near 1 (worst-cost exploitation of high-|savings| nodes), and as stagnation rises the exponent flattens so removal spreads to cluster-related and near-depot-boundary nodes. This should improve clustered/eccentric-depot/loose-capacity instances most (currently the largest VBS-relative gaps, -17.9% to -21.6%), because in loose-capacity clustered geometry worst-cost removal repeatedly destroys the same few expensive-to-reinsert boundary customers while leaving the cluster structure intact, whereas flat-rank diversified removal actually reshuffles cluster membership and lets Regret-2 reinsertion re-partition it. Expected effect: mean objective below 16.16 on cvrp_dev_hetero_24 with no solve-ms regression into timeouts.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:e6da2020fa16490db7a70156915e2a17"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the single hook `score_ruin_nodes` toward a multiplicative-gated, rank-power ruin priority: score_i = |removal_savings_i|/scale * gate_load(route slack) * gate_depot(eccentric/edge-of-cluster customers) * gate_demand * gate_rdist, elevated to an adaptive rank exponent p(iter_frac, stagnation_ratio) that shifts from near-worst-cost exploitation early to relatedness/cluster-coherent diversification under stagnation. Target the archive's weakest regimes directly: loose capacity (weakest gate), clustered spatial, eccentric depot, uniform demand, n=100."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:a7859c8227cd4b56b4982f7883b44632"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H1: Because the LNS skeleton's fixed deterministic Regret-2 repair benefits from destroying a small, high-value cluster, a monotone increasing rank exponent p(iter_frac, stagnation_ratio) that sharpens the ruin priority distribution as stagnation grows (p ~ 1 early, rising to ~4-6 under sustained stagnation) will reduce mean tour length on cvrp_dev_hetero_24 versus the zero-evolution Worst-Cost-Removal L3-ctrl, whereas a static p will capture only part of the gain. Secondary claim: multiplicative load/depot/demand gates on |removal_savings| matter more than the exponent schedule on heterogeneous instances (mixed capacity demand) since they prevent destroying customers whose removal cannot be feasibly reinserted.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:a7859c8227cd4b56b4982f7883b44632"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_ruin_nodes as a multiplicative gating × rank-power ruin priority: base term = |removal_savings_i| normalized by route-scale, multiplied by (a) a load-utilization gate that relaxes for heavily loaded routes, (b) a depot-proximity gate that suppresses far-from-depot customers early, (c) a demand gate biasing toward medium-demand customers, and (d) a route-distance gate; then apply a rank transform with exponent p = p0 + dp*stagnation_ratio + dp2*iter_frac that sharpens toward top-removal under stagnation and flattens (more randomization-free diversification) early. Keep all outputs finite, length n, deterministic ties."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

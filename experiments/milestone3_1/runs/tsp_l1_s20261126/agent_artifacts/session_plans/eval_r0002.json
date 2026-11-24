@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:ea346a07068b481696bf6c07b98809b3"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If selection score combines step-normalized endpoint attraction (dest-pull) with a step-normalized mean-farness isolation term, then the constructive tour gap decreases versus pure dest-pull at equal O(n^2) cost (sub-millisecond per instance, 100% completion under 500 ms), because the isolation term prevents the tour from stranding far-from-all-unvisited cities for late expensive closure, while normalization keeps the mix robust across distance scales.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:ea346a07068b481696bf6c07b98809b3"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Hybridize the two strongest full-completion 500 ms TSP constructive rules: the O(n^2) vectorized linear endpoint pull 0.7*d(dest,u) - d(cur,u) (T69 dest-pull) with the unvisited mean-farness isolation term (T46), both rescaled by a dimensionless per-step normalization so the score is invariant to coordinate scale. Target: keep T69's sub-millisecond 128/128 completion while capturing T46's better relative gap, i.e. move the speed-quality Pareto knee rather than chase O(n^4) rollout quality."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

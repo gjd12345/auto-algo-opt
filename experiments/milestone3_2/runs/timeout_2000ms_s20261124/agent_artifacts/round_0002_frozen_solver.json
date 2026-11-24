@@ -1,0 +1,29 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_cvrp_ruin_recreate_b9955308",
+  "display_name": "Session R2 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    n = dm.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = float(capacity) if capacity > 0 else 1.0\n    eps = 1e-12\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n\n    def _z(x):\n        x = np.asarray(x, dtype=np.float64)\n        mu = float(np.mean(x)) if x.size else 0.0\n        sd = float(np.std(x)) if x.size else 0.0\n        if sd <= eps:\n            return np.zeros_like(x)\n        return (x - mu) / sd\n\n    # Savings term: centered-softmax style exponential rank (bounded, scale-free, monotone).\n    s = np.abs(sav) / scale\n    z_s = _z(s)\n    z_s = np.clip(z_s, -40.0, 40.0)\n    es = np.exp(z_s - np.max(z_s))\n    sav_term = es / (np.sum(es) + eps)\n\n    # Route-state additive composite (all standardized and signed so higher = more attractive).\n    ut = np.clip(np.abs(rload) / cap, 0.0, 1.0)\n    tight = 1.0 - ut\n    rmax = float(np.max(np.abs(rdist))) if n else 1.0\n    rmax = max(rmax, eps)\n    burden = np.abs(rdist) / rmax\n    prox = 1.0 / (1.0 + d0 / scale)\n    dem_abs = np.abs(dem[1:]).astype(np.float64)\n    dmax = float(np.max(dem_abs)) if n else 0.0\n    dsig = dem_abs / dmax if dmax > eps else np.ones(n, dtype=np.float64)\n\n    z_tight = _z(tight)\n    z_burden = _z(burden)\n    z_prox = _z(prox)\n    z_dem = _z(dsig)\n\n    frag_raw = 0.30 * z_tight + 0.30 * z_burden + 0.25 * z_prox + 0.15 * z_dem\n    fmin = float(np.min(frag_raw)) if n else 0.0\n    fmax = float(np.max(frag_raw)) if n else 0.0\n    if fmax - fmin > eps:\n        frag_term = (frag_raw - fmin) / (fmax - fmin)\n    else:\n        frag_term = np.full(n, 0.5, dtype=np.float64)\n\n    # Phase-scheduled convex weight, interpolating savings-dominant to state-dominant.\n    w_sav = float(np.clip(0.35 + 0.45 * (1.0 - it) + 0.15 * (1.0 - st), 0.05, 0.95))\n    w_frag = 1.0 - w_sav\n\n    score = w_sav * sav_term + w_frag * frag_term\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.maximum(score, 0.0)\n    smin = float(np.min(score)) if score.size else 0.0\n    smax = float(np.max(score)) if score.size else 0.0\n    if smax - smin > eps:\n        score = (score - smin) / (smax - smin)\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "b99553081ba08532d12885545b060cbc99ee3cb17cd6caedc7eb16eca84d3de7",
+  "design_sha256": "63b036ee9c9ae460e12c9d2c967feccdb116f7c104e945029e6fdb3347e7a5c9",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

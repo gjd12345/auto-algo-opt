@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:0fa39e0f71a84b9893c2130c63ac4485"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The Pareto-optimal incumbent (round3, obj 16.0504 @188ms) and round5 (16.1239 @123ms) leave substantial unused budget headroom. Scaling ruin-recreate iterations to fill ~500ms and adapting ruin size to instance clustering/capacity-tightness will lower mean objective, especially on the weakest regimes (spatial=clustered, capacity_level=tight, size=100).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0fa39e0f71a84b9893c2130c63ac4485"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Raise anytime-LNS intensity: adaptively scale ruin-set size and iteration count to consume the full 500ms budget (prior best used only ~188ms), with greedy + regret-2 recreate and simulated-acceptance, emphasizing clustered-spatial and tight-capacity regimes."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

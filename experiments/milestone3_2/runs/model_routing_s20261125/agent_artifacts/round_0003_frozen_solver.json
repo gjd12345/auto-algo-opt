@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_cvrp_ruin_recreate_9ebea320",
+  "display_name": "Session R3 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dist = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    cap = float(capacity) if capacity > 0 else 1e-12\n\n    n = int(sav.shape[0])\n    if n == 0:\n        return np.asarray(sav, dtype=np.float64)\n\n    eps = 1e-12\n\n    def minmax(x):\n        x = np.asarray(x, dtype=np.float64)\n        x = np.where(np.isfinite(x), x, 0.0)\n        if x.size == 0:\n            return x\n        lo = float(np.min(x)); hi = float(np.max(x))\n        span = hi - lo\n        if not np.isfinite(span) or span <= eps:\n            return np.full_like(x, 0.5)\n        return (x - lo) / span\n\n    # --- normalized savings rank (median-scaled, scale invariant) ---\n    abs_sav = np.abs(sav)\n    med = float(np.median(abs_sav))\n    scale_sav = med if med > eps else (float(np.mean(abs_sav)) if abs_sav.size > 0 else 0.0)\n    if not np.isfinite(scale_sav) or scale_sav <= eps:\n        scale_sav = 1.0\n    sav_norm = minmax(abs_sav / scale_sav)\n\n    # --- capacity-tightness gate: gentler exponent (1.8), lower baseline (0.20) ---\n    load_frac = np.clip(rl / cap, 0.0, 4.0)\n    gate_load = np.clip(load_frac, 0.0, 1.5) ** 1.8\n    gate_load = 0.20 + 0.80 * minmax(gate_load)\n\n    # --- depot eccentricity gate: moderate baseline (0.35) ---\n    depot_d = dist[0, 1:].astype(np.float64)\n    depot_scale = float(np.mean(depot_d)) if depot_d.size > 0 else 1.0\n    if not np.isfinite(depot_scale) or depot_scale <= eps:\n        depot_scale = 1.0\n    depot_norm = depot_d / depot_scale\n    gate_depot = 0.35 + 0.65 * minmax(depot_norm)\n\n    # --- demand gate: stronger relocation incentive (0.55) ---\n    dem_frac = np.clip(dem[1:] / cap, 0.0, 4.0)\n    gate_demand = 1.0 - 0.55 * minmax(dem_frac)\n\n    # --- moderate stagnation schedule: softer rise, gentler decay ---\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n    power = 1.00 + 3.0 * stag - 0.9 * itf\n    power = float(np.clip(power, 0.35, 4.5))\n\n    base = np.power(sav_norm + 1e-9, power)\n    gate = gate_load * gate_depot * gate_demand\n    priority = base * gate\n\n    # --- dispersion tie-breaker: moderate weight ---\n    rdist_norm = minmax(rd / (depot_scale + eps))\n    disp = 0.40 * minmax(depot_norm) - 0.60 * minmax(dem_frac) + 0.20 * (1.0 - rdist_norm)\n    priority = priority + 2.0e-3 * np.where(np.isfinite(disp), disp, 0.0)\n\n    priority = np.where(np.isfinite(priority), priority, 0.0)\n    return np.asarray(priority, dtype=np.float64)",
+  "hook_code_sha256": "9ebea3205e0a67cbd0ca7a2267c8a75b86e80657839fd165a4f1ffcbafd5fbb4",
+  "design_sha256": "6736da2c351a28bed7ab5997168dbdc4da19642708e9aa1b5cc5c02850fb4ec9",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261125\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

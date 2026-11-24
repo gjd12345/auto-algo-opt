@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Stagnation-adaptive, scale-invariant ruin scoring: replace raw worst-cost removal with a normalized score blending (a) removal_savings divided by the route's mean edge cost, (b) demand-weighted distance-to-depot, and (c) a scale-free spatial-relatedness term, then anneal determinism -> randomized geometric removal as iter_frac/stagnation_ratio increase, targeting the weakest regimes (spatial=clustered, capacity=tight, size=100, eccentric depot).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Portfolio shows a very flat frontier (SBS 15.7807 vs VBS 15.7359, 0.28% gap) and the weakest regimes are clustered spatial structure, tight capacity, size 100 and eccentric depot; those are exactly the regimes where pure worst-cost removal (L3-ctrl) myopically re-inserts the same nodes and where Shaw-relatedness / randomized destroy is known to help. Scoring with normalized (scale-free) quantities keeps the heuristic invariant across instance sizes and demand scales, which matters because dev_24 mixes size-50/100 and uniform/other demand distributions. Stagnation-driven annealing of determinism keeps early iterations greedy (fast descent under the 500 ms deadline) and only spends randomization late, so the anytime curve should improve without inflating solve_ms_mean. This is a single-hook change within the allowed cvrp_ruin_recreate template and 'none' postprocess mode, so it stays inside the validated interface."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "A score_ruin_nodes that uses only scale-invariant ratios (removal_savings / mean route edge cost, demand * dist_to_depot / mean depot distance) for the deterministic worst-removal phase, and that linearly blends toward a randomized spatial-relatedness ranking as stagnation_ratio grows (with a floor of ~20% randomization before any stagnation), will escape the local optima that cost the current SBS 0.28% VBS gap -- mainly in clustered / tight-capacity / eccentric-depot instances -- improving mean objective on cvrp_dev_hetero_24 below the current SBS 15.7807 at <=500 ms while keeping solve_ms_mean under 200 ms.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Portfolio shows a very flat frontier (SBS 15.7807 vs VBS 15.7359, 0.28% gap) and the weakest regimes are clustered spatial structure, tight capacity, size 100 and eccentric depot; those are exactly the regimes where pure worst-cost removal (L3-ctrl) myopically re-inserts the same nodes and where Shaw-relatedness / randomized destroy is known to help. Scoring with normalized (scale-free) quantities keeps the heuristic invariant across instance sizes and demand scales, which matters because dev_24 mixes size-50/100 and uniform/other demand distributions. Stagnation-driven annealing of determinism keeps early iterations greedy (fast descent under the 500 ms deadline) and only spends randomization late, so the anytime curve should improve without inflating solve_ms_mean. This is a single-hook change within the allowed cvrp_ruin_recreate template and 'none' postprocess mode, so it stays inside the validated interface."
+  }
+}

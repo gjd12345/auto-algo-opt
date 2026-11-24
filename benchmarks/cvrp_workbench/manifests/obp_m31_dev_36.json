@@ -1,0 +1,43 @@
+{
+  "schema_version": "m31-public-suite/v1",
+  "suite_id": "obp_m31_dev_36",
+  "problem_family": "obp",
+  "problem_id": "obp_online",
+  "protocol_id": "obp_online/v1",
+  "split": "dev",
+  "suite_role": "dev_search",
+  "distance_convention": "not_applicable",
+  "vehicle_limit_policy": "not_applicable",
+  "generator_version": "m31_stratified/v1",
+  "instance_count": 36,
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_low": 2,
+      "n50_uniform_high": 2,
+      "n50_bimodal_low": 2,
+      "n50_bimodal_high": 2,
+      "n50_weibull_low": 2,
+      "n50_weibull_high": 2,
+      "n100_uniform_low": 2,
+      "n100_uniform_high": 2,
+      "n100_bimodal_low": 2,
+      "n100_bimodal_high": 2,
+      "n100_weibull_low": 2,
+      "n100_weibull_high": 2,
+      "n200_uniform_low": 2,
+      "n200_uniform_high": 2,
+      "n200_bimodal_low": 2,
+      "n200_bimodal_high": 2,
+      "n200_weibull_low": 2,
+      "n200_weibull_high": 2
+    },
+    "axis": "capacity_to_median_ratio",
+    "strata": {
+      "low": 4,
+      "high": 8
+    }
+  },
+  "reference_baseline": "first_fit",
+  "input_visibility": "arrival_prefix",
+  "suite_content_sha256": "3d21c739f3a08225b86f65cea8f29b180a52d435ce479a1e7cae8daec60f1698"
+}

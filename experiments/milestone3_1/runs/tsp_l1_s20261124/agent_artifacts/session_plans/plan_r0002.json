@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Vectorized O(n^2)-per-step farness+destionation-pull scoring: choose next city by argmax over unvisited u of (-a*d(cur,u) + b*mean_{v in U\\u} d(u,v) + c*d(dest,u)), with candidate pruning to the K nearest unvisited to cur (K adaptive to n) to stay inside the 500 ms budget; evolve the coefficients (a,b,c,K) and the normalization (median/mean scaling) rather than adding deeper lookahead.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "KB evidence: T46 farness (argmax -d(cur,u)+0.7*mean_{v in U\\u}d(u,v)) is the best full-completion island rule (mean_rel_gap 0.1428 on eohs_128, 16/18 on TSPLIB) but is O(n^3) and needs one mean update per step, while T69 dest-pull (0.7*d(dest,u)-d(cur,u)) is sub-millisecond with 18/18 completion at 0.1649 gap. Neither dominates: farness gives quality, dest-pull gives speed/completion. Both are pure select_next_node hooks, so fusing them in one scoring vector plus restricting candidates to K nearest unvisited keeps the contract (return value in unvisited_nodes, no revisits) and the arithmetic cost per construction near O(n^2 + nK), well inside 500 ms. Incremental mean update: maintain row sums of unvisited-unvisited distances, subtracting the chosen column each step, so farness costs O(n) per candidate batch (vectorized NumPy) instead of recomputation. Evolvable parameters: a in [0.5,2], b in [0.2,1.5], c in [0,0.5], K in {10,15,25,n}, plus scaling by median of unvisited distances to make weights dimensionally consistent across instance scales."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A single-order-vectorized blend of farness (mean distance from candidate to remaining unvisited cities) with a small destination-pull term (d(0,u)) and a nearest-neighbor distance term, restricted to the K nearest candidates, retains most of T46's farness quality (+14.3% gap class) while cutting per-step cost from O(n^3) to O(n^2 K), so 100% of instances finish inside 500 ms and the mean relative gap improves over pure nearest neighbor.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dest-pull",
+      "method-lit-tsp-metric-nearest-neighbor"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB evidence: T46 farness (argmax -d(cur,u)+0.7*mean_{v in U\\u}d(u,v)) is the best full-completion island rule (mean_rel_gap 0.1428 on eohs_128, 16/18 on TSPLIB) but is O(n^3) and needs one mean update per step, while T69 dest-pull (0.7*d(dest,u)-d(cur,u)) is sub-millisecond with 18/18 completion at 0.1649 gap. Neither dominates: farness gives quality, dest-pull gives speed/completion. Both are pure select_next_node hooks, so fusing them in one scoring vector plus restricting candidates to K nearest unvisited keeps the contract (return value in unvisited_nodes, no revisits) and the arithmetic cost per construction near O(n^2 + nK), well inside 500 ms. Incremental mean update: maintain row sums of unvisited-unvisited distances, subtracting the chosen column each step, so farness costs O(n) per candidate batch (vectorized NumPy) instead of recomputation. Evolvable parameters: a in [0.5,2], b in [0.2,1.5], c in [0,0.5], K in {10,15,25,n}, plus scaling by median of unvisited distances to make weights dimensionally consistent across instance scales."
+  }
+}

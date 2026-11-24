@@ -1,0 +1,176 @@
+{
+  "schema_version": "m32-pre-blind-protocol/v1",
+  "protocol_id": "cvrp_m32_scaling_blind/v1",
+  "blind_commitment": {
+    "suite_id": "cvrp_m32_blind_120",
+    "instance_count": 120,
+    "commitment_file_sha256": "a5766786f30cfffe1e45abdf85fd8b5fe05fc2a356b50b73afa70d4d95e40327",
+    "suite_content_sha256": "fd2f60ff984fdfd5bb4d5899f234357e5b1c62e2340375053ff859e532712dc5"
+  },
+  "request_cap": 400,
+  "checkpoints": [
+    36,
+    100,
+    200,
+    400
+  ],
+  "seeds": [
+    20261124,
+    20261125,
+    20261126
+  ],
+  "controls": [
+    "model_routing",
+    "l3b_dual_hook",
+    "timeout_2000ms"
+  ],
+  "roster_cells": [
+    "20261124:checkpoint:36",
+    "20261124:checkpoint:100",
+    "20261124:checkpoint:200",
+    "20261124:checkpoint:400",
+    "20261124:control:model_routing",
+    "20261124:control:l3b_dual_hook",
+    "20261124:control:timeout_2000ms",
+    "20261125:checkpoint:36",
+    "20261125:checkpoint:100",
+    "20261125:checkpoint:200",
+    "20261125:checkpoint:400",
+    "20261125:control:model_routing",
+    "20261125:control:l3b_dual_hook",
+    "20261125:control:timeout_2000ms",
+    "20261126:checkpoint:36",
+    "20261126:checkpoint:100",
+    "20261126:checkpoint:200",
+    "20261126:checkpoint:400",
+    "20261126:control:model_routing",
+    "20261126:control:l3b_dual_hook",
+    "20261126:control:timeout_2000ms"
+  ],
+  "one_shot_attempt": {
+    "scope": "external_custody",
+    "key": "a5766786f30cfffe1e45abdf85fd8b5fe05fc2a356b50b73afa70d4d95e40327",
+    "claim_before": "sealed_file_open"
+  },
+  "solver_rules": {
+    "problem_family": "cvrp",
+    "runtime_protocol_id": "cvrp/v1",
+    "distance_convention": "euc_2d_float",
+    "vehicle_limit_policy": "unconstrained",
+    "solve_deadline_ms": 500.0,
+    "snapshot_type": "frozen_interface_solver_manifest",
+    "control_deadlines_ms": {
+      "timeout_2000ms": 2000.0
+    },
+    "cell_deadlines_ms": {},
+    "cell_execution": {
+      "20261124:checkpoint:36": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:checkpoint:100": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:checkpoint:200": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:checkpoint:400": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:control:model_routing": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:control:l3b_dual_hook": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261124:control:timeout_2000ms": {
+        "solve_deadline_ms": 2000.0,
+        "outer_timeout_s": 5.5
+      },
+      "20261125:checkpoint:36": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:checkpoint:100": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:checkpoint:200": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:checkpoint:400": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:control:model_routing": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:control:l3b_dual_hook": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261125:control:timeout_2000ms": {
+        "solve_deadline_ms": 2000.0,
+        "outer_timeout_s": 5.5
+      },
+      "20261126:checkpoint:36": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:checkpoint:100": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:checkpoint:200": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:checkpoint:400": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:control:model_routing": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:control:l3b_dual_hook": {
+        "solve_deadline_ms": 500.0,
+        "outer_timeout_s": 5.0
+      },
+      "20261126:control:timeout_2000ms": {
+        "solve_deadline_ms": 2000.0,
+        "outer_timeout_s": 5.5
+      }
+    }
+  },
+  "metric_rules": {
+    "objective": "verified_tour_length_minimize",
+    "invalid_or_missing_raw_objective": null,
+    "overall_noncompletion_penalty": "2 * reference_objective",
+    "completed_comparison": "same_seed_paired_common_completed",
+    "fleet_reporting": [
+      "free_fleet",
+      "exact_k_against_nn_reference"
+    ],
+    "inference_unit": "paired_blind_instances_within_each_seed",
+    "paired_test": "two_sided_wilcoxon_signed_rank",
+    "paired_bootstrap_draws": 10000,
+    "multiple_testing": "holm_bonferroni_within_predeclared_family"
+  },
+  "stopping_rules": {
+    "stop_search_at_requests": 400,
+    "stop_earlier_on": [
+      "predeclared_run_stop",
+      "unrecoverable_infrastructure_failure"
+    ],
+    "unreached_cells": "lock_as_explicit_missing_no_backfill",
+    "after_unseal": "evaluate_locked_snapshots_only_no_search_or_retry"
+  }
+}

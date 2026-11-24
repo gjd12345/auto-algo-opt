@@ -1,0 +1,71 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_dual_b8bde769",
+  "display_name": "Session R1 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n    sav = np.abs(removal_savings) / scale\n    # rank-power: flatten exponent toward 1 (uniform) under stagnation, sharpen early\n    p = 1.0 + (1.0 - stagnation_ratio) * (1.0 - iter_frac) * 3.0\n    # fractional rank (0..1), higher savings -> higher rank\n    order = np.argsort(np.argsort(sav))\n    frac = (order + 0.5) / max(n, 1)\n    rank_score = frac ** p\n    # load-saturation gate: reward customers in near-full routes\n    load_ratio = np.clip(route_loads / max(capacity, 1e-12), 0.0, 1.0)\n    load_gate = 0.5 + 0.5 * load_ratio\n    # depot-proximity gate: reward far-from-depot customers (good to relocate)\n    d0 = distance_matrix[0, 1:]\n    d0n = d0 / max(np.max(d0), 1e-12)\n    depot_gate = 0.5 + 0.5 * d0n\n    # route-length gate: reward customers on long routes\n    rd = route_dists / max(np.max(route_dists), 1e-12)\n    route_gate = 0.5 + 0.5 * rd\n    return rank_score * load_gate * depot_gate * route_gate\n",
+  "hook_code_sha256": "7b9c1ad7a33086527b834a9ddc806045313ebe321cc040a45e29c7f1afcc0664",
+  "design_sha256": "89d5e59b66b4b54b6b6db2c311fb67922f1b42837afa7a320f51c2f083738e6f",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261125\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-cheapest-regret-insertion",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n    sav = np.abs(removal_savings) / scale\n    # rank-power: flatten exponent toward 1 (uniform) under stagnation, sharpen early\n    p = 1.0 + (1.0 - stagnation_ratio) * (1.0 - iter_frac) * 3.0\n    # fractional rank (0..1), higher savings -> higher rank\n    order = np.argsort(np.argsort(sav))\n    frac = (order + 0.5) / max(n, 1)\n    rank_score = frac ** p\n    # load-saturation gate: reward customers in near-full routes\n    load_ratio = np.clip(route_loads / max(capacity, 1e-12), 0.0, 1.0)\n    load_gate = 0.5 + 0.5 * load_ratio\n    # depot-proximity gate: reward far-from-depot customers (good to relocate)\n    d0 = distance_matrix[0, 1:]\n    d0n = d0 / max(np.max(d0), 1e-12)\n    depot_gate = 0.5 + 0.5 * d0n\n    # route-length gate: reward customers on long routes\n    rd = route_dists / max(np.max(route_dists), 1e-12)\n    route_gate = 0.5 + 0.5 * rd\n    return rank_score * load_gate * depot_gate * route_gate\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    insert_delta = np.asarray(insert_delta, dtype=np.float64)\n    regret2_margin = np.asarray(regret2_margin, dtype=np.float64)\n    route_load_after = np.asarray(route_load_after, dtype=np.float64)\n    target_route_idx = np.asarray(target_route_idx)\n    insert_pos = np.asarray(insert_pos, dtype=np.float64)\n    n = len(insert_delta)\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n    scale = max(np.mean(np.abs(insert_delta)) if np.any(insert_delta) else 1.0, 1e-9)\n    # cheapest-detour component (normalized, negated)\n    cheap = -insert_delta / scale\n    # regret-2 component (normalized, rewarded)\n    reg_scale = max(np.max(np.abs(regret2_margin)), 1e-9)\n    reg = regret2_margin / reg_scale\n    # capacity-fill residual gate: prefer actions leaving room but not too empty; tighter residual harder\n    residual = np.clip(capacity - route_load_after, 0.0, capacity) / max(capacity, 1e-12)\n    cap_gate = 0.5 + 0.5 * residual\n    # blend weights driven by regret magnitude relative to detour\n    blend = 0.5\n    # position bias: earlier positions slightly preferred; new route (-1) neutral\n    pos_bias = np.where(target_route_idx < 0, 0.0, -0.05 * np.clip(insert_pos, 0.0, 1.0) / max(n, 1))\n    return (1.0 - blend) * cheap + blend * reg + 0.3 * cap_gate + 0.1 * pos_bias\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "7b9c1ad7a33086527b834a9ddc806045313ebe321cc040a45e29c7f1afcc0664",
+    "score_recreate_action": "7c182b77c88f7aa392afcc4de9005bb49ab3d01eac7b4a8c33f8d149d37b438d"
+  },
+  "bundle_hash": "67c2cbe684c83ae1d2065686f628d0fcbf74ba895805fb9cb3b2e895b4ff3f3e",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

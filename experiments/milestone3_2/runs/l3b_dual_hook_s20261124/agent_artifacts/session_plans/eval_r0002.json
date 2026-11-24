@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:c28b067c48cf449e96aeba923ffd8424"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under the 500 ms budget with mean solve time 341 ms (i.e. LNS loop is actually running, not budget-starved), the dev_24 residual gap (VBS rel gap ~ -20% on n=100, uniform-spatial, eccentric-depot, loose-capacity instances) comes mainly from ruin-set selection that is too uniform in effect: worst-cost removal alone concentrates removal in the same long-edge customers and re-inserts them into near-identical routes, so the LNS stalls early. A score_ruin_nodes that (a) normalizes removal_savings by a robust scale (mean/median of |removal_savings|) so it is scale-invariant across n=100 vs smaller instances, (b) applies multiplicative gates for route load slack (capacity=loose regimes reward removing from loaded routes), depot proximity (eccentric depot: customers far from depot carry large round-trip cost so their removal is worth more), demand magnitude, and route distance modulation, and (c) raises a rank-power exponent p(iter_frac, stagnation_ratio) so that as stagnation grows the score flattens toward diversification and as stagnation is low it sharpens toward greedy worst-removal, will lower mean tour length on dev_24 below the round-1 baseline 16.1493, with the largest gains on the n=100 / uniform / eccentric-depot / loose-capacity buckets. Paired with a recreate action score that prefers min-detour regret-2 insertion weighted by depot-distance asymmetry, this yields both deeper intra-route 2-opt-compatible removals and better route-count control under loose capacity.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c28b067c48cf449e96aeba923ffd8424"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive, scale-invariant multiplicative-gating ruin scoring paired with regret-driven recreate action scoring, tuned for the exhausted weak regimes (n=100, spatial=uniform, depot=eccentric, capacity=loose)"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

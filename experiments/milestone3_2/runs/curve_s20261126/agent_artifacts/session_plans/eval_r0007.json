@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 7 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:e12b8696ab9d4fa6afcf0389521ca964"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A score_ruin_nodes that uses only scale-invariant ratios (removal_savings / mean route edge cost, demand * dist_to_depot / mean depot distance) for the deterministic worst-removal phase, and that linearly blends toward a randomized spatial-relatedness ranking as stagnation_ratio grows (with a floor of ~20% randomization before any stagnation), will escape the local optima that cost the current SBS 0.28% VBS gap -- mainly in clustered / tight-capacity / eccentric-depot instances -- improving mean objective on cvrp_dev_hetero_24 below the current SBS 15.7807 at <=500 ms while keeping solve_ms_mean under 200 ms.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:e12b8696ab9d4fa6afcf0389521ca964"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive, scale-invariant ruin scoring: replace raw worst-cost removal with a normalized score blending (a) removal_savings divided by the route's mean edge cost, (b) demand-weighted distance-to-depot, and (c) a scale-free spatial-relatedness term, then anneal determinism -> randomized geometric removal as iter_frac/stagnation_ratio increase, targeting the weakest regimes (spatial=clustered, capacity=tight, size=100, eccentric depot)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

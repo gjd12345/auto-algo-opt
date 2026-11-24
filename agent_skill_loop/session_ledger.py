@@ -71,7 +71,7 @@ class SessionRequestBudget(RequestBudget):
             return max(0,min(limits)) if limits else None
         finally: con.close()
 
-    def reserve(self, *, purpose, problem, attempt=None, model=None):
+    def reserve(self, *, purpose, problem, attempt=None, model=None, **extra):
         if purpose not in {"eoh_probe","eoh_generation","eoh_repair"}:
             raise ValueError("gateway_purpose_denied")
         con = db._connect(self.root / "session.sqlite3")
@@ -109,18 +109,28 @@ class SessionRequestBudget(RequestBudget):
                     return None
                 parent_slot = None
                 if self._parent is not None:
-                    parent_slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model)
+                    parent_slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model, **extra)
                     if parent_slot is None:
-                        self.denial_reason = "outer_budget_exhausted"
+                        self.denial_reason = getattr(self._parent, "denial_reason", None) or "outer_budget_exhausted"
                         self._rejected += 1
                         return None
+                self.denial_reason = None
                 request_id = (parent_slot.request_id if parent_slot is not None and parent_slot.request_id else None) or uuid.uuid4().hex
                 mark_effect(con,row,task)
-                slot=RequestSlot(used+1,purpose,problem,attempt,model,request_id=request_id)
+                slot=RequestSlot(
+                    used+1,purpose,problem,attempt,model,request_id=request_id,
+                    logical_call_id=getattr(parent_slot, "logical_call_id", None) or extra.get("logical_call_id"),
+                    logical_ordinal=getattr(parent_slot, "logical_ordinal", None) or extra.get("logical_ordinal"),
+                    retry_index=getattr(parent_slot, "retry_index", None) or extra.get("retry_index"),
+                    requested_model=getattr(parent_slot, "requested_model", None) or extra.get("requested_model") or model,
+                    attempt_token=getattr(parent_slot, "attempt_token", None) or extra.get("attempt_token"),
+                )
                 if parent_slot is not None:
                     self._parent_slots[request_id] = parent_slot
-                con.execute("INSERT INTO requests(request_id,run_id,round_id,task_id,sequence,purpose,attempt,model,state,created_at_utc) VALUES (?,?,?,?,?,?,?,?,'reserved',?)",
-                            (request_id,row["run_id"],task["round_id"],self.task_id,slot.index,purpose,attempt,model,db._utc_now()))
+                con.execute(
+                    "INSERT INTO requests(request_id,run_id,round_id,task_id,sequence,purpose,attempt,model,requested_model,state,created_at_utc) VALUES (?,?,?,?,?,?,?,?,?,'reserved',?)",
+                    (request_id,row["run_id"],task["round_id"],self.task_id,slot.index,purpose,attempt,model,slot.requested_model,db._utc_now()),
+                )
             slot.reserved_event=self._make_event(slot,"reserved",request_id=request_id)
             slot.reserved_event["request_id"]=request_id
             self.events.append(slot.reserved_event)
@@ -134,7 +144,11 @@ class SessionRequestBudget(RequestBudget):
             pslot = self._parent_slots.pop(slot.request_id)
             parent_ev = self._parent.finish(pslot, state, **fields)
             slot.state = state
-            for k in ("elapsed_seconds", "status", "error_code", "input_tokens", "output_tokens", "model", "response_sha256"):
+            for k in (
+                "elapsed_seconds", "status", "error_code", "input_tokens", "output_tokens",
+                "model", "response_sha256", "served_model", "cached_tokens",
+                "provider_request_id", "rate_card_version", "estimated_cost_usd",
+            ):
                 if k in parent_ev:
                     setattr(slot, k, parent_ev[k])
             event = {**parent_ev, "index": slot.index, "request_id": slot.request_id}
@@ -153,8 +167,23 @@ class SessionRequestBudget(RequestBudget):
         try:
             with db._transaction(con):
                 db._ensure_requests_columns(con)
-                con.execute("UPDATE requests SET state=?,status=?,input_tokens=?,output_tokens=?,elapsed_seconds=?,error_code=?,finish_reason=?,response_sha256=?,finished_at_utc=? WHERE request_id=?",
-                    (terminal,event.get("status"),event.get("input_tokens"),event.get("output_tokens"),event.get("elapsed_seconds"),event.get("error_code"),event.get("finish_reason"),event.get("response_sha256"),db._utc_now(),slot.request_id))
+                con.execute(
+                    """
+                    UPDATE requests SET state=?,status=?,input_tokens=?,output_tokens=?,cached_tokens=?,
+                        elapsed_seconds=?,error_code=?,finish_reason=?,response_sha256=?,
+                        requested_model=COALESCE(?, requested_model),served_model=?,provider_request_id=?,
+                        estimated_cost_usd=?,finished_at_utc=?
+                    WHERE request_id=?
+                    """,
+                    (
+                        terminal,event.get("status"),event.get("input_tokens"),event.get("output_tokens"),
+                        event.get("cached_tokens"),event.get("elapsed_seconds"),event.get("error_code"),
+                        event.get("finish_reason"),event.get("response_sha256"),
+                        event.get("requested_model"),event.get("served_model"),
+                        event.get("provider_request_id"),event.get("estimated_cost_usd"),
+                        db._utc_now(),slot.request_id,
+                    ),
+                )
         finally: con.close()
         return event
 

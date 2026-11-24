@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Dual-hook LNS: (1) score_ruin_nodes = rank_power(|removal_savings_i| / scale_global, p(iter_frac, stagnation_ratio)) multiplied by dimensionless gates (capacity-utilization |load - q/2| fill gate, depot-proximity gate d(0,i)/mean d(0,·), demand-share gate q_i/mean q, route-distance gate route_dist/mean route_dist), with p increasing from ~0.7 to ~3.0 as stagnation_ratio grows (smooth deterministic ramp, no RNG); (2) score_recreate_action = regret-2 detour deficit normalized by scale_global, penalized by residual-slack shrinkage after insertion (beta * (slack_after / q)) and rewarded by route-pair demand-match, with k adaptively lifted toward regret-3 when mean route slack is below a threshold. Both hooks strictly scale-invariant (all terms divided by global mean depot distance / mean demand), deterministic tie-breaking by customer index, arrays read-only.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 states the L3 LNS skeleton (unified deadline incl. CW + initial intra_2opt + LNS, deterministic Regret-2 reinsertion, per-route intra_2opt, R2R acceptance) already yields a large skeleton bonus (blind_120 L3-ctrl 23.3474 vs cw_relocate_2opt 23.3399) and that the single-hook evolved rank-power gated rule gave a small but significant further gain; its own unresolved item is explicitly the \"dual-hook (ruin + recreate co-evolution)\" extension, which is precisely what the cvrp_ruin_recreate_dual(L3b) template exposes via score_ruin_nodes + score_recreate_action. The stated pitfall is tight-budget degradation, so I keep the same skeleton cost profile (Regret-2 core, no extra O(n^3) passes) and set budget to 500 ms where KB reports completion rate 1.0. Scale normalisation by mean depot distance and mean demand follows method-cvrp-m2-l2a-generalized-savings evidence of 0.00% coordinate-scaling drift, and the stagnation-ramped rank exponent follows the L3 math_formulation rank_power(., p(iter_frac, stagnation_ratio)). Recreate-side slack-shrinkage and adaptive regret-k follow method-cvrp-cheapest-regret-insertion / method-cvrp-lns-shaw-regret semantics (Regret-k over parallel routes, cheapest-detour deficit). This first round establishes the dual-hook baseline and the heterogeneity/scale-invariance claims to be tested by the diagnostic suite and evolution."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, an evolved dual-hook LNS whose ruin priority is a scale-normalized rank-power of removal savings gated by capacity-utilisation, depot proximity, demand share and route distance, and whose recreate priority is a normalized regret-2 detour deficit penalised by post-insertion slack shrinkage, will beat the zero-evolution L3-ctrl (worst-cost removal + cheapest/Regret-2) baseline in mean tour length, with largest per-instance wins on instances having high demand heterogeneity (wide q_i/mean q spread) and multi-route high-slack regimes; the gain should survive under 0.5x-2x coordinate scaling with <0.01% drift in mean tour length.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 states the L3 LNS skeleton (unified deadline incl. CW + initial intra_2opt + LNS, deterministic Regret-2 reinsertion, per-route intra_2opt, R2R acceptance) already yields a large skeleton bonus (blind_120 L3-ctrl 23.3474 vs cw_relocate_2opt 23.3399) and that the single-hook evolved rank-power gated rule gave a small but significant further gain; its own unresolved item is explicitly the \"dual-hook (ruin + recreate co-evolution)\" extension, which is precisely what the cvrp_ruin_recreate_dual(L3b) template exposes via score_ruin_nodes + score_recreate_action. The stated pitfall is tight-budget degradation, so I keep the same skeleton cost profile (Regret-2 core, no extra O(n^3) passes) and set budget to 500 ms where KB reports completion rate 1.0. Scale normalisation by mean depot distance and mean demand follows method-cvrp-m2-l2a-generalized-savings evidence of 0.00% coordinate-scaling drift, and the stagnation-ramped rank exponent follows the L3 math_formulation rank_power(., p(iter_frac, stagnation_ratio)). Recreate-side slack-shrinkage and adaptive regret-k follow method-cvrp-cheapest-regret-insertion / method-cvrp-lns-shaw-regret semantics (Regret-k over parallel routes, cheapest-detour deficit). This first round establishes the dual-hook baseline and the heterogeneity/scale-invariance claims to be tested by the diagnostic suite and evolution."
+  }
+}

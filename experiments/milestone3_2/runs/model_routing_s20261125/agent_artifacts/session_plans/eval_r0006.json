@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:4678406ee7c74844ad881a1b7ee14b42"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Multiplicatively gating removal savings by capacity pressure, depot eccentricity and cheap-node re-insertability, with a rank-power exponent that increases with stagnation_ratio and iter_frac, will beat the single-term worst-cost removal control and the current best archive solver (mean 15.9328, SBS 382.3874) on cvrp_dev_hetero_24 — in particular on the reported weakest regimes (capacity_level=tight, size=100, depot_style=eccentric, demand_dist=uniform, spatial=clustered) — because those regimes need removals concentrated in capacity-saturated far-from-depot route segments where Regret-2 reinsertion can rebuild better routes, whereas pure savings maximization repeatedly destroys the same cheap peripheral nodes and stalls.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:4678406ee7c74844ad881a1b7ee14b42"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive multiplicative-gate rank-power ruin scoring: keep the L3 skeleton (CW + initial intra_2opt + deterministic Regret-2 reinsertion + R2R) fixed and evolve only score_ruin_nodes into a scale-normalized product of four dimensionless gates — |removal_savings_i|/scale (scale = mean depot distance for translation/scale invariance), a load-pressure gate targeting tight-capacity routes (route_loads/Q close to 1 and residual capacity small relative to the node demand), a depot-eccentric geometry gate (node distance to depot relative to the global mean depot distance, boosting far-from-depot nodes whose route edges are long), and a cheap-node re-insert-ability gate (small demand x short nearest-neighbor distance => easy to re-insert, so destroying it costs little but frees structure) — then ranked with a power p(iter_frac, stagnation_ratio) that is ~1 in the early intensification phase and rises toward 2-3 as stagnation grows, so top-q selection drifts from worst-cost removals to hard-region clustered diversifications. Keep all state read-only, deterministic tie-breaking by index, finite output of length n, and avoid RNG so the 5-gate causal probe stays bit-exact."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

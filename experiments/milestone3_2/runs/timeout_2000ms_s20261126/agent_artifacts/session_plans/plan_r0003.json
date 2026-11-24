@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Refine the ruin priority hook `score_ruin_nodes` into a stagnation-adaptive, dimensionless multiplicative gate: rank-power of the scale-normalized removal savings with exponent p(iter_frac, stagnation_ratio) that shifts from exploitation (high p, worst-cost removal) toward diversification (p→1 + randomized-deterministic geometric spread) as stagnation rises; multiply by smooth gates for route load slack (dense/loose-capacity routes first), depot proximity asymmetry (eccentric-depot instances), and within-route distance, so that clustered/loose-capacity regimes get larger ruin sets while eccentric-depot routes are ruined along their far-side arc.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows a monotone 2-round improvement (16.1603 -> 16.0293, VBS gap only 0.052%) with all 5 weakest regimes clustered at the same instances, i.e. the remaining loss is regime-structured rather than random. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the single evolvable hook score_ruin_nodes with fixed deterministic Regret-2 reinsertion + intra_2opt + R2R acceptance is the correct attribution-safe surface, and that a multiplicative gate x rank-power form p(iter_frac, stagnation_ratio) was exactly the rule that beat the L2a champion across interfaces (8/24 head-to-head). Keeping postprocess_mode=none preserves the 5-gate interface contract and the ~155 ms mean solve time at 2000 ms budget leaves ample LNS iteration headroom, so effort is best spent on diversity-controlling ruin scoring rather than on postprocessing."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "An evolved multiplicative-gate rank-power ruin score that is jointly normalized by the global depot-distance scale and adapts its rank exponent to stagnation will improve mean objective on cvrp_dev_hetero_24 versus the round-2 incumbent (16.0293), with the gains concentrated in the weakest regimes identified in the archive feedback (spatial=clustered, capacity_level=loose, size=100, depot_style=eccentric), because worst-cost removal alone over-focuses on long edges and never diversifies across routes of an eccentric-depot instance.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows a monotone 2-round improvement (16.1603 -> 16.0293, VBS gap only 0.052%) with all 5 weakest regimes clustered at the same instances, i.e. the remaining loss is regime-structured rather than random. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the single evolvable hook score_ruin_nodes with fixed deterministic Regret-2 reinsertion + intra_2opt + R2R acceptance is the correct attribution-safe surface, and that a multiplicative gate x rank-power form p(iter_frac, stagnation_ratio) was exactly the rule that beat the L2a champion across interfaces (8/24 head-to-head). Keeping postprocess_mode=none preserves the 5-gate interface contract and the ~155 ms mean solve time at 2000 ms budget leaves ample LNS iteration headroom, so effort is best spent on diversity-controlling ruin scoring rather than on postprocessing."
+  }
+}

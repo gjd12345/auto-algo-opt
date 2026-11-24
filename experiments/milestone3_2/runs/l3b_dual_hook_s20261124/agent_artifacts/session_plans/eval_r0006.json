@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:798b83530c294bdaba67b85da19ba90e"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Coupling a stagnation-gated rank-power ruin score (p: 1.0 -> 2.5) with a scale-invariant Regret-2 x detour recreate score, both normalized by mean nearest-neighbour edge length, will reduce mean objective on cvrp_dev_hetero_24 from the current SBS 16.0924 by >= 0.5% (to <= 16.012) without exceeding 500 ms mean solve time, because the normalization removes the 20.8% VBS gap observed on size=100/eccentric-depot/loose-capacity regimes where an unnormalized savings magnitude over-prioritizes large-scale instances and under-diversifies stagnant LNS iterations.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:798b83530c294bdaba67b85da19ba90e"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Dual-hook scale-invariant stagnation-gated coupling: make `score_ruin_nodes` a rank-power over normalized removal_savings with multiplicative gates for route-load slack, depot eccentricity and route length, whose rank exponent p(iter_frac, stagnation_ratio) grows from ~1.0 to ~2.5 as stagnation rises (concentrating ruin on the worst-fit cluster); simultaneously make `score_recreate_action` a normalized mix of Regret-2 magnitude rank and min-detour rank, both divided by a per-instance distance scale (mean nearest-neighbour edge / depot radius) so the hook is strictly scale-invariant across size=100 and eccentric-depot instances. Bias insertion order toward far/near-capacity-bound customers first (larger regret*detour product) to keep routes full on loose-capacity instances, and add a small node-degree/angle-coherence term so sparse uniform-configurations do not collapse into a single giant route."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

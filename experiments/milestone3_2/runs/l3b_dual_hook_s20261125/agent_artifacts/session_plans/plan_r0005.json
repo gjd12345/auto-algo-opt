@@ -1,0 +1,35 @@
+{
+  "round_id": 5,
+  "direction": "Stagnation-adaptive ruin intensity + rank-power escalation on the dual hook: let the removal-count multiplier scale with stagnation_ratio and iter_frac (small q while improving, up to ~1.6-2.0x q once stagnating), raise the rank-power exponent p from ~1.0 toward ~1.8 as iter_frac grows, and keep a mild depot-distance gate (distance to depot normalized by mean depot distance) so high removal_savings/scale nodes on large traversal legs are preferred. For the recreate side, keep deterministic Regret-2 ordering but elevate the regret weight for customers whose best feasible insertion capacity slack is tight, so route-count reduction is favored on loose-capacity / uniform-demand instances. Preserve fully deterministic tie-breaks and O(n log n) per-iteration cost so the 500 ms budget still yields many LNS iterations.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Archive shows monotone but saturating gains across 4 rounds (16.1402 -> 16.1100 -> 16.1107 -> 16.0565) with only 0.147% gap-over-VBS, so remaining headroom is in diversification rather than restructuring: all weakest regimes are budget-exhausted, i.e. the LNS is stuck in local optima rather than lacking time. The L3 KB entry (method-cvrp-m3-ruin-recreate-l3) documents that the productive evolved form of score_ruin_nodes is exactly the multiplicative-gate x rank-power family with p(iter_frac, stagnation_ratio), and that stagnation-aware diversification is its listed strong regime; Shaw-regret LNS (method-cvrp-lns-shaw-regret) supports coupling destroy-size growth with stagnation and regret-k repair weighting. Hence the minimal-risk, evidence-bound move is to deepen the same hook family (stronger stagnation escalation of q and p, normalized depot gate, capacity-slack-weighted regret) instead of switching templates. Verified against the 500 ms budget: per-iteration cost stays O(n log n) and the first feasible solution is produced within ~2-3 ms, so no budget-exhaustion regression is expected."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "Replacing the round-4 best ruin scoring with an explicit stagnation -> ruin-size (q) escalation plus an iter_frac-driven rank-power exponent (1.0 -> ~1.8) and a normalized depot-distance gate will push mean objective on cvrp_dev_hetero_24 below the round-4 Pareto leader 16.0565, with the gain concentrated in the weakest regimes (size=100, spatial=uniform, depot=eccentric) that currently sit ~20-24% above VBS and are budget-exhausted; degenerate ruin sets on the n=6 gate probe remain distinguishable (set A != set B).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows monotone but saturating gains across 4 rounds (16.1402 -> 16.1100 -> 16.1107 -> 16.0565) with only 0.147% gap-over-VBS, so remaining headroom is in diversification rather than restructuring: all weakest regimes are budget-exhausted, i.e. the LNS is stuck in local optima rather than lacking time. The L3 KB entry (method-cvrp-m3-ruin-recreate-l3) documents that the productive evolved form of score_ruin_nodes is exactly the multiplicative-gate x rank-power family with p(iter_frac, stagnation_ratio), and that stagnation-aware diversification is its listed strong regime; Shaw-regret LNS (method-cvrp-lns-shaw-regret) supports coupling destroy-size growth with stagnation and regret-k repair weighting. Hence the minimal-risk, evidence-bound move is to deepen the same hook family (stronger stagnation escalation of q and p, normalized depot gate, capacity-slack-weighted regret) instead of switching templates. Verified against the 500 ms budget: per-iteration cost stays O(n log n) and the first feasible solution is produced within ~2-3 ms, so no budget-exhaustion regression is expected."
+  }
+}

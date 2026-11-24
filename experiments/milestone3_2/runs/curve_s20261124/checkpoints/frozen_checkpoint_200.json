@@ -1,0 +1,79 @@
+{
+  "best_dev_objective": 16.05043237,
+  "checkpoint_budget": 200,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58",
+    "penalized_mean_objective": 16.05043237,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 16.05043237
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "default_budget_ms": 500.0,
+    "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+    "design_sha256": "019daddcff288f2155d53ec8b1713cc0dfd14953ffb2e1adb86b90c6fd47f30e",
+    "diagnostic_ref": null,
+    "display_name": "M3.2 Candidate cvrp_ruin_recreate (f233572f)",
+    "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n    cap = max(float(capacity), 1e-12)\n    eps = 1e-12\n\n    def rank01(x):\n        r = np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\").astype(np.float64)\n        return r / (n - 1 if n > 1 else 1.0)\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n    drive = float(np.clip(0.5 * s + 0.5 * p, 0.0, 1.0))\n\n    # --- Scale-free primitives (ratio form, monotone, bounded in [0,1)) ---\n    sav_scale = max(float(np.mean(sav)), eps)\n    sav_ratio = sav / (sav + sav_scale)\n\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    dem_util = np.clip(dem / cap, 0.0, 1.0)\n\n    d0_scale = max(float(np.mean(d0)), eps)\n    dep_ratio = d0 / (d0 + d0_scale)\n\n    rd_scale = max(float(np.mean(rdists)), eps)\n    rd_ratio = rdists / (rdists + rd_scale)\n\n    # --- Additive convex \"pressure\" field: load + depot + route distance ---\n    # Weights shift toward geometry as drive grows (additive, not multiplicative).\n    w_load = 0.30 + 0.40 * drive\n    w_dep = 0.25 + 0.45 * drive\n    w_rd = 0.15 + 0.30 * drive\n    w_dem = 0.10 + 0.25 * drive\n    wsum = w_load + w_dep + w_rd + w_dem\n    pressure = (w_load * load_util + w_dep * dep_ratio + w_rd * rd_ratio + w_dem * dem_util) / wsum  # in [0,1]\n\n    # --- Savings efficiency (bounded, load-normalized detour value) ---\n    eff = sav / (sav + cap)  # bounded in [0,1), scale-free vs capacity\n\n    # --- Multiplicative blend: efficient savings shaped by pressure field ---\n    # At low drive the pressure exponent ~1 (near-pure efficiency); at high drive\n    # the pressure term dominates, tilting toward tight/eccentric/expensive nodes.\n    alpha = 0.35 + 1.25 * drive       # weight on efficiency vs pressure in sum\n    beta = 0.20 + 1.10 * drive        # pressure amplification exponent\n    press_amp = 0.25 + 0.75 * np.power(np.clip(pressure, 0.0, 1.0), beta)\n\n    blend = alpha * eff + (1.0 - alpha) * press_amp  # in ~[0,1]\n\n    # --- Stagnation-only rank-power sharpening (crisper sets when stuck) ---\n    gamma = 1.0 + 1.4 * s\n    sharp = np.power(np.clip(rank01(blend), 0.0, 1.0), gamma)\n\n    # Deterministic tie-break by savings magnitude (tiny weight preserves ordering).\n    result = sharp + 1e-7 * rank01(sav_ratio)\n    return np.where(np.isfinite(result), np.clip(result, 0.0, None), 0.0).astype(np.float64)",
+    "hook_code_sha256": "f233572fad2eb0fc5b0441f5ae32eafc4489a3c6c50b19841b0f7c896825a94d",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "origin_run": "m32_curve_s20261124",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "ckpt_cand_f233572fad",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_curve_s20261124",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 200,
+  "usage_cutoff": {
+    "attempted_requests": 200,
+    "by_state": {
+      "complete": 182,
+      "connectivity_failed": 12,
+      "http_error": 5,
+      "killed_unknown": 1
+    },
+    "cached_tokens": 656000,
+    "input_tokens": 989487,
+    "output_tokens": 165154,
+    "priced_attempts": 182,
+    "priced_cost_usd": 0.15108344,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "eoh_skipped": 3,
+      "invalid_candidate": 20,
+      "probe": 4,
+      "provider_failed": 13,
+      "valid_candidate": 136
+    },
+    "provider_elapsed_seconds": 1966.012,
+    "requested_models": {
+      "deepseek-v4.1-flash": 200
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 182
+    },
+    "unpriced_attempts": 18
+  },
+  "wall_elapsed_seconds_at_seal": 3414.719,
+  "winner_solver_sha256": "327fa6e5c5a880d77424d3fa16e33f63df5bd91503f9140d3e3d55ebca1f36bb",
+  "winner_source_ordinal": 152
+}

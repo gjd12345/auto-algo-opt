@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the multiplicative gate × rank-power ruin priority score toward a capacity/depot-aware hybrid: keep |removal_savings|/scale as the density-normalized base, but amplify the gate_load term (tight-capacity routes prioritized) and add an eccentric-depot radial gate that favors removing nodes far from the depot centroid, with the rank-power exponent p annealed as a function of stagnation_ratio and iter_frac so that early iterations diversify (broad top-q ruin) and stagnant phases intensify worst-removal.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 1 archive: single solver at mean objective 16.0429 over 24 instances, 206.2 ms mean (well inside the 500 ms deadline, so there is headroom for the LNS loop to run more/harder iterations). VBS==SBS means no complementarity yet — the only lever is improving the single hook. KB entry method-cvrp-m3-ruin-recreate-l3 confirms cvrp_ruin_recreate/v1 exposes exactly one evolvable hook score_ruin_nodes(dm, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac) with fixed deterministic Regret-2 repair, intra_2opt and R2R acceptance, and that the winning M3 rule was a multiplicative gate + rank-power form — so the search space is (1) which gates to multiply, (2) the rank-power exponent schedule. The documented L3-ctrl baseline is pure worst-cost removal, so the deltas we seek are precisely in the gate design. Weakest-regime evidence says to weight capacity saturation and depot-eccentricity gating, and the KB's applicable_regimes explicitly lists 'stagnation_aware_diversification' as a strong point of this template, justifying an iter_frac/stagnation_ratio-annealed exponent rather than a static worst-removal. Postprocess stays 'none' because the only allowed mode is none and the skeleton already ends with intra_2opt + R2R acceptance."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 (500 ms budget) the weakest regimes are capacity_level=tight (vbs_rel_gap -22.25%), size=100 (-20.89%), spatial=clustered (-19.23%) and depot_style=eccentric (-19.83%). Because tight-capacity and eccentric-depot instances dominate the loss, a multiplication-based ruin score that (a) strongly gates on route-load saturation (route_loads/capacity) and (b) gates on radial distance from the depot will select ruin sets whose re-insertion by deterministic Regret-2 is much more constrained, yielding larger net tour-length reduction than the plain worst-cost/savings ranking; annealing p with stagnation_ratio should also avoid the R2R stagnation trap within the 500 ms anytime loop. Expected mean objective < 16.0429.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 archive: single solver at mean objective 16.0429 over 24 instances, 206.2 ms mean (well inside the 500 ms deadline, so there is headroom for the LNS loop to run more/harder iterations). VBS==SBS means no complementarity yet — the only lever is improving the single hook. KB entry method-cvrp-m3-ruin-recreate-l3 confirms cvrp_ruin_recreate/v1 exposes exactly one evolvable hook score_ruin_nodes(dm, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac) with fixed deterministic Regret-2 repair, intra_2opt and R2R acceptance, and that the winning M3 rule was a multiplicative gate + rank-power form — so the search space is (1) which gates to multiply, (2) the rank-power exponent schedule. The documented L3-ctrl baseline is pure worst-cost removal, so the deltas we seek are precisely in the gate design. Weakest-regime evidence says to weight capacity saturation and depot-eccentricity gating, and the KB's applicable_regimes explicitly lists 'stagnation_aware_diversification' as a strong point of this template, justifying an iter_frac/stagnation_ratio-annealed exponent rather than a static worst-removal. Postprocess stays 'none' because the only allowed mode is none and the skeleton already ends with intra_2opt + R2R acceptance."
+  }
+}

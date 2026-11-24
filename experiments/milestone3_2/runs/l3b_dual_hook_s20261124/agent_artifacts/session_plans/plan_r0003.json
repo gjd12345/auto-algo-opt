@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Dual-hook co-evolution for LNS ruin+recreate under 500 ms: (1) make `score_ruin_nodes` scale-invariant by normalizing removal savings with the global mean depot distance scale, and add multiplicative gates that favor (a) high-fill routes (route_load/capacity near 1) and (b) low route-distance-share nodes, with an iter_frac/stagnation_ratio-driven rank power that shifts from exploitation (p≈1, worst-cost removal) early to diversification (p≈0.5 flat) once stagnation rises; (2) make `score_recreate_action` a cheap-detour vs Regret-2 blend whose regret weight increases with the number of open (post-ruin) positions and whose capacity-fill bonus increases when the target route is lightly loaded (loose-capacity regime), while penalizing insertion detour normalized by local edge scale. Both hooks stay read-only, deterministic, tie-broken by index, and O(n·positions) so no extra LNS iterations are lost.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round 2 improved only -0.0233 (16.1493 -> 16.1260) with a single evolved hook, and the archive shows the portfolio gap over VBS is tiny (0.08%) but absolute objectives are still ~20% above VBS in the size=100 / uniform / eccentric / loose-capacity regimes — i.e. the remaining loss is regime-specific rather than global. The KB entry method-cvrp-m3-ruin-recreate-l3 fixes recreate as deterministic Regret-2 and leaves the recreate side unexploited (\"dual-hook ruin+recreate co-evolution left to later large-budget stages\"), which is exactly the untried axis under this template. method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion confirm that the ruin operator should balance worst-relatedness removal against geographic coherence and that repair should blend cheapest-detour with Regret-k lookahead. Hence the plan: keep the template's proven CW+intra_2opt+R2R anytime skeleton and single deadline clock (0002 already fits 350 ms mean, well inside 500 ms), and spend the evolution budget on hook structure only: scale normalization (zero coordinate-scale drift), multiplicative load-fill / route-distance gates, stagnation-driven rank power on the ruin side, and a detour-normalized regret/capacity-fill blend on the recreate side."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, co-evolving both LNS hooks (scale-normalized, gate-multiplied ruin priority + regret/capacity-fill-weighted recreate action) reduces mean objective versus the current single-hook Pareto best (16.1260), with the largest gains concentrated in the weak regimes reported by the archive (size=100, spatial=uniform, depot_style=eccentric, capacity_level=loose) because in those regimes route-load dispersion and insertion-detour scale spread are largest, so load-fill gating plus normalized detour penalties remove exactly the wrong nodes and reinsert them into the wrong routes.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 2 improved only -0.0233 (16.1493 -> 16.1260) with a single evolved hook, and the archive shows the portfolio gap over VBS is tiny (0.08%) but absolute objectives are still ~20% above VBS in the size=100 / uniform / eccentric / loose-capacity regimes — i.e. the remaining loss is regime-specific rather than global. The KB entry method-cvrp-m3-ruin-recreate-l3 fixes recreate as deterministic Regret-2 and leaves the recreate side unexploited (\"dual-hook ruin+recreate co-evolution left to later large-budget stages\"), which is exactly the untried axis under this template. method-cvrp-lns-shaw-regret and method-cvrp-cheapest-regret-insertion confirm that the ruin operator should balance worst-relatedness removal against geographic coherence and that repair should blend cheapest-detour with Regret-k lookahead. Hence the plan: keep the template's proven CW+intra_2opt+R2R anytime skeleton and single deadline clock (0002 already fits 350 ms mean, well inside 500 ms), and spend the evolution budget on hook structure only: scale normalization (zero coordinate-scale drift), multiplicative load-fill / route-distance gates, stagnation-driven rank power on the ruin side, and a detour-normalized regret/capacity-fill blend on the recreate side."
+  }
+}

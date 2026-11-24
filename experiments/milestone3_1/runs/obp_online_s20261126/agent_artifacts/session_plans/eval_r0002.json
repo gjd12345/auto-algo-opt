@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:fc63a6ab009041cab9f8eddefd42a363"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "For online bin packing with strict prefix-causal scoring (irrevocable placement, no future item information), the dominant driver of bin count is residual fragmentation: a score_bin that minimizes the arithmetic residual together with a dead-zone penalty on mid-range residuals (r in (eps, w-eps)) will match or beat pure Best Fit on dev_24, because it both packs tightly now and preserves a residual distribution that stays size-compatible with the empirical item-size distribution. Indexing the penalty by a scale-free ratio r/w keeps it robust to bin-capacity shifts (no 10x capacity drift), and an exponential closing bonus once a bin exceeds ~90% utilization should convert nearly-full bins into closed bins sooner.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:fc63a6ab009041cab9f8eddefd42a363"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the strict prefix-causal `score_bin` residual scoring toward a best-fit-dominant rule with a symmetric residual dead-zone: prefer bins whose post-placement residual is near 0 (exact fit) or near w (perfect complementary pairing), and strongly penalize mid-range fragment residuals, while keeping bin-open decisions strictly causal (only observe items already seen, never look ahead)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

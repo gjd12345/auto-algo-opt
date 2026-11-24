@@ -1,0 +1,44 @@
+{
+  "type": "method",
+  "title": "Neighbor-restricted 2-opt tour repair on main",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "2-opt",
+    "local-search"
+  ],
+  "status": "reviewed",
+  "summary": "Best-improvement 2-opt using a geometric k-nearest graph, applied to already built tours.",
+  "attributes": {
+    "method_family": "local_search",
+    "online_offline": "offline",
+    "interface": "nearest_two_opt(route, distances, neighbors, max_steps)",
+    "objective": "tour cost"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "sources": [
+      "src-croes-2opt"
+    ],
+    "implementations": [
+      "impl-tsp-neighbor-2opt-repair"
+    ]
+  },
+  "source_refs": [
+    "src-croes-2opt"
+  ],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_nearest_two_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_nearest_two_opt.py",
+      "sha256": "c1add417f81c1c4335cbb5187449ae9d3a9c1d0e5c40bd377f8f096e69181676"
+    }
+  ],
+  "id": "method-tsp-two-opt",
+  "content_sha256": "778820e7ead485002c29b923f2dd368dbc0d2e814bab6a4cb2b945b7c996f41e"
+}

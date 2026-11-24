@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Scale-invariant dual-hook refinement targeted at the n=100 / uniform / eccentric-depot / loose-capacity weak regimes: (1) `score_ruin_nodes` — replace absolute removal-saving ranking with n-normalized rank-power scoring score_i = rank_pow(savings_i/scale, p(iter_frac, stagnation_ratio)) * gate_load * gate_depot * gate_demand * gate_rdist, where scale = median positive removal saving over the current incumbent routes (robust to size 40 vs 100), p ramps from ~0.6 early (breadth, exploration on uniform spatial) to ~1.6 under stagnation (sharp worst-first, escape from local minima in the all-exhausted n=100 block), and the depot gate down-weights depot-adjacent nodes in eccentric-depot instances so ruin concentrates on the far radial tail; add a size-adaptive ruin cardinality pressure term q_eff/n via a monotone gate on scale. (2) `score_recreate_action` — deterministic Regret-2-style ranking reparameterized to prefer capacity-tight route fits (post-insertion residual load ratio) and lower detour per unit of demand in eccentric-depot/loose-capacity regimes, with strict lexicographic determinism (no RNG, no argmax ties broken by index order beyond documented tie-break) so the two hooks stay causally separable and the fourth-gate 6-customer dual-action probe still yields distinct ruin sets.{1,2,3,4} vs {3,4,5,6}.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Archive shows 3 near-identical solvers (16.126 / 16.135 / 16.149, VBS-SBS gap only 0.088%) meaning the current dual-hook surface is saturated on a single basin: the portfolio is degenerate and novelty must come from changing the removal *scale sensitivity*, not from micro-tuning constants. Weakest regimes are size=100 (12/12 exhausted budget), uniform spatial, eccentric depot, loose capacity — all signatures of an incumbent that reaches its local optimum early and then burns the remaining 500 ms in pseudo-diversified ruin without re-insertion returns. KB method-cvrp-m3-ruin-recreate-l3 documents exactly this failure mode and prescribes multiplicative gating times a rank power p(iter_frac, stagnation_ratio) with readonly state and deterministic tie-breaks; the L3-ctrl vs evolved delta (23.3474 -> 23.3186) shows the hook, not the skeleton, carries the gain. method-cvrp-lns-shaw-regret supports adding relatedness-driven ruin for uniform spatial layouts, and method-cvrp-cheapest-regret-insertion supports Regret-2 with detour normalization for the recreate side. Median-saving normalization is the key new lever: it keeps the rank-power exponent meaningful across n=40 and n=100 in the heterogeneous suite, preventing the n=100 block from being dominated by a handful of huge absolute savings. Postprocess mode stays 'none' because the interface is already validated for the dual template at 500 ms and any extra repair pass would eat into the 500 ms LNS iteration count in exactly the exhausted regime we want to fix."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "If removal-priority scoring is made n-scale-invariant via median-saving normalization with a stagnation-ramped rank power and a depot-adjacency gate, and recreate ranking is augmented with capacity-tightness plus detour-per-demand terms, then mean objective on cvrp_dev_hetero_24 improves beyond the current SBS 16.1260 — with the gain concentrated in the n=100 (all 12 exhausted) and eccentric-depot uniform sub-blocks, because absolute saving magnitudes otherwise saturate at large n so worst-first removal degenerates and stagnation happens before the deadline clock binds.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows 3 near-identical solvers (16.126 / 16.135 / 16.149, VBS-SBS gap only 0.088%) meaning the current dual-hook surface is saturated on a single basin: the portfolio is degenerate and novelty must come from changing the removal *scale sensitivity*, not from micro-tuning constants. Weakest regimes are size=100 (12/12 exhausted budget), uniform spatial, eccentric depot, loose capacity — all signatures of an incumbent that reaches its local optimum early and then burns the remaining 500 ms in pseudo-diversified ruin without re-insertion returns. KB method-cvrp-m3-ruin-recreate-l3 documents exactly this failure mode and prescribes multiplicative gating times a rank power p(iter_frac, stagnation_ratio) with readonly state and deterministic tie-breaks; the L3-ctrl vs evolved delta (23.3474 -> 23.3186) shows the hook, not the skeleton, carries the gain. method-cvrp-lns-shaw-regret supports adding relatedness-driven ruin for uniform spatial layouts, and method-cvrp-cheapest-regret-insertion supports Regret-2 with detour normalization for the recreate side. Median-saving normalization is the key new lever: it keeps the rank-power exponent meaningful across n=40 and n=100 in the heterogeneous suite, preventing the n=100 block from being dominated by a handful of huge absolute savings. Postprocess mode stays 'none' because the interface is already validated for the dual template at 500 ms and any extra repair pass would eat into the 500 ms LNS iteration count in exactly the exhausted regime we want to fix."
+  }
+}

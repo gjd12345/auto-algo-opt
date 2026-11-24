@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:600cab880b534840b097996b91a47c35"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A score_bin that is a smooth convex combination of post-placement residual (best-fit term) and a fill-ratio term with a deterministic residual-tie ordering will weakly dominate the current pure best-fit score on the hetero_24 dev suite, reducing mean objective in the large-size (200) and small-size (50) regimes where the archive reports VBS gaps of -0.19% and -0.83%, while keeping mean solve time under 500 ms and remaining strictly prefix-causal (score uses only the current item and already-open-bin statistics).",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:600cab880b534840b097996b91a47c35"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the prefix-causal score_bin into a smooth best-fit-almost-best-fit hybrid: primary term = residual after placement (tightest feasible bin), with a small convex fill/utilization correction and a deterministic bin-age tie-break so residual ties break toward bins with larger current fill; when no bin fits, the new-bin decision must remain unchanged. Exploit the fact that archive shows zero portfolio diversity (both solvers 27.8333, 36/36 wins) so a strictly different residual-scoring shape is needed rather than parameter tuning."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

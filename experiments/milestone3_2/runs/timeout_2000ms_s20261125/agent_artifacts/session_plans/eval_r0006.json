@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 6 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:8cc2d59b3876459e800493f61d91efc7"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under the 2000 ms budget, a stagnation-adaptive multiplicative-gated rank-power destroy score (route-dist-normalized removal savings x nearly-full-route load gate x demand gate x depot-proximity gate, p: 1.6 -> 0.7 with iter_frac) beats the plain worst-cost-savings ranking (SBS dev_24 mean 16.0496) because the residual VBS gap is concentrated in tight-capacity (vbs_rel_gap -22.6%), size-100 (-21.2%), uniform-demand (-21.0%) and eccentric-depot (-20.4%) regimes, where full-route-focused ruin sets open the capacity-relief moves that savings ranking misses.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:8cc2d59b3876459e800493f61d91efc7"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve score_ruin_nodes from plain worst-cost-savings ranking into a stagnation-adaptive multiplicative gate: score_i = rank_power(|removal_savings_i| / max(route_dist, eps) * gate_load * gate_demand * gate_depot, p) with gate_load = 1 + 0.6*route_load/capacity (bias ruin toward nearly-full routes, key for tight-capacity n=100), gate_demand = (1 + 0.4*demand_i/mean_demand), gate_depot = 1/(1 + 0.5*d(depot,i)/max_col_depot_dist) to suppress far-field nodes while the solve clock is young, and rank exponent p shrinks from ~1.6 to ~0.7 as iter_frac rises so late iterations flatten the priority into a broad multi-node ruin set (~15-20% of n) for deeper diversification. Normalizing savings by route_dist keeps the scale invariant across clustered vs scattered geometry and eccentric depots."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

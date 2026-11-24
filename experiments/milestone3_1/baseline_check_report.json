@@ -1,0 +1,54 @@
+{
+  "schema_version": "m31-baseline-check/v1",
+  "checked_at": "2026-11-23T17:16:54Z",
+  "results": {
+    "tsp": {
+      "suite_id": "tsp_m31_dev_36",
+      "protocol_id": "tsp/v1",
+      "baseline_id": "bl_tsp",
+      "matched_reference": true,
+      "completion_rate": 1.0,
+      "mean_objective": 99742.09830823,
+      "completion_bitmap_equal": true,
+      "strong_comparator": "tsp_nn_2opt",
+      "strong_mean_objective": 85179.702874,
+      "strong_completion_rate": 1.0
+    },
+    "tsp_tsplib": {
+      "suite_id": "tsp_ext_tsplib_euc2d",
+      "protocol_id": "tsp/v1",
+      "baseline_id": "bl_tsp_tsplib",
+      "matched_reference": true,
+      "completion_rate": 1.0,
+      "mean_objective": 64150.66666667,
+      "completion_bitmap_equal": true,
+      "strong_comparator": "tsp_nn_2opt",
+      "strong_mean_objective": 54830.722222,
+      "strong_completion_rate": 1.0
+    },
+    "obp": {
+      "suite_id": "obp_m31_dev_36",
+      "protocol_id": "obp_online/v1",
+      "baseline_id": "bl_obp",
+      "matched_reference": true,
+      "completion_rate": 1.0,
+      "mean_objective": 27.83333333,
+      "completion_bitmap_equal": true,
+      "strong_comparator": "obp_best_fit",
+      "strong_mean_objective": 27.833333,
+      "strong_completion_rate": 1.0
+    },
+    "bpp": {
+      "suite_id": "bpp_m31_dev_36",
+      "protocol_id": "bpp_offline/v1",
+      "baseline_id": "bl_bpp",
+      "matched_reference": true,
+      "completion_rate": 1.0,
+      "mean_objective": 27.52777778,
+      "completion_bitmap_equal": true,
+      "strong_comparator": "bpp_ffd",
+      "strong_mean_objective": 27.527778,
+      "strong_completion_rate": 1.0
+    }
+  }
+}

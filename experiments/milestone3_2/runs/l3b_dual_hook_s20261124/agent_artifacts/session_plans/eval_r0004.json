@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:784f4e2c327b4eb4a8cee590f4cbbb50"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If removal-priority scoring is made n-scale-invariant via median-saving normalization with a stagnation-ramped rank power and a depot-adjacency gate, and recreate ranking is augmented with capacity-tightness plus detour-per-demand terms, then mean objective on cvrp_dev_hetero_24 improves beyond the current SBS 16.1260 — with the gain concentrated in the n=100 (all 12 exhausted) and eccentric-depot uniform sub-blocks, because absolute saving magnitudes otherwise saturate at large n so worst-first removal degenerates and stagnation happens before the deadline clock binds.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:784f4e2c327b4eb4a8cee590f4cbbb50"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Scale-invariant dual-hook refinement targeted at the n=100 / uniform / eccentric-depot / loose-capacity weak regimes: (1) `score_ruin_nodes` — replace absolute removal-saving ranking with n-normalized rank-power scoring score_i = rank_pow(savings_i/scale, p(iter_frac, stagnation_ratio)) * gate_load * gate_depot * gate_demand * gate_rdist, where scale = median positive removal saving over the current incumbent routes (robust to size 40 vs 100), p ramps from ~0.6 early (breadth, exploration on uniform spatial) to ~1.6 under stagnation (sharp worst-first, escape from local minima in the all-exhausted n=100 block), and the depot gate down-weights depot-adjacent nodes in eccentric-depot instances so ruin concentrates on the far radial tail; add a size-adaptive ruin cardinality pressure term q_eff/n via a monotone gate on scale. (2) `score_recreate_action` — deterministic Regret-2-style ranking reparameterized to prefer capacity-tight route fits (post-insertion residual load ratio) and lower detour per unit of demand in eccentric-depot/loose-capacity regimes, with strict lexicographic determinism (no RNG, no argmax ties broken by index order beyond documented tie-break) so the two hooks stay causally separable and the fourth-gate 6-customer dual-action probe still yields distinct ruin sets.{1,2,3,4} vs {3,4,5,6}."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

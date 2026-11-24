@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0006_cvrp_ruin_recreate_76a7c200",
+  "display_name": "Session R6 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(dm.shape[0]) - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rl = np.asarray(route_loads, dtype=np.float64).ravel()\n    rd = np.asarray(route_dists, dtype=np.float64).ravel()\n    rs = np.asarray(removal_savings, dtype=np.float64).ravel()\n    dmd = np.asarray(demands, dtype=np.float64).ravel()\n\n    if rl.shape[0] != n:\n        rl = np.zeros(n, dtype=np.float64)\n    if rd.shape[0] != n:\n        rd = np.ones(n, dtype=np.float64)\n    if rs.shape[0] != n:\n        rs = np.zeros(n, dtype=np.float64)\n    if dmd.shape[0] != n + 1:\n        dmd = np.zeros(n + 1, dtype=np.float64)\n\n    cap = float(capacity)\n    if not np.isfinite(cap) or cap <= 0.0:\n        cap = 1.0\n\n    rs = np.where(np.isfinite(rs), rs, 0.0)\n    rl = np.where(np.isfinite(rl), rl, 0.0)\n    rd = np.where(np.isfinite(rd) & (rd > 1e-12), rd, 1.0)\n\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = min(max(it, 0.0), 1.0)\n\n    # Criterion A: whitened detour-savings share.\n    rs_abs = np.abs(rs)\n    rmean = float(np.mean(rs_abs))\n    rstd = float(np.std(rs_abs))\n    if not np.isfinite(rmean):\n        rmean = 0.0\n    if not np.isfinite(rstd) or rstd <= 1e-12:\n        rstd = max(rmean, 1.0)\n    c_save = np.clip((rs_abs - rmean) / rstd, -2.0, 2.0) * 0.5 + 0.5\n    c_save = np.where(np.isfinite(c_save), c_save, 0.0)\n\n    # Criterion B: concave near-full-route load pressure.\n    util = np.clip(rl / cap, 0.0, 1.0)\n    c_load = np.sqrt(util)\n\n    # Criterion C: depot radial eccentricity, whitened.\n    depot_d = np.abs(dm[0, 1:n + 1])\n    depot_d = np.where(np.isfinite(depot_d), depot_d, 0.0)\n    dmean = float(np.mean(depot_d))\n    dstd = float(np.std(depot_d))\n    if not np.isfinite(dmean):\n        dmean = 0.0\n    if not np.isfinite(dstd) or dstd <= 1e-12:\n        dstd = max(dmean, 1.0)\n    c_ecc = np.clip((depot_d - dmean) / dstd, -2.0, 2.0) * 0.5 + 0.5\n    c_ecc = np.where(np.isfinite(c_ecc), c_ecc, 0.0)\n\n    # Demand pressure lightly modulates base score.\n    dvec = np.abs(dmd[1:n + 1])\n    dmax = float(np.max(dvec)) if n > 0 else 1.0\n    if not np.isfinite(dmax) or dmax <= 1e-12:\n        dmax = 1.0\n    c_dem = np.clip(dvec / dmax, 0.0, 1.0)\n\n    # Geometric mean of the three criteria (all in [0,1]) plus demand nudge.\n    eps = 1e-6\n    base = np.power(\n        np.clip(c_save + eps, eps, 1.0) *\n        np.clip(c_load + eps, eps, 1.0) *\n        np.clip(c_ecc + eps, eps, 1.0),\n        1.0 / 3.0,\n    )\n    base = base * (0.75 + 0.25 * c_dem)\n    base = np.where(np.isfinite(base), base, 0.0)\n\n    # Shaw-style relatedness for late-stagnation mixing.\n    if n > 1:\n        sub = dm[1:n + 1, 1:n + 1].astype(np.float64, copy=True)\n        sub = np.where(np.isfinite(sub), sub, np.inf)\n        idxs = np.arange(n)\n        sub[idxs, idxs] = np.inf\n        k = int(max(1, min(n - 1, 5)))\n        srt = np.sort(sub, axis=1)\n        knn = srt[:, :k]\n        knn = np.where(np.isfinite(knn), knn, 1e12)\n        mean_knn = np.mean(knn, axis=1)\n        mref = float(np.mean(mean_knn))\n        if not np.isfinite(mref) or mref <= 1e-12:\n            mref = 1.0\n        related = 1.0 / (1.0 + mean_knn / mref)\n    else:\n        related = np.ones(n, dtype=np.float64)\n\n    mix = float(np.clip(st * (0.35 + 0.45 * st) + 0.20 * it * st, 0.0, 0.85))\n    signal = (1.0 - mix) * base + mix * related * (0.45 + 0.55 * c_load)\n    signal = np.where(np.isfinite(signal), signal, 0.0)\n\n    # Rank-power with deterministic index tie-breaking.\n    order = np.argsort(signal + 1e-9 * np.arange(n, dtype=np.float64))\n    ranks = np.zeros(n, dtype=np.float64)\n    ranks[order] = np.arange(1, n + 1, dtype=np.float64)\n    rank_frac = 1.0 - ranks / float(n + 1)\n\n    p = 1.0 + 2.5 * float(np.clip(0.55 * st + 0.35 * it * st + 0.10 * it, 0.0, 1.0))\n    score = np.power(np.clip(rank_frac, 0.0, 1.0), p)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "76a7c200667026dfd2f97bb179bd078d146573a5f06534e7a7bc663696fa2059",
+  "design_sha256": "69e4153c825dc82a4cb1c1c6d01cfb15828915106f24e475584ffb105ccbf035",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261126\\session_run\\rounds\\round_0006\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

@@ -1,0 +1,37 @@
+{
+  "round_id": 2,
+  "direction": "Vectorized dimensionless farness + destination-pull scoring inside select_next_node: score(u) = -d(cur,u)/s1 + w_f * mean_{v in U\\{u}} d(u,v)/s1 + w_t * d(dest_anchor,u)/s1, with per-step max-normalization (dimensionless, scale-invariant) and all features computed with pure NumPy mask/index math in O(|U|^2) per step, keeping full construction within a few ms for n<=200 so 500 ms budget is never at risk.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "Round-1 baseline achieved 99900.08 mean objective with 2.59 ms mean solve time and a 4.10% relative gap concentrated on size=200 instances, i.e. large headroom in the 500 ms budget and quality-limited (not time-limited) behavior. KB entry method-tsp-i605-mean-farness is the best full-completion Island605 rule (+14.28% gap, O(n^3) plain form) and explicitly flags that SOTA-rules like one-step rollout blow the 500 ms budget via O(n^4) — so I keep the O(|U|^2) plain formula and vectorize the mean-farness term with NumPy row means over the unvisited mask instead of per-candidate Python loops. method-tsp-i605-dest-pull shows that a linear destination/anchor attraction term is the Pareto speed point (sub-ms per instance, 100% completion), and method-tsp-i605-dimensionless-ratio shows max-normalizing every feature is strictly scale-invariant and keeps weights comparable across instance sizes 50/100/200, which is exactly where the archive reports the weakest regime (size=200, +4.10% rel gap). Combining the two yields an isolated-city-hugging rule with a weak closing pull so that the final forced leg from the last city back to the start does not become long; per-step cost is 2 vectorized distance gathers plus one masked mean, so total construction stays in single-digit milliseconds for n=200 — orders of magnitude inside the 500 ms budget, no timeout/completion risk. Postprocess 'none' is fixed by the allowed list; all gains must come from the constructive step itself."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Combining the unfarness term (hug isolated unvisited cities early) with a mild residual pull toward the closing/anchor node, both normalized per-step by their maxima, reduces tour length versus pure nearest neighbor on Euclidean TSP without any runtime risk, since per-step cost stays O(|U|^2) and vectorized.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-dimensionless-ratio",
+      "method-tsp-nearest-neighbor-construct"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-1 baseline achieved 99900.08 mean objective with 2.59 ms mean solve time and a 4.10% relative gap concentrated on size=200 instances, i.e. large headroom in the 500 ms budget and quality-limited (not time-limited) behavior. KB entry method-tsp-i605-mean-farness is the best full-completion Island605 rule (+14.28% gap, O(n^3) plain form) and explicitly flags that SOTA-rules like one-step rollout blow the 500 ms budget via O(n^4) — so I keep the O(|U|^2) plain formula and vectorize the mean-farness term with NumPy row means over the unvisited mask instead of per-candidate Python loops. method-tsp-i605-dest-pull shows that a linear destination/anchor attraction term is the Pareto speed point (sub-ms per instance, 100% completion), and method-tsp-i605-dimensionless-ratio shows max-normalizing every feature is strictly scale-invariant and keeps weights comparable across instance sizes 50/100/200, which is exactly where the archive reports the weakest regime (size=200, +4.10% rel gap). Combining the two yields an isolated-city-hugging rule with a weak closing pull so that the final forced leg from the last city back to the start does not become long; per-step cost is 2 vectorized distance gathers plus one masked mean, so total construction stays in single-digit milliseconds for n=200 — orders of magnitude inside the 500 ms budget, no timeout/completion risk. Postprocess 'none' is fixed by the allowed list; all gains must come from the constructive step itself."
+  }
+}

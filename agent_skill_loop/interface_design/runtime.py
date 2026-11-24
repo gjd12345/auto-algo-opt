@@ -45,10 +45,14 @@ from agent_skill_loop.evaluator import (
 from .contracts import (
     FrozenInterfaceSolver,
     GateFailure,
+    HookSpec,
+    LEGACY_CVRP_PROTOCOL_ID,
+    OUTCOME_COMPLETED,
     classify_outcome,
+    hook_bundle_metadata,
     sha256_text,
 )
-from .templates import get_template_spec
+from .templates import TemplateSpec, get_template_spec
 
 _ALLOWED_ATTRIBUTES = frozenset(_NUMPY_ATTRIBUTES) | frozenset(_MATH_ATTRIBUTES)
 
@@ -265,6 +269,12 @@ def validate_hook_ast(
                 root = _attribute_root_id(node)
                 if root in _NP_MATH_ROOTS or root in np_math_aliases:
                     if node.attr not in _ALLOWED_ATTRIBUTES:
+                        if node.attr == "ix_":
+                            hint = "np.ix_ is outside the AST whitelist; use broadcast indexing like `distance_matrix[nodes[:, None], nodes[None, :]]` instead."
+                        elif node.attr == "fill_diagonal":
+                            hint = "np.fill_diagonal mutates arrays in-place and is outside the AST whitelist; use `np.where(np.eye(k, dtype=bool), val, sub)` instead."
+                        else:
+                            hint = "Use whitelisted vectorized numpy/math functions (e.g., np.where, np.clip, np.sqrt, np.exp)."
                         g1.append(GateFailure(
                             gate_id=1,
                             gate_name="ast_whitelist",
@@ -272,7 +282,7 @@ def validate_hook_ast(
                             line_no=line_no,
                             symbol=f"{root}.{node.attr}",
                             detail=f"Attribute '{root}.{node.attr}' is not in the numpy/math whitelist.",
-                            fix_hint="Use whitelisted vectorized numpy/math functions (e.g., np.where, np.clip, np.sqrt, np.exp).",
+                            fix_hint=hint,
                         ))
                 elif node.attr not in _ALLOWED_ATTRIBUTES and node.attr not in _CONTAINER_METHODS:
                     g1.append(GateFailure(
@@ -368,14 +378,85 @@ def compile_hook_function(
     return fn
 
 
+def validate_hook_bundle(
+    hook_specs: Sequence[HookSpec], hook_implementations: Mapping[str, str],
+) -> tuple[list[GateFailure], list[GateFailure]]:
+    """Validate isolated, named source units under the existing hook whitelist."""
+    try:
+        hook_bundle_metadata(hook_specs, hook_implementations)
+    except ValueError as exc:
+        return [], [GateFailure(2, "template_and_signature", str(exc), None, None,
+                                "Source units must match the declared hook names.", "Supply every named hook once.")]
+    gate1: list[GateFailure] = []
+    gate2: list[GateFailure] = []
+    for spec in hook_specs:
+        source = hook_implementations[spec.name]
+        first, second = validate_hook_ast(source, hook_name=spec.name, expected_args=spec.signature)
+        gate1.extend(first)
+        gate2.extend(second)
+        if first or second:
+            continue
+        body = ast.parse(source).body
+        functions = [node for node in body if isinstance(node, ast.FunctionDef)]
+        if (len(functions) != 1 or functions[0].decorator_list or functions[0].args.defaults
+                or any(not isinstance(node, (ast.Import, ast.ImportFrom, ast.FunctionDef)) for node in body)):
+            gate2.append(GateFailure(
+                2, "template_and_signature", "invalid_hook_source_unit", None, spec.name,
+                "Each named source unit must contain one undecorated hook with no defaults and optional imports.",
+                "Move computation into the hook body.",
+            ))
+    return gate1, gate2
+
+
+def compile_hook_bundle(
+    hook_specs: Sequence[HookSpec], hook_implementations: Mapping[str, str],
+) -> dict[str, Callable[..., Any]]:
+    first, second = validate_hook_bundle(hook_specs, hook_implementations)
+    if first or second:
+        failure = (first + second)[0]
+        raise ValueError(f"{failure.error_code}:{failure.symbol or failure.detail}")
+    return {
+        spec.name: compile_hook_function(
+            hook_implementations[spec.name], hook_name=spec.name, expected_args=spec.signature,
+        )
+        for spec in hook_specs
+    }
+
+
+def _checked_hook(fn: Callable[..., Any], spec: HookSpec) -> Callable[..., Any]:
+    position = spec.signature.index(spec.output_shape_arg) if spec.output_shape_arg is not None else None
+
+    def checked(*args: Any, **kwargs: Any) -> Any:
+        raw = fn(*args, **kwargs)
+        shape = ()
+        if position is not None:
+            argument = args[position] if position < len(args) else kwargs[spec.output_shape_arg]
+            shape = (len(argument),)
+        result = np.asarray(raw)
+        if result.shape != shape or result.dtype.kind not in "iuf":
+            raise ValueError(f"invalid_return:{spec.name}:expected_finite_numeric_shape={shape}")
+        if not np.isfinite(result).all():
+            raise ValueError(f"nonfinite_hook_scores:{spec.name}")
+        return raw
+
+    return checked
+
+
 @dataclass(frozen=True)
 class ProblemRuntimeAdapter:
-    """Per-problem input prep, template dispatch, and verifier contract for M3/M3.1."""
+    """Prepare trusted runner inputs and independently verify a typed solution.
+
+    Verification supplies valid, verify_ms, the declared objective field and
+    optional problem-specific fields. record_fields adds solution/trace fields.
+    """
 
     problem_family: str
     prepare_inputs: Callable[[Mapping[str, Any], str], tuple[tuple[Any, ...], dict[str, Any]]]
     verify_solution: Callable[..., dict[str, Any]]
     failure_verification: Callable[[str | None, str | None, Mapping[str, Any], dict[str, Any]], dict[str, Any]]
+    protocol_id: str = LEGACY_CVRP_PROTOCOL_ID
+    objective_key: str = "objective"
+    record_fields: Callable[[Any, Mapping[str, Any], Mapping[str, Any], bool], Mapping[str, Any]] | None = None
 
 
 def _cvrp_prepare_inputs(instance: Mapping[str, Any], distance_convention: str) -> tuple[tuple[Any, ...], dict[str, Any]]:
@@ -434,21 +515,80 @@ def _cvrp_failure_verification(
     }
 
 
-PROBLEM_ADAPTERS: dict[str, ProblemRuntimeAdapter] = {
+def _cvrp_record_fields(
+    routes: Any, verification: Mapping[str, Any], meta: Mapping[str, Any], capture: bool,
+) -> dict[str, Any]:
+    fields = {
+        "routes": routes if verification["valid"] else [],
+        "voluntary_early_return_count": int(meta.get("voluntary_early_return_count", 0)),
+        "forced_capacity_return_count": int(meta.get("forced_capacity_return_count", 0)),
+        "trace_steps": None,
+        "merges_applied": int(meta.get("merges_applied", 0)),
+        "candidate_pair_count": int(meta.get("candidate_pair_count", 0)),
+    }
+    if capture:
+        fields.update(merge_sequence=meta.get("merge_sequence"), pre_postprocess_routes=meta.get("pre_postprocess_routes"))
+        fields.update({key: meta[key] for key in ("first_ruin_set", "pre_recreate_routes") if key in meta})
+    return fields
+
+
+PROBLEM_ADAPTERS: dict[str | tuple[str, str], ProblemRuntimeAdapter] = {
     "cvrp": ProblemRuntimeAdapter(
         problem_family="cvrp",
         prepare_inputs=_cvrp_prepare_inputs,
         verify_solution=_cvrp_verify_solution,
         failure_verification=_cvrp_failure_verification,
+        objective_key="tour_length",
+        record_fields=_cvrp_record_fields,
     ),
 }
+
+
+def register_problem_adapter(adapter: ProblemRuntimeAdapter) -> None:
+    key = (adapter.problem_family, adapter.protocol_id)
+    legacy = PROBLEM_ADAPTERS.get(adapter.problem_family)
+    if key in PROBLEM_ADAPTERS or (legacy is not None and legacy.protocol_id == adapter.protocol_id):
+        raise ValueError(f"duplicate_problem_adapter:{key}")
+    if not adapter.problem_family.strip() or not adapter.protocol_id.strip():
+        raise ValueError("empty_problem_adapter_identity")
+    PROBLEM_ADAPTERS[key] = adapter
+
+
+def resolve_problem_adapter(
+    template: TemplateSpec, *, problem_family: str | None = None, protocol_id: str | None = None,
+) -> ProblemRuntimeAdapter:
+    expected = template.effective_protocol_id
+    if problem_family is not None and problem_family != template.problem_family:
+        raise ValueError(f"problem_family_mismatch:{problem_family}!={template.problem_family}")
+    if protocol_id is not None and protocol_id != expected:
+        raise ValueError(f"protocol_id_mismatch:{protocol_id}!={expected}")
+    adapter = PROBLEM_ADAPTERS.get((template.problem_family, expected))
+    if adapter is None:
+        legacy = PROBLEM_ADAPTERS.get(template.problem_family)
+        if legacy is not None and legacy.protocol_id == expected:
+            return legacy
+        raise ValueError(f"unsupported_problem_protocol:{template.problem_family}/{expected}")
+    return adapter
+
+
+def derive_outer_timeout_s(
+    instance_count: int, solve_deadline_ms: float | None, *, minimum_s: float = 20.0,
+) -> float:
+    """Budget a full serial batch plus worker startup, verification, and IPC."""
+    if instance_count < 0 or not math.isfinite(minimum_s) or minimum_s <= 0:
+        raise ValueError("invalid_outer_timeout")
+    if solve_deadline_ms is None:
+        return minimum_s
+    if isinstance(solve_deadline_ms, bool) or not math.isfinite(solve_deadline_ms) or solve_deadline_ms <= 0:
+        raise ValueError("invalid_solve_deadline")
+    return max(minimum_s, 3.0 + 1.25 * instance_count * solve_deadline_ms / 1000.0)
 
 
 def evaluate_hook_on_instance_inprocess(
     *,
     template_id: str,
     template_version: str,
-    hook_fn: Callable[..., Any],
+    hook_fn: Callable[..., Any] | Mapping[str, Callable[..., Any]],
     instance: Mapping[str, Any],
     postprocess_mode: str = "none",
     template_options: Mapping[str, Any] | None = None,
@@ -456,12 +596,32 @@ def evaluate_hook_on_instance_inprocess(
     vehicle_limit_policy: str = "unconstrained",
     time_budget_ms: float | None = 500.0,
     capture_merge_sequence: bool = False,
+    problem_family: str | None = None,
+    protocol_id: str | None = None,
+    solve_deadline_ms: float | None = None,
+    strict_hook_outputs: bool | None = None,
 ) -> dict[str, Any]:
     """Run one registered template + compiled hook on one instance via ``PROBLEM_ADAPTERS``."""
     tpl = get_template_spec(template_id, template_version)
-    if tpl.problem_family not in PROBLEM_ADAPTERS:
-        raise ValueError(f"unsupported_problem_family:{tpl.problem_family}")
-    adapter = PROBLEM_ADAPTERS[tpl.problem_family]
+    adapter = resolve_problem_adapter(tpl, problem_family=problem_family, protocol_id=protocol_id)
+    if "protocol_id" in instance and instance["protocol_id"] != adapter.protocol_id:
+        raise ValueError("protocol_id_mismatch:instance")
+    if solve_deadline_ms is not None:
+        time_budget_ms = solve_deadline_ms
+    derive_outer_timeout_s(1, time_budget_ms)
+    specs = tpl.effective_hook_specs
+    if isinstance(hook_fn, Mapping):
+        if set(hook_fn) != {spec.name for spec in specs}:
+            raise ValueError("hook_bundle_names_mismatch")
+        hooks = hook_fn
+    elif len(specs) == 1:
+        hooks = {specs[0].name: hook_fn}
+    else:
+        raise ValueError("hook_bundle_required")
+    strict = bool(tpl.hook_specs or tpl.protocol_id) if strict_hook_outputs is None else strict_hook_outputs
+    if strict:
+        hooks = {spec.name: _checked_hook(hooks[spec.name], spec) for spec in specs}
+    runner_hook = hooks[specs[0].name] if len(specs) == 1 else hooks
 
     t_pre0 = time.perf_counter()
     solver_args, orig_refs = adapter.prepare_inputs(instance, distance_convention)
@@ -471,14 +631,14 @@ def evaluate_hook_on_instance_inprocess(
     status = "ok"
     error_code: str | None = None
     error_detail: str | None = None
-    routes: list[list[int]] = []
+    solution: Any = None
     meta: dict[str, Any] = {}
     sink = _QuietSink()
     try:
         with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink), np.errstate(all="ignore"):
-            routes, meta = tpl.runner(
+            solution, meta = tpl.runner(
                 *solver_args,
-                hook_fn,
+                runner_hook,
                 postprocess_mode=postprocess_mode,
                 time_budget_ms=time_budget_ms,
                 template_options=template_options,
@@ -501,71 +661,70 @@ def evaluate_hook_on_instance_inprocess(
     if status == "ok":
         verification = adapter.verify_solution(
             instance,
-            routes,
+            solution,
             orig_refs,
             distance_convention=distance_convention,
             vehicle_limit_policy=vehicle_limit_policy,
         )
         if not verification["valid"]:
             status = "infeasible"
-            error_code = verification["error_code"]
-            error_detail = verification["error_detail"]
+            error_code = verification.get("error_code")
+            error_detail = verification.get("error_detail")
     else:
         verification = adapter.failure_verification(error_code, error_detail, instance, orig_refs)
 
     ref_obj = instance.get("reference_objective")
     ref_val = float(ref_obj) if isinstance(ref_obj, (int, float)) and math.isfinite(float(ref_obj)) and float(ref_obj) > 0 else None
-    rel_gap = (
-        round((float(verification["tour_length"]) - ref_val) / ref_val, 6)
-        if (verification["valid"] and verification["tour_length"] is not None and ref_val is not None)
-        else None
-    )
+    valid = bool(verification["valid"])
+    raw_objective = verification.get(adapter.objective_key) if valid else None
+    objective = None
+    if valid:
+        if raw_objective is None or isinstance(raw_objective, (bool, np.bool_)):
+            valid, status, error_code = False, "error", "missing_objective"
+        elif not math.isfinite(float(raw_objective)):
+            valid, status, error_code = False, "error", "nonfinite_objective"
+        else:
+            objective = float(raw_objective)
+    if not valid and verification["valid"]:
+        verification = adapter.failure_verification(error_code, error_detail, instance, orig_refs)
+    rel_gap = round((objective - ref_val) / ref_val, 6) if objective is not None and ref_val is not None else None
     stop_reason = meta.get("stop_reason")
     # The v1 templates use this bit for both iteration and wall-clock limits.
     budget_exhausted = bool(meta.get("budget_exhausted", False)) and stop_reason != "max_passes"
     outcome_class = classify_outcome(
-        valid=bool(verification["valid"]),
+        valid=valid,
         status=status,
         budget_exhausted=budget_exhausted,
     )
 
+    fields = adapter.record_fields(solution, verification, meta, capture_merge_sequence) if adapter.record_fields else {}
     out: dict[str, Any] = {
+        **verification,
+        **fields,
         "instance_id": str(instance.get("instance_id", "")),
         "problem_family": tpl.problem_family,
+        "protocol_id": adapter.protocol_id,
+        "objective": objective,
+        "completed": outcome_class == OUTCOME_COMPLETED,
         "status": status,
         "outcome_class": outcome_class,
-        "valid": bool(verification["valid"]),
-        "error_code": verification["error_code"],
-        "error_detail": verification["error_detail"],
-        "routes": routes if verification["valid"] else [],
-        "tour_length": verification["tour_length"],
+        "valid": valid,
+        "error_code": verification.get("error_code") or error_code,
+        "error_detail": verification.get("error_detail") or error_detail,
         "reference_objective": ref_val,
         "reference_kind": instance.get("reference_kind"),
         "rel_gap": rel_gap,
-        "route_count": verification["route_count"],
-        "route_loads": verification["route_loads"],
-        "route_distances": verification["route_distances"],
-        "max_utilization": verification["max_utilization"],
-        "mean_utilization": verification["mean_utilization"],
-        "target_vehicles": verification["target_vehicles"],
-        "within_vehicle_limit": verification["within_vehicle_limit"],
-        "exact_vehicle_count": verification["exact_vehicle_count"],
-        "vehicle_count_delta": verification["vehicle_count_delta"],
         "preprocess_ms": round(preprocess_ms, 4),
         "candidate_gen_ms": float(meta.get("candidate_gen_ms", 0.0)),
         "hook_ms": float(meta.get("hook_ms", 0.0)),
         "merge_ms": float(meta.get("merge_ms", 0.0)),
         "postprocess_ms": float(meta.get("postprocess_ms", 0.0)),
         "solve_ms": round(solve_ms, 4),
-        "verify_ms": float(verification["verify_ms"]),
-        "voluntary_early_return_count": int(meta.get("voluntary_early_return_count", 0)),
-        "forced_capacity_return_count": int(meta.get("forced_capacity_return_count", 0)),
-        "trace_steps": None,
+        "verify_ms": float(verification.get("verify_ms", 0.0)),
         "budget_exhausted": budget_exhausted,
+        "timeout_kind": "solve_deadline" if budget_exhausted else None,
         "stop_reason": str(meta.get("stop_reason", "error" if status != "ok" else "completed")),
         "hook_call_count": int(meta.get("hook_call_count", 0)),
-        "merges_applied": int(meta.get("merges_applied", 0)),
-        "candidate_pair_count": int(meta.get("candidate_pair_count", 0)),
         "template_source_sha256": tpl.template_source_sha256,
     }
     if "first_feasible_ms" in meta:
@@ -574,13 +733,6 @@ def evaluate_hook_on_instance_inprocess(
         out["anytime_curve"] = meta["anytime_curve"]
     if "iterations_completed" in meta:
         out["iterations_completed"] = int(meta["iterations_completed"])
-    if capture_merge_sequence:
-        out["merge_sequence"] = meta.get("merge_sequence")
-        out["pre_postprocess_routes"] = meta.get("pre_postprocess_routes")
-        if "first_ruin_set" in meta:
-            out["first_ruin_set"] = meta.get("first_ruin_set")
-        if "pre_recreate_routes" in meta:
-            out["pre_recreate_routes"] = meta.get("pre_recreate_routes")
     return out
 
 
@@ -601,7 +753,7 @@ class DynamicSubprocessEvaluator:
         *,
         template_id: str,
         template_version: str,
-        hook_code: str,
+        hook_code: str | None = None,
         instances: Sequence[Mapping[str, Any]],
         postprocess_mode: str = "none",
         template_options: Mapping[str, Any] | None = None,
@@ -609,8 +761,18 @@ class DynamicSubprocessEvaluator:
         vehicle_limit_policy: str = "unconstrained",
         instance_time_budget_ms: float | None = 500.0,
         capture_merge_sequence: bool = False,
+        hook_implementations: Mapping[str, str] | None = None,
+        problem_family: str | None = None,
+        protocol_id: str | None = None,
+        solve_deadline_ms: float | None = None,
+        outer_timeout_s: float | None = None,
+        strict_hook_outputs: bool | None = None,
     ) -> dict[str, Any]:
         """Evaluate a hook across ``instances`` in a dedicated subprocess with hard kill on timeout."""
+        budget = solve_deadline_ms if solve_deadline_ms is not None else instance_time_budget_ms
+        timeout = derive_outer_timeout_s(
+            len(instances), budget, minimum_s=self.candidate_timeout_s if outer_timeout_s is None else outer_timeout_s,
+        )
         request = {
             "template_id": template_id,
             "template_version": template_version,
@@ -620,10 +782,18 @@ class DynamicSubprocessEvaluator:
             "instances": [dict(inst) for inst in instances],
             "distance_convention": distance_convention,
             "vehicle_limit_policy": vehicle_limit_policy,
-            "time_budget_ms": instance_time_budget_ms,
+            "solve_deadline_ms": budget,
             "capture_merge_sequence": bool(capture_merge_sequence),
             "parent_pid": os.getpid(),
         }
+        if hook_implementations is not None:
+            request["hook_implementations"] = dict(hook_implementations)
+        if problem_family is not None:
+            request["problem_family"] = problem_family
+        if protocol_id is not None:
+            request["protocol_id"] = protocol_id
+        if strict_hook_outputs is not None:
+            request["strict_hook_outputs"] = strict_hook_outputs
         payload_bytes = json.dumps(request, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
         repo_root = Path(__file__).resolve().parents[2]
@@ -647,7 +817,7 @@ class DynamicSubprocessEvaluator:
             **popen_kwargs,
         )
         try:
-            stdout, stderr = proc.communicate(input=payload_bytes, timeout=self.candidate_timeout_s)
+            stdout, stderr = proc.communicate(input=payload_bytes, timeout=timeout)
         except subprocess.TimeoutExpired:
             kill_process_tree(proc)
             elapsed_ms = (time.perf_counter() - t0) * 1000.0
@@ -655,7 +825,9 @@ class DynamicSubprocessEvaluator:
                 "valid": False,
                 "objective": None,
                 "error_code": "candidate_timeout",
-                "error_detail": f"Subprocess exceeded candidate_timeout_s={self.candidate_timeout_s}",
+                "error_detail": f"Subprocess exceeded outer_timeout_s={timeout}",
+                "timeout_kind": "outer_worker",
+                "outer_timeout_s": timeout,
                 "failures": [
                     GateFailure(
                         gate_id=5,
@@ -663,7 +835,7 @@ class DynamicSubprocessEvaluator:
                         error_code="candidate_timeout",
                         line_no=None,
                         symbol=None,
-                        detail=f"Candidate subprocess killed after {self.candidate_timeout_s:.2f}s outer timeout.",
+                        detail=f"Candidate subprocess killed after {timeout:.2f}s outer timeout.",
                         fix_hint="Remove infinite loops or reduce per-call complexity so the hook finishes well inside budget.",
                     ).as_dict()
                 ],
@@ -703,6 +875,7 @@ class DynamicSubprocessEvaluator:
         inner_ms = float(resp.get("inner_compute_ms", 0.0))
         resp["worker_wall_ms"] = round(total_wall_ms, 4)
         resp["subprocess_overhead_ms"] = round(max(0.0, total_wall_ms - inner_ms), 4)
+        resp["outer_timeout_s"] = timeout
         return resp
 
 
@@ -783,6 +956,11 @@ def evaluate_frozen_interface_solver(
     vehicle_limit_policy: str = "unconstrained",
     time_budget_ms: float | None = None,
     capture_merge_sequence: bool = False,
+    protocol_id: str | None = None,
+    solve_deadline_ms: float | None = None,
+    outer_timeout_s: float | None = None,
+    strict_hook_outputs: bool | None = None,
+    enforce_wall_deadline: bool = True,
 ) -> dict[str, Any]:
     """Unified M1 Workbench adapter for a frozen M2 solver.
 
@@ -799,53 +977,81 @@ def evaluate_frozen_interface_solver(
         raise ValueError(f"hook_code_sha256_mismatch:{frozen_solver.solver_id}")
     if frozen_solver.hook_name != tpl.hook_name:
         raise ValueError(f"hook_name_mismatch:{frozen_solver.hook_name}!={tpl.hook_name}")
-
+    adapter = resolve_problem_adapter(
+        tpl, problem_family=frozen_solver.problem_family, protocol_id=frozen_solver.protocol_id,
+    )
+    if tpl.protocol_id is not None and frozen_solver.protocol_id != tpl.protocol_id:
+        raise ValueError("frozen_solver_protocol_id_mismatch")
+    if protocol_id is not None and protocol_id != adapter.protocol_id:
+        raise ValueError("protocol_id_mismatch:frozen_solver")
+    if "protocol_id" in instance and instance["protocol_id"] != adapter.protocol_id:
+        raise ValueError("protocol_id_mismatch:instance")
+    if frozen_solver.hook_specs != tpl.hook_specs:
+        raise ValueError("frozen_solver_hook_contract_mismatch")
+    manifest = frozen_solver.to_dict()
     budget = time_budget_ms if time_budget_ms is not None else frozen_solver.default_budget_ms
-    if not math.isfinite(budget) or budget <= 0:
-        raise ValueError("frozen_evaluation_budget_must_be_positive_and_finite")
+    if solve_deadline_ms is not None:
+        budget = solve_deadline_ms
+    worker_deadline_ms = budget if enforce_wall_deadline else None
+    default_min_s = 5.0 if enforce_wall_deadline else max(15.0, 4.0 * float(budget or 500.0) / 1000.0 + 3.0)
+    timeout = derive_outer_timeout_s(1, budget, minimum_s=default_min_s if outer_timeout_s is None else outer_timeout_s)
     started = time.perf_counter()
     response = _FROZEN_WORKER.call({
         "template_id": frozen_solver.template_id,
         "template_version": frozen_solver.template_version,
         "hook_code": frozen_solver.hook_code,
+        "hook_implementations": manifest.get("hook_implementations"),
+        "problem_family": adapter.problem_family,
+        "protocol_id": adapter.protocol_id,
+        "strict_hook_outputs": strict_hook_outputs,
         "instances": [dict(instance)],
         "postprocess_mode": frozen_solver.postprocess_mode,
         "template_options": dict(frozen_solver.template_options),
         "distance_convention": distance_convention,
         "vehicle_limit_policy": vehicle_limit_policy,
-        "time_budget_ms": budget,
+        "solve_deadline_ms": worker_deadline_ms,
         "capture_merge_sequence": capture_merge_sequence,
         "parent_pid": os.getpid(),
-    }, timeout_s=max(5.0, budget / 1000.0 + 2.0))
+    }, timeout_s=timeout)
     records = response.get("records")
     if records:
         if response.get("template_source_sha256") != frozen_solver.template_source_sha256:
             raise ValueError(f"worker_template_source_sha256_mismatch:{frozen_solver.solver_id}")
-        return records[0]
+        if records[0].get("protocol_id") != adapter.protocol_id:
+            raise ValueError("worker_protocol_id_mismatch")
+        if frozen_solver.hook_specs and response.get("bundle_hash") != frozen_solver.bundle_hash:
+            raise ValueError("worker_bundle_hash_mismatch")
+        rec0 = records[0]
+        if not enforce_wall_deadline and budget is not None and float(rec0.get("solve_ms") or 0.0) > float(budget):
+            rec0["budget_exhausted"] = True
+            rec0["timeout_kind"] = "solve_deadline"
+        return rec0
     code = response.get("error_code") or "worker_protocol"
     status = "timeout" if code == "candidate_timeout" else "error"
-    return {
+    failure = {
+        "instance_id": str(instance.get("instance_id", "")),
+        "problem_family": adapter.problem_family,
+        "protocol_id": adapter.protocol_id,
+        "objective": None,
+        "completed": False,
         "status": status,
         "valid": False,
         "outcome_class": classify_outcome(valid=False, status=status, budget_exhausted=status == "timeout"),
         "error_code": code,
         "error_detail": response.get("error_detail"),
+        "template_source_sha256": frozen_solver.template_source_sha256,
         "budget_exhausted": status == "timeout",
-        "tour_length": None,
-        "routes": [],
-        "route_count": 0,
-        "route_loads": [],
-        "route_distances": [],
-        "max_utilization": None,
-        "mean_utilization": None,
+        "timeout_kind": "outer_worker" if status == "timeout" else None,
         "reference_objective": instance.get("reference_objective"),
         "reference_kind": instance.get("reference_kind"),
         "rel_gap": None,
-        "target_vehicles": instance.get("k_vehicles", instance.get("max_vehicles")),
-        "within_vehicle_limit": None,
-        "exact_vehicle_count": None,
-        "vehicle_count_delta": None,
         "preprocess_ms": 0.0,
         "solve_ms": round((time.perf_counter() - started) * 1000.0, 4),
         "verify_ms": 0.0,
     }
+    if adapter.problem_family == "cvrp":
+        legacy = _cvrp_failure_verification(code, response.get("error_detail"), instance, {})
+        legacy.pop("capacity")
+        legacy["target_vehicles"] = instance.get("k_vehicles", instance.get("max_vehicles"))
+        return {**legacy, "routes": [], **failure}
+    return failure

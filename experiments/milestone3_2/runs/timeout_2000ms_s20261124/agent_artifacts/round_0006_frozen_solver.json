@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0006_cvrp_ruin_recreate_7662cea4",
+  "display_name": "Session R6 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n\n    n = int(dm.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    cap = float(capacity) if capacity > 0 else 1.0\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    def unit(v):\n        v = np.asarray(v, dtype=np.float64)\n        if v.size == 0:\n            return np.zeros(v.shape, dtype=np.float64)\n        lo = float(np.min(v))\n        hi = float(np.max(v))\n        if hi - lo > eps:\n            return (v - lo) / (hi - lo)\n        return np.zeros(v.shape, dtype=np.float64)\n\n    # Base: normalized removal savings\n    sav_abs = np.abs(sav).astype(np.float64)\n    c_sav = unit(sav_abs)\n\n    # Capacity-slack gate: near-full routes shielded, slack-rich routes destroyable\n    load_frac = np.clip(rload / max(cap, eps), 0.0, 1.0)\n    # exponent scheduled by iter_frac: early more permissive, late more shielding\n    shrink_exp = 0.5 + 2.0 * it\n    slack_gate = np.power(np.clip(1.0 - load_frac, 1e-6, 1.0), shrink_exp)\n    slack_gate = 0.15 + 0.85 * slack_gate\n\n    # Route sparsity gate: sparser routes more destroyable\n    R = int(np.max(rid)) + 1 if n > 0 else 0\n    if R <= 0:\n        return np.zeros(n, dtype=np.float64)\n    n_stops = np.zeros(R, dtype=np.float64)\n    for r in range(R):\n        n_stops[r] = float(np.sum(rid == r))\n    inv_stops = np.where(n_stops > 0, 1.0 / np.maximum(n_stops, 1.0), 0.0)\n    sparse_norm = unit(inv_stops[rid])\n    sparse_gate = 0.3 + 0.7 * sparse_norm\n\n    # Sector-coherence term: |cos| of angle to depot x radial distance\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n    rad = d0 / (scale + eps)\n    coords_ok = True\n    # Use pairwise depot-radius as proxy for radial; |cos| via distance matrix ratio\n    # cos(angle) approximated by (d_ij^2 - r_i^2 - r_j^2) not available; use radial-only coherence\n    sector = 1.0 / (1.0 + rad * rad)\n    sector_norm = unit(sector)\n    sector_gate = 1.0 + 0.4 * sector_norm\n\n    # Route distance relative cost gate\n    rdist_norm = unit(rdist)\n    rdist_gate = 1.0 - 0.25 * it * rdist_norm\n\n    # Multiplicative base\n    base = c_sav * slack_gate * sparse_gate * sector_gate * rdist_gate\n\n    # Stagnation-driven tail randomization (deterministic hash)\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    h = np.sin(idx * 12.9898 + st * 78.233 + it * 37.719)\n    tail_raw = 0.5 + 0.5 * h\n    tail_exp = 1.0 + 1.5 * st\n    tail = np.power(np.clip(tail_raw, 1e-6, 1.0), tail_exp)\n    tail_norm = unit(tail)\n\n    # Blend: early/tight favors structure, stagnant favors tail\n    w_tail = 0.05 + 0.55 * st + 0.15 * it\n    w_tail = float(np.clip(w_tail, 0.0, 0.85))\n\n    score = (1.0 - w_tail) * unit(base) + w_tail * tail_norm\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(unit(score), dtype=np.float64)",
+  "hook_code_sha256": "7662cea43eda01c7673e86ab29775cdfce1b88b67aa7a23f2bca8c6d97da9976",
+  "design_sha256": "f2ca1f96d4b1a4fbc19127d0b0eb8393d5b39ce40ea54909038140eb541783da",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0006\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

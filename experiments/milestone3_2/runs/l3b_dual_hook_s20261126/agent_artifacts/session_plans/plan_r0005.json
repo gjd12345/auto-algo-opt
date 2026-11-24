@@ -1,0 +1,35 @@
+{
+  "round_id": 5,
+  "direction": "Pivot away from the refuted stagnation-adaptive rank-power schedule (H_r4_stag_adaptive_dual_gate). Instead push capacity-tightness and depot-eccentricity exploitation: (1) score_ruin_nodes = rank_power(|removal_savings|/scale, p≈1.5 fixed with tiny stagnation nudge only) multiplied by a load-saturation gate g_load = (route_load/capacity)^{beta}, beta≈1.5, so ruins preferentially attack nearly-full routes (the tight-capacity weak regime) plus a depot-eccentricity term (d(0,i)/mean_d0)^{0.5} to break clusters far from an eccentric depot; (2) score_recreate_action adds a dimensionless capacity-slack reward (remaining slack after insertion / capacity) instead of any absolute depot-distance term, keeping both hooks scale-invariant and observational-noise free. Keep the Regret-2 deterministic recreate untouched.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton already carries the LNS benefit (first_feasible_ms ~2-3 ms, unified deadline) so the evolvable headroom sits entirely in the multiplicative gate/rank-power of score_ruin_nodes; it also flags that higher-request dual-hook (ruin+recreate co-evolution) is the explicitly unexplored item. Round-4 evidence (H_r4_stag_adaptive_dual_gate refuted, mean 16.0887 vs SBS 16.0597) shows a time-varying exponent adds noise rather than signal at 500 ms, so this round holds the exponent fixed and moves the adaptivity into a state-quantity that the archive actually flags as weak: route load saturation (capacity_level=tight, 12 instances) and depot eccentricity (12 instances). Removing all absolute-distance terms keeps both hooks scale-invariant, avoiding the coordinate-scaling drift pitfall noted for the merge family, and keeps the deterministic Regret-2 recreate (KB lns-shaw-regret) as the fixed backbone so attribution stays clean."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "H_r5_load_saturation_ruin: On cvrp_dev_hetero_24 at 500 ms, replacing the round-4 stagnation-adaptive rank-power schedule with a fixed-p rank power (p≈1.5) amplified by a load-saturation gate (route_load/capacity)^1.5 and a mild depot-eccentricity factor, plus a capacity-slack reward in score_recreate_action, will reduce mean tour length below the portfolio SBS 16.0597 (round-4 arm was 16.0887 with the refuted schedule), with the gain concentrated in the weak regimes size=100, capacity_level=tight, depot_style=eccentric and spatial=uniform.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton already carries the LNS benefit (first_feasible_ms ~2-3 ms, unified deadline) so the evolvable headroom sits entirely in the multiplicative gate/rank-power of score_ruin_nodes; it also flags that higher-request dual-hook (ruin+recreate co-evolution) is the explicitly unexplored item. Round-4 evidence (H_r4_stag_adaptive_dual_gate refuted, mean 16.0887 vs SBS 16.0597) shows a time-varying exponent adds noise rather than signal at 500 ms, so this round holds the exponent fixed and moves the adaptivity into a state-quantity that the archive actually flags as weak: route load saturation (capacity_level=tight, 12 instances) and depot eccentricity (12 instances). Removing all absolute-distance terms keeps both hooks scale-invariant, avoiding the coordinate-scaling drift pitfall noted for the merge family, and keeps the deterministic Regret-2 recreate (KB lns-shaw-regret) as the fixed backbone so attribution stays clean."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "round_id": 1,
+  "direction": "Evolve score_ruin_nodes toward a multiplicative-gating + rank-power destroy rule: raw removal_savings_i normalized by a robust scale (median |savings|) then gated by load tightness (route_load/capacity), depot proximity (d(i,0)/mean depot dist), and demand share (demand_i/capacity), with the rank exponent p(iter_frac, stagnation_ratio) increasing from ~0.7 (exploitative, low stagnation) to ~2.0 (diversifying, high stagnation) so early iterations remove high-savings-cost customers and stagnating iterations randomize the ruin set toward spatially dispersed, low-demand customers.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 is the verified-experiment backbone for exactly this template (cvrp_ruin_recreate/v1, hook score_ruin_nodes, 500 ms regime, mean_first_feasible ~2-3 ms so always feasible) and shows the evolved multiplicative-gate rank-power destroy rule beating L3-ctrl Worst Removal (23.3186 vs 23.3474 blind-120) while winning 8/24 head-to-head on dev_24. Its math formulation score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) is exactly the search space I seed here, restricted to the single allowed hook, with postprocess none (no extra budget overhead) and the 500 ms target budget where the LNS skeleton is known strong (not the weak 25 ms regime). The plan is deterministic-tie-break safe (finite float vector of length n, read-only state arrays, no RNG), satisfying interface invariants."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A rank-power monotone reshuffling of |removal_savings_i|/median(|savings|), gated multiplicatively by load-tightness, depot-distance and demand-share terms, will outperform the plain worst-cost removal (L3-ctrl) destroy policy on the heterogeneous-capacity dev_24 suite at 500 ms, because heterogeneous instances need stagnation-adaptive diversification (high p) rather than always-greedy removal (low p); the effect should be visible as a strictly lower mean tour length with the gain concentrated in high-demand-variance instances.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 is the verified-experiment backbone for exactly this template (cvrp_ruin_recreate/v1, hook score_ruin_nodes, 500 ms regime, mean_first_feasible ~2-3 ms so always feasible) and shows the evolved multiplicative-gate rank-power destroy rule beating L3-ctrl Worst Removal (23.3186 vs 23.3474 blind-120) while winning 8/24 head-to-head on dev_24. Its math formulation score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)) is exactly the search space I seed here, restricted to the single allowed hook, with postprocess none (no extra budget overhead) and the 500 ms target budget where the LNS skeleton is known strong (not the weak 25 ms regime). The plan is deterministic-tie-break safe (finite float vector of length n, read-only state arrays, no RNG), satisfying interface invariants."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "round_id": 8,
+  "direction": "Refine the round-7 supported destroy score into a saturation-normalized form: keep the multiplicative depot-distance gate and stale-route load gate but (a) rescale each route's load gate by the *instance-observed* mean route saturation (mean(route_loads)/capacity) so the gate's slope adapts to tight-capacity instances instead of using a fixed exponent, and (b) drive the rank exponent from stagnation only (p = 1.25 + 1.0*stagnation_ratio, no additive slack term, no sector-coherence term). Target: cut the tight-capacity / size-100 / eccentric-depot residual gap (currently ~21-23% VBS-relative) without perturbing the clustered regime where round-7 is already SBS-co-equal.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-7 (agent_artifacts/round_0007_dev_eval.json, sha256 29d2981...) confirmed the multiplicative depot-gate x load-gate x rank-power rule at 15.8554, statistically co-equal with the round-5 frontier 15.8374 and clearly above the 16.078 L3-ctrl baseline; that round also proved that adding engine terms (round-6 additive slack exponent + sector gate) costs 0.061. KB method-cvrp-m3-ruin-recreate-l3 documents the hook contract (score_ruin_nodes -> rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) with output-length-n finite float invariant, so this proposal only re-parameterizes two multiplicative factors inside that verified skeleton. The change is a one-parameter-per-gate perturbation rather than a structural addition, so it is falsifiable: if mean objective does not drop below 15.8374 the self-normalizing saturation exponent claim fails and we revert to the frozen round-5/7 form. Weakest regimes from archive feedback (capacity_level=tight 12 instances, size=100 12 instances, eccentric depot 12 instances, clustered 8 instances) motivate the saturation-adaptive slope as the highest-leverage remaining knob."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 7,
+    "evaluation_ref": "rounds/round_0007/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, replacing the fixed load-saturation gate exponent with a self-normalizing exponent gamma = 1 + clip(mean_route_saturation - 0.5, 0, 0.4), applied as gate_load = (1 - route_loads/capacity)^gamma * (1 + 0.5*route_dists/mean(route_dists)), and setting the stagnation rank power to p = 1.25 + 1.0*stagnation_ratio with no additive slack term, will lower mean objective below the round-7 SBS 15.8554 (and the round-5 15.8374 frontier) because tight-capacity instances (12/24 of the suite) receive a steeper under-load emphasis that concentrates ruin on degenerate near-empty routes, while clustered/eccentric instances are unaffected by the exponent change since their mean saturation is near 0.5.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-7 (agent_artifacts/round_0007_dev_eval.json, sha256 29d2981...) confirmed the multiplicative depot-gate x load-gate x rank-power rule at 15.8554, statistically co-equal with the round-5 frontier 15.8374 and clearly above the 16.078 L3-ctrl baseline; that round also proved that adding engine terms (round-6 additive slack exponent + sector gate) costs 0.061. KB method-cvrp-m3-ruin-recreate-l3 documents the hook contract (score_ruin_nodes -> rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) with output-length-n finite float invariant, so this proposal only re-parameterizes two multiplicative factors inside that verified skeleton. The change is a one-parameter-per-gate perturbation rather than a structural addition, so it is falsifiable: if mean objective does not drop below 15.8374 the self-normalizing saturation exponent claim fails and we revert to the frozen round-5/7 form. Weakest regimes from archive feedback (capacity_level=tight 12 instances, size=100 12 instances, eccentric depot 12 instances, clustered 8 instances) motivate the saturation-adaptive slope as the highest-leverage remaining knob."
+  }
+}

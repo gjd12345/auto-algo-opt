@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Stagnation-adaptive multiplicative-gate rank-power ruin scoring: keep the L3 skeleton (CW + initial intra_2opt + deterministic Regret-2 reinsertion + R2R) fixed and evolve only score_ruin_nodes into a scale-normalized product of four dimensionless gates — |removal_savings_i|/scale (scale = mean depot distance for translation/scale invariance), a load-pressure gate targeting tight-capacity routes (route_loads/Q close to 1 and residual capacity small relative to the node demand), a depot-eccentric geometry gate (node distance to depot relative to the global mean depot distance, boosting far-from-depot nodes whose route edges are long), and a cheap-node re-insert-ability gate (small demand x short nearest-neighbor distance => easy to re-insert, so destroying it costs little but frees structure) — then ranked with a power p(iter_frac, stagnation_ratio) that is ~1 in the early intensification phase and rises toward 2-3 as stagnation grows, so top-q selection drifts from worst-cost removals to hard-region clustered diversifications. Keep all state read-only, deterministic tie-breaking by index, finite output of length n, and avoid RNG so the 5-gate causal probe stays bit-exact.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round-6 evidence: archive SBS is session_r0004 (15.9328) and VBS 381.5379, so remaining headroom over SBS is only 0.22% — incremental, high-variance score tweaks on already-strong instances will not separate. Weakest regimes are structural: tight capacity (-23.06% VBS rel gap), size 100 (-21.51%), eccentric depot (-20.39%), uniform demand (-21.31%), clustered spatial (-19.85%), with zero exhausted/failed instances, i.e. the budget is sufficient and the miss is search quality, not timing. The KB entry method-cvrp-m3-ruin-recreate-l3 identifies the exact evolvable hook score_ruin_nodes and the winning shape score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), and flags stagnation-aware diversification as a strong-on regime at 500 ms (our budget), while 25 ms exhaustion is not our case. So we re-target the same proven gate structure at the measured weak regimes: capacity pressure (tight), depot eccentricity (eccentric depot), demand/nearest-neighbor re-insertion cost (uniform demand), and scale normalization by mean depot distance to keep behavior invariant across size-100 instances. Postprocess mode stays 'none' since the RB entry gives no evidence for any postprocess gain and the budget is spent better in LNS iterations."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "Multiplicatively gating removal savings by capacity pressure, depot eccentricity and cheap-node re-insertability, with a rank-power exponent that increases with stagnation_ratio and iter_frac, will beat the single-term worst-cost removal control and the current best archive solver (mean 15.9328, SBS 382.3874) on cvrp_dev_hetero_24 — in particular on the reported weakest regimes (capacity_level=tight, size=100, depot_style=eccentric, demand_dist=uniform, spatial=clustered) — because those regimes need removals concentrated in capacity-saturated far-from-depot route segments where Regret-2 reinsertion can rebuild better routes, whereas pure savings maximization repeatedly destroys the same cheap peripheral nodes and stalls.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-6 evidence: archive SBS is session_r0004 (15.9328) and VBS 381.5379, so remaining headroom over SBS is only 0.22% — incremental, high-variance score tweaks on already-strong instances will not separate. Weakest regimes are structural: tight capacity (-23.06% VBS rel gap), size 100 (-21.51%), eccentric depot (-20.39%), uniform demand (-21.31%), clustered spatial (-19.85%), with zero exhausted/failed instances, i.e. the budget is sufficient and the miss is search quality, not timing. The KB entry method-cvrp-m3-ruin-recreate-l3 identifies the exact evolvable hook score_ruin_nodes and the winning shape score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), and flags stagnation-aware diversification as a strong-on regime at 500 ms (our budget), while 25 ms exhaustion is not our case. So we re-target the same proven gate structure at the measured weak regimes: capacity pressure (tight), depot eccentricity (eccentric depot), demand/nearest-neighbor re-insertion cost (uniform demand), and scale normalization by mean depot distance to keep behavior invariant across size-100 instances. Postprocess mode stays 'none' since the RB entry gives no evidence for any postprocess gain and the budget is spent better in LNS iterations."
+  }
+}

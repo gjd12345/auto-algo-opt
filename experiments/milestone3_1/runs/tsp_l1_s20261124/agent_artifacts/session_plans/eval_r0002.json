@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:6f416cba0f4f4942a010e1f36d37e521"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A single-order-vectorized blend of farness (mean distance from candidate to remaining unvisited cities) with a small destination-pull term (d(0,u)) and a nearest-neighbor distance term, restricted to the K nearest candidates, retains most of T46's farness quality (+14.3% gap class) while cutting per-step cost from O(n^3) to O(n^2 K), so 100% of instances finish inside 500 ms and the mean relative gap improves over pure nearest neighbor.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:6f416cba0f4f4942a010e1f36d37e521"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Vectorized O(n^2)-per-step farness+destionation-pull scoring: choose next city by argmax over unvisited u of (-a*d(cur,u) + b*mean_{v in U\\u} d(u,v) + c*d(dest,u)), with candidate pruning to the K nearest unvisited to cur (K adaptive to n) to stay inside the 500 ms budget; evolve the coefficients (a,b,c,K) and the normalization (median/mean scaling) rather than adding deeper lookahead."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

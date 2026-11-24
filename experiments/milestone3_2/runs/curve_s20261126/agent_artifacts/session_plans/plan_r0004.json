@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Stagnation-adaptive destruction scoring: rank-power p(iter_frac, stagnation_ratio) that grows during stagnation (diversify) but shrinks near deadline (exploit), multiplied by capacity-tightness and depot-eccentricity gates to target the weakest regimes (capacity_level=tight, depot_style=eccentric, spatial=clustered).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows SBS at 15.788 mean objective (217.7 ms) and round-3 attempt at 16.074 regressed by +0.2856, so we must not just re-tune absolute savings ranking. Weakest regimes are capacity_level=tight (-23.4% rel gap), size=100, demand_dist=uniform, depot_style=eccentric, spatial=clustered — all indicative of route saturation and geometry rather than pure cost-greedy removal. KB method-cvrp-m3-ruin-recreate-l3 confirms the multiplicative gate + rank-power form (score_i = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) is the verified evolvable hook with deterministic Regret-2 repair and R2R acceptance; it also notes stagnation-aware diversification is a strong-on regime. Stagnation-adaptive p exploits the anytime LNS budget (first feasible ~2-3 ms, so ~200+ ms of iterations remain within 500 ms) without extra per-iteration cost. Postprocess stays none since only that mode is allowed and the L3 skeleton's intra_2opt + Regret-2 already performs local repair."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "If score_ruin_nodes uses score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p) with p rising from ~1.2 toward ~2.5 as stagnation_ratio grows but decaying as iter_frac -> 1, and gate_load = (route_load/capacity)^2 rewards over-full routes while gate_rdist = route_dists/mean_route_dist penalizes long routes, then mean objective on cvrp_dev_hetero_24 improves versus the current SBS (15.788 mean) because tight-capacity and clustered instances are best served by re-inserting customers out of saturated routes rather than the highest absolute-savings edges.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows SBS at 15.788 mean objective (217.7 ms) and round-3 attempt at 16.074 regressed by +0.2856, so we must not just re-tune absolute savings ranking. Weakest regimes are capacity_level=tight (-23.4% rel gap), size=100, demand_dist=uniform, depot_style=eccentric, spatial=clustered — all indicative of route saturation and geometry rather than pure cost-greedy removal. KB method-cvrp-m3-ruin-recreate-l3 confirms the multiplicative gate + rank-power form (score_i = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) is the verified evolvable hook with deterministic Regret-2 repair and R2R acceptance; it also notes stagnation-aware diversification is a strong-on regime. Stagnation-adaptive p exploits the anytime LNS budget (first feasible ~2-3 ms, so ~200+ ms of iterations remain within 500 ms) without extra per-iteration cost. Postprocess stays none since only that mode is allowed and the L3 skeleton's intra_2opt + Regret-2 already performs local repair."
+  }
+}

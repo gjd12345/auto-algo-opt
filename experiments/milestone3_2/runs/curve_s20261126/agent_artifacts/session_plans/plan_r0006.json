@@ -1,0 +1,35 @@
+{
+  "round_id": 6,
+  "direction": "Improve `score_ruin_nodes` by making the ruin priority a stagnation-adaptive, rank-power-mixed score: multiply normalized removal savings by (a) a tight-capacity load gate that favours customers on near-full routes (weakest regime = capacity_level tight, gap -23.6%), (b) an eccentric-depot radial gate that favours extreme-radius customers (weakest regime = depot_style eccentric, gap -21.0%), and (c) blend with a Shaw-style spatial-cluster relatedness term when stagnation_ratio grows, so destroy sets shift from \"worst-cost\" (early, iter_frac<0.3) to \"related cluster + high-load\" (late, stagnating). Rank-power exponent p(iter_frac, stagnation_ratio) interpolates from p≈1.0 early to p≈3.0 under stagnation, with deterministic index-based tie-breaking.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents the single evolvable hook score_ruin_nodes with the multiplicative gate + rank-power form (score = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) and shows an evolved version beating the zero-evolution Worst-Cost control (23.3186 vs 23.3474) at 500 ms, with first_feasible_ms ~2-3 ms so budget exhaustion is not a risk here. The only evolvable surface is this hook; postprocess must remain 'none'. This round's delta is therefore to push the two gates and the rank-power exponent toward the archive's identified weak regimes (tight capacity, eccentric depot, clustered spatial) and to add a Shaw-relatedness diversification term driven by stagnation_ratio, which KB method-cvrp-lns-shaw-regret identifies as the standard complement to worst-removal. Direction stays strictly inside the anytime-LNS skeleton contract: single hook, read-only state inputs, deterministic tie-breaking, no RNG."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, a stagnation-adaptive ruin score that switches from pure worst-cost removal (low iter_frac, low stagnation) to a relatedness + near-full-route-load gated removal (high iter_frac / stagnation) will reduce mean objective below the current SBS 15.7807, because the archive's weakest regimes (capacity_level=tight -23.6%, depot_style=eccentric -21.0%, spatial=clustered -20.3%) indicate the current fixed priority under-diversifies exactly where ruin-set composition matters most, and relatedness-based destroy sets raise the probability that Regret-2 reinsertion finds improving recombinations instead of re-creating the removed pattern.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents the single evolvable hook score_ruin_nodes with the multiplicative gate + rank-power form (score = rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))) and shows an evolved version beating the zero-evolution Worst-Cost control (23.3186 vs 23.3474) at 500 ms, with first_feasible_ms ~2-3 ms so budget exhaustion is not a risk here. The only evolvable surface is this hook; postprocess must remain 'none'. This round's delta is therefore to push the two gates and the rank-power exponent toward the archive's identified weak regimes (tight capacity, eccentric depot, clustered spatial) and to add a Shaw-relatedness diversification term driven by stagnation_ratio, which KB method-cvrp-lns-shaw-regret identifies as the standard complement to worst-removal. Direction stays strictly inside the anytime-LNS skeleton contract: single hook, read-only state inputs, deterministic tie-breaking, no RNG."
+  }
+}

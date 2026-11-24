@@ -1,0 +1,36 @@
+{
+  "round_id": 6,
+  "direction": "Dual-hook scale-invariant stagnation-gated coupling: make `score_ruin_nodes` a rank-power over normalized removal_savings with multiplicative gates for route-load slack, depot eccentricity and route length, whose rank exponent p(iter_frac, stagnation_ratio) grows from ~1.0 to ~2.5 as stagnation rises (concentrating ruin on the worst-fit cluster); simultaneously make `score_recreate_action` a normalized mix of Regret-2 magnitude rank and min-detour rank, both divided by a per-instance distance scale (mean nearest-neighbour edge / depot radius) so the hook is strictly scale-invariant across size=100 and eccentric-depot instances. Bias insertion order toward far/near-capacity-bound customers first (larger regret*detour product) to keep routes full on loose-capacity instances, and add a small node-degree/angle-coherence term so sparse uniform-configurations do not collapse into a single giant route.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round 4 solver (16.0924) is the SBS and the archive Pareto frontier is flat (SBS 386.2179 vs VBS 385.4963, gap only 0.187%), so gains must come from the two remaining levers on the dual-hook template: (a) the destroy hook's priority shape and (b) the recreate hook's action ordering. KB method-cvrp-m3-ruin-recreate-l3 confirms removal_savings must be scaled and gated (rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist)) with p driven by iter_frac and stagnation_ratio; KB method-cvrp-cheapest-regret-insertion confirms Regret-2 lookahead is the strong repair, so making the recreate hook a normalized Regret-2 x detour ordering keeps the deterministic regret-2 feasibility guarantees while adding evolution headroom. Weakest regimes reported are size=100 (vbs_rel_gap -20.84%), spatial=uniform (-23.91%), depot_style=eccentric (-19.62%), capacity=loose (-22.16%) — all scale-sensitive, hence the per-instance normalization term. Both hooks stay O(n^2)-bounded and deterministic (no global RNG), so the 500 ms mean / first-feasible behavior of the L3 skeleton is preserved."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "Coupling a stagnation-gated rank-power ruin score (p: 1.0 -> 2.5) with a scale-invariant Regret-2 x detour recreate score, both normalized by mean nearest-neighbour edge length, will reduce mean objective on cvrp_dev_hetero_24 from the current SBS 16.0924 by >= 0.5% (to <= 16.012) without exceeding 500 ms mean solve time, because the normalization removes the 20.8% VBS gap observed on size=100/eccentric-depot/loose-capacity regimes where an unnormalized savings magnitude over-prioritizes large-scale instances and under-diversifies stagnant LNS iterations.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-cheapest-regret-insertion",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 4 solver (16.0924) is the SBS and the archive Pareto frontier is flat (SBS 386.2179 vs VBS 385.4963, gap only 0.187%), so gains must come from the two remaining levers on the dual-hook template: (a) the destroy hook's priority shape and (b) the recreate hook's action ordering. KB method-cvrp-m3-ruin-recreate-l3 confirms removal_savings must be scaled and gated (rank_power(|savings|/scale * gate_load * gate_depot * gate_demand * gate_rdist)) with p driven by iter_frac and stagnation_ratio; KB method-cvrp-cheapest-regret-insertion confirms Regret-2 lookahead is the strong repair, so making the recreate hook a normalized Regret-2 x detour ordering keeps the deterministic regret-2 feasibility guarantees while adding evolution headroom. Weakest regimes reported are size=100 (vbs_rel_gap -20.84%), spatial=uniform (-23.91%), depot_style=eccentric (-19.62%), capacity=loose (-22.16%) — all scale-sensitive, hence the per-instance normalization term. Both hooks stay O(n^2)-bounded and deterministic (no global RNG), so the 500 ms mean / first-feasible behavior of the L3 skeleton is preserved."
+  }
+}

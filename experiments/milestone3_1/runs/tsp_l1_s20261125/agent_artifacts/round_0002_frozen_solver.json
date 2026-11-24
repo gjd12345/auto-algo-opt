@@ -1,0 +1,51 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_tsp_constructive_step_039658c8",
+  "display_name": "Session R2 · tsp_constructive_step",
+  "problem_family": "tsp",
+  "paradigm": "sequential_construct",
+  "interface": "tsp_constructive_step/v1:select_next_city",
+  "template_id": "tsp_constructive_step",
+  "template_version": "v1",
+  "template_source_sha256": "375d1c0196a8f5ad8beff8f8bcf11726078682eb39562ed060e1de87435fca87",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "select_next_city",
+  "hook_code": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score",
+  "hook_code_sha256": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0",
+  "design_sha256": "8f8936541f1b36793226303d4230001adfb9f5869381c647f5c7df7835a73228",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-tsp-i605-mean-farness",
+  "cited_kb_ids": [
+    "method-tsp-i605-mean-farness",
+    "method-tsp-i605-dest-pull",
+    "method-tsp-i605-dimensionless-ratio",
+    "method-tsp-nearest-neighbor-construct"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved tsp_constructive_step/v1:select_next_city",
+  "default_budget_ms": 500.0,
+  "protocol_id": "tsp/v1",
+  "hook_specs": [
+    {
+      "name": "select_next_city",
+      "signature": [
+        "current_node",
+        "unvisited_nodes",
+        "distance_matrix"
+      ],
+      "output_shape_arg": "unvisited_nodes"
+    }
+  ],
+  "hook_implementations": {
+    "select_next_city": "def select_next_city(current_node, unvisited_nodes, distance_matrix):\n    import numpy as np\n    u = np.asarray(unvisited_nodes)\n    m = u.shape[0]\n    if m == 1:\n        return -np.asarray(distance_matrix[current_node, u], dtype=np.float64)\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    U = dm[u][:, u]\n    d_cur = dm[current_node, u]\n    dest = u[m // 2]\n    d_dest = dm[dest, u]\n    row_sums = U.sum(axis=1) - np.diag(U)\n    mean_far = row_sums / float(max(m - 1, 1))\n    max_dcur = float(np.max(d_cur))\n    if max_dcur <= 0:\n        max_dcur = 1.0\n    max_far = float(np.max(mean_far))\n    if max_far <= 0:\n        max_far = 1.0\n    max_ddest = float(np.max(d_dest))\n    if max_ddest <= 0:\n        max_ddest = 1.0\n    total = len(dm)\n    progress = float(total - m) / float(max(total - 1, 1))\n    w_f = 0.20 + 0.35 * (1.0 - progress)\n    w_t = 0.05 + 0.40 * progress\n    score = (-d_cur / max_dcur) + w_f * (mean_far / max_far) + w_t * (d_dest / max_ddest)\n    return score"
+  },
+  "hook_hashes": {
+    "select_next_city": "039658c80d88855a76193ac6f058c2968686293149f27efa0f87183dd7401bf0"
+  },
+  "bundle_hash": "e8b5c3a36a70d1dcffdcb426791ea00424bd55ee9561a8a7e1b318a634313a48",
+  "hook_contract_sha256": "b1b3d5443c26b634ec25ae449e9829b74695f4819f40103d5c8e006c6628a58d"
+}

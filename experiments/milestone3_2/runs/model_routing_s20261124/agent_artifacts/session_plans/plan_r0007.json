@@ -1,0 +1,35 @@
+{
+  "round_id": 7,
+  "direction": "Stagnation-triggered diversification in score_ruin_nodes: keep the multiplicative gating form (removal_savings/scale × load × depot × demand × route-dist) but make the rank power p(iter_frac, stagnation_ratio) saturate earlier and add a deterministic relate-gate that biases removal toward spatial neighbours of the last-removed customers once stagnation_ratio > 0.5, so ruin sets escape the clustered-region local optima that dominate the weakest regimes (spatial=clustered, depot_style=eccentric, capacity_level=tight, size=100).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents that the evolvable hook is exactly score_ruin_nodes with fixed deterministic Regret-2 repair, R2R acceptance, and a unified 500 ms clock — so all improvement must come from the ruin-priority vector, and its verified gain over the worst-removal control was small (23.3186 vs 23.3474 blind-120), meaning the remaining headroom lies in diversification, not in sharper worst-first ranking. KB method-cvrp-lns-shaw-regret identifies spatially-related (Shaw) destroy as complementary to worst/random destroy in the same budget. The archive shows six solvers spanning only 16.10 to 15.9986 with zero win diversity on r0005/r0006, and the weakest regimes are all clustered/eccentric/tight-capacity — consistent with premature fixation. Hence the plan keeps the validated skeleton and postprocess=none, and only reshapes the rank-power schedule plus a deterministic spatial relate gate, which preserves the Gate-4 double-action sensitivity probe (the first-iteration ruin set stays driven by the same monotone score ordering) and keeps first_feasible_ms near 2-3 ms, so feasibility under the 500 ms budget is unaffected."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "In cvrp_ruin_recreate/v1 at 500 ms, the archive plateau at mean 15.9986 (identical for r0004 and r0006, VBS gap only 0.56%) indicates the LNS is converging to the same tight-capacity clustered local optimum across seeds; therefore a stagnation-gated shift from pure worst-removal priority (rank power on removal_savings) toward spatially-correlated (Shaw-like) removal when stagnation_ratio exceeds ~0.5 will lower mean objective on the tight-capacity / clustered / eccentric-depot instances by at least 0.5% relative, without regressing the uniform-demand regime (expected net dev_24 mean < 15.99 at ~250 ms mean solve time).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents that the evolvable hook is exactly score_ruin_nodes with fixed deterministic Regret-2 repair, R2R acceptance, and a unified 500 ms clock — so all improvement must come from the ruin-priority vector, and its verified gain over the worst-removal control was small (23.3186 vs 23.3474 blind-120), meaning the remaining headroom lies in diversification, not in sharper worst-first ranking. KB method-cvrp-lns-shaw-regret identifies spatially-related (Shaw) destroy as complementary to worst/random destroy in the same budget. The archive shows six solvers spanning only 16.10 to 15.9986 with zero win diversity on r0005/r0006, and the weakest regimes are all clustered/eccentric/tight-capacity — consistent with premature fixation. Hence the plan keeps the validated skeleton and postprocess=none, and only reshapes the rank-power schedule plus a deterministic spatial relate gate, which preserves the Gate-4 double-action sensitivity probe (the first-iteration ruin set stays driven by the same monotone score ordering) and keeps first_feasible_ms near 2-3 ms, so feasibility under the 500 ms budget is unaffected."
+  }
+}

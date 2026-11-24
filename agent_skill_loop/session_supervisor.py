@@ -598,8 +598,11 @@ def collect_facts(root, con, run, rd, task):
                     (population_snapshot["ref"], population_snapshot["sha256"], run["run_id"], rd["round_id"]))
     baseline=next((x for x in rows if x["origin"]=="baseline"),None)
     if m2_interface_sel is not None:
+        from agent_skill_loop.interface_design.templates import get_template_spec
         design = _load_round_interface_design(root, con, rd)
-        if baseline and baseline["code_sha256"] != design.baseline_hook_sha256:
+        tpl = get_template_spec(design.template_id, design.template_version)
+        valid_baseline_shas = {design.baseline_hook_sha256, db._sha256(tpl.default_template_program)}
+        if baseline and baseline["code_sha256"] not in valid_baseline_shas:
             raise ValueError("baseline_identity_mismatch")
     elif baseline and baseline["code_sha256"]!=run["baseline_code_sha256"]: raise ValueError("baseline_identity_mismatch")
     prefix=output.relative_to(root).as_posix()
@@ -719,11 +722,12 @@ def collect_facts(root, con, run, rd, task):
                 for phase, limit in normalized.get("phase_budgets", {}).items()
             },
         }
+    effective_baseline_sha = design.baseline_hook_sha256 if m2_interface_sel is not None else run["baseline_code_sha256"]
     return {"round_id":rd["round_id"],"problem":run["problem"],"suite_hash":run["suite_hash"],"evaluator_hash":run["evaluator_hash"],
             "objective_direction": run["objective_direction"],
             "benchmark": {"benchmark_id": run["benchmark_id"], "profile": run["benchmark_profile"], "problem_spec_hash": run["problem_spec_hash"], "benchmark_spec_hash": run["benchmark_spec_hash"],
                           "data_manifest_hash": run["data_manifest_hash"], "reference_manifest_hash": run["reference_manifest_hash"], "metric_spec_hash": metric_run_hash} if "benchmark_id" in run.keys() and run["benchmark_id"] else None,
-            "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":run["baseline_code_sha256"],
+            "baseline":baseline["evaluation"] if baseline else None,"baseline_code_sha256":effective_baseline_sha,
             "incumbent_before":before,"incumbent_after":after,"candidates":candidates,
             "solver_attempts": solver_attempts,"exports":exported,
             "best_generated_ref":f"{prefix}/{exported['best_generated_path']}" if exported.get("best_generated_path") else None,

@@ -1,0 +1,48 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_obp_online_priority_531bc3f7",
+  "display_name": "Session R2 · obp_online_priority",
+  "problem_family": "obp",
+  "paradigm": "sequential_construct",
+  "interface": "obp_online_priority/v1:priority",
+  "template_id": "obp_online_priority",
+  "template_version": "v1",
+  "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "priority",
+  "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n\n    caps = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    if caps.shape[0] == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    item = float(current_item)\n    residual = caps - item  # >= 0 by feasibility\n    caps_safe = np.where(caps > 0.0, caps, 1.0)\n\n    # strict best-fit primary term: smaller residual scores higher\n    best_fit = -residual\n\n    # residual-slack tie-break: penalize leaving large absolute slack,\n    # and slightly stronger when the residual is a big fraction of the bin\n    slack_penalty = -0.05 * residual - 0.05 * (residual / caps_safe)\n\n    return (best_fit + slack_penalty).astype(np.float64)",
+  "hook_code_sha256": "531bc3f70ea8142176d283c25b6d3ecdc205b6b70d36d3b832e33f6a3d8e83ad",
+  "design_sha256": "190442a5c078c65d3438361950139ce3d05f608f15592b56063970c3d52a7355",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-obp-best-fit",
+  "cited_kb_ids": [
+    "method-obp-best-fit",
+    "method-obp-first-fit"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved obp_online_priority/v1:priority",
+  "default_budget_ms": 500.0,
+  "protocol_id": "obp_online/v1",
+  "hook_specs": [
+    {
+      "name": "priority",
+      "signature": [
+        "current_item",
+        "feasible_remaining_capacities"
+      ],
+      "output_shape_arg": "feasible_remaining_capacities"
+    }
+  ],
+  "hook_implementations": {
+    "priority": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n\n    caps = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    if caps.shape[0] == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    item = float(current_item)\n    residual = caps - item  # >= 0 by feasibility\n    caps_safe = np.where(caps > 0.0, caps, 1.0)\n\n    # strict best-fit primary term: smaller residual scores higher\n    best_fit = -residual\n\n    # residual-slack tie-break: penalize leaving large absolute slack,\n    # and slightly stronger when the residual is a big fraction of the bin\n    slack_penalty = -0.05 * residual - 0.05 * (residual / caps_safe)\n\n    return (best_fit + slack_penalty).astype(np.float64)"
+  },
+  "hook_hashes": {
+    "priority": "531bc3f70ea8142176d283c25b6d3ecdc205b6b70d36d3b832e33f6a3d8e83ad"
+  },
+  "bundle_hash": "41ab09ae4e2b774e8fb771d5f6508e1c4e05ed156b216c9f02566909fb89771b",
+  "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+}

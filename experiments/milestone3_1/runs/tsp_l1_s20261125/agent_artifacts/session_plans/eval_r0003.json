@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:89fbc30ab4694fbb88c704b45e895ed6"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Scoring candidate u from current node c as score(u) = d(c,u)/max_d - w_f * mean_{v unvisited}(d(v,u))/max_mean + w_d * d(u,start)/max_d (all terms divided by their current-step maximum, so the rule is scale-invariant) yields shorter tours than plain nearest-neighbour while staying well inside the 500 ms budget; the mean-farness term counteracts NN's early 'stranding' of isolated cities and the destination-pull term truncates the long closing edge, so the combined score should beat either alone, especially on the size=100/200 regimes where the archived portfolio shows the largest gaps.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:89fbc30ab4694fbb88c704b45e895ed6"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Blend dimensionless mean-isolation farness with linear destination (closing) pull in the next-node score, keeping the step O(n) vectorized so remaining budget is spent on better choices rather than lookahead."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

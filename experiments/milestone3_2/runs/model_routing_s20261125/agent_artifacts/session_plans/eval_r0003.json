@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:f671f688fb8f4c45886218703f8a009e"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 the weakest regimes are tight capacity (vbs_rel_gap -22.26%), size 100 (-21.02%), uniform demand (-20.42%), eccentric depot (-19.99%) and clustered spatial (-19.23%). Because tight-capacity instances make route loads the binding constraint and clustered+eccentric instances make far-from-depot detours expensive, a score_ruin_nodes hook that multiplies the normalized removal-savings rank by (a) a route-load utilisation gate (load/capacity squared) and (b) a depot-distance gate on the removed node, with a rank-power exponent that rises with stagnation_ratio and falls with iter_frac, should remove the customers whose relocation can actually unlock load rebalancing. This should lower mean objective below the r0001 SBS mean 16.0429 within the 500 ms budget without hurting the already-strong easy regimes, since the multiplicative gates are neutral when loads are slack and the savings rank still dominates early iterations.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:f671f688fb8f4c45886218703f8a009e"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive rank-power ruin scoring with multiplicative capacity-tightness and depot-eccentricity gating: prioritize removing customers from nearly-full routes and from route segments far from an eccentric depot, decaying toward savings-dominant worst-removal as iterations stagnate."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

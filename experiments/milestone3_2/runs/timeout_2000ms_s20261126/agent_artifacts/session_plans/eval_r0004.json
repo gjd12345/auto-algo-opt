@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:1ddbf69e1dd249adb8c520964b7a0d27"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "H-r4-01: On cvrp_dev_hetero_24 under the 2000ms budget (mean solve only ~155ms, so the LNS loop gets many hundreds of iterations with slack), replacing a purely cost-savings-based score_ruin_nodes with a multiplicative rule score_i = rank_power( normalized( |removal_savings_i| ) * (1 + beta * cluster_pressure_i) * gate_load_i * gate_depot_i , p(iter_frac, stagnation_ratio) ) where cluster_pressure_i = mean distance from node i to its k nearest neighbours relative to the instance-mean nearest-neighbour distance (small => node sits in a dense cluster whose removal unlocks re-partitioning), gate_load_i = route_loads[r]/capacity sharpening when capacity is loose, and p rises from ~1.2 to ~4.0 with stagnation_ratio, will lower mean tour length below the current SBS 16.0293 on the clustered / loose-capacity / size-100 slices without degrading the AFV (all 24 instances remain feasible, first_feasible_ms stays < 10ms). Rationale: VBS gaps are largest on clustered (-19.30%), loose-capacity (-22.30%) and size-100 (-21.11%) slices, i.e., exactly where contiguous-cluster destroy (rather than single-route worst-cost destroy) is needed; a higher rank power under stagnation prevents the deterministic Regret-2 repair from cycling the same nodes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:1ddbf69e1dd249adb8c520964b7a0d27"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Spatial-relatedness (Shaw-style) ruin scoring with load-imbalance gating and stagnation-adaptive rank power to target the weakest regimes (clustered spatial, loose capacity, size=100, eccentric depot)"
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

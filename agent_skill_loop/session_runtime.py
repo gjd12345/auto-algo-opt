@@ -583,6 +583,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
         if name not in table_columns["solver_calls"]:
             connection.execute(f"ALTER TABLE solver_calls ADD COLUMN {name} {definition}")
     _ensure_requests_columns(connection)
+    from agent_skill_loop.interface_design.session_baseline import ensure_baseline_tables
+
+    ensure_baseline_tables(connection)
     for name, definition in {
         "search_policy_defaults_json": "TEXT",
         "search_policy_limits_json": "TEXT",
@@ -600,10 +603,19 @@ def _row(connection: sqlite3.Connection, query: str, parameters: tuple[Any, ...]
 
 
 def _ensure_requests_columns(connection: sqlite3.Connection) -> bool:
-    """Idempotently backfill M3 request ledger columns on pre-existing sessions."""
+    """Idempotently backfill M3/M3.2 request ledger columns on pre-existing sessions."""
     request_columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
     added = False
-    for name, definition in {"attempt": "INTEGER", "response_sha256": "TEXT", "sent_at_utc": "TEXT"}.items():
+    for name, definition in {
+        "attempt": "INTEGER",
+        "response_sha256": "TEXT",
+        "sent_at_utc": "TEXT",
+        "requested_model": "TEXT",
+        "served_model": "TEXT",
+        "cached_tokens": "INTEGER",
+        "provider_request_id": "TEXT",
+        "estimated_cost_usd": "REAL",
+    }.items():
         if name not in request_columns:
             connection.execute(f"ALTER TABLE requests ADD COLUMN {name} {definition}")
             added = True
@@ -1314,6 +1326,7 @@ def initialize_session(
     round_budget: int | None = None,
     explicit_seed_set: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
     persistent_budget: Mapping[str, Any] | None = None,
+    model_routing: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     action = "init"
     if eoh_thinking not in {"provider-default", "enabled", "disabled"}:
@@ -1437,19 +1450,62 @@ def initialize_session(
     metric = None
     problem_spec_hash = None
     benchmark_spec_hash = data_manifest_hash = reference_manifest_hash = metric_spec_hash = None
+    suite_loaded = False
+    _PROBLEM_ALIASES = {
+        "cvrp": PROBLEM_CVRP,
+        "tsp": "tsp_construct",
+        "obp": "obp_online",
+        "bpp": "bpp_offline",
+    }
     if benchmark_id:
         try:
-            from agent_skill_loop.benchmark import benchmark_profile, load_profile_suite
-            benchmark, metric, _benchmark_item = benchmark_profile(benchmark_id, benchmark_profile_name)
-            if problem == PROBLEM_CVRP:
-                problem = benchmark.problem_id
-            if problem != benchmark.problem_id:
-                raise ValueError("benchmark_problem_mismatch")
-            suite = dict(load_profile_suite(benchmark_id, benchmark_profile_name, split="dev_train"))
-            benchmark_spec_hash = benchmark.content_hash
-            data_manifest_hash = benchmark.train_manifest_hash
-            reference_manifest_hash = benchmark.reference_manifest_hash
-            metric_spec_hash = metric.content_hash
+            from agent_skill_loop.cvrp_workbench import m31_suites as _m31
+            from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID as _WB_BENCHMARK_ID
+            from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
+
+            is_m31_milestone_suite = bool(
+                benchmark_id in {"cvrp_workbench", _WB_BENCHMARK_ID} and benchmark_profile_name in _m31.M31_SUITE_KEYS
+            )
+            if is_m31_milestone_suite:
+                family, m31_split = _m31.M31_SUITE_KEYS[benchmark_profile_name]
+                if m31_split != "dev":
+                    raise ValueError(f"selection_or_blind_suite_forbidden_in_session_init:{benchmark_profile_name}")
+                suite = dict(load_dev_or_public_suite(benchmark_profile_name, role="interactive_sandbox"))
+                target_problem = _m31.M31_PROBLEM_IDS[family]
+                resolved_req = _PROBLEM_ALIASES.get(problem, problem)
+                if problem == PROBLEM_CVRP or resolved_req == target_problem:
+                    problem = target_problem
+                if problem != target_problem:
+                    raise ValueError("benchmark_problem_mismatch")
+                spec = get_problem(problem)
+                suite["problem"] = problem
+                suite["split"] = "dev_train"
+                suite["content_hash"] = spec.suite_hash(problem, "dev_train", suite["instances"])
+                suite_loaded = True
+                benchmark = None
+                metric = None
+                benchmark_spec_hash = _sha256(_json({k: v for k, v in suite.items() if k != "instances"}))
+                data_manifest_hash = str(suite.get("suite_content_sha256") or suite["content_hash"])
+                reference_manifest_hash = data_manifest_hash
+                metric_spec_hash = _sha256(_json({
+                    "problem": problem,
+                    "protocol_id": suite.get("protocol_id"),
+                    "objective_direction": spec.objective_direction,
+                }))
+            else:
+                from agent_skill_loop.benchmark import benchmark_profile, load_profile_suite
+                benchmark, metric, _benchmark_item = benchmark_profile(benchmark_id, benchmark_profile_name)
+                resolved_req = _PROBLEM_ALIASES.get(problem, problem)
+                if problem == PROBLEM_CVRP or resolved_req == benchmark.problem_id:
+                    problem = benchmark.problem_id
+                if problem != benchmark.problem_id:
+                    raise ValueError("benchmark_problem_mismatch")
+                suite = dict(load_profile_suite(benchmark_id, benchmark_profile_name, split="dev_train"))
+                suite_loaded = True
+                benchmark_spec_hash = benchmark.content_hash
+                data_manifest_hash = benchmark.train_manifest_hash
+                reference_manifest_hash = benchmark.reference_manifest_hash
+                metric_spec_hash = metric.content_hash
         except (OSError, TypeError, ValueError, KeyError) as exc:
             raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
     else:
@@ -1457,8 +1513,9 @@ def initialize_session(
             spec = get_problem(problem)
         except ValueError as exc:
             raise SessionError("INVALID_ARGUMENT", str(exc), action=action) from exc
+        is_m31_milestone_suite = False
     try:
-        if benchmark is None:
+        if not suite_loaded:
             suite = dict(spec.build_suite(seed, split="dev_train", count=count, size=size))
         else:
             spec = get_problem(problem)
@@ -1547,7 +1604,7 @@ def initialize_session(
         solver_timeout=solver_timeout,
         request_timeout=request_timeout,
         benchmark_id=benchmark_id,
-        benchmark_profile_name=benchmark_profile_name if benchmark else None,
+        benchmark_profile_name=benchmark_profile_name if (benchmark or is_m31_milestone_suite) else None,
         benchmark_spec_hash=benchmark_spec_hash,
         data_manifest_hash=data_manifest_hash,
         reference_manifest_hash=reference_manifest_hash,
@@ -1654,6 +1711,7 @@ def initialize_session(
         for contract_name, actual_contract in experiment_contracts.items():
             if manifest_payload["extra"].get(contract_name) != actual_contract:
                 raise SessionError("INVALID_ARGUMENT", f"experiment_manifest_{contract_name}_mismatch", action="init")
+    has_benchmark_profile = benchmark is not None or is_m31_milestone_suite
     config: dict[str, Any] = {
         "schema_version": CONFIG_SCHEMA,
         "run_id": run_id,
@@ -1666,14 +1724,14 @@ def initialize_session(
         "objective_direction": spec.objective_direction,
         "benchmark": {
             "id": benchmark_id,
-            "profile": benchmark_profile_name if benchmark is not None else None,
+            "profile": benchmark_profile_name if has_benchmark_profile else None,
             "problem_spec_hash": problem_spec_hash,
             "benchmark_spec_hash": benchmark_spec_hash,
             "data_manifest_hash": data_manifest_hash,
             "reference_manifest_hash": reference_manifest_hash,
             "metric_spec_hash": metric_spec_hash,
-            "reference_kind": metric.reference_kind if metric is not None else None,
-        } if benchmark is not None else None,
+            "reference_kind": metric.reference_kind if metric is not None else "solver_reference",
+        } if has_benchmark_profile else None,
         "inheritance": {
             "mode": inheritance_mode,
             "population_snapshot_contract": "official_final_population_order_preserved",
@@ -1748,6 +1806,8 @@ def initialize_session(
     }
     if persistent_budget is not None:
         config["persistent_budget"] = dict(persistent_budget)
+    if model_routing is not None:
+        config["model_routing"] = dict(model_routing)
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
         staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.init-", dir=str(output.parent)))
@@ -1791,7 +1851,7 @@ def initialize_session(
                 """,
                 (
                     run_id, str(output), "RUNNING", 1, 1,
-                     problem, problem_spec_hash, benchmark_id, benchmark_profile_name if benchmark is not None else None, benchmark_spec_hash,
+                     problem, problem_spec_hash, benchmark_id, benchmark_profile_name if has_benchmark_profile else None, benchmark_spec_hash,
                      data_manifest_hash, reference_manifest_hash, metric_spec_hash,
                      inheritance_mode, feedback_mode, 1 if agent_guidance else 0, manifest_hash,
                      max_rounds, round_budget,

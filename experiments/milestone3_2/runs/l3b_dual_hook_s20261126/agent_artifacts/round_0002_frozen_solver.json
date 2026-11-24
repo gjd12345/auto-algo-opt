@@ -1,0 +1,71 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0002_cvrp_ruin_recreate_dual_3077091b",
+  "display_name": "Session R2 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads,\n                     route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    dem = np.asarray(demands[1:], dtype=np.float64)\n\n    depot_row = np.asarray(distance_matrix[0, 1:], dtype=np.float64)\n    scale = float(np.mean(depot_row)) if depot_row.size else 1.0\n    if not np.isfinite(scale) or scale <= eps:\n        scale = 1.0\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n    cap = max(float(capacity), eps)\n\n    def sat(x, k):\n        return 1.0 - np.exp(-np.clip(k * x, 0.0, 60.0))\n\n    # normalized detour value in [0, inf)\n    sav_norm = np.abs(sav) / scale\n\n    # soft saturating load factor; softened under stagnation to diversify\n    fill = np.clip(loads / cap, 0.0, 1.5)\n    k_load = (2.2 - 1.2 * stag) * (1.2 - 0.4 * itf)\n    f_load = 1.0 + (0.25 + 0.75 * (1.0 - stag)) * sat(fill, k_load)\n\n    # depot eccentricity factor: interior nodes less favored late/stagnant\n    ddepth = np.abs(depot_row) / scale\n    k_dep = 0.4 + 0.9 * stag + 0.2 * itf\n    f_depot = 0.6 + 0.4 * sat(ddepth, k_dep)\n\n    # demand-weighted destructiveness; rises under stagnation\n    dfill = np.clip(dem / cap, 0.0, 1.0)\n    k_dem = 1.0 + 2.0 * stag + 0.3 * itf\n    f_dem = 1.0 + (0.1 + 0.6 * stag + 0.15 * itf) * sat(dfill, k_dem)\n\n    # route-distance factor: long/tight routes more likely to be broken\n    rmean = float(np.mean(rdist)) if rdist.size else 1.0\n    if not np.isfinite(rmean) or rmean <= eps:\n        rmean = 1.0\n    rn = np.clip(rdist / rmean, 0.0, 3.0)\n    k_rd = 0.6 + 0.4 * stag + 0.2 * (1.0 - itf)\n    f_rdist = 1.0 + (0.2 + 0.5 * stag + 0.2 * (1.0 - itf)) * sat(rn, k_rd)\n\n    composite = (sav_norm + eps) * f_load * f_depot * f_dem * f_rdist\n    composite = np.where(np.isfinite(composite), composite, 0.0)\n\n    # rank-normalized score in [0,1], monotone in composite\n    order = np.argsort(np.argsort(composite))\n    ranks = (order.astype(np.float64) + 1.0) / float(n)\n\n    # exponent sweep: high early (greedy), lower late/stagnant (diversify)\n    p = 1.4 - 0.85 * itf - 0.30 * stag\n    p = float(np.clip(p, 0.35, 1.6))\n\n    score = np.power(ranks, p)\n    score = np.asarray(score, dtype=np.float64)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score\n",
+  "hook_code_sha256": "fa38c969213c4eb6e71149c342f1fec501c915c4ae01c40c83ea917e6cbde629",
+  "design_sha256": "f4b604e6a7aead3c4a90aadca9496c3760089ab5a5fe2bee75a0c3f13525fe76",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261126\\session_run\\rounds\\round_0002\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads,\n                     route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    loads = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    dem = np.asarray(demands[1:], dtype=np.float64)\n\n    depot_row = np.asarray(distance_matrix[0, 1:], dtype=np.float64)\n    scale = float(np.mean(depot_row)) if depot_row.size else 1.0\n    if not np.isfinite(scale) or scale <= eps:\n        scale = 1.0\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n    cap = max(float(capacity), eps)\n\n    def sat(x, k):\n        return 1.0 - np.exp(-np.clip(k * x, 0.0, 60.0))\n\n    # normalized detour value in [0, inf)\n    sav_norm = np.abs(sav) / scale\n\n    # soft saturating load factor; softened under stagnation to diversify\n    fill = np.clip(loads / cap, 0.0, 1.5)\n    k_load = (2.2 - 1.2 * stag) * (1.2 - 0.4 * itf)\n    f_load = 1.0 + (0.25 + 0.75 * (1.0 - stag)) * sat(fill, k_load)\n\n    # depot eccentricity factor: interior nodes less favored late/stagnant\n    ddepth = np.abs(depot_row) / scale\n    k_dep = 0.4 + 0.9 * stag + 0.2 * itf\n    f_depot = 0.6 + 0.4 * sat(ddepth, k_dep)\n\n    # demand-weighted destructiveness; rises under stagnation\n    dfill = np.clip(dem / cap, 0.0, 1.0)\n    k_dem = 1.0 + 2.0 * stag + 0.3 * itf\n    f_dem = 1.0 + (0.1 + 0.6 * stag + 0.15 * itf) * sat(dfill, k_dem)\n\n    # route-distance factor: long/tight routes more likely to be broken\n    rmean = float(np.mean(rdist)) if rdist.size else 1.0\n    if not np.isfinite(rmean) or rmean <= eps:\n        rmean = 1.0\n    rn = np.clip(rdist / rmean, 0.0, 3.0)\n    k_rd = 0.6 + 0.4 * stag + 0.2 * (1.0 - itf)\n    f_rdist = 1.0 + (0.2 + 0.5 * stag + 0.2 * (1.0 - itf)) * sat(rn, k_rd)\n\n    composite = (sav_norm + eps) * f_load * f_depot * f_dem * f_rdist\n    composite = np.where(np.isfinite(composite), composite, 0.0)\n\n    # rank-normalized score in [0,1], monotone in composite\n    order = np.argsort(np.argsort(composite))\n    ranks = (order.astype(np.float64) + 1.0) / float(n)\n\n    # exponent sweep: high early (greedy), lower late/stagnant (diversify)\n    p = 1.4 - 0.85 * itf - 0.30 * stag\n    p = float(np.clip(p, 0.35, 1.6))\n\n    score = np.power(ranks, p)\n    score = np.asarray(score, dtype=np.float64)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta,\n                          regret2_margin, route_load_after, capacity, insert_pos):\n    cust = np.asarray(customer_idx)\n    m = int(cust.shape[0]) if cust.ndim > 0 else 1\n    if m == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    tri = np.asarray(target_route_idx)\n    delta = np.asarray(insert_delta, dtype=np.float64)\n    regret = np.asarray(regret2_margin, dtype=np.float64)\n    load_after = np.asarray(route_load_after, dtype=np.float64)\n\n    eps = 1e-12\n    dscale = float(np.mean(np.abs(delta))) if delta.size else 1.0\n    if not np.isfinite(dscale) or dscale <= eps:\n        dscale = 1.0\n    rscale = float(np.mean(np.abs(regret))) if regret.size else 1.0\n    if not np.isfinite(rscale) or rscale <= eps:\n        rscale = 1.0\n\n    detour_norm = delta / dscale\n    regret_norm = regret / rscale\n\n    fill = np.clip(load_after / max(float(capacity), eps), 0.0, 1.0)\n\n    # shifted fill bonus peaking near 0.85; mild penalty beyond\n    fill_bonus = 0.35 * (1.0 - np.abs(fill - 0.85) / 0.85)\n\n    new_route_pen = np.where(tri < 0, -1.0, 0.0)\n\n    lam = 1.4\n    score = -1.2 * detour_norm + lam * regret_norm + fill_bonus + new_route_pen\n    score = np.asarray(score, dtype=np.float64)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "fa38c969213c4eb6e71149c342f1fec501c915c4ae01c40c83ea917e6cbde629",
+    "score_recreate_action": "43af8eb7ce93e3e9893e02c26de50a7e24b0658bfdbaa8acc0e7795f67cb2526"
+  },
+  "bundle_hash": "737afa819090067ae23b58d4a2712c89725c5b887bd2250c364a2d347ef51b9d",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

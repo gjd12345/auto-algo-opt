@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Regime-adaptive dual-hook LNS: make `score_ruin_nodes` cost-per-iteration aware and `score_recreate_action` regime-conditioned so that large-n (size=100), uniform-spatial, eccentric-depot, loose-capacity instances get geometric/angular-cluster ruin with cheaper per-node scoring, while small-n instances get aggressive worst-cost removal.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Archive shows a saturated portfolio (SBS 16.1100, VBS 15.3838 total / gap 0.21%) across three near-identical L3b solvers, so marginal gains must come from the regime where the frontier is weakest: size=100 (12/12 exhausted), uniform spatial, eccentric depot, uniform demand, loose capacity — i.e. cases where the 500 ms deadline caps LNS iterations. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton's bottleneck at tight budgets is per-iteration ruin+regret-2 cost (25 ms => 120/120 early stop) and that the evolvable hook is exactly `score_ruin_nodes`; combined with method-cvrp-lns-shaw-regret (Shaw relatedness vs worst vs random destroy trade-off) and method-cvrp-cheapest-regret-insertion (regret-2 vs cheapest detour), the plan is to co-evolve both hooks under a stagnation/iter_frac-driven schedule that trades expensive relatedness for cheap geometric ruin at large n. This is causally testable per-instance on dev_24 (iteration-count delta on size=100 vs objective delta) and preserves the frozen interface (dual-hook template, postprocess none) so 5-gate validation is unchanged."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0003/eoh_run/skills/best_generated",
+  "hypothesis": "Because all size=100 and uniform-spatial/eccentric-depot/loose-capacity regimes show exhausted_instances (LNS iterations truncated by the 500 ms deadline) and their vbs_rel_gap_pct is ~-20%, the binding constraint is iteration throughput at large n, not local-optimum quality. A ruin score that (a) scales the rank-power exponent with iter_frac and stagnation_ratio, (b) down-weights per-node evaluation cost via a distance-gated coarse candidate set (O(n) instead of O(n^2) relatedness), and (c) makes the recreate hook prefer geometrically coherent (angular-sector / heavy-load) insertions rather than pure detour-minimum, will increase completed LNS iterations per 500 ms on size=100 instances and thus lower mean objective vs the current SBS 16.1100 without regressing n<=64 cases.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows a saturated portfolio (SBS 16.1100, VBS 15.3838 total / gap 0.21%) across three near-identical L3b solvers, so marginal gains must come from the regime where the frontier is weakest: size=100 (12/12 exhausted), uniform spatial, eccentric depot, uniform demand, loose capacity — i.e. cases where the 500 ms deadline caps LNS iterations. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 skeleton's bottleneck at tight budgets is per-iteration ruin+regret-2 cost (25 ms => 120/120 early stop) and that the evolvable hook is exactly `score_ruin_nodes`; combined with method-cvrp-lns-shaw-regret (Shaw relatedness vs worst vs random destroy trade-off) and method-cvrp-cheapest-regret-insertion (regret-2 vs cheapest detour), the plan is to co-evolve both hooks under a stagnation/iter_frac-driven schedule that trades expensive relatedness for cheap geometric ruin at large n. This is causally testable per-instance on dev_24 (iteration-count delta on size=100 vs objective delta) and preserves the frozen interface (dual-hook template, postprocess none) so 5-gate validation is unchanged."
+  }
+}

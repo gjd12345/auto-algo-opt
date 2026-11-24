@@ -1,0 +1,358 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m32_timeout_2000ms_s20261126",
+  "arm_id": "m32_timeout_2000ms",
+  "problem_family": "cvrp",
+  "final_phase": "budget_stopped",
+  "completed_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "best_dev_objective": 16.029261,
+  "best_solver_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json",
+  "frozen_checkpoints": {
+    "400": "checkpoints/frozen_checkpoint_400.json"
+  },
+  "budget_summary": {
+    "run_id": "m32_timeout_2000ms_s20261126",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261126\\agent_budget.sqlite3",
+    "max_requests": 400,
+    "attempted_requests": 400,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "http_error": 7,
+      "complete": 355,
+      "connectivity_failed": 38
+    },
+    "by_purpose": {
+      "planner": 36,
+      "eoh_probe": 8,
+      "eoh_generation": 343,
+      "reflection": 13
+    },
+    "input_tokens": 2070944,
+    "output_tokens": 308726,
+    "total_tokens": 2379670
+  },
+  "token_summary": {
+    "input_tokens": 2070944,
+    "output_tokens": 308726,
+    "cached_tokens": 1394304,
+    "cached_tokens_reported_count": 355,
+    "total_tokens": 2379670,
+    "provider_elapsed_seconds": 3267.116,
+    "outer_requests": 49,
+    "inner_eoh_requests": 351,
+    "state_counts": {
+      "http_error": 7,
+      "complete": 355,
+      "connectivity_failed": 38
+    },
+    "requested_models": {
+      "deepseek-v4.1-flash": 400
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 355
+    },
+    "barrier_rejections": 0
+  },
+  "cost_summary": {
+    "rate_card_version": "opencode-go-reference/v1",
+    "priced_cost_usd": 0.29091452,
+    "priced_attempts": 355,
+    "unpriced_attempts": 45,
+    "unpriced_reasons": {
+      "missing_token_usage": 45
+    }
+  },
+  "milestone_status": {
+    "run_id": "m32_timeout_2000ms_s20261126",
+    "attempted_requests": 400,
+    "checkpoints": [
+      {
+        "ckpt_budget": 400,
+        "state": "sealed",
+        "draining_started_ordinal": 400,
+        "settled_through_ordinal": 400,
+        "winner_source_ordinal": 68,
+        "winner_solver_sha256": "8bd52e4abe2456f9cb848ec744b75795e7a406f4c3af25038ea95ab51a8dd767",
+        "payload_sha256": "2670d96b2d0484a9b9f631da300abf8795a428a10270568bf5ebb3c947086374"
+      }
+    ],
+    "usage_eventual": {
+      "attempted_requests": 400,
+      "by_state": {
+        "http_error": 7,
+        "complete": 355,
+        "connectivity_failed": 38
+      },
+      "input_tokens": 2070944,
+      "output_tokens": 308726,
+      "cached_tokens": 1394304,
+      "provider_elapsed_seconds": 3267.116,
+      "priced_cost_usd": 0.29091452,
+      "priced_attempts": 355,
+      "unpriced_attempts": 45,
+      "requested_models": {
+        "deepseek-v4.1-flash": 400
+      },
+      "served_models": {
+        "deepseek-v4.1-flash": 355
+      },
+      "provenance_counts": {
+        "baseline_seed": 1,
+        "eoh_skipped": 2,
+        "invalid_candidate": 90,
+        "probe": 8,
+        "provider_failed": 38,
+        "valid_candidate": 213
+      }
+    }
+  },
+  "hypothesis_counts": {
+    "testing": 0,
+    "refuted": 0,
+    "abandoned": 1,
+    "superseded": 0,
+    "proposed": 1,
+    "supported": 0
+  },
+  "archive_summary": {
+    "solver_count": 8,
+    "pareto_frontier": [
+      {
+        "solver_id": "session_r0002_cvrp_ruin_recreate_dfda91b7",
+        "template_id": "cvrp_ruin_recreate",
+        "mean_objective": 16.029261,
+        "solve_ms_mean": 155.242,
+        "arm_id": "m32_timeout_2000ms"
+      }
+    ],
+    "portfolio": {
+      "suite_id": "cvrp_dev_hetero_24",
+      "solver_ids": [
+        "session_r0001_cvrp_ruin_recreate_aa597d50",
+        "session_r0002_cvrp_ruin_recreate_dfda91b7",
+        "session_r0003_cvrp_ruin_recreate_ae320ab8",
+        "session_r0004_cvrp_ruin_recreate_b5a02ea4",
+        "session_r0005_cvrp_ruin_recreate_48fcf4eb",
+        "session_r0006_cvrp_ruin_recreate_33a8c961",
+        "session_r0007_cvrp_ruin_recreate_d86386d9",
+        "session_r0008_cvrp_ruin_recreate_03fa2957"
+      ],
+      "common_completed_count": 24,
+      "mean_by_solver": {
+        "session_r0001_cvrp_ruin_recreate_aa597d50": 16.1603,
+        "session_r0002_cvrp_ruin_recreate_dfda91b7": 16.0293,
+        "session_r0003_cvrp_ruin_recreate_ae320ab8": 16.0351,
+        "session_r0004_cvrp_ruin_recreate_b5a02ea4": 16.0305,
+        "session_r0005_cvrp_ruin_recreate_48fcf4eb": 16.0439,
+        "session_r0006_cvrp_ruin_recreate_33a8c961": 16.0858,
+        "session_r0007_cvrp_ruin_recreate_d86386d9": 16.1359,
+        "session_r0008_cvrp_ruin_recreate_03fa2957": 16.0319
+      },
+      "sbs_solver": "session_r0002_cvrp_ruin_recreate_dfda91b7",
+      "sbs_total": 384.7023,
+      "vbs_total": 383.3163,
+      "gap_over_sbs_pct": 0.3603,
+      "gap_over_vbs_pct": 0.3616,
+      "win_counts": {
+        "session_r0001_cvrp_ruin_recreate_aa597d50": 5,
+        "session_r0002_cvrp_ruin_recreate_dfda91b7": 6,
+        "session_r0003_cvrp_ruin_recreate_ae320ab8": 1,
+        "session_r0004_cvrp_ruin_recreate_b5a02ea4": 10,
+        "session_r0005_cvrp_ruin_recreate_48fcf4eb": 1,
+        "session_r0006_cvrp_ruin_recreate_33a8c961": 1,
+        "session_r0007_cvrp_ruin_recreate_d86386d9": 0,
+        "session_r0008_cvrp_ruin_recreate_03fa2957": 0
+      }
+    },
+    "weakest_regimes": [
+      {
+        "factor": "spatial",
+        "value": "clustered",
+        "instance_count": 8,
+        "vbs_mean_objective": 14.4568,
+        "vbs_rel_gap_pct": -19.3734,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "depot_style",
+        "value": "eccentric",
+        "instance_count": 12,
+        "vbs_mean_objective": 19.0949,
+        "vbs_rel_gap_pct": -20.0542,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "demand_dist",
+        "value": "uniform",
+        "instance_count": 12,
+        "vbs_mean_objective": 16.404,
+        "vbs_rel_gap_pct": -20.5549,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "size",
+        "value": "100",
+        "instance_count": 12,
+        "vbs_mean_objective": 20.5906,
+        "vbs_rel_gap_pct": -21.3555,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      },
+      {
+        "factor": "capacity_level",
+        "value": "loose",
+        "instance_count": 12,
+        "vbs_mean_objective": 13.5948,
+        "vbs_rel_gap_pct": -22.5478,
+        "exhausted_instances": 0,
+        "failed_instances": 0
+      }
+    ],
+    "known_signatures_count": 8
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.1603",
+      "delta_vs_prev": "",
+      "requests_used_total": 36,
+      "outer_requests_round": 6,
+      "inner_requests_round": 24,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0293",
+      "delta_vs_prev": "-0.1310",
+      "requests_used_total": 94,
+      "outer_requests_round": 5,
+      "inner_requests_round": 53,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0351",
+      "delta_vs_prev": "+0.0059",
+      "requests_used_total": 150,
+      "outer_requests_round": 5,
+      "inner_requests_round": 51,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 4,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0305",
+      "delta_vs_prev": "+0.0012",
+      "requests_used_total": 207,
+      "outer_requests_round": 5,
+      "inner_requests_round": 52,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 5,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0439",
+      "delta_vs_prev": "+0.0147",
+      "requests_used_total": 272,
+      "outer_requests_round": 6,
+      "inner_requests_round": 59,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 6,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.0858",
+      "delta_vs_prev": "+0.0565",
+      "requests_used_total": 335,
+      "outer_requests_round": 6,
+      "inner_requests_round": 57,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 7,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "16.1359",
+      "delta_vs_prev": "+0.1066",
+      "requests_used_total": 366,
+      "outer_requests_round": 5,
+      "inner_requests_round": 26,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 8,
+      "arm_id": "m32_timeout_2000ms",
+      "problem_family": "cvrp",
+      "template_id": "cvrp_ruin_recreate",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "16.0319",
+      "delta_vs_prev": "+0.0027",
+      "requests_used_total": 400,
+      "outer_requests_round": 4,
+      "inner_requests_round": 29,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    }
+  ],
+  "completed_at": "2026-11-24T00:02:04Z"
+}

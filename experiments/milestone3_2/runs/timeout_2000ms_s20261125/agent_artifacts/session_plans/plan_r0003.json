@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Evolve score_ruin_nodes toward a stagnation-scheduled, structure-aware ruin priority: multiplicative gating of normalized removal savings by (a) route-load saturation gate and (b) customer demand ratio, combined with an iter_frac/stagnation_ratio-driven rank-power exponent that starts near-pure worst-cost (p≈1) early and shifts to strong diversification (p→3–4) plus a clustered-geometry term (mean nearest-neighbor distance of the customer) when stagnation_ratio is high. Target the archive's weakest regimes: spatial=clustered, depot_style=eccentric, demand_dist=uniform, size=100, capacity_level=loose (rel_gap ≈ -19% to -22%).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 establishes that score_ruin_nodes with rank-power(gated savings) plus Regret-2 recreate is the correct evolvable hook and that its anytime curve already returns a feasible solution in ~2-3 ms, so budget headroom is not the limiting factor at 2000 ms; its evolution history shows the multiplicative gate + rank-power form is the productive search space. method-cvrp-lns-shaw-regret motivates adding Shaw-style relatedness (clustered geometry) removal on top of worst-cost removal, which is exactly what the archive's weakest regime (spatial=clustered, rel_gap -18.9%) and eccentric-depot (-19.6%) subsets demand. Since the current portfolio gap-over-SBS is only 0.04% across 24 instances, complementarity must come from a qualitatively different ruin schedule rather than parameter nudges, so the plan couples a monotone stagnation schedule with load/demand gates and a clustered-neighborhood term while keeping postprocess none and the deterministic Regret-2 recreate untouched for gate-4 causal sensitivity."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Because dev_24 solve_ms_mean is only ~316 ms against a 2000 ms budget (≈6x headroom) and no instance is exhausted or failed, the current L3 loop is stagnating in local optima rather than running out of time. Therefore making the ruin priority stagnation-scheduled and geometry/demand-aware — normalized |removal_savings| gated by route-load saturation and demand ratio, with rank-power exponent p(iter_frac, stagnation_ratio) rising from ≈1 to ≈3.5 and a clustered-neighborhood modifier that preferentially ruins co-located customers once stagnation_ratio > 0.4 — will lower dev_24 mean objective by >0.05 vs the round-2 incumbent (16.0496), with the largest gains on loose-capacity (12 instances) and eccentric-depot (12 instances) subsets where routes are long and worst-cost removal alone keeps re-selecting the same endpoints.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 establishes that score_ruin_nodes with rank-power(gated savings) plus Regret-2 recreate is the correct evolvable hook and that its anytime curve already returns a feasible solution in ~2-3 ms, so budget headroom is not the limiting factor at 2000 ms; its evolution history shows the multiplicative gate + rank-power form is the productive search space. method-cvrp-lns-shaw-regret motivates adding Shaw-style relatedness (clustered geometry) removal on top of worst-cost removal, which is exactly what the archive's weakest regime (spatial=clustered, rel_gap -18.9%) and eccentric-depot (-19.6%) subsets demand. Since the current portfolio gap-over-SBS is only 0.04% across 24 instances, complementarity must come from a qualitatively different ruin schedule rather than parameter nudges, so the plan couples a monotone stagnation schedule with load/demand gates and a clustered-neighborhood term while keeping postprocess none and the deterministic Regret-2 recreate untouched for gate-4 causal sensitivity."
+  }
+}

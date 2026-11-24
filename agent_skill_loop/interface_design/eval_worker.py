@@ -1,8 +1,7 @@
 """Dedicated JSON stdin/stdout subprocess worker for Milestone 2 interface templates & hooks.
 
-Enforces parent-pid watchdog cancellation (safe on Windows) and runs the exact same
-AST capability whitelist, registered template, and M1 ``verify_cvrp_solution`` verifier
-for both ``InterfaceValidator`` and ``DynamicInterfaceProblem``.
+Enforces parent-pid watchdog cancellation and runs the registered adapter and
+template under the shared AST capability whitelist.
 """
 
 from __future__ import annotations
@@ -11,12 +10,20 @@ import json
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, Mapping
 
 from agent_skill_loop.eval_worker import _watch_parent
 
-from .contracts import GateFailure
-from .runtime import PROBLEM_ADAPTERS, compile_hook_function, evaluate_hook_on_instance_inprocess, validate_hook_ast
+from .contracts import OUTCOME_TIMEOUT_OR_INFEASIBLE, GateFailure, hook_bundle_metadata
+from .runtime import (
+    compile_hook_bundle,
+    compile_hook_function,
+    derive_outer_timeout_s,
+    evaluate_hook_on_instance_inprocess,
+    resolve_problem_adapter,
+    validate_hook_ast,
+    validate_hook_bundle,
+)
 from .templates import get_template_spec
 
 
@@ -26,18 +33,17 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     template_version = str(request["template_version"])
     postprocess_mode = str(request.get("postprocess_mode", "none"))
     template_options = dict(request.get("template_options") or {})
-    hook_code = str(request["hook_code"])
+    hook_code = request.get("hook_code")
+    implementations = request.get("hook_implementations")
     instances = list(request.get("instances") or [])
     distance_convention = str(request.get("distance_convention", "euc_2d_float"))
     vehicle_limit_policy = str(request.get("vehicle_limit_policy", "unconstrained"))
-    time_budget_ms = request.get("time_budget_ms", 500.0)
-    time_budget_ms = float(time_budget_ms) if time_budget_ms is not None else None
+    time_budget_ms = request.get("solve_deadline_ms", request.get("time_budget_ms", 500.0))
     capture_merge_sequence = bool(request.get("capture_merge_sequence", False))
+    strict = request.get("strict_hook_outputs")
 
     try:
         tpl = get_template_spec(template_id, template_version)
-        if tpl.problem_family not in PROBLEM_ADAPTERS:
-            raise KeyError(f"unsupported_problem_family:{tpl.problem_family}")
     except KeyError as exc:
         f = GateFailure(
             gate_id=2,
@@ -58,7 +64,39 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
             "inner_compute_ms": round((time.perf_counter() - t0) * 1000.0, 4),
         }
 
-    g1, g2 = validate_hook_ast(hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+    try:
+        adapter = resolve_problem_adapter(
+            tpl, problem_family=request.get("problem_family"), protocol_id=request.get("protocol_id"),
+        )
+        if any("protocol_id" in inst and inst["protocol_id"] != adapter.protocol_id for inst in instances):
+            raise ValueError("protocol_id_mismatch:instance")
+        derive_outer_timeout_s(len(instances), time_budget_ms)
+        if strict is not None and not isinstance(strict, bool):
+            raise ValueError("invalid_strict_hook_outputs")
+        if postprocess_mode not in tpl.allowed_postprocess_modes:
+            raise ValueError("unsupported_postprocess_mode")
+        if implementations is not None:
+            if not isinstance(implementations, Mapping):
+                raise ValueError("invalid_hook_implementations")
+            if hook_code is not None and hook_code != implementations.get(tpl.hook_name):
+                raise ValueError("primary_hook_mismatch")
+        elif len(tpl.effective_hook_specs) > 1:
+            raise ValueError("hook_bundle_required")
+        elif not isinstance(hook_code, str):
+            raise ValueError("missing_hook_code")
+    except (ValueError, TypeError) as exc:
+        return {
+            "valid": False, "objective": None, "records": [], "failures": [],
+            "error_code": str(exc).partition(":")[0], "error_detail": str(exc),
+        }
+
+    specs = tpl.effective_hook_specs
+    if tpl.hook_specs and implementations is None:
+        implementations = {tpl.hook_name: hook_code}
+    if implementations is None:
+        g1, g2 = validate_hook_ast(hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+    else:
+        g1, g2 = validate_hook_bundle(specs, implementations)
     if g1 or g2:
         all_f = [*g1, *g2]
         return {
@@ -73,11 +111,10 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
         }
 
     try:
-        hook_fn = compile_hook_function(
-            hook_code,
-            hook_name=tpl.hook_name,
-            expected_args=tpl.hook_signature,
-        )
+        if implementations is None:
+            hook_fn = compile_hook_function(hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+        else:
+            hook_fn = compile_hook_bundle(specs, implementations)
     except Exception as exc:
         return {
             "valid": False,
@@ -97,21 +134,38 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     first_error_detail: str | None = None
 
     for inst in instances:
-        rec = evaluate_hook_on_instance_inprocess(
-            template_id=template_id,
-            template_version=template_version,
-            hook_fn=hook_fn,
-            instance=inst,
-            postprocess_mode=postprocess_mode,
-            template_options=template_options,
-            distance_convention=distance_convention,
-            vehicle_limit_policy=vehicle_limit_policy,
-            time_budget_ms=time_budget_ms,
-            capture_merge_sequence=capture_merge_sequence,
-        )
+        try:
+            rec = evaluate_hook_on_instance_inprocess(
+                template_id=template_id,
+                template_version=template_version,
+                hook_fn=hook_fn,
+                instance=inst,
+                postprocess_mode=postprocess_mode,
+                template_options=template_options,
+                distance_convention=distance_convention,
+                vehicle_limit_policy=vehicle_limit_policy,
+                time_budget_ms=time_budget_ms,
+                capture_merge_sequence=capture_merge_sequence,
+                protocol_id=adapter.protocol_id,
+                strict_hook_outputs=strict,
+            )
+        except (ValueError, TypeError, KeyError) as exc:
+            if tpl.protocol_id is None and not tpl.hook_specs:
+                raise
+            rec = {
+                "instance_id": str(inst.get("instance_id", "")),
+                "problem_family": adapter.problem_family,
+                "protocol_id": adapter.protocol_id,
+                "status": "error",
+                "valid": False, "completed": False, "objective": None,
+                "outcome_class": OUTCOME_TIMEOUT_OR_INFEASIBLE,
+                "preprocess_ms": None, "solve_ms": None, "verify_ms": None,
+                "error_code": "instance_evaluation_error", "error_detail": str(exc),
+                "timeout_kind": None,
+            }
         records.append(rec)
-        if rec["valid"] and rec["tour_length"] is not None:
-            objectives.append(float(rec["tour_length"]))
+        if rec["valid"] and rec["objective"] is not None:
+            objectives.append(float(rec["objective"]))
         else:
             all_valid = False
             if first_error_code is None:
@@ -122,14 +176,18 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     inner_ms = (time.perf_counter() - t0) * 1000.0
     return {
         "valid": bool(all_valid and bool(objectives)),
+        "completed": bool(records) and all(rec["completed"] for rec in records),
+        "protocol_id": adapter.protocol_id,
         "objective": round(mean_obj, 6) if mean_obj is not None else None,
         "instance_objectives": [round(x, 6) for x in objectives],
+        "ordered_instance_objectives": [rec["objective"] for rec in records],
         "error_code": first_error_code,
         "error_detail": first_error_detail,
         "failures": [],
         "records": records,
         "template_source_sha256": tpl.template_source_sha256,
         "inner_compute_ms": round(inner_ms, 4),
+        **(hook_bundle_metadata(specs, implementations) if implementations is not None else {}),
     }
 
 

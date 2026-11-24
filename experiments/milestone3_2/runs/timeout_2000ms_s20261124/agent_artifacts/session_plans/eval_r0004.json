@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:620e285b64174ed69f6bd6963972e206"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 2000 ms, replacing the round-2 fixed gate/rank-power destroy score with (a) an iter_frac-scheduled two-phase rank exponent, (b) a route-sparsity (short-route priority) factor and (c) a Shaw-relatedness second-pass term will lower mean objective below the current SBS 16.078067, with the largest per-instance gains on the weakest regimes (size 100, loose capacity, eccentric depot, uniform demand), because those instances have many partially-filled short routes whose customers are geographically interchangeable and thus need spatially coherent removal rather than globally top-savings removal.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:620e285b64174ed69f6bd6963972e206"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the round-2 champion destroy score (method-cvrp-m3-ruin-recreate-l3) into a scale-free, stagnation-phase-scheduled ruin rule: keep the multiplicative gates (normalized removal savings x depot-distance gate x route-load saturation gate) but (i) replace the single fixed rank exponent with a two-phase schedule that is near-linear-greedy at iter_frac<0.35 and transitions to a mid-tail power (p~0.5-0.7) plus a small deterministic jitter term later, (ii) add a 'route-sparsity' factor 1/(route_len) so short/degenerate routes are prioritized for rearrangement, and (iii) add a Shaw-relatedness term to the second ruin pass (customers near the already-selected seed customer score higher) so successive removals in the same iteration cluster geographically instead of scattering. Hyperparameter sensitivity (gate strengths, phase switch point, power bounds) is co-evolved, not hand-tuned."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

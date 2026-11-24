@@ -1,0 +1,44 @@
+{
+  "suite_id": "obp_m31_blind_72",
+  "problem_family": "obp",
+  "problem_id": "obp_online",
+  "protocol_id": "obp_online/v1",
+  "split": "blind",
+  "suite_role": "final_blind_acceptance",
+  "distance_convention": "not_applicable",
+  "vehicle_limit_policy": "not_applicable",
+  "generator_version": "m31_stratified/v1",
+  "instance_count": 72,
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_low": 4,
+      "n50_uniform_high": 4,
+      "n50_bimodal_low": 4,
+      "n50_bimodal_high": 4,
+      "n50_weibull_low": 4,
+      "n50_weibull_high": 4,
+      "n100_uniform_low": 4,
+      "n100_uniform_high": 4,
+      "n100_bimodal_low": 4,
+      "n100_bimodal_high": 4,
+      "n100_weibull_low": 4,
+      "n100_weibull_high": 4,
+      "n200_uniform_low": 4,
+      "n200_uniform_high": 4,
+      "n200_bimodal_low": 4,
+      "n200_bimodal_high": 4,
+      "n200_weibull_low": 4,
+      "n200_weibull_high": 4
+    },
+    "axis": "capacity_to_median_ratio",
+    "strata": {
+      "low": 4,
+      "high": 8
+    }
+  },
+  "reference_baseline": "first_fit",
+  "input_visibility": "arrival_prefix",
+  "exposure_status": "locked_m31_blind",
+  "schema_version": "milestone-blind-commitment-design/v1",
+  "commitment_status": "pending_external_seal"
+}

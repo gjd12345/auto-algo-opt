@@ -1,0 +1,70 @@
+{
+  "bundle_hash": "c4ca773e04f9743a1a95616f1f6ba5153aaeb8ec43cf2148be8074f013441c2a",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "default_budget_ms": 500.0,
+  "description": "Settled candidate under cvrp_ruin_recreate_dual/v1.",
+  "design_sha256": "16420f43a1b53f4f3036642f400e3dedfd34ab5f095c33db46849ff2873ef029",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate_dual (96095da4)",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    rid = np.asarray(route_ids, dtype=np.int64)\n    n = int(rid.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n\n    d0 = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    d0_mean = float(np.mean(d0)) if n > 0 and np.any(d0) else 1.0\n    d0_mean = max(d0_mean, 1e-9)\n    d0_n = np.clip(d0 / d0_mean, 0.0, 6.0)\n\n    sav_abs = np.abs(sav)\n    sav_ref = float(np.mean(sav_abs)) if np.any(sav_abs) else 1.0\n    sav_ref = max(sav_ref, 1e-9)\n    sav_n = sav / sav_ref\n\n    uniq, counts = np.unique(rid, return_counts=True)\n    cmap = {int(r): int(c) for r, c in zip(uniq, counts)}\n    rsz = np.array([cmap[int(r)] for r in rid], dtype=np.float64)\n    rsz_ref = float(np.mean(rsz)) if n > 0 else 1.0\n    crowd = np.clip(rsz_ref / np.maximum(rsz, 0.75), 0.30, 1.55)\n\n    rd_max = float(np.max(rd)) if rd.size and np.max(rd) > 0 else 1.0\n    rl_max = float(np.max(rl)) if rl.size and np.max(rl) > 0 else 1.0\n    route_gate = 0.45 + 0.55 * (rd / rd_max)\n    load_gate = 0.40 + 0.60 * (rl / rl_max)\n\n    dem_max = float(np.max(dem)) if dem.size and np.max(dem) > 0 else 1.0\n    dem_gate = 0.45 + 0.55 * (dem / dem_max)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n\n    power = (1.00 + 1.05 * itf) * (1.0 + 0.45 * stag)\n    power = float(np.clip(power, 1.0, 2.10))\n\n    lo = float(np.min(sav_n))\n    hi = float(np.max(sav_n))\n    span = max(hi - lo, 1e-12)\n    sav_rank = (sav_n - lo) / span\n    sav_soft = sav_rank ** power\n\n    far_gate = 0.20 + 0.80 * d0_n\n\n    idx = np.arange(n, dtype=np.float64)\n    phase = (idx + 1.0) * 2.718281828459045 + stag * 9.1 + itf * 6.7\n    diverse = 0.5 + 0.5 * np.sin(phase)\n\n    base = sav_soft * crowd * route_gate * load_gate * dem_gate * far_gate\n\n    mix_w = 0.18 + 0.60 * stag + 0.36 * itf\n    mix_w = float(np.clip(mix_w, 0.0, 0.90))\n    out = (1.0 - mix_w) * base + mix_w * (0.45 * base + 0.55 * diverse)\n\n    out = np.asarray(out, dtype=np.float64)\n    out = np.where(np.isfinite(out), out, 0.0)\n    return out\n",
+  "hook_code_sha256": "fbd938822d6d6655333598a68d754b52abcc707cad89b342b999198f3d98b7cc",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec",
+  "hook_hashes": {
+    "score_recreate_action": "bd9d16022cf0741fb8ce78f363cf6985dbc7163c6941c730150c151d9d6c4308",
+    "score_ruin_nodes": "fbd938822d6d6655333598a68d754b52abcc707cad89b342b999198f3d98b7cc"
+  },
+  "hook_implementations": {
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    insert_delta = np.asarray(insert_delta, dtype=np.float64)\n    regret2_margin = np.asarray(regret2_margin, dtype=np.float64)\n    route_load_after = np.asarray(route_load_after, dtype=np.float64)\n    target_route_idx = np.asarray(target_route_idx)\n    insert_pos = np.asarray(insert_pos, dtype=np.float64)\n    n = int(len(insert_delta)) if np.ndim(insert_delta) else 1\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n\n    d_abs = np.abs(insert_delta)\n    d_ref = float(np.mean(d_abs)) if np.any(d_abs) else 1.0\n    d_scale = max(d_ref, 1e-9)\n    detour_term = -insert_delta / d_scale\n\n    r_abs = np.abs(regret2_margin)\n    r_ref = float(np.mean(r_abs)) if np.any(r_abs) else 1.0\n    r_scale = max(r_ref, 1e-9)\n    reg_term = regret2_margin / r_scale\n\n    fill = np.clip(route_load_after / cap, 0.0, 1.0)\n    mean_fill = float(np.mean(fill)) if n > 0 else 0.5\n    loose = float(np.clip(1.0 - mean_fill, 0.0, 1.0))\n    tight = 1.0 - loose\n\n    fill_target = 0.60 + 0.28 * loose\n    fill_gate = np.clip(1.0 - 2.2 * np.abs(fill - fill_target), -1.4, 1.4)\n\n    overfill_pen = -(0.22 + 0.60 * tight) * np.clip(fill - 0.80, 0.0, 1.0)\n\n    new_route_bonus = np.where(target_route_idx < 0, 0.06 + 0.20 * loose, 0.0)\n\n    slack = np.clip(1.0 - fill, 0.0, 1.0)\n    tight_slack = 1.0 - slack\n    reg_w = (0.85 - 0.10 * loose) * (1.0 + 1.05 * tight_slack)\n\n    pos_norm = np.where(target_route_idx < 0, 0.0, np.clip(insert_pos, 0.0, 1e9) / max(1.0, float(n)))\n    pos_term = -(0.015 + 0.10 * tight) * pos_norm\n\n    detour_w = 0.95 + 0.32 * tight\n    fill_w = 0.28 + 0.28 * loose\n\n    score = (detour_w * detour_term\n             + reg_w * reg_term\n             + fill_w * fill_gate\n             + overfill_pen\n             + new_route_bonus\n             + pos_term)\n\n    score = np.asarray(score, dtype=np.float64)\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score\n",
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    rid = np.asarray(route_ids, dtype=np.int64)\n    n = int(rid.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    cap = max(float(capacity), 1e-12)\n\n    d0 = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    d0_mean = float(np.mean(d0)) if n > 0 and np.any(d0) else 1.0\n    d0_mean = max(d0_mean, 1e-9)\n    d0_n = np.clip(d0 / d0_mean, 0.0, 6.0)\n\n    sav_abs = np.abs(sav)\n    sav_ref = float(np.mean(sav_abs)) if np.any(sav_abs) else 1.0\n    sav_ref = max(sav_ref, 1e-9)\n    sav_n = sav / sav_ref\n\n    uniq, counts = np.unique(rid, return_counts=True)\n    cmap = {int(r): int(c) for r, c in zip(uniq, counts)}\n    rsz = np.array([cmap[int(r)] for r in rid], dtype=np.float64)\n    rsz_ref = float(np.mean(rsz)) if n > 0 else 1.0\n    crowd = np.clip(rsz_ref / np.maximum(rsz, 0.75), 0.30, 1.55)\n\n    rd_max = float(np.max(rd)) if rd.size and np.max(rd) > 0 else 1.0\n    rl_max = float(np.max(rl)) if rl.size and np.max(rl) > 0 else 1.0\n    route_gate = 0.45 + 0.55 * (rd / rd_max)\n    load_gate = 0.40 + 0.60 * (rl / rl_max)\n\n    dem_max = float(np.max(dem)) if dem.size and np.max(dem) > 0 else 1.0\n    dem_gate = 0.45 + 0.55 * (dem / dem_max)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n\n    power = (1.00 + 1.05 * itf) * (1.0 + 0.45 * stag)\n    power = float(np.clip(power, 1.0, 2.10))\n\n    lo = float(np.min(sav_n))\n    hi = float(np.max(sav_n))\n    span = max(hi - lo, 1e-12)\n    sav_rank = (sav_n - lo) / span\n    sav_soft = sav_rank ** power\n\n    far_gate = 0.20 + 0.80 * d0_n\n\n    idx = np.arange(n, dtype=np.float64)\n    phase = (idx + 1.0) * 2.718281828459045 + stag * 9.1 + itf * 6.7\n    diverse = 0.5 + 0.5 * np.sin(phase)\n\n    base = sav_soft * crowd * route_gate * load_gate * dem_gate * far_gate\n\n    mix_w = 0.18 + 0.60 * stag + 0.36 * itf\n    mix_w = float(np.clip(mix_w, 0.0, 0.90))\n    out = (1.0 - mix_w) * base + mix_w * (0.45 * base + 0.55 * diverse)\n\n    out = np.asarray(out, dtype=np.float64)\n    out = np.where(np.isfinite(out), out, 0.0)\n    return out\n"
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "output_shape_arg": "route_ids",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ]
+    },
+    {
+      "name": "score_recreate_action",
+      "output_shape_arg": "customer_idx",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ]
+    }
+  ],
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_l3b_dual_hook_s20261125",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_96095da4f5",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "template_version": "v1"
+}

@@ -1,0 +1,31 @@
+{
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "evidence-cvrp-m3-blind120-and-direction2"
+  ],
+  "default_budget_ms": 500.0,
+  "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+  "design_sha256": "5c0cd1b5f29200fb7417d58394a3203f383cdffecb500c69ba171f4b52f5d744",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate (4bddddc9)",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dmd = np.asarray(demands, dtype=np.float64)\n    rs = np.asarray(removal_savings, dtype=np.float64).ravel()\n    rl = np.asarray(route_loads, dtype=np.float64).ravel()\n    rd = np.asarray(route_dists, dtype=np.float64).ravel()\n\n    if rs.shape[0] != n:\n        out = np.zeros(n, dtype=np.float64)\n        m = min(n, rs.shape[0])\n        out[:m] = rs[:m]\n        return out\n\n    cap = float(capacity)\n    if not np.isfinite(cap) or cap <= 0.0:\n        cap = 1.0\n    if rl.shape[0] != n:\n        rl = np.full(n, 0.5 * cap, dtype=np.float64)\n    if rd.shape[0] != n:\n        rd = np.ones(n, dtype=np.float64)\n\n    rs = np.where(np.isfinite(rs), rs, 0.0)\n    depot_d = np.abs(dm[0, 1:n + 1]) if dm.shape[0] > 1 else np.ones(n)\n    depot_d = np.where(np.isfinite(depot_d), depot_d, 0.0)\n    gscale = float(np.mean(depot_d)) if n > 0 else 1.0\n    if not np.isfinite(gscale) or gscale <= 1e-12:\n        gscale = 1.0\n\n    rd_safe = np.where(np.isfinite(rd) & (rd > 1e-12), rd, gscale)\n\n    # Scale-free worst-cost removal saving (detour fraction).\n    detour = rs / rd_safe\n    detour = np.where(np.isfinite(detour), detour, 0.0)\n    detour = np.clip(detour, 0.0, None)\n\n    # Capacity slack pressure (sharp near full).\n    rl_f = np.where(np.isfinite(rl), rl, 0.0)\n    util = np.clip(rl_f / cap, 0.0, 1.0)\n    slack_pressure = util / (1.0 - util + 0.1)\n\n    # Demand fraction as a small tie-breaker.\n    dem_frac = np.zeros(n, dtype=np.float64)\n    if dmd.shape[0] >= n + 1:\n        dd = np.where(np.isfinite(dmd[1:n + 1]), dmd[1:n + 1], 0.0)\n        dem_frac = np.clip(dd / cap, 0.0, 1.0)\n\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = min(max(it, 0.0), 1.0)\n\n    diversity = 0.55 * st + 0.45 * it\n    diversity = min(max(diversity, 0.0), 1.0)\n\n    # Weights shift from greedy (saving) to diverse (slack/demand-driven).\n    w_detour = 1.0 - 0.45 * diversity\n    w_slack = 0.08 + 0.32 * diversity\n    w_dem = 0.03 + 0.18 * it\n\n    norm_detour = detour / (1.0 + detour)\n    norm_slack = slack_pressure / (1.0 + slack_pressure)\n\n    hazard = (w_detour * norm_detour\n              + w_slack * norm_slack\n              + w_dem * dem_frac)\n    hazard = np.where(np.isfinite(hazard), hazard, 0.0)\n    hazard = np.clip(hazard, 0.0, None)\n\n    # Deterministic per-customer hash-lattice pseudo-uniforms in (0,1).\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    h1 = np.sin(idx * 12.9898 + 78.2330 * it + 3.1417 * st) * 43758.5453\n    h2 = np.sin(idx * 7.2371 + 39.4251 * st + 6.2831 * it) * 24634.6345\n    u = np.abs(h1 + h2)\n    u = u - np.floor(u)\n    u = np.where(np.isfinite(u), u, 0.5)\n    u = np.clip(u, 1e-9, 1.0 - 1e-9)\n\n    # Survival probability against a single ruin-hazard draw:\n    # higher hazard -> lower survival -> higher ruin priority.\n    survival = np.power(u, 1.0 + hazard)\n    survival = np.where(np.isfinite(survival), survival, 0.5)\n    survival = np.clip(survival, 0.0, 1.0)\n\n    # Rank-based tail widening: as iter_frac and stagnation grow, we stretch\n    # the priority into a heavier-tailed ordering to diversify the ruin set.\n    widen = 0.6 * diversity\n    widen = min(max(widen, 0.0), 1.0)\n\n    # Base priority: strong saving dominance in early/stalled state, then\n    # flatter but hash-varying ordering later.\n    priority = (1.0 - widen) * (1.0 - survival) + widen * (hazard / (1.0 + hazard))\n\n    # Residual jitter dampened when greedy, amplified when diversified.\n    jitter = (0.05 + 0.20 * widen) * (u - 0.5)\n    priority = priority + jitter\n\n    # Stable tie-breaker so equal rates still get deterministic ordering.\n    priority = priority + 1e-6 * (1.0 - np.abs(2.0 * u - 1.0))\n\n    priority = np.where(np.isfinite(priority), priority, 0.0)\n    return priority.astype(np.float64)",
+  "hook_code_sha256": "4bddddc9aa8fb9ed7f365e56c0c9a67c4be6a3872912bc8c7097669c8153045f",
+  "hook_name": "score_ruin_nodes",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_curve_s20261126",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_4bddddc9aa",
+  "template_id": "cvrp_ruin_recreate",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "template_version": "v1"
+}

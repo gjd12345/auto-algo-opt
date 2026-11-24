@@ -1,0 +1,38 @@
+{
+  "round_id": 3,
+  "direction": "Replace the plain cheapest-insertion delta in score_insertion_move with a regret-style score: score(u) = best_insertion_delta(u) + w(t) * max_norm_farness(u) - lambda * second_best_delta_gap(u), where farness(u) is the mean distance from u to all remaining uninserted cities normalized by the per-step max (dimensionless), and w(t) grows with construction progress (capped). Use a fully vectorized, squared-distance formulation so the hook stays sub-millisecond per step and leaves the whole 500 ms budget intact; rely on the template's built-in 2-opt repair for local optimality rather than adding search inside the hook.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_guided_insertion_2opt",
+      "mechanism": "Archive frontier shows both existing solvers are the same template with mean objective 84482 and 84740 at only 10-16 ms mean solve time — i.e. we are far under the 500 ms budget and quality, not speed, is the binding constraint; VBS/SBS gap of 1.21% shows complementarity exists but is small, so a genuine quality jump must come from a better move-scoring rule. KB entries method-tsp-i605-mean-farness (128/128 completion, best RD among full-completion island rules, +14.28%) and method-tsp-i605-dest-pull (sub-ms, 128/128) both demonstrate that cheap linear/normalized geometric terms in the constructive score dominate expensive rollout (method-tsp-i605-1step-rollout completed only 44/128 under a 500 ms budget). method-tsp-i605-dimensionless-ratio shows max-normalization gives strict scale invariance, which matters because dev_24 mixes size 50/100/200 instances with different coordinate scales and the weakest regime reported is exactly the mixed size factor (rel gaps -14.9% to -16.8%). method-tsp-two-opt guarantees the template's 2-opt pass already handles local geometry, so the hook should spend its effort on global outlier scheduling (isolation) rather than duplicating local search. The regret term suppresses ties/ambiguity in insertion position that otherwise cause premature locking of the tour into a poor cyclic order."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Coupling cheapest-insertion cost with a scale-invariant (max-normalized) mean-farness isolation term and a regret gap on the second-best insertion position will cut mean_objective below the current SBS 84482.07 on dev_24/dev_36 while keeping mean solve time under ~40 ms, because pure insertion deltas defer far-outlier cities until late and thereby create long final edges that the restricted 2-opt repair cannot undo.",
+  "interface_selection": {
+    "template_id": "tsp_guided_insertion_2opt",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-dimensionless-ratio",
+      "method-tsp-two-opt",
+      "method-tsp-nearest-neighbor-construct"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive frontier shows both existing solvers are the same template with mean objective 84482 and 84740 at only 10-16 ms mean solve time — i.e. we are far under the 500 ms budget and quality, not speed, is the binding constraint; VBS/SBS gap of 1.21% shows complementarity exists but is small, so a genuine quality jump must come from a better move-scoring rule. KB entries method-tsp-i605-mean-farness (128/128 completion, best RD among full-completion island rules, +14.28%) and method-tsp-i605-dest-pull (sub-ms, 128/128) both demonstrate that cheap linear/normalized geometric terms in the constructive score dominate expensive rollout (method-tsp-i605-1step-rollout completed only 44/128 under a 500 ms budget). method-tsp-i605-dimensionless-ratio shows max-normalization gives strict scale invariance, which matters because dev_24 mixes size 50/100/200 instances with different coordinate scales and the weakest regime reported is exactly the mixed size factor (rel gaps -14.9% to -16.8%). method-tsp-two-opt guarantees the template's 2-opt pass already handles local geometry, so the hook should spend its effort on global outlier scheduling (isolation) rather than duplicating local search. The regret term suppresses ties/ambiguity in insertion position that otherwise cause premature locking of the tour into a poor cyclic order."
+  }
+}

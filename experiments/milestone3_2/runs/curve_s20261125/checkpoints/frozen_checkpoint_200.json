@@ -1,0 +1,80 @@
+{
+  "best_dev_objective": 15.74349974,
+  "checkpoint_budget": 200,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58",
+    "penalized_mean_objective": 15.74349974,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 15.74349974
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "default_budget_ms": 500.0,
+    "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+    "design_sha256": "127af9eba6e8a4b37ad9b9fd87411548fd1d0d7e8a2c5e7bba0747dc01a3d589",
+    "diagnostic_ref": null,
+    "display_name": "M3.2 Candidate cvrp_ruin_recreate (d6c597ab)",
+    "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = route_ids.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    s = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    s = np.where(np.isfinite(s), s, 0.0)\n\n    # Normalize savings to [0, 1] via max (scale invariant)\n    smax = float(np.max(s)) if n > 0 else 0.0\n    if not (smax > 0.0) or not np.isfinite(smax):\n        smax = 1.0\n    zn = np.clip(s / smax, 0.0, 1.0)\n\n    # Rank-power core: p annealed from sharp (early/non-stagnant) toward 1 (stagnant/late)\n    p = (1.0 + 2.0 * (1.0 - it)) * (1.0 - 0.6 * st)\n    p = min(max(p, 0.5), 6.0)\n    core = np.power(zn + 1e-9, p)\n\n    def soft_mean(arr):\n        m = float(np.mean(arr))\n        return m if (m > 0.0 and np.isfinite(m)) else 1.0\n\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n    util = np.clip(loads / cap, 0.0, 1.0)\n\n    depot = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    depot = np.where(np.isfinite(depot), depot, 0.0)\n    ecc = depot / (soft_mean(depot) + 1e-12)\n\n    d = np.asarray(demands[1:n + 1], dtype=np.float64)\n    d = np.where(np.isfinite(d), d, 0.0)\n    dem_rel = d / (soft_mean(d) + 1e-12)\n\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd = np.where(np.isfinite(rd), rd, 0.0)\n    rd_rel = rd / (soft_mean(rd) + 1e-12)\n\n    def gate(x, k):\n        x = np.clip(x, 0.0, 50.0)\n        return 1.0 / (1.0 + np.exp(-k * (x - 1.0)))\n\n    # Gate strengths: capacity tightness dominates under tight regime\n    k_load = 2.0 + 2.0 * st\n    g = gate(util, k_load) * gate(ecc, 1.5) * gate(dem_rel, 1.5) * gate(rd_rel, 1.0)\n\n    score_cost = core * g\n\n    # Deterministic index hash for diversification\n    idx = np.arange(n, dtype=np.float64)\n    h = np.sin((idx + 1.0) * 12.9898 + st * 78.233 + it * 37.719) * 43758.5453\n    h = h - np.floor(h)\n    h = np.clip(h, 0.0, 1.0 - 1e-12)\n\n    mix = 0.55 * st + 0.15 * it\n    mix = min(max(mix, 0.0), 0.9)\n    score = (1.0 - mix) * score_cost + mix * h\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+    "hook_code_sha256": "d6c597ab94b5719d9f20bedb534648ba2113551899feee6c50a10f7fe1df53f5",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "origin_run": "m32_curve_s20261125",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "ckpt_cand_d6c597ab94",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_curve_s20261125",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 200,
+  "usage_cutoff": {
+    "attempted_requests": 200,
+    "by_state": {
+      "complete": 185,
+      "connectivity_failed": 9,
+      "http_error": 5,
+      "killed_unknown": 1
+    },
+    "cached_tokens": 672000,
+    "input_tokens": 1021321,
+    "output_tokens": 193981,
+    "priced_attempts": 185,
+    "priced_cost_usd": 0.17080279,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "eoh_skipped": 5,
+      "invalid_candidate": 58,
+      "probe": 4,
+      "provider_failed": 10,
+      "valid_candidate": 99
+    },
+    "provider_elapsed_seconds": 2065.151,
+    "requested_models": {
+      "deepseek-v4.1-flash": 200
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 185
+    },
+    "unpriced_attempts": 15
+  },
+  "wall_elapsed_seconds_at_seal": 3176.876,
+  "winner_solver_sha256": "164b43b3f0f35aded3d0f85d4cc34cf4ccad75c30af76cceca1c86e0ee468cd2",
+  "winner_source_ordinal": 96
+}

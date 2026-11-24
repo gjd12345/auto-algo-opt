@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0007_cvrp_ruin_recreate_56de9608",
+  "display_name": "Session R7 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    eps = 1e-12\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    dmat = np.asarray(distance_matrix, dtype=np.float64)\n    d0 = np.asarray(dmat[0, 1:], dtype=np.float64).ravel()\n    cap = max(float(capacity), eps)\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # Robust, scale-free normalization of each criterion.\n    sav_mean = float(np.mean(sav)) + eps\n    sav_std = float(np.std(sav)) + eps\n    z_sav = (sav - sav_mean) / sav_std\n\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    dem_util = np.clip(dem / cap, 0.0, 1.0)\n    z_load = (0.6 * load_util + 0.4 * dem_util) * 2.0 - 1.0\n\n    d0_mean = float(np.mean(d0)) + eps\n    z_depot = 1.0 - 2.0 / (1.0 + d0 / d0_mean)\n\n    rd_mean = float(np.mean(rdists)) + eps\n    z_rdist = 2.0 * rdists / (rdists + rd_mean) - 1.0\n\n    dem_mean = float(np.mean(dem)) + eps\n    z_demand = 2.0 * dem / (dem + dem_mean) - 1.0\n\n    # Temperature: high on stagnation (broad exploration), low late (sharp exploitation).\n    temp = 0.35 + 1.65 * s * (1.0 - p) + 0.25 * (1.0 - p)\n    temp = float(np.clip(temp, 0.15, 2.0))\n    inv_t = 1.0 / temp\n\n    # Linear utility combining criteria; savings dominate but others modulate.\n    util = 1.6 * z_sav + 0.45 * z_load + 0.35 * z_depot + 0.40 * z_rdist + 0.30 * z_demand\n\n    # Soft-max tilt with temperature.\n    tilted = inv_t * util\n    tilted = tilted - float(np.max(tilted))\n    expv = np.exp(np.clip(tilted, -60.0, 0.0))\n    base = expv / (float(np.sum(expv)) + eps)\n\n    # Spatial-cluster widening: average priority over k nearest customer neighbors.\n    k = int(np.clip(round(4 + 10 * s * (1.0 - 0.5 * p)), 2, min(12, n - 1))) if n > 2 else 1\n    if n > 2 and k >= 1:\n        sub = dmat[1:, 1:]\n        # Exclude self by setting diagonal to +inf.\n        idx = np.arange(n)\n        sub_safe = np.array(sub, dtype=np.float64, copy=True)\n        sub_safe[idx, idx] = np.inf\n        order = np.argsort(sub_safe, axis=1)\n        nbr_idx = order[:, :k]\n        nbr_mean = np.mean(base[nbr_idx], axis=1)\n        cluster_bonus = 1.0 + (0.6 * s) * (nbr_mean / (base + eps) - 1.0)\n        cluster_bonus = np.clip(cluster_bonus, 0.5, 2.5)\n    else:\n        cluster_bonus = np.ones(n, dtype=np.float64)\n\n    score = base * cluster_bonus\n\n    # Deterministic tie-break favoring larger savings.\n    tie = 1e-9 * (sav / (float(np.max(sav)) + eps))\n    result = score + tie\n\n    return np.where(np.isfinite(result), np.clip(result, 0.0, None), 0.0).astype(np.float64)",
+  "hook_code_sha256": "56de9608b75dc21c2c3ae4680eb4a883a9f75708c3c6a7f851488414c265c4fd",
+  "design_sha256": "245b119dc245f46c6dbf69fd254a9095cc02c64a1cca20e6da5d136a2e2d5146",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261124\\session_run\\rounds\\round_0007\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

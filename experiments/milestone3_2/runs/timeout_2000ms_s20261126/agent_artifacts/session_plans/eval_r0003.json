@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:6b53cc7e10a84543b36ed430a3aeb775"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "An evolved multiplicative-gate rank-power ruin score that is jointly normalized by the global depot-distance scale and adapts its rank exponent to stagnation will improve mean objective on cvrp_dev_hetero_24 versus the round-2 incumbent (16.0293), with the gains concentrated in the weakest regimes identified in the archive feedback (spatial=clustered, capacity_level=loose, size=100, depot_style=eccentric), because worst-cost removal alone over-focuses on long edges and never diversifies across routes of an eccentric-depot instance.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:6b53cc7e10a84543b36ed430a3aeb775"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the ruin priority hook `score_ruin_nodes` into a stagnation-adaptive, dimensionless multiplicative gate: rank-power of the scale-normalized removal savings with exponent p(iter_frac, stagnation_ratio) that shifts from exploitation (high p, worst-cost removal) toward diversification (p→1 + randomized-deterministic geometric spread) as stagnation rises; multiply by smooth gates for route load slack (dense/loose-capacity routes first), depot proximity asymmetry (eccentric-depot instances), and within-route distance, so that clustered/loose-capacity regimes get larger ruin sets while eccentric-depot routes are ruined along their far-side arc."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

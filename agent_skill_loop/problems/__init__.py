@@ -1,6 +1,7 @@
 """Problem contracts: CVRP construct, TSP construct, and TSP 2-opt local search."""
 
 from agent_skill_loop.problems.base import PROBLEM_REGISTRY, ProblemSpec, get_problem, register_problem
+from agent_skill_loop.problems import bpp_offline, obp, tsp, tsp_2opt  # noqa: F401
 from agent_skill_loop.problems.cvrp import (
     BASELINE_CODE,
     ENTRYPOINT,

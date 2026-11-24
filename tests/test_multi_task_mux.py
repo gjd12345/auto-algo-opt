@@ -498,3 +498,70 @@ def test_multi_task_mux_supervisor_survives_lock_timeout_and_kill_does_not_hold_
     res = kill_session(base_dir, "killlock")
     assert observed_during_kill["lock_free"] is True
     assert res["unkilled_pids"] == []
+
+
+def test_multi_task_mux_resumable_exit_code_auto_resumes(tmp_path: Path, capsys) -> None:
+    manifest = tmp_path / "resume_jobs.json"
+    marker = tmp_path / "attempt_count.txt"
+    py = sys.executable
+    script = (
+        f"import pathlib, sys; p = pathlib.Path({str(marker)!r}); "
+        "n = int(p.read_text()) + 1 if p.exists() else 1; "
+        "p.write_text(str(n), encoding='utf-8'); "
+        "sys.exit(75 if n == 1 else 0)"
+    )
+    manifest.write_text(
+        json.dumps({"panes": [{"id": "retry_job", "command": [py, "-c", script, "--resume"]}]}),
+        encoding="utf-8",
+    )
+    base_dir = tmp_path / "mux_base"
+    assert mux_main(["--base-dir", str(base_dir), "start", "--session", "res_sess", "--manifest", str(manifest), "--max-concurrent", "1"]) == 0
+    capsys.readouterr()
+
+    deadline = time.monotonic() + 20.0
+    snap = inspect_session(base_dir, "res_sess")
+    while not snap["all_finished"] and time.monotonic() < deadline:
+        time.sleep(0.2)
+        snap = inspect_session(base_dir, "res_sess")
+
+    assert snap["all_finished"] is True
+    assert snap["counts"]["done"] == 1
+    assert snap["counts"]["failed"] == 0
+    assert snap["counts"].get("resumable", 0) == 0
+    assert int(marker.read_text(encoding="utf-8")) == 2
+
+
+def test_multi_task_mux_retry_exhausted_and_log_append(tmp_path: Path, capsys) -> None:
+    manifest = tmp_path / "exhaust_jobs.json"
+    marker = tmp_path / "always75_count.txt"
+    py = sys.executable
+    script = (
+        f"import pathlib, sys; p = pathlib.Path({str(marker)!r}); "
+        "n = int(p.read_text()) + 1 if p.exists() else 1; "
+        "p.write_text(str(n), encoding='utf-8'); "
+        "print(f'attempt={n}', flush=True); "
+        "sys.exit(75)"
+    )
+    manifest.write_text(
+        json.dumps({"panes": [{"id": "exhaust_job", "command": [py, "-c", script, "--resume"]}]}),
+        encoding="utf-8",
+    )
+    base_dir = tmp_path / "mux_base"
+    assert mux_main(["--base-dir", str(base_dir), "start", "--session", "ex_sess", "--manifest", str(manifest), "--max-concurrent", "1"]) == 0
+    capsys.readouterr()
+
+    rc_wait = mux_main(["--base-dir", str(base_dir), "wait", "--session", "ex_sess", "--timeout", "40", "--interval", "0.2"])
+    assert rc_wait == 1
+    snap = json.loads(capsys.readouterr().out)
+    assert snap["all_finished"] is True
+    assert snap["counts"]["retry_exhausted"] == 1
+    assert snap["counts"].get("resumable", 0) == 0
+    assert int(marker.read_text(encoding="utf-8")) == 4
+
+    log_text = (base_dir / "ex_sess" / "logs" / "exhaust_job.log").read_text(encoding="utf-8")
+    assert "attempt=1" in log_text
+    assert "attempt=4" in log_text
+    assert "[mux resume attempt 1" in log_text
+
+    assert mux_main(["--base-dir", str(base_dir), "status", "--session", "ex_sess"]) == 0
+    assert "retry_exhausted=1" in capsys.readouterr().out

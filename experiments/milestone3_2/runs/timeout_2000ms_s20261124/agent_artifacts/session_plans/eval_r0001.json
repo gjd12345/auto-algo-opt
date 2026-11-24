@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:de1501eff48a4c5bb03dc5938525b584"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Under a 2000 ms per-instance budget the L3 ruin-recreate skeleton performs far more iterations than at 500 ms; therefore a stagnation-adaptive rank-power destroy score (near-uniform ruin early to diversify, sharp worst-cost ruin under stagnation, multiplied by load/depot/demand/route-share gates) will beat the zero-evolution Worst-Cost-Removal control on cvrp_dev_hetero_24 by a larger margin than the +0.12% seen at 500 ms, because extra iterations amplify the value of a destroy policy that escapes local minima while never discarding high-`removal_savings` structural targets.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:de1501eff48a4c5bb03dc5938525b584"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the single hook `score_ruin_nodes` as a multiplicative gated rank-power destroy-selection rule, with the rank exponent p made state-adaptive: p small (≈0.5–0.8, near-uniform randomized-agnostic spread) during early low-`iter_frac` exploration and p ramping up (≈1.5–2.0, sharp worst-removal focus) as `stagnation_ratio` grows. Gate by load utilization, depot proximity of the customer nearest in route, demand magnitude and route-length share, so that the ruin set prefers customers whose removal unlocks load re-balancing across routes. Keep the repair side fixed (deterministic Regret-2 + local intra_2opt + R2R acceptance) and keep the hook fully deterministic and state-only, so the gain is attributable to destroy prioritization alone under the 2000 ms budget where many more LNS iterations fit than the 500 ms reference."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

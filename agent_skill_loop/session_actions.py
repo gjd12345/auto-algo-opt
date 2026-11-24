@@ -548,6 +548,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                             }}
                 interface_design_meta = None
                 if plan.interface_selection is not None:
+                    from agent_skill_loop.interface_design.runtime import derive_outer_timeout_s
                     from agent_skill_loop.interface_design.session_bridge import (
                         resolve_session_kb_release,
                         resolve_session_time_budget_ms,
@@ -555,10 +556,15 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     )
                     resolved_budget_ms = resolve_session_time_budget_ms(plan.interface_selection, config)
                     kb_release_id, kb_manifest_sha256 = resolve_session_kb_release(config, session_root=root)
+                    dev_suite_payload = json.loads((root / "dev_suite.json").read_text(encoding="utf-8"))
+                    effective_cand_timeout = max(
+                        float(row["solver_timeout"]),
+                        derive_outer_timeout_s(len(dev_suite_payload.get("instances") or ()), resolved_budget_ms, minimum_s=float(row["solver_timeout"])),
+                    )
                     m2_design, m2_val = validate_session_interface_selection(
                         plan.interface_selection,
                         round_id=rd["round_id"],
-                        candidate_timeout_s=float(row["solver_timeout"]),
+                        candidate_timeout_s=effective_cand_timeout,
                         instance_time_budget_ms=resolved_budget_ms,
                     )
                     val_ref = f"{prefix}/interface_validation.json"
@@ -1041,3 +1047,63 @@ def finish_round(*, run, operation_id, expected_state_version, decision, expecte
         from agent_skill_loop.evidence.report import write_round_progress
         write_round_progress(root)
         return result
+
+
+def freeze_baseline(
+    *,
+    run,
+    operation_id,
+    expected_state_version,
+    baseline_id=None,
+    round_id=None,
+    template_id=None,
+    template_version="v1",
+    postprocess_mode="none",
+    time_budget_ms=None,
+    suite_id=None,
+    expected_run_id=None,
+):
+    from agent_skill_loop.interface_design.session_baseline import freeze_session_baseline
+
+    return freeze_session_baseline(
+        run=run,
+        operation_id=operation_id,
+        expected_state_version=expected_state_version,
+        baseline_id=baseline_id,
+        round_id=round_id,
+        template_id=template_id,
+        template_version=template_version,
+        postprocess_mode=postprocess_mode,
+        time_budget_ms=time_budget_ms,
+        suite_id=suite_id,
+        expected_run_id=expected_run_id,
+    )
+
+
+def re_eval_baseline(
+    *,
+    run,
+    operation_id,
+    expected_state_version,
+    baseline_id,
+    suite_id=None,
+    protocol_id=None,
+    time_budget_ms=None,
+    distance_convention=None,
+    replicate_id="rep_1",
+    expected_run_id=None,
+):
+    from agent_skill_loop.interface_design.session_baseline import re_eval_session_baseline
+
+    return re_eval_session_baseline(
+        run=run,
+        operation_id=operation_id,
+        expected_state_version=expected_state_version,
+        baseline_id=baseline_id,
+        suite_id=suite_id,
+        protocol_id=protocol_id,
+        time_budget_ms=time_budget_ms,
+        distance_convention=distance_convention,
+        replicate_id=replicate_id,
+        expected_run_id=expected_run_id,
+    )

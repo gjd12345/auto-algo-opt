@@ -1,0 +1,31 @@
+{
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "default_budget_ms": 2000.0,
+  "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+  "design_sha256": "f11cd4d5c7056ec87d2670054ba4f53f7009c0798d45b38703bfdbcd9ff7e988",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate (31c4a39e)",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n\n    mean_edge = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n    scale = mean_edge\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # --- Efficiency term: savings per unit edge-scale and unit demand, bounded via tanh-shape ---\n    # Using x/(1+x) instead of rank-power: convex-like saturating transform, scale-free.\n    eff = np.abs(sav) / (scale * (1.0 + dem / mean_dem))\n    eff = np.maximum(eff, 0.0)\n    eff_b = eff / (1.0 + eff)  # bounded in [0,1), monotone\n\n    # --- Locality term: inverse-distance coupling to route-mates + depot ---\n    # For each customer, average inverse distance to route-mates (up to 3 nearest) and depot.\n    inv_mate = np.zeros(n, dtype=np.float64)\n    inv_dep = np.zeros(n, dtype=np.float64)\n    for i in range(n):\n        ci = i + 1\n        members = np.nonzero(rid == rid[i])[0]\n        if members.size <= 1:\n            inv_mate[i] = 0.0\n        else:\n            custs = members + 1\n            dists = d[ci, custs]\n            mask = custs != ci\n            if np.any(mask):\n                dd = np.sort(dists[mask])\n                k = 3 if dd.size >= 3 else dd.size\n                # inverse distance kernel, scale-normalized\n                inv = scale / (dd[:k] + 1e-12)\n                inv = inv / (1.0 + inv)\n                inv_mate[i] = float(np.mean(inv))\n            else:\n                inv_mate[i] = 0.0\n        ddep = float(d[0, ci])\n        x = scale / (ddep + 1e-12)\n        inv_dep[i] = x / (1.0 + x)  # near depot -> closer to 1\n\n    # Locality: prefer BOTH route-mate closeness (clustered) and depot proximity in eccentric geometry\n    locality = 0.6 * inv_mate + 0.4 * inv_dep\n\n    # --- Sigmoid stagnation exponent: exploit efficiency early, shift toward locality as stag/prog rise ---\n    # sigmoid of (stag+prog) with slight bias so switch begins around iter_frac~0.35\n    z = 2.5 * (0.6 * stag + 0.4 * prog) - 0.9\n    w_loc = 1.0 / (1.0 + np.exp(-z))  # ~0.29 when z=-0.9, ~0.5 at z=0, ->1 as z grows\n    w_loc = float(np.clip(w_loc, 0.15, 0.85))\n    w_eff = 1.0 - w_loc\n\n    # --- Capacity-slack bonus (tight routes favored) ---\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    slack_bonus = 0.06 * fill\n\n    # --- Route-distance fraction bonus (long routes slightly favored) ---\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n    rdn = rd / mean_rd\n    rdist_bonus = 0.05 * (rdn / (1.0 + rdn))\n\n    # --- Adaptive-q amplitude: grows with stagnation, gently boosts overall diversity ---\n    amp = 1.0 + 0.35 * stag\n\n    # --- Convex-combined score ---\n    score = amp * (w_eff * eff_b + w_loc * locality) + slack_bonus + rdist_bonus\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "31c4a39eb6da3f2f5d408769a73e58d74e002461924dab87e2b1f980772bccd2",
+  "hook_name": "score_ruin_nodes",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_timeout_2000ms_s20261125",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_31c4a39eb6",
+  "template_id": "cvrp_ruin_recreate",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "template_version": "v1"
+}

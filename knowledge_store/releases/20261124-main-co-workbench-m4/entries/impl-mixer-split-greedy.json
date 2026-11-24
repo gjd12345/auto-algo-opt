@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Mixer split: greedy fill by smallest fitting vehicle capacity",
+  "category": "implementation",
+  "problem_family": "mixer_split",
+  "tags": [
+    "mixer_split",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "Capacities are sorted descending, then each order volume is repeatedly cut using the smallest listed capacity that still fits the remainder (loop over sorted caps keeps the last cap with remaining<=cap, starting from lar",
+  "attributes": {
+    "interface": "SplitOrders(orders, vehicles, workHours) []SubOrder",
+    "online_offline": "offline"
+  },
+  "relations": {
+    "code": [
+      "eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go",
+      "sha256": "d2ec22a1d1473375660ed16b2d278782feac20dbcdc598bd8a3714941d429dc0"
+    }
+  ],
+  "id": "impl-mixer-split-greedy",
+  "content_sha256": "56bc05e45aef16292e84f35a939db341697eef29fa2432e297892b11416aeaef"
+}

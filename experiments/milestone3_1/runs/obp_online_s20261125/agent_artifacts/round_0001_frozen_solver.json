@@ -1,0 +1,51 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_obp_online_priority_08a71795",
+  "display_name": "Session R1 · obp_online_priority",
+  "problem_family": "obp",
+  "paradigm": "sequential_construct",
+  "interface": "obp_online_priority/v1:priority",
+  "template_id": "obp_online_priority",
+  "template_version": "v1",
+  "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "priority",
+  "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n\n    caps = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    n = caps.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    item = float(current_item)\n    caps_safe = np.where(caps > 0.0, caps, 1.0)\n\n    # post-placement residual fraction (0 = perfect pack, 1 = empty bin)\n    r = np.clip((caps - item) / caps_safe, 0.0, 1.0)\n\n    # multiplicative proximity-to-perfect-pack score:\n    # sharp peak at r == 0 (tight fit), smooth falloff, and a mild\n    # near-half preference via a secondary symmetric bump.\n    tight = np.exp(-18.0 * r)          # dominates when a near-perfect fit exists\n    half = np.exp(-8.0 * (r - 0.5) ** 2)  # soft symmetry preference\n    waste = 1.0 / (1.0 + 3.0 * r)      # discourages leaving large residuals\n\n    return (tight * (0.75 + 0.25 * half) * waste).astype(np.float64)",
+  "hook_code_sha256": "08a717950fd5bfc75bccc76530b1b1a59ad8be2432483acefdea43a459881e4f",
+  "design_sha256": "20de653d2293046c0e76dc22a1c87b1c393436a5d0734296abe344bff37c50c3",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261125\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-obp-i605-log-half-symmetry",
+  "cited_kb_ids": [
+    "method-obp-i605-log-half-symmetry",
+    "method-obp-i605-sqrt-close-bonus",
+    "method-obp-i605-exp-deadzone",
+    "method-obp-best-fit",
+    "impl-obp-go-solver"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved obp_online_priority/v1:priority",
+  "default_budget_ms": 500.0,
+  "protocol_id": "obp_online/v1",
+  "hook_specs": [
+    {
+      "name": "priority",
+      "signature": [
+        "current_item",
+        "feasible_remaining_capacities"
+      ],
+      "output_shape_arg": "feasible_remaining_capacities"
+    }
+  ],
+  "hook_implementations": {
+    "priority": "def priority(current_item, feasible_remaining_capacities):\n    import numpy as np\n\n    caps = np.asarray(feasible_remaining_capacities, dtype=np.float64)\n    n = caps.shape[0]\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    item = float(current_item)\n    caps_safe = np.where(caps > 0.0, caps, 1.0)\n\n    # post-placement residual fraction (0 = perfect pack, 1 = empty bin)\n    r = np.clip((caps - item) / caps_safe, 0.0, 1.0)\n\n    # multiplicative proximity-to-perfect-pack score:\n    # sharp peak at r == 0 (tight fit), smooth falloff, and a mild\n    # near-half preference via a secondary symmetric bump.\n    tight = np.exp(-18.0 * r)          # dominates when a near-perfect fit exists\n    half = np.exp(-8.0 * (r - 0.5) ** 2)  # soft symmetry preference\n    waste = 1.0 / (1.0 + 3.0 * r)      # discourages leaving large residuals\n\n    return (tight * (0.75 + 0.25 * half) * waste).astype(np.float64)"
+  },
+  "hook_hashes": {
+    "priority": "08a717950fd5bfc75bccc76530b1b1a59ad8be2432483acefdea43a459881e4f"
+  },
+  "bundle_hash": "a3aa7473d200b0dac5d25952c3cc659c7ba3dbaed39671dc0bbd7da6a7b7b6c9",
+  "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+}

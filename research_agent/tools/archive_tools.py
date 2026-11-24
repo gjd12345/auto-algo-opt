@@ -7,14 +7,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from agent_skill_loop.benchmark.catalog import load_profile_suite
-from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.interface_design.archive import (
     ComplementaryArchive,
     compute_quality_time_pareto,
     compute_weakest_regimes_feedback,
 )
-from agent_skill_loop.interface_design.blind_commitment import assert_suite_allowed_for_interactive_role
+from agent_skill_loop.interface_design.blind_eval_m32 import assert_milestone_suite_allowed_for_interactive_role
+from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
 from research_agent.contracts import sha256_text
 
 
@@ -31,7 +30,7 @@ class SteppingStoneArchiveTool:
         self.run_dir = Path(run_dir).resolve()
         self.dev_suite_id = str(dev_suite_id)
         self.dev_split = str(dev_split)
-        assert_suite_allowed_for_interactive_role(self.dev_suite_id, role="feedback_archive")
+        assert_milestone_suite_allowed_for_interactive_role(self.dev_suite_id, role="feedback_archive")
         self.archive = ComplementaryArchive(self.run_dir / "archive")
         self.records_path = self.run_dir / "archive" / "dev_instance_records.jsonl"
         self.novelty_path = self.run_dir / "archive" / "novelty_signatures.json"
@@ -46,8 +45,8 @@ class SteppingStoneArchiveTool:
         if self.novelty_path.is_file():
             self._signatures = json.loads(self.novelty_path.read_text(encoding="utf-8"))
 
-        suite = load_profile_suite(BENCHMARK_ID, self.dev_suite_id, split=self.dev_split)
-        assert_suite_allowed_for_interactive_role(self.dev_suite_id, suite, role="feedback_archive")
+        suite = load_dev_or_public_suite(self.dev_suite_id, split=self.dev_split, role="feedback_archive")
+        assert_milestone_suite_allowed_for_interactive_role(self.dev_suite_id, suite, role="feedback_archive")
         self._inst_meta = {str(inst["instance_id"]): inst for inst in suite["instances"]}
 
     @staticmethod
@@ -95,9 +94,19 @@ class SteppingStoneArchiveTool:
         with self.records_path.open("a", encoding="utf-8", newline="\n") as handle:
             for r in dev_records:
                 rec = {**dict(r), "suite_id": self.dev_suite_id, "algorithm_id": sid}
+                if rec.get("tour_length") is None:
+                    for key in ("objective", "bins_used"):
+                        val = rec.get(key)
+                        if val is not None and not isinstance(val, bool) and isinstance(val, (int, float)):
+                            rec["tour_length"] = float(val)
+                            break
                 self._records.append(rec)
                 handle.write(json.dumps(rec, ensure_ascii=False) + "\n")
-        self.check_and_record_novelty(code=str(frozen_solver["hook_code"]), status="accepted")
+        code_src = str(
+            frozen_solver.get("hook_code")
+            or json.dumps(frozen_solver.get("hook_implementations") or {}, sort_keys=True)
+        )
+        self.check_and_record_novelty(code=code_src, status="accepted")
         return entry
 
     def summary(self) -> dict[str, Any]:

@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_cc319d29",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    eps = 1e-12\n    n = int(removal_savings.shape[0])\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    depot_d = distance_matrix[0, 1:].astype(np.float64, copy=True)\n    dscale = max(float(np.mean(depot_d)), eps)\n\n    sav_abs = np.abs(removal_savings.astype(np.float64, copy=True))\n    dem = demands[1:].astype(np.float64, copy=True)\n    dem_safe = np.maximum(dem, eps)\n\n    # Channel 1: savings intensity (savings per unit demand), saturating\n    spd = sav_abs / dem_safe / dscale\n    spd = spd / (1.0 + spd)\n    # add a mild floor so zero-savings customers are still selectable\n    ch_sav = eps + spd\n\n    # Channel 2: route load saturation\n    load_ratio = np.clip(route_loads.astype(np.float64, copy=True) / max(capacity, eps), 0.0, 1.0)\n    ch_load = eps + load_ratio\n\n    # Channel 3: route-level depot eccentricity (group by route)\n    uniq = np.unique(route_ids)\n    route_depot_mean = np.zeros(n, dtype=np.float64)\n    for r in uniq:\n        mask = route_ids == r\n        cnt = int(np.sum(mask))\n        if cnt > 0:\n            route_depot_mean[mask] = np.sum(depot_d[mask]) / cnt\n    dep = route_depot_mean / dscale\n    dep = dep / (1.0 + dep)\n    ch_dep = eps + dep\n\n    # Channel 4: route-distance pressure\n    rdm = max(float(np.mean(route_dists.astype(np.float64, copy=True))), eps)\n    rd = route_dists.astype(np.float64, copy=True) / rdm\n    rd = rd / (1.0 + rd)\n    ch_rd = eps + rd\n\n    # Channel 5: relative demand prominence\n    dem_mean = max(float(np.mean(dem)), eps)\n    dem_rel = dem / (dem_mean + dem)\n    ch_dem = eps + dem_rel\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # Phase-adaptive exponents (positive, NOT normalized to sum=1; product form)\n    # Early: savings intensity dominates. Late / stagnant: load, depot, distance gain weight.\n    p_sav = 1.20 + 0.50 * (1.0 - itf) + 0.20 * (1.0 - stag)\n    p_load = 0.25 + 0.55 * itf + 0.50 * stag\n    p_dep = 0.20 + 0.25 * itf + 0.30 * stag\n    p_rd = 0.20 + 0.20 * itf - 0.05 * stag\n    p_dem = 0.10 + 0.10 * stag\n\n    # Clip exponents to stay numerically safe\n    p_sav = float(np.clip(p_sav, 0.05, 4.0))\n    p_load = float(np.clip(p_load, 0.05, 4.0))\n    p_dep = float(np.clip(p_dep, 0.05, 4.0))\n    p_rd = float(np.clip(p_rd, 0.05, 4.0))\n    p_dem = float(np.clip(p_dem, 0.05, 4.0))\n\n    # Geometric mean product (all channels already in (0,1], so log is safe)\n    log_score = (p_sav * np.log(ch_sav)\n                 + p_load * np.log(ch_load)\n                 + p_dep * np.log(ch_dep)\n                 + p_rd * np.log(ch_rd)\n                 + p_dem * np.log(ch_dem))\n\n    # Normalize by total exponent weight so magnitudes stay bounded\n    w_tot = p_sav + p_load + p_dep + p_rd + p_dem\n    log_score = log_score / w_tot\n\n    score = np.exp(log_score)\n\n    # Gentle monotone squash to keep scores in a tight band while preserving order\n    score = score / (1.0 + score)\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.clip(score, eps, 1.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "cc319d29fd380c83fca9e21b454fc303505f7078f9d8168cb6fadb8770cfff73",
+  "design_sha256": "54a26e7ebb6a1f3c6422744461d24a804dda816db15e8c942dadc616c7cba833",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261124\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

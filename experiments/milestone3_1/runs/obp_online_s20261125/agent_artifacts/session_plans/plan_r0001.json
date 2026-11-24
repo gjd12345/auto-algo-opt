@@ -1,0 +1,34 @@
+{
+  "round_id": 1,
+  "direction": "Optimize a strictly prefix-causal score_bin hook for obp_online_priority: for each open bin compute normalized fill-after-placement u = (cap - r)/cap and residual ratio rho = r/cap. Build a dimensionless composite score = w1 * exp(k1 * u) * 1[u >= 0.90] (exponential cap-tightening reward) + w2 * (1 - |u - 0.5|/0.5)^2 (log/half-fill symmetry preference) + w3 * deadzone-quadratic penalty on rho in [0.02, 0.25] that vanishes at rho==0 and at rho==1. Keep everything scale-invariant (10x capacity scaling must be 0% drift) and use only the arriving item size plus current residuals; no lookahead, no batch reordering. Evolution should tune (k1, w1, w2, w3) and deadzone width while guarding the active-open-new-bin control: never open a new bin if any feasible bin exists and rho <= deadzone bound, since ablation shows aggressive opening degrades B1 from 0.006741 to 0.039038 (BPPLib +36.35%). Target: minimize bins on cvrp_dev_hetero_24 under 500 ms budget with stable worst-case factor behavior.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "obp_online_priority",
+      "mechanism": "Archive is empty (0 solvers, no Pareto frontier), and list_interfaces returned no registered templates other than the mandated obp_online_priority with postprocess 'none', so round 1 must seed the archive from KB-verified structure rather than local ablations. KB evidence: the Island605 log-half-symmetry variant (B16) achieves +3.34% Weibull-common-intersection gap and +7.62% on BPPLib 70 with 0.00% capacity-scaling drift — the best BPPLib robustness among the island scores; the sqrt/85%-close variant (B50) is strongest under the current 'evaluate-open-bins-only' multi-capacity screening; and the exp-utilization + deadzone variant (B1) dominates the pure-ablation streams (0.006741) only when it is allowed to avoid gratuitous new-bin opening, degrading to 0.039038 when that control is removed. So the exploit direction is to fuse the three mechanisms into a single scale-invariant score_bin and explicitly protect the open-new-bin control, which is exactly what the dying/most-common failure mode in the KB indicates. Using the reference Best-Fit/fill-after-placement semantics (ScoreBin = capacity - remaining) as the baseline anchor keeps the fused score monotone-compatible with the solver's default preference order, reducing integration risk on the strict 500 ms per-instance budget while giving EoH four tunable weights to search."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A dimensionless fill-ratio score combining an exponential reward above 0.90 utilization, a log-style symmetry preference near half-fill, and a residual deadzone quadratic that vanishes at exactly-full and exactly-symmetric residuals (r==0 and r==w), with new-bin opening suppressed when a feasible fitting bin exists, will beat Best-Fit/fill-after-placement baselines on cvrp_dev_hetero_24 (fewer bins, lower worst-case factor) while remaining 0% drift under 10x capacity rescaling.",
+  "interface_selection": {
+    "template_id": "obp_online_priority",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-obp-i605-log-half-symmetry",
+      "method-obp-i605-sqrt-close-bonus",
+      "method-obp-i605-exp-deadzone",
+      "method-obp-best-fit",
+      "impl-obp-go-solver"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive is empty (0 solvers, no Pareto frontier), and list_interfaces returned no registered templates other than the mandated obp_online_priority with postprocess 'none', so round 1 must seed the archive from KB-verified structure rather than local ablations. KB evidence: the Island605 log-half-symmetry variant (B16) achieves +3.34% Weibull-common-intersection gap and +7.62% on BPPLib 70 with 0.00% capacity-scaling drift — the best BPPLib robustness among the island scores; the sqrt/85%-close variant (B50) is strongest under the current 'evaluate-open-bins-only' multi-capacity screening; and the exp-utilization + deadzone variant (B1) dominates the pure-ablation streams (0.006741) only when it is allowed to avoid gratuitous new-bin opening, degrading to 0.039038 when that control is removed. So the exploit direction is to fuse the three mechanisms into a single scale-invariant score_bin and explicitly protect the open-new-bin control, which is exactly what the dying/most-common failure mode in the KB indicates. Using the reference Best-Fit/fill-after-placement semantics (ScoreBin = capacity - remaining) as the baseline anchor keeps the fused score monotone-compatible with the solver's default preference order, reducing integration risk on the strict 500 ms per-instance budget while giving EoH four tunable weights to search."
+  }
+}

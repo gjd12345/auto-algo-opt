@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:f954f0e2c59b41fd83110155ae7c73df"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If the ruin priority multiplies scale-normalized removal savings by a near-full-route load-utilization gate, a residual-slack demand-alignment gate, and a stagnation-scheduled rank-power exponent (p rising from ~1 to ~3 with stagnation_ratio, decaying with iter_frac), then dev_24 mean objective will improve beyond the round-3 incumbent 16.0504 without exceeding the 500 ms budget, because tight-capacity clustered instances gain from focused over-capacity-aware destruction while non-stagnant iterations stay diversified.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:f954f0e2c59b41fd83110155ae7c73df"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the single hook `score_ruin_nodes` toward a stagnation-aware multiplicative-gate rank-power ruin priority: normalize |removal_savings| by a global depot-distance scale, then apply (a) a tight-capacity load-utilization gate that up-weights customers on near-full routes (route_loads/capacity -> 1) so tight-capacity instances (weakest regime, vbs_rel_gap -22.48%) get bolder ruin, (b) a demand-alignment gate biased toward demands comparable to residual slack, helping uniform-demand/eccentric-depot regimes, and (c) a rank-power exponent p(iter_frac, stagnation_ratio) that anneals from near-linear (broad diversification early) to sharply focused top-q removal when stagnation rises, so the LNS escapes local optima within the 500 ms budget instead of over-spending on the initial CW+2opt backbone."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

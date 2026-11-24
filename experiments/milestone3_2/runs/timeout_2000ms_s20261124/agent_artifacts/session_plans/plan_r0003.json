@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Densify the destroy score into a two-component mixed operator: keep the round-2 multiplicative gates (removal savings / depot-distance / route-load saturation) but add a Shaw-style spatial-relatedness term (customer's mean distance to the k nearest other customers, normalized — high for isolated customers, low inside tight clusters) plus a deterministic index-hash jitter, so that on clustered/loose-capacity instances removal alternates between isolated outliers and cluster interiors instead of repeatedly picking the same high-savings ring, with the stagnation-driven rank exponent now modulating the savings-vs-relatedness mix ratio rather than only the tail rank.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows two nearly identical L3 solvers (16.1297 / 16.0781) with vbs-sbs gap of only 0.1937%, i.e. the current destroy rule is near a local attractor and further pure re-weighting of savings gates yields diminishing returns; the round-2 hypothesis already confirmed that gated ranking + stagnation rank power works, so round 3 attacks removal-SET diversity (Shaw relatedness mixing + deterministic jitter, RNG-free to keep determinism) which the KB entry method-cvrp-lns-shaw-regret identifies as the standard complement to worst-removal in LNS, while keeping the fixed Regret-2 repair and unified deadline invariants of the verified L3 skeleton (first_feasible_ms ~2-3 ms, solve_ms_mean 108 ms leaves ample headroom within 2000 ms)."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 2000 ms, augmenting the round-2 supported destroy score with a normalized Shaw spatial-relatedness term and a deterministic index-hash jitter, with the stagnation-driven rank power re-pointed at modulating the savings-vs-relatedness blend (diversified mid-tail removal under stagnation) will lower mean objective below the round-2 record 16.078067, with the largest per-instance gains on the reported weakest regimes (spatial=clustered, depot_style=eccentric, size=100, capacity_level=loose), because the round-2 gains came from gate concentration and now saturate (round-2 vs round-1 delta only -0.0516, archive gap_over_sbs 0.19%), so the remaining headroom is in removal-set diversity rather than in severity of savings ranking.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows two nearly identical L3 solvers (16.1297 / 16.0781) with vbs-sbs gap of only 0.1937%, i.e. the current destroy rule is near a local attractor and further pure re-weighting of savings gates yields diminishing returns; the round-2 hypothesis already confirmed that gated ranking + stagnation rank power works, so round 3 attacks removal-SET diversity (Shaw relatedness mixing + deterministic jitter, RNG-free to keep determinism) which the KB entry method-cvrp-lns-shaw-regret identifies as the standard complement to worst-removal in LNS, while keeping the fixed Regret-2 repair and unified deadline invariants of the verified L3 skeleton (first_feasible_ms ~2-3 ms, solve_ms_mean 108 ms leaves ample headroom within 2000 ms)."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "round_id": 4,
+  "direction": "Evolve score_ruin_nodes toward a multiplicative-gate + adaptive-rank-power ruin priority that targets the archive's weakest regimes on dev_24 (capacity_level=tight, size=100, depot_style=eccentric, demand_dist=uniform, spatial=clustered): score_i = |removal_savings_i| / scale * gate_load * gate_depot * gate_demand * gate_rdist, then rank-power sharpen with p = p_low + (p_high - p_low) * f(stagnation_ratio, iter_frac). Concretely: gate_load = (route_load / capacity) ^ a with a ~ 1.0-2.0 so tight-capacity instances preferentially ruin the fullest routes (where the load constraint binds and reinsertion freedom is smallest); gate_depot = 1 + b * (mean depot distance of the route / global mean depot distance) with b ~ 0.5-1.0 so eccentric-depot instances spend ruin budget on far, high-latitude routes instead of near-depot clusters; gate_demand = (demand_i / mean_demand) ^ c with c ~ 0.5 to slightly favor multi-customer reshuffles over unit-demand churn; gate_rdist = sigmoid-like squash of route_dist relative to the incumbent mean so short routes are not over-cycled. Stagnation coupling is inverted vs worst-only removal: p_high (~2.5-3.0, near-pure worst removal, exploitation) at low stagnation and p_low (~1.0-1.3, flatter, more diverse node picks) as stagnation_ratio -> 1, so the loop escapes clustered-instance local optima that a monotone worst-removal ranking cannot. All state arrays treated read-only, fully deterministic tie-breaking, output length n finite. Keep the LNS skeleton, deterministic Regret-2 reinsertion, intra_2opt and R2R acceptance untouched so any gain is attributable to the ruin hook alone.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the LNS skeleton's gain is essentially flat under the zero-evolution Worst-Removal control (23.3474) versus the evolved multiplicative-gate/rank-power hook (23.3186 on blind_120), i.e. residual headroom lives entirely in the score_ruin_nodes hook and must come from regime-conditional gating rather than skeleton changes; it also records verified stagnation-aware diversification as a strong regime and confirms first_feasible_ms ~2-3 ms safety margin at 500 ms (no budget exhaustion risk on dev_24 at 500 ms). Archive feedback shows the three session solvers are statistically tied (16.0465 / 16.0201 / 16.0900, VBS-SBS gap only 0.45%) with a symmetric 8/8/8 win split, indicating the current frontier is a plateau of near-identical removal heuristics and that a structurally different priority shape — not further scalar tuning — is needed to break it. The weakest regimes (tight capacity -22.6%, size 100 -21.4%, eccentric depot -20.5%, uniform demand -21.0%, clustered -19.4% VBS gap) are exactly those where load-fill binding and depot-distance heterogeneity dominate, motivating the load and depot eccentricity gates; demand_dist=uniform gets its gate coefficient centered at 1.0 so it is a neutral, non-degrading control there. postprocess_mode=none is retained because only 'none' is allowed and the interface validation must stay on the tested L3 skeleton path."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, replacing a flat/descent-monotone removal-savings ranking with a multiplicative-gate score (load-fill gate emphasizing near-capacity routes, depot-eccentricity gate emphasizing far routes, mild demand gate) combined with stagnation-inverted rank power (sharp exploitation early, flattening as stagnation_ratio -> 1) will improve mean objective beyond the current SBS 16.0201 (session_r0002) with the largest absolute gains concentrated in the weakest archive regimes: capacity_level=tight (12 instances), size=100 (12), depot_style=eccentric (12), demand_dist=uniform (12), and spatial=clustered (8), while first_feasible_ms stays ~2-3 ms so no instance becomes exhausted or failed.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the LNS skeleton's gain is essentially flat under the zero-evolution Worst-Removal control (23.3474) versus the evolved multiplicative-gate/rank-power hook (23.3186 on blind_120), i.e. residual headroom lives entirely in the score_ruin_nodes hook and must come from regime-conditional gating rather than skeleton changes; it also records verified stagnation-aware diversification as a strong regime and confirms first_feasible_ms ~2-3 ms safety margin at 500 ms (no budget exhaustion risk on dev_24 at 500 ms). Archive feedback shows the three session solvers are statistically tied (16.0465 / 16.0201 / 16.0900, VBS-SBS gap only 0.45%) with a symmetric 8/8/8 win split, indicating the current frontier is a plateau of near-identical removal heuristics and that a structurally different priority shape — not further scalar tuning — is needed to break it. The weakest regimes (tight capacity -22.6%, size 100 -21.4%, eccentric depot -20.5%, uniform demand -21.0%, clustered -19.4% VBS gap) are exactly those where load-fill binding and depot-distance heterogeneity dominate, motivating the load and depot eccentricity gates; demand_dist=uniform gets its gate coefficient centered at 1.0 so it is a neutral, non-degrading control there. postprocess_mode=none is retained because only 'none' is allowed and the interface validation must stay on the tested L3 skeleton path."
+  }
+}

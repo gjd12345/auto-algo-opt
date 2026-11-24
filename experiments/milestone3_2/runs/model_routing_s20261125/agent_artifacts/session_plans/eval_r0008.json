@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 8 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:b37b6b650ef1438b9dc0bd4de4477c59"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "The current SBS (15.8948 mean) is stuck within 0.42% of VBS across 7 near-identical LNS variants, indicating the bottleneck is destroy-operator diversity rather than repair quality. Since weakest regimes are tightly-capacitated (rel_gap -23.27%), size-100 (-21.68%) and eccentric-depot instances where worst-cost removal repeatedly removes the same short-edge customers, a destroy rule that (a) sharpens toward worst-cost early and (b) switches to a diversification-heavy rank-power only under stagnation, while gating on route slack and above-median demand, will lower mean objective on tight/clustered/eccentric sub-suites versus the current incumbent without regressing uniform-demand instances.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b37b6b650ef1438b9dc0bd4de4477c59"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive rank-power ruin scoring with tight-capacity/eccentric-depot gating: evolve score_ruin_nodes as a multiplicative rule on normalized removal_savings (per-instance scale = mean of |removal_savings|), times a capacity-utilization gate that up-weights customers in lightly-loaded routes (high residual capacity => easy reinsertion freedom) and a demand gate favoring above-median demands, all raised to a rank-power exponent p(iter_frac, stagnation_ratio) that starts near 1 (pure worst-cost removal while descending) and rises to ~3 only when stagnation_ratio>0.5 to force diversification. Deterministic tie-breaking by index, no RNG."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

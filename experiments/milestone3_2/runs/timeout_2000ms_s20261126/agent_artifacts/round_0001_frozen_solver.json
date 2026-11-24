@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_aa597d50",
+  "display_name": "Session R1 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = demands.shape[0] - 1\n    dm = distance_matrix\n    depot_d = dm[0, 1:]  # length n, distance depot->customer\n    mean_depot = float(np.mean(depot_d)) if n > 0 else 1.0\n    scale_d = max(mean_depot, 1e-12)\n\n    # Robust scale for removal savings (median absolute saving)\n    abs_sav = np.abs(removal_savings.astype(np.float64))\n    med_sav = float(np.median(abs_sav)) if n > 0 else 0.0\n    scale_s = max(med_sav, 1e-12 * scale_d, 1e-12)\n\n    # Base rank-power term: signed savings normalized\n    base = removal_savings.astype(np.float64) / scale_s\n\n    # Capacity utilization gate: route_load / capacity near 1 -> prioritize\n    util = route_loads.astype(np.float64) / max(capacity, 1e-12)\n    util = np.clip(util, 0.0, 1.0)\n    gate_load = 0.5 + util  # in [0.5, 1.5]\n\n    # Depot proximity gate: customers far from depot in near-full routes get more value;\n    # use normalized depot distance, softly centered.\n    dist_norm = depot_d.astype(np.float64) / scale_d\n    gate_depot = 1.0 + 0.5 * (dist_norm / (1.0 + dist_norm))  # in [1.0, 1.5]\n\n    # Demand gate: larger demand customers slightly favored (more disruptive removal)\n    dem = demands[1:].astype(np.float64)\n    mean_dem = float(np.mean(dem)) if n > 0 else 1.0\n    dem_norm = dem / max(mean_dem, 1e-12)\n    gate_demand = 1.0 + 0.25 * (dem_norm / (1.0 + dem_norm))\n\n    # Route density gate: route_dists / customers_in_route (average edge cost per customer)\n    # Larger average route distance -> denser/expensive route -> prioritize its customers.\n    counts = np.zeros(n, dtype=np.float64)\n    # Vectorized count of customers per route\n    if n > 0:\n        rid = route_ids.astype(np.int64)\n        # bincount via numpy\n        maxr = int(rid.max()) + 1 if n > 0 else 1\n        rc = np.zeros(maxr, dtype=np.float64)\n        for i in range(n):\n            rc[rid[i]] += 1.0\n        counts = rc[rid]\n\n    avg_route_cost = np.where(counts > 0, route_dists.astype(np.float64) / np.maximum(counts, 1.0), 0.0)\n    mean_arc = float(np.mean(avg_route_cost)) if n > 0 else 1.0\n    dens_norm = avg_route_cost / max(mean_arc, 1e-12)\n    gate_rdist = 1.0 + 0.4 * (dens_norm / (1.0 + dens_norm))\n\n    # Combine gates multiplicatively\n    gated = base * gate_load * gate_depot * gate_demand * gate_rdist\n\n    # Rank-power exponent p rises with progress and stagnation: ~1.0 -> ~2.5\n    p = 1.0 + 1.5 * float(np.clip(0.5 * iter_frac + 0.5 * stagnation_ratio, 0.0, 1.0))\n\n    # Apply signed rank-power preserving sign of gated score\n    sign = np.where(gated >= 0.0, 1.0, -1.0)\n    mag = np.abs(gated)\n    score = sign * np.power(mag, p)\n\n    # Ensure finite\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "aa597d50bba5d18c9a0f646070677f398016f5ddedc4a1cd26931ce5ad32eba0",
+  "design_sha256": "7909d6b3985cdad3b81a217d1a8c8bd625d2cb7de32e66a66d32f7c96dbd29cc",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

@@ -44,6 +44,14 @@ from .blind_commitment import (
     read_verified_blind_payload,
     require_external_custody_path,
 )
+from .blind_eval_m32 import (
+    freeze_m32_roster_lock,
+    freeze_pre_blind_protocol_m32,
+    seal_m31_blind_suite,
+    seal_m32_blind_120,
+    unseal_and_evaluate_m31,
+    unseal_and_evaluate_m32,
+)
 from .contracts import FrozenInterfaceSolver, canonical_json, classify_outcome, sha256_text
 from .runtime import evaluate_frozen_interface_solver
 from .templates import get_template_spec

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:1395a42bd0cb42669428b628e85a3f11"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 500 ms, a two-sided capacity/route-load gating plus depot-normalized savings and a stagnation-decayed rank-power exponent in score_ruin_nodes will lower mean tour length below the round-1 SBS 16.0429 (and clearly below round-3's 16.0808), with the largest per-instance gains concentrated on capacity_level=tight and size=100 instances where route-count pressure dominates.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:1395a42bd0cb42669428b628e85a3f11"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the multiplicative gated rank-power ruin scoring toward the archive's weakest regimes (capacity_level=tight, size=100, depot_style=eccentric, spatial=clustered, demand_dist=uniform) by making the capacity-utilization gate and route-distance gate two-sided rather than one-sided: heavily occupied routes (route_loads/capacity near 1) and near-mean-overloaded long routes get boosted removal priority so ruin always targets the routes that force extra vehicles, while a mild complementary term keeps a small share of low-utilization routes so clustered instances are not starved of structural rearrangement. Tie the rank-power exponent to stagnation_ratio with a steeper early-phase exponent (broad exploitation of savings) decaying to a flatter exponent under stagnation (diversification), and add a depot-eccentricity normalization of removal_savings by 2*d(depot,i) so that savings magnitudes are comparable across instances with far-away depots."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

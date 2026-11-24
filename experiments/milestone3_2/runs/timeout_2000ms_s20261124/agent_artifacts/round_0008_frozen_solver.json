@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0008_cvrp_ruin_recreate_75829165",
+  "display_name": "Session R8 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n\n    n = int(dm.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    eps = 1e-12\n    cap = float(capacity) if capacity > 0 else 1.0\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # per-customer depot distance and its instance-adaptive scale\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    d0_mean = float(np.mean(d0)) if d0.size else 1.0\n    d_scale = max(d0_mean, eps)\n\n    # route saturation -> self-normalizing load-gate slope\n    R = int(np.max(rid)) + 1 if n > 0 else 0\n    if R <= 0:\n        return np.zeros(n, dtype=np.float64)\n    route_used = np.zeros(R, dtype=np.float64)\n    dem_c = dem[1:]\n    for r in range(R):\n        mask = (rid == r)\n        if np.any(mask):\n            route_used[r] = float(np.sum(dem_c[mask]))\n    route_sat = np.clip(route_used / max(cap, eps), 0.0, 1.0)\n    mean_sat = float(np.mean(route_sat)) if route_sat.size else 0.0\n    gamma = 1.0 + float(np.clip(mean_sat - 0.5, 0.0, 0.4))\n\n    # normalized detour savings (rank-power input)\n    s = np.abs(sav).astype(np.float64)\n    s_max = float(np.max(s)) if s.size else 0.0\n    snorm = s / (s_max + eps) if s_max > eps else np.zeros(n, dtype=np.float64)\n\n    # load gate: underload on customer's current route, slope adapts to mean saturation\n    underload = np.clip(1.0 - rload / max(cap, eps), 0.0, 1.0)\n    gate_load = np.power(underload + eps, gamma)\n\n    # depot eccentricity gate (monotone, bounded)\n    gate_depot = np.clip(d0 / (d_scale + eps), 0.0, None)\n    gate_depot = gate_depot / (1.0 + gate_depot)\n\n    # route-staleness gate: longer current route distance -> slightly favored\n    rd_mean = float(np.mean(rdist)) if rdist.size else 1.0\n    gate_stale = np.clip(rdist / (rd_mean + eps), 0.0, None)\n    gate_stale = gate_stale / (1.0 + gate_stale)\n\n    # stagnation-only rank power (round-8 hypothesis)\n    p = 1.25 + 1.0 * st\n\n    # search-progress phase blend (explore -> neutral -> diversify)\n    w_exploit = float(np.clip(1.0 - 2.0 * it, 0.0, 1.0))\n    w_divers = float(np.clip(2.0 * it - 1.0, 0.0, 1.0))\n    w_neutral = max(0.0, 1.0 - w_exploit - w_divers)\n\n    core_exploit = np.power(snorm + eps, p) * gate_load\n    core_neutral = np.power(snorm + eps, p) * (0.5 * gate_load + 0.5 * gate_stale)\n    core_divers = np.power(snorm + eps, 0.5 * p) * gate_depot * gate_stale\n\n    score = w_exploit * core_exploit + w_neutral * core_neutral + w_divers * core_divers\n\n    # deterministic tie-breaker, distinct from prior rounds\n    idx = np.arange(1, n + 1, dtype=np.float64)\n    jit = 1e-6 * np.sin(idx * 7.3219 + st * 41.17 + it * 63.91)\n    score = score + jit\n\n    score = np.where(np.isfinite(score), score, 0.0)\n\n    smin = float(np.min(score)) if score.size else 0.0\n    smax = float(np.max(score)) if score.size else 0.0\n    if smax - smin > eps:\n        score = (score - smin) / (smax - smin)\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "758291657c3bf2389aa9ce6bda2a732876297ef0cd144366bda7c3304d3c09d3",
+  "design_sha256": "0ea54f1cdcf0c78b5548a6c9eba148309c77eec9787849016ae211026ba5d468",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0008\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:0b0229cbd3754771ae0b4a37fbdbe981"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Because all size=100 and uniform-spatial/eccentric-depot/loose-capacity regimes show exhausted_instances (LNS iterations truncated by the 500 ms deadline) and their vbs_rel_gap_pct is ~-20%, the binding constraint is iteration throughput at large n, not local-optimum quality. A ruin score that (a) scales the rank-power exponent with iter_frac and stagnation_ratio, (b) down-weights per-node evaluation cost via a distance-gated coarse candidate set (O(n) instead of O(n^2) relatedness), and (c) makes the recreate hook prefer geometrically coherent (angular-sector / heavy-load) insertions rather than pure detour-minimum, will increase completed LNS iterations per 500 ms on size=100 instances and thus lower mean objective vs the current SBS 16.1100 without regressing n<=64 cases.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0b0229cbd3754771ae0b4a37fbdbe981"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Regime-adaptive dual-hook LNS: make `score_ruin_nodes` cost-per-iteration aware and `score_recreate_action` regime-conditioned so that large-n (size=100), uniform-spatial, eccentric-depot, loose-capacity instances get geometric/angular-cluster ruin with cheaper per-node scoring, while small-n instances get aggressive worst-cost removal."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

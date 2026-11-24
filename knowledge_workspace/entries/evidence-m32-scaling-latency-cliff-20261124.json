@@ -1,0 +1,76 @@
+{
+  "type": "evidence",
+  "title": "里程碑 3.2 大预算 Scaling Law (36->400) 与 n=200 延迟墙 / 2000ms 解封盲测证据",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3.2",
+    "scaling-law",
+    "latency-wall",
+    "timeout-2000ms",
+    "cvrp_m32_blind_120"
+  ],
+  "status": "reviewed",
+  "summary": "完成 21 格预锁盘实测（3 种子 × 4 档主曲线 + 3 项 400 请求单因子对照，4,800 请求实费 $4.8419）与 cvrp_m32_blind_120 一次性开封：主曲线 500ms 下未加罚原始可行解均值严格单调改善（23.1931 -> 23.0521 -> 23.0372 -> 23.0257），exact-k 达标率由 0.683 单调升至 0.792，n=50/100 全部 100% 按时完成并超越强基准，但 n=200 因复杂脚本开销触及 500ms 发生 113/120 (94.2%) 超时导致加罚均值升至 39.1999；timeout_2000ms 完整对照实现 3/3 种子 0/120 超时、均长 23.1111±0.1142，全部 3 种子显著胜过 l3_ctrl@2000ms (23.2230, p <= 4.00e-6)，最优种子达 22.9796 (exact-k=0.850)。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "empirical",
+    "interface": "score_ruin_nodes",
+    "applicable_regimes": {
+      "strong_on": [
+        "large_budget_400_requests",
+        "matched_2000ms_deadline_n200",
+        "exact_k_fleet_consolidation"
+      ],
+      "weak_on": [
+        "unconstrained_hook_complexity_under_tight_500ms_n200"
+      ],
+      "scale_notes": "双轨报告原始可行均长与硬截止加罚均长；l3_ctrl@500ms 在非截断路径记录 9/120 超时（严格硬截止等效 26.4966）。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tools/run_m32_scaling.py",
+        "sha256": "195e67688e499e0328d7b2fd281d9188d3a22cdc1df8025bf5ffc49a556c9d6c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tools/build_m32_trajectory_report.py",
+        "sha256": "fd26ee9d635a454c08369a4fbb5767546db342d4a47809abecf505c9a936afbf"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "agent_skill_loop/milestone_checkpoint.py",
+        "sha256": "d00268fc75b0f27a227d615d3b3e4be4f87686007135e754f8d6f624462ae7cb"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-research-agent-m3-autonomous-loop"
+    ],
+    "sources": [
+      "src-milestone4-m31-m32-math-closure-20261124"
+    ]
+  },
+  "source_refs": [
+    "src-milestone4-m31-m32-math-closure-20261124"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3_2/m32_scaling_report.json",
+    "report:experiments/milestone3_2/m32_evolution_trajectory.html"
+  ],
+  "code_refs": [],
+  "id": "evidence-m32-scaling-latency-cliff-20261124",
+  "content_sha256": "3b8ff029570fd1d6d1b5dc541008c9dd5e27bfe43a7fc8623e331a7cabbb9d59"
+}

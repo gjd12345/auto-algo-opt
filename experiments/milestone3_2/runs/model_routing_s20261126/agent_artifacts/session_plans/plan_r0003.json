@@ -1,0 +1,36 @@
+{
+  "round_id": 3,
+  "direction": "Scale-invariant, n-adaptive ruin scoring: (1) divide removal_savings by a robust scale estimate (median absolute savings, floored) instead of raw magnitudes so scores transfer across n=50/100 and capacity levels; (2) make the rank-power exponent p grow with instance size n and with iter_frac/stagnation_ratio, so at n=100 (all 12 instances budget-exhausted) the destroy set concentrates on fewer, higher-leverage nodes, letting more LNS iterations fit in the fixed 500 ms budget; (3) add a multiplicative gate favoring nodes whose removal-merit per unit demand is high but whose distance from an eccentric depot is large, to relieve the weakest regime 'depot_style=eccentric' and 'capacity_level=loose' where worst-removal is blind to load structure. Keep deterministic tie-breaking by (score, index) and keep all state reads strictly read-only.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows a very tight portfolio (gap SBS->VBS 0.078%, only 8 wins for round-2 solver), so gains must come from a genuinely different destroy policy rather than tuning the same raw-savings rule. All 12 size=100 instances are exhausted (time-bound, not converged), which points at iteration throughput and destroy-set calibration at larger n rather than more search depth. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the additive/multiplicative gate + rank-power form of score_ruin_nodes is exactly the evolvable hook that beat the Worst-Cost Removal control (23.3186 vs 23.3474 on blind_120 at 500 ms) and that first_feasible_ms ~2-3 ms guarantees feasibility at any budget, so making the score scale-free and n-adaptive is a safe, attributable single-hook change."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "On dev_hetero_24 at 500 ms, replacing raw-magnitude removal-savings scoring with a median-normalized, size- and iteration-adaptive rank-power score (plus a depot-eccentricity x demand-efficiency gate) reduces mean objective below the current SBS of 16.0353, with the largest per-instance gains on the size=100 subset (12/12 currently exhausted) and on depot_style=eccentric, because normalization keeps the destroy set calibrated as the tour scale grows and the sharper exponent under stagnation increases iterations completed per budget.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows a very tight portfolio (gap SBS->VBS 0.078%, only 8 wins for round-2 solver), so gains must come from a genuinely different destroy policy rather than tuning the same raw-savings rule. All 12 size=100 instances are exhausted (time-bound, not converged), which points at iteration throughput and destroy-set calibration at larger n rather than more search depth. KB entry method-cvrp-m3-ruin-recreate-l3 documents that the additive/multiplicative gate + rank-power form of score_ruin_nodes is exactly the evolvable hook that beat the Worst-Cost Removal control (23.3186 vs 23.3474 on blind_120 at 500 ms) and that first_feasible_ms ~2-3 ms guarantees feasibility at any budget, so making the score scale-free and n-adaptive is a safe, attributable single-hook change."
+  }
+}

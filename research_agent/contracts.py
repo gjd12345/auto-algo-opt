@@ -110,6 +110,10 @@ class AgentConfig:
     archive_feedback_enabled: bool = True
     kb_store_path: str | None = None
     checkpoint_budgets: tuple[int, ...] = (36,)
+    strict_checkpoint_barriers: bool = False
+    model_routing_policy: dict[str, Any] | None = None
+    rate_card: dict[str, dict[str, float]] | None = None
+    rate_card_version: str | None = None
     mode: str = "mock"  # "mock" | "live"
     request_timeout_s: float = 60.0
     wall_seconds: float = 1200.0
@@ -127,6 +131,9 @@ class AgentConfig:
                 data[key] = tuple(str(x) for x in data[key])
         if "checkpoint_budgets" in data and isinstance(data["checkpoint_budgets"], list):
             data["checkpoint_budgets"] = tuple(int(x) for x in data["checkpoint_budgets"])
+        for map_key in ("model_routing_policy", "rate_card"):
+            if map_key in data and isinstance(data[map_key], Mapping):
+                data[map_key] = dict(data[map_key])
         return cls(**data)
 
 
@@ -189,6 +196,7 @@ class AgentCheckpoint:
     round_summaries: list[dict[str, Any]] = field(default_factory=list)
     pending_reflect_payload: dict[str, Any] | None = None
     pending_submit_tool_call: dict[str, Any] | None = None
+    accumulated_wall_seconds: float = 0.0
     updated_at_utc: str = field(default_factory=utc_now)
 
     def to_dict(self) -> dict[str, Any]:

@@ -1,10 +1,7 @@
-"""Bridge connecting Milestone 2 dynamic interfaces into the cross-harness Skill + Session Runtime.
+"""Bridge connecting dynamic multi-problem interfaces into the cross-harness Skill + Session Runtime.
 
-Allows any Coding Agent (Claude Code, Codex, OpenCode, Antigravity, Cursor, etc.) driving
-``skills/algorithm-optimization/SKILL.md`` via ``session submit-plan -> execute -> collect -> finish-round``
-to diagnose, validate (5 gates), switch templates at plan-time, execute EoH under Session's
-durable SQLite budget/recovery/evidence ledger, and export ``FrozenInterfaceSolver`` manifests
-back to the Milestone 1 Workbench — with zero changes to ``eoh_frozen/``.
+Supports CVRP (L1/L2a/L2b/L3/L3b dual-hook), M3.1 TSP/OBP/BPP, M3.2 settled-prefix
+checkpoint barriers, deterministic OpenCode Go strong/weak routing, and 2000ms timeouts.
 """
 
 from __future__ import annotations
@@ -14,29 +11,39 @@ import json
 import math
 import os
 import random
+import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 
 from agent_skill_loop.contracts import EOH_COMMIT, EvaluationResult, SkillVersion
-from agent_skill_loop.evaluator import evaluator_source_hash
+from agent_skill_loop.milestone_checkpoint import (
+    claim_latest_pending_attempt_token,
+    get_run_wall_offset_seconds,
+    settle_attempt_provenance,
+    settle_pending_provenance_for_terminal_requests,
+    try_seal_draining_checkpoints,
+)
+from agent_skill_loop.request_budget import BudgetExhausted
 from agent_skill_loop.session_ledger import SessionRequestBudget, solver_event
 from agent_skill_loop.skill_store import _atomic_write_text, load_skill, save_skill
 from knowledge_tools.core import resolve_release
 
 from .contracts import ALLOWED_POSTPROCESS_MODES, FrozenInterfaceSolver, InterfaceDesign, sha256_text
 from .dynamic_eoh import (
-    DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE,
     DEFAULT_MOCK_MERGE_CANDIDATES,
     DynamicInterfaceProblem,
     MockEoHLLMServer,
+    _default_mock_candidates,
+    derive_effective_batch_timeout_s,
 )
-from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template
-from .runtime import validate_hook_ast
-from .templates import TEMPLATE_REGISTRY, get_template_spec
+from .model_routing import ModelRoutingPolicy, allocate_logical_route, compute_attempt_cost_usd, extract_provider_usage
+from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template, parse_hook_candidate
+from .runtime import resolve_problem_adapter, validate_hook_ast, validate_hook_bundle
+from .templates import get_template_spec
 from .validator import InterfaceValidator
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -51,6 +58,11 @@ INTERFACE_SELECTION_KEYS = frozenset({
     "diagnostic_ref",
     "rationale",
 })
+
+
+def _utc_now() -> str:
+    import datetime as _dt
+    return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _validate_positive_budget_ms(value: Any, *, field_name: str) -> float:
@@ -152,11 +164,13 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("interface_selection_template_version_required")
     tid = tid.strip()
     tver = tver.strip()
-    if (tid, tver) not in TEMPLATE_REGISTRY:
-        raise ValueError(f"interface_selection_unknown_template:{tid}/{tver}")
+    try:
+        tpl = get_template_spec(tid, tver)
+    except KeyError:
+        raise ValueError(f"interface_selection_unknown_template:{tid}/{tver}") from None
 
     post_mode = str(raw.get("postprocess_mode", "none")).strip()
-    if post_mode not in ALLOWED_POSTPROCESS_MODES:
+    if post_mode not in ALLOWED_POSTPROCESS_MODES or post_mode not in tpl.allowed_postprocess_modes:
         raise ValueError(f"interface_selection_postprocess_not_allowed:{post_mode}")
 
     opts = raw.get("template_options")
@@ -230,39 +244,75 @@ def validate_session_interface_selection(
             diagnostic_ref=design.diagnostic_ref,
             rationale=design.rationale,
             template_options={**design.template_options, **dict(selection.get("template_options") or {})},
+            protocol_id=design.protocol_id,
+            hook_specs=design.hook_specs,
+            hook_implementations=dict(design.hook_implementations),
         )
     validator = InterfaceValidator(
         candidate_timeout_s=candidate_timeout_s,
         instance_time_budget_ms=instance_time_budget_ms,
+        outer_timeout_s=candidate_timeout_s,
     )
     report = validator.validate(design)
     return design, report.as_dict()
 
 
-def _normalize_session_suite_instances(suite: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Adapt a Session dev_suite.json (CVRP) into the workbench instance dict shape."""
+def _normalize_session_suite_instances(
+    suite: Mapping[str, Any], *, problem_family: str = "cvrp",
+) -> list[dict[str, Any]]:
+    """Adapt a Session dev_suite.json into the target problem family's runtime instance shape."""
     out: list[dict[str, Any]] = []
     for idx, inst in enumerate(suite.get("instances") or []):
+        iid = str(inst.get("instance_id") or f"session_inst_{idx:03d}")
+        if problem_family == "tsp":
+            coords = inst.get("coordinates")
+            if coords is None:
+                raise ValueError("session_suite_missing_tsp_coordinates")
+            row = {
+                "instance_id": iid,
+                "protocol_id": inst.get("protocol_id") or "tsp/v1",
+                "coordinates": [list(pt) for pt in coords],
+                "size": len(coords),
+            }
+            if inst.get("reference_objective") is not None:
+                row["reference_objective"] = inst["reference_objective"]
+            out.append(row)
+            continue
+        if problem_family in {"obp", "bpp"}:
+            default_proto = "obp_online/v1" if problem_family == "obp" else "bpp_offline/v1"
+            row = {
+                "instance_id": iid,
+                "protocol_id": inst.get("protocol_id") or default_proto,
+                "items": list(inst["items"]),
+                "capacity": float(inst["capacity"]),
+                "size": len(inst["items"]),
+            }
+            if inst.get("reference_objective") is not None:
+                row["reference_objective"] = inst["reference_objective"]
+            out.append(row)
+            continue
         coords = inst.get("customer_coordinates") or inst.get("coordinates")
         if coords is None:
             raise ValueError("session_suite_missing_customer_coordinates")
         depot = inst.get("depot")
         if depot is None:
-            # Standard problems/cvrp.py stores depot at index 0 of coordinates
             depot = coords[0]
             cust_coords = coords[1:]
             raw_demands = list(inst["demands"])[1:] if len(inst["demands"]) == len(coords) else list(inst["demands"])
         else:
             cust_coords = coords
             raw_demands = list(inst["demands"])
-        out.append({
-            "instance_id": str(inst.get("instance_id") or f"session_inst_{idx:03d}"),
+        row = {
+            "instance_id": iid,
             "size": len(cust_coords),
             "depot": list(depot),
             "customer_coordinates": [list(pt) for pt in cust_coords],
             "demands": [float(d) for d in raw_demands],
             "capacity": float(inst["capacity"]),
-        })
+        }
+        if inst.get("reference_objective") is not None:
+            row["reference_objective"] = inst["reference_objective"]
+        out.append(row)
     return out
 
 
@@ -290,8 +340,42 @@ def load_verified_session_design(root: Path, receipt: Mapping[str, Any]) -> Inte
     return design
 
 
+def _summarize_records_for_checkpoint(
+    instances: Sequence[Mapping[str, Any]],
+    records: Sequence[Mapping[str, Any]],
+    *,
+    dev_suite_hash: str,
+    solve_budget_ms: float,
+) -> dict[str, Any]:
+    valid_vals: list[float] = []
+    pen_vals: list[float] = []
+    for inst, rec in zip(instances, records):
+        obj = rec.get("objective")
+        if obj is None:
+            obj = rec.get("tour_length")
+        if obj is None:
+            obj = rec.get("bins_used")
+        if rec.get("valid") is True and rec.get("completed", True) is True and obj is not None:
+            valid_vals.append(float(obj))
+            pen_vals.append(float(obj))
+        else:
+            ref = inst.get("reference_objective")
+            pen_vals.append(2.0 * float(ref) if isinstance(ref, (int, float)) and float(ref) > 0 else 100.0)
+    n_total = len(instances)
+    valid_count = len(valid_vals)
+    comp_rate = round(valid_count / max(1, n_total), 6)
+    return {
+        "all_feasible": bool(n_total > 0 and valid_count == n_total),
+        "completion_rate": comp_rate,
+        "penalized_mean_objective": round(sum(pen_vals) / max(1, n_total), 8),
+        "valid_only_mean_objective": round(sum(valid_vals) / valid_count, 8) if valid_vals else None,
+        "dev_suite_hash": dev_suite_hash,
+        "solve_budget_ms": float(solve_budget_ms),
+    }
+
+
 class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
-    """DynamicInterfaceProblem that mirrors every evaluation into Session SQLite & evaluations.jsonl."""
+    """DynamicInterfaceProblem mirroring evaluations into Session SQLite & M3.2 milestone ledger."""
 
     def __init__(
         self,
@@ -303,6 +387,12 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         metric_spec_hash: str | None = None,
         problem_spec_hash: str | None = None,
         data_manifest_hash: str | None = None,
+        kb_release_id: str = "",
+        milestone_ledger_path: Path | None = None,
+        milestone_run_id: str | None = None,
+        strict_checkpoint_barriers: bool = False,
+        run_started_monotonic: float | None = None,
+        bridge_ref: Any | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(suite_hash=suite_hash, **kwargs)
@@ -312,8 +402,20 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         self.session_metric_spec_hash = metric_spec_hash
         self.session_problem_spec_hash = problem_spec_hash
         self.session_data_manifest_hash = data_manifest_hash
+        self.kb_release_id = kb_release_id
+        self.milestone_ledger_path = Path(milestone_ledger_path) if milestone_ledger_path else None
+        self.milestone_run_id = milestone_run_id
+        self.strict_checkpoint_barriers = bool(strict_checkpoint_barriers)
+        self.run_started_monotonic = run_started_monotonic
+        self.bridge_ref = bridge_ref
         self.seed_origins: dict[str, str] = {}
         self._seq = 0
+        self._val_cache: dict[str, bool] = {}
+
+    def __getstate__(self) -> dict[str, Any]:
+        state = super().__getstate__()
+        state["bridge_ref"] = None
+        return state
 
     def evaluate_detailed(self, code_string: str) -> dict[str, Any]:
         self._seq += 1
@@ -322,6 +424,17 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         code_sha = sha256_text(code_str)
         origin = self.seed_origins.get(code_sha, "generated")
         cand_id = origin if origin in {"baseline", "explicit_parent"} else f"m2_cand_{self._seq}"
+
+        attempt_token = None
+        if origin == "generated":
+            if self.bridge_ref is not None and hasattr(self.bridge_ref, "consume_pending_attempt_token"):
+                attempt_token = self.bridge_ref.consume_pending_attempt_token()
+            elif self.strict_checkpoint_barriers and self.milestone_ledger_path is not None and self.milestone_run_id:
+                attempt_token = claim_latest_pending_attempt_token(
+                    self.milestone_ledger_path,
+                    self.milestone_run_id,
+                    eval_id=eval_id,
+                )
 
         start_payload = {
             "code": code_str,
@@ -344,7 +457,12 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
 
         resp = super().evaluate_detailed(code_str)
         inst_objs = tuple(float(x) for x in (resp.get("instance_objectives") or []))
-        exact_obj = (sum(inst_objs) / len(inst_objs)) if (resp.get("valid") and inst_objs) else None
+        if resp.get("valid") and inst_objs:
+            exact_obj = sum(inst_objs) / len(inst_objs)
+        elif resp.get("valid") and resp.get("objective") is not None:
+            exact_obj = float(resp["objective"])
+        else:
+            exact_obj = None
         ev_result = EvaluationResult(
             valid=bool(resp.get("valid")),
             objective=exact_obj,
@@ -361,6 +479,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
             "template_version": self.design.template_version,
             "template_source_sha256": self.tpl.template_source_sha256,
             "design_sha256": self.design.design_sha256,
+            "attempt_token": attempt_token,
         }
         if self.evaluation_log:
             ev_path = Path(self.evaluation_log)
@@ -370,11 +489,450 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                     handle.write(json.dumps(done_payload, ensure_ascii=False, allow_nan=False) + "\n")
                     handle.flush()
         solver_event(self.session, done_payload)
+
+        if self.strict_checkpoint_barriers and self.milestone_ledger_path is not None and self.milestone_run_id:
+            if attempt_token is not None:
+                if ev_result.valid and ev_result.objective is not None:
+                    try:
+                        primary_code, impls = self._resolve_hook_payload(code_str)
+                    except (ValueError, SyntaxError):
+                        primary_code, impls = None, None
+                    if primary_code is None:
+                        settle_attempt_provenance(
+                            self.milestone_ledger_path,
+                            attempt_token=attempt_token,
+                            generation_status="malformed_response",
+                            eval_id=eval_id,
+                            code_sha256=code_sha,
+                            validation_passed=False,
+                        )
+                    else:
+                        if code_sha not in self._val_cache:
+                            validator = InterfaceValidator(
+                                candidate_timeout_s=self.candidate_timeout_s,
+                                instance_time_budget_ms=self.instance_time_budget_ms,
+                                outer_timeout_s=self.candidate_timeout_s,
+                            )
+                            vrep = validator.validate(
+                                self.design,
+                                hook_code_override=primary_code,
+                                hook_implementations=impls,
+                            )
+                            self._val_cache[code_sha] = bool(vrep.passed)
+                        passed = self._val_cache[code_sha]
+                        dev_summary = _summarize_records_for_checkpoint(
+                            self.instances,
+                            resp.get("records") or [],
+                            dev_suite_hash=self.suite_hash or "",
+                            solve_budget_ms=self.instance_time_budget_ms,
+                        )
+                        frozen_manifest = FrozenInterfaceSolver(
+                            solver_id=f"ckpt_cand_{code_sha[:10]}",
+                            display_name=f"M3.2 Candidate {self.design.template_id} ({code_sha[:8]})",
+                            problem_family=self.design.problem_family,
+                            paradigm=self.design.paradigm,
+                            template_id=self.design.template_id,
+                            template_version=self.design.template_version,
+                            template_source_sha256=self.tpl.template_source_sha256,
+                            postprocess_mode=self.design.postprocess_mode,
+                            template_options=dict(self.design.template_options),
+                            hook_name=self.design.hook_name,
+                            hook_code=primary_code,
+                            hook_code_sha256=sha256_text(primary_code),
+                            design_sha256=self.design.design_sha256,
+                            origin_run=str(self.milestone_run_id),
+                            kb_release_id=self.kb_release_id,
+                            kb_entry_id=self.design.cited_kb_ids[0] if self.design.cited_kb_ids else None,
+                            cited_kb_ids=self.design.cited_kb_ids,
+                            diagnostic_ref=self.design.diagnostic_ref,
+                            description=f"Settled candidate under {self.design.template_id}/{self.design.template_version}.",
+                            default_budget_ms=self.instance_time_budget_ms,
+                            protocol_id=self.adapter.protocol_id,
+                            hook_specs=self.tpl.hook_specs,
+                            hook_implementations=impls or {},
+                        )
+                        settle_attempt_provenance(
+                            self.milestone_ledger_path,
+                            attempt_token=attempt_token,
+                            generation_status="valid_candidate",
+                            eval_id=eval_id,
+                            code_sha256=code_sha,
+                            bundle_hash=frozen_manifest.bundle_hash,
+                            solver_manifest=frozen_manifest.to_dict(),
+                            validation_passed=passed,
+                            dev_eval=dev_summary,
+                            dev_suite_hash=self.suite_hash,
+                            solve_budget_ms=self.instance_time_budget_ms,
+                        )
+                else:
+                    settle_attempt_provenance(
+                        self.milestone_ledger_path,
+                        attempt_token=attempt_token,
+                        generation_status="invalid_candidate",
+                        eval_id=eval_id,
+                        code_sha256=code_sha,
+                        validation_passed=False,
+                    )
+            wall_elapsed = (time.monotonic() - self.run_started_monotonic) if self.run_started_monotonic is not None else None
+            try_seal_draining_checkpoints(
+                self.milestone_ledger_path,
+                self.milestone_run_id,
+                wall_elapsed_seconds=wall_elapsed,
+            )
         return resp
 
     def _append_eval_log(self, code_string: str, resp: Mapping[str, Any]) -> None:
-        # Handled in Session-schema format inside evaluate_detailed above
         return None
+
+
+def _build_session_bridge(
+    *,
+    endpoint: str,
+    api_key: str,
+    model: str,
+    request_timeout: float,
+    budget: SessionRequestBudget,
+    req_log: Path,
+    wall_seconds: float,
+    problem: str,
+    routing_policy: ModelRoutingPolicy,
+    ledger_path: Path | None,
+    run_id: str,
+    strict_barriers: bool,
+    use_mock: bool,
+    mock_candidates: Sequence[str],
+    mock_failure_hook: Any | None = None,
+    run_started_monotonic: float,
+):
+    from agent_skill_loop.client import ProviderFailure, http_post_with_deadline
+    from eoh_frozen.generation_contract import generation_parameters
+    from eoh_frozen.llm_bridge import OpenAIPathBridge
+
+    class _RoutedSessionBridge(OpenAIPathBridge):
+        """Session bridge supporting pre-payload routing, rate-card usage, and M3.2 prefix barriers."""
+
+        def __init__(self) -> None:
+            super().__init__(
+                endpoint,
+                api_key,
+                model,
+                timeout=request_timeout,
+                budget=budget,
+                request_log=req_log,
+                wall_seconds=wall_seconds,
+                problem=problem,
+            )
+            self._routing_policy = routing_policy
+            self._ledger_path = Path(ledger_path) if ledger_path else None
+            self._run_id = run_id
+            self._strict_barriers = bool(strict_barriers)
+            self._use_mock = bool(use_mock)
+            self._mock_candidates = list(mock_candidates)
+            self._mock_idx = 0
+            self._mock_failure_hook = mock_failure_hook
+            self._pending_attempt_token: str | None = None
+            self._token_lock = threading.Lock()
+            self._run_started = run_started_monotonic
+
+        def consume_pending_attempt_token(self) -> str | None:
+            with self._token_lock:
+                tok = self._pending_attempt_token
+                self._pending_attempt_token = None
+                return tok
+
+        def settle_trailing_pending(self, reason: str = "eoh_skipped") -> None:
+            tok = self.consume_pending_attempt_token()
+            if tok is not None and self._ledger_path is not None:
+                settle_attempt_provenance(
+                    self._ledger_path,
+                    attempt_token=tok,
+                    generation_status=reason,
+                    only_if_pending=True,
+                )
+            if self._strict_barriers and self._ledger_path is not None:
+                settle_pending_provenance_for_terminal_requests(self._ledger_path, self._run_id)
+                try_seal_draining_checkpoints(
+                    self._ledger_path,
+                    self._run_id,
+                    wall_elapsed_seconds=time.monotonic() - self._run_started,
+                )
+
+        def _save_exchange(self, slot, prompt: str, response: str, *, metadata=None) -> None:
+            if slot is not None:
+                slot.response_sha256 = hashlib.sha256(str(response).encode("utf-8")).hexdigest()
+            super()._save_exchange(slot, prompt, response, metadata=metadata)
+
+        def _perform_post(
+            self, target_url: str, headers: dict[str, str], body_bytes: bytes, timeout_s: float, *, slot, prompt: str,
+        ) -> tuple[int, bytes]:
+            if not self._use_mock:
+                return http_post_with_deadline(target_url, headers, body_bytes, timeout_s)
+            if callable(self._mock_failure_hook):
+                hook_res = self._mock_failure_hook(slot, json.loads(body_bytes.decode("utf-8")), prompt)
+                if hook_res is not None:
+                    return hook_res
+            if prompt.strip() == "1+1=?":
+                text = "2"
+            else:
+                text = self._mock_candidates[self._mock_idx % len(self._mock_candidates)]
+                self._mock_idx += 1
+            mock_resp = {
+                "id": f"mock_{slot.request_id if slot else uuid.uuid4().hex}",
+                "model": json.loads(body_bytes.decode("utf-8")).get("model"),
+                "choices": [{"index": 0, "message": {"role": "assistant", "content": text}, "finish_reason": "stop"}],
+                "usage": {
+                    "prompt_tokens": max(1, len(prompt) // 4),
+                    "completion_tokens": max(1, len(text) // 4),
+                    "prompt_tokens_details": {"cached_tokens": 0},
+                },
+            }
+            return 200, json.dumps(mock_resp).encode("utf-8")
+
+        def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
+            self.settle_trailing_pending("eoh_skipped")
+            self.last_request_index = None
+            if purpose is not None and purpose not in {"eoh_probe", "eoh_generation", "eoh_repair"}:
+                raise ValueError("gateway_purpose_denied")
+            if self.terminal:
+                raise BudgetExhausted(self.last_error or "provider_terminal")
+            remaining = self._remaining_wall()
+            if remaining is not None and remaining <= 0:
+                self.last_error = "wall_time_exhausted"
+                self.terminal = True
+                raise BudgetExhausted("wall_time_exhausted")
+            if purpose is None:
+                purpose = "eoh_probe" if prompt.strip() == "1+1=?" else "eoh_generation"
+            if purpose == "eoh_repair" and self.repair_limit is not None and self.repair_used >= self.repair_limit:
+                raise BudgetExhausted("repair_request_limit")
+
+            if self._ledger_path is not None and (self._routing_policy.enabled or self._strict_barriers):
+                route = allocate_logical_route(
+                    self._ledger_path,
+                    run_id=self._run_id,
+                    purpose=purpose,
+                    policy=self._routing_policy,
+                    created_at_utc=_utc_now(),
+                )
+            else:
+                route = {
+                    "logical_call_id": f"lcall_{uuid.uuid4().hex}",
+                    "logical_ordinal": None,
+                    "requested_model": self.model,
+                    "route_role": "single_model",
+                }
+
+            backoff_schedule = (5.0, 15.0, 30.0) if not self._use_mock else (0.01, 0.01)
+            last_exc: Exception | None = None
+            for retry_idx in range(len(backoff_schedule) + 1):
+                rem_wall = self._remaining_wall()
+                if rem_wall is not None and rem_wall <= 0:
+                    self.last_error = "wall_time_exhausted"
+                    self.terminal = True
+                    raise BudgetExhausted("wall_time_exhausted")
+
+                chosen_model = str(route["requested_model"])
+                payload: dict[str, Any] = {
+                    "model": chosen_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    **generation_parameters(self.target_url, self.thinking, repair=purpose == "eoh_repair"),
+                }
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "eoh-frozen-bridge/0908",
+                    "X-Request-Purpose": purpose,
+                }
+                if self._opencode:
+                    headers["x-opencode-session"] = self.session_id
+
+                slot = self.budget.reserve(
+                    purpose=purpose,
+                    problem=self.problem,
+                    attempt=retry_idx + 1,
+                    model=chosen_model,
+                    logical_call_id=route["logical_call_id"],
+                    logical_ordinal=route["logical_ordinal"],
+                    retry_index=retry_idx,
+                    requested_model=chosen_model,
+                )
+                if slot is None and self.budget.denial_reason == "checkpoint_pending" and self._ledger_path is not None:
+                    self.settle_trailing_pending("eoh_skipped")
+                    slot = self.budget.reserve(
+                        purpose=purpose,
+                        problem=self.problem,
+                        attempt=retry_idx + 1,
+                        model=chosen_model,
+                        logical_call_id=route["logical_call_id"],
+                        logical_ordinal=route["logical_ordinal"],
+                        retry_index=retry_idx,
+                        requested_model=chosen_model,
+                    )
+                if slot is None:
+                    self.last_error = getattr(self.budget, "denial_reason", None) or "request_budget_exhausted"
+                    self.terminal = True
+                    raise BudgetExhausted(self.last_error)
+
+                self.last_request_index = slot.index
+                self._log_event(slot.reserved_event)
+                if purpose == "eoh_repair":
+                    self.repair_used += 1
+                started = time.monotonic()
+                req_timeout = self.timeout if rem_wall is None else min(self.timeout, max(0.05, rem_wall))
+
+                try:
+                    if self.request_log is not None:
+                        _atomic_write_text(
+                            self.request_log.parent / "request_inputs" / f"request_{slot.index}.json",
+                            json.dumps(payload, ensure_ascii=False),
+                        )
+                    self.budget.mark_sent(slot)
+                    status, raw = self._perform_post(
+                        self.target_url, headers, json.dumps(payload).encode("utf-8"), req_timeout, slot=slot, prompt=prompt,
+                    )
+                    parsed = json.loads(raw.decode("utf-8"))
+                    if not isinstance(parsed, dict):
+                        raise ValueError("invalid_completion_object")
+                    choices = parsed.get("choices") or []
+                    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict) or not isinstance(choices[0].get("message"), dict):
+                        raise ValueError("invalid_completion_choices")
+                    if not isinstance(parsed.get("usage", {}), dict):
+                        raise ValueError("invalid_completion_usage")
+                except BudgetExhausted:
+                    raise
+                except ProviderFailure as exc:
+                    last_exc = exc
+                    elapsed = time.monotonic() - started
+                    if exc.error_code == "request_deadline":
+                        self._record(slot, "killed_unknown", error_code="request_deadline", elapsed_seconds=elapsed, requested_model=chosen_model)
+                    elif exc.error_code in {"provider_auth_invalid"} or str(exc.error_code).startswith("http_"):
+                        self._record(slot, "http_error", status=exc.status, error_code=exc.error_code, elapsed_seconds=elapsed, requested_model=chosen_model)
+                    else:
+                        self._record(slot, "connectivity_failed", error_code=exc.error_code, elapsed_seconds=elapsed, requested_model=chosen_model)
+                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                        settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="provider_failed")
+                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                    self.last_error = exc.error_code
+                    transient = (
+                        exc.error_code in {"provider_connectivity_or_protocol_error", "request_deadline"}
+                        or exc.status == 429
+                        or (isinstance(exc.status, int) and 500 <= exc.status < 600)
+                    )
+                    if transient and retry_idx < len(backoff_schedule):
+                        rem_after = self._remaining_wall()
+                        if rem_after is None or rem_after > backoff_schedule[retry_idx]:
+                            time.sleep(backoff_schedule[retry_idx])
+                            continue
+                    self.terminal = True
+                    raise
+                except Exception as exc:
+                    self._record(
+                        slot,
+                        "connectivity_failed",
+                        error_code="provider_connectivity_or_protocol_error",
+                        elapsed_seconds=time.monotonic() - started,
+                        requested_model=chosen_model,
+                    )
+                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                        settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="provider_failed")
+                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                    self.last_error = "provider_connectivity_or_protocol_error"
+                    self.terminal = True
+                    raise ProviderFailure(self.last_error) from exc
+
+                choices = parsed.get("choices") or []
+                message = choices[0].get("message", {}) if choices else {}
+                content = message.get("content") if isinstance(message, dict) else None
+                reasoning = message.get("reasoning_content") if isinstance(message, dict) else None
+                finish_reason = choices[0].get("finish_reason") if choices and isinstance(choices[0], dict) else None
+                usage_fields = extract_provider_usage(parsed)
+                cost_usd, priced, _ = compute_attempt_cost_usd(
+                    model_alias=chosen_model,
+                    input_tokens=usage_fields["input_tokens"],
+                    output_tokens=usage_fields["output_tokens"],
+                    cached_tokens=usage_fields["cached_tokens"],
+                    rate_card=self._routing_policy.rate_card,
+                )
+                elapsed = time.monotonic() - started
+                response_metadata = {
+                    "request_payload": payload,
+                    "requested_model": chosen_model,
+                    "served_model": usage_fields["served_model"],
+                    "provider_request_id": usage_fields["provider_request_id"],
+                    "logical_call_id": route["logical_call_id"],
+                    "logical_ordinal": route["logical_ordinal"],
+                    "retry_index": retry_idx,
+                    "finish_reason": finish_reason,
+                    "content_present": isinstance(content, str) and bool(content.strip()),
+                    "reasoning_content_present": isinstance(reasoning, str) and bool(reasoning.strip()),
+                    "selected_content_field": "content" if isinstance(content, str) and content.strip() and finish_reason != "length" else None,
+                    "response_policy": "content_only_complete_v1",
+                    "raw_response": parsed,
+                    "usage": parsed.get("usage") if isinstance(parsed.get("usage"), dict) else {},
+                    "cached_tokens": usage_fields["cached_tokens"],
+                    "rate_card_version": self._routing_policy.rate_card_version,
+                    "estimated_cost_usd": cost_usd if priced else None,
+                }
+                self.last_completion = parsed
+                bad_content = finish_reason == "length" or not isinstance(content, str) or not content.strip()
+                if bad_content:
+                    err = "generation_truncated" if finish_reason == "length" else "empty_or_nontext_completion"
+                    response_metadata["response_error"] = err
+                    self._save_exchange(slot, prompt, content if isinstance(content, str) else "", metadata=response_metadata)
+                    self._record(
+                        slot,
+                        "complete",
+                        status=status,
+                        error_code=err,
+                        elapsed_seconds=elapsed,
+                        input_tokens=usage_fields["input_tokens"],
+                        output_tokens=usage_fields["output_tokens"],
+                        cached_tokens=usage_fields["cached_tokens"],
+                        finish_reason=finish_reason,
+                        selected_content_field=None,
+                        requested_model=chosen_model,
+                        served_model=usage_fields["served_model"],
+                        provider_request_id=usage_fields["provider_request_id"],
+                        rate_card_version=self._routing_policy.rate_card_version,
+                        estimated_cost_usd=cost_usd if priced else None,
+                    )
+                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                        settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="malformed_response")
+                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                    self.last_error = err
+                    raise ValueError(err)
+
+                self._save_exchange(slot, prompt, content, metadata=response_metadata)
+                self._record(
+                    slot,
+                    "complete",
+                    status=status,
+                    error_code=None,
+                    elapsed_seconds=elapsed,
+                    input_tokens=usage_fields["input_tokens"],
+                    output_tokens=usage_fields["output_tokens"],
+                    cached_tokens=usage_fields["cached_tokens"],
+                    finish_reason=finish_reason,
+                    selected_content_field="content",
+                    requested_model=chosen_model,
+                    served_model=usage_fields["served_model"],
+                    provider_request_id=usage_fields["provider_request_id"],
+                    rate_card_version=self._routing_policy.rate_card_version,
+                    estimated_cost_usd=cost_usd if priced else None,
+                )
+                if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                    if purpose == "eoh_probe":
+                        settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="probe")
+                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                    else:
+                        with self._token_lock:
+                            self._pending_attempt_token = slot.attempt_token
+                self.last_error = None
+                return content
+
+            assert last_exc is not None
+            raise last_exc
+
+    return _RoutedSessionBridge()
 
 
 def execute_m2_session_task(
@@ -394,15 +952,16 @@ def execute_m2_session_task(
     seed_selection_path: str | None,
     previous_design: InterfaceDesign | None,
 ) -> None:
-    """Execute one Session round using Milestone 2's validated dynamic interface inside Session authority."""
+    """Execute one Session round using validated dynamic interface inside Session authority."""
     from eoh import LLMConfig
     from eoh.config import EoHConfig
     from eoh.eoh.eoh import EOH
 
     from agent_skill_loop.client import ProviderFailure, load_local_env
-    from eoh_frozen.llm_bridge import OpenAIPathBridge
 
+    t_run0 = time.monotonic()
     tpl = get_template_spec(design.template_id, design.template_version)
+    adapter = resolve_problem_adapter(tpl, problem_family=design.problem_family, protocol_id=design.protocol_id)
 
     output.mkdir(parents=True, exist_ok=True)
     results_dir = output / "results"
@@ -411,7 +970,7 @@ def execute_m2_session_task(
 
     eval_log = results_dir / "evaluations.jsonl"
     req_log = results_dir / "requests.jsonl"
-    instances = _normalize_session_suite_instances(suite)
+    instances = _normalize_session_suite_instances(suite, problem_family=design.problem_family)
     suite_hash = str(row["suite_hash"])
     eval_hash = str(row["evaluator_hash"])
     metric_hash = row["metric_spec_hash"] if "metric_spec_hash" in row.keys() else None
@@ -431,6 +990,90 @@ def execute_m2_session_task(
 
     budget_ms = resolve_session_time_budget_ms(plan.get("interface_selection"), config, design)
     kb_release_id, kb_manifest_sha256 = resolve_session_kb_release(config, session_root=root)
+    effective_cand_timeout = derive_effective_batch_timeout_s(
+        len(instances), budget_ms, floor_s=float(row["solver_timeout"]),
+    )
+
+    pb_cfg = config.get("persistent_budget") if isinstance(config, Mapping) else None
+    ledger_path = Path(str(pb_cfg["ledger_path"])) if isinstance(pb_cfg, Mapping) and pb_cfg.get("ledger_path") else None
+    milestone_run_id = str(pb_cfg.get("run_id") or row["run_id"]) if isinstance(pb_cfg, Mapping) else str(row["run_id"])
+    strict_barriers = bool(pb_cfg.get("strict_checkpoint_barriers", False)) if isinstance(pb_cfg, Mapping) else False
+    base_owner_epoch = str(pb_cfg.get("owner_epoch") or "") if isinstance(pb_cfg, Mapping) and pb_cfg.get("owner_epoch") else None
+    owner_epoch = f"{base_owner_epoch}:{task_id}" if base_owner_epoch else f"task:{task_id}"
+    wall_offset_s = get_run_wall_offset_seconds(ledger_path, milestone_run_id) if ledger_path is not None else 0.0
+    t_wall_origin = t_run0 - wall_offset_s
+    routing_policy = ModelRoutingPolicy.from_dict(config.get("model_routing") if isinstance(config, Mapping) else None)
+    if not routing_policy.enabled:
+        routing_policy = ModelRoutingPolicy(
+            enabled=False,
+            weak_model=str(row["eoh_model"]),
+            strong_model=str(row["eoh_model"]),
+            rate_card=routing_policy.rate_card,
+            rate_card_version=routing_policy.rate_card_version,
+        )
+
+    endpoint = str(row["eoh_endpoint"])
+    model = str(row["eoh_model"])
+    api_key_env = str(row["eoh_api_key_env"])
+    request_timeout = float(row["request_timeout"])
+    use_mock = endpoint.startswith("mock://") or os.environ.get("AGENT_SKILL_M2_MOCK") == "1"
+
+    parent_budget = None
+    if ledger_path is not None:
+        from agent_skill_loop.request_budget import PersistentRequestBudget
+
+        parent_budget = PersistentRequestBudget(
+            ledger_path,
+            pb_cfg.get("max_requests") if isinstance(pb_cfg, Mapping) else None,
+            run_id=milestone_run_id,
+            reconcile_inflight=False,
+            strict_checkpoint_barriers=strict_barriers,
+            owner_epoch=owner_epoch,
+        )
+    budget = SessionRequestBudget(str(root), task_id, parent=parent_budget)
+
+    bridge = None
+    mock_srv = None
+    use_routed_bridge = (not use_mock) or strict_barriers or routing_policy.enabled
+    if use_routed_bridge:
+        if not use_mock:
+            load_local_env()
+            api_key = os.environ.get(api_key_env, "").strip()
+            if not api_key:
+                summary = {
+                    "problem": str(row["problem"]),
+                    "status": "provider_failed",
+                    "stop_reason": "provider_error",
+                    "provider_error_code": f"missing_api_key:{api_key_env}",
+                    "loop_completed": False,
+                }
+                _atomic_write_text(output / "summary.json", json.dumps(summary, indent=2) + "\n")
+                return
+        else:
+            api_key = "mock-key"
+        mock_pool = _default_mock_candidates().get(design.template_id, DEFAULT_MOCK_MERGE_CANDIDATES)
+        bridge = _build_session_bridge(
+            endpoint=endpoint,
+            api_key=api_key,
+            model=model,
+            request_timeout=request_timeout,
+            budget=budget,
+            req_log=req_log,
+            wall_seconds=wall_seconds,
+            problem=f"{design.template_id}/{design.template_version}",
+            routing_policy=routing_policy,
+            ledger_path=ledger_path,
+            run_id=milestone_run_id,
+            strict_barriers=strict_barriers,
+            use_mock=use_mock,
+            mock_candidates=mock_pool,
+            run_started_monotonic=t_wall_origin,
+        )
+        local_url = bridge.start()
+    else:
+        mock_pool = _default_mock_candidates().get(design.template_id, DEFAULT_MOCK_MERGE_CANDIDATES)
+        mock_srv = MockEoHLLMServer(mock_pool, request_log=req_log)
+        local_url = mock_srv.start()
 
     task = _SessionTrackedDynamicProblem(
         session=session_ref,
@@ -440,19 +1083,29 @@ def execute_m2_session_task(
         metric_spec_hash=metric_hash,
         problem_spec_hash=problem_spec_hash,
         data_manifest_hash=data_manifest_hash,
+        kb_release_id=kb_release_id,
+        milestone_ledger_path=ledger_path,
+        milestone_run_id=milestone_run_id,
+        strict_checkpoint_barriers=strict_barriers,
+        run_started_monotonic=t_wall_origin,
+        bridge_ref=bridge,
         design=design,
         instances=instances,
         suite_id=f"session_{row['problem']}",
-        candidate_timeout_s=float(row["solver_timeout"]),
+        distance_convention=str(suite.get("distance_convention") or ("euc_2d_float" if design.problem_family in {"cvrp", "tsp"} else "not_applicable")),
+        vehicle_limit_policy=str(suite.get("vehicle_limit_policy") or ("unconstrained" if design.problem_family == "cvrp" else "not_applicable")),
+        candidate_timeout_s=effective_cand_timeout,
         instance_time_budget_ms=budget_ms,
         evaluation_log=eval_log,
         round_context=combined_ctx,
     )
     _atomic_write_text(output / "task_description.txt", task.task_description)
 
-    seed_origin_by_hash = {design.baseline_hook_sha256: "baseline"}
+    baseline_code = tpl.default_template_program if len(tpl.effective_hook_specs) > 1 else design.baseline_hook_code
+    baseline_sha = sha256_text(baseline_code)
+    seed_origin_by_hash = {baseline_sha: "baseline", design.baseline_hook_sha256: "baseline"}
     seed_entries = [{"algorithm": f"Baseline hook for {design.template_id}/{design.template_version}.",
-                     "code": design.baseline_hook_code}]
+                     "code": baseline_code}]
     inherited = []
     if seed_selection_path:
         seed_doc = json.loads(Path(seed_selection_path).read_text(encoding="utf-8"))
@@ -469,8 +1122,15 @@ def execute_m2_session_task(
             previous_design.template_id, previous_design.template_version
         ) != (design.template_id, design.template_version):
             continue
-        gate1, gate2 = validate_hook_ast(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
-        if gate1 or gate2:
+        if len(tpl.effective_hook_specs) > 1:
+            try:
+                impls = parse_hook_candidate(tpl.template_id, tpl.template_version, code)
+                g1, g2 = validate_hook_bundle(tpl.effective_hook_specs, impls)
+            except (ValueError, SyntaxError):
+                continue
+        else:
+            g1, g2 = validate_hook_ast(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+        if g1 or g2:
             continue
         seed_origin_by_hash[checksum] = origin
         seed_entries.append({"algorithm": f"Inherited {origin} ({checksum[:12]}).", "code": code})
@@ -483,8 +1143,12 @@ def execute_m2_session_task(
         "seed_origins": seed_origin_by_hash,
     }, indent=2) + "\n")
     task.seed_origins = seed_origin_by_hash
-    baseline_resp = task.evaluate_detailed(design.baseline_hook_code)
+    baseline_resp = task.evaluate_detailed(baseline_code)
     if not baseline_resp.get("valid"):
+        if bridge is not None:
+            bridge.stop()
+        if mock_srv is not None:
+            mock_srv.stop()
         raise ValueError(f"interface_baseline_infeasible:{baseline_resp.get('error_code')}")
 
     seed_path = output / "seeds" / "baseline_seed.json"
@@ -494,86 +1158,10 @@ def execute_m2_session_task(
         encoding="utf-8",
     )
 
-    endpoint = str(row["eoh_endpoint"])
-    model = str(row["eoh_model"])
-    api_key_env = str(row["eoh_api_key_env"])
-    request_timeout = float(row["request_timeout"])
-    use_mock = endpoint.startswith("mock://") or os.environ.get("AGENT_SKILL_M2_MOCK") == "1"
-
-    bridge = None
-    mock_srv = None
-    if use_mock:
-        mock_candidates = DEFAULT_MOCK_CANDIDATES_BY_TEMPLATE.get(design.template_id, DEFAULT_MOCK_MERGE_CANDIDATES)
-        mock_srv = MockEoHLLMServer(mock_candidates, request_log=req_log)
-        local_url = mock_srv.start()
-    else:
-        class _ResilientSessionBridge(OpenAIPathBridge):
-            def _save_exchange(self, slot, prompt: str, response: str, *, metadata=None) -> None:
-                if slot is not None:
-                    slot.response_sha256 = hashlib.sha256(str(response).encode("utf-8")).hexdigest()
-                super()._save_exchange(slot, prompt, response, metadata=metadata)
-
-            def _forward_serial(self, prompt: str, *, purpose: str | None = None) -> str:
-                last_exc: Exception | None = None
-                backoff_schedule = (5.0, 15.0, 30.0)
-                for attempt in range(len(backoff_schedule) + 1):
-                    try:
-                        return super()._forward_serial(prompt, purpose=purpose)
-                    except ProviderFailure as exc:
-                        last_exc = exc
-                        transient = (
-                            exc.error_code in {"provider_connectivity_or_protocol_error", "request_deadline"}
-                            or exc.status == 429
-                            or (isinstance(exc.status, int) and 500 <= exc.status < 600)
-                        )
-                        if transient and attempt < len(backoff_schedule):
-                            self.terminal = False
-                            self.last_error = None
-                            time.sleep(backoff_schedule[attempt])
-                            continue
-                        raise
-                assert last_exc is not None
-                raise last_exc
-
-        load_local_env()
-        api_key = os.environ.get(api_key_env, "").strip()
-        if not api_key:
-            summary = {
-                "problem": str(row["problem"]),
-                "status": "provider_failed",
-                "stop_reason": "provider_error",
-                "provider_error_code": f"missing_api_key:{api_key_env}",
-                "loop_completed": False,
-            }
-            _atomic_write_text(output / "summary.json", json.dumps(summary, indent=2) + "\n")
-            return
-        parent_budget = None
-        pb_cfg = config.get("persistent_budget") if isinstance(config, Mapping) else None
-        if isinstance(pb_cfg, Mapping) and pb_cfg.get("ledger_path"):
-            from agent_skill_loop.request_budget import PersistentRequestBudget
-
-            parent_budget = PersistentRequestBudget(
-                Path(str(pb_cfg["ledger_path"])),
-                pb_cfg.get("max_requests"),
-                run_id=str(pb_cfg.get("run_id") or row["run_id"]),
-                reconcile_inflight=False,
-            )
-        budget = SessionRequestBudget(str(root), task_id, parent=parent_budget)
-        bridge = _ResilientSessionBridge(
-            endpoint,
-            api_key,
-            model,
-            timeout=request_timeout,
-            budget=budget,
-            request_log=req_log,
-            wall_seconds=wall_seconds,
-            problem=f"{design.template_id}/{design.template_version}",
-        )
-        local_url = bridge.start()
-
     status = "completed"
     stop_reason = "eoh_completed"
     loop_completed = True
+    provider_error_code = None
     try:
         llm_cfg = LLMConfig(use_local=True, local_url=local_url, timeout=int(request_timeout) + 5)
         engine_cfg = EoHConfig(
@@ -596,7 +1184,25 @@ def execute_m2_session_task(
         engine.run()
     except Exception as exc:
         msg = str(exc)
-        if "budget_exhausted" in msg or "request_limit" in msg:
+        bridge_err = getattr(bridge, "last_error", None) if bridge is not None else None
+        bridge_term = bool(getattr(bridge, "terminal", False)) if bridge is not None else False
+        is_provider_err = (
+            isinstance(exc, ProviderFailure)
+            or (
+                bridge_term
+                and bridge_err is not None
+                and bridge_err not in {"request_budget_exhausted", "wall_time_exhausted", "checkpoint_pending", "repair_request_limit", "budget_exhausted"}
+            )
+        )
+        if is_provider_err:
+            status = "provider_failed"
+            provider_error_code = str(getattr(exc, "error_code", None) or bridge_err or "provider_error")
+            stop_reason = provider_error_code
+            loop_completed = False
+        elif "wall_time_exhausted" in msg or bridge_err == "wall_time_exhausted":
+            status = "stopped"
+            stop_reason = "wall_time_limit"
+        elif "budget_exhausted" in msg or "request_limit" in msg or "checkpoint_pending" in msg:
             status = "stopped"
             stop_reason = "request_limit"
         else:
@@ -604,12 +1210,12 @@ def execute_m2_session_task(
             stop_reason = "engine_error"
             loop_completed = False
     finally:
+        if bridge is not None:
+            bridge.settle_trailing_pending("eoh_skipped")
+            bridge.stop()
         if mock_srv is not None:
             mock_srv.stop()
-        if bridge is not None:
-            bridge.stop()
 
-    # Read durable evaluations and export best valid generated skill + FrozenInterfaceSolver manifest
     rows = [json.loads(line) for line in eval_log.read_text(encoding="utf-8").splitlines() if line.strip()] if eval_log.is_file() else []
     gen_valid = [
         r for r in rows
@@ -620,27 +1226,40 @@ def execute_m2_session_task(
     ]
     best_rel = None
     frozen_rel = None
-    validator = InterfaceValidator(candidate_timeout_s=float(row["solver_timeout"]), instance_time_budget_ms=budget_ms)
+    validator = InterfaceValidator(
+        candidate_timeout_s=effective_cand_timeout,
+        instance_time_budget_ms=budget_ms,
+        outer_timeout_s=effective_cand_timeout,
+    )
     validated = []
     best = None
     for candidate in sorted(gen_valid, key=lambda r: float(r["evaluation"]["objective"])):
         if any(r["code_sha256"] == candidate["code_sha256"] for r in validated):
             continue
-        report = validator.validate(design, hook_code_override=str(candidate["code"]))
+        try:
+            win_primary, win_impls = task._resolve_hook_payload(str(candidate["code"]))
+        except (ValueError, SyntaxError):
+            continue
+        report = validator.validate(
+            design,
+            hook_code_override=win_primary,
+            hook_implementations=win_impls,
+        )
         validated.append({"code_sha256": candidate["code_sha256"], "validation": report.as_dict()})
         if report.passed:
-            best = candidate
+            best = (candidate, win_primary, win_impls)
             break
     _atomic_write_text(output / "winner_validation_report.json", json.dumps(validated, indent=2) + "\n")
     if best is not None:
-        ev = best["evaluation"]
+        best_rec, win_primary, win_impls = best
+        ev = best_rec["evaluation"]
         skill_dir = output / "skills" / "best_generated"
         sv = SkillVersion(
-            version_id=f"m2_r{rd['round_id']:04d}_{best['code_sha256'][:10]}",
+            version_id=f"m2_r{rd['round_id']:04d}_{best_rec['code_sha256'][:10]}",
             problem=str(row["problem"]),
             entrypoint=design.hook_name,
-            code=str(best["code"]),
-            code_sha256=str(best["code_sha256"]),
+            code=str(best_rec["code"]),
+            code_sha256=str(best_rec["code_sha256"]),
             parent_version_id=None,
             suite_hash=suite_hash,
             evaluator_hash=eval_hash,
@@ -657,8 +1276,9 @@ def execute_m2_session_task(
         save_skill(skill_dir, sv)
         best_rel = "skills/best_generated"
 
+        primary_src = win_primary or str(best_rec["code"])
         frozen = FrozenInterfaceSolver(
-            solver_id=f"session_r{rd['round_id']:04d}_{design.template_id}_{best['code_sha256'][:8]}",
+            solver_id=f"session_r{rd['round_id']:04d}_{design.template_id}_{best_rec['code_sha256'][:8]}",
             display_name=f"Session R{rd['round_id']} · {design.template_id}",
             problem_family=design.problem_family,
             paradigm=design.paradigm,
@@ -668,8 +1288,8 @@ def execute_m2_session_task(
             postprocess_mode=design.postprocess_mode,
             template_options=dict(design.template_options),
             hook_name=design.hook_name,
-            hook_code=str(best["code"]),
-            hook_code_sha256=str(best["code_sha256"]),
+            hook_code=primary_src,
+            hook_code_sha256=sha256_text(primary_src),
             design_sha256=design.design_sha256,
             origin_run=str(output),
             kb_release_id=kb_release_id,
@@ -678,6 +1298,9 @@ def execute_m2_session_task(
             diagnostic_ref=design.diagnostic_ref,
             description=sv.description,
             default_budget_ms=budget_ms,
+            protocol_id=adapter.protocol_id,
+            hook_specs=tpl.hook_specs,
+            hook_implementations=win_impls or {},
         )
         _atomic_write_text(
             output / "frozen_solver_manifest.json",
@@ -687,6 +1310,8 @@ def execute_m2_session_task(
 
     summary = {
         "problem": str(row["problem"]),
+        "problem_family": design.problem_family,
+        "protocol_id": adapter.protocol_id,
         "search": "official_eoh",
         "interface_mode": "m2_dynamic_interface",
         "template_id": design.template_id,
@@ -694,6 +1319,7 @@ def execute_m2_session_task(
         "template_source_sha256": tpl.template_source_sha256,
         "design_sha256": design.design_sha256,
         "instance_time_budget_ms": budget_ms,
+        "effective_candidate_timeout_s": effective_cand_timeout,
         "kb_release_id": kb_release_id,
         "kb_manifest_sha256": kb_manifest_sha256,
         "static_kb_clues_injected": inject_static_kb_clues,
@@ -703,6 +1329,7 @@ def execute_m2_session_task(
         "evaluator_hash": eval_hash,
         "status": status,
         "stop_reason": stop_reason,
+        "provider_error_code": provider_error_code,
         "loop_completed": loop_completed,
         "baseline": baseline_resp.get("objective"),
         "best_generated_path": best_rel,

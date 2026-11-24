@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:55fabedf757c4ddca26424b8a7a92441"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Targeting the archive's weakest regimes (capacity_level=tight, spatial=clustered, depot_style=eccentric, where vbs_rel_gap_pct is most negative at -23.6/-20.9/-21.4), a multiplicative-gated rank-power ruin score that jointly prioritizes customers on high-capacity-utilization long routes (hard to reinsert, hence the binding constraint under tight capacity) and, under stagnation, flips the exponent upward to break up routes far from an eccentric depot, will lower mean objective on cvrp_dev_hetero_24 versus the round-2 champion (15.7435) by >0.05%, while preserving feasible-first-return and the deadline invariant (fixing the 25 ms/near-deadline early-stop pitfall is not required at 500 ms). This refines method-cvrp-m3-ruin-recreate-l3's reported rank-power-with-multiplicative-gates rule by making the gate weights and exponent explicitly capacity-utilization- and eccentricity-aware rather than uniformly normalized.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:55fabedf757c4ddca26424b8a7a92441"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve `score_ruin_nodes` from a monotone worst-cost removal ranking into a stagnation-adaptive multiplicative-gated rank-power ruin priority: score_i = rank_power(|removal_savings_i|/scale_norm * (1 + w_load*(load_r/mean_load)) * (1 + w_depot*(d(depot,i)/max_depot_d)) * (1 + w_dem*demand_i/mean_dem) * (1 + w_rdist*(route_dist_r/mean_route_dist)), p(iter_frac, stagnation_ratio)), where p decays with iter_frac for early intensification on long/high-load routes and rises with stagnation_ratio for late diversification (route-breaking ruin) so the search escapes local optima on clustered / eccentric-depot / tight-capacity instances without ever consuming more than the shared deadline (all state arrays read-only, deterministic tie-breaking, no RNG)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

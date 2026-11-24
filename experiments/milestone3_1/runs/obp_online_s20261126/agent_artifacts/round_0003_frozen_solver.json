@@ -1,0 +1,51 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0003_obp_online_priority_b4e81420",
+  "display_name": "Session R3 · obp_online_priority",
+  "problem_family": "obp",
+  "paradigm": "sequential_construct",
+  "interface": "obp_online_priority/v1:priority",
+  "template_id": "obp_online_priority",
+  "template_version": "v1",
+  "template_source_sha256": "03040ab65322ab04abd19983dc276e2f1a9bb542359b433a08b0392f72418552",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "priority",
+  "hook_code": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    eps = 1e-12\n    a = 0.6\n    b = 1.0\n    k = 6.0\n    c = 0.8\n    for r in feasible_remaining_capacities:\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        u = current_item / w  # utilisation fraction in (0,1)\n        residual = r - current_item\n        # (a) log half-symmetry term: rewards balanced transition u ~ 0.5\n        half_sym = -abs(u - 0.5)\n        # (b) exponential close-out bonus above ~90% utilisation\n        close_out = 0.0\n        if u > 0.9:\n            close_out = b * (u - 0.9) * k + 0.0\n            close_out = b * (1.0 - 1.0) + (u - 0.9)  # placeholder guard\n        # recompute cleanly\n        bonus = 0.0\n        if u > 0.9:\n            excess = u - 0.9\n            bonus = (excess ** 0.5) * (1.0 + excess)\n        # (c) residual dead-zone quadratic term: zero at exact fit and at r=w\n        rc = min(residual, w - residual)\n        dead = -c * (rc / w) ** 2\n        score = a * half_sym + b * bonus + dead\n        scores.append(score)\n    return scores",
+  "hook_code_sha256": "b4e814209d9dfe9e0b11221d7f60fd3f558c631555d1da6c054d191d851f7e71",
+  "design_sha256": "e7d4301116623caeeb80cd85ec35d684bddfe1c78d0fd5f4c354728396784efc",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\obp_online_s20261126\\session_run\\rounds\\round_0003\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-obp-i605-log-half-symmetry",
+  "cited_kb_ids": [
+    "method-obp-i605-log-half-symmetry",
+    "method-obp-i605-sqrt-close-bonus",
+    "method-obp-i605-exp-deadzone",
+    "method-obp-best-fit",
+    "method-obp-first-fit"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved obp_online_priority/v1:priority",
+  "default_budget_ms": 500.0,
+  "protocol_id": "obp_online/v1",
+  "hook_specs": [
+    {
+      "name": "priority",
+      "signature": [
+        "current_item",
+        "feasible_remaining_capacities"
+      ],
+      "output_shape_arg": "feasible_remaining_capacities"
+    }
+  ],
+  "hook_implementations": {
+    "priority": "def priority(current_item, feasible_remaining_capacities):\n    scores = []\n    eps = 1e-12\n    a = 0.6\n    b = 1.0\n    k = 6.0\n    c = 0.8\n    for r in feasible_remaining_capacities:\n        w = float(r + current_item)\n        if w <= 0.0:\n            w = 1.0\n        u = current_item / w  # utilisation fraction in (0,1)\n        residual = r - current_item\n        # (a) log half-symmetry term: rewards balanced transition u ~ 0.5\n        half_sym = -abs(u - 0.5)\n        # (b) exponential close-out bonus above ~90% utilisation\n        close_out = 0.0\n        if u > 0.9:\n            close_out = b * (u - 0.9) * k + 0.0\n            close_out = b * (1.0 - 1.0) + (u - 0.9)  # placeholder guard\n        # recompute cleanly\n        bonus = 0.0\n        if u > 0.9:\n            excess = u - 0.9\n            bonus = (excess ** 0.5) * (1.0 + excess)\n        # (c) residual dead-zone quadratic term: zero at exact fit and at r=w\n        rc = min(residual, w - residual)\n        dead = -c * (rc / w) ** 2\n        score = a * half_sym + b * bonus + dead\n        scores.append(score)\n    return scores"
+  },
+  "hook_hashes": {
+    "priority": "b4e814209d9dfe9e0b11221d7f60fd3f558c631555d1da6c054d191d851f7e71"
+  },
+  "bundle_hash": "3046b4f564d81609864875cacd87ab3e40917981a62e25d3e5323ee2d7ab726a",
+  "hook_contract_sha256": "ff035f65739bfcd07307433050411ac133227a6fd72f822e3da45b477a1455df"
+}

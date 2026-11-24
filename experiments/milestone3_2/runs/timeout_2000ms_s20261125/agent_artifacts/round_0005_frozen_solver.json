@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_db2da235",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n\n    mean_edge = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # ---- Tier 1: capacity-tightness class of node's route (0,1,2) ----\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    load_tier = np.floor(fill * 3.0).astype(np.int64)\n    load_tier = np.clip(load_tier, 0, 2)\n\n    # ---- Tier 2: depot-eccentricity class of the node (0,1,2) ----\n    ddep = np.asarray(d[0, 1:], dtype=np.float64)\n    mean_ddep = max(float(np.mean(ddep)), 1e-12)\n    # eccentric if far from depot AND on a long route\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n    rd_n = rd / (rd + mean_rd + 1e-12)          # in (0,1)\n    dd_n = ddep / (ddep + mean_ddep + 1e-12)    # in (0,1)\n    ecc = 0.5 * rd_n + 0.5 * dd_n               # in (0,1)\n    dep_tier = np.floor(ecc * 3.0).astype(np.int64)\n    dep_tier = np.clip(dep_tier, 0, 2)\n\n    # ---- Regime switch: as stagnation/progress rise, invert tier priorities ----\n    # Early: prioritize high load_tier & low dep_tier (near-depot tight clusters)\n    # Late : prioritize high dep_tier (eccentric long routes) to diversify\n    switch = float(np.clip(0.55 * stag + 0.45 * prog, 0.0, 1.0))\n    if switch < 0.5:\n        tier_combo = load_tier * 3 + dep_tier\n    else:\n        tier_combo = dep_tier * 3 + load_tier\n\n    # ---- Within-tier: savings rank (scale-free via normalized bounded transform) ----\n    eff = np.abs(sav) / (mean_edge * (1.0 + dem / mean_dem) + 1e-12)\n    eff_b = eff / (1.0 + eff)  # in [0,1)\n\n    # Lexicographic combine: tier dominates, within-tier savings breaks ties\n    # Normalize both into [0,1], give tier 100x weight to enforce lexicographic order\n    tier_n = tier_combo.astype(np.float64) / 8.0   # max combo = 2*3+2 = 8\n    score = 100.0 * tier_n + eff_b\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "db2da235d477471b2084160af5a8514216297b2d94e72c80e9a9418e27c3385c",
+  "design_sha256": "b4d35a9247392eb0af3f705cec81cfdc3533eb2dfe1a784f3c6727042e466e9d",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261125\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

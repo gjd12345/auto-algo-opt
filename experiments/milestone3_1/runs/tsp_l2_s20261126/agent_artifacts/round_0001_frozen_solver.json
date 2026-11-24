@@ -1,0 +1,46 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_tsp_guided_insertion_2opt_85ea14f8",
+  "display_name": "Session R1 · tsp_guided_insertion_2opt",
+  "problem_family": "tsp",
+  "paradigm": "insertion",
+  "interface": "tsp_guided_insertion_2opt/v1:score_insertion",
+  "template_id": "tsp_guided_insertion_2opt",
+  "template_version": "v1",
+  "template_source_sha256": "4d278295fa2fe6f600c726b2648a7429037f725011f7d204b2a3e3ba0ae43f37",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_insertion",
+  "hook_code": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n    dmax = float(np.max(d)) if d.size else 0.0\n    cmax = float(np.max(c)) if c.size else 0.0\n    if dmax > 0.0:\n        d = d / dmax\n    if cmax > 0.0:\n        c = c / cmax\n    w = 0.65\n    return w * d + (1.0 - w) * (1.0 - c)",
+  "hook_code_sha256": "85ea14f8267f4df479f0d8bf3e85435eaabaa77677df6145d689eee440d31c1f",
+  "design_sha256": "176ebf006fa5464f718f078edd4b29455267e5dec15b1626d131298c465edcb3",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l2_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": null,
+  "cited_kb_ids": [],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved tsp_guided_insertion_2opt/v1:score_insertion",
+  "default_budget_ms": 500.0,
+  "protocol_id": "tsp/v1",
+  "hook_specs": [
+    {
+      "name": "score_insertion",
+      "signature": [
+        "unvisited_nodes",
+        "nearest_tour_distances",
+        "insertion_costs"
+      ],
+      "output_shape_arg": "unvisited_nodes"
+    }
+  ],
+  "hook_implementations": {
+    "score_insertion": "def score_insertion(unvisited_nodes, nearest_tour_distances, insertion_costs):\n    import numpy as np\n    d = np.asarray(nearest_tour_distances, dtype=np.float64)\n    c = np.asarray(insertion_costs, dtype=np.float64)\n    dmax = float(np.max(d)) if d.size else 0.0\n    cmax = float(np.max(c)) if c.size else 0.0\n    if dmax > 0.0:\n        d = d / dmax\n    if cmax > 0.0:\n        c = c / cmax\n    w = 0.65\n    return w * d + (1.0 - w) * (1.0 - c)"
+  },
+  "hook_hashes": {
+    "score_insertion": "85ea14f8267f4df479f0d8bf3e85435eaabaa77677df6145d689eee440d31c1f"
+  },
+  "bundle_hash": "27889bd48ade43c5ea157efe00ded952adaab1e96fc5c2b489a48685031096ef",
+  "hook_contract_sha256": "17dc269b2fbb4faeeafe6a474e5d7180712a6c7311c9d0667ba95763bd634a07"
+}

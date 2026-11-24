@@ -1,0 +1,37 @@
+{
+  "round_id": 6,
+  "direction": "Scale- and tightness-adaptive dual hook: make `score_ruin_nodes` a size-normalized blend of Shaw-relatedness removal and worst-cost removal (relatedness weight rising with n=100 / uniform-spatial instances, worst-cost weight rising for eccentric-depot instances), and make `score_recreate_action` switch from pure Regret-2 to a capacity-slack-aware Regret-2 + cheapest-detour hybrid when the residual capacity of routes is low (tight capacity regime).",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Archive shows five homologous solvers with a tight spread (16.0549-16.1402) and a VBS gap of only 0.44%, i.e. static hook variants have converged; the only exploitable signal is regime heterogeneity. KB method-cvrp-m3-ruin-recreate-l3 documents that score_ruin_nodes is the sole evolvable destroy hook with deterministic Regret-2 repair, and method-cvrp-lns-shaw-regret shows Shaw-relatedness vs worst-cost removal trade off exactly along spatial clustering, while method-cvrp-cheapest-regret-insertion shows Regret-k pays off precisely when capacity is tight and detour choices are contested. Combining a scale-normalized relatedness/worst blend in the ruin hook with a slack-adaptive recreate rule targets the four reported weakest regimes directly, and the ~110 ms of unused budget per instance funds the extra relatedness normalization arithmetic."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0005/eoh_run/skills/best_generated",
+  "hypothesis": "The Pareto frontier is saturated at mean objective ~16.05 with only 0.44% SBS-VBS gap, and every exhausted-trace weakness concentrates in n=100 / uniform-spatial / eccentric-depot / tight-capacity instances (12 of 24 exhausted). A hook that (a) normalizes removal priority by instance scale so the ruin set stays a fixed fraction of nodes at n=100 instead of degenerating into overly large destroys, and (b) adapts the recreate criterion to capacity slack rather than always using Regret-2, should lower mean objective on those four weak regimes while leaving small/loose instances unchanged, yielding mean objective below the current SBS 16.0549 without exceeding the 500 ms budget (mean solve ~390 ms leaves ~110 ms headroom).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows five homologous solvers with a tight spread (16.0549-16.1402) and a VBS gap of only 0.44%, i.e. static hook variants have converged; the only exploitable signal is regime heterogeneity. KB method-cvrp-m3-ruin-recreate-l3 documents that score_ruin_nodes is the sole evolvable destroy hook with deterministic Regret-2 repair, and method-cvrp-lns-shaw-regret shows Shaw-relatedness vs worst-cost removal trade off exactly along spatial clustering, while method-cvrp-cheapest-regret-insertion shows Regret-k pays off precisely when capacity is tight and detour choices are contested. Combining a scale-normalized relatedness/worst blend in the ruin hook with a slack-adaptive recreate rule targets the four reported weakest regimes directly, and the ~110 ms of unused budget per instance funds the extra relatedness normalization arithmetic."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_cd8aaa03",
+  "display_name": "Session R4 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dm = np.asarray(distance_matrix, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rload = np.asarray(route_loads, dtype=np.float64)\n    rdist = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    n = dm.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = float(capacity) if capacity > 0 else 1.0\n    eps = 1e-12\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n\n    d0 = np.abs(dm[0, 1:]).astype(np.float64)\n    dmax = float(np.max(d0)) if d0.size else 1.0\n    dmax = max(dmax, eps)\n    scale = max(float(np.mean(d0)) if d0.size else 1.0, eps)\n\n    # normalized savings\n    s = np.abs(sav).astype(np.float64)\n    smax = float(np.max(s)) if s.size else 0.0\n    if smax > eps:\n        snorm = np.clip(s / (smax + eps), 0.0, 1.0)\n    else:\n        snorm = np.zeros(n, dtype=np.float64)\n\n    # proximity (near depot -> low; far -> high when we want geographic spread)\n    prox = d0 / dmax  # 0..1 far preference\n\n    # load saturation\n    util = np.clip(np.abs(rload) / cap, 0.0, 1.0)\n\n    # route sparsity: short routes get high priority\n    rmax = float(np.max(np.abs(rdist))) if n else 1.0\n    rmax = max(rmax, eps)\n    rlen = np.maximum(np.abs(rdist) / rmax, eps)\n    sparse = 1.0 / (1.0 + rlen)  # 0.5..1\n\n    # seed = top-savings customer (deterministic)\n    if smax > eps:\n        seed_idx = int(np.argmax(s))\n    else:\n        seed_idx = int(np.argmax(prox))\n\n    seed_d = dm[seed_idx + 1, 1:]  # distance from seed to all customers\n    rel_kernel = 1.0 / (1.0 + (seed_d / scale) ** 2)  # 0..1, 1 at seed\n\n    # loglikelihood-style additive composite\n    log_s = np.log(snorm + 0.02)\n    log_p = np.log(0.4 + 0.6 * prox)          # favor far but not zero-prox\n    log_l = np.log(0.5 + 0.5 * util)          # load saturation soft\n    log_sp = np.log(0.3 + 0.7 * sparse)       # sparsity\n    log_r = np.log(0.05 + 0.95 * rel_kernel)  # relatedness\n\n    # phase-shifting weights: early savings-heavy, late relatedness/gate-heavy\n    w_s = 1.0 - 0.35 * it\n    w_p = 0.15 + 0.35 * it\n    w_l = 0.20 + 0.40 * it + 0.15 * st\n    w_sp = 0.10 + 0.55 * it\n    w_r = 0.05 + 0.55 * it + 0.25 * st\n\n    score = (w_s * log_s + w_p * log_p + w_l * log_l\n             + w_sp * log_sp + w_r * log_r)\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    score = np.maximum(score, 0.0)\n\n    smin = float(np.min(score)) if score.size else 0.0\n    smax2 = float(np.max(score)) if score.size else 0.0\n    if smax2 - smin > eps:\n        score = (score - smin) / (smax2 - smin)\n    else:\n        score = np.zeros(n, dtype=np.float64)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "cd8aaa033dd5c8f1eac69bf73d1c15806f55468faedcf7e4269d0e493e03615f",
+  "design_sha256": "4c2810c599af71a17aec56462aca56a37777203fa6b5643834bdeb42a5fad5a0",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261124\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

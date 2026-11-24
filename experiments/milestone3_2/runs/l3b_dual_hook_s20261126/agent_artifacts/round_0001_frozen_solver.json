@@ -1,0 +1,71 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_dual_501be7ec",
+  "display_name": "Session R1 · cvrp_ruin_recreate_dual",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate_dual",
+  "template_version": "v1",
+  "template_source_sha256": "14883315be795b35c5df7adc26d730b54731cd92b4799e141421b4e0da5c58cc",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n\n    # (a) normalized removal savings\n    savings_norm = removal_savings / scale\n\n    # (b) route-length share (dimensionless detour fraction)\n    route_dists_safe = np.maximum(route_dists, 1e-12)\n    length_share = removal_savings / route_dists_safe\n\n    # (c) relatedness via normalized depot distance, weighted by demand fraction\n    depot_dist = distance_matrix[0, 1:].astype(np.float64)\n    depot_dist_norm = depot_dist / scale\n    demand_frac = np.clip(demands[1:] / capacity, 0.0, 1.0)\n    rel_term = -depot_dist_norm * (0.4 + 1.6 * demand_frac)\n\n    # phase weights: stronger early savings-focus, stronger late/stagnant cluster-focus\n    w_sav = 1.5 * (1.0 - iter_frac) ** 1.3 + 0.15 * stagnation_ratio\n    w_share = 0.15 + 1.1 * iter_frac ** 1.2 + 0.35 * stagnation_ratio\n    w_rel = 0.05 + 1.2 * stagnation_ratio + 0.7 * iter_frac\n\n    score = w_sav * savings_norm + w_share * length_share + w_rel * rel_term\n    return np.asarray(score, dtype=np.float64)\n",
+  "hook_code_sha256": "8aae86384440f44113f1f681441babf4f46c26bd10de04dfd97e0036d176e634",
+  "design_sha256": "3d7c961562b8d5045292d1659a20e237c9522abc82ed13e40bee2954f9ed578d",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\l3b_dual_hook_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate_dual/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1",
+  "hook_specs": [
+    {
+      "name": "score_ruin_nodes",
+      "signature": [
+        "distance_matrix",
+        "demands",
+        "capacity",
+        "route_ids",
+        "route_loads",
+        "route_dists",
+        "removal_savings",
+        "stagnation_ratio",
+        "iter_frac"
+      ],
+      "output_shape_arg": "route_ids"
+    },
+    {
+      "name": "score_recreate_action",
+      "signature": [
+        "customer_idx",
+        "target_route_idx",
+        "insert_delta",
+        "regret2_margin",
+        "route_load_after",
+        "capacity",
+        "insert_pos"
+      ],
+      "output_shape_arg": "customer_idx"
+    }
+  ],
+  "hook_implementations": {
+    "score_ruin_nodes": "import numpy as np\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = len(route_ids)\n    scale = np.maximum(np.mean(distance_matrix[0, 1:]), 1e-12)\n\n    # (a) normalized removal savings\n    savings_norm = removal_savings / scale\n\n    # (b) route-length share (dimensionless detour fraction)\n    route_dists_safe = np.maximum(route_dists, 1e-12)\n    length_share = removal_savings / route_dists_safe\n\n    # (c) relatedness via normalized depot distance, weighted by demand fraction\n    depot_dist = distance_matrix[0, 1:].astype(np.float64)\n    depot_dist_norm = depot_dist / scale\n    demand_frac = np.clip(demands[1:] / capacity, 0.0, 1.0)\n    rel_term = -depot_dist_norm * (0.4 + 1.6 * demand_frac)\n\n    # phase weights: stronger early savings-focus, stronger late/stagnant cluster-focus\n    w_sav = 1.5 * (1.0 - iter_frac) ** 1.3 + 0.15 * stagnation_ratio\n    w_share = 0.15 + 1.1 * iter_frac ** 1.2 + 0.35 * stagnation_ratio\n    w_rel = 0.05 + 1.2 * stagnation_ratio + 0.7 * iter_frac\n\n    score = w_sav * savings_norm + w_share * length_share + w_rel * rel_term\n    return np.asarray(score, dtype=np.float64)\n",
+    "score_recreate_action": "import numpy as np\ndef score_recreate_action(customer_idx, target_route_idx, insert_delta, regret2_margin, route_load_after, capacity, insert_pos):\n    customer_idx = np.asarray(customer_idx)\n    target_route_idx = np.asarray(target_route_idx)\n    insert_delta = np.asarray(insert_delta, dtype=np.float64)\n    regret2_margin = np.asarray(regret2_margin, dtype=np.float64)\n    route_load_after = np.asarray(route_load_after, dtype=np.float64)\n\n    m = len(customer_idx)\n    if m == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    scale = np.maximum(np.mean(np.abs(insert_delta)), 1e-12)\n    detour_norm = insert_delta / scale\n\n    regret_scale = np.maximum(np.mean(np.abs(regret2_margin)), 1e-12)\n    regret_norm = regret2_margin / regret_scale\n\n    fill = np.clip(route_load_after / max(capacity, 1e-12), 0.0, 1.0)\n    fill_bonus = fill\n\n    new_route_pen = np.where(target_route_idx < 0, -0.6, 0.0)\n\n    lam = 1.4\n    score = -detour_norm + lam * regret_norm + 0.02 * fill_bonus + new_route_pen\n    return np.asarray(score, dtype=np.float64)\n"
+  },
+  "hook_hashes": {
+    "score_ruin_nodes": "8aae86384440f44113f1f681441babf4f46c26bd10de04dfd97e0036d176e634",
+    "score_recreate_action": "3848f05590108e474cb5ea57a086977fce20b4f8e8c95652a39652774bea73be"
+  },
+  "bundle_hash": "ecaff5e97fa431783e42c6548f7021be600411af445f35285dd0b766e11b28f1",
+  "hook_contract_sha256": "073b56e501c6ab9b7013d2cfd43f5e30d6c4562329906f37c0f748c231d31bec"
+}

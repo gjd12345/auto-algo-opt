@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:58f9b6270169444f86d37113601290e5"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Switching the 2-opt repair from full-pair enumeration to a k-NN-restricted best-improvement sweep driven by don't-look bits (plus an Or-opt-2 VND stage and budget-aware double-bridge restarts) yields strictly lower mean tour cost than the round-1 insertion+2-opt solver at equal or lower mean solve_ms, with the largest relative gains on n=200 where the current relative gap is near -10%.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:58f9b6270169444f86d37113601290e5"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Harden the local-search half of the insertion/2-opt template: after each guided (cheapest/regret) insertion, run neighbor-restricted best-improvement 2-opt using a k-NN candidate graph (k≈min(10..16, n-1)) with a don't-look-bit activation queue instead of full-pair enumeration, and add a cheap Or-opt-2 segment relocation pass as a final VND stage. Use delta dist(a,c)+dist(b,d)-dist(a,b)-dist(c,d) with strict improvement only, and spend the remaining per-instance budget (≤500 ms) on iterated double-bridge restarts that keep only strict improvements, tightening the neighbor list and step caps for n=200 to stay inside budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

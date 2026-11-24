@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Hybridize the two strongest full-completion 500 ms TSP constructive rules: the O(n^2) vectorized linear endpoint pull 0.7*d(dest,u) - d(cur,u) (T69 dest-pull) with the unvisited mean-farness isolation term (T46), both rescaled by a dimensionless per-step normalization so the score is invariant to coordinate scale. Target: keep T69's sub-millisecond 128/128 completion while capturing T46's better relative gap, i.e. move the speed-quality Pareto knee rather than chase O(n^4) rollout quality.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "tsp_constructive_step",
+      "mechanism": "KB evidence: dest-pull (T69) achieves 128/128 completion at 0.63 ms median with mean_rel_gap 0.1555 (EoH-128) and 0.1649 (TSPLIB 18) via the single vectorized expression argmax_u (0.7*d(dest,u) - d(cur,u)); mean-farness (T46) reaches the best gap among full-completion rules (+0.1428 / +0.1445) using an unvisited-isolation pull; dimensionless-ratio (T81) shows all features normalized by per-step maxima are scale-invariant and still 128/128 complete. T1 step-rollout shows the quality ceiling but times out (44/128), so the budget-safe route is to blend cheap O(n^2) features instead of lookahead. Sandbox limitation: the globals() probe was rejected by the AST whitelist, so feature verification is deferred to diagnose_suite inside this evolution round."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "1059aee05ddbbc48f38a92564f54b0d2babb7dd5072727ddd969805b7bdb5417"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "If selection score combines step-normalized endpoint attraction (dest-pull) with a step-normalized mean-farness isolation term, then the constructive tour gap decreases versus pure dest-pull at equal O(n^2) cost (sub-millisecond per instance, 100% completion under 500 ms), because the isolation term prevents the tour from stranding far-from-all-unvisited cities for late expensive closure, while normalization keeps the mix robust across distance scales.",
+  "interface_selection": {
+    "template_id": "tsp_constructive_step",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-tsp-i605-dest-pull",
+      "method-tsp-i605-mean-farness",
+      "method-tsp-i605-dimensionless-ratio"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB evidence: dest-pull (T69) achieves 128/128 completion at 0.63 ms median with mean_rel_gap 0.1555 (EoH-128) and 0.1649 (TSPLIB 18) via the single vectorized expression argmax_u (0.7*d(dest,u) - d(cur,u)); mean-farness (T46) reaches the best gap among full-completion rules (+0.1428 / +0.1445) using an unvisited-isolation pull; dimensionless-ratio (T81) shows all features normalized by per-step maxima are scale-invariant and still 128/128 complete. T1 step-rollout shows the quality ceiling but times out (44/128), so the budget-safe route is to blend cheap O(n^2) features instead of lookahead. Sandbox limitation: the globals() probe was rejected by the AST whitelist, so feature verification is deferred to diagnose_suite inside this evolution round."
+  }
+}

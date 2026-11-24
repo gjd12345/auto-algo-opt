@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under bpp_offline_reorder_repack/none.",
+      "evidence_refs": [
+        "evaluation:02c31fbc81514cff9a3a76f56b318bcb"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "A descending-size (FFD-like) item priority score strictly dominates ascending or random ordering for offline bin packing on heterogeneous item sizes, because placing large items first prevents the residual-fragmentation failure mode where many small bins end up with unusable gaps; adding a capacity-complement tie-break (prefer sizes near capacity/k for small k) further reduces bin count without changing the primary ordering.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:02c31fbc81514cff9a3a76f56b318bcb"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Choose item priority score_item as a monotone decreasing-size key with a tightness tie-break: sort items primarily by descending size, and among near-equal sizes (within a small epsilon fraction of capacity) prefer items whose size is closest to a complementary fraction of bin capacity (i.e., large-residual-filling items first). This is an FFD-flavoured reordering for the offline reorder-repack template: largest-first reduces the number of residual bins, while the complement-awareness tie-break keeps sub-one-quarter leftovers packable instead of stranding them."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

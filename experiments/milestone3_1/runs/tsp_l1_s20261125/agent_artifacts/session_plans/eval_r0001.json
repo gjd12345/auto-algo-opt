@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under tsp_constructive_step/none.",
+      "evidence_refs": [
+        "evaluation:0d070c4b4a264770a0c3f5b43f3e950e"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Replacing raw argmin(d(cur,u)) with the algebraically simplified endpoint-attraction score argmax_u (0.7*d(dest,u) - d(cur,u)) — scale-normalized by the mean/median of d(cur, ·) over unvisited nodes and blended with a normalized nearest-neighbour term via a progress-dependent weight w(t) — reduces mean relative tour gap vs pure NN on dev_24 while keeping median runtime sub-millisecond and completion at 24/24, because it reserves short edges for the closing phase instead of exhausting the nearest nodes early.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:0d070c4b4a264770a0c3f5b43f3e950e"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the step-wise selection score from pure nearest-neighbour toward a normalized linear endpoint-attraction (destination pull) score with progress-adaptive blending, plus a small variance/regret term to avoid creating long edges late in the tour. Keep everything vectorized over unvisited_nodes so each step is O(m) and total O(n^2), guaranteeing 100% completion within the 500 ms budget."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:eaefdd983e9f40cc93eba1367a66afd3"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 2000 ms, augmenting the round-2 supported destroy score with a normalized Shaw spatial-relatedness term and a deterministic index-hash jitter, with the stagnation-driven rank power re-pointed at modulating the savings-vs-relatedness blend (diversified mid-tail removal under stagnation) will lower mean objective below the round-2 record 16.078067, with the largest per-instance gains on the reported weakest regimes (spatial=clustered, depot_style=eccentric, size=100, capacity_level=loose), because the round-2 gains came from gate concentration and now saturate (round-2 vs round-1 delta only -0.0516, archive gap_over_sbs 0.19%), so the remaining headroom is in removal-set diversity rather than in severity of savings ranking.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:eaefdd983e9f40cc93eba1367a66afd3"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Densify the destroy score into a two-component mixed operator: keep the round-2 multiplicative gates (removal savings / depot-distance / route-load saturation) but add a Shaw-style spatial-relatedness term (customer's mean distance to the k nearest other customers, normalized — high for isolated customers, low inside tight clusters) plus a deterministic index-hash jitter, so that on clustered/loose-capacity instances removal alternates between isolated outliers and cluster interiors instead of repeatedly picking the same high-savings ring, with the stagnation-driven rank exponent now modulating the savings-vs-relatedness mix ratio rather than only the tail rank."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

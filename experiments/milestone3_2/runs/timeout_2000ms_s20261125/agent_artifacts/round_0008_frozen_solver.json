@@ -1,0 +1,29 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0008_cvrp_ruin_recreate_c8223170",
+  "display_name": "Session R8 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n\n    mean_edge = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n    scale = mean_edge\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # --- Factor 1: efficiency (savings per demand, per edge scale) as sigmoid ---\n    eff = np.abs(sav) / (scale * (1.0 + dem / mean_dem))\n    eff = np.maximum(eff, 0.0)\n    eff_b = eff / (1.0 + eff)\n\n    # --- Factor 2: fill-ratio gate (near-full routes ruptured first) ---\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    fill_b = fill * fill * (3.0 - 2.0 * fill)  # smoothstep for sharper gating near 1\n\n    # --- Factor 3: demand-over-slack scarcity (dimensionless) ---\n    slack_denom = np.maximum(cap - rl + dem, 1e-12)\n    dem_slack = dem / slack_denom\n    scar_b = dem_slack / (1.0 + dem_slack)\n\n    # --- Locality: inverse-distance to route-mates (nearest 2) and depot ---\n    inv_mate = np.zeros(n, dtype=np.float64)\n    for i in range(n):\n        ci = i + 1\n        members = np.nonzero(rid == rid[i])[0]\n        if members.size > 1:\n            custs = members + 1\n            dists = d[ci, custs]\n            mask = custs != ci\n            if np.any(mask):\n                dd = np.sort(dists[mask])\n                k = 2 if dd.size >= 2 else dd.size\n                inv = scale / (dd[:k] + 1e-12)\n                inv = inv / (1.0 + inv)\n                inv_mate[i] = float(np.mean(inv))\n    ddep = d[0, 1:].astype(np.float64)\n    xd = scale / (ddep + 1e-12)\n    inv_dep = xd / (1.0 + xd)\n    locality = 0.55 * inv_mate + 0.45 * inv_dep\n\n    # --- Stagnation-adaptive product core ---\n    # When stagnation is low, lean on efficiency; when high, boost locality+scarcity.\n    gate = (0.35 + 0.65 * eff_b) * (0.40 + 0.60 * fill_b) * (0.50 + 0.50 * scar_b)\n    gate = np.maximum(gate, 1e-12)\n\n    # Locality/scarcity booster grows with stagnation\n    booster = 1.0 + (0.35 + 0.55 * stag) * locality * (0.5 + 0.5 * scar_b)\n\n    # Route-distance fraction (mild shaping)\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n    rdn = rd / mean_rd\n    rdist_b = rdn / (1.0 + rdn)\n\n    core = gate * booster * (1.0 + 0.15 * prog) + 0.06 * rdist_b\n\n    # --- Rank-power transform: p increases with stagnation to flatten ranking ---\n    p = 1.0 + 1.8 * (0.6 * stag + 0.4 * prog)\n    rank = np.argsort(np.argsort(core)).astype(np.float64)\n    denom = float(max(n - 1, 1))\n    rank_norm = rank / denom\n    # Higher raw core => higher rank; use (1 - rank_norm) so top gets ~1\n    shaped = np.power(np.clip(1.0 - rank_norm, 0.0, 1.0) + 1e-6, p)\n\n    # Blend raw magnitude signal with rank-power for robust ordering\n    raw_norm = core / (np.max(core) + 1e-12)\n    score = 0.55 * shaped + 0.45 * raw_norm\n\n    score = np.where(np.isfinite(score), score, 0.0)\n\n    # Deterministic tie-breaking\n    idx = np.arange(n, dtype=np.float64)\n    score = score + 1e-12 * (idx / float(max(n, 1)))\n\n    return score.astype(np.float64)",
+  "hook_code_sha256": "c8223170f0248b9e3fb8024dd0b5232a79f142613fedc33074b295a23efbad4f",
+  "design_sha256": "3783ff3c77d531af783484623eedee546e83b764176c0b75a89c7b32b0c2417e",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261125\\session_run\\rounds\\round_0008\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

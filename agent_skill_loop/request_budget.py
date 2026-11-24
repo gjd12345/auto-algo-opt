@@ -55,6 +55,17 @@ class RequestSlot:
     request_id: str | None = None
     sent_at_utc: str | None = None
     response_sha256: str | None = None
+    logical_call_id: str | None = None
+    logical_ordinal: int | None = None
+    retry_index: int | None = None
+    requested_model: str | None = None
+    served_model: str | None = None
+    cached_tokens: int | None = None
+    provider_request_id: str | None = None
+    rate_card_version: str | None = None
+    estimated_cost_usd: float | None = None
+    owner_epoch: str | None = None
+    attempt_token: str | None = None
     reserved_event: dict[str, Any] | None = field(default=None, repr=False)
 
 
@@ -79,6 +90,7 @@ class RequestBudget:
         self._lock = threading.Lock()
         self._used = 0
         self._rejected = 0
+        self.denial_reason: str | None = None
         self.events: list[dict[str, Any]] = []
         self.checkpoint_budgets = tuple(sorted({int(x) for x in checkpoint_budgets if int(x) > 0}))
         self._on_checkpoint = on_checkpoint
@@ -123,16 +135,19 @@ class RequestBudget:
         problem: str,
         attempt: int | None = None,
         model: str | None = None,
+        **extra: Any,
     ) -> RequestSlot | None:
         prev_used = 0
         curr_used = 0
         with self._lock:
             if self.max_requests is not None and self._used >= self.max_requests:
+                self.denial_reason = "request_budget_exhausted"
                 self._rejected += 1
                 return None
             if self._parent is not None:
-                slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model)
+                slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model, **extra)
                 if slot is None:
+                    self.denial_reason = getattr(self._parent, "denial_reason", None) or "outer_budget_exhausted"
                     self._rejected += 1
                     return None
             else:
@@ -143,7 +158,14 @@ class RequestBudget:
                     attempt=attempt,
                     model=model,
                     request_id=uuid.uuid4().hex,
+                    logical_call_id=extra.get("logical_call_id"),
+                    logical_ordinal=extra.get("logical_ordinal"),
+                    retry_index=extra.get("retry_index"),
+                    requested_model=extra.get("requested_model") or model,
+                    owner_epoch=extra.get("owner_epoch"),
+                    attempt_token=extra.get("attempt_token"),
                 )
+            self.denial_reason = None
             prev_used = self._used
             self._used += 1
             curr_used = self._used
@@ -184,25 +206,22 @@ class RequestBudget:
             # A deadline-canceled request never produced token counts.
             fields["input_tokens"] = None
             fields["output_tokens"] = None
+            fields["cached_tokens"] = None
+            fields["estimated_cost_usd"] = None
         slot.state = state
-        if "elapsed_seconds" in fields:
-            slot.elapsed_seconds = fields["elapsed_seconds"]
-        if "status" in fields:
-            slot.status = fields["status"]
-        if "error_code" in fields:
-            slot.error_code = fields["error_code"]
-        if "input_tokens" in fields:
-            slot.input_tokens = fields["input_tokens"]
-        if "output_tokens" in fields:
-            slot.output_tokens = fields["output_tokens"]
-        if "model" in fields:
-            slot.model = fields["model"]
+        for attr in (
+            "elapsed_seconds", "status", "error_code", "input_tokens", "output_tokens",
+            "model", "requested_model", "served_model", "cached_tokens",
+            "provider_request_id", "rate_card_version", "estimated_cost_usd",
+        ):
+            if attr in fields:
+                setattr(slot, attr, fields[attr])
         if resp_sha is not None:
             slot.response_sha256 = resp_sha
         return self.add_event(slot, state, **fields)
 
     def _make_event(self, slot: RequestSlot, state: str, **fields: Any) -> dict[str, Any]:
-        return {
+        ev = {
             "state": state,
             "request_id": slot.request_id,
             "purpose": slot.purpose,
@@ -219,6 +238,15 @@ class RequestBudget:
             "selected_content_field": fields.get("selected_content_field"),
             "response_sha256": fields.get("response_sha256", slot.response_sha256),
         }
+        for key in (
+            "logical_call_id", "logical_ordinal", "retry_index", "requested_model",
+            "served_model", "cached_tokens", "provider_request_id", "rate_card_version",
+            "estimated_cost_usd", "attempt_token",
+        ):
+            val = fields.get(key, getattr(slot, key, None))
+            if val is not None:
+                ev[key] = val
+        return ev
 
 
 class PersistentRequestBudget(RequestBudget):
@@ -242,10 +270,15 @@ class PersistentRequestBudget(RequestBudget):
         checkpoint_budgets: Sequence[int] = (),
         on_checkpoint: Callable[[int, int], Any] | None = None,
         reconcile_inflight: bool = True,
+        strict_checkpoint_barriers: bool = False,
+        owner_epoch: str | None = None,
     ) -> None:
         self.ledger_path = Path(ledger_path)
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
         self.run_id = str(run_id)
+        self.strict_checkpoint_barriers = bool(strict_checkpoint_barriers)
+        self.owner_epoch = owner_epoch or uuid.uuid4().hex
+        self.barrier_rejections = 0
         super().__init__(
             max_requests,
             parent=parent,
@@ -253,6 +286,7 @@ class PersistentRequestBudget(RequestBudget):
             on_checkpoint=on_checkpoint,
         )
         self.reconciled_unknown_count = 0
+        self._bound_epoch_seq = 1
         self._init_storage_and_recover(reconcile_inflight=reconcile_inflight)
 
     def _connect(self) -> sqlite3.Connection:
@@ -264,6 +298,8 @@ class PersistentRequestBudget(RequestBudget):
         return con
 
     def _init_storage_and_recover(self, *, reconcile_inflight: bool) -> None:
+        from agent_skill_loop.milestone_checkpoint import ensure_milestone_tables
+
         now = _utc_now()
         con = self._connect()
         try:
@@ -304,6 +340,22 @@ class PersistentRequestBudget(RequestBudget):
                 )
                 """
             )
+            req_cols = {str(r[1]) for r in con.execute("PRAGMA table_info(budget_requests)")}
+            for col_name, col_def in {
+                "logical_call_id": "TEXT",
+                "logical_ordinal": "INTEGER",
+                "retry_index": "INTEGER",
+                "requested_model": "TEXT",
+                "served_model": "TEXT",
+                "cached_tokens": "INTEGER",
+                "provider_request_id": "TEXT",
+                "rate_card_version": "TEXT",
+                "estimated_cost_usd": "REAL",
+                "owner_epoch": "TEXT",
+                "attempt_token": "TEXT",
+            }.items():
+                if col_name not in req_cols:
+                    con.execute(f"ALTER TABLE budget_requests ADD COLUMN {col_name} {col_def}")
             con.execute(
                 """
                 CREATE TABLE IF NOT EXISTS budget_checkpoints (
@@ -315,16 +367,29 @@ class PersistentRequestBudget(RequestBudget):
                 )
                 """
             )
+            ensure_milestone_tables(con)
+            meta_cols = {str(r[1]) for r in con.execute("PRAGMA table_info(budget_meta)")}
+            if "active_epoch_seq" not in meta_cols:
+                con.execute("ALTER TABLE budget_meta ADD COLUMN active_epoch_seq INTEGER NOT NULL DEFAULT 1")
             meta = con.execute(
-                "SELECT max_requests FROM budget_meta WHERE run_id=?",
+                "SELECT max_requests, active_epoch_seq FROM budget_meta WHERE run_id=?",
                 (self.run_id,),
             ).fetchone()
             if meta is None:
                 con.execute(
-                    "INSERT INTO budget_meta(run_id, max_requests, created_at_utc, updated_at_utc) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO budget_meta(run_id, max_requests, active_epoch_seq, created_at_utc, updated_at_utc) VALUES (?, ?, 1, ?, ?)",
                     (self.run_id, self.max_requests, now, now),
                 )
+                self._bound_epoch_seq = 1
             else:
+                curr_seq = int(meta["active_epoch_seq"] or 1)
+                if reconcile_inflight:
+                    curr_seq += 1
+                    con.execute(
+                        "UPDATE budget_meta SET active_epoch_seq=?, updated_at_utc=? WHERE run_id=?",
+                        (curr_seq, now, self.run_id),
+                    )
+                self._bound_epoch_seq = curr_seq
                 stored_max = meta["max_requests"]
                 if self.max_requests is None:
                     self.max_requests = stored_max
@@ -346,12 +411,29 @@ class PersistentRequestBudget(RequestBudget):
                         error_code=COALESCE(error_code, 'interrupted_inflight'),
                         input_tokens=NULL,
                         output_tokens=NULL,
+                        cached_tokens=NULL,
+                        estimated_cost_usd=NULL,
                         finished_at_utc=?
                     WHERE run_id=? AND state IN ('reserved', 'sent')
+                      AND (owner_epoch IS NULL OR owner_epoch != ?)
                     """,
-                    (now, self.run_id),
+                    (now, self.run_id, self.owner_epoch),
                 )
                 self.reconciled_unknown_count = int(cur.rowcount)
+                if self.reconciled_unknown_count:
+                    con.execute(
+                        """
+                        UPDATE candidate_provenance
+                        SET generation_status='interrupted_unknown',
+                            eligible=0,
+                            settled_at_utc=?
+                        WHERE run_id=? AND generation_status='pending'
+                          AND physical_request_id IN (
+                              SELECT request_id FROM budget_requests WHERE run_id=? AND state='unknown'
+                          )
+                        """,
+                        (now, self.run_id, self.run_id),
+                    )
             self._used = int(
                 con.execute("SELECT COUNT(*) FROM budget_requests WHERE run_id=?", (self.run_id,)).fetchone()[0]
             )
@@ -386,7 +468,17 @@ class PersistentRequestBudget(RequestBudget):
     def remaining(self) -> int | None:
         used_now = self.used
         with self._lock:
-            limits = [self.max_requests - used_now] if self.max_requests is not None else []
+            meta_cap = self.max_requests
+            con = self._connect()
+            try:
+                row = con.execute("SELECT max_requests FROM budget_meta WHERE run_id=?", (self.run_id,)).fetchone()
+                if row is not None and row["max_requests"] is not None:
+                    meta_cap = int(row["max_requests"])
+                    if self.max_requests is None or meta_cap < self.max_requests:
+                        self.max_requests = meta_cap
+            finally:
+                con.close()
+            limits = [meta_cap - used_now] if meta_cap is not None else []
             parent_remaining = self._parent.remaining if self._parent is not None else None
             if parent_remaining is not None:
                 limits.append(parent_remaining)
@@ -420,7 +512,7 @@ class PersistentRequestBudget(RequestBudget):
                 raise
             finally:
                 con.close()
-        if self._on_checkpoint is not None:
+        if self._on_checkpoint is not None and not self.strict_checkpoint_barriers:
             for ckpt in newly_hit:
                 self._on_checkpoint(ckpt, curr_used)
         return newly_hit
@@ -432,6 +524,7 @@ class PersistentRequestBudget(RequestBudget):
         problem: str,
         attempt: int | None = None,
         model: str | None = None,
+        **extra: Any,
     ) -> RequestSlot | None:
         now = _utc_now()
         prev_used = 0
@@ -441,24 +534,47 @@ class PersistentRequestBudget(RequestBudget):
             con = self._connect()
             try:
                 con.execute("BEGIN IMMEDIATE")
+                meta_row = con.execute("SELECT max_requests, active_epoch_seq FROM budget_meta WHERE run_id=?", (self.run_id,)).fetchone()
+                if meta_row is not None and int(meta_row["active_epoch_seq"] or 1) != self._bound_epoch_seq:
+                    con.execute("ROLLBACK")
+                    self.denial_reason = "stale_owner_superseded"
+                    self._rejected += 1
+                    return None
+                effective_cap = meta_row["max_requests"] if (meta_row is not None and meta_row["max_requests"] is not None) else self.max_requests
+                if self.max_requests is not None and effective_cap is not None:
+                    effective_cap = min(int(self.max_requests), int(effective_cap))
                 db_used = int(
                     con.execute("SELECT COUNT(*) FROM budget_requests WHERE run_id=?", (self.run_id,)).fetchone()[0]
                 )
-                if self.max_requests is not None and db_used >= self.max_requests:
+                if effective_cap is not None and db_used >= int(effective_cap):
                     con.execute("ROLLBACK")
+                    self.denial_reason = "request_budget_exhausted"
                     self._rejected += 1
                     self._used = db_used
                     return None
+                if self.strict_checkpoint_barriers:
+                    draining = con.execute(
+                        "SELECT ckpt_budget FROM milestone_checkpoints WHERE run_id=? AND state='draining' LIMIT 1",
+                        (self.run_id,),
+                    ).fetchone()
+                    if draining is not None:
+                        con.execute("ROLLBACK")
+                        self.denial_reason = "checkpoint_pending"
+                        self.barrier_rejections += 1
+                        self._used = db_used
+                        return None
                 if self._parent is not None:
-                    slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model)
+                    slot = self._parent.reserve(purpose=purpose, problem=problem, attempt=attempt, model=model, **extra)
                     if slot is None:
                         con.execute("ROLLBACK")
+                        self.denial_reason = getattr(self._parent, "denial_reason", None) or "outer_budget_exhausted"
                         self._rejected += 1
                         return None
                     req_id = slot.request_id or uuid.uuid4().hex
                     slot.request_id = req_id
                 else:
                     req_id = uuid.uuid4().hex
+                    curr_attempt_token = extra.get("attempt_token") or f"{self.run_id}:{db_used + 1}:{req_id[:12]}"
                     slot = RequestSlot(
                         index=db_used + 1,
                         purpose=purpose,
@@ -466,18 +582,54 @@ class PersistentRequestBudget(RequestBudget):
                         attempt=attempt,
                         model=model,
                         request_id=req_id,
+                        logical_call_id=extra.get("logical_call_id"),
+                        logical_ordinal=extra.get("logical_ordinal"),
+                        retry_index=extra.get("retry_index"),
+                        requested_model=extra.get("requested_model") or model,
+                        owner_epoch=extra.get("owner_epoch") or self.owner_epoch,
+                        attempt_token=curr_attempt_token,
                     )
                 prev_used = db_used
                 curr_used = db_used + 1
+                attempt_token = slot.attempt_token or extra.get("attempt_token") or f"{self.run_id}:{curr_used}:{req_id[:12]}"
+                slot.attempt_token = attempt_token
+                requested_model = slot.requested_model or extra.get("requested_model") or model
+                slot.requested_model = requested_model
                 con.execute(
                     """
                     INSERT INTO budget_requests(
-                        request_id, run_id, idx, purpose, problem, attempt, model, state, created_at_utc
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'reserved', ?)
+                        request_id, run_id, idx, purpose, problem, attempt, model, state,
+                        logical_call_id, logical_ordinal, retry_index, requested_model,
+                        owner_epoch, attempt_token, created_at_utc
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (req_id, self.run_id, curr_used, purpose, problem, attempt, model, now),
+                    (
+                        req_id, self.run_id, curr_used, purpose, problem, attempt, model,
+                        slot.logical_call_id, slot.logical_ordinal, slot.retry_index, requested_model,
+                        slot.owner_epoch or self.owner_epoch, attempt_token, now,
+                    ),
                 )
+                if self.strict_checkpoint_barriers:
+                    con.execute(
+                        """
+                        UPDATE milestone_checkpoints
+                        SET state='draining', draining_started_ordinal=?, updated_at_utc=?
+                        WHERE run_id=? AND state='scheduled' AND ckpt_budget > ? AND ckpt_budget <= ?
+                        """,
+                        (curr_used, now, self.run_id, prev_used, curr_used),
+                    )
+                    if purpose in {"eoh_generation", "eoh_repair", "eoh_probe"}:
+                        con.execute(
+                            """
+                            INSERT OR IGNORE INTO candidate_provenance(
+                                attempt_token, run_id, logical_call_id, physical_request_id,
+                                global_ordinal, purpose, generation_status, eligible
+                            ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0)
+                            """,
+                            (attempt_token, self.run_id, slot.logical_call_id, req_id, curr_used, purpose),
+                        )
                 con.execute("COMMIT")
+                self.denial_reason = None
                 self._used = curr_used
             except Exception:
                 try:
@@ -502,10 +654,17 @@ class PersistentRequestBudget(RequestBudget):
             con = self._connect()
             try:
                 con.execute("BEGIN IMMEDIATE")
-                con.execute(
-                    "UPDATE budget_requests SET state='sent', sent_at_utc=? WHERE request_id=? AND state='reserved'",
-                    (now, slot.request_id),
+                meta_row = con.execute("SELECT active_epoch_seq FROM budget_meta WHERE run_id=?", (self.run_id,)).fetchone()
+                if meta_row is not None and int(meta_row["active_epoch_seq"] or 1) != self._bound_epoch_seq:
+                    con.execute("ROLLBACK")
+                    raise BudgetExhausted("stale_owner_superseded")
+                cur = con.execute(
+                    "UPDATE budget_requests SET state='sent', sent_at_utc=? WHERE request_id=? AND state='reserved' AND (owner_epoch IS NULL OR owner_epoch=?)",
+                    (now, slot.request_id, slot.owner_epoch or self.owner_epoch),
                 )
+                if cur.rowcount != 1:
+                    con.execute("ROLLBACK")
+                    raise BudgetExhausted("stale_owner_superseded")
                 con.execute("COMMIT")
             except Exception:
                 try:
@@ -527,22 +686,19 @@ class PersistentRequestBudget(RequestBudget):
         if state == "killed_unknown":
             fields["input_tokens"] = None
             fields["output_tokens"] = None
+            fields["cached_tokens"] = None
+            fields["estimated_cost_usd"] = None
         if self._parent is not None:
             event = self._parent.finish(slot, state, **fields)
         else:
             slot.state = state
-            if "elapsed_seconds" in fields:
-                slot.elapsed_seconds = fields["elapsed_seconds"]
-            if "status" in fields:
-                slot.status = fields["status"]
-            if "error_code" in fields:
-                slot.error_code = fields["error_code"]
-            if "input_tokens" in fields:
-                slot.input_tokens = fields["input_tokens"]
-            if "output_tokens" in fields:
-                slot.output_tokens = fields["output_tokens"]
-            if "model" in fields:
-                slot.model = fields["model"]
+            for attr in (
+                "elapsed_seconds", "status", "error_code", "input_tokens", "output_tokens",
+                "model", "requested_model", "served_model", "cached_tokens",
+                "provider_request_id", "rate_card_version", "estimated_cost_usd",
+            ):
+                if attr in fields:
+                    setattr(slot, attr, fields[attr])
             if resp_sha is not None:
                 slot.response_sha256 = resp_sha
             event = self._make_event(slot, state, **fields)
@@ -551,6 +707,10 @@ class PersistentRequestBudget(RequestBudget):
             con = self._connect()
             try:
                 con.execute("BEGIN IMMEDIATE")
+                meta_row = con.execute("SELECT active_epoch_seq FROM budget_meta WHERE run_id=?", (self.run_id,)).fetchone()
+                if meta_row is not None and int(meta_row["active_epoch_seq"] or 1) != self._bound_epoch_seq:
+                    con.execute("ROLLBACK")
+                    return self._make_event(slot, "suppressed")
                 con.execute(
                     """
                     UPDATE budget_requests
@@ -559,13 +719,19 @@ class PersistentRequestBudget(RequestBudget):
                         error_code=?,
                         input_tokens=?,
                         output_tokens=?,
+                        cached_tokens=?,
                         elapsed_seconds=?,
                         finish_reason=?,
                         selected_content_field=?,
                         response_sha256=?,
                         model=?,
+                        requested_model=COALESCE(?, requested_model),
+                        served_model=?,
+                        provider_request_id=?,
+                        rate_card_version=?,
+                        estimated_cost_usd=?,
                         finished_at_utc=?
-                    WHERE request_id=?
+                    WHERE request_id=? AND state IN ('reserved', 'sent') AND (owner_epoch IS NULL OR owner_epoch=?)
                     """,
                     (
                         state,
@@ -573,13 +739,20 @@ class PersistentRequestBudget(RequestBudget):
                         event.get("error_code"),
                         event.get("input_tokens"),
                         event.get("output_tokens"),
+                        event.get("cached_tokens"),
                         event.get("elapsed_seconds"),
                         event.get("finish_reason"),
                         event.get("selected_content_field"),
                         event.get("response_sha256"),
                         event.get("model"),
+                        event.get("requested_model"),
+                        event.get("served_model"),
+                        event.get("provider_request_id"),
+                        event.get("rate_card_version"),
+                        event.get("estimated_cost_usd"),
                         now,
                         slot.request_id,
+                        slot.owner_epoch or self.owner_epoch,
                     ),
                 )
                 con.execute("COMMIT")

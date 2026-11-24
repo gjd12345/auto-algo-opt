@@ -31,6 +31,7 @@ import numpy as np
 
 from agent_skill_loop.benchmark.contracts import BenchmarkSpec, MetricSpec
 
+from . import m31_suites as m31
 from .protocol import compute_distance_matrix, normalize_routes, verify_cvrp_solution
 from .published_results import materialize_published_results
 from .solvers import evaluate_algorithm_on_instance
@@ -76,6 +77,107 @@ OFFICIAL_TSPLIB_OPT: dict[str, int] = {
     "st70": 675,
     "tsp225": 3916,
 }
+
+
+def materialize_milestone_suite_manifests(output_dir: Path = WORKBENCH_BENCHMARKS_DIR) -> dict[str, dict[str, Any]]:
+    """Create M3.1 public manifests and public blind designs without opening custody."""
+    from agent_skill_loop.interface_design.blind_eval_m32 import m32_blind_suite_design
+
+    public_splits = [m31.build_m31_suite(family, split) for family, split in m31.M31_SUITE_KEYS.values() if split != "blind"]
+    m31.assert_m31_splits_disjoint(*public_splits)
+    manifests = []
+    for family, split in m31.M31_SUITE_KEYS.values():
+        if split == "blind":
+            manifests.append({
+                **m31.m31_suite_design(family, split),
+                "exposure_status": "locked_m31_blind",
+                "schema_version": "milestone-blind-commitment-design/v1",
+                "commitment_status": "pending_external_seal",
+            })
+        else:
+            manifests.append(m31.m31_public_manifest(family, split))
+    manifests.append({
+        **m32_blind_suite_design(),
+        "schema_version": "milestone-blind-commitment-design/v1",
+        "commitment_status": "pending_external_seal",
+    })
+
+    registry: dict[str, dict[str, Any]] = {}
+    for manifest in manifests:
+        suite_id = manifest["suite_id"]
+        blind = manifest["split"] == "blind"
+        suffix = "_commitment_design" if blind else ""
+        relative_path = f"manifests/{suite_id}{suffix}.json"
+        path = Path(output_dir) / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = (json.dumps(manifest, indent=2, allow_nan=False) + "\n").encode("utf-8")
+        try:
+            with path.open("xb") as handle:
+                handle.write(data)
+        except FileExistsError:
+            if path.read_bytes() != data:
+                raise ValueError(f"milestone_public_manifest_already_exists_with_different_bytes:{suite_id}") from None
+        entry = {
+            key: manifest[key]
+            for key in ("suite_id", "problem_family", "problem_id", "protocol_id", "split", "suite_role", "instance_count")
+        }
+        entry.update(manifest_path=relative_path, manifest_sha256=hashlib.sha256(data).hexdigest())
+        if blind:
+            entry.update(
+                commitment_status=manifest["commitment_status"],
+                sealed_commitment_path=f"manifests/{suite_id}_commitment.json",
+            )
+        if "blind_protocol_id" in manifest:
+            entry["blind_protocol_id"] = manifest["blind_protocol_id"]
+        registry[suite_id] = entry
+    return registry
+
+
+def load_milestone_suite_metadata(suite_id: str, *, registry_path: Path = REGISTRY_PATH) -> dict[str, Any]:
+    """Load a hash-pinned public M3.1 manifest or M3.1/M3.2 blind design."""
+    registry_path = Path(registry_path)
+    registry = json.loads(registry_path.read_bytes())
+    entry = registry.get("milestone_suites", {}).get(suite_id)
+    if entry is None:
+        raise ValueError(f"unknown_milestone_suite:{suite_id}")
+    data = (registry_path.parent / entry["manifest_path"]).read_bytes()
+    if hashlib.sha256(data).hexdigest() != entry["manifest_sha256"]:
+        raise ValueError("milestone_manifest_sha256_mismatch")
+    manifest = json.loads(data)
+    if manifest.get("suite_id") != suite_id or any(
+        manifest.get(key) != entry[key]
+        for key in ("problem_family", "problem_id", "protocol_id", "split", "suite_role", "instance_count")
+    ):
+        raise ValueError("milestone_manifest_identity_mismatch")
+    return manifest
+
+
+def load_m31_suite(
+    suite_id: str, *, role: str = "interactive_sandbox", registry_path: Path = REGISTRY_PATH,
+) -> dict[str, Any]:
+    """Regenerate a public split on demand after enforcing its role and hash."""
+    from agent_skill_loop.interface_design.blind_eval_m32 import (
+        SELECTION_ROLES,
+        assert_milestone_suite_allowed_for_interactive_role,
+    )
+
+    assert_milestone_suite_allowed_for_interactive_role(suite_id, role=role)
+    manifest = load_milestone_suite_metadata(suite_id, registry_path=registry_path)
+    assert_milestone_suite_allowed_for_interactive_role(suite_id, manifest, role=role)
+    if suite_id not in m31.M31_SUITE_KEYS:
+        raise ValueError(f"unknown_m31_suite:{suite_id}")
+    family, split = m31.M31_SUITE_KEYS[suite_id]
+    if split == "dev" and role in SELECTION_ROLES:
+        raise ValueError(f"dev_suite_forbidden_in_selection_role:{suite_id}")
+    design = m31.m31_suite_design(family, split)
+    if manifest.get("schema_version") != "m31-public-suite/v1" or any(
+        manifest.get(key) != value for key, value in design.items()
+    ):
+        raise ValueError("m31_public_manifest_design_mismatch")
+    instances = m31.build_m31_suite(family, split)
+    if m31.m31_sha256(instances) != manifest["suite_content_sha256"]:
+        raise ValueError("m31_suite_content_sha256_mismatch")
+    return {**manifest, "benchmark_id": BENCHMARK_ID, "profile": suite_id, "instances": instances}
 
 
 def _seeded_rng(seed: int, cell: str, index: int) -> random.Random:
@@ -1494,6 +1596,7 @@ def materialize_cvrp_workbench_registry(
         "published_results_index_hash": pub_info["index.json"]["sha256"],
         "published_results_files": pub_info,
         "benchmarks": registry_entries,
+        "milestone_suites": materialize_milestone_suite_manifests(output_dir),
     }
     reg_hash = _write_lf_json(output_dir / "registry.json", registry)
     return {

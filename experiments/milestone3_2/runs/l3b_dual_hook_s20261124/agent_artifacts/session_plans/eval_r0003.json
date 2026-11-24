@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:7aedfef235a04c2b9073dc7673dc1c79"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 500 ms, co-evolving both LNS hooks (scale-normalized, gate-multiplied ruin priority + regret/capacity-fill-weighted recreate action) reduces mean objective versus the current single-hook Pareto best (16.1260), with the largest gains concentrated in the weak regimes reported by the archive (size=100, spatial=uniform, depot_style=eccentric, capacity_level=loose) because in those regimes route-load dispersion and insertion-detour scale spread are largest, so load-fill gating plus normalized detour penalties remove exactly the wrong nodes and reinsert them into the wrong routes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:7aedfef235a04c2b9073dc7673dc1c79"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Dual-hook co-evolution for LNS ruin+recreate under 500 ms: (1) make `score_ruin_nodes` scale-invariant by normalizing removal savings with the global mean depot distance scale, and add multiplicative gates that favor (a) high-fill routes (route_load/capacity near 1) and (b) low route-distance-share nodes, with an iter_frac/stagnation_ratio-driven rank power that shifts from exploitation (p≈1, worst-cost removal) early to diversification (p≈0.5 flat) once stagnation rises; (2) make `score_recreate_action` a cheap-detour vs Regret-2 blend whose regret weight increases with the number of open (post-ruin) positions and whose capacity-fill bonus increases when the target route is lightly loaded (loose-capacity regime), while penalizing insertion detour normalized by local edge scale. Both hooks stay read-only, deterministic, tie-broken by index, and O(n·positions) so no extra LNS iterations are lost."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

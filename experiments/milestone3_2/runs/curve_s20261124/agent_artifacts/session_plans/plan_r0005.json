@@ -1,0 +1,36 @@
+{
+  "round_id": 5,
+  "direction": "Exploit the L3 ruin-recreate skeleton's single evolvable hook `score_ruin_nodes` and push toward stagnation-aware diversification: evolve a multiplicative-gated, rank-power removal priority whose exponent p(iter_frac, stagnation_ratio) starts near 1.0 (pure worst-savings removal) and rises toward 2-3 only as stagnation_ratio grows, so the search behaves exploitatively on tight-capacity/size-100 instances (where capacity packing is scarce and every route-merging removal matters) but switches to broad-shouldered, relatedness-weighted ruin sets once R2R acceptance stalls on clustered / eccentric-depot instances. Keep the deterministic Regret-2 repair, intra_2opt and record-to-record acceptance intact, and keep tie-breaking free of global RNG so anytime behaviour stays monotone under the 500 ms deadline.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 5 continues the cvrp_ruin_recreate / none interface that already holds the portfolio SBS (session_r0003, mean 16.0504, 188 ms mean, comfortably inside the 500 ms budget) — switching templates would forfeit that complementarity for a VBS gap of only 0.31% (portfolio VBS 384.0173 vs SBS 385.2104). KB entry method-cvrp-m3-ruin-recreate-l3 is exactly this skeleton and reports that only `score_ruin_nodes` is evolvable while the L3-ctrl Worst-Cost baseline already reaches 23.3474 on the 120-instance blind suite and the evolved rank-power gated rule improves it to 23.3186; the same entry documents stagnation-aware diversification as a strong regime and notes the pending \"multi-generation L3 fine-tuning\" as an open item — which is precisely what this round does with the remaining budget. Shaw/regret entries justify keeping the deterministic Regret-2 repair fixed so attribution stays clean. Prior rounds show session-to-session mean deltas of order 0.03-0.08 (r0004 regressed +0.0828 with an over-aggressive arm), so this direction deliberately anchors p near 1.0 at low stagnation to avoid the r0004 failure mode of over-diversified ruin sets, and only escalates the exponent under frozen incumbents."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0003/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, the weakest regimes are tight capacity (12 instances, VBS mean 18.3908), size 100 (12), clustered (8) and eccentric depot (12) — all sharing the structure that a fail-early worst-savings ruin set gets stuck in a small neighbourhood. Hypothesis: a multiplicative gate on removal_savings (load-near-capacity gate + demand gate + route-distance gate) combined with a stagnation-driven rank exponent p(stagnation_ratio) in [1.0, 3.0] will lower mean tour length versus the current session SBS of 16.0504 (session_r0003) by >0.5% on the tight-capacity and size-100 subsets while not regressing the loose/depot-central subsets, because the load gate preferentially destroys near-capacity routes (the binding constraint in tight regimes) while the rising exponent injects diversity only when the incumbent is frozen.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 5 continues the cvrp_ruin_recreate / none interface that already holds the portfolio SBS (session_r0003, mean 16.0504, 188 ms mean, comfortably inside the 500 ms budget) — switching templates would forfeit that complementarity for a VBS gap of only 0.31% (portfolio VBS 384.0173 vs SBS 385.2104). KB entry method-cvrp-m3-ruin-recreate-l3 is exactly this skeleton and reports that only `score_ruin_nodes` is evolvable while the L3-ctrl Worst-Cost baseline already reaches 23.3474 on the 120-instance blind suite and the evolved rank-power gated rule improves it to 23.3186; the same entry documents stagnation-aware diversification as a strong regime and notes the pending \"multi-generation L3 fine-tuning\" as an open item — which is precisely what this round does with the remaining budget. Shaw/regret entries justify keeping the deterministic Regret-2 repair fixed so attribution stays clean. Prior rounds show session-to-session mean deltas of order 0.03-0.08 (r0004 regressed +0.0828 with an over-aggressive arm), so this direction deliberately anchors p near 1.0 at low stagnation to avoid the r0004 failure mode of over-diversified ruin sets, and only escalates the exponent under frozen incumbents."
+  }
+}

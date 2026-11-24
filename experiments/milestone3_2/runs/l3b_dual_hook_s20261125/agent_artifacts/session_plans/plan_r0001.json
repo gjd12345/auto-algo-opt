@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve the dual-hook L3b ruin+recreate LNS jointly: (1) `score_ruin_nodes` = multiplicative-gated rank-power removal priority — rank_power(|removal_savings|/scale, p(iter_frac, stagnation_ratio)) with load-saturation gate, depot-proximity gate and per-route-length gate, so that under stagnation the priority flattens toward uniform/random diversification while under early iterations it concentrates on worst-detour nodes; (2) `score_recreate_action` = cheapest-detour score blended with Regret-2 lookahead margin (second-best minus best insertion cost) and a capacity-fill residual gate, so that scarce-capacity customers with high regret are placed earlier (farther detour is penalized, high regret is rewarded), stabilizing deterministic replay.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round 1, empty archive, no open hypotheses. KB `method-cvrp-m3-ruin-recreate-l3` supplies the verified L3 skeleton (CW + intra_2opt + Regret-2 ruin/recreate + R2R acceptance, unified deadline) and its controlled baseline with the exact stagnation/load/depot/route-dist gating form for `score_ruin_nodes`, plus the measured ~0.12% net evolutionary gain on blind-120 median 500 ms budget — the same budget as this session. Under the allowed L3b dual-hook template the untested lever is the second hook `score_recreate_action`: KB `method-cvrp-cheapest-regret-insertion` and `method-cvrp-lns-shaw-regret` establish cheapest-detour and Regret-k as the two canonical repair criteria with complementary failure modes (cheapest detour greedily fills cheap routes and strands high-demand customers; pure Regret-2 sacrifices immediate cost for lookahead), which motivates a continuous blend instead of the hard-coded Regret-2. Both hooks are kept deterministic, scale-invariant (all terms divided by instance scale) and O(n^2)-per-iteration so the 500 ms budget still admits many LNS iterations, and postprocess_mode `none` keeps the comparison clean against the fixed skeleton postprocessing."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "H1 (from method-cvrp-m3-ruin-recreate-l3): the multiplicative-gated rank-power destroy rule beats zero-evolution Worst-Cost Removal (L3-ctrl, blind-120 23.3474) because stagnation-adaptive flattening of the rank exponent prevents the LNS from re-destroying the same worst-detour customers every iteration. H2 (from method-cvrp-cheapest-regret-insertion + method-cvrp-lns-shaw-regret): opening the second hook `score_recreate_action` as a cheapest-detour x Regret-2 blend with a capacity-fill gate strictly improves the fixed deterministic Regret-2 repair on heterogeneous-demand dev_24 instances, since high-regret-but-capacity-tight customers must be seated before cheap repeated re-insertions consume the residual capacity of the cheapest routes. Prediction: on cvrp_dev_hetero_24 at 500 ms, mean tour length improves vs the L3 single-hook control, with the largest relative gains on the high-demand-variance / tight-capacity regimes, and no regression on the mid-scale uniform regimes.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-cheapest-regret-insertion",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1, empty archive, no open hypotheses. KB `method-cvrp-m3-ruin-recreate-l3` supplies the verified L3 skeleton (CW + intra_2opt + Regret-2 ruin/recreate + R2R acceptance, unified deadline) and its controlled baseline with the exact stagnation/load/depot/route-dist gating form for `score_ruin_nodes`, plus the measured ~0.12% net evolutionary gain on blind-120 median 500 ms budget — the same budget as this session. Under the allowed L3b dual-hook template the untested lever is the second hook `score_recreate_action`: KB `method-cvrp-cheapest-regret-insertion` and `method-cvrp-lns-shaw-regret` establish cheapest-detour and Regret-k as the two canonical repair criteria with complementary failure modes (cheapest detour greedily fills cheap routes and strands high-demand customers; pure Regret-2 sacrifices immediate cost for lookahead), which motivates a continuous blend instead of the hard-coded Regret-2. Both hooks are kept deterministic, scale-invariant (all terms divided by instance scale) and O(n^2)-per-iteration so the 500 ms budget still admits many LNS iterations, and postprocess_mode `none` keeps the comparison clean against the fixed skeleton postprocessing."
+  }
+}

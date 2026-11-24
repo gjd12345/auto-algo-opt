@@ -1,0 +1,31 @@
+{
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "default_budget_ms": 2000.0,
+  "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+  "design_sha256": "31c49bdaed8c416cb7617d131101ebe0af79bce1f278a1dab0669e257d9b0ee3",
+  "diagnostic_ref": null,
+  "display_name": "M3.2 Candidate cvrp_ruin_recreate (dfda91b7)",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = demands.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dm = distance_matrix\n    depot_d = dm[0, 1:].astype(np.float64)\n    scale_d = max(float(np.mean(depot_d)), 1e-12)\n\n    sav = removal_savings.astype(np.float64)\n    abs_sav = np.abs(sav)\n    scale_s = max(float(np.median(abs_sav)), 1e-12 * scale_d, 1e-12)\n\n    def to_rank(x):\n        if n == 1:\n            return np.zeros(1, dtype=np.float64)\n        order = np.argsort(np.argsort(x)).astype(np.float64)\n        return order / (n - 1)\n\n    # Expert A: rank-normalized |savings| with sign, plus magnitude confidence\n    r_sav = to_rank(abs_sav)\n    sign_sav = np.where(sav >= 0.0, 1.0, -1.0)\n    eA = sign_sav * r_sav\n\n    # Expert B: squared-slack eccentric depot boundary (loose-capacity + edge-of-cluster)\n    dn = depot_d / scale_d\n    dn = dn / (1.0 + dn)\n    util = np.clip(route_loads.astype(np.float64) / max(capacity, 1e-12), 0.0, 1.0)\n    slack = 1.0 - util\n    prod = (slack * slack) * dn\n    eB = 2.0 * to_rank(prod) - 1.0\n\n    # Steeper single driver from stagnation and progress\n    driver = float(np.clip(0.75 * stagnation_ratio + 0.35 * iter_frac, 0.0, 1.0))\n\n    # Two-expert mixture: savings dominates early, geometry ramps steeply\n    wA = 1.0 - 0.75 * driver\n    wB = 0.10 + 0.90 * driver\n    tot = wA + wB\n    mixA = wA / tot\n    mixB = wB / tot\n\n    blended = mixA * eA + mixB * eB\n\n    # Rank shaping with wider exponent sweep\n    sign = np.where(blended >= 0.0, 1.0, -1.0)\n    mag = np.abs(blended)\n    r_mag = to_rank(mag)\n    p = 0.35 + 3.6 * driver\n    score = sign * np.power(r_mag + 1e-12, p)\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "dfda91b73b7d2aa508660ed9821189695239a89a37b87b0459f9133624bc2cf1",
+  "hook_name": "score_ruin_nodes",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "origin_run": "m32_timeout_2000ms_s20261126",
+  "paradigm": "ruin_recreate",
+  "postprocess_mode": "none",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "ckpt_cand_dfda91b73b",
+  "template_id": "cvrp_ruin_recreate",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "template_version": "v1"
+}

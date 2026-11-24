@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:19e917064f9b407abf3b31cb9c5e6606"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On dev_24 hetero instances at 500 ms, replacing the control worst-cost ruin hook with a normalized 3-term ruin score (removal savings/mean depot distance + route-length share + relatedness) and replacing greedy-cheapest reinsertion with a normalized Regret-2-aware recreate score (detour/scale minus lambda*regret gap plus fill bonus) will lower mean total tour length versus the L3-ctrl worst-cost-removal + cheapest-insertion control, because LNS diversification improves when ruin targets both high-cost and clustered nodes and reinsertion defers nodes with small regret, and both scores are invariant to coordinate scaling so no drift is introduced.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:19e917064f9b407abf3b31cb9c5e6606"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Dual-hook LNS: make score_ruin_nodes a scale-free blend of (a) normalized removal savings (d(prev,i)+d(i,next)-d(prev,next)) / scale, (b) route-length share of node i, and (c) a deterministic relatedness (proximity to the just-removed set) term so iterations alternate between cost-focused and cluster-focused ruin; make score_recreate_action a Regret-2 style insertion score = normalized detour - lambda * second-best-route detour gap + small load-fill bonus, i.e. prefer actions that are cheap AND whose alternative routes are much worse (low regret), while keeping all quantities dimensionless under coordinate scaling."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

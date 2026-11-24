@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 5 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:91a042bc435e4690b2e50516a232bf7d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 2000 ms with cvrp_ruin_recreate/none, replacing the round-4 fixed depot+load gate with a capacity-slack x route-sparsity gate (score = |savings|/scale * (1 + alpha * slack_frac) * (1 + beta / n_stops) * depot_gate) and a three-phase stagnation clock (exploit -> neutral -> Shaw-diversify) will lower mean objective below the 15.9801 SBS, with the largest per-instance gains in the weakest regimes (tight capacity, size 100, eccentric depot, clustered spatial), because route-elimination-friendly removals are most valuable exactly where capacity is binding and geometry is clustered.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:91a042bc435e4690b2e50516a232bf7d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Refine the round-4 champion destroy score from a multiplicative depot-load gate into a capacity-slack-aware, route-sparsity-normalized score with a three-phase stagnation clock: (1) exploit phase — concentrate removals on the smallest routes (fewest stops, highest residual capacity) to enable route-elimination moves; (2) neutral phase — flat rank power over normalized removal savings; (3) diversify phase — randomized mid-tail removal driven by Shaw relatedness to the last-improved incumbent. All gates remain scale-invariant (normalized by mean depot distance) and deterministic, with tie-breaks by index only."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

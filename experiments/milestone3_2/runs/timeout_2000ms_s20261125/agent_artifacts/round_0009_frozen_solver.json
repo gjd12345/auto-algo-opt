@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0009_cvrp_ruin_recreate_3c76c987",
+  "display_name": "Session R9 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    d = distance_matrix\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64)\n    cap = float(capacity) if capacity > 0.0 else 1e-12\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    rid = np.asarray(route_ids, dtype=np.int64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n\n    mean_edge = max(float(np.mean(d[0, 1:])), 1e-12)\n    mean_dem = max(float(np.mean(dem)), 1e-12)\n    scale = mean_edge\n\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    prog = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # --- Stagnation-adaptive rank power: 1.0 (near-greedy) -> ~2.5 (uniformized) ---\n    blend = 0.55 * stag + 0.45 * prog\n    p = 1.0 + 1.5 * blend\n    p = float(np.clip(p, 1.0, 2.75))\n\n    # --- Base savings normalized ---\n    sav_norm = sav / (scale * (1.0 + dem / mean_dem) + 1e-12)\n    base = np.maximum(sav_norm, 1e-12)\n\n    # --- Gate 1: full/loaded routes preferred (tight-capacity regime) ---\n    fill = np.clip(rl / cap, 0.0, 1.0)\n    gate_load = 1.0 + 0.35 * fill\n\n    # --- Gate 2: depot eccentricity weighting (far routes slightly favored) ---\n    ddep = np.maximum(d[0, 1:], 1e-12)\n    gate_depot = 1.0 + 0.20 * (ddep / (np.mean(ddep) + 1e-12)) / (1.0 + ddep / (scale * 4.0 + 1e-12))\n\n    # --- Gate 3: spatial clustering (dense removal for clustered instances) ---\n    # inverse-distance kernel to nearest route-mates\n    inv_mate = np.zeros(n, dtype=np.float64)\n    for i in range(n):\n        ci = i + 1\n        members = np.nonzero(rid == rid[i])[0]\n        if members.size <= 1:\n            continue\n        custs = members + 1\n        mask = custs != ci\n        if not np.any(mask):\n            continue\n        dd = np.sort(d[custs[0] - 1 + 0, :][:0]) if False else np.sort(d[ci, custs[mask]])\n        k = 3 if dd.size >= 3 else dd.size\n        x = scale / (dd[:k] + 1e-12)\n        x = x / (1.0 + x)\n        inv_mate[i] = float(np.mean(x))\n    gate_demand = 1.0 + 0.25 * inv_mate\n\n    # --- Multiplicative gates + rank-power ---\n    gated = base * gate_load * gate_depot * gate_demand\n    score = np.power(np.maximum(gated, 1e-12), p)\n\n    # Tiny deterministic tie-break with route-distance normalization (scale-free)\n    mean_rd = max(float(np.mean(rd)), 1e-12)\n    rdn = rd / mean_rd\n    score = score + 1e-6 * (rdn / (1.0 + rdn))\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "3c76c987e3d1abfaec33af8e7d2f578d2bf377f8c6b5d433d0109e69bc589667",
+  "design_sha256": "35edd3a20a8a7fb7b8a2e2ec8bcf3f52a71ba22cad994bc980d77b6b3f7363b7",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261125\\session_run\\rounds\\round_0009\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

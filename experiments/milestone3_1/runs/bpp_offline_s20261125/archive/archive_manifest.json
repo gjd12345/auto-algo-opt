@@ -1,0 +1,123 @@
+{
+  "schema_version": "m2-complementary-archive/v1",
+  "updated_at": "2026-11-23T16:01:17Z",
+  "solver_count": 2,
+  "solvers": [
+    {
+      "solver_id": "session_r0001_bpp_offline_reorder_repack_672025f4",
+      "registered_at": "2026-11-23T15:58:59Z",
+      "arm_id": "m31_bpp_offline",
+      "search_seed": 20261125,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0001_bpp_offline_reorder_repack_672025f4",
+        "display_name": "Session R1 · bpp_offline_reorder_repack",
+        "problem_family": "bpp",
+        "paradigm": "reorder_repack",
+        "interface": "bpp_offline_reorder_repack/v1:rank_items",
+        "template_id": "bpp_offline_reorder_repack",
+        "template_version": "v1",
+        "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "rank_items",
+        "hook_code": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity)\n    eps = 0.02 * cap\n    comps = [cap / k for k in (1, 2, 3, 4)]\n\n    sizes = [float(s) for s in item_sizes]\n\n    def key(i):\n        s = sizes[i]\n        # primary: descending size\n        # secondary: complement-aware distance (only meaningful among near-equal sizes)\n        best = min(abs(s - c) for c in comps)\n        # group sizes within eps bucket for tie-break; otherwise keep size ordering\n        bucket = int(s / eps) if eps > 0 else 0\n        return (-bucket, best, -s, i)\n\n    order = sorted(range(n), key=key)\n    return order",
+        "hook_code_sha256": "672025f465e5c748d89a9fa570e81f4b3bcffb81a857b1eacd127c6dfad91648",
+        "design_sha256": "1ba03027511a7e5a8e2924a506d9ee79a49909f337a56478e30d8ed028c21943",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261125\\session_run\\rounds\\round_0001\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": null,
+        "cited_kb_ids": [],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved bpp_offline_reorder_repack/v1:rank_items",
+        "default_budget_ms": 500.0,
+        "protocol_id": "bpp_offline/v1",
+        "hook_specs": [
+          {
+            "name": "rank_items",
+            "signature": [
+              "item_sizes",
+              "capacity"
+            ],
+            "output_shape_arg": "item_sizes"
+          }
+        ],
+        "hook_implementations": {
+          "rank_items": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity)\n    eps = 0.02 * cap\n    comps = [cap / k for k in (1, 2, 3, 4)]\n\n    sizes = [float(s) for s in item_sizes]\n\n    def key(i):\n        s = sizes[i]\n        # primary: descending size\n        # secondary: complement-aware distance (only meaningful among near-equal sizes)\n        best = min(abs(s - c) for c in comps)\n        # group sizes within eps bucket for tie-break; otherwise keep size ordering\n        bucket = int(s / eps) if eps > 0 else 0\n        return (-bucket, best, -s, i)\n\n    order = sorted(range(n), key=key)\n    return order"
+        },
+        "hook_hashes": {
+          "rank_items": "672025f465e5c748d89a9fa570e81f4b3bcffb81a857b1eacd127c6dfad91648"
+        },
+        "bundle_hash": "f6aab54d52dd1081cc3c98c735aed6aeb3324555abc6498ed36fbc2253f41dfd",
+        "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+      },
+      "suite_metrics": {
+        "suite_id": "bpp_m31_dev_36",
+        "mean_tour_length": 28.166667,
+        "solve_ms_mean": 0.2862
+      },
+      "resource_ledger": {}
+    },
+    {
+      "solver_id": "session_r0002_bpp_offline_reorder_repack_21a9c538",
+      "registered_at": "2026-11-23T16:01:17Z",
+      "arm_id": "m31_bpp_offline",
+      "search_seed": 20261125,
+      "budget_id": "500ms",
+      "frozen_solver": {
+        "schema_version": "frozen-interface-solver/v2",
+        "solver_id": "session_r0002_bpp_offline_reorder_repack_21a9c538",
+        "display_name": "Session R2 · bpp_offline_reorder_repack",
+        "problem_family": "bpp",
+        "paradigm": "reorder_repack",
+        "interface": "bpp_offline_reorder_repack/v1:rank_items",
+        "template_id": "bpp_offline_reorder_repack",
+        "template_version": "v1",
+        "template_source_sha256": "f60c1260fc3fd9dd594d39fa3205f7d14738ac8143f78829be81926072e81b22",
+        "postprocess_mode": "none",
+        "template_options": {
+          "inject_static_kb_clues": false
+        },
+        "hook_name": "rank_items",
+        "hook_code": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity)\n    eps = 0.02 * cap if cap > 0 else 0.0\n\n    sizes = [float(s) for s in item_sizes]\n\n    def key(i):\n        s = sizes[i]\n        bucket = int(s / eps) if eps > 0 else 0\n        # deterministic size hash so equal/near-equal sizes get distinct order\n        h = (int(round(s * 1000003)) * 2654435761) & 0xFFFFFFFF\n        # complement distance to dominant fill quanta, normalized\n        comps = (cap, cap / 2.0, cap / 3.0, cap / 4.0)\n        best = min(abs(s - c) for c in comps)\n        return (-bucket, -s, h, best, i)\n\n    return sorted(range(n), key=key)",
+        "hook_code_sha256": "21a9c538e59cb5667b6b9b2e68e2d4d83b3235b65a150abdfc1bfe27bd4a776e",
+        "design_sha256": "a64bd0b7b38fecf5953c66e0c30140c2d652d82fc83172593c86e4e956855273",
+        "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\bpp_offline_s20261125\\session_run\\rounds\\round_0002\\eoh_run",
+        "kb_release_id": "20261123-main-co-workbench-m3",
+        "kb_entry_id": null,
+        "cited_kb_ids": [],
+        "diagnostic_ref": null,
+        "description": "Session M2 evolved bpp_offline_reorder_repack/v1:rank_items",
+        "default_budget_ms": 500.0,
+        "protocol_id": "bpp_offline/v1",
+        "hook_specs": [
+          {
+            "name": "rank_items",
+            "signature": [
+              "item_sizes",
+              "capacity"
+            ],
+            "output_shape_arg": "item_sizes"
+          }
+        ],
+        "hook_implementations": {
+          "rank_items": "def rank_items(item_sizes, capacity):\n    n = len(item_sizes)\n    if n == 0:\n        return []\n    cap = float(capacity)\n    eps = 0.02 * cap if cap > 0 else 0.0\n\n    sizes = [float(s) for s in item_sizes]\n\n    def key(i):\n        s = sizes[i]\n        bucket = int(s / eps) if eps > 0 else 0\n        # deterministic size hash so equal/near-equal sizes get distinct order\n        h = (int(round(s * 1000003)) * 2654435761) & 0xFFFFFFFF\n        # complement distance to dominant fill quanta, normalized\n        comps = (cap, cap / 2.0, cap / 3.0, cap / 4.0)\n        best = min(abs(s - c) for c in comps)\n        return (-bucket, -s, h, best, i)\n\n    return sorted(range(n), key=key)"
+        },
+        "hook_hashes": {
+          "rank_items": "21a9c538e59cb5667b6b9b2e68e2d4d83b3235b65a150abdfc1bfe27bd4a776e"
+        },
+        "bundle_hash": "eef052748785c367f869bc70dfb04f280692fe55f84445b0600b6e9df540736a",
+        "hook_contract_sha256": "f34ffabaa8986d59156f9d4b1db3e22c94bd1ed66d08fb569f875eb5d06378d0"
+      },
+      "suite_metrics": {
+        "suite_id": "bpp_m31_dev_36",
+        "mean_tour_length": 28.083333,
+        "solve_ms_mean": 0.6024
+      },
+      "resource_ledger": {}
+    }
+  ]
+}

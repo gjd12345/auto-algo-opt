@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:6946e342ba6848a7b02115196ea2965c"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "If score_ruin_nodes uses score_i = rank_power(|removal_savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p) with p rising from ~1.2 toward ~2.5 as stagnation_ratio grows but decaying as iter_frac -> 1, and gate_load = (route_load/capacity)^2 rewards over-full routes while gate_rdist = route_dists/mean_route_dist penalizes long routes, then mean objective on cvrp_dev_hetero_24 improves versus the current SBS (15.788 mean) because tight-capacity and clustered instances are best served by re-inserting customers out of saturated routes rather than the highest absolute-savings edges.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:6946e342ba6848a7b02115196ea2965c"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Stagnation-adaptive destruction scoring: rank-power p(iter_frac, stagnation_ratio) that grows during stagnation (diversify) but shrinks near deadline (exploit), multiplied by capacity-tightness and depot-eccentricity gates to target the weakest regimes (capacity_level=tight, depot_style=eccentric, spatial=clustered)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "m31-public-suite/v1",
+  "suite_id": "tsp_m31_select_36",
+  "problem_family": "tsp",
+  "problem_id": "tsp_construct",
+  "protocol_id": "tsp/v1",
+  "split": "select",
+  "suite_role": "selection_tuning",
+  "distance_convention": "euc_2d_float",
+  "vehicle_limit_policy": "not_applicable",
+  "generator_version": "m31_stratified/v1",
+  "instance_count": 36,
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_low": 2,
+      "n50_uniform_high": 2,
+      "n50_clustered_low": 2,
+      "n50_clustered_high": 2,
+      "n50_grid_low": 2,
+      "n50_grid_high": 2,
+      "n100_uniform_low": 2,
+      "n100_uniform_high": 2,
+      "n100_clustered_low": 2,
+      "n100_clustered_high": 2,
+      "n100_grid_low": 2,
+      "n100_grid_high": 2,
+      "n200_uniform_low": 2,
+      "n200_uniform_high": 2,
+      "n200_clustered_low": 2,
+      "n200_clustered_high": 2,
+      "n200_grid_low": 2,
+      "n200_grid_high": 2
+    },
+    "axis": "hull_boundary_ratio",
+    "strata": {
+      "low": 0.1,
+      "high": 0.3
+    }
+  },
+  "reference_baseline": "nearest_neighbor",
+  "input_visibility": "full_coordinates",
+  "suite_content_sha256": "a2e97d745ed005ec8bf280893aaa39ca45ba6cd6897a02e61f120b919102c7e9"
+}

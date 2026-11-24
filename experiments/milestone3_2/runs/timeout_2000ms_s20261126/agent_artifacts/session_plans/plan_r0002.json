@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the single hook `score_ruin_nodes` toward a multiplicative-gated, rank-power ruin priority: score_i = |removal_savings_i|/scale * gate_load(route slack) * gate_depot(eccentric/edge-of-cluster customers) * gate_demand * gate_rdist, elevated to an adaptive rank exponent p(iter_frac, stagnation_ratio) that shifts from near-worst-cost exploitation early to relatedness/cluster-coherent diversification under stagnation. Target the archive's weakest regimes directly: loose capacity (weakest gate), clustered spatial, eccentric depot, uniform demand, n=100.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents this exact template/interface and reports that an evolved multiplicative-gate + rank-power score_ruin_nodes hit 23.3186 vs 23.3474 for the zero-evolution L3-ctrl Worst-Cost Removal baseline on blind_120 at 500 ms, i.e. the gain comes specifically from the gating/rank-power form of the hook and is strongest where worst-cost removal is uninformative (stagnation-aware diversification listed under strong_on). method-cvrp-lns-shaw-regret supports pairing worst/related destroy operators with Regret-k repair, and method-cvrp-cheapest-regret-insertion fixes the non-evolvable repair layer as deterministic Regret-2. Scope note from KB: L3 degrades under tight 25 ms budgets via collaborative early stop, but our arm is m32_timeout_2000ms with observed mean solve 190.5 ms, so the regime is safe and we keep the anytime deadline untouched. Only the score_ruin_nodes hook is evolved; postprocess_mode stays 'none' per the allowed set."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "Under the 2000 ms anytime budget (mean solve ~190 ms on dev_24, so ample iteration headroom), a stagnation-adaptive rank-power exponent over multiplicatively gated removal savings will beat the round-1 fixed worst-cost-style score: when stagnation_ratio is low the rank exponent stays near 1 (worst-cost exploitation of high-|savings| nodes), and as stagnation rises the exponent flattens so removal spreads to cluster-related and near-depot-boundary nodes. This should improve clustered/eccentric-depot/loose-capacity instances most (currently the largest VBS-relative gaps, -17.9% to -21.6%), because in loose-capacity clustered geometry worst-cost removal repeatedly destroys the same few expensive-to-reinsert boundary customers while leaving the cluster structure intact, whereas flat-rank diversified removal actually reshuffles cluster membership and lets Regret-2 reinsertion re-partition it. Expected effect: mean objective below 16.16 on cvrp_dev_hetero_24 with no solve-ms regression into timeouts.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents this exact template/interface and reports that an evolved multiplicative-gate + rank-power score_ruin_nodes hit 23.3186 vs 23.3474 for the zero-evolution L3-ctrl Worst-Cost Removal baseline on blind_120 at 500 ms, i.e. the gain comes specifically from the gating/rank-power form of the hook and is strongest where worst-cost removal is uninformative (stagnation-aware diversification listed under strong_on). method-cvrp-lns-shaw-regret supports pairing worst/related destroy operators with Regret-k repair, and method-cvrp-cheapest-regret-insertion fixes the non-evolvable repair layer as deterministic Regret-2. Scope note from KB: L3 degrades under tight 25 ms budgets via collaborative early stop, but our arm is m32_timeout_2000ms with observed mean solve 190.5 ms, so the regime is safe and we keep the anytime deadline untouched. Only the score_ruin_nodes hook is evolved; postprocess_mode stays 'none' per the allowed set."
+  }
+}

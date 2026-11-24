@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 7 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:da6a5ae4d14c4856abe2665952042c80"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 under the 2000 ms budget, keeping the monotone magnitude backbone intact and adding only a bounded cross-route multiplicative factor lam = clip(1 + 0.30*(rd_r/mean_rd - 1) + 0.15*(nl_r/mean_nl - 1), 0.70, 1.30) to score_ruin_nodes will lower the mean objective versus the current SBS 16.0293 by >= 0.05, primarily on the weakest regimes (capacity_level=loose, spatial=clustered, size=100) where a single over-long route dominates cost; because the perturbation never reorders nodes within a route, the early exploitation trajectory stays identical to the monotone champion and only the choice of which route to attack changes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:da6a5ae4d14c4856abe2665952042c80"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Route level: replace the refuted node-level gating/rank-power reshaping with a route-length-conditioned magnitude score. Keep the pure monotone |removal_savings|/scale backbone (the axis that 6 sessions all cluster around, SBS 16.0293), but multiply it by a bounded, smooth route-complexity factor lam in [0.70, 1.30] derived from (route_dists[r] / mean_route_dist) and, as a secondary conserved term, route length in nodes (route_loads[r] / capacity) so that under-diversified, over-long routes are preferentially ruined. The factor is amplitude-bounded and strictly non-inverting, so within-route ordering is preserved and only cross-route removal priority shifts; no rank power, no depot-prominence gate, no demand gate (all previously refuted), and no stagnation-adaptive exponent."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

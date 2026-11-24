@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 4 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:ffab356916d54600bdc00b6d3621f2a2"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 the weakest regimes are tight capacity (12 instances, vbs_rel_gap -23.60%), size=100 (-22.47%) and uniform demands (-22.49%), where removal by pure distance savings leaves routes near capacity that Regret-2 cannot refill feasibly. Therefore a hook that scores ruin candidates as removal_savings normalized by route_dists blended with demand saturation (demands/capacity) and that gradually shifts weight toward high-saturation nodes as stagnation_ratio grows will reduce mean objective below the current SBS 15.7435 while keeping solve_ms_mean under 500 ms.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:ffab356916d54600bdc00b6d3621f2a2"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Capacity-aware ruin scoring: reweight removal_savings by per-node demand fill (demands/capacity) and switch to stagnation-driven diversification when stagnation_ratio is high, targeting the weakest regimes (capacity_level=tight, size=100, demand_dist=uniform)."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

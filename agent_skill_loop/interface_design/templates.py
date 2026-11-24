@@ -10,14 +10,15 @@ from __future__ import annotations
 import hashlib
 import inspect
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from importlib import import_module
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
 from agent_skill_loop.cvrp_workbench.protocol import normalize_routes
 
-from .contracts import ALLOWED_POSTPROCESS_MODES, InterfaceDesign
+from .contracts import ALLOWED_POSTPROCESS_MODES, LEGACY_CVRP_PROTOCOL_ID, HookSpec, InterfaceDesign, hook_bundle_metadata
 
 CLASSIC_CW_STATIC_HOOK_CODE = """import numpy as np
 
@@ -1536,12 +1537,37 @@ class TemplateSpec:
     hook_name: str
     hook_signature: tuple[str, ...]
     allowed_postprocess_modes: frozenset[str]
-    runner: Callable[..., tuple[list[list[int]], dict[str, Any]]]
+    runner: Callable[..., tuple[Any, dict[str, Any]]]
     default_task_description: str
     default_template_program: str
     default_baseline_hook_code: str
     template_source_sha256: str
     advisory_deadline_supported: bool = True
+    protocol_id: str | None = None
+    hook_specs: tuple[HookSpec, ...] = ()
+    baseline_hook_implementations: Mapping[str, str] = field(default_factory=dict)
+
+    @property
+    def effective_protocol_id(self) -> str:
+        if self.protocol_id is not None:
+            return self.protocol_id
+        if self.problem_family == "cvrp":
+            return LEGACY_CVRP_PROTOCOL_ID
+        raise ValueError(f"template_protocol_required:{self.template_id}")
+
+    @property
+    def effective_hook_specs(self) -> tuple[HookSpec, ...]:
+        if self.hook_specs:
+            return self.hook_specs
+        shape_arg = {
+            "score_merge_static": "i_idx",
+            "score_merge_dynamic": "i_idx",
+            "score_ruin_nodes": "route_ids",
+        }.get(self.hook_name)
+        return (HookSpec(self.hook_name, self.hook_signature, shape_arg),)
+
+    def baseline_implementations(self) -> dict[str, str]:
+        return dict(self.baseline_hook_implementations or {self.hook_name: self.default_baseline_hook_code})
 
 
 def _compute_template_source_sha256(runner_fn: Callable[..., Any]) -> str:
@@ -1663,8 +1689,49 @@ def _build_template_registry() -> dict[tuple[str, str], TemplateSpec]:
 TEMPLATE_REGISTRY: dict[tuple[str, str], TemplateSpec] = _build_template_registry()
 
 
+def compute_template_source_sha256(runner: Callable[..., Any], *dependencies: Callable[..., Any]) -> str:
+    """Pin a new runner and its ordered, explicitly declared source dependencies."""
+    return hashlib.sha256("\n###\n".join(inspect.getsource(fn) for fn in (runner, *dependencies)).encode("utf-8")).hexdigest()
+
+
+def register_template(spec: TemplateSpec) -> None:
+    """Register a trusted template without replacing an existing version."""
+    key = (spec.template_id, spec.template_version)
+    if key in TEMPLATE_REGISTRY:
+        raise ValueError(f"duplicate_template:{spec.template_id}/{spec.template_version}")
+    if not spec.effective_protocol_id.strip():
+        raise ValueError("empty_template_protocol")
+    specs = spec.effective_hook_specs
+    if (specs[0].name, specs[0].signature) != (spec.hook_name, spec.hook_signature):
+        raise ValueError("primary_hook_contract_mismatch")
+    implementations = spec.baseline_implementations()
+    hook_bundle_metadata(specs, implementations)
+    if implementations[spec.hook_name] != spec.default_baseline_hook_code:
+        raise ValueError("primary_hook_mismatch")
+    TEMPLATE_REGISTRY[key] = spec
+
+
+def _load_interface_extensions(*, probes: bool = False) -> None:
+    # The worker starts a fresh interpreter. Load only repository-owned modules,
+    # and never accept an import path from a request or a generated candidate.
+    names = (
+        "tsp_adapter", "packing_adapters", "tsp_templates", "obp_templates", "bpp_templates", "cvrp_l3b",
+    )
+    if probes:
+        names += ("tsp_probes", "packing_probes", "cvrp_l3b_probes")
+    for name in names:
+        module = f"{__package__}.{name}"
+        try:
+            import_module(module)
+        except ModuleNotFoundError as exc:
+            if exc.name != module:
+                raise
+
+
 def get_template_spec(template_id: str, template_version: str) -> TemplateSpec:
     key = (str(template_id), str(template_version))
+    if key not in TEMPLATE_REGISTRY:
+        _load_interface_extensions()
     if key not in TEMPLATE_REGISTRY:
         raise KeyError(f"unknown_template:{template_id}/{template_version}")
     return TEMPLATE_REGISTRY[key]

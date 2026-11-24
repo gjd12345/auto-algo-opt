@@ -1,0 +1,31 @@
+{
+  "round_id": 1,
+  "direction": "Ruin-priority scoring as a stagnation-adaptive rank-power rule: normalize per-node removal savings by run-scale, multiply load/depot/demand/route-distance gating factors, then rank-transform and raise to an exponent that grows with stagnation_ratio (mild when improving, aggressive when stuck) to diversify destroy sets under the 500 ms anytime budget.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the L3 skeleton (CW + intra_2opt + Regret-2 reinsertion + R2R acceptance) with a fixed worst-removal control at 23.3474 mean blind tour length and an evolved multiplicative-gate/rank-power destroy rule at 23.3186, showing the destroy-priority hook is the binding degree of freedom and that the controlled baseline is a solid, feasible-by-2-3 ms starting point. It further notes the evolved rule won 8/24 dev problems over the constructive champion, i.e. per-instance complementarity is real. Since only score_ruin_nodes is evolvable and postprocess must be 'none', the highest-leverage deterministic refinement is (a) scale-free rank normalization of |removal_savings| for cross-instance robustness on heterogeneous demand/geometry, and (b) a stagnation-adaptive power exponent that sharpens or flattens the destroy distribution as the search stalls, directly implementing the 'stagnation_aware_diversification' strong regime flagged in the KB while keeping tie-breaking deterministic. Regret-2 reinsertion plus intra_2opt is retained unchanged so any gain is attributable to the evolved destroy score, preserving the strict attribution separation the KB baseline was built for."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "A rank-based (monotone-invariant) power transform of removal savings with multiplicative gating (gates on route load ratio, depot-adjacency, demand, and route distance) outperforms plain worst-removal scoring on dev_24 hetero instances at 500 ms, because rank normalization removes scale heterogeneity across instances while the stagnation-driven exponent switches from local (small exponent, exploit) to global (large exponent, diversify) destruction without introducing RNG nondeterminism.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents the L3 skeleton (CW + intra_2opt + Regret-2 reinsertion + R2R acceptance) with a fixed worst-removal control at 23.3474 mean blind tour length and an evolved multiplicative-gate/rank-power destroy rule at 23.3186, showing the destroy-priority hook is the binding degree of freedom and that the controlled baseline is a solid, feasible-by-2-3 ms starting point. It further notes the evolved rule won 8/24 dev problems over the constructive champion, i.e. per-instance complementarity is real. Since only score_ruin_nodes is evolvable and postprocess must be 'none', the highest-leverage deterministic refinement is (a) scale-free rank normalization of |removal_savings| for cross-instance robustness on heterogeneous demand/geometry, and (b) a stagnation-adaptive power exponent that sharpens or flattens the destroy distribution as the search stalls, directly implementing the 'stagnation_aware_diversification' strong regime flagged in the KB while keeping tie-breaking deterministic. Regret-2 reinsertion plus intra_2opt is retained unchanged so any gain is attributable to the evolved destroy score, preserving the strict attribution separation the KB baseline was built for."
+  }
+}

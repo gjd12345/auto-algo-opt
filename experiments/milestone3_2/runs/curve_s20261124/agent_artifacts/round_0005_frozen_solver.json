@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_fbe9adce",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n    cap = max(float(capacity), 1e-12)\n    eps = 1e-12\n\n    def rank01(x):\n        r = np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\").astype(np.float64)\n        return r / (n - 1 if n > 1 else 1.0)\n\n    def softsimplex(x):\n        # shift-and-scale to (0,1], then renormalize to a distribution over nodes\n        lo = float(np.min(x))\n        hi = float(np.max(x))\n        span = hi - lo\n        if span <= eps:\n            return np.full(n, 1.0 / n, dtype=np.float64)\n        return (x - lo) / span\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n\n    # --- Three orthogonal removal-evidence channels ---\n    # Channel A: worst detour saved (self-normalized saturating map)\n    sav_scale = max(float(np.mean(sav)), eps)\n    chan_sav = sav / (sav + sav_scale)\n\n    # Channel B: capacity pressure = load utilization * demand size utilization\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    dem_util = np.clip(dem / cap, 0.0, 1.0)\n    chan_cap = np.sqrt(load_util * dem_util + eps)\n\n    # Channel C: cluster dispersion ~ depot distance * route distance (both self-normalized)\n    d0_scale = max(float(np.mean(d0)), eps)\n    rd_scale = max(float(np.mean(rdists)), eps)\n    ch_dep = d0 / (d0 + d0_scale)\n    ch_rd = rdists / (rdists + rd_scale)\n    chan_disp = np.sqrt(ch_dep * ch_rd + eps)\n\n    # Barycentric simplex projections\n    a = softsimplex(chan_sav)\n    b = softsimplex(chan_cap)\n    c = softsimplex(chan_disp)\n\n    # Stagnation-driven Dirichlet-style weight rotation across simplex vertices\n    # At s=0: ~ savings vertex. As s rises, mass migrates to capacity and dispersion.\n    w_sav = 1.0 - 0.85 * s           # in [0.15, 1.0]\n    aux = max(0.0, 1.0 - w_sav)      # [0.0, 0.85]\n    w_cap = 0.55 * aux\n    w_disp = 0.45 * aux\n\n    blend = w_sav * a + w_cap * b + w_disp * c\n\n    # Load-utilization gate: preferentially ruin near-capacity routes (binding constraint)\n    gate = 0.5 + 0.5 * load_util\n    gated = blend * gate\n\n    # Stagnation-driven rank-power sharpening (p in [1.0, 2.75]); iter_frac unused for gate.\n    p = 1.0 + 1.75 * s * s\n    sharp = np.power(np.clip(rank01(gated), 0.0, 1.0), p)\n\n    # Deterministic scale-invariant tie-break on raw detour savings.\n    result = sharp + 1e-7 * rank01(sav)\n\n    return np.where(np.isfinite(result), np.clip(result, 0.0, None), 0.0).astype(np.float64)",
+  "hook_code_sha256": "fbe9adce22ecb1d33ce8f6ad2478c7ac7a12b509db6c57781ebeebe930a0fd13",
+  "design_sha256": "18cb7c5994542a9652a9c3f22782d37ceed0940fbeeb760f34a8c36109e8b437",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261124\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

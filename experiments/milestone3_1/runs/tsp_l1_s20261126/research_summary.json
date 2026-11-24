@@ -1,0 +1,119 @@
+{
+  "schema_version": "m3-research-summary/v1",
+  "run_id": "m31_tsp_l1_s20261126",
+  "arm_id": "m31_tsp_l1",
+  "problem_family": "tsp",
+  "final_phase": "no_champion",
+  "completed_rounds": [
+    1,
+    2
+  ],
+  "best_dev_objective": null,
+  "best_solver_manifest_ref": null,
+  "frozen_checkpoints": {},
+  "budget_summary": {
+    "run_id": "m31_tsp_l1_s20261126",
+    "ledger_path": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_1\\runs\\tsp_l1_s20261126\\agent_budget.sqlite3",
+    "max_requests": 36,
+    "attempted_requests": 36,
+    "remaining": 0,
+    "rejected_requests": 0,
+    "reconciled_unknown_count": 0,
+    "by_state": {
+      "http_error": 3,
+      "complete": 31,
+      "connectivity_failed": 2
+    },
+    "by_purpose": {
+      "planner": 13,
+      "eoh_probe": 2,
+      "eoh_generation": 19,
+      "reflection": 2
+    },
+    "input_tokens": 93420,
+    "output_tokens": 13570,
+    "total_tokens": 106990
+  },
+  "token_summary": {
+    "input_tokens": 93420,
+    "output_tokens": 13570,
+    "cached_tokens": 52736,
+    "cached_tokens_reported_count": 31,
+    "total_tokens": 106990,
+    "provider_elapsed_seconds": 319.284,
+    "outer_requests": 15,
+    "inner_eoh_requests": 21,
+    "state_counts": {
+      "http_error": 3,
+      "complete": 31,
+      "connectivity_failed": 2
+    },
+    "requested_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 31
+    },
+    "barrier_rejections": 0
+  },
+  "cost_summary": {
+    "rate_card_version": "opencode-go-reference/v1",
+    "priced_cost_usd": null,
+    "priced_attempts": 0,
+    "unpriced_attempts": 36,
+    "unpriced_reasons": {
+      "missing_rate_card": 36
+    }
+  },
+  "milestone_status": null,
+  "hypothesis_counts": {
+    "supported": 0,
+    "testing": 0,
+    "superseded": 0,
+    "proposed": 0,
+    "abandoned": 0,
+    "refuted": 0
+  },
+  "archive_summary": {
+    "solver_count": 0,
+    "pareto_frontier": [],
+    "portfolio": null,
+    "weakest_regimes": [],
+    "known_signatures_count": 0
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m31_tsp_l1",
+      "problem_family": "tsp",
+      "template_id": "tsp_constructive_step",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "",
+      "delta_vs_prev": "",
+      "requests_used_total": 15,
+      "outer_requests_round": 5,
+      "inner_requests_round": 8,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": ""
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m31_tsp_l1",
+      "problem_family": "tsp",
+      "template_id": "tsp_constructive_step",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "",
+      "delta_vs_prev": "",
+      "requests_used_total": 33,
+      "outer_requests_round": 5,
+      "inner_requests_round": 13,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": ""
+    }
+  ],
+  "completed_at": "2026-11-23T15:47:49Z"
+}

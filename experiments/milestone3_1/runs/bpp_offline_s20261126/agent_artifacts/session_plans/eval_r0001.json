@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under bpp_offline_reorder_repack/none.",
+      "evidence_refs": [
+        "evaluation:f1f1a5b8c03a4d4bab5455c7cbf6a2cf"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "For binary/bin-packing instances on cvrp_dev_hetero_24 style data, a score_item that is monotone decreasing in item size (plus a tie-break term favouring items that fill the residual capacity of an open bin most tightly) yields strictly lower bin count than insertion order or random order at a 500 ms budget, because large items have the fewest feasible placements and must be placed while slack is still large; the repack pass then recovers the residual waste that a pure FFD ordering leaves.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:f1f1a5b8c03a4d4bab5455c7cbf6a2cf"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Implement `rank_items(items, capacity, ctx)` so the offline reorder+repack template places items in non-increasing size order (First-Fit-Decreasing style), breaking ties by descending remainder-fit to the current open bin, then run greedy FFD packing and attempt a local repack of partially filled bins."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

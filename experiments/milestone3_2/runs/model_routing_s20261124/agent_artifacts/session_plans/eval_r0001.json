@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:68e666103b0e4cfd96b892615a9e2612"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "In the L3 ruin-recreate skeleton (CW + intra_2opt build, deterministic Regret-2 reinsertion, intra_2opt per perturbed route, R2R acceptance), the mean tour length on cvrp_dev_hetero_24 at 500 ms is dominated by two controllable factors in score_ruin_nodes: (a) a load-utilization gate that preferentially destroys customers on under-filled routes (where removal_savings underestimates reinsertion gains), and (b) a rank-power exponent p that is high (p~2) in the early iter_frac regime to focus on the most removable customers and decays toward p~1 (or below) as stagnation_ratio crosses ~0.5 to diversify. Because Regret-2 reinsertion already exploits detour savings greedily, adding depot-distance and demand gates mostly injects noise; ablating them is expected to be neutral-to-positive.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:68e666103b0e4cfd96b892615a9e2612"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Evolve the multiplicative gated rank-power ruin priority score: seed the population with worst-removal (rank_power p=1, all gates=1) and with load/depot-balanced variants, then evolve gate exponents and a stagnation/iter_frac-adaptive rank power that concentrates on high removal savings early and diversifies (spatial-adjacency relatedness proxy) when stagnation_ratio rises."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

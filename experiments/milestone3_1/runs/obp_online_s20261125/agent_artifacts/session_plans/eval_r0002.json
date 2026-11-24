@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 2 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:fc6eb31b7fa641619d71ef2dda62b56d"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "For strict prefix-causal online bin packing, scoring open bins by smallest feasible residual (Best Fit, score ~ capacity-(rem_item)) instead of the current worst-fit opposite preference reduces total bin count on cvrp_dev_hetero_24 (obp dev_36), since tighter fills preserve large residual bins for later items; the gain should grow with instance size (50 -> 200 items), where the archive shows the largest relative gaps.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:fc6eb31b7fa641619d71ef2dda62b56d"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace worst-fit preference in score_bin with best-fit (tightest feasible residual) plus a residual-slack tie-break against opening a new bin."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

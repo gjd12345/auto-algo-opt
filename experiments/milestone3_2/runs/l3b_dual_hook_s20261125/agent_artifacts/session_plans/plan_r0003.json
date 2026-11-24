@@ -1,0 +1,37 @@
+{
+  "round_id": 3,
+  "direction": "Co-evolve the dual hooks for the weakest regimes (n=100, spatial=uniform, depot=eccentric, demand=uniform, capacity=loose): (a) make `score_ruin_nodes` scale-invariant by normalizing removal savings by the per-instance mean edge length and by multiplying in a mild size-aware priority term so that at n=100 the ruin set spans multiple routes (route-coverage/depot-integration gating) rather than concentrating inside one dense route; (b) make `score_recreate_action` a capacity-slack- and detour-regret-weighted regrank: prefer the (customer, position) action with the strongest second-best-minus-best detour regret (Regret-2/3 blend) while penalizing actions that consume a large fraction of residual route capacity under loose capacity, and mildly favor filling near-empty routes early (eccentric-depot respect). Keep both hooks deterministic, tie-break by index, and bounded to a small softmax/bonus magnitude so the LNS baseline behavior is preserved as iter_frac -> 1.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate_dual",
+      "mechanism": "Round-2 champion (session_r0002, mean 16.1100) still sits on a Pareto plateau where vbs-vs-sbs gap is only 0.114%, while the weakest-regime table shows uniformly negative rel gaps concentrated in n=100, uniform spatial, eccentric depot and loose capacity — i.e. the residual errors are structural (ruin-set geometry + slack-blind insertion) rather than budget-driven. KB entry method-cvrp-m3-ruin-recreate-l3 confirms the L3 skeleton fixes Recreate to deterministic Regret-2 and only exposes ruin scoring; the explicit 'unexplored dual-hook (ruin+recreate) co-tuning' limitation noted there is exactly the lever of the L3b dual-hook template. method-cvrp-cheapest-regret-insertion and method-cvrp-lns-shaw-regret motivate replacing a slack-blind Regret-2 with a Regret-2/3 + capacity-slack blend, and method-cvrp-m2-l2a-generalized-savings motivates scale-invariant savings normalization so the same hook transfers between n=50 and n=100 slices."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 2,
+    "evaluation_ref": "rounds/round_0002/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Under a 500 ms budget, the dev_24 loss is dominated by (i) ruin sets that are geometrically localized in uniform/eccentric-depot instances and (ii) regret-2 recreate decisions that ignore residual capacity slack. Adding a scale-invariant, size-aware route-coverage gate to `score_ruin_nodes` and a capacity-slack-weighted Regret-2/3 blend to `score_recreate_action` will lower mean objective on the n=100 / uniform / eccentric / loose-capacity slices by >=0.15 units versus the round-2 champion (16.1100) without increasing solve_ms beyond the 500 ms budget envelope.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate_dual",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-cheapest-regret-insertion",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round-2 champion (session_r0002, mean 16.1100) still sits on a Pareto plateau where vbs-vs-sbs gap is only 0.114%, while the weakest-regime table shows uniformly negative rel gaps concentrated in n=100, uniform spatial, eccentric depot and loose capacity — i.e. the residual errors are structural (ruin-set geometry + slack-blind insertion) rather than budget-driven. KB entry method-cvrp-m3-ruin-recreate-l3 confirms the L3 skeleton fixes Recreate to deterministic Regret-2 and only exposes ruin scoring; the explicit 'unexplored dual-hook (ruin+recreate) co-tuning' limitation noted there is exactly the lever of the L3b dual-hook template. method-cvrp-cheapest-regret-insertion and method-cvrp-lns-shaw-regret motivate replacing a slack-blind Regret-2 with a Regret-2/3 + capacity-slack blend, and method-cvrp-m2-l2a-generalized-savings motivates scale-invariant savings normalization so the same hook transfers between n=50 and n=100 slices."
+  }
+}

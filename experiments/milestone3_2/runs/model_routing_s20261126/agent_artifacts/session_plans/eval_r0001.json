@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:f90af32ae8c148a48ff4062a4d74ad00"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Replacing the zero-evolution worst-cost removal priority (L3-ctrl, 23.3474 on cvrp_m3_blind_120 at 500ms) with a scale-normalized composite ruin score that anneals from savings-dominant (early) to Shaw-relatedness/cluster-dominant (stagnated), plus a route-load and inter-route-redundancy correction, increases the removal efficiency per ruined node and lowers total cost by a small but statistically detectable margin (>0.05%, p<1e-6) at the same 500ms budget, without regressing feasibility or anytime curve.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:f90af32ae8c148a48ff4062a4d74ad00"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Design score_ruin_nodes as a scale-invariant composite removal-priority score: normalize removal_savings by the per-instance mean/median of finite distance_matrix entries (s_hat = removal_savings / mean_d) so the term transfers across instance scale; add a stagnation-adaptive relatedness term that grows with stagnation_ratio (favouring nodes in geometrically tight, mutually-close clusters, computed from row-wise mean of the node's k nearest distances divided by mean_d) so early-LNS iterations behave like worst-cost removal (high savings, global) while stagnated iterations behave like Shaw removal (cohesive cluster rips); add a route-load-structure term using route_loads/route_dists so that nodes on under-filled or anomalously long routes are preferentially removed; add an inter-route redundancy term (min distance to any node NOT on the same route, normalized) that downscores nodes whose removal cannot help because they are already served by a nearby route; expose all mix weights as evolvable constants (w_savings, w_cluster, w_load, w_isolated) and include iter_frac as a linear anneal from savings-dominant to cluster-dominant. Avoid raw magnitude features (distances, demands) to keep scale invariance; keep all outputs monotone-safe and finite with eps floor."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

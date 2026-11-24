@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under cvrp_ruin_recreate/none.",
+      "evidence_refs": [
+        "evaluation:b2a6038d4c5247c78cd791ad2abb8f32"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On dev_hetero_24 at 500 ms, replacing raw-magnitude removal-savings scoring with a median-normalized, size- and iteration-adaptive rank-power score (plus a depot-eccentricity x demand-efficiency gate) reduces mean objective below the current SBS of 16.0353, with the largest per-instance gains on the size=100 subset (12/12 currently exhausted) and on depot_style=eccentric, because normalization keeps the destroy set calibrated as the tour scale grows and the sharper exponent under stagnation increases iterations completed per budget.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:b2a6038d4c5247c78cd791ad2abb8f32"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Scale-invariant, n-adaptive ruin scoring: (1) divide removal_savings by a robust scale estimate (median absolute savings, floored) instead of raw magnitudes so scores transfer across n=50/100 and capacity levels; (2) make the rank-power exponent p grow with instance size n and with iter_frac/stagnation_ratio, so at n=100 (all 12 instances budget-exhausted) the destroy set concentrates on fewer, higher-leverage nodes, letting more LNS iterations fit in the fixed 500 ms budget; (3) add a multiplicative gate favoring nodes whose removal-merit per unit demand is high but whose distance from an eccentric depot is large, to relieve the weakest regime 'depot_style=eccentric' and 'capacity_level=loose' where worst-removal is blind to load structure. Keep deterministic tie-breaking by (score, index) and keep all state reads strictly read-only."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

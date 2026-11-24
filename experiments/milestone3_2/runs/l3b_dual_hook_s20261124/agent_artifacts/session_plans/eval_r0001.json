@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under cvrp_ruin_recreate_dual/none.",
+      "evidence_refs": [
+        "evaluation:c1918ac95ae242a082b2f82892dca946"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "On cvrp_dev_hetero_24 at 500 ms, an evolved dual-hook LNS whose ruin priority is a scale-normalized rank-power of removal savings gated by capacity-utilisation, depot proximity, demand share and route distance, and whose recreate priority is a normalized regret-2 detour deficit penalised by post-insertion slack shrinkage, will beat the zero-evolution L3-ctrl (worst-cost removal + cheapest/Regret-2) baseline in mean tour length, with largest per-instance wins on instances having high demand heterogeneity (wide q_i/mean q spread) and multi-route high-slack regimes; the gain should survive under 0.5x-2x coordinate scaling with <0.01% drift in mean tour length.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:c1918ac95ae242a082b2f82892dca946"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Dual-hook LNS: (1) score_ruin_nodes = rank_power(|removal_savings_i| / scale_global, p(iter_frac, stagnation_ratio)) multiplied by dimensionless gates (capacity-utilization |load - q/2| fill gate, depot-proximity gate d(0,i)/mean d(0,·), demand-share gate q_i/mean q, route-distance gate route_dist/mean route_dist), with p increasing from ~0.7 to ~3.0 as stagnation_ratio grows (smooth deterministic ramp, no RNG); (2) score_recreate_action = regret-2 detour deficit normalized by scale_global, penalized by residual-slack shrinkage after insertion (beta * (slack_after / q)) and rewarded by route-pair demand-match, with k adaptively lifted toward regret-3 when mean route slack is below a threshold. Both hooks strictly scale-invariant (all terms divided by global mean depot distance / mean demand), deterministic tie-breaking by customer index, arrays read-only."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

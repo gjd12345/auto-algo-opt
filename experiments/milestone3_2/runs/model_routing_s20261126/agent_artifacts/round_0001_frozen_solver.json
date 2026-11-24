@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0001_cvrp_ruin_recreate_f8ccdec1",
+  "display_name": "Session R1 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    D = np.asarray(distance_matrix, dtype=np.float64)\n    n = int(route_ids.shape[0])\n    eps = 1e-12\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    rid = np.asarray(route_ids, dtype=np.int64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n\n    mean_d = float(np.mean(D[0, 1:]))\n    if not np.isfinite(mean_d) or mean_d <= 0.0:\n        mean_d = float(np.mean(D[1:n + 1, 1:n + 1])) if n > 1 else 1.0\n    mean_d = max(mean_d, eps)\n\n    cust = D[1:n + 1, 1:n + 1]\n\n    # Radial pressure: positive savings normalized, then saturating via x/(1+x)\n    s_norm = np.where(np.isfinite(sav), sav, 0.0) / mean_d\n    s_norm = np.clip(s_norm, 0.0, None)\n    radial = s_norm / (1.0 + s_norm)\n\n    # Coherence: inverse mean k-nearest same-route neighbor distance (normalized)\n    k = min(5, max(n - 1, 1))\n    coherence = np.ones(n, dtype=np.float64)\n    isolation = np.ones(n, dtype=np.float64)\n    for i in range(n):\n        row = cust[i]\n        same = (rid == rid[i])\n        same[i] = False\n        if np.any(same):\n            ds = np.sort(row[same])\n            kk = min(k, ds.shape[0])\n            m = float(np.mean(ds[:kk]))\n            coherence[i] = 1.0 / (1.0 + m / mean_d)\n        diff = (rid != rid[i])\n        if np.any(diff):\n            dd = row[diff]\n            mn = float(np.min(dd))\n            isolation[i] = 1.0 / (1.0 + mn / mean_d)\n        else:\n            isolation[i] = 1.0\n\n    # Route strain: hypoxia factor from underfill + anomalously long route\n    fill = np.clip(np.asarray(route_loads, dtype=np.float64) / max(capacity, eps), 0.0, 1.0)\n    under = 1.0 - fill\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd_ref = float(np.mean(rd)) if n > 0 else mean_d\n    rd_ref = max(rd_ref, eps)\n    extra = np.clip(rd / rd_ref - 1.0, 0.0, 2.0) / 2.0\n    strain = 0.5 * (under + extra)  # in [0,1]\n\n    # Anneal: iter_frac drives blend from savings-radial to coherence-dominant\n    it = float(np.clip(iter_frac, 0.0, 1.0))\n    st = float(np.clip(stagnation_ratio, 0.0, 1.0))\n\n    # Power-law blend exponent: early -> radial emphasis (high exponent on radial),\n    # late -> coherence emphasis. Monotone-smooth via sqrt gate.\n    gate = float(np.sqrt(max(it, 0.0)))  # 0 -> early, 1 -> late\n    # Multiplicative core: radial^a * coherence^b, exponents shift with progress\n    a = 1.0 + 2.0 * (1.0 - gate)   # radial exponent: 3 early -> 1 late\n    b = 0.25 + 2.75 * gate          # coherence exponent: 0.25 early -> 3 late\n\n    # Multiplicative coupling with mild strain boost (additive inside a convex lift)\n    core = np.power(np.clip(radial, 0.0, 1.0), a) * np.power(np.clip(coherence, 0.0, 1.0), b)\n    core = core * (1.0 + 0.5 * strain)\n\n    # Stagnation-activated isolation bonus: prefer nodes with no close cross-route substitute\n    iso_bonus = (0.10 + 0.30 * st) * isolation\n\n    score = core + iso_bonus\n\n    # Deterministic tiny tie-breaker (scale-safe)\n    score = score + 1e-9 * (np.arange(n, dtype=np.float64) / max(n, 1))\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "f8ccdec191e1443fee7d783be10ddb1bdd080a693865d013ab62ae0c5ac4de5e",
+  "design_sha256": "bd6f70e4fbd681943abce0454a9fba443f42179b6e59bae6c34c8bb38054c578",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261126\\session_run\\rounds\\round_0001\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-s2-r7-iso"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

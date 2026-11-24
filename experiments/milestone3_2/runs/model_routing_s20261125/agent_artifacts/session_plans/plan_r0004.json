@@ -1,0 +1,36 @@
+{
+  "round_id": 4,
+  "direction": "Refine the multiplicative gated rank-power ruin scoring toward the archive's weakest regimes (capacity_level=tight, size=100, depot_style=eccentric, spatial=clustered, demand_dist=uniform) by making the capacity-utilization gate and route-distance gate two-sided rather than one-sided: heavily occupied routes (route_loads/capacity near 1) and near-mean-overloaded long routes get boosted removal priority so ruin always targets the routes that force extra vehicles, while a mild complementary term keeps a small share of low-utilization routes so clustered instances are not starved of structural rearrangement. Tie the rank-power exponent to stagnation_ratio with a steeper early-phase exponent (broad exploitation of savings) decaying to a flatter exponent under stagnation (diversification), and add a depot-eccentricity normalization of removal_savings by 2*d(depot,i) so that savings magnitudes are comparable across instances with far-away depots.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 confirms this exact template/skeleton (CW + intra_2opt + ruin -> deterministic Regret-2 -> intra_2opt -> R2R) is strong at a 500 ms budget (first_feasible_ms ~2-3 ms, blind_120 completion 1.0) and that the M3-3 evolved multiplicative gate x rank-power score_ruin_nodes beat the L3-ctrl worst-removal baseline (23.3186 vs 23.3474). That evolved rule was one-sided on load/depot/demand/route-distance gates, so the archive's weakest regimes here (tight capacity, n=100, eccentric depot, clustered) are exactly where one-sided gating under-serves: tight-capacity instances need removal pressure concentrated on high-utilization routes, and eccentric-depot instances have removal_savings scales that are not comparable across instances. Shaw/regret LNS literature supports strengthening the destroy operator's relatedness/worst targeting while keeping repair deterministic (Regret-2) to preserve the L3 control baseline and avoid hand-tuning the repair stage. Postprocess stays 'none' per allowed modes; only the single whitelisted hook score_ruin_nodes is evolved, so any gain is attributable to the ruin policy rather than to extra local search."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 3,
+    "evaluation_ref": "rounds/round_0003/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "On cvrp_dev_hetero_24 at 500 ms, a two-sided capacity/route-load gating plus depot-normalized savings and a stagnation-decayed rank-power exponent in score_ruin_nodes will lower mean tour length below the round-1 SBS 16.0429 (and clearly below round-3's 16.0808), with the largest per-instance gains concentrated on capacity_level=tight and size=100 instances where route-count pressure dominates.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 confirms this exact template/skeleton (CW + intra_2opt + ruin -> deterministic Regret-2 -> intra_2opt -> R2R) is strong at a 500 ms budget (first_feasible_ms ~2-3 ms, blind_120 completion 1.0) and that the M3-3 evolved multiplicative gate x rank-power score_ruin_nodes beat the L3-ctrl worst-removal baseline (23.3186 vs 23.3474). That evolved rule was one-sided on load/depot/demand/route-distance gates, so the archive's weakest regimes here (tight capacity, n=100, eccentric depot, clustered) are exactly where one-sided gating under-serves: tight-capacity instances need removal pressure concentrated on high-utilization routes, and eccentric-depot instances have removal_savings scales that are not comparable across instances. Shaw/regret LNS literature supports strengthening the destroy operator's relatedness/worst targeting while keeping repair deterministic (Regret-2) to preserve the L3 control baseline and avoid hand-tuning the repair stage. Postprocess stays 'none' per allowed modes; only the single whitelisted hook score_ruin_nodes is evolved, so any gain is attributable to the ruin policy rather than to extra local search."
+  }
+}

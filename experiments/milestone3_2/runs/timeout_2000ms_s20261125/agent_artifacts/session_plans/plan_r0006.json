@@ -1,0 +1,35 @@
+{
+  "round_id": 6,
+  "direction": "Evolve score_ruin_nodes from plain worst-cost-savings ranking into a stagnation-adaptive multiplicative gate: score_i = rank_power(|removal_savings_i| / max(route_dist, eps) * gate_load * gate_demand * gate_depot, p) with gate_load = 1 + 0.6*route_load/capacity (bias ruin toward nearly-full routes, key for tight-capacity n=100), gate_demand = (1 + 0.4*demand_i/mean_demand), gate_depot = 1/(1 + 0.5*d(depot,i)/max_col_depot_dist) to suppress far-field nodes while the solve clock is young, and rank exponent p shrinks from ~1.6 to ~0.7 as iter_frac rises so late iterations flatten the priority into a broad multi-node ruin set (~15-20% of n) for deeper diversification. Normalizing savings by route_dist keeps the scale invariant across clustered vs scattered geometry and eccentric depots.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents the verified multiplicative-gate + rank-power destroy rule as the evolved winner on the L3 skeleton (blind-120 23.3186 vs L3-ctrl 23.3474), and specifies that gate_load / gate_rdist type terms with a rank exponent p(iter_frac, stagnation_ratio) are exactly the evolvable surface of score_ruin_nodes while removal_savings stay raw. Archive feedback shows the 5-solver portfolio is tightly clustered (SBS 385.1902, VBS 382.9867, gap 0.572%) and win_counts spread across solvers (9/6/4/4/1), i.e. the LNS skeleton is saturated at 500ms-scale effort and the remaining lever is destroy-set quality, so I keep the skeleton fixed and concentrate mutation on the normalization + gating + exponent schedule, targeting the four weakest regimes where the ruin decision actually binds. Rounds 4-5 regressed (16.0665 -> 16.1375) which is consistent with un-gated scoring drifting away from the SBS optimum, so this plan re-anchors on the KB's verified gated form rather than adding new unverified operators."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Under the 2000 ms budget, a stagnation-adaptive multiplicative-gated rank-power destroy score (route-dist-normalized removal savings x nearly-full-route load gate x demand gate x depot-proximity gate, p: 1.6 -> 0.7 with iter_frac) beats the plain worst-cost-savings ranking (SBS dev_24 mean 16.0496) because the residual VBS gap is concentrated in tight-capacity (vbs_rel_gap -22.6%), size-100 (-21.2%), uniform-demand (-21.0%) and eccentric-depot (-20.4%) regimes, where full-route-focused ruin sets open the capacity-relief moves that savings ranking misses.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents the verified multiplicative-gate + rank-power destroy rule as the evolved winner on the L3 skeleton (blind-120 23.3186 vs L3-ctrl 23.3474), and specifies that gate_load / gate_rdist type terms with a rank exponent p(iter_frac, stagnation_ratio) are exactly the evolvable surface of score_ruin_nodes while removal_savings stay raw. Archive feedback shows the 5-solver portfolio is tightly clustered (SBS 385.1902, VBS 382.9867, gap 0.572%) and win_counts spread across solvers (9/6/4/4/1), i.e. the LNS skeleton is saturated at 500ms-scale effort and the remaining lever is destroy-set quality, so I keep the skeleton fixed and concentrate mutation on the normalization + gating + exponent schedule, targeting the four weakest regimes where the ruin decision actually binds. Rounds 4-5 regressed (16.0665 -> 16.1375) which is consistent with un-gated scoring drifting away from the SBS optimum, so this plan re-anchors on the KB's verified gated form rather than adding new unverified operators."
+  }
+}

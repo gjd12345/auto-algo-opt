@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:861e1da618f245daa25ca9ee10ba10fe"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Regret-based (forced-early) insertion seeded from a k-NN candidate graph, followed by neighbor-restricted 2-opt with don't-look bits and an Or-opt segment pass, lowers mean tour length on tsp dev_24 relative to pure best-insertion + geometric 2-opt at the same ~500 ms budget, with the largest gain in the size=50 and size=100 regimes (current vbs_rel_gap of -16.06% and -14.31%), because regret ordering prevents expensive late insertions on nearly-closed tours while don't-look bits let the 2-opt phase exhaust improving moves on small n instead of spending the budget re-scanning all pairs.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:861e1da618f245daa25ca9ee10ba10fe"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Improve the guided-insertion seed + 2-opt repair hook so that the 500 ms budget is spent where it pays: (1) build a k-NN candidate graph (k = min(20, n-1)) once and reuse it for both insertion scoring and move generation; (2) make the insertion phase regret-aware instead of pure best-insertion — score_insertion_move should return a lexicographic score (best insertion cost, then second-best minus best, i.e. regret) so high-regret cities are placed first, which fixes the chevron/stranded-city failures that dominate the size=50 and size=100 regimes; (3) follow with neighbor-restricted first-improvement 2-opt using don't-look bits plus an Or-opt (segment of 1-3 nodes) pass, restarting 2-opt only on nodes touched by an accepted move; (4) guard the total against the deadline with a decreasing-iteration check scaled by n (n<=60 -> full candidate sweep; n>=150 -> cap candidate width to ~8 and skip Or-opt when the remaining time fraction is low), so larger instances degrade gracefully rather than exhausting the budget mid-move."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

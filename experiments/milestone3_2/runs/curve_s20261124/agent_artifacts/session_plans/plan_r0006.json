@@ -1,0 +1,32 @@
+{
+  "round_id": 6,
+  "direction": "Raise anytime-LNS intensity: adaptively scale ruin-set size and iteration count to consume the full 500ms budget (prior best used only ~188ms), with greedy + regret-2 recreate and simulated-acceptance, emphasizing clustered-spatial and tight-capacity regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Archive shows objective barely varies across 5 solvers (16.05–16.13) with a VBS gap of only 0.31%, meaning the template is stable but under-exploiting the time budget. The strongest solver used 188ms and best objective; round5 regressed while using only 123ms. Filling the 500ms budget with adaptive ruin size (larger ruptures on tight-capacity/clustered instances, smaller on uniform-demand) plus SISR-style acceptance should trade negligible extra time for measurable objective reduction without changing the validated interface."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 5,
+    "evaluation_ref": "rounds/round_0005/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0003/eoh_run/skills/best_generated",
+  "hypothesis": "The Pareto-optimal incumbent (round3, obj 16.0504 @188ms) and round5 (16.1239 @123ms) leave substantial unused budget headroom. Scaling ruin-recreate iterations to fill ~500ms and adapting ruin size to instance clustering/capacity-tightness will lower mean objective, especially on the weakest regimes (spatial=clustered, capacity_level=tight, size=100).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [],
+    "diagnostic_ref": null,
+    "rationale": "Archive shows objective barely varies across 5 solvers (16.05–16.13) with a VBS gap of only 0.31%, meaning the template is stable but under-exploiting the time budget. The strongest solver used 188ms and best objective; round5 regressed while using only 123ms. Filling the 500ms budget with adaptive ruin size (larger ruptures on tight-capacity/clustered instances, smaller on uniform-demand) plus SISR-style acceptance should trade negligible extra time for measurable objective reduction without changing the validated interface."
+  }
+}

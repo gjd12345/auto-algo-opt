@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the `score_ruin_nodes` hook toward a stagnation-adaptive, capacity-aware ruin priority: base term = normalized worst-cost removal saving (removal_savings / route_dists contribution of the node's route), modulated by route slack utilization (demand vs capacity) and a deterministic pseudo-random jitter whose amplitude scales with `stagnation_ratio` and `iter_frac`, so the LNS alternates between greedy worst-node destruction early and diversified related-destroy later; keep the ruin-size schedule tied to iter_frac so late iterations widen the removed set.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 score_ruin_nodes hook is the only evolved component (deterministic Regret-2 repair, intra_2opt and Record-to-Record acceptance are fixed), and that prior evolution of exactly this hook gave a small but highly significant gain (+0.12%, p<1e-8) over the Worst-Cost Removal control at 500 ms — so the hook, not the skeleton, is where headroom lies. method-cvrp-lns-shaw-regret motivates diversifying the destroy operator (Shaw relatedness / randomness) alongside worst-cost removal rather than using worst-cost alone. Since the budget is 500 ms and p50 first feasible is ~171 ms, the anytime curve is tight; therefore diversification must be gated on stagnation_ratio (only after the search stalls) to avoid wasting the strict deadline. All terms are computed from the hook's state-only signature (removal_savings, route_loads, capacity, route_dists, stagnation_ratio, iter_frac) with no oracle/instance-id information, keeping the interface scale-invariant and whitelist-safe; postprocess is forced to 'none'."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "For cvrp_ruin_recreate/v1 at a 500 ms budget, a ruin scoring hook that linearly blends node worst-cost removal saving (primary) with route slack/capacity-utilization and a stagnation_ratio-scaled deterministic jitter will lower total tour length versus a pure worst-cost-removal control (L3-ctrl), i.e. the LNS escapes local optima after stagnation without hurting the early anytime curve, because the jitter amplitude only grows once `stagnation_ratio` rises while `iter_frac` is still small enough to allow many further iterations.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "evidence-cvrp-m3-blind120-and-direction2"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 documents that the L3 score_ruin_nodes hook is the only evolved component (deterministic Regret-2 repair, intra_2opt and Record-to-Record acceptance are fixed), and that prior evolution of exactly this hook gave a small but highly significant gain (+0.12%, p<1e-8) over the Worst-Cost Removal control at 500 ms — so the hook, not the skeleton, is where headroom lies. method-cvrp-lns-shaw-regret motivates diversifying the destroy operator (Shaw relatedness / randomness) alongside worst-cost removal rather than using worst-cost alone. Since the budget is 500 ms and p50 first feasible is ~171 ms, the anytime curve is tight; therefore diversification must be gated on stagnation_ratio (only after the search stalls) to avoid wasting the strict deadline. All terms are computed from the hook's state-only signature (removal_savings, route_loads, capacity, route_dists, stagnation_ratio, iter_frac) with no oracle/instance-id information, keeping the interface scale-invariant and whitelist-safe; postprocess is forced to 'none'."
+  }
+}

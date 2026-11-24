@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_e7add838",
+  "display_name": "Session R4 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n    if n == 1:\n        return np.ones(1, dtype=np.float64)\n\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    sav = np.abs(np.asarray(removal_savings, dtype=np.float64).ravel())\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n\n    cap = max(float(capacity), 1e-12)\n    eps = 1e-12\n\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n\n    # Scale-free savings via depot distance scale.\n    d_scale = max(float(np.mean(d0)), eps)\n    sav_score = sav / (sav + d_scale)\n\n    # Quantile binning into K ordinal tiers (hard ranks, not continuous powers).\n    K = 6\n    def quantile_tier(x):\n        order = np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\").astype(np.float64)\n        return np.floor(order * K / max(n, 1)).astype(np.float64)  # 0..K-1\n\n    sav_tier = quantile_tier(sav_score)\n    load_util = np.clip(loads / cap, 0.0, 1.0)\n    load_tier = quantile_tier(load_util)\n    slack_ratio = np.clip((cap - loads) / cap, 0.0, 1.0)\n    dem_ratio = np.clip(dem / cap, 0.0, 1.0)\n    align = -np.abs(dem_ratio - slack_ratio)  # higher = better aligned\n    align_tier = quantile_tier(align)\n\n    # Stagnation-driven gating mask: at high stagnation, only near-full routes survive gate.\n    gate_strength = 0.4 + 0.6 * s\n    load_gate = np.where(load_util >= 1.0 - gate_strength * 0.5, 1.0, 0.35 + 0.65 * (1.0 - s))\n\n    # Lexicographic ordinal composite: savings dominate, load tier next, alignment last.\n    # Stagnation shifts weight from savings toward load pressure (bolder ruin).\n    w_sav = 1.0 - 0.35 * s\n    w_load = 0.25 + 0.55 * s\n    w_align = 0.20 + 0.10 * (1.0 - s) * (1.0 - p)\n\n    ordinal = (w_sav * (sav_tier / max(K - 1, 1))\n               + w_load * (load_tier / max(K - 1, 1)) * load_gate\n               + w_align * (align_tier / max(K - 1, 1)))\n\n    # Tiny continuous tie-break by raw savings magnitude.\n    score = ordinal + 1e-6 * sav_score\n\n    return np.where(np.isfinite(score), np.clip(score, 0.0, None), 0.0).astype(np.float64)",
+  "hook_code_sha256": "e7add838e957b46031066853e220be9f2b085c5941b00ec6aaeff63383a787aa",
+  "design_sha256": "9d92c88e6e4b11dad5375eae755317e0f5bad1412e38af5be78e60a95326a26f",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261124\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

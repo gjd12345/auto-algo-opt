@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 1 evaluated under obp_online_priority/none.",
+      "evidence_refs": [
+        "evaluation:bdca5c52e7ff484fb40ac0f003ad279c"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "In online bin packing with irrevocable placements, a score that prefers the minimum post-placement residual (Best-Fit-like) yields equal or fewer bins than Worst-Fit residual selection, because it concentrates fragmentation into as few open bins as possible; tie-breaking by larger pre-placement fill (and then by bin creation order) preserves packability of the remaining capacity without added opens. Stated testably: on cvrp_dev_hetero_24 (as proxy OBP stream), a score of the form score = -(capacity - (remaining - item)) with residual-first tie-break should show a non-worse bin count than the baseline Worst-Fit score across the five diagnostic factor classes, and improvements should be largest on high-variance item-size regimes.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:bdca5c52e7ff484fb40ac0f003ad279c"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Tighten the `score_bin` from a pure Worst-Fit residual preference toward a Best-Fit-like residual signal (prefer the feasible bin whose post-placement leftover is smallest), with deterministic prefix-causal tie-breaking on bin fill level and bin creation index, so that no item-level lookahead is used."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

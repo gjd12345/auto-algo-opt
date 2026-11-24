@@ -1,0 +1,77 @@
+{
+  "best_dev_objective": 16.08959696,
+  "checkpoint_budget": 36,
+  "dev_metrics": {
+    "all_feasible": true,
+    "completion_rate": 1.0,
+    "dev_suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58",
+    "penalized_mean_objective": 16.08959696,
+    "solve_budget_ms": 500.0,
+    "valid_only_mean_objective": 16.08959696
+  },
+  "eligibility_status": "eligible_champion",
+  "frozen_solver": {
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "default_budget_ms": 500.0,
+    "description": "Settled candidate under cvrp_ruin_recreate/v1.",
+    "design_sha256": "c19cbd07da9652a50e2baf776b90283a304241a7c5b550a8b8b87c9fb448816a",
+    "diagnostic_ref": null,
+    "display_name": "M3.2 Candidate cvrp_ruin_recreate (698c6731)",
+    "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(demands.shape[0] - 1)\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    d0 = np.asarray(distance_matrix[0, 1:], dtype=np.float64).ravel()\n    dem = np.asarray(demands[1:], dtype=np.float64).ravel()\n    loads = np.asarray(route_loads, dtype=np.float64).ravel()\n    rdists = np.asarray(route_dists, dtype=np.float64).ravel()\n    sav = np.asarray(removal_savings, dtype=np.float64).ravel()\n    cap = max(float(capacity), 1e-12)\n\n    def rank01(x):\n        if n <= 1:\n            return np.zeros(n, dtype=np.float64)\n        order = np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\").astype(np.float64)\n        return order / (n - 1)\n\n    # Per-criterion normalized \"deficiency signals\" in [0,1] (higher = more ruin-worthy)\n    a_sav = rank01(sav)                                     # high savings high priority\n    a_load = np.clip(loads / cap, 0.0, 1.0)                 # fuller routes favored\n    d0_scale = max(float(np.mean(d0)), 1e-12)\n    a_depot = 1.0 / (1.0 + d0 / d0_scale)                   # near depot favored\n    dem_mean = max(float(np.mean(dem)), 1e-12)\n    a_dem = np.clip(1.0 - np.abs(dem - dem_mean) / (dem_mean + 1e-12), 0.0, 1.0)\n    rd_scale = max(float(np.mean(rdists)), 1e-12)\n    a_rd = np.clip(rdists / rd_scale, 0.0, 1.0)             # stretched routes favored\n\n    # Pairwise normalization by median (robust, scale free)\n    def med_norm(x):\n        m = float(np.median(x))\n        if m <= 1e-12:\n            return x\n        return np.clip(x / m, 0.0, 2.0) * 0.5\n\n    sig_sav = med_norm(a_sav)\n    sig_load = med_norm(a_load)\n    sig_depot = med_norm(a_depot)\n    sig_dem = med_norm(a_dem)\n    sig_rd = med_norm(a_rd)\n\n    stack = np.column_stack([sig_sav, sig_load, sig_depot, sig_dem, sig_rd])\n\n    # Chebyshev-style max aggregation: the strongest single deficiency dominates\n    cheb = np.max(stack, axis=1)\n    # Complement with mean aggregation\n    mean_agg = np.mean(stack, axis=1)\n\n    # Stagnation-controlled mixing between max and mean\n    s = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    p = float(np.clip(iter_frac, 0.0, 1.0))\n    # Early/improv: max-dominated (sharpen). Stagnating: mean-dominated (flatten).\n    w_max = 0.85 - 0.5 * s * (0.4 + 0.6 * p)\n    w_mean = 1.0 - w_max\n\n    combined = w_max * cheb + w_mean * mean_agg\n\n    # Bounded logistic squash, temperature via stagnation\n    k = 4.0 + 2.0 * s * (0.5 + 0.5 * p)   # sharper when stuck (higher |grad|) — diversified tails\n    score = 1.0 / (1.0 + np.exp(-k * (combined - 0.5)))\n\n    # Tiny savings anchor for deterministic tie diversity\n    score = score * (1.0 + 1e-3 * a_sav)\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.clip(score, 0.0, None).astype(np.float64)",
+    "hook_code_sha256": "698c67310d5b530f9381486d95a031185eff553c9a435f3bfedd91e38d23d476",
+    "hook_name": "score_ruin_nodes",
+    "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+    "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+    "kb_release_id": "20261123-main-co-workbench-m3",
+    "origin_run": "m32_curve_s20261124",
+    "paradigm": "ruin_recreate",
+    "postprocess_mode": "none",
+    "problem_family": "cvrp",
+    "protocol_id": "cvrp/v1",
+    "schema_version": "frozen-interface-solver/v2",
+    "solver_id": "ckpt_cand_698c67310d",
+    "template_id": "cvrp_ruin_recreate",
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+    "template_version": "v1"
+  },
+  "run_id": "m32_curve_s20261124",
+  "schema_version": "m32-frozen-checkpoint/v1",
+  "settled_through_ordinal": 36,
+  "usage_cutoff": {
+    "attempted_requests": 36,
+    "by_state": {
+      "complete": 31,
+      "connectivity_failed": 3,
+      "http_error": 2
+    },
+    "cached_tokens": 38656,
+    "input_tokens": 86209,
+    "output_tokens": 24865,
+    "priced_attempts": 31,
+    "priced_cost_usd": 0.02216788,
+    "provenance_counts": {
+      "baseline_seed": 1,
+      "invalid_candidate": 6,
+      "probe": 1,
+      "provider_failed": 3,
+      "valid_candidate": 20
+    },
+    "provider_elapsed_seconds": 282.749,
+    "requested_models": {
+      "deepseek-v4.1-flash": 36
+    },
+    "served_models": {
+      "deepseek-v4.1-flash": 31
+    },
+    "unpriced_attempts": 5
+  },
+  "wall_elapsed_seconds_at_seal": 493.391,
+  "winner_solver_sha256": "bb91305a010321046d06b1d15db23d837641420a6653c1c4ac2fff98ba860352",
+  "winner_source_ordinal": 29
+}

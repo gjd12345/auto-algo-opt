@@ -1,0 +1,98 @@
+{
+  "type": "method",
+  "title": "Standard CVRP Variable Neighborhood Search (VNS / RVND)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "vns",
+    "rvnd",
+    "vnd",
+    "metaheuristic",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Standard CVRP General VNS / Randomized Variable Neighborhood Descent combining shaking perturbations with deterministic descent over {2-opt, Or-opt, relocate, swap, 2-opt*}, distinct from the DARP VNS entry.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "metaheuristic",
+    "complexity_class": "O(k*n^2)",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "cvrplib_abpx",
+        "heterogeneous_regimes",
+        "multi_second_budget",
+        "escaping_local_optima"
+      ],
+      "weak_on": [
+        "sub_10ms_ultra_fast_budget"
+      ],
+      "scale_notes": "在单次 RVND 陷入复合局部最优后通过可控强度扰动（k-step shake: double-bridge / random cross-exchange）跳出局部极值，是超越单一局部搜索上限的核心元启发式骨架。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "外层 VNS 循环维护全局最优解 x* 与扰动强度 k=1..k_max；内层 RVND 随机打乱邻域序列 N={2-opt, Or-opt, relocate, swap, 2-opt*} 直至全部邻域均无改进；若新解严格更优则更新 x* 并重置 k=1，否则增大扰动强度 k+=1",
+      "evolvable_hook": "neighborhood_schedule(k, stagnation, instance_features) 与 shaking_operator(routes, k, capacity)",
+      "state_maintained": [
+        "best_routes",
+        "incumbent_routes",
+        "neighborhood_order",
+        "shake_level_k",
+        "time_budget_left"
+      ],
+      "invariants_and_constraints": [
+        "扰动算子必须输出容量可行解或立即经修复恢复可行",
+        "每次内层 RVND 结束时必须验证客户覆盖与容量不变量",
+        "严格遵守显式时间预算以便公平跨算法比较"
+      ],
+      "typical_pitfalls": [
+        "将 DARP 的 VNS 文献卡误认为标准 CVRP 实现",
+        "扰动强度过大退化为随机重启，过小则反复落回同一吸引盆"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "x' = Shake_k(x*),   x'' = RVND(x', {N_1..N_5});   accept x* <- x'' if f(x'') < f(x*)",
+        "variables": {
+          "x*": "当前全局最优 CVRP 路径集",
+          "Shake_k": "第 k 档扰动算子",
+          "N_1..N_5": "路内/路间复合局部搜索邻域族"
+        },
+        "preconditions": "标准无时间窗 CVRP；所有邻域均满足精确容量可行检查"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-intra-2opt",
+      "method-cvrp-intra-or-opt",
+      "method-cvrp-inter-relocate",
+      "method-cvrp-inter-swap",
+      "method-cvrp-inter-2opt-star",
+      "method-lit-darp-iterated-vns-for-dial-a-ride"
+    ],
+    "sources": [
+      "src-mladenovic-hansen-1997-vns"
+    ]
+  },
+  "source_refs": [
+    "src-mladenovic-hansen-1997-vns"
+  ],
+  "evidence_refs": [
+    "literature:10.1016/S0305-0548(97)00031-2"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-vns",
+  "content_sha256": "e9a34ff4c17b7c80840d102b670ec8fdf99e6125ef109f2a4920897857314047"
+}

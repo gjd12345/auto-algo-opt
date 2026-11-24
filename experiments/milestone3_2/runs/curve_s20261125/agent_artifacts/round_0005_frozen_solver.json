@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_7e6d05f6",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    n = int(route_ids.shape[0]) if route_ids is not None else 0\n    if n == 0:\n        return np.zeros(0, dtype=np.float64)\n\n    cap = max(float(capacity), 1e-12)\n    st = float(stagnation_ratio) if np.isfinite(stagnation_ratio) else 0.0\n    st = min(max(st, 0.0), 1.0)\n    it = float(iter_frac) if np.isfinite(iter_frac) else 0.0\n    it = min(max(it, 0.0), 1.0)\n\n    s = np.abs(np.asarray(removal_savings, dtype=np.float64))\n    s = np.where(np.isfinite(s), s, 0.0)\n    smax = float(np.max(s)) if n > 0 else 0.0\n    if not (smax > 0.0) or not np.isfinite(smax):\n        smax = 1.0\n    zn = np.clip(s / smax, 0.0, 1.0)\n\n    p = 1.0 + 5.5 * st * (1.0 - 0.15 * it)\n    p = min(max(p, 1.0), 7.0)\n    core = np.power(zn + 1e-9, p)\n\n    def safe_mean(arr):\n        m = float(np.mean(arr))\n        return m if (m > 0.0 and np.isfinite(m)) else 1.0\n\n    loads = np.asarray(route_loads, dtype=np.float64)\n    loads = np.where(np.isfinite(loads), loads, 0.0)\n    util = np.clip(loads / cap, 0.0, 1.0)\n\n    depot = np.asarray(distance_matrix[0, 1:n + 1], dtype=np.float64)\n    depot = np.where(np.isfinite(depot), depot, 0.0)\n    ecc = depot / (safe_mean(depot) + 1e-12)\n\n    d = np.asarray(demands[1:n + 1], dtype=np.float64)\n    d = np.where(np.isfinite(d), d, 0.0)\n    dem_rel = d / (safe_mean(d) + 1e-12)\n\n    rd = np.asarray(route_dists, dtype=np.float64)\n    rd = np.where(np.isfinite(rd), rd, 0.0)\n    rd_rel = rd / (safe_mean(rd) + 1e-12)\n\n    def sig(x, k, c):\n        x = np.clip(x, 0.0, 50.0)\n        return 1.0 / (1.0 + np.exp(-k * (x - c)))\n\n    slack = np.clip(1.0 - util, 0.0, 1.0)\n    k_load = 5.0 + 4.0 * st\n    g_load = sig(-slack, -k_load, -0.22)\n\n    g_ecc = sig(ecc, 1.1, 0.95)\n    g_dem = sig(dem_rel, 1.1, 0.95)\n    g_rd = sig(rd_rel, 0.7, 0.95)\n\n    score_cost = core * g_load * g_ecc * g_dem * g_rd\n\n    idx = np.arange(n, dtype=np.float64)\n    h = np.sin((idx + 1.0) * 12.9898 + st * 78.233 + it * 37.719) * 43758.5453\n    h = h - np.floor(h)\n    h = np.clip(h, 0.0, 1.0 - 1e-12)\n\n    mix = 0.30 * st + 0.05 * it\n    mix = min(max(mix, 0.0), 0.80)\n    score = (1.0 - mix) * score_cost + mix * h\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return np.asarray(score, dtype=np.float64)",
+  "hook_code_sha256": "7e6d05f6fd8c7eb555d8c0651a8e048eebfa027ec834100b0bc2e1bd03a98639",
+  "design_sha256": "6c40301756b786032d316561fff243f91f89fce2d5c0fc0b6cb7f54cd19854b8",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\curve_s20261125\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

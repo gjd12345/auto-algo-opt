@@ -1,0 +1,31 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0004_cvrp_ruin_recreate_b51c7ef9",
+  "display_name": "Session R4 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    dist = np.asarray(distance_matrix, dtype=np.float64)\n    dem = np.asarray(demands, dtype=np.float64)\n    rl = np.asarray(route_loads, dtype=np.float64)\n    rd = np.asarray(route_dists, dtype=np.float64)\n    sav = np.asarray(removal_savings, dtype=np.float64)\n    cap = float(capacity) if capacity > 0 else 1e-12\n    n = int(sav.shape[0])\n    if n == 0:\n        return np.asarray(sav, dtype=np.float64)\n    eps = 1e-12\n\n    def zscore(x):\n        x = np.asarray(x, dtype=np.float64)\n        x = np.where(np.isfinite(x), x, 0.0)\n        mu = float(np.mean(x))\n        sd = float(np.std(x))\n        if not np.isfinite(sd) or sd <= eps:\n            return np.zeros_like(x)\n        return (x - mu) / sd\n\n    def soft_unit(x):\n        # maps z-scores to (0,1) via logistic\n        x = np.asarray(x, dtype=np.float64)\n        x = np.where(np.isfinite(x), x, 0.0)\n        x = np.clip(x, -60.0, 60.0)\n        return 1.0 / (1.0 + np.exp(-x))\n\n    depot_d = dist[0, 1:].astype(np.float64)\n    depot_d = np.where(np.isfinite(depot_d), depot_d, 0.0)\n    denom = 2.0 * np.maximum(depot_d, eps)\n\n    # Depot-eccentricity normalized savings, log-compressed to control heavy tails\n    sav_ecc = np.abs(sav) / denom\n    sav_ecc = np.where(np.isfinite(sav_ecc), sav_ecc, 0.0)\n    sav_log = np.log1p(sav_ecc)\n    sav_z = zscore(sav_log)\n\n    # Utilization pressure: two-sided, logistic high gate minus a scaled logistic low gate\n    util = np.clip(rl / cap, 0.0, 5.0)\n    util_z = zscore(util)\n    # center the logistic around the sample mean so both sides are data-adaptive\n    hi = soft_unit(3.0 * util_z)\n    lo = soft_unit(-3.0 * util_z)\n    util_pressure = 0.80 * hi + 0.20 * lo\n\n    # Route-distance pressure: two-sided around route-distance mean, using relative deviation\n    rd_v = np.where(np.isfinite(rd), rd, 0.0)\n    rd_mu = float(np.mean(rd_v))\n    rd_sd = float(np.std(rd_v))\n    if not np.isfinite(rd_sd) or rd_sd <= eps:\n        rd_sd = 1.0\n    rd_z = (rd_v - rd_mu) / rd_sd\n    rd_hi = soft_unit(2.5 * rd_z)\n    rd_lo = soft_unit(-2.5 * rd_z)\n    rd_pressure = 0.75 * rd_hi + 0.25 * rd_lo\n\n    gate = 0.5 * util_pressure + 0.5 * rd_pressure\n    gate = np.clip(gate, 0.0, 1.0)\n\n    # Temperature: early sharp (boost savings contrast), late/stagnant flat (diversify)\n    stag = float(np.clip(stagnation_ratio, 0.0, 1.0))\n    itf = float(np.clip(iter_frac, 0.0, 1.0))\n    temp = 2.6 - 1.9 * stag - 0.35 * itf\n    if not np.isfinite(temp) or temp <= 0.05:\n        temp = 0.05\n\n    # Softmax-style sharpening on scaled savings\n    s = temp * sav_z\n    s = np.clip(s, -60.0, 60.0)\n    e = np.exp(s)\n    denom_sum = float(np.sum(e))\n    if not np.isfinite(denom_sum) or denom_sum <= eps:\n        sav_w = np.full(n, 1.0 / max(n, 1), dtype=np.float64)\n    else:\n        sav_w = e / denom_sum\n    sav_w = sav_w * float(n)  # rescale to O(1)\n    sav_w = np.where(np.isfinite(sav_w), sav_w, 0.0)\n\n    # Demand gentleness: very large customers on tight routes should not dominate removal\n    dem_n = np.clip(dem[1:] / np.maximum(cap, eps), 0.0, 5.0)\n    dem_adj = 1.0 - 0.12 * soft_unit(zscore(dem_n))\n\n    # Deterministic low-discrepancy jitter (bit-reversal of scrambled id), small\n    idx = np.arange(1, n + 1, dtype=np.uint64)\n    mix = 0.5 * stag + 0.5 * itf\n    phase = np.uint64(int(np.floor(97.0 * mix)))\n    key = (idx * np.uint64(2654435761) + phase * np.uint64(40503)) % np.uint64(1000003)\n    v = np.zeros(n, dtype=np.float64)\n    x = key.copy()\n    for k in range(32):\n        v += ((x & np.uint64(1)).astype(np.float64)) * (0.5 ** (k + 1))\n        x = x >> np.uint64(1)\n    v = np.where(np.isfinite(v), v, 0.0)\n\n    jitter_w = 0.06 + 0.10 * mix\n\n    priority = sav_w * gate * dem_adj + jitter_w * v\n    priority = np.where(np.isfinite(priority), priority, 0.0)\n    return np.asarray(priority, dtype=np.float64)",
+  "hook_code_sha256": "b51c7ef91566d9e0faf21b8805ee8a0b5fb8c7bce64abb9341c7251b4d65677e",
+  "design_sha256": "c0822ed736864bd675585ec878a157842b78238b499dcdcebc573142df5ec020",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\model_routing_s20261125\\session_run\\rounds\\round_0004\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret",
+    "method-cvrp-cheapest-regret-insertion"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 500.0,
+  "protocol_id": "cvrp/v1"
+}

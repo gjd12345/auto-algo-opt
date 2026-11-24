@@ -1,0 +1,35 @@
+{
+  "round_id": 5,
+  "direction": "Capacity-tightness & clustered-geometry aware ruin scoring with stagnation-gated diversification: replace the plain |removal_savings| rank-power rule with a multiplicative gate chain sc = |sav|/scale * (0.5+load_util)^a * (1 + b*(d(0,i)/mean_depot_dist)) * (1 + c*route_dist_share), then apply rank-power p that grows from ~0.8 to ~2.5 as stagnation_ratio rises, and mix in a small fraction of relatedness-driven (Shaw-like) neighbourhood picks in the top-q so tight-capacity clustered instances escape depot-proximity bias rather than repeating near-identical ruins.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB entry method-cvrp-m3-ruin-recreate-l3 confirms score_ruin_nodes as the sole evolvable hook with a controlled multiplicative gate + rank-power form, verified at 500 ms and documented as strong for stagnation-aware diversification; method-cvrp-lns-shaw-regret motivates relatedness-driven ruin for clustered geometries. Archive shows the only remaining headroom is a 0.17% portfolio band and that tight capacity / clustered / eccentric-depot regimes are weakest, so the next evolution step targets exactly those factors via load-utilization and depot-share gates plus stagnation-scaled rank power, keeping the deterministic Regret-2 repair and R2R acceptance untouched (no postprocess) to preserve the ~2-3 ms first-feasible and full 500 ms search horizon."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 4,
+    "evaluation_ref": "rounds/round_0004/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0004/eoh_run/skills/best_generated",
+  "hypothesis": "The dev_24 residual error concentrates on tight-capacity, size-100, clustered instances with eccentric depots (per archive weakest_regimes). Hypothesis: gating ruin priority by route load utilization and depot-distance share, and raising the rank-power exponent with stagnation_ratio, will make the LNS ruin selection diversify into spatially coherent clusters at high stagnation while still removing cost-heavy nodes early, lowering mean objective below the 0.17% SBS/VBS band (i.e. beating 15.9328) without increasing per-instance solve time above the 500 ms budget.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB entry method-cvrp-m3-ruin-recreate-l3 confirms score_ruin_nodes as the sole evolvable hook with a controlled multiplicative gate + rank-power form, verified at 500 ms and documented as strong for stagnation-aware diversification; method-cvrp-lns-shaw-regret motivates relatedness-driven ruin for clustered geometries. Archive shows the only remaining headroom is a 0.17% portfolio band and that tight capacity / clustered / eccentric-depot regimes are weakest, so the next evolution step targets exactly those factors via load-utilization and depot-share gates plus stagnation-scaled rank power, keeping the deterministic Regret-2 repair and R2R acceptance untouched (no postprocess) to preserve the ~2-3 ms first-feasible and full 500 ms search horizon."
+  }
+}

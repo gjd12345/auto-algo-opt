@@ -1,0 +1,29 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0005_cvrp_ruin_recreate_48fcf4eb",
+  "display_name": "Session R5 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = demands.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dm = distance_matrix\n    depot_d = dm[0, 1:].astype(np.float64)\n    mean_d = max(float(np.mean(depot_d)), 1e-12)\n    med_s = max(float(np.median(np.abs(removal_savings))), 1e-12)\n    ref = max(mean_d, med_s, 1e-12)\n\n    # Bounded smooth savings term in (0,1) using tanh-free rational sigmoid\n    sav = removal_savings.astype(np.float64) / ref\n    s = sav / (1.0 + np.abs(sav))  # in (-1,1)\n\n    # Signed savings shape: sign amplified by magnitude via softplus-free form\n    sav_pos = np.maximum(sav, 0.0)\n    sav_neg = np.maximum(-sav, 0.0)\n    big = 1.0 - np.exp(-sav_pos)     # rewards large positive savings\n    small = 1.0 - np.exp(-sav_neg)   # penalizes negative savings (rare)\n    sav_term = big - 0.5 * small\n\n    # Geometry: slack and eccentricity, both bounded\n    util = np.clip(route_loads.astype(np.float64) / max(capacity, 1e-12), 0.0, 1.0)\n    slack = 1.0 - util\n    dn = depot_d / ref\n    ecc = dn / (1.0 + dn)\n    geo_raw = slack * (0.5 + 0.5 * ecc)  # in (0,1)\n    geo_term = geo_raw / (1.0 + geo_raw)\n\n    # Route distance term: normalized route dists to prefer large routes\n    rd = route_dists.astype(np.float64)\n    rd_norm = rd / (np.max(np.abs(rd)) + 1e-12)\n\n    # Stage schedule via smooth sinusoid of progress\n    phase = float(np.clip(0.5 * (1.0 - np.cos(np.pi * iter_frac)) + 0.5 * stagnation_ratio, 0.0, 1.0))\n\n    # Multiplicative synergy between savings and geometry (product-like consensus)\n    synergy = sav_term * (0.35 + 0.65 * geo_term)\n    diversity = geo_term * (xf := (1.0 - 0.5 * phase))\n    focus = sav_term * (0.4 + 0.6 * phase)\n    route_bias = 0.15 * rd_norm * phase\n\n    score = synergy + (1.0 - phase) * diversity + phase * focus + route_bias\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "48fcf4ebc86a1e7f74b7717fda15a03e54939bc966ca05ecb04940074e5fdaaf",
+  "design_sha256": "60979399871d3a3f70575b6f19098b911e6295d726b2f2fad1a7e73c11dd4082",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261126\\session_run\\rounds\\round_0005\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-cw-parallel",
+  "cited_kb_ids": [
+    "method-cvrp-cw-parallel"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

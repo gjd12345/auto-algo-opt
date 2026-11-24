@@ -1,0 +1,32 @@
+{
+  "round_id": 1,
+  "direction": "Evolve score_ruin_nodes into a multiplicative-gated rank-power destroy priority: normalize removal_savings by a robust scale (median absolute saving + epsilon), then gate by capacity slack (route_load/capacity near 1 -> prioritize), depot proximity of the removed pair's endpoints, and local route density (route_dist / customers_in_route); exponent p(iter_frac, stagnation_ratio) rising from ~1.0 (early, exploratory worst-removal) to ~2.5 (late/stagnant, aggressively sharpened) so that at 2000 ms budget the LNS exploits far past the initial CW+2opt construct.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "KB method-cvrp-m3-ruin-recreate-l3 documents the evolvable single hook score_ruin_nodes with the multiplicative gate + rank-power form score_i = rank_power(|savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), and its evolved arm beat the Worst-Removal control on blind_120 (23.3186 vs 23.3474) while remaining strictly complementary per-instance. That evidence is at 500 ms; our budget is 2000 ms, where LNS iteration count is ~4x larger and the sharpening exponent / gate strengths (not the skeleton) become the dominant lever. Gates keep the score scale-invariant across dev_24's heterogeneous instance scales, and the stagnation ratio guards against premature convergence — the documented weak regime of ruin-recreate. No template switch is needed: active template cvrp_ruin_recreate and postprocess none are already the allowed combination, so evolution acts only on the destroy hook, preserving the deterministic Regret-2 repair attribution."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": null,
+  "memory_basis": [],
+  "reference_skill_ref": null,
+  "hypothesis": "At a 2000 ms budget the L3 ruin-recreate skeleton performs many hundreds of destroy/repair iterations, so destroy selection quality dominates the incumbent. A scale-invariant, multiplicatively-gated rank-power score over removal_savings (gates: route load utilization, depot/route boundary proximity, and per-route average edge cost) with a stagnation-adaptive exponent p rising from ~1 to ~2.5 will lower mean tour length on dev_24 versus the plain worst-removal L3 control and versus an ungated rank-power variant, and will also tilt the anytime curve at 250/500/1000 ms without hurting first_feasible_ms (still ~2-3 ms).",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "KB method-cvrp-m3-ruin-recreate-l3 documents the evolvable single hook score_ruin_nodes with the multiplicative gate + rank-power form score_i = rank_power(|savings_i|/scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio)), and its evolved arm beat the Worst-Removal control on blind_120 (23.3186 vs 23.3474) while remaining strictly complementary per-instance. That evidence is at 500 ms; our budget is 2000 ms, where LNS iteration count is ~4x larger and the sharpening exponent / gate strengths (not the skeleton) become the dominant lever. Gates keep the score scale-invariant across dev_24's heterogeneous instance scales, and the stagnation ratio guards against premature convergence — the documented weak regime of ruin-recreate. No template switch is needed: active template cvrp_ruin_recreate and postprocess none are already the allowed combination, so evolution acts only on the destroy hook, preserving the deterministic Regret-2 repair attribution."
+  }
+}

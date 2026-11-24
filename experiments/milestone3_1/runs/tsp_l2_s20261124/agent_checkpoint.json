@@ -1,0 +1,81 @@
+{
+  "schema_version": "m3-research-agent-checkpoint/v1",
+  "run_id": "m31_tsp_l2_s20261124",
+  "current_round": 4,
+  "phase": "completed",
+  "round_step_index": 0,
+  "round_outer_requests": 0,
+  "round_reflect_requests": 0,
+  "round_inner_requests": 0,
+  "round_prev_best_dev": null,
+  "round_plan_args": null,
+  "last_diag_ref": null,
+  "session_initialized": true,
+  "completed_rounds": [
+    1,
+    2,
+    3
+  ],
+  "active_template_id": "tsp_guided_insertion_2opt",
+  "active_postprocess_mode": "none",
+  "best_solver_manifest_ref": "agent_artifacts/round_0003_frozen_solver.json",
+  "best_dev_objective": 84541.491785,
+  "best_all_feasible": true,
+  "best_completion_rate": 1.0,
+  "frozen_checkpoints": {
+    "36": "checkpoints/frozen_checkpoint_36.json"
+  },
+  "round_summaries": [
+    {
+      "round_id": 1,
+      "arm_id": "m31_tsp_l2",
+      "problem_family": "tsp",
+      "template_id": "tsp_guided_insertion_2opt",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "87950.8378",
+      "delta_vs_prev": "",
+      "requests_used_total": 15,
+      "outer_requests_round": 6,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json"
+    },
+    {
+      "round_id": 2,
+      "arm_id": "m31_tsp_l2",
+      "problem_family": "tsp",
+      "template_id": "tsp_guided_insertion_2opt",
+      "postprocess_mode": "none",
+      "session_status": "RUNNING",
+      "best_objective": "85145.8501",
+      "delta_vs_prev": "-2804.9877",
+      "requests_used_total": 27,
+      "outer_requests_round": 5,
+      "inner_requests_round": 7,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0002_frozen_solver.json"
+    },
+    {
+      "round_id": 3,
+      "arm_id": "m31_tsp_l2",
+      "problem_family": "tsp",
+      "template_id": "tsp_guided_insertion_2opt",
+      "postprocess_mode": "none",
+      "session_status": "COMPLETED",
+      "best_objective": "84541.4918",
+      "delta_vs_prev": "-604.3583",
+      "requests_used_total": 36,
+      "outer_requests_round": 4,
+      "inner_requests_round": 5,
+      "hypotheses_supported": 0,
+      "hypotheses_refuted": 0,
+      "frozen_manifest_ref": "agent_artifacts/round_0003_frozen_solver.json"
+    }
+  ],
+  "pending_reflect_payload": null,
+  "pending_submit_tool_call": null,
+  "updated_at_utc": "2026-11-23T15:47:59Z"
+}

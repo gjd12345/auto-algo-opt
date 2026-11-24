@@ -1,0 +1,30 @@
+{
+  "schema_version": "frozen-interface-solver/v2",
+  "solver_id": "session_r0007_cvrp_ruin_recreate_d86386d9",
+  "display_name": "Session R7 · cvrp_ruin_recreate",
+  "problem_family": "cvrp",
+  "paradigm": "ruin_recreate",
+  "interface": "cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "template_id": "cvrp_ruin_recreate",
+  "template_version": "v1",
+  "template_source_sha256": "07206f68a07e520fb4099bf9c49e8b5bda881e4678a16b861fba60aa8aacea42",
+  "postprocess_mode": "none",
+  "template_options": {
+    "inject_static_kb_clues": false
+  },
+  "hook_name": "score_ruin_nodes",
+  "hook_code": "import numpy as np\n\ndef score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac):\n    \"\"\"Return a length-n 1D finite float array of ruin priorities for customers 1..n (higher = removed first).\"\"\"\n    n = demands.shape[0] - 1\n    if n <= 0:\n        return np.zeros(0, dtype=np.float64)\n\n    dm = distance_matrix\n    depot_d = dm[0, 1:].astype(np.float64)\n    scale_d = max(float(np.mean(depot_d)), 1e-12)\n\n    sav = removal_savings.astype(np.float64)\n    dem = demands[1:].astype(np.float64)\n    cap_safe = max(float(capacity), 1e-12)\n\n    # Signed magnitude backbone (coordinate-scale invariant).\n    backbone = sav / scale_d\n\n    # Density term: detour saved per unit demand, normalized to cap scale.\n    density = backbone / (1.0 + dem / cap_safe)\n\n    # Smooth concave saturation by route utilization: over-full routes get boosted\n    # but gains saturate, avoiding single-route domination.\n    util = np.clip(np.asarray(route_loads, dtype=np.float64).ravel() / cap_safe, 0.0, 1.0)\n    if util.shape[0] != n:\n        util = np.zeros(n, dtype=np.float64)\n    saturation = 1.0 + 0.5 * np.sqrt(util + 1e-12)\n\n    score = density * saturation\n\n    score = np.where(np.isfinite(score), score, 0.0)\n    return score.astype(np.float64)",
+  "hook_code_sha256": "d86386d94ce8d42ee7abbcbaa566b32383fb9ca9e3dde8204bd88f94067aac68",
+  "design_sha256": "e0eb43d1324dd571a32dcd7bba2aa740ae3aae41e04fa942ebf3691c058e69bb",
+  "origin_run": "C:\\Users\\24294\\Projects\\auto-algo-opt\\experiments\\milestone3_2\\runs\\timeout_2000ms_s20261126\\session_run\\rounds\\round_0007\\eoh_run",
+  "kb_release_id": "20261123-main-co-workbench-m3",
+  "kb_entry_id": "method-cvrp-m3-ruin-recreate-l3",
+  "cited_kb_ids": [
+    "method-cvrp-m3-ruin-recreate-l3",
+    "method-cvrp-lns-shaw-regret"
+  ],
+  "diagnostic_ref": null,
+  "description": "Session M2 evolved cvrp_ruin_recreate/v1:score_ruin_nodes",
+  "default_budget_ms": 2000.0,
+  "protocol_id": "cvrp/v1"
+}

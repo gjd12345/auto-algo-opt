@@ -352,6 +352,7 @@ def _spawn_pane(
     pane: dict[str, Any],
     *,
     run_id: str | None = None,
+    resume_attempts: int = 0,
 ) -> dict[str, Any]:
     pane_id = pane["id"]
     log_path = sess_dir / "logs" / f"{pane_id}.log"
@@ -360,6 +361,7 @@ def _spawn_pane(
     log_path.parent.mkdir(parents=True, exist_ok=True)
     spec_payload = dict(pane)
     spec_payload["run_id"] = run_id
+    spec_payload["resume_attempts"] = int(resume_attempts)
     _atomic_write_json(spec_path, spec_payload)
 
     cmd_args = [
@@ -385,6 +387,7 @@ def _spawn_pane(
         "status": "running",
         "cancelled": False,
         "run_id": run_id,
+        "resume_attempts": int(resume_attempts),
         "wrapper_pid": proc.pid,
         "pid": proc.pid,
         "started_at": time.time(),
@@ -414,6 +417,7 @@ def _cmd_run_pane(args: argparse.Namespace) -> int:
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         spec = json.loads(spec_path.read_text(encoding="utf-8"))
         cur = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
+        cur_resume_attempts = int(cur.get("resume_attempts", spec.get("resume_attempts", 0)) or 0)
         expected_run_id = cli_run_id if cli_run_id is not None else spec.get("run_id")
         if (
             meta.get("stopped")
@@ -436,14 +440,20 @@ def _cmd_run_pane(args: argparse.Namespace) -> int:
             child_kwargs["start_new_session"] = True
 
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        lf = open(log_path, "w", encoding="utf-8", errors="replace")
+        existing_size = log_path.stat().st_size if log_path.is_file() else 0
+        lf = open(log_path, "a", encoding="utf-8", errors="replace")
         try:
+            if existing_size > 0:
+                ts_label = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                lf.write(f"\n--- [mux resume attempt {cur_resume_attempts} at {ts_label}] ---\n")
+                lf.flush()
             child = subprocess.Popen(spec["command"], stdout=lf, stderr=subprocess.STDOUT, **child_kwargs)
             init_state = {
                 "id": pane_id,
                 "status": "running",
                 "cancelled": False,
                 "run_id": expected_run_id,
+                "resume_attempts": cur_resume_attempts,
                 "wrapper_pid": os.getpid(),
                 "pid": child.pid,
                 "started_at": started,
@@ -462,6 +472,7 @@ def _cmd_run_pane(args: argparse.Namespace) -> int:
         lf.close()
 
     fin = time.time()
+    resumable = (rc == 75)
     with _session_lock(sess_dir):
         if not meta_path.is_file():
             return -15
@@ -469,9 +480,13 @@ def _cmd_run_pane(args: argparse.Namespace) -> int:
         cur = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
         if meta.get("run_id") != expected_run_id or cur.get("cancelled"):
             return -15
+        prev_resume_attempts = int(cur.get("resume_attempts", spec.get("resume_attempts", 0)) or 0)
+        next_resume_attempts = prev_resume_attempts + (1 if resumable else 0)
+        can_retry = resumable and "--resume" in spec.get("command", []) and next_resume_attempts <= 3
+        term_status = "done" if rc == 0 else ("resumable" if can_retry else ("retry_exhausted" if resumable else "failed"))
         done_state = {
             "id": pane_id,
-            "status": "done" if rc == 0 else "failed",
+            "status": term_status,
             "cancelled": False,
             "run_id": expected_run_id,
             "wrapper_pid": os.getpid(),
@@ -479,6 +494,8 @@ def _cmd_run_pane(args: argparse.Namespace) -> int:
             "started_at": started,
             "finished_at": fin,
             "returncode": rc,
+            "resume_attempts": next_resume_attempts,
+            "retry_after": (fin + 5.0) if can_retry else None,
             "elapsed_s": round(fin - started, 3),
             "log": str(log_path),
         }
@@ -524,7 +541,8 @@ def _inspect_session_unlocked(sess_dir: Path, session: str) -> dict[str, Any]:
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     stopped = bool(meta.get("stopped", False))
     rows: list[dict[str, Any]] = []
-    counts = {"pending": 0, "running": 0, "done": 0, "failed": 0}
+    counts = {"pending": 0, "running": 0, "done": 0, "resumable": 0, "retry_exhausted": 0, "failed": 0}
+    has_retryable_resumable = False
     now = time.time()
     for pane in meta["panes"]:
         pid_key = pane["id"]
@@ -538,6 +556,8 @@ def _inspect_session_unlocked(sess_dir: Path, session: str) -> dict[str, Any]:
                 "pid": None,
                 "returncode": -15 if stopped else None,
                 "cancelled": stopped,
+                "resume_attempts": 0,
+                "retry_after": None,
                 "elapsed_s": 0.0,
                 "log": str(log_path),
                 "last_line": "",
@@ -555,6 +575,14 @@ def _inspect_session_unlocked(sess_dir: Path, session: str) -> dict[str, Any]:
             elapsed = st.get("elapsed_s")
             if elapsed is None:
                 elapsed = round(max(0.0, finished_at - started_at), 2)
+            r_attempts = int(st.get("resume_attempts", 0) or 0)
+            if (
+                status == "resumable"
+                and not stopped
+                and "--resume" in pane.get("command", [])
+                and r_attempts <= 3
+            ):
+                has_retryable_resumable = True
             row = {
                 "id": pid_key,
                 "status": status,
@@ -562,6 +590,8 @@ def _inspect_session_unlocked(sess_dir: Path, session: str) -> dict[str, Any]:
                 "wrapper_pid": st.get("wrapper_pid"),
                 "returncode": st.get("returncode"),
                 "cancelled": bool(st.get("cancelled", False)),
+                "resume_attempts": r_attempts,
+                "retry_after": st.get("retry_after"),
                 "elapsed_s": elapsed,
                 "log": str(log_path),
                 "last_line": _read_last_nonempty_line(log_path),
@@ -575,7 +605,7 @@ def _inspect_session_unlocked(sess_dir: Path, session: str) -> dict[str, Any]:
         "stopped": stopped,
         "supervisor_pid": meta.get("supervisor_pid"),
         "counts": counts,
-        "all_finished": counts["pending"] == 0 and counts["running"] == 0,
+        "all_finished": counts["pending"] == 0 and counts["running"] == 0 and not has_retryable_resumable,
         "panes": rows,
     }
 
@@ -596,13 +626,31 @@ def _pump_pending_slots_unlocked(base_dir: Path, sess_dir: Path, session: str) -
         return snap
     running = snap["counts"]["running"]
     limit = int(meta["max_concurrent"])
-    pending_ids = [r["id"] for r in snap["panes"] if r["status"] == "pending"]
+    now = time.time()
     pane_map = {p["id"]: p for p in meta["panes"]}
+    pending_rows = [
+        r for r in snap["panes"]
+        if r["status"] == "pending"
+        or (
+            r["status"] == "resumable"
+            and "--resume" in pane_map[r["id"]].get("command", [])
+            and int(r.get("resume_attempts", 0) or 0) <= 3
+            and now >= float(r.get("retry_after") or 0.0)
+        )
+    ]
     spawned_any = False
-    for pane_id in pending_ids:
+    for r in pending_rows:
         if running >= limit:
             break
-        _spawn_pane(base_dir, sess_dir, session, pane_map[pane_id], run_id=meta.get("run_id"))
+        pane_id = r["id"]
+        _spawn_pane(
+            base_dir,
+            sess_dir,
+            session,
+            pane_map[pane_id],
+            run_id=meta.get("run_id"),
+            resume_attempts=int(r.get("resume_attempts", 0) or 0),
+        )
         running += 1
         spawned_any = True
     return _inspect_session_unlocked(sess_dir, session) if spawned_any else snap
@@ -728,7 +776,8 @@ def cmd_start(args: argparse.Namespace) -> int:
             }
             _atomic_write_json(meta_path, meta)
             snap = _pump_pending_slots_unlocked(base_dir, sess_dir, session)
-            if snap["counts"]["pending"] > 0 and not getattr(args, "no_supervisor", False):
+            has_resumable_cmd = any("--resume" in p.get("command", []) for p in panes)
+            if (snap["counts"]["pending"] > 0 or has_resumable_cmd) and not getattr(args, "no_supervisor", False):
                 sup_pid = _spawn_supervisor_daemon(base_dir, session)
                 meta["supervisor_pid"] = sup_pid
                 _atomic_write_json(meta_path, meta)
@@ -749,7 +798,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         c = snap["counts"]
         print(
             f"[{snap['session']}] pending={c['pending']} running={c['running']} "
-            f"done={c['done']} failed={c['failed']} (max_concurrent={snap['max_concurrent']})"
+            f"done={c['done']} resumable={c.get('resumable', 0)} retry_exhausted={c.get('retry_exhausted', 0)} failed={c['failed']} (max_concurrent={snap['max_concurrent']})"
         )
         for row in snap["panes"]:
             print(
@@ -786,7 +835,11 @@ def cmd_wait(args: argparse.Namespace) -> int:
             continue
         if snap["all_finished"]:
             print(json.dumps(snap, ensure_ascii=False, indent=2))
-            return 0 if snap["counts"]["failed"] == 0 else 1
+            return 0 if (
+                snap["counts"]["failed"] == 0
+                and snap["counts"].get("retry_exhausted", 0) == 0
+                and snap["counts"].get("resumable", 0) == 0
+            ) else 1
         if time.monotonic() >= deadline:
             print(json.dumps(snap, ensure_ascii=False, indent=2))
             return 2

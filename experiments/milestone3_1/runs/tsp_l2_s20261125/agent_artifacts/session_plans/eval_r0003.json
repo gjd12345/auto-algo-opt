@@ -1,0 +1,26 @@
+{
+  "plan_alignment": "aligned",
+  "observations": [
+    {
+      "claim": "Session round 3 evaluated under tsp_guided_insertion_2opt/none.",
+      "evidence_refs": [
+        "evaluation:49cf4cd4cbe940ed9b75c2e59d77bd2c"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "claim": "Coupling cheapest-insertion cost with a scale-invariant (max-normalized) mean-farness isolation term and a regret gap on the second-best insertion position will cut mean_objective below the current SBS 84482.07 on dev_24/dev_36 while keeping mean solve time under ~40 ms, because pure insertion deltas defer far-outlier cities until late and thereby create long final edges that the restricted 2-opt repair cannot undo.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "evaluation:49cf4cd4cbe940ed9b75c2e59d77bd2c"
+      ]
+    }
+  ],
+  "next_search_advice": {
+    "direction": "Replace the plain cheapest-insertion delta in score_insertion_move with a regret-style score: score(u) = best_insertion_delta(u) + w(t) * max_norm_farness(u) - lambda * second_best_delta_gap(u), where farness(u) is the mean distance from u to all remaining uninserted cities normalized by the per-step max (dimensionless), and w(t) grows with construction progress (capped). Use a fully vectorized, squared-distance formulation so the hook stays sub-millisecond per step and leaves the whole 500 ms budget intact; rely on the template's built-in 2-opt repair for local optimality rather than adding search inside the hook."
+  },
+  "memory_action": {
+    "kind": "disabled"
+  }
+}

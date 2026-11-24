@@ -1,0 +1,36 @@
+{
+  "round_id": 7,
+  "direction": "Diversify the ruin node-scoring hook away from pure worst-removal toward cluster-aware (Shaw-relatedness) removal with tight-capacity demand gating and stagnation-scaled diversification, targeting the clustered / eccentric-depot / tight-capacity / size-100 weak regimes.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 7 remains on cvrp_ruin_recreate with postprocess none (only allowed pairing, already gate-validated in earlier rounds) at 500 ms where KB method-cvrp-m3-ruin-recreate-l3 documents full LNS completion (1.0) and first_feasible_ms ~2-3 ms, so anytime safety is preserved. The archive shows six homogeneous worst-removal variants clustered in 15.74-15.89 with zero structural diversity — new Pareto progress requires changing the destroy policy, not the skeleton. KB method-cvrp-lns-shaw-regret identifies Shaw relatedness as the complement to worst removal, which directly attacks the observed clustered/eccentric/tight-capacity weakness; Regret-2 reinsertion stays fixed per KB, and the evolved score keeps the rank-power + multiplicative-gate form proven in method-cvrp-m3-ruin-recreate-l3, only replacing the pure |removal_savings| signal with a relatedness/demand-blended signal and making the exponent stagnation- and iteration-fraction-driven for late-search diversification."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 6,
+    "evaluation_ref": "rounds/round_0006/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0002/eoh_run/skills/best_generated",
+  "hypothesis": "Because the 6-solver portfolio is saturated (SBS 15.7435 vs VBS gap only 0.44%) and all weakest regimes are the same instances (clustered spatial, eccentric depot, n=100, uniform demand, tight capacity), marginal gains must come from removing spatially-related node clusters rather than top-cost singletons: a score_ruin_nodes hook that blends normalized removal savings with a Shaw-style relatedness term (mean distance to the route's nearest neighbors in the destroyed seed set) plus a demand-fill gate that prefers removing customers whose demand amplitude ~ capacity fill, and that multiplicatively widens q / flattens the rank power as stagnation_ratio and iter_frac grow, will reduce mean objective on cvrp_dev_hetero_24 below the current 15.7435 within the 500 ms budget while preserving deterministic first_feasible behavior.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 500.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 7 remains on cvrp_ruin_recreate with postprocess none (only allowed pairing, already gate-validated in earlier rounds) at 500 ms where KB method-cvrp-m3-ruin-recreate-l3 documents full LNS completion (1.0) and first_feasible_ms ~2-3 ms, so anytime safety is preserved. The archive shows six homogeneous worst-removal variants clustered in 15.74-15.89 with zero structural diversity — new Pareto progress requires changing the destroy policy, not the skeleton. KB method-cvrp-lns-shaw-regret identifies Shaw relatedness as the complement to worst removal, which directly attacks the observed clustered/eccentric/tight-capacity weakness; Regret-2 reinsertion stays fixed per KB, and the evolved score keeps the rank-power + multiplicative-gate form proven in method-cvrp-m3-ruin-recreate-l3, only replacing the pure |removal_savings| signal with a relatedness/demand-blended signal and making the exponent stagnation- and iteration-fraction-driven for late-search diversification."
+  }
+}

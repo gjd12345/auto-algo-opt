@@ -10,7 +10,7 @@ RESEARCH_POLICY_MD = """# Autonomous CO Research Charter (Milestone 3)
 ## Non-Negotiable Audit Rules
 1. **Hard Budget Conservation**: Every outer planning/reflection call and every inner EoH generation/repair call deducts from ONE shared persistent `PersistentRequestBudget`.
 2. **Evidence-Bound Hypotheses**: Never mark a hypothesis `supported`, `refuted`, or `abandoned` without citing at least one disk-persisted artifact path and exact SHA-256 checksum.
-3. **Blind & Selection Isolation**: Work exclusively on `cvrp_dev_hetero_24` and synthetic fixtures during search. `cvrp_select_multiscale_64` and sealed blind suites (`cvrp_m2_blind_120`, `cvrp_m3_blind_120`, `cvrp_m32_blind_120`) are strictly forbidden in interactive tools and sandboxes.
+3. **Blind & Selection Isolation**: Work exclusively on dev suites (`cvrp_dev_hetero_24`, `tsp_m31_dev_36`, `obp_m31_dev_36`, `bpp_m31_dev_36`) and synthetic fixtures during search. Selection suites and sealed blind suites (`cvrp_select_multiscale_64`, `tsp_m31_select_36`, `obp_m31_select_36`, `bpp_m31_select_36`, `cvrp_m2_blind_120`, `cvrp_m3_blind_120`, `cvrp_m32_blind_120`, `tsp_m31_blind_72`, `obp_m31_blind_72`, `bpp_m31_blind_72`) are strictly forbidden in interactive tools and sandboxes. Offline BPP must stay strictly separate from Online OBP (zero future lookahead in Online OBP).
 4. **Five-Gate Interface Integrity**: Switch `(template_id, postprocess_mode)` only via registered templates that pass all 5 behavioral gates under the target per-instance time budget.
 5. **Non-Destructive Archive**: Retain complementary stepping-stone solvers across regimes and time-quality Pareto trade-offs; target the highest-regret `weakest_regimes` in the next round.
 """
@@ -187,6 +187,11 @@ _TEMPLATE_HINTS = {
     "cvrp_parallel_merge_static": "cvrp_parallel_merge_static(L2a static merge `score_merge_static`)",
     "cvrp_parallel_merge_dynamic": "cvrp_parallel_merge_dynamic(L2b dynamic route-state merge `score_merge_dynamic`)",
     "cvrp_ruin_recreate": "cvrp_ruin_recreate(L3 anytime LNS ruin-recreate `score_ruin_nodes`)",
+    "cvrp_ruin_recreate_dual": "cvrp_ruin_recreate_dual(L3b dual-hook LNS ruin+recreate `score_ruin_nodes` + `score_recreate_action`)",
+    "tsp_constructive_step": "tsp_constructive_step(L1 TSP constructive `select_next_node`)",
+    "tsp_guided_insertion_2opt": "tsp_guided_insertion_2opt(L2 TSP insertion/2-opt move `score_insertion_move`)",
+    "obp_online_priority": "obp_online_priority(Online OBP strict prefix-causal `score_bin`)",
+    "bpp_offline_reorder_repack": "bpp_offline_reorder_repack(Offline BPP item priority `score_item`)",
 }
 
 

@@ -1,0 +1,36 @@
+{
+  "round_id": 2,
+  "direction": "Evolve the single open hook `score_ruin_nodes` into a stagnation-adaptive multiplicative-gated rank-power destroy rule: score_i = rank_power(|removal_savings_i| / scale) * gate_load * gate_depot * gate_demand * gate_rdist, where the rank exponent p(iter_frac, stagnation_ratio) anneals from a greedy-biased exponent (near 1, exploit) toward a flatter exponent (near 0.4-0.5, diversify) as stagnation_ratio→1, and all gates are normalized by per-instance scale (mean edge length, mean demand, capacity slack) so the rule stays scale-invariant across size 100/200, loose vs tight capacity, and eccentric-depot geometries; prefer spatially-related removal (distance-from-last-removed-node gate) once iteration fraction exceeds ~0.3 so clustered instances get true Shaw-style relatedness ruin rather than scattered worst-cost removal. Exploration axes for the inner EoH loop: (a) exponent schedule shape (linear vs power vs sigmoid in stagnation_ratio), (b) relative weight of depot-proximity vs route-distance gates, (c) whether ruin-set size grows with stagnation (adaptive q) as a multiplicative amplitude on the same score, keeping the deterministic no-RNG tie-break and the O(n) per-iteration cost required to avoid 2000 ms budget exhaustion.",
+  "operations": [
+    {
+      "type": "replace",
+      "target": "cvrp_ruin_recreate",
+      "mechanism": "Round 1 shows a single-solver Pareto frontier at mean 16.1391 with solve_ms_mean 204.75 ms — far below the 2000 ms budget, so the LNS loop converges/early-stops long before the deadline; the binding constraint is search quality per iteration, not wall clock. That makes a cheap O(n) score change the highest-leverage lever. The KB L3 entry documents that the score_ruin_nodes hook is exactly the evolvable slot (Regret-2 repair + intra_2opt + R2R acceptance fixed), and that the evolved multiplicative-gate rank-power form was the only variant that beat the zero-evolution Worst-Cost removal control (23.3186 vs 23.3474 on blind_120), i.e. gate/rank structure is validated while the anti-clustering relatedness dimension is still unconfirmed ('further L3 multi-generation fine-tuning left for later budgets' per the entry's unresolved section). Its listed pitfall — budget exhaustion under tight clocks — does not apply here (204 ms used of 2000 ms), so we can afford adaptive-q growth. Shaw/regret KB entries support relatedness destroy paired with deterministic Regret-2 repair as the standard high-value combination. Postprocess stays 'none' per allowed modes; template cvrp_ruin_recreate is the only allowed template."
+    }
+  ],
+  "preserve": "Route feasibility, strict time budget, and scale invariance.",
+  "feedback_basis": {
+    "round_id": 1,
+    "evaluation_ref": "rounds/round_0001/evaluation_facts.json",
+    "suite_hash": "a932443a819ae32681cc0ae151090b438eaa51b4828afad99b94633f1f4c4b58"
+  },
+  "memory_basis": [],
+  "reference_skill_ref": "rounds/round_0001/eoh_run/skills/best_generated",
+  "hypothesis": "A stagnation-adaptive rank-power destroy score with scale-normalized multiplicative gates (load, depot-proximity, demand, route-distance) and an iteration-fraction-dependent relatedness gate will beat the current incumbent (dev_24 mean 16.1391, 24/24 wins vs VBS-equal baseline) especially in the weakest regimes flagged by archive feedback — spatial=clustered (-18.1% rel gap), depot_style=eccentric (-19.1%), demand_dist=uniform (-20.0%), size=100 (-20.3%), capacity_level=loose (-21.6%) — because in clustered/eccentric geometries worst-cost removal repeatedly destroys the same peripheral customers while the real gains come from intra-cluster re-partitioning, which only relatedness-guided ruin with stagnation-driven flatter ranking can reach within the ~200 ms effective anytime window.",
+  "interface_selection": {
+    "template_id": "cvrp_ruin_recreate",
+    "template_version": "v1",
+    "postprocess_mode": "none",
+    "time_budget_ms": 2000.0,
+    "template_options": {
+      "inject_static_kb_clues": false
+    },
+    "cited_kb_ids": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-cvrp-lns-shaw-regret",
+      "method-cvrp-cheapest-regret-insertion"
+    ],
+    "diagnostic_ref": null,
+    "rationale": "Round 1 shows a single-solver Pareto frontier at mean 16.1391 with solve_ms_mean 204.75 ms — far below the 2000 ms budget, so the LNS loop converges/early-stops long before the deadline; the binding constraint is search quality per iteration, not wall clock. That makes a cheap O(n) score change the highest-leverage lever. The KB L3 entry documents that the score_ruin_nodes hook is exactly the evolvable slot (Regret-2 repair + intra_2opt + R2R acceptance fixed), and that the evolved multiplicative-gate rank-power form was the only variant that beat the zero-evolution Worst-Cost removal control (23.3186 vs 23.3474 on blind_120), i.e. gate/rank structure is validated while the anti-clustering relatedness dimension is still unconfirmed ('further L3 multi-generation fine-tuning left for later budgets' per the entry's unresolved section). Its listed pitfall — budget exhaustion under tight clocks — does not apply here (204 ms used of 2000 ms), so we can afford adaptive-q growth. Shaw/regret KB entries support relatedness destroy paired with deterministic Regret-2 repair as the standard high-value combination. Postprocess stays 'none' per allowed modes; template cvrp_ruin_recreate is the only allowed template."
+  }
+}
