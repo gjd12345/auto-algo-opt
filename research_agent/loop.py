@@ -140,7 +140,7 @@ def _build_initial_baseline_solver(config: AgentConfig) -> FrozenInterfaceSolver
         template_version=tpl.template_version,
         template_source_sha256=tpl.template_source_sha256,
         postprocess_mode=config.initial_postprocess_mode,
-        template_options={"inject_static_kb_clues": bool(config.inject_static_kb_clues)},
+        template_options={"inject_static_kb_clues": config.kb_enabled and config.inject_static_kb_clues},
         hook_name=tpl.hook_name,
         hook_code=tpl.default_baseline_hook_code,
         hook_code_sha256=sha256_text(tpl.default_baseline_hook_code),
@@ -161,6 +161,7 @@ def run_research_agent(
     *,
     driver: AgentDriver | None = None,
     resume: bool = False,
+    common_start: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run or crash-resume the autonomous Research Agent across multi-round Session execution."""
     run_dir = Path(config.output_dir).resolve()
@@ -169,9 +170,20 @@ def run_research_agent(
     ckpt_path = run_dir / "agent_checkpoint.json"
     policy_path = run_dir / "research_policy.md"
     tsv_path = run_dir / "results.tsv"
+    fork_path = run_dir / "common_start_sha256.json"
 
     if not resume and ckpt_path.exists():
         raise FileExistsError(f"research_agent_checkpoint_already_exists:{ckpt_path}")
+    if common_start is not None and not (config.strict_checkpoint_barriers and config.use_benchmark_dev_suite):
+        raise ValueError("common_start_requires_strict_benchmark_run")
+    fork_digest = sha256_text(json.dumps(common_start, sort_keys=True, allow_nan=False)) if common_start is not None else None
+    if fork_path.is_file():
+        if json.loads(fork_path.read_text(encoding="utf-8")) != fork_digest:
+            raise ValueError("resume_common_start_mismatch")
+    elif fork_digest is not None:
+        if ckpt_path.is_file():
+            raise ValueError("resume_common_start_missing")
+        atomic_write_json(fork_path, fork_digest)
 
     if not policy_path.is_file():
         atomic_write_text(policy_path, RESEARCH_POLICY_MD)
@@ -212,6 +224,15 @@ def run_research_agent(
             "enable_stagnation_diagnostic_gate",
             "early_stop_no_jump_requests",
             "basin_restart_on_stagnation",
+            "memory_enabled",
+            "memory_store_path",
+            "memory_mode",
+            "kb_enabled",
+            "pinned_kb_release_id",
+            "pinned_kb_manifest_sha256",
+            "memory_max_solution_cards",
+            "memory_mmr_lambda",
+            "memory_cooldown_rounds",
         )
         for field_name in immutable_fields:
             if getattr(persisted_cfg, field_name) != getattr(config, field_name):
@@ -266,7 +287,13 @@ def run_research_agent(
         strict_checkpoint_barriers=bool(config.strict_checkpoint_barriers),
     )
 
-    kb_tool = KnowledgeBaseTool(run_dir, kb_store_path=config.kb_store_path)
+    kb_tool = KnowledgeBaseTool(
+        run_dir,
+        kb_store_path=config.kb_store_path,
+        enabled=config.kb_enabled,
+        pinned_release_id=config.pinned_kb_release_id,
+        pinned_manifest_sha256=config.pinned_kb_manifest_sha256,
+    )
     diag_tool = DiagnosticTool(run_dir, dev_suite_id=config.dev_suite_id, dev_split=config.dev_split)
     sandbox_tool = MathSandboxTool(run_dir, timeout_s=config.sandbox_timeout_s)
     iface_tool = InterfaceTool(
@@ -326,7 +353,11 @@ def run_research_agent(
                     split=config.dev_split,
                     role="diagnostic_interactive",
                 )
-                base_dev_eval = session_tool._evaluate_frozen_on_dev(baseline_solver.to_dict())
+                if common_start is None:
+                    base_dev_eval = session_tool._evaluate_frozen_on_dev(baseline_solver.to_dict())
+                else:
+                    baseline_solver = FrozenInterfaceSolver.from_dict(common_start["frozen_solver"])
+                    base_dev_eval = dict(common_start["baseline_dev_eval"])
             else:
                 suite_obj = json.loads((session_tool.session_dir / "dev_suite.json").read_text(encoding="utf-8"))
                 dist_conv = str(suite_obj.get("distance_convention") or "euc_2d_float")
@@ -361,6 +392,8 @@ def run_research_agent(
             dev_suite_hash = sha256_text(
                 json.dumps(suite_obj["instances"], ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
             )
+            if common_start is not None and dev_suite_hash != common_start["dev_suite_hash"]:
+                raise ValueError("common_start_dev_suite_mismatch")
             initialize_milestone_schedule(
                 budget.ledger_path,
                 run_id=config.run_id,
@@ -376,6 +409,16 @@ def run_research_agent(
                     "instance_time_budget_ms": float(config.instance_time_budget_ms),
                 },
             )
+        if common_start is not None and ckpt.best_solver_manifest_ref is None:
+            baseline_eval = common_start["baseline_dev_eval"]
+            baseline_objective = _extract_eval_objective(baseline_eval)
+            if baseline_objective is not None and baseline_eval.get("valid_count", 0) > 0:
+                baseline_ref = "agent_artifacts/common_start_solver.json"
+                atomic_write_json(run_dir / baseline_ref, common_start["frozen_solver"])
+                ckpt.best_solver_manifest_ref = baseline_ref
+                ckpt.best_dev_objective = baseline_objective
+                ckpt.best_all_feasible = bool(baseline_eval["all_feasible"])
+                ckpt.best_completion_rate = float(baseline_eval["completion_rate"])
         _sync_strict_checkpoints()
 
     _save_ckpt()
@@ -397,6 +440,8 @@ def run_research_agent(
 
     def _dispatch_tool(tool_name: str, args: Mapping[str, Any], round_id: int) -> dict[str, Any]:
         nonlocal last_sandbox, last_diag
+        if not config.kb_enabled and tool_name in {"kb_search", "kb_read"}:
+            raise PermissionError("kb_disabled_in_arm")
         if not config.tools_enabled and tool_name not in {"hypothesis_propose", "hypothesis_update"}:
             raise PermissionError(f"tool_disabled_in_arm:{tool_name}")
         if tool_name == "kb_search":
@@ -695,7 +740,7 @@ def run_research_agent(
                     postprocess_mode=chosen_pp,
                     direction=str(pargs.get("direction") or f"Round {r_id}"),
                     hypothesis=str(pargs.get("hypothesis") or f"Round {r_id} hypothesis"),
-                    cited_kb_ids=pargs.get("cited_kb_ids") or (),
+                    cited_kb_ids=(pargs.get("cited_kb_ids") or ()) if config.kb_enabled else (),
                     diagnostic_ref=diag_ref_payload,
                     rationale=str(pargs.get("rationale") or ""),
                     is_final_round=(r_id >= config.max_rounds),
@@ -952,6 +997,9 @@ def run_research_agent(
                 "hypotheses_refuted": h_counts.get("refuted", 0),
                 "frozen_manifest_ref": ckpt.best_solver_manifest_ref or "",
             }
+            consumption = session_tool.memory_consumption(r_id)
+            r_summary["memory_consumption"] = consumption
+            r_summary["feature_count"] = len(consumption["injected_refs"])
             if inner_stopped:
                 r_summary["stop_reason"] = "stagnation_early_stop"
             append_results_tsv_row(tsv_path, r_summary)
@@ -970,6 +1018,10 @@ def run_research_agent(
             ckpt.round_diagnostic_blocks = 0
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None
+            if session_out and session_out.get("session_status") in {"COMPLETED", "STOPPED"}:
+                ckpt.phase = "budget_stopped"
+                _save_ckpt()
+                break
             _save_ckpt()
 
     if config.strict_checkpoint_barriers:
@@ -1045,6 +1097,8 @@ def run_research_agent(
         "hypothesis_counts": ledger_tool.counts(),
         "archive_summary": archive_tool.summary() if config.archive_feedback_enabled else None,
         "round_summaries": round_summaries,
+        "memory_consumption": [row["memory_consumption"] for row in round_summaries if "memory_consumption" in row],
+        "feature_count": sum(row.get("feature_count", 0) for row in round_summaries),
         "trajectory_control_events": list(ckpt.trajectory_control_events),
         "completed_at": utc_now(),
     }

@@ -1,0 +1,189 @@
+{
+  "split": "dev_train",
+  "suite_id": "cvrp_dev_hetero_24",
+  "evaluation_facts": {
+    "problem": "cvrp_construct",
+    "split": "dev_train",
+    "suite_id": "cvrp_dev_hetero_24",
+    "evaluator_version": "8deca3342fcaa8aa3c5e811ebbcf104d67cf88a58c6298edbc2ba9198588e8fb",
+    "fleet_policy": "unconstrained",
+    "evidence_refs": [
+      "evaluation:dev_ordinal0_cvrp_sequential_construct",
+      "evaluation:dev_ordinal0_cvrp_parallel_merge_static",
+      "evaluation:dev_ordinal0_cvrp_parallel_merge_dynamic",
+      "evaluation:dev_ordinal0_cvrp_ruin_recreate"
+    ],
+    "candidates": [
+      {
+        "evaluation_id": "dev_ordinal0_cvrp_sequential_construct",
+        "interface_id": "cvrp_sequential_construct",
+        "code_sha256": "0d039d4435c347c256bbd4ee7e0d691d65a78ca0ce452af9f54a630a12e0bc50",
+        "canonical_ast_sha256": "8e99db5df36935875a1b66c47e2c21bcfbf346d107256a9ed23a552120c7d5f1",
+        "objective": 20.53371360226667,
+        "valid": true
+      },
+      {
+        "evaluation_id": "dev_ordinal0_cvrp_parallel_merge_static",
+        "interface_id": "cvrp_parallel_merge_static",
+        "code_sha256": "156921ee5ded68cbd2704d51ceeb131af9665aa7ddf3e62419f70da269d62e05",
+        "canonical_ast_sha256": "32a340066e328f782956329e095c916e7d37cb788eb922d1c96a2e07132a02c0",
+        "objective": 16.222471534014687,
+        "valid": true
+      },
+      {
+        "evaluation_id": "dev_ordinal0_cvrp_parallel_merge_dynamic",
+        "interface_id": "cvrp_parallel_merge_dynamic",
+        "code_sha256": "34a7bff59cd71cb3ad0394a3d11591e2f8a3b63fe3b0993c71a61a10318eaff6",
+        "canonical_ast_sha256": "dcccc2470d33a297c0fed05a64811ada1b58a604f2441cb66470f6f83dfefc5b",
+        "objective": 16.222471534014687,
+        "valid": true
+      },
+      {
+        "evaluation_id": "dev_ordinal0_cvrp_ruin_recreate",
+        "interface_id": "cvrp_ruin_recreate",
+        "code_sha256": "fadc010c7e3fd0446ececb0d3043382d88b4333079e3e01fd14f37f6c6e7fa5b",
+        "canonical_ast_sha256": "80ca5607f244f0a12d47a6da77daab9be874cd7504d0e4ae544d75e56fb49d55",
+        "objective": 16.142403305679252,
+        "valid": true
+      }
+    ]
+  },
+  "claims": [
+    {
+      "claim_id": "dev-baseline-cvrp_sequential_construct",
+      "source_reference": "cvrp_construct/insight_dev-baseline-cvrp-sequential-construct@v0001",
+      "applicability_scope": {
+        "problem": "cvrp_construct",
+        "interface_id": "cvrp_sequential_construct",
+        "fleet_policy": "unconstrained",
+        "evaluator_version": "8deca3342fcaa8aa3c5e811ebbcf104d67cf88a58c6298edbc2ba9198588e8fb",
+        "n_range": [
+          1,
+          2000
+        ],
+        "budget_ms_range": [
+          500.0,
+          500.0
+        ]
+      },
+      "denominators": {
+        "attempted": 24,
+        "valid": 24
+      },
+      "adverse_results": [
+        "Valid 24/24 cases on cvrp_dev_hetero_24 at 500ms."
+      ],
+      "contradictions": [
+        "Underperformed best stock template cvrp_ruin_recreate (16.1424 vs 20.5337)."
+      ],
+      "code_anchor": {
+        "code_sha256": "0d039d4435c347c256bbd4ee7e0d691d65a78ca0ce452af9f54a630a12e0bc50",
+        "canonical_ast_sha256": "8e99db5df36935875a1b66c47e2c21bcfbf346d107256a9ed23a552120c7d5f1"
+      },
+      "evaluation_facts_sha256": "0f0c34cfa1479fa0731f489f099d5cef68fe33247e89dddb80e1fbffb33bb860",
+      "evidence_ref": "evaluation:dev_ordinal0_cvrp_sequential_construct"
+    },
+    {
+      "claim_id": "dev-baseline-cvrp_parallel_merge_static",
+      "source_reference": "cvrp_construct/insight_dev-baseline-cvrp-parallel-merge-static@v0001",
+      "applicability_scope": {
+        "problem": "cvrp_construct",
+        "interface_id": "cvrp_parallel_merge_static",
+        "fleet_policy": "unconstrained",
+        "evaluator_version": "8deca3342fcaa8aa3c5e811ebbcf104d67cf88a58c6298edbc2ba9198588e8fb",
+        "n_range": [
+          1,
+          2000
+        ],
+        "budget_ms_range": [
+          500.0,
+          500.0
+        ]
+      },
+      "denominators": {
+        "attempted": 24,
+        "valid": 24
+      },
+      "adverse_results": [
+        "Valid 24/24 cases on cvrp_dev_hetero_24 at 500ms."
+      ],
+      "contradictions": [
+        "Underperformed best stock template cvrp_ruin_recreate (16.1424 vs 16.2225)."
+      ],
+      "code_anchor": {
+        "code_sha256": "156921ee5ded68cbd2704d51ceeb131af9665aa7ddf3e62419f70da269d62e05",
+        "canonical_ast_sha256": "32a340066e328f782956329e095c916e7d37cb788eb922d1c96a2e07132a02c0"
+      },
+      "evaluation_facts_sha256": "0f0c34cfa1479fa0731f489f099d5cef68fe33247e89dddb80e1fbffb33bb860",
+      "evidence_ref": "evaluation:dev_ordinal0_cvrp_parallel_merge_static"
+    },
+    {
+      "claim_id": "dev-baseline-cvrp_parallel_merge_dynamic",
+      "source_reference": "cvrp_construct/insight_dev-baseline-cvrp-parallel-merge-dynamic@v0001",
+      "applicability_scope": {
+        "problem": "cvrp_construct",
+        "interface_id": "cvrp_parallel_merge_dynamic",
+        "fleet_policy": "unconstrained",
+        "evaluator_version": "8deca3342fcaa8aa3c5e811ebbcf104d67cf88a58c6298edbc2ba9198588e8fb",
+        "n_range": [
+          1,
+          2000
+        ],
+        "budget_ms_range": [
+          500.0,
+          500.0
+        ]
+      },
+      "denominators": {
+        "attempted": 24,
+        "valid": 24
+      },
+      "adverse_results": [
+        "Valid 24/24 cases on cvrp_dev_hetero_24 at 500ms."
+      ],
+      "contradictions": [
+        "Underperformed best stock template cvrp_ruin_recreate (16.1424 vs 16.2225)."
+      ],
+      "code_anchor": {
+        "code_sha256": "34a7bff59cd71cb3ad0394a3d11591e2f8a3b63fe3b0993c71a61a10318eaff6",
+        "canonical_ast_sha256": "dcccc2470d33a297c0fed05a64811ada1b58a604f2441cb66470f6f83dfefc5b"
+      },
+      "evaluation_facts_sha256": "0f0c34cfa1479fa0731f489f099d5cef68fe33247e89dddb80e1fbffb33bb860",
+      "evidence_ref": "evaluation:dev_ordinal0_cvrp_parallel_merge_dynamic"
+    },
+    {
+      "claim_id": "dev-baseline-cvrp_ruin_recreate",
+      "source_reference": "cvrp_construct/insight_dev-baseline-cvrp-ruin-recreate@v0001",
+      "applicability_scope": {
+        "problem": "cvrp_construct",
+        "interface_id": "cvrp_ruin_recreate",
+        "fleet_policy": "unconstrained",
+        "evaluator_version": "8deca3342fcaa8aa3c5e811ebbcf104d67cf88a58c6298edbc2ba9198588e8fb",
+        "n_range": [
+          1,
+          2000
+        ],
+        "budget_ms_range": [
+          500.0,
+          500.0
+        ]
+      },
+      "denominators": {
+        "attempted": 24,
+        "valid": 24
+      },
+      "adverse_results": [
+        "Valid 24/24 cases on cvrp_dev_hetero_24 at 500ms."
+      ],
+      "contradictions": [
+        "Stock comparison span against cvrp_sequential_construct (20.5337)."
+      ],
+      "code_anchor": {
+        "code_sha256": "fadc010c7e3fd0446ececb0d3043382d88b4333079e3e01fd14f37f6c6e7fa5b",
+        "canonical_ast_sha256": "80ca5607f244f0a12d47a6da77daab9be874cd7504d0e4ae544d75e56fb49d55"
+      },
+      "evaluation_facts_sha256": "0f0c34cfa1479fa0731f489f099d5cef68fe33247e89dddb80e1fbffb33bb860",
+      "evidence_ref": "evaluation:dev_ordinal0_cvrp_ruin_recreate"
+    }
+  ]
+}

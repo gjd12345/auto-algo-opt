@@ -20,6 +20,8 @@ from agent_skill_loop.session_contracts import (
     strict_json_object,
 )
 from agent_skill_loop.memory import open_memory_backend
+from agent_skill_loop.memory.api import MEMORY_CARD_TYPES, _validate_entry
+from agent_skill_loop.memory.problem_vocab import problem_family
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 
@@ -44,7 +46,8 @@ def opened(run, action, expected_run_id=None):
     try:
         db._require_schema(con, action=action)
         req_cols = {r[1] for r in con.execute("PRAGMA table_info(requests)")}
-        if not {"attempt", "response_sha256", "sent_at_utc"}.issubset(req_cols):
+        if not {"attempt", "response_sha256", "sent_at_utc", "attempted_send_at_utc",
+                "delivered_at_utc", "delivery_http_status"}.issubset(req_cols):
             with db._transaction(con):
                 db._ensure_requests_columns(con)
         row = db._require_run(con, action=action, run_id=expected_run_id)
@@ -368,6 +371,24 @@ def _known_solver_attempts(*, inheritance_mode: str, incumbent_before_ref: str |
     return attempts
 
 
+def _memory_applicability(root, row, action, selection=None):
+    config, suite = db._verify_files(root, row, action=action)
+    spec = get_problem(row["problem"])
+    family = problem_family(spec.problem_id)
+    instance_fields = ("customer_coordinates", "coordinates", "items", "points")
+    sizes = tuple(next((len(instance[key]) for key in instance_fields if isinstance(instance.get(key), list)), None)
+                  for instance in suite["instances"])
+    budget_ms = config["evaluator"]["solver_timeout"] * 1000
+    interface_id = spec.entrypoint
+    if selection is not None:
+        from agent_skill_loop.interface_design.session_bridge import resolve_session_time_budget_ms
+        interface_id = selection["template_id"]
+        budget_ms = resolve_session_time_budget_ms(selection, config)
+    return {"problem": spec.problem_id, "interface_id": interface_id,
+            "fleet_policy": suite.get("vehicle_limit_policy") or ("unconstrained" if family == "cvrp" else "not_applicable"),
+            "evaluator_version": row["evaluator_hash"], "n": sizes, "budget_ms": budget_ms}
+
+
 def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
                   include_shared=False, include_cross_project=False, cursor=None,
                   expected_run_id=None):
@@ -386,13 +407,17 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
                 backend_result = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(
                     query, project=row["problem"], scene=scene or get_problem(row["problem"]).entrypoint,
                     memory_type=memory_type, limit=min(limit+1,100), offset=offset,
-                    include_shared=include_shared, include_cross_project=include_cross_project)
+                    include_shared=include_shared, include_cross_project=include_cross_project,
+                    applicability_context=_memory_applicability(root, row, action))
                 records = backend_result["memories"]
                 diagnostics = list(backend_result.get("diagnostics") or [])
                 records = [x for x in records if x["project"] == row["problem"]
                            or include_shared and x["project"] == "_shared"
                            or include_cross_project and x["project"] not in {row["problem"], "_shared"}]
-                memories = [{k: x[k] for k in ("reference", "name", "description", "type", "project", "scene", "version", "body_sha256", "age_days", "age_label", "cross_project")} for x in records]
+                fields = ("reference", "name", "description", "type", "project", "scene", "version", "body_sha256",
+                          "age_days", "age_label", "cross_project", "format_version", "applicability_scope",
+                          "validity_status", "evidence_tier", "code_anchor")
+                memories = [{k: x[k] for k in fields if k in x} for x in records]
             except (OSError, ValueError) as exc:
                 error = type(exc).__name__
         # A full maximum-size page may require one final empty-page read.
@@ -430,7 +455,9 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None):
             if not row["memory_enabled"]:
                 fail("MEMORY_REFERENCE_INVALID", action)
             try:
-                page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(reference, max_chars=limit, offset=offset)
+                page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(
+                    reference, max_chars=limit, offset=offset, require_active=True,
+                    applicability_context=_memory_applicability(root, row, action))
             except (ValueError, OSError) as exc:
                 con.execute("INSERT INTO memory_reads(run_id,round_id,reference,body_sha256,offset_chars,returned_chars,total_chars,read_at_utc,status,error_code) VALUES (?,?,?,?,?,?,?,?,?,?)",
                             (row["run_id"],rd["round_id"],reference,"",offset,0,0,db._utc_now(),"failed",type(exc).__name__))
@@ -456,7 +483,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 prefix = f"rounds/round_{rd['round_id']:04d}"
                 raw_hash = db._sha256(text)
                 save(root, f"{prefix}/submissions/{raw_hash}.json", text)
-                reads = complete_reads(con, row["run_id"], rd["round_id"])
+                reads = complete_reads(con, row["run_id"], rd["round_id"]) if row["memory_enabled"] else {}
                 try:
                     feedback_enabled = row["feedback_mode"] != "off" if "feedback_mode" in row.keys() else True
                     guidance_enabled = bool(row["agent_guidance"]) if "agent_guidance" in row.keys() else True
@@ -478,8 +505,14 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     fail("HISTORICAL_MATERIAL_CONTROLLER_ONLY", action)
                 bodies = []
                 treatment = str(_manifest_extra(root).get("treatment") or "")
+                if plan.memory_basis:
+                    backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                    applicability = _memory_applicability(root, row, action, plan.interface_selection)
                 for ref in plan.memory_basis:
-                    body = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(ref)
+                    try:
+                        body = backend.read_version(ref, require_active=True, applicability_context=applicability)
+                    except (ValueError, OSError) as exc:
+                        fail("MEMORY_REFERENCE_INVALID", action, str(exc))
                     if body["body_sha256"] != reads[ref] or body["truncated"]:
                         fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
                     if treatment == "reflection_with_online_memory":
@@ -527,6 +560,9 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                     search_progress_mode=search_progress_mode,
                 )
                 payload = json.loads(context.split("\n", 1)[1])
+                if set(plan.memory_basis) != ({item["reference"] for item in payload["memory"]}
+                                              | set(payload["omitted_memory_refs"])):
+                    fail("MEMORY_REFERENCE_INVALID", action, "Memory became inactive while compiling the plan")
                 manifest = {"plan_sha256": db._sha256(db._json(plan.as_dict())+"\n"), "context_sha256": db._sha256(context),
                             "adopted_refs": list(plan.memory_basis), "injected": [{"reference": x["reference"], "body_sha256": x["body_sha256"], "injected_sha256": db._sha256(x["body"])} for x in payload["memory"]],
                             "omitted_refs": payload.get("omitted_memory_refs", []), "advisory_truncated": payload.get("advisory_truncated", False), "advisory_omitted": payload.get("advisory_omitted", False),
@@ -633,6 +669,21 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                         or db._sha256(context_bytes) != rd["round_context_sha256"]):
                     fail("EVIDENCE_INTEGRITY_FAILED", action)
                 normalized_plan = json.loads(normalized_plan_bytes)
+                if normalized_plan.get("memory_basis"):
+                    if not row["memory_enabled"]:
+                        fail("MEMORY_REFERENCE_INVALID", action)
+                    context = json.loads(context_bytes.decode("utf-8").split("\n", 1)[1])
+                    if context["memory"]:
+                        backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                        applicability = _memory_applicability(root, row, action, normalized_plan.get("interface_selection"))
+                        for item in context["memory"]:
+                            try:
+                                current = backend.read_version(item["reference"], require_active=True,
+                                                               applicability_context=applicability)
+                            except (ValueError, OSError) as exc:
+                                fail("MEMORY_REFERENCE_INVALID", action, str(exc))
+                            if current["body_sha256"] != item["body_sha256"]:
+                                fail("MEMORY_REFERENCE_HASH_MISMATCH", action)
                 fresh_template = (normalized_plan.get("interface_selection") or {}).get("fresh_template") is True
                 if fresh_template:
                     inheritance_mode = "fresh_template"
@@ -906,29 +957,29 @@ def parse_evaluation(raw, enabled, evidence_refs):
     except ValueError as exc: fail("MEMORY_ACTION_INVALID","submit-evaluation",str(exc))
 
 
-def validate_memory_publication(memory, row, *, treatment=""):
-    if memory.kind not in {"insight", "solution"}:
+def validate_memory_publication(memory, row, *, treatment="", action="submit-evaluation"):
+    if memory.kind not in MEMORY_CARD_TYPES:
         return
-    from agent_skill_loop.memory.api import MemoryEntry, _validate_entry
     if memory.project != row["problem"] or memory.scene != get_problem(row["problem"]).entrypoint:
-        fail("MEMORY_SCENE_IDENTITY_MISMATCH", "submit-evaluation")
+        fail("MEMORY_SCENE_IDENTITY_MISMATCH", action)
     try:
-        _validate_entry(MemoryEntry(name=memory.name, description=memory.description,
-                                   type=memory.kind, project=memory.project, scene=memory.scene, body=memory.body))
+        _validate_entry(memory.to_entry())
     except ValueError as exc:
-        fail("MEMORY_ACTION_INVALID", "submit-evaluation", str(exc))
+        fail("MEMORY_ACTION_INVALID", action, str(exc))
     if treatment == "reflection_with_online_memory" and memory.kind == "insight":
         if not memory.evidence_ref:
-            fail("MEMORY_EVIDENCE_REQUIRED", "submit-evaluation")
+            fail("MEMORY_EVIDENCE_REQUIRED", action)
         body = memory.body or ""
         if "**Applicability:**" not in body or "**Limitations:**" not in body:
-            fail("MEMORY_SCOPE_REQUIRED", "submit-evaluation",
+            fail("MEMORY_SCOPE_REQUIRED", action,
                  "online research insights require Applicability and Limitations sections")
 
 
 def memory_revise(*, run, operation_id, expected_state_version, file, expected_run_id=None):
     """Correct a failed proposal without rewriting Evaluate or re-executing EoH."""
     action = "memory-revise"
+    from agent_skill_loop.session_memory import _verified_json, commit_pending, validate_revision
+
     text = Path(file).read_text(encoding="utf-8")
     with opened(run, action, expected_run_id) as (root, con):
         with db._transaction(con):
@@ -938,19 +989,51 @@ def memory_revise(*, run, operation_id, expected_state_version, file, expected_r
                 if rd["memory_commit_status"] not in {"failed", "rejected"}:
                     fail("MEMORY_REVISION_NOT_ALLOWED", action)
                 memory = MemoryAction.from_dict(strict_json_object(text), enabled=bool(row["memory_enabled"]))
-                if memory.kind not in {"insight", "solution"}:
+                if memory.kind not in MEMORY_CARD_TYPES:
                     fail("MEMORY_ACTION_INVALID", action)
                 if (_manifest_extra(root).get("study_id") == "island605_bp_memory_content_control_v1"
                         and len(memory.body or "") > 1200):
                     fail("HISTORICAL_MATERIAL_EXCEEDS_FROZEN_LIMIT", action)
-                validate_memory_publication(memory, row, treatment=str(_manifest_extra(root).get("treatment") or ""))
+                validate_memory_publication(memory, row, treatment=str(_manifest_extra(root).get("treatment") or ""), action=action)
+                prior = con.execute(
+                    "SELECT o.receipt_json FROM memory_writes w JOIN operations o USING (operation_id) "
+                    "WHERE w.run_id=? AND w.round_id=? AND w.proposal_ref=? AND w.status IN ('failed','rejected')",
+                    (row["run_id"], rd["round_id"], rd["memory_proposal_ref"]),
+                ).fetchone()
+                if prior is None:
+                    fail("MEMORY_REVISION_BINDING_MISSING", action)
+                prior_result = json.loads(prior["receipt_json"])["result"]
+                old_sha = prior_result.get("proposal_sha256")
+                if old_sha is None:
+                    # Historical submit-evaluation receipts can derive the
+                    # proposal identity from the immutable submitted Evaluate.
+                    submitted = _verified_json(root, rd["submitted_evaluation_ref"], rd["submitted_evaluation_sha256"])
+                    original = MemoryAction.from_dict(submitted["memory_action"], enabled=True)
+                    old_sha = db._sha256(db._json(original.as_dict()) + "\n")
+                binding = {
+                    "old_proposal_ref": rd["memory_proposal_ref"], "old_proposal_sha256": old_sha,
+                    "old_evaluation_facts_ref": prior_result.get("evaluation_facts_ref", rd["evaluation_facts_ref"]),
+                    "old_evaluation_facts_sha256": prior_result.get("evaluation_facts_sha256", rd["evaluation_facts_sha256"]),
+                    "evaluation_facts_ref": rd["evaluation_facts_ref"], "evaluation_facts_sha256": rd["evaluation_facts_sha256"],
+                    "card_head": memory.memory_based_on,
+                }
+                facts = _verified_json(root, binding["evaluation_facts_ref"], binding["evaluation_facts_sha256"])
+                try:
+                    validate_revision(root, binding, memory, facts)
+                except ValueError as exc:
+                    fail(str(exc).upper(), action)
+                backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                if backend.card_head(memory.to_entry()) != binding["card_head"]:
+                    fail("MEMORY_CARD_HEAD_CONFLICT", action)
                 ref = f"rounds/round_{rd['round_id']:04d}/memory_revisions/{db._sha256(operation_id)}.json"
                 sha = save(root, ref, memory.as_dict())
                 con.execute("INSERT INTO memory_writes(run_id,round_id,operation_id,kind,proposal_ref,status,created_at_utc) VALUES (?,?,?,?,?,'proposed',?)",
                             (row["run_id"], rd["round_id"], operation_id, memory.kind, ref, db._utc_now()))
                 con.execute("UPDATE rounds SET memory_proposal_ref=?,memory_commit_status='proposed' WHERE run_id=? AND round_id=?", (ref,row["run_id"],rd["round_id"]))
-                result = receipt(con,row,rd,action,operation_id,ih,{"proposal_ref":ref,"proposal_sha256":sha,"memory":{"status":"proposed"}})
-        from agent_skill_loop.session_memory import commit_pending
+                result = receipt(con, row, rd, action, operation_id, ih, {
+                    **binding, "proposal_ref": ref, "proposal_sha256": sha, "new_proposal_sha256": sha,
+                    "memory": {"status": "proposed"},
+                })
         commit_pending(root, operation_id)
         result = json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?", (operation_id,)).fetchone()[0])
         db.flush_audit(root)
@@ -976,18 +1059,23 @@ def submit_evaluation(*, run, operation_id, expected_state_version, file, expect
                 if treatment == "reflection_with_online_memory" and memory.kind == "none" and not memory.reason:
                     fail("MEMORY_REASON_REQUIRED", action)
                 if (_manifest_extra(root).get("study_id") == "island605_bp_memory_content_control_v1"
-                        and memory.kind in {"insight", "solution"} and len(memory.body or "") > 1200):
+                        and memory.kind in MEMORY_CARD_TYPES and len(memory.body or "") > 1200):
                     fail("HISTORICAL_MATERIAL_EXCEEDS_FROZEN_LIMIT", action)
                 validate_memory_publication(memory, row, treatment=treatment)
                 ref = prefix+"/evaluation.submitted.json"
                 sha = save(root,ref,text)
-                status = "proposed" if memory.kind in {"insight","solution"} else memory.kind
+                status = "proposed" if memory.kind in MEMORY_CARD_TYPES else memory.kind
                 proposal_ref = prefix+"/memory_proposal.json"
+                binding = {}
                 if status=="proposed":
-                    save(root,proposal_ref,memory.as_dict())
+                    proposal_sha = save(root, proposal_ref, memory.as_dict())
+                    binding = {"proposal_ref": proposal_ref, "proposal_sha256": proposal_sha,
+                               "evaluation_facts_ref": rd["evaluation_facts_ref"],
+                               "evaluation_facts_sha256": rd["evaluation_facts_sha256"],
+                               "card_head": memory.memory_based_on}
                     con.execute("INSERT INTO memory_writes(run_id,round_id,operation_id,kind,proposal_ref,status,created_at_utc) VALUES (?,?,?,?,?,'proposed',?)",(row["run_id"],rd["round_id"],operation_id,memory.kind,proposal_ref,db._utc_now()))
                 con.execute("UPDATE rounds SET state='READY_TO_FINISH',submitted_evaluation_ref=?,submitted_evaluation_sha256=?,memory_proposal_ref=?,memory_commit_status=? WHERE run_id=? AND round_id=?",(ref,sha,proposal_ref if status=="proposed" else None,status,row["run_id"],rd["round_id"]))
-                result = receipt(con,row,rd,action,operation_id,ih,{"evaluation_accepted":True,"evaluate_ref":ref,"memory":{"status":status}})
+                result = receipt(con,row,rd,action,operation_id,ih,{"evaluation_accepted":True,"evaluate_ref":ref,"memory":{"status":status}, **binding})
         # Memory publication is recoverable and independent of evaluation acceptance.
         from agent_skill_loop.session_memory import commit_pending
         commit_pending(root, operation_id)

@@ -8,6 +8,10 @@ from agent_skill_loop.request_budget import RequestBudget, RequestSlot
 from agent_skill_loop.evidence.search_progress import normalize_policy, phase_for_round
 
 
+def _is_http_status(status):
+    return type(status) is int and 100 <= status <= 599
+
+
 def _budget_phase(root: Path, con, task) -> tuple[str | None, dict[str, object]]:
     """Read the immutable outer phase contract and declared round intent."""
     try:
@@ -138,6 +142,10 @@ class SessionRequestBudget(RequestBudget):
         finally: con.close()
 
     def finish(self, slot, state, **fields):
+        # The frozen bridge supplies HTTP status at settlement. The routed
+        # bridge records it earlier, before interpreting the response body.
+        if slot.sent_at_utc and slot.delivered_at_utc is None and _is_http_status(fields.get("status")):
+            self.mark_delivered(slot, fields["status"], record_event=False)
         if getattr(slot, "response_sha256", None) and not fields.get("response_sha256") and not fields.get("response_text"):
             fields["response_sha256"] = slot.response_sha256
         if self._parent is not None and slot.request_id in self._parent_slots:
@@ -162,6 +170,7 @@ class SessionRequestBudget(RequestBudget):
             finally:
                 self._parent = orig_parent
         event["request_id"]=slot.request_id
+        event.update(self._transport_fields(slot))
         terminal="complete" if state=="complete" else "unknown" if state in {"killed_unknown", "connectivity_failed", "unknown"} else "failed"
         con=db._connect(self.root / "session.sqlite3")
         try:
@@ -187,7 +196,15 @@ class SessionRequestBudget(RequestBudget):
         finally: con.close()
         return event
 
-    def mark_sent(self, slot):
+    @staticmethod
+    def _transport_fields(slot):
+        return {
+            "attempted_send_at_utc": slot.sent_at_utc,
+            "delivered_at_utc": slot.delivered_at_utc,
+            "delivery_http_status": slot.delivery_http_status,
+        }
+
+    def mark_attempted_send(self, slot):
         now = db._utc_now()
         if self._parent is not None and slot.request_id in self._parent_slots and hasattr(self._parent, "mark_sent"):
             self._parent.mark_sent(self._parent_slots[slot.request_id], sent_at_utc=now)
@@ -195,11 +212,46 @@ class SessionRequestBudget(RequestBudget):
         try:
             with db._transaction(con):
                 db._ensure_requests_columns(con)
-                con.execute("UPDATE requests SET state='sent',sent_at_utc=? WHERE request_id=? AND state='reserved'",(now,slot.request_id))
+                updated = con.execute(
+                    "UPDATE requests SET state='sent',sent_at_utc=?,attempted_send_at_utc=? "
+                    "WHERE request_id=? AND state='reserved'", (now, now, slot.request_id),
+                )
+                if updated.rowcount != 1:
+                    raise ValueError("request_not_reserved")
         finally: con.close()
         slot.state = "sent"
         slot.sent_at_utc = now
-        return self.add_event(slot, "sent")
+        event = self.add_event(slot, "attempted_send")
+        event.update(self._transport_fields(slot))
+        return event
+
+    def mark_sent(self, slot):
+        """Compatibility entry point for the frozen bridge."""
+        return self.mark_attempted_send(slot)
+
+    def mark_delivered(self, slot, status, *, record_event=True):
+        """Record an observed HTTP response independently of completion parsing."""
+        if not _is_http_status(status):
+            raise ValueError("request_http_status_invalid")
+        now = db._utc_now()
+        con = db._connect(self.root / "session.sqlite3")
+        try:
+            with db._transaction(con):
+                updated = con.execute(
+                    "UPDATE requests SET delivered_at_utc=?, delivery_http_status=? "
+                    "WHERE request_id=? AND state='sent' AND attempted_send_at_utc IS NOT NULL "
+                    "AND delivered_at_utc IS NULL", (now, status, slot.request_id),
+                )
+                if updated.rowcount != 1:
+                    raise ValueError("request_delivery_transition_invalid")
+        finally:
+            con.close()
+        slot.delivered_at_utc = now
+        slot.delivery_http_status = status
+        if record_event:
+            event = self.add_event(slot, "delivered", status=status)
+            event.update(self._transport_fields(slot))
+            return event
 
 
 def solver_event(session, payload):

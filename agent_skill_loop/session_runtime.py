@@ -444,6 +444,9 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             attempt INTEGER,
             response_sha256 TEXT,
             sent_at_utc TEXT,
+            attempted_send_at_utc TEXT,
+            delivered_at_utc TEXT,
+            delivery_http_status INTEGER,
             UNIQUE(run_id, sequence),
             FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
         )""",
@@ -603,13 +606,16 @@ def _row(connection: sqlite3.Connection, query: str, parameters: tuple[Any, ...]
 
 
 def _ensure_requests_columns(connection: sqlite3.Connection) -> bool:
-    """Idempotently backfill M3/M3.2 request ledger columns on pre-existing sessions."""
+    """Add current request ledger columns to pre-existing sessions."""
     request_columns = {row[1] for row in connection.execute("PRAGMA table_info(requests)")}
     added = False
     for name, definition in {
         "attempt": "INTEGER",
         "response_sha256": "TEXT",
         "sent_at_utc": "TEXT",
+        "attempted_send_at_utc": "TEXT",
+        "delivered_at_utc": "TEXT",
+        "delivery_http_status": "INTEGER",
         "requested_model": "TEXT",
         "served_model": "TEXT",
         "cached_tokens": "INTEGER",

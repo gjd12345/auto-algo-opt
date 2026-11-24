@@ -11,8 +11,11 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from agent_skill_loop.memory.api import MEMORY_CARD_TYPES, MemoryEntry
+
 
 MAX_ROUND_CONTEXT_CHARS = 12000
+MAX_ROUND_CONTEXT_UTF8_BYTES = 24000
 
 
 PLAN_KEYS = frozenset({
@@ -29,9 +32,10 @@ MEMORY_ACTION_KEYS = frozenset({
     "kind", "name", "description", "project", "scene", "body",
     "source_skill_ref", "memory_based_on", "evidence_ref",
     "reason", "based_on",  # read-compatible alias for historical solution submissions
+    "applicability_scope", "validity_status", "evidence_tier", "code_anchor",
 })
 OPERATION_TYPES = frozenset({"add", "remove", "replace", "preserve"})
-MEMORY_ACTION_TYPES = frozenset({"disabled", "none", "insight", "solution"})
+MEMORY_ACTION_TYPES = MEMORY_CARD_TYPES | {"disabled", "none"}
 SEARCH_POLICY_KEYS = frozenset({"pop_size", "n_pop", "max_sample_nums"})
 SEARCH_POLICY_MINIMUMS = {"pop_size": 2, "n_pop": 1, "max_sample_nums": 1}
 SEARCH_INTENT_KEYS = frozenset({"phase"})
@@ -250,7 +254,7 @@ class PlanDocument:
         if not isinstance(memory, list) or any(not isinstance(item, str) or not item.strip() for item in memory):
             raise ValueError("memory_basis_must_be_string_list")
         memory_basis = tuple(item.strip() for item in memory)
-        if len(memory_basis) > 2 or len(set(memory_basis)) != len(memory_basis):
+        if len(memory_basis) > 3 or len(set(memory_basis)) != len(memory_basis):
             raise ValueError("memory_basis_limit")
         if available_memory_refs is not None and not set(memory_basis).issubset(available_memory_refs):
             raise ValueError("memory_reference_not_found")
@@ -350,6 +354,10 @@ class MemoryAction:
     memory_based_on: str | None = None
     evidence_ref: str | None = None
     reason: str | None = None
+    applicability_scope: Mapping[str, Any] | None = None
+    validity_status: str | None = None
+    evidence_tier: str | None = None
+    code_anchor: Mapping[str, Any] | None = None
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any], *, enabled: bool) -> "MemoryAction":
@@ -387,6 +395,9 @@ class MemoryAction:
             evidence_ref = _text(evidence_ref, "memory_evidence_ref", max_chars=512)
         if kind == "insight" and source_skill_ref is not None:
             raise ValueError("insight_source_skill_ref_not_allowed")
+        for field in ("applicability_scope", "code_anchor"):
+            if raw.get(field) is not None and not isinstance(raw[field], Mapping):
+                raise ValueError(f"memory_{field}_must_be_object")
         return cls(
             kind,
             _text(raw.get("name"), "memory_name", max_chars=80),
@@ -397,6 +408,10 @@ class MemoryAction:
             source_skill_ref,
             memory_based_on,
             evidence_ref,
+            applicability_scope=dict(raw["applicability_scope"]) if raw.get("applicability_scope") is not None else None,
+            validity_status=_text(raw["validity_status"], "memory_validity_status", max_chars=32) if raw.get("validity_status") is not None else None,
+            evidence_tier=_text(raw["evidence_tier"], "memory_evidence_tier", max_chars=32) if raw.get("evidence_tier") is not None else None,
+            code_anchor=dict(raw["code_anchor"]) if raw.get("code_anchor") is not None else None,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -407,7 +422,21 @@ class MemoryAction:
             "memory_based_on": self.memory_based_on,
             "evidence_ref": self.evidence_ref,
             "reason": self.reason,
+            "applicability_scope": self.applicability_scope,
+            "validity_status": self.validity_status,
+            "evidence_tier": self.evidence_tier,
+            "code_anchor": self.code_anchor,
         }.items() if value is not None}
+
+    def to_entry(self) -> MemoryEntry:
+        if self.kind not in MEMORY_CARD_TYPES:
+            raise ValueError("memory_action_has_no_card")
+        return MemoryEntry(
+            name=self.name, description=self.description, type=self.kind,
+            project=self.project, scene=self.scene, body=self.body,
+            applicability_scope=self.applicability_scope, validity_status=self.validity_status,
+            evidence_tier=self.evidence_tier, code_anchor=self.code_anchor,
+        )
 
 
 def strict_json_object(text: str) -> dict[str, Any]:
@@ -706,16 +735,23 @@ def compile_round_context(
     agent_guidance: bool = True,
     search_progress_mode: str = "expose",
     max_chars: int = MAX_ROUND_CONTEXT_CHARS,
+    max_utf8_bytes: int = MAX_ROUND_CONTEXT_UTF8_BYTES,
 ) -> str:
     """Compile only advisory plan text for the official EoH task prompt."""
+    from agent_skill_loop.memory.api import memory_is_active
+
+    max_chars = min(max_chars, MAX_ROUND_CONTEXT_CHARS)
+    max_utf8_bytes = min(max_utf8_bytes, MAX_ROUND_CONTEXT_UTF8_BYTES)
     if feedback_mode not in {"off", "runtime_facts"}:
         raise ValueError("invalid_feedback_mode")
     if not isinstance(agent_guidance, bool):
         raise ValueError("agent_guidance_must_be_bool")
     if search_progress_mode not in {"off", "record_only", "expose"}:
         raise ValueError("invalid_search_progress_mode")
+    selected = set(plan.memory_basis)
     unique_memory = {item.get("reference"): item for item in (memory_summaries or [])
-                     if item.get("reference") in set(plan.memory_basis) and item.get("body") and not item.get("truncated")}
+                     if item.get("reference") in selected and item.get("body") and not item.get("truncated")
+                     and memory_is_active(item)}
     if agent_guidance:
         guidance = {
             "direction": plan.direction,
@@ -772,26 +808,29 @@ def compile_round_context(
     prefix = "ROUND CONTEXT (advisory; do not change the interface or evaluator):\n"
     def render():
         return prefix + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+    def too_large(context):
+        return len(context) > max_chars or len(context.encode("utf-8")) > max_utf8_bytes
+
     # Omit complete memory records rather than cutting away applicability rules.
     payload["omitted_memory_refs"] = []
     context = render()
-    while len(context) > max_chars and payload["memory"]:
+    while too_large(context) and payload["memory"]:
         payload["omitted_memory_refs"].append(payload["memory"].pop()["reference"])
         context = render()
-    if len(context) > max_chars:
+    if too_large(context):
         payload["advisory_truncated"] = True
         for key in ("direction", "hypothesis"):
             payload[key] = payload[key][:768]
         for operation in payload["operations"]:
             operation["mechanism"] = operation["mechanism"][:256]
         context = render()
-    context = render()
-    if len(context) > max_chars:
+    if too_large(context):
         # ProblemSpec supplies the actual invariant contract independently.
         # Drop model-written advisory fields as whole units if JSON escaping
         # alone would exceed the cap; retain the full original in plan.json.
         payload.update(advisory_omitted=True, direction="", operations=[], preserve="", hypothesis="")
         context = render()
-    if len(context) > max_chars:
+    if too_large(context):
         raise ValueError("plan_context_too_large")
     return context
