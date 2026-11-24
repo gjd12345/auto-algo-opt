@@ -1018,6 +1018,10 @@ def run_research_agent(
             ckpt.round_diagnostic_blocks = 0
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None
+            if session_out and session_out.get("session_status") in {"COMPLETED", "STOPPED"}:
+                ckpt.phase = "budget_stopped"
+                _save_ckpt()
+                break
             _save_ckpt()
 
     if config.strict_checkpoint_barriers:

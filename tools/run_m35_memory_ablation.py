@@ -131,7 +131,7 @@ def _agent_settings(mode: str) -> dict[str, Any]:
     return {
         "problem_family": "cvrp", "planner_model": MODEL, "eoh_model": MODEL,
         "mode": mode, "endpoint": _endpoint(mode), "api_key_env": API_KEY_ENV,
-        "max_rounds": 1 if mock else 8, "wall_seconds": 1200.0, "request_timeout_s": 60.0,
+        "max_rounds": 1 if mock else 8, "wall_seconds": 1200.0 if mock else 14400.0, "request_timeout_s": 60.0,
         "total_request_cap": REQUEST_CAP, "checkpoint_budgets": [REQUEST_CAP],
         "strict_checkpoint_barriers": True, "instance_time_budget_ms": SOLVE_MS,
         "use_benchmark_dev_suite": True, "dev_suite_id": DEV[0], "dev_split": DEV[1],

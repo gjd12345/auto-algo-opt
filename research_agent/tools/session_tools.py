@@ -77,6 +77,38 @@ class SessionRunnerTool:
         finally:
             con.close()
 
+    @staticmethod
+    def _session_cannot_continue(session_dir: Path) -> bool:
+        db_path = session_dir / "session.sqlite3"
+        if not db_path.is_file():
+            return False
+        con = sqlite3.connect(str(db_path), timeout=10.0)
+        con.row_factory = sqlite3.Row
+        try:
+            run = con.execute(
+                "SELECT run_id, eoh_round_max_requests, round_wall_seconds, engine_wall_seconds FROM runs LIMIT 1"
+            ).fetchone()
+            if run is None:
+                return False
+            if run["eoh_round_max_requests"] == 0 or run["round_wall_seconds"] == 0:
+                return True
+            elapsed = con.execute(
+                "SELECT COALESCE(SUM(engine_elapsed_seconds), 0) FROM tasks WHERE run_id=?",
+                (run["run_id"],),
+            ).fetchone()[0]
+            if run["engine_wall_seconds"] is not None and float(elapsed) >= float(run["engine_wall_seconds"]):
+                return True
+            terminal = con.execute(
+                "SELECT 1 FROM tasks WHERE run_id=? AND terminal_reason IN "
+                "('PROVIDER_TERMINAL','UNKNOWN','STARTUP_FAILED','EVIDENCE_STORAGE_FAILED','PHASE_BUDGET_EXHAUSTED','DEADLINE_EXCEEDED') LIMIT 1",
+                (run["run_id"],),
+            ).fetchone()
+            return terminal is not None
+        except sqlite3.Error:
+            return False
+        finally:
+            con.close()
+
     def ensure_initialized(self) -> dict[str, Any]:
         if self.config.memory_enabled:
             if self.config.dev_split not in {"dev", "dev_train"}:
@@ -678,7 +710,13 @@ class SessionRunnerTool:
                     decision="complete",
                 )
                 raise ProviderFailure("session_provider_terminal:ready_to_finish_resume")
-            decision = "complete" if (is_final_round or (self.budget.remaining is not None and self.budget.remaining <= 0)) else "continue"
+            cannot_continue = (
+                is_final_round
+                or (self.budget.remaining is not None and self.budget.remaining <= 0)
+                or terminal_reason in {"DEADLINE_EXCEEDED", "PHASE_BUDGET_EXHAUSTED", "UNKNOWN"}
+                or self._session_cannot_continue(self.session_dir)
+            )
+            decision = "complete" if cannot_continue else "continue"
             fin = finish_round(
                 run=self.session_dir,
                 operation_id=f"fin_r{cur_round}_{self.config.run_id}",

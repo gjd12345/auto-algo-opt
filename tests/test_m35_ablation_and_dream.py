@@ -263,3 +263,27 @@ def test_build_dev_seed_feeds_init_fork_and_loads_env(tmp_path, monkeypatch):
             dev_artifacts=[bad_artifact], source_stores=[store],
             output_store=tmp_path / "bad_dream_mem", output_dir=tmp_path / "bad_dream_out",
         )
+
+
+def test_live_wall_seconds_and_session_cannot_continue(tmp_path):
+    import sqlite3
+    from research_agent.tools.session_tools import SessionRunnerTool
+    from tools import run_m35_memory_ablation as ablation
+
+    assert ablation._agent_settings("mock")["wall_seconds"] == 1200.0
+    assert ablation._agent_settings("live")["wall_seconds"] == 14400.0
+
+    session_dir = tmp_path / "session_run"
+    session_dir.mkdir(parents=True)
+    db_path = session_dir / "session.sqlite3"
+    con = sqlite3.connect(db_path)
+    con.execute("CREATE TABLE runs(run_id TEXT, eoh_round_max_requests INTEGER, round_wall_seconds REAL, engine_wall_seconds REAL)")
+    con.execute("CREATE TABLE tasks(task_id TEXT, run_id TEXT, terminal_reason TEXT, engine_elapsed_seconds REAL)")
+    con.execute("INSERT INTO runs VALUES ('r1', 10, 300.0, 1200.0)")
+    con.execute("INSERT INTO tasks VALUES ('t1', 'r1', 'SUCCEEDED', 600.0)")
+    con.commit()
+    assert SessionRunnerTool._session_cannot_continue(session_dir) is False
+    con.execute("INSERT INTO tasks VALUES ('t2', 'r1', 'DEADLINE_EXCEEDED', 600.5)")
+    con.commit()
+    assert SessionRunnerTool._session_cannot_continue(session_dir) is True
+    con.close()
