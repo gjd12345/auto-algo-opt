@@ -627,10 +627,17 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                 elapsed=con.execute("SELECT COALESCE(SUM(engine_elapsed_seconds),0) FROM tasks WHERE run_id=?",(row["run_id"],)).fetchone()[0]
                 if row["engine_wall_seconds"] is not None and elapsed>=row["engine_wall_seconds"]: fail("ENGINE_WALL_EXHAUSTED", action)
                 if row["round_wall_seconds"] == 0: fail("ROUND_WALL_EXHAUSTED", action)
-                for ref_key, hash_key in (("normalized_plan_ref", "normalized_plan_sha256"), ("round_context_ref", "round_context_sha256")):
-                    if db._sha256(local(root, rd[ref_key]).read_bytes()) != rd[hash_key]: fail("EVIDENCE_INTEGRITY_FAILED", action)
+                normalized_plan_bytes = local(root, rd["normalized_plan_ref"]).read_bytes()
+                context_bytes = local(root, rd["round_context_ref"]).read_bytes()
+                if (db._sha256(normalized_plan_bytes) != rd["normalized_plan_sha256"]
+                        or db._sha256(context_bytes) != rd["round_context_sha256"]):
+                    fail("EVIDENCE_INTEGRITY_FAILED", action)
+                normalized_plan = json.loads(normalized_plan_bytes)
+                fresh_template = (normalized_plan.get("interface_selection") or {}).get("fresh_template") is True
+                if fresh_template:
+                    inheritance_mode = "fresh_template"
                 try:
-                    seed_selection = _prepare_population_seeds(root, con, row, rd, config)
+                    seed_selection = None if fresh_template else _prepare_population_seeds(root, con, row, rd, config)
                 except db.SessionError as exc:
                     # A population-seeded round must never fall through to a
                     # cold start when its source evidence is absent or has
@@ -715,7 +722,9 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                     # attempts too. Reserve their known cost before starting
                     # the child; the solver gateway enforces the same limit
                     # for every later candidate and repair re-evaluation.
-                    known_attempts = _known_solver_attempts(
+                    # A fresh dynamic round evaluates its template baseline
+                    # before launch and again in EoH's seed initialization.
+                    known_attempts = 2 if fresh_template else _known_solver_attempts(
                         inheritance_mode=inheritance_mode,
                         incumbent_before_ref=rd["incumbent_before_ref"],
                         seed_selection=seed_selection,
@@ -829,7 +838,13 @@ def collect(*, run, operation_id, expected_state_version, expected_run_id=None):
                     source_rows, plan_ref=rd["normalized_plan_ref"], plan_sha256=rd["normalized_plan_sha256"],
                     hypothesis=plan.get("hypothesis"), incumbent_code=incumbent_code,
                     incumbent_ref=rd["incumbent_before_ref"], reference_skill_ref=plan.get("reference_skill_ref"),
-                    behavior_supported=get_problem(row["problem"]).evaluate_with_behavior is not None,
+                    behavior_supported=(
+                        get_problem(row["problem"]).evaluate_with_behavior is not None
+                        or any(
+                            ((r.get("evaluation") or {}).get("metrics") or {}).get("behavior_evidence")
+                            for r in source_rows
+                        )
+                    ),
                     previous_evaluated_hashes=previous_hashes,
                 )
                 delta_ref = prefix + "/execution_delta.json"

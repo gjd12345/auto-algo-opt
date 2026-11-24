@@ -55,7 +55,14 @@ class DiagnosticTool:
         assert_milestone_suite_allowed_for_interactive_role(self.dev_suite_id, role="diagnostic_interactive")
         self.diag_dir = self.run_dir / "agent_artifacts" / "diagnostics"
         self.diag_dir.mkdir(parents=True, exist_ok=True)
-        self._seq = 0
+        self._seq = max(
+            (
+                int(path.stem.split("_", 1)[1])
+                for path in self.diag_dir.glob("diag_*.json")
+                if "_" in path.stem and path.stem.split("_", 1)[1].isdigit()
+            ),
+            default=0,
+        )
 
     def _load_dev_instances(self, max_instances: int | None = None) -> tuple[list[dict[str, Any]], str, str, str]:
         suite = load_dev_or_public_suite(self.dev_suite_id, split=self.dev_split, role="diagnostic_interactive")
@@ -107,13 +114,12 @@ class DiagnosticTool:
             cand_raw = evaluate_hook_on_instance_inprocess(
                 template_id=template_id,
                 template_version=template_version,
-                hook_fn=fn,
+                hook_fn=({tpl.hook_name: fn, **extra_hooks} if extra_hooks else fn),
                 instance=inst,
                 postprocess_mode=postprocess_mode,
                 distance_convention=dist_conv,
                 vehicle_limit_policy=veh_pol,
                 time_budget_ms=time_budget_ms,
-                extra_hooks=extra_hooks or None,
             )
             cand_records.append(_with_tour_length_alias(cand_raw))
             if problem == "tsp":

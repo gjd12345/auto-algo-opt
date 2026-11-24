@@ -43,12 +43,19 @@ _FORBIDDEN_CALLS = frozenset({
     "exit", "quit", "memoryview",
 })
 _FORBIDDEN_STRINGS = (
-    "cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_select_multiscale_64",
+    "cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_m5_control_blind_120",
+    "cvrp_select_multiscale_64",
     "tsp_m31_select_36", "tsp_m31_blind_72",
     "obp_m31_select_36", "obp_m31_blind_72",
     "bpp_m31_select_36", "bpp_m31_blind_72",
-    ".agent_skill_custody", ".agent_skill_custody_m31", ".agent_skill_custody_m32", ".secrets",
+    ".agent_skill_custody", ".agent_skill_custody_m31", ".agent_skill_custody_m32", ".agent_skill_custody_m5",
+    ".secrets",
 )
+_FORBIDDEN_NP_IO_ATTRS = frozenset({
+    "load", "save", "savez", "savez_compressed", "loadtxt", "savetxt", "genfromtxt",
+    "fromfile", "tofile", "memmap", "fromregex", "ctypes", "ctypeslib",
+    "testing", "distutils", "f2py", "lib",
+})
 
 
 def validate_sandbox_ast(script: str) -> None:
@@ -77,6 +84,8 @@ def validate_sandbox_ast(script: str) -> None:
         elif isinstance(node, ast.Attribute):
             if node.attr.startswith("__"):
                 raise ValueError(f"forbidden_dunder_attribute:{node.attr}")
+            if node.attr in _FORBIDDEN_NP_IO_ATTRS:
+                raise ValueError(f"forbidden_attribute:{node.attr}")
 
 
 def _safe_load_dev_suite(suite_id: str = "cvrp_dev_hetero_24", max_instances: int | None = None) -> list[dict[str, Any]]:

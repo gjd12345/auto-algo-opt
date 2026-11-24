@@ -87,7 +87,7 @@ _FORBIDDEN_NAMES = {
     "vars", "dir", "getattr", "setattr", "delattr", "breakpoint", "help", "quit",
     "exit", "os", "sys", "subprocess", "socket", "pathlib", "shutil", "requests",
 }
-_NUMPY_ATTRIBUTES = {
+_LEGACY_NUMPY_ATTRIBUTES = {
     "abs", "add", "all", "allclose", "any", "argmax", "argmin", "argsort", "arange", "array",
     "array_equal", "asarray", "astype", "clip", "column_stack", "concatenate", "copy", "cos",
     "cumsum", "delete", "diag", "diff", "divide", "dot", "dtype", "e", "exp", "float32",
@@ -100,6 +100,13 @@ _NUMPY_ATTRIBUTES = {
     "log", "log1p", "log2", "log10", "expm1", "hypot", "isclose", "fabs",
     "zeros_like", "ones_like", "full_like", "eye", "maximum",
 }
+_EXTENDED_NUMPY_ATTRIBUTES = _LEGACY_NUMPY_ATTRIBUTES | {
+    "tanh", "sinh", "cosh", "sign", "mod", "fmod",
+    "remainder", "stack", "vstack", "dstack", "nan_to_num", "fill_diagonal",
+    "bincount", "lexsort", "ix_", "argpartition", "triu", "tril",
+    "flatnonzero", "searchsorted", "percentile", "quantile", "prod", "all", "any",
+}
+_NUMPY_ATTRIBUTES = _EXTENDED_NUMPY_ATTRIBUTES
 _NP_MATH_ROOTS = {"np", "numpy", "math"}
 _ALLOWED_IMPORT_ROOTS = {"numpy", "math"}
 _REAL_IMPORT = builtins.__import__
@@ -1107,7 +1114,7 @@ CVRP_SPEC = ProblemSpec(
     evaluate_instances=_evaluate_cvrp_instances,
     safe_builtins=_SAFE_BUILTINS,
     forbidden_names=frozenset(_FORBIDDEN_NAMES),
-    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    numpy_attributes=frozenset(_LEGACY_NUMPY_ATTRIBUTES),
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
@@ -1135,7 +1142,7 @@ TSP_SPEC = ProblemSpec(
     evaluate_instances=_evaluate_tsp_instances,
     safe_builtins=_SAFE_BUILTINS,
     forbidden_names=frozenset(_FORBIDDEN_NAMES),
-    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    numpy_attributes=frozenset(_LEGACY_NUMPY_ATTRIBUTES),
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
@@ -1165,7 +1172,7 @@ TSP2_SPEC = ProblemSpec(
     evaluate_instances=_evaluate_tsp2_instances,
     safe_builtins=_SAFE_BUILTINS,
     forbidden_names=frozenset(_FORBIDDEN_NAMES),
-    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    numpy_attributes=frozenset(_LEGACY_NUMPY_ATTRIBUTES),
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),
@@ -1194,7 +1201,7 @@ OBP_SPEC = ProblemSpec(
     evaluate_instances=_evaluate_obp_instances,
     safe_builtins=_SAFE_BUILTINS,
     forbidden_names=frozenset(_FORBIDDEN_NAMES),
-    numpy_attributes=frozenset(_NUMPY_ATTRIBUTES),
+    numpy_attributes=frozenset(_LEGACY_NUMPY_ATTRIBUTES),
     math_attributes=frozenset(_MATH_ATTRIBUTES),
     np_math_roots=frozenset(_NP_MATH_ROOTS),
     allowed_import_roots=frozenset(_ALLOWED_IMPORT_ROOTS),

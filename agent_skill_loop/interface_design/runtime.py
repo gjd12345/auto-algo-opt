@@ -23,6 +23,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -32,12 +33,14 @@ from agent_skill_loop.evaluator import (
     _ALLOWED_IMPORT_ROOTS,
     _CONTAINER_METHODS,
     _FORBIDDEN_NAMES,
+    _LEGACY_NUMPY_ATTRIBUTES,
     _MATH_ATTRIBUTES,
     _NP_MATH_ROOTS,
     _NUMPY_ATTRIBUTES,
     _SAFE_BUILTINS,
     _attribute_root_id,
     _collect_np_math_aliases,
+    _expr_is_np_math_alias,
     _make_restricted_import,
     kill_process_tree,
 )
@@ -54,7 +57,12 @@ from .contracts import (
 )
 from .templates import TemplateSpec, get_template_spec
 
-_ALLOWED_ATTRIBUTES = frozenset(_NUMPY_ATTRIBUTES) | frozenset(_MATH_ATTRIBUTES)
+_NUMPY_ROOTS = frozenset({"np", "numpy"})
+_MATH_ROOTS = frozenset({"math"})
+
+
+def _numpy_attributes(allow_extended_numpy_whitelist: bool) -> set[str]:
+    return _NUMPY_ATTRIBUTES if allow_extended_numpy_whitelist else _LEGACY_NUMPY_ATTRIBUTES
 
 
 class _QuietSink(io.TextIOBase):
@@ -65,7 +73,14 @@ class _QuietSink(io.TextIOBase):
         return None
 
 
-def capability_contract_dict(*, hook_name: str, hook_signature: Sequence[str], template_id: str, template_version: str) -> dict[str, Any]:
+def capability_contract_dict(
+    *,
+    hook_name: str,
+    hook_signature: Sequence[str],
+    template_id: str,
+    template_version: str,
+    allow_extended_numpy_whitelist: bool = True,
+) -> dict[str, Any]:
     """Machine-derived capability contract mirroring ``validate_hook_ast`` exactly."""
     return {
         "interface": f"{template_id}/{template_version}:{hook_name}",
@@ -73,7 +88,7 @@ def capability_contract_dict(*, hook_name: str, hook_signature: Sequence[str], t
         "parameters": list(hook_signature),
         "allowed_import_roots": sorted(_ALLOWED_IMPORT_ROOTS),
         "allowed_numpy_math_roots": sorted(_NP_MATH_ROOTS),
-        "allowed_numpy_attributes": sorted(_NUMPY_ATTRIBUTES),
+        "allowed_numpy_attributes": sorted(_numpy_attributes(allow_extended_numpy_whitelist)),
         "allowed_math_attributes": sorted(_MATH_ATTRIBUTES),
         "safe_builtins": sorted(_SAFE_BUILTINS),
         "forbidden_names": sorted(_FORBIDDEN_NAMES),
@@ -134,11 +149,12 @@ def validate_hook_ast(
     *,
     hook_name: str,
     expected_args: Sequence[str],
+    allow_extended_numpy_whitelist: bool = True,
 ) -> tuple[list[GateFailure], list[GateFailure]]:
     """Run Gate 1 (AST capability whitelist) and Gate 2 (entrypoint/signature) on hook source.
 
     Returns ``(gate1_failures, gate2_failures)`` with exact AST line numbers and actionable fix hints.
-    Uses the exact same capability allowlists as ``agent_skill_loop.evaluator._validate_candidate_ast``.
+    Uses the shared capability allowlists with the selected NumPy mode.
     """
     g1: list[GateFailure] = []
     g2: list[GateFailure] = []
@@ -182,7 +198,10 @@ def validate_hook_ast(
         return g1, g2
 
     allowed_aliases = {root: (None, "np" if root == "numpy" else root) for root in _ALLOWED_IMPORT_ROOTS}
-    np_math_aliases = _collect_np_math_aliases(tree, _NP_MATH_ROOTS)
+    numpy_attributes = _numpy_attributes(allow_extended_numpy_whitelist)
+    allowed_attributes = numpy_attributes | _MATH_ATTRIBUTES
+    numpy_aliases = _collect_np_math_aliases(tree, _NUMPY_ROOTS)
+    math_aliases = _collect_np_math_aliases(tree, _MATH_ROOTS)
 
     for node in ast.walk(tree):
         line_no = getattr(node, "lineno", None)
@@ -267,8 +286,17 @@ def validate_hook_ast(
                 ))
             else:
                 root = _attribute_root_id(node)
-                if root in _NP_MATH_ROOTS or root in np_math_aliases:
-                    if node.attr not in _ALLOWED_ATTRIBUTES:
+                numpy_receiver = root in _NUMPY_ROOTS or root in numpy_aliases
+                math_receiver = root in _MATH_ROOTS or root in math_aliases
+                if root is None:
+                    receiver = node.value
+                    while isinstance(receiver, ast.Attribute):
+                        receiver = receiver.value
+                    numpy_receiver = _expr_is_np_math_alias(receiver, _NUMPY_ROOTS, numpy_aliases)
+                    math_receiver = _expr_is_np_math_alias(receiver, _MATH_ROOTS, math_aliases)
+                if numpy_receiver or math_receiver:
+                    attributes = numpy_attributes if numpy_receiver else _MATH_ATTRIBUTES
+                    if node.attr not in attributes:
                         if node.attr == "ix_":
                             hint = "np.ix_ is outside the AST whitelist; use broadcast indexing like `distance_matrix[nodes[:, None], nodes[None, :]]` instead."
                         elif node.attr == "fill_diagonal":
@@ -284,7 +312,7 @@ def validate_hook_ast(
                             detail=f"Attribute '{root}.{node.attr}' is not in the numpy/math whitelist.",
                             fix_hint=hint,
                         ))
-                elif node.attr not in _ALLOWED_ATTRIBUTES and node.attr not in _CONTAINER_METHODS:
+                elif node.attr not in allowed_attributes and node.attr not in _CONTAINER_METHODS:
                     g1.append(GateFailure(
                         gate_id=1,
                         gate_name="ast_whitelist",
@@ -350,9 +378,13 @@ def compile_hook_function(
     *,
     hook_name: str,
     expected_args: Sequence[str],
+    allow_extended_numpy_whitelist: bool = True,
 ) -> Callable[..., Any]:
     """Validate and compile a hook function inside the restricted capability namespace."""
-    g1, g2 = validate_hook_ast(code, hook_name=hook_name, expected_args=expected_args)
+    g1, g2 = validate_hook_ast(
+        code, hook_name=hook_name, expected_args=expected_args,
+        allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+    )
     if g1:
         f = g1[0]
         raise ValueError(f"{f.error_code}:{f.symbol or f.detail}")
@@ -360,14 +392,28 @@ def compile_hook_function(
         f = g2[0]
         raise ValueError(f"{f.error_code}:{f.symbol or f.detail}")
 
+    # Limit module access even through aliases whose values cannot be resolved by the AST walk.
+    numpy = SimpleNamespace(**{
+        name: getattr(np, name) for name in _numpy_attributes(allow_extended_numpy_whitelist)
+        if hasattr(np, name)
+    })
+    math_module = SimpleNamespace(**{name: getattr(math, name) for name in _MATH_ATTRIBUTES})
+    allowed_modules = {"numpy": numpy, "math": math_module}
+    restricted_import = _make_restricted_import(set(_ALLOWED_IMPORT_ROOTS))
     restricted_builtins = dict(_SAFE_BUILTINS)
-    restricted_builtins["__import__"] = _make_restricted_import(set(_ALLOWED_IMPORT_ROOTS))
     namespace: dict[str, Any] = {
         "__builtins__": restricted_builtins,
-        "np": np,
-        "numpy": np,
-        "math": math,
+        "np": numpy,
+        "numpy": numpy,
+        "math": math_module,
     }
+
+    def import_module(name, globals=None, locals=None, fromlist=(), level=0):
+        if globals is namespace and level == 0 and not fromlist and name in allowed_modules:
+            return allowed_modules[name]
+        return restricted_import(name, globals, locals, fromlist, level)
+
+    restricted_builtins["__import__"] = import_module
     compiled = compile(ast.parse(code, mode="exec"), f"<m2_hook:{hook_name}>", "exec")
     sink = _QuietSink()
     with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
@@ -380,6 +426,7 @@ def compile_hook_function(
 
 def validate_hook_bundle(
     hook_specs: Sequence[HookSpec], hook_implementations: Mapping[str, str],
+    *, allow_extended_numpy_whitelist: bool = True,
 ) -> tuple[list[GateFailure], list[GateFailure]]:
     """Validate isolated, named source units under the existing hook whitelist."""
     try:
@@ -391,7 +438,10 @@ def validate_hook_bundle(
     gate2: list[GateFailure] = []
     for spec in hook_specs:
         source = hook_implementations[spec.name]
-        first, second = validate_hook_ast(source, hook_name=spec.name, expected_args=spec.signature)
+        first, second = validate_hook_ast(
+            source, hook_name=spec.name, expected_args=spec.signature,
+            allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+        )
         gate1.extend(first)
         gate2.extend(second)
         if first or second:
@@ -410,14 +460,19 @@ def validate_hook_bundle(
 
 def compile_hook_bundle(
     hook_specs: Sequence[HookSpec], hook_implementations: Mapping[str, str],
+    *, allow_extended_numpy_whitelist: bool = True,
 ) -> dict[str, Callable[..., Any]]:
-    first, second = validate_hook_bundle(hook_specs, hook_implementations)
+    first, second = validate_hook_bundle(
+        hook_specs, hook_implementations,
+        allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+    )
     if first or second:
         failure = (first + second)[0]
         raise ValueError(f"{failure.error_code}:{failure.symbol or failure.detail}")
     return {
         spec.name: compile_hook_function(
             hook_implementations[spec.name], hook_name=spec.name, expected_args=spec.signature,
+            allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
         )
         for spec in hook_specs
     }
@@ -647,7 +702,7 @@ def evaluate_hook_on_instance_inprocess(
     except Exception as exc:
         status = "error"
         msg = str(exc)
-        if msg.startswith("candidate_mutated_input"):
+        if msg.startswith("candidate_mutated_input") or "read-only" in msg or "WRITEABLE flag" in msg:
             error_code = "candidate_mutated_input"
         elif msg.startswith("invalid_return"):
             error_code = "invalid_return"
@@ -767,6 +822,8 @@ class DynamicSubprocessEvaluator:
         solve_deadline_ms: float | None = None,
         outer_timeout_s: float | None = None,
         strict_hook_outputs: bool | None = None,
+        allow_extended_numpy_whitelist: bool = True,
+        enable_degenerate_constant_screen: bool = False,
     ) -> dict[str, Any]:
         """Evaluate a hook across ``instances`` in a dedicated subprocess with hard kill on timeout."""
         budget = solve_deadline_ms if solve_deadline_ms is not None else instance_time_budget_ms
@@ -784,6 +841,8 @@ class DynamicSubprocessEvaluator:
             "vehicle_limit_policy": vehicle_limit_policy,
             "solve_deadline_ms": budget,
             "capture_merge_sequence": bool(capture_merge_sequence),
+            "allow_extended_numpy_whitelist": allow_extended_numpy_whitelist,
+            "enable_degenerate_constant_screen": enable_degenerate_constant_screen,
             "parent_pid": os.getpid(),
         }
         if hook_implementations is not None:
@@ -1007,6 +1066,7 @@ def evaluate_frozen_interface_solver(
         "instances": [dict(instance)],
         "postprocess_mode": frozen_solver.postprocess_mode,
         "template_options": dict(frozen_solver.template_options),
+        "allow_extended_numpy_whitelist": frozen_solver.template_options.get("allow_extended_numpy_whitelist", True),
         "distance_convention": distance_convention,
         "vehicle_limit_policy": vehicle_limit_policy,
         "solve_deadline_ms": worker_deadline_ms,

@@ -27,7 +27,14 @@ class MathSandboxTool:
         self.repo_root = Path(repo_root).resolve()
         self.sandbox_dir = self.run_dir / "agent_artifacts" / "sandbox"
         self.sandbox_dir.mkdir(parents=True, exist_ok=True)
-        self._seq = 0
+        self._seq = max(
+            (
+                int(path.stem.split("_", 1)[1])
+                for path in self.sandbox_dir.glob("run_*.json")
+                if "_" in path.stem and path.stem.split("_", 1)[1].isdigit()
+            ),
+            default=0,
+        )
 
     def run(self, *, script: str) -> dict[str, Any]:
         self._seq += 1

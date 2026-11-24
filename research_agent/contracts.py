@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import json
+import math
 import os
 import tempfile
 import uuid
@@ -119,6 +120,21 @@ class AgentConfig:
     wall_seconds: float = 1200.0
     candidate_timeout_s: float = 20.0
     sandbox_timeout_s: float = 15.0
+    allow_extended_numpy_whitelist: bool = True
+    enable_n200_latency_screen: bool = False
+    enable_degenerate_constant_screen: bool = False
+    n200_latency_multiplier: float = 1.0
+    enable_stagnation_diagnostic_gate: bool = False
+    early_stop_no_jump_requests: int | None = None
+    basin_restart_on_stagnation: bool = False
+
+    def __post_init__(self) -> None:
+        multiplier = self.n200_latency_multiplier
+        if type(multiplier) not in {float, int} or not math.isfinite(multiplier) or multiplier <= 0:
+            raise ValueError("n200_latency_multiplier_must_be_positive_finite")
+        threshold = self.early_stop_no_jump_requests
+        if threshold is not None and (type(threshold) is not int or threshold < 0):
+            raise ValueError("early_stop_no_jump_requests_must_be_nonnegative_integer")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -157,9 +173,10 @@ class HypothesisRecord:
     evidence_artifacts: tuple[EvidenceArtifactRef, ...] = ()
     created_at_utc: str = field(default_factory=utc_now)
     updated_at_utc: str = field(default_factory=utc_now)
+    auto_registered: bool = False
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        record = {
             "hypothesis_id": self.hypothesis_id,
             "round_id": int(self.round_id),
             "statement": self.statement,
@@ -169,6 +186,9 @@ class HypothesisRecord:
             "created_at_utc": self.created_at_utc,
             "updated_at_utc": self.updated_at_utc,
         }
+        if self.auto_registered:
+            record["auto_registered"] = True
+        return record
 
 
 @dataclass
@@ -176,7 +196,7 @@ class AgentCheckpoint:
     schema_version: str = "m3-research-agent-checkpoint/v1"
     run_id: str = ""
     current_round: int = 1
-    phase: str = "diagnose"  # diagnose | session_evolve | reflect | completed | budget_stopped
+    phase: str = "diagnose"  # diagnose | session_evolve | reflect | completed | budget_stopped | no_champion
     round_step_index: int = 0
     round_outer_requests: int = 0
     round_reflect_requests: int = 0
@@ -198,6 +218,13 @@ class AgentCheckpoint:
     pending_submit_tool_call: dict[str, Any] | None = None
     accumulated_wall_seconds: float = 0.0
     updated_at_utc: str = field(default_factory=utc_now)
+    round_diagnostic_called: bool = False
+    diagnostic_ever_called: bool = False
+    round_diagnostic_blocks: int = 0
+    consecutive_stagnant_rounds: int = 0
+    trajectory_best_dev_objective: float | None = None
+    restart_eligible_round_id: int | None = None
+    trajectory_control_events: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         self.updated_at_utc = utc_now()

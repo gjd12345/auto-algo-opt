@@ -76,6 +76,7 @@ def test_validator_evolved_hook_n200_latency_and_ast_hints() -> None:
         "import numpy as np\ndef select_next_city(current_node, unvisited_nodes, distance_matrix):\n    sub = distance_matrix[np.ix_(unvisited_nodes, unvisited_nodes)]\n    np.fill_diagonal(sub, np.inf)\n    return -distance_matrix[current_node, unvisited_nodes]\n",
         hook_name="select_next_city",
         expected_args=("current_node", "unvisited_nodes", "distance_matrix"),
+        allow_extended_numpy_whitelist=False,
     )
     hints = {f.symbol: f.fix_hint for f in g1}
     assert "broadcast indexing" in hints["np.ix_"]

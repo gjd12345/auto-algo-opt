@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any, Mapping
@@ -88,9 +89,36 @@ def _extract_eval_objective(eval_obj: Mapping[str, Any] | None) -> float | None:
         "mean_tour_length",
     ):
         val = eval_obj.get(key)
-        if val is not None and not isinstance(val, bool) and isinstance(val, (int, float)):
+        if not isinstance(val, bool) and isinstance(val, (int, float)) and math.isfinite(val):
             return float(val)
     return None
+
+
+def _append_tool_result(
+    messages: list[dict[str, Any]],
+    decision: Mapping[str, Any],
+    tool_name: str,
+    arguments: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> None:
+    if decision.get("tool_call_id"):
+        call_id = str(decision["tool_call_id"])
+        messages.append({
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{
+                "id": call_id,
+                "type": "function",
+                "function": {"name": tool_name, "arguments": json.dumps(arguments, ensure_ascii=False)},
+            }],
+        })
+        messages.append({"role": "tool", "tool_call_id": call_id, "content": json.dumps(result, ensure_ascii=False, default=str)})
+    else:
+        messages.append({"role": "assistant", "content": json.dumps(decision, ensure_ascii=False)})
+        messages.append({
+            "role": "user",
+            "content": json.dumps({"tool": tool_name, "result": result}, ensure_ascii=False, default=str),
+        })
 
 
 def _build_initial_baseline_solver(config: AgentConfig) -> FrozenInterfaceSolver:
@@ -177,6 +205,13 @@ def run_research_agent(
             "allowed_templates",
             "allowed_postprocess_modes",
             "search_seed",
+            "allow_extended_numpy_whitelist",
+            "enable_n200_latency_screen",
+            "enable_degenerate_constant_screen",
+            "n200_latency_multiplier",
+            "enable_stagnation_diagnostic_gate",
+            "early_stop_no_jump_requests",
+            "basin_restart_on_stagnation",
         )
         for field_name in immutable_fields:
             if getattr(persisted_cfg, field_name) != getattr(config, field_name):
@@ -346,9 +381,19 @@ def run_research_agent(
     _save_ckpt()
 
     last_sandbox: dict[str, Any] | None = None
-    last_diag: dict[str, Any] | None = None
+    last_diag: dict[str, Any] | None = ckpt.last_diag_ref
     prev_best_dev: float | None = ckpt.best_dev_objective
     round_summaries: list[dict[str, Any]] = list(ckpt.round_summaries)
+    track_round_stagnation = config.enable_stagnation_diagnostic_gate or config.basin_restart_on_stagnation
+
+    def _diagnostic_required(round_id: int) -> bool:
+        return (
+            config.enable_stagnation_diagnostic_gate
+            and config.tools_enabled
+            and not ckpt.round_diagnostic_called
+            and ckpt.round_diagnostic_blocks < 2
+            and (ckpt.consecutive_stagnant_rounds >= 1 or (round_id >= 2 and not ckpt.diagnostic_ever_called))
+        )
 
     def _dispatch_tool(tool_name: str, args: Mapping[str, Any], round_id: int) -> dict[str, Any]:
         nonlocal last_sandbox, last_diag
@@ -367,10 +412,23 @@ def run_research_agent(
                 max_instances=args.get("max_instances"),
             )
             last_diag = res
+            if (
+                config.enable_stagnation_diagnostic_gate
+                and res.get("error") is None
+                and res.get("error_code") is None
+                and res.get("ok") is not False
+            ):
+                ckpt.round_diagnostic_called = True
+                ckpt.diagnostic_ever_called = True
+                if res.get("artifact_ref") and res.get("artifact_sha256"):
+                    ckpt.last_diag_ref = {key: res[key] for key in ("artifact_ref", "artifact_sha256")}
             return res
         if tool_name == "run_math_sandbox":
             res = sandbox_tool.run(script=str(args["script"]))
             last_sandbox = res
+            if config.enable_stagnation_diagnostic_gate and res.get("ok") is True:
+                ckpt.round_diagnostic_called = True
+                ckpt.diagnostic_ever_called = True
             return res
         if tool_name == "list_interfaces":
             return iface_tool.list_interfaces()
@@ -398,14 +456,17 @@ def run_research_agent(
                 last_diag=last_diag,
             )
             return ledger_tool.update(
-                hypothesis_id=str(args["hypothesis_id"]),
+                hypothesis_id=str(args["hypothesis_id"] or ""),
                 status=str(args["status"]),
                 rationale=str(args.get("rationale", "")),
                 evidence_artifacts=refs,
+                round_id=round_id,
             )
         raise ValueError(f"unknown_tool:{tool_name}")
 
     while ckpt.current_round <= config.max_rounds:
+        if ckpt.phase in {"completed", "budget_stopped", "no_champion"}:
+            break
         r_id = ckpt.current_round
         if r_id in ckpt.completed_rounds:
             ckpt.current_round += 1
@@ -416,6 +477,8 @@ def run_research_agent(
             ckpt.round_inner_requests = 0
             ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
+            ckpt.round_diagnostic_called = False
+            ckpt.round_diagnostic_blocks = 0
             _save_ckpt()
             continue
 
@@ -424,6 +487,14 @@ def run_research_agent(
             _save_ckpt()
             break
 
+        restart_available = config.basin_restart_on_stagnation and ckpt.restart_eligible_round_id == r_id
+        trajectory_observation = None
+        if track_round_stagnation:
+            trajectory_observation = {
+                "diagnostic_required": _diagnostic_required(r_id),
+                "consecutive_stagnant_rounds": ckpt.consecutive_stagnant_rounds,
+                "fresh_template_available": restart_available,
+            }
         messages: list[dict[str, Any]] = [
             {
                 "role": "user",
@@ -435,6 +506,7 @@ def run_research_agent(
                     archive_state=archive_tool.summary() if config.archive_feedback_enabled else None,
                     previous_round_summary=round_summaries[-1] if round_summaries else None,
                     open_hypotheses=ledger_tool.list_records(),
+                    trajectory_control=trajectory_observation,
                 ),
             }
         ]
@@ -443,7 +515,21 @@ def run_research_agent(
         # Phase 1: Diagnose & Plan
         if ckpt.phase == "diagnose":
             while ckpt.round_plan_args is None:
-                if ckpt.round_outer_requests >= config.outer_requests_per_round_cap:
+                if budget.remaining is not None and budget.remaining <= 0:
+                    ckpt.phase = "budget_stopped"
+                    _save_ckpt()
+                    break
+
+                effective_outer_cap = config.outer_requests_per_round_cap + (
+                    ckpt.round_diagnostic_blocks if config.enable_stagnation_diagnostic_gate else 0
+                )
+                if ckpt.round_outer_requests >= effective_outer_cap:
+                    bypassed_diag = _diagnostic_required(r_id)
+                    if bypassed_diag:
+                        ckpt.trajectory_control_events.append({
+                            "round_id": r_id,
+                            "event": "stagnation_diagnostic_bypassed_on_cap",
+                        })
                     ckpt.round_plan_args = {
                         "template_id": ckpt.active_template_id,
                         "postprocess_mode": ckpt.active_postprocess_mode,
@@ -451,16 +537,16 @@ def run_research_agent(
                         "hypothesis": f"Evolve {ckpt.active_template_id} within remaining EoH budget.",
                         "cited_kb_ids": [],
                         "rationale": "Outer round cap reached.",
+                        **({"diagnostic_bypassed_on_cap": True} if bypassed_diag else {}),
                     }
                     _save_ckpt()
                     break
 
-                if budget.remaining is not None and budget.remaining <= 0:
-                    ckpt.phase = "budget_stopped"
-                    _save_ckpt()
-                    break
-
-                if ckpt.round_outer_requests == config.outer_requests_per_round_cap - 1 and ckpt.round_outer_requests > 0:
+                if (
+                    ckpt.round_outer_requests == effective_outer_cap - 1
+                    and ckpt.round_outer_requests > 0
+                    and not _diagnostic_required(r_id)
+                ):
                     messages.append({
                         "role": "user",
                         "content": (
@@ -485,6 +571,13 @@ def run_research_agent(
                 if config.strict_checkpoint_barriers:
                     _sync_strict_checkpoints()
                 act = str(dec.get("action") or "")
+                if act == "call_tool" and dec.get("tool") == "submit_plan_and_evolve":
+                    dec = {
+                        **dict(dec.get("arguments") or {}),
+                        "action": "submit_plan",
+                        "tool_call_id": dec.get("tool_call_id"),
+                    }
+                    act = "submit_plan"
                 if act == "budget_exhausted":
                     if (
                         config.strict_checkpoint_barriers
@@ -506,28 +599,33 @@ def run_research_agent(
                     except Exception as exc:
                         tres = {"error": f"{type(exc).__name__}: {exc}"}
                     last_tool_res = tres
-                    if dec.get("tool_call_id"):
-                        messages.append({
-                            "role": "assistant",
-                            "content": "",
-                            "tool_calls": [{
-                                "id": str(dec["tool_call_id"]),
-                                "type": "function",
-                                "function": {"name": tname, "arguments": json.dumps(targs, ensure_ascii=False)},
-                            }],
-                        })
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": str(dec["tool_call_id"]),
-                            "content": json.dumps(tres, ensure_ascii=False, default=str),
-                        })
-                    else:
-                        messages.append({"role": "assistant", "content": json.dumps(dec, ensure_ascii=False)})
-                        messages.append({"role": "user", "content": json.dumps({"tool": tname, "result": tres}, ensure_ascii=False, default=str)})
+                    _append_tool_result(messages, dec, tname, targs, tres)
                     ckpt.round_step_index += 1
                     _save_ckpt()
                     continue
                 if act == "submit_plan":
+                    if _diagnostic_required(r_id):
+                        ckpt.round_diagnostic_blocks += 1
+                        last_tool_res = {
+                            "error_code": "stagnation_diagnostic_required",
+                            "error": "Call diagnose_suite or run_math_sandbox, then resubmit the plan.",
+                            "recommended_tools": ["diagnose_suite", "run_math_sandbox"],
+                            "remaining_blocks": 2 - ckpt.round_diagnostic_blocks,
+                        }
+                        ckpt.trajectory_control_events.append({
+                            "round_id": r_id,
+                            "event": "stagnation_diagnostic_required",
+                            "block": ckpt.round_diagnostic_blocks,
+                        })
+                        arguments = {key: value for key, value in dec.items() if key not in {"action", "tool_call_id"}}
+                        _append_tool_result(messages, dec, "submit_plan_and_evolve", arguments, last_tool_res)
+                        ckpt.round_step_index += 1
+                        _save_ckpt()
+                        continue
+                    if budget.remaining is not None and budget.remaining <= 0:
+                        ckpt.phase = "budget_stopped"
+                        _save_ckpt()
+                        break
                     chosen_tpl = str(dec.get("template_id") or ckpt.active_template_id)
                     chosen_pp = str(dec.get("postprocess_mode") or ckpt.active_postprocess_mode)
                     if not config.tools_enabled or chosen_tpl not in config.allowed_templates:
@@ -542,6 +640,9 @@ def run_research_agent(
                         "cited_kb_ids": list(dec.get("cited_kb_ids") or []),
                         "rationale": str(dec.get("rationale") or ""),
                     }
+                    if restart_available and dec.get("fresh_template") is True:
+                        ckpt.round_plan_args["fresh_template"] = True
+                        ckpt.trajectory_control_events.append({"round_id": r_id, "event": "basin_restart"})
                     if dec.get("tool_call_id"):
                         ckpt.pending_submit_tool_call = {
                             "id": str(dec["tool_call_id"]),
@@ -581,7 +682,7 @@ def run_research_agent(
             _save_ckpt()
 
             diag_ref_payload = None
-            if last_diag is not None:
+            if last_diag and last_diag.get("artifact_ref") and last_diag.get("artifact_sha256"):
                 diag_ref_payload = {
                     "path": last_diag["artifact_ref"],
                     "sha256": last_diag["artifact_sha256"],
@@ -599,6 +700,7 @@ def run_research_agent(
                     rationale=str(pargs.get("rationale") or ""),
                     is_final_round=(r_id >= config.max_rounds),
                     eval_dev_suite=bool(config.eval_dev_suite),
+                    fresh_template=pargs.get("fresh_template") is True,
                 )
             except ProviderFailure:
                 if config.strict_checkpoint_barriers:
@@ -696,6 +798,8 @@ def run_research_agent(
                 "evolved_hook_preview": str(frozen.get("hook_code") or "")[:1200] if frozen else None,
                 "regime_summary": (regime_slices or {}).get("by_factor") if isinstance(regime_slices, Mapping) else None,
             }
+            if session_out.get("stop_reason") == "stagnation_early_stop":
+                reflect_payload["stop_reason"] = "stagnation_early_stop"
             last_tool_res = reflect_payload
             ckpt.pending_reflect_payload = reflect_payload
             ckpt.phase = "reflect"
@@ -806,6 +910,26 @@ def run_research_agent(
             if dev_obj is not None and (prev_best_dev is None or float(dev_obj) < float(prev_best_dev)):
                 prev_best_dev = float(dev_obj)
 
+            inner_stopped = (reflect_payload_now or {}).get("stop_reason") == "stagnation_early_stop"
+            if inner_stopped:
+                ckpt.trajectory_control_events.append({"round_id": r_id, "event": "stagnation_early_stop"})
+            if track_round_stagnation:
+                previous = ckpt.trajectory_best_dev_objective
+                if dev_obj is not None and (previous is None or dev_obj < previous):
+                    ckpt.trajectory_best_dev_objective = dev_obj
+                    ckpt.consecutive_stagnant_rounds = 0
+                else:
+                    ckpt.consecutive_stagnant_rounds += 1
+                    ckpt.trajectory_control_events.append({
+                        "round_id": r_id,
+                        "event": "round_stagnant",
+                        "consecutive_stagnant_rounds": ckpt.consecutive_stagnant_rounds,
+                    })
+                if config.basin_restart_on_stagnation and (inner_stopped or ckpt.consecutive_stagnant_rounds >= 1):
+                    ckpt.restart_eligible_round_id = r_id + 1
+                else:
+                    ckpt.restart_eligible_round_id = None
+
             h_counts = ledger_tool.counts()
             inner_used = (
                 _round_inner_requests(session_out, budget.used)
@@ -828,6 +952,8 @@ def run_research_agent(
                 "hypotheses_refuted": h_counts.get("refuted", 0),
                 "frozen_manifest_ref": ckpt.best_solver_manifest_ref or "",
             }
+            if inner_stopped:
+                r_summary["stop_reason"] = "stagnation_early_stop"
             append_results_tsv_row(tsv_path, r_summary)
             round_summaries.append(r_summary)
             ckpt.round_summaries.append(r_summary)
@@ -840,6 +966,8 @@ def run_research_agent(
             ckpt.round_inner_requests = 0
             ckpt.round_prev_best_dev = None
             ckpt.round_plan_args = None
+            ckpt.round_diagnostic_called = False
+            ckpt.round_diagnostic_blocks = 0
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None
             _save_ckpt()
@@ -917,6 +1045,7 @@ def run_research_agent(
         "hypothesis_counts": ledger_tool.counts(),
         "archive_summary": archive_tool.summary() if config.archive_feedback_enabled else None,
         "round_summaries": round_summaries,
+        "trajectory_control_events": list(ckpt.trajectory_control_events),
         "completed_at": utc_now(),
     }
     atomic_write_json(run_dir / "research_summary.json", final_summary)

@@ -31,6 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--no-agent-guidance", action="store_true")
     p_run.add_argument("--use-benchmark-dev-suite", action="store_true")
     p_run.add_argument("--kb-store", type=Path, default=None)
+    p_run.add_argument("--no-extended-numpy-whitelist", action="store_true", help="Use the legacy NumPy hook whitelist.")
+    p_run.add_argument("--enable-n200-latency-screen", action="store_true")
+    p_run.add_argument("--enable-degenerate-constant-screen", action="store_true")
+    p_run.add_argument("--n200-latency-multiplier", type=float, default=1.0)
+    p_run.add_argument("--enable-stagnation-diagnostic-gate", action="store_true")
+    p_run.add_argument("--early-stop-no-jump-requests", type=int)
+    p_run.add_argument("--basin-restart-on-stagnation", action="store_true")
 
     p_res = sub.add_parser("resume", help="Resume an interrupted autonomous research run.")
     p_res.add_argument("--output-dir", type=Path, required=True)
@@ -54,6 +61,13 @@ def main(argv: list[str] | None = None) -> int:
             agent_guidance=not args.no_agent_guidance,
             use_benchmark_dev_suite=bool(args.use_benchmark_dev_suite),
             kb_store_path=str(args.kb_store.resolve()) if args.kb_store else None,
+            allow_extended_numpy_whitelist=not args.no_extended_numpy_whitelist,
+            enable_n200_latency_screen=args.enable_n200_latency_screen,
+            enable_degenerate_constant_screen=args.enable_degenerate_constant_screen,
+            n200_latency_multiplier=args.n200_latency_multiplier,
+            enable_stagnation_diagnostic_gate=args.enable_stagnation_diagnostic_gate,
+            early_stop_no_jump_requests=args.early_stop_no_jump_requests,
+            basin_restart_on_stagnation=args.basin_restart_on_stagnation,
         )
         res = run_research_agent(cfg, resume=False)
     else:

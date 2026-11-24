@@ -205,6 +205,7 @@ class SessionRunnerTool:
         rationale: str = "",
         is_final_round: bool = False,
         eval_dev_suite: bool = True,
+        fresh_template: bool = False,
     ) -> dict[str, Any]:
         if self.config.allowed_templates and template_id not in self.config.allowed_templates:
             raise ValueError(f"template_not_allowed:{template_id}")
@@ -236,6 +237,7 @@ class SessionRunnerTool:
                 "session_status": st.get("run_state") or "already_completed",
                 "round_state": "ROUND_COMPLETED",
                 "evaluation_facts": ev_facts_rec,
+                "stop_reason": ev_facts_rec.get("stop_reason"),
                 "frozen_solver": frozen_rec,
                 "dev_eval": dev_eval_rec,
                 "crossed_checkpoints": [],
@@ -256,6 +258,19 @@ class SessionRunnerTool:
 
         if round_state == "WAITING_FOR_PLAN":
             plan_path = self.plans_dir / f"plan_r{cur_round:04d}.json"
+            template_options: dict[str, Any] = {
+                "inject_static_kb_clues": bool(self.config.inject_static_kb_clues),
+            }
+            for name, default in (
+                ("allow_extended_numpy_whitelist", True),
+                ("enable_n200_latency_screen", False),
+                ("enable_degenerate_constant_screen", False),
+                ("n200_latency_multiplier", 1.0),
+                ("early_stop_no_jump_requests", None),
+            ):
+                value = getattr(self.config, name)
+                if value != default and not (name == "early_stop_no_jump_requests" and value == 0):
+                    template_options[name] = value
             plan_doc = {
                 "round_id": cur_round,
                 "direction": direction,
@@ -276,12 +291,14 @@ class SessionRunnerTool:
                     "template_version": "v1",
                     "postprocess_mode": postprocess_mode,
                     "time_budget_ms": float(self.config.instance_time_budget_ms),
-                    "template_options": {"inject_static_kb_clues": bool(self.config.inject_static_kb_clues)},
+                    "template_options": template_options,
                     "cited_kb_ids": list(cited_kb_ids),
                     "diagnostic_ref": dict(diagnostic_ref) if diagnostic_ref else None,
                     "rationale": rationale or f"Round {cur_round} interface selection.",
                 },
             }
+            if fresh_template and self.config.basin_restart_on_stagnation:
+                plan_doc["interface_selection"]["fresh_template"] = True
             plan_path.write_text(json.dumps(plan_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             sub = submit_plan(
                 run=self.session_dir,
@@ -413,6 +430,7 @@ class SessionRunnerTool:
             "session_status": st.get("run_state") or "ok",
             "round_state": st.get("state"),
             "evaluation_facts": ev_facts,
+            "stop_reason": ev_facts.get("stop_reason"),
             "frozen_solver": frozen_solver,
             "dev_eval": dev_eval,
             "crossed_checkpoints": crossed,

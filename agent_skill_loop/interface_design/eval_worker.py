@@ -10,7 +10,9 @@ import json
 import sys
 import threading
 import time
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
+
+import numpy as np
 
 from agent_skill_loop.eval_worker import _watch_parent
 
@@ -24,10 +26,116 @@ from .runtime import (
     validate_hook_ast,
     validate_hook_bundle,
 )
-from .templates import get_template_spec
+from .templates import TemplateSpec, get_template_spec
 
 
-def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
+def _constant_probe_instances(tpl: TemplateSpec, protocol_id: str) -> list[dict[str, Any]]:
+    """Small deterministic fixtures exercising vector hooks through their normal runner."""
+    if tpl.problem_family == "cvrp":
+        from .cvrp_l3b_probes import _build_recreate_probe_instance
+        from .validator import (
+            _build_gate5_n200_stress_instances,
+            build_gate4_dual_action_instance,
+            build_gate4_l3_6cust_instance,
+        )
+
+        stress = _build_gate5_n200_stress_instances()[0]
+        return [
+            build_gate4_dual_action_instance(),
+            build_gate4_l3_6cust_instance(),
+            _build_recreate_probe_instance(),
+            {
+                "instance_id": "constant-probe-cvrp-50", "size": 50,
+                "depot": stress["depot"], "capacity": stress["capacity"],
+                "customer_coordinates": stress["customer_coordinates"][:50],
+                "demands": stress["demands"][:50],
+            },
+        ]
+    if tpl.problem_family == "tsp":
+        from .tsp_probes import _fixture
+
+        return [_fixture(3, 10), _fixture(12, 11), _fixture(32, 12, clustered=True)]
+    if tpl.problem_family in {"obp", "bpp"}:
+        return [
+            {"instance_id": "constant-probe-packing", "protocol_id": protocol_id,
+             "capacity": 1000, "items": [750, 625, 500, 125, 100, 250]},
+        ]
+    return []
+
+
+def _constant_output_hooks(
+    tpl: TemplateSpec,
+    hook_fn: Callable[..., Any] | Mapping[str, Callable[..., Any]],
+    *,
+    protocol_id: str,
+    distance_convention: str,
+    template_options: Mapping[str, Any],
+    strict_hook_outputs: bool | None,
+) -> list[str]:
+    specs = tpl.effective_hook_specs
+    if not any(spec.output_shape_arg is not None for spec in specs):
+        return []
+
+    # Absence means there was no eligible vector. Judge variation at the largest
+    # observed action vector size so large-n constant branches cannot be masked
+    # by later tiny-vector calls or small probe fixtures.
+    observed_variation: dict[str, bool] = {}
+    max_size_seen: dict[str, int] = {}
+
+    def observe(fn: Callable[..., Any], name: str, shape_arg: str, position: int) -> Callable[..., Any]:
+        def checked(*args: Any, **kwargs: Any) -> Any:
+            raw = fn(*args, **kwargs)
+            shape_input = args[position] if position < len(args) else kwargs[shape_arg]
+            prev_size = max_size_seen.get(name, 0)
+            if observed_variation.get(name) is not True or len(shape_input) >= prev_size:
+                scores = np.asarray(raw)
+                if scores.shape == (len(shape_input),) and scores.size >= 2 and scores.dtype.kind in "iuf":
+                    if np.isfinite(scores).all():
+                        if scores.dtype.kind in "iu":
+                            # Integer range can overflow in np.ptp; any distinct integer exceeds the tolerance.
+                            varied = bool(np.any(scores != scores[0]))
+                        else:
+                            varied = bool(np.ptp(scores) > 1e-12)
+                        if scores.size > prev_size:
+                            max_size_seen[name] = scores.size
+                            observed_variation[name] = varied
+                        elif scores.size == prev_size and varied:
+                            observed_variation[name] = True
+            return raw
+
+        return checked
+
+    hooks = dict(hook_fn) if isinstance(hook_fn, Mapping) else {specs[0].name: hook_fn}
+    for spec in specs:
+        shape_arg = spec.output_shape_arg
+        if shape_arg is not None:
+            hooks[spec.name] = observe(hooks[spec.name], spec.name, shape_arg, spec.signature.index(shape_arg))
+
+    # Iterate largest-first so thresholded constants (e.g. constant when n > 10)
+    # cannot be masked by tiny early fixtures.
+    for instance in reversed(_constant_probe_instances(tpl, protocol_id)):
+        evaluate_hook_on_instance_inprocess(
+            template_id=tpl.template_id,
+            template_version=tpl.template_version,
+            hook_fn=hooks,
+            instance=instance,
+            template_options=template_options,
+            distance_convention=distance_convention,
+            time_budget_ms=None,
+            protocol_id=protocol_id,
+            strict_hook_outputs=strict_hook_outputs,
+        )
+        if all(observed_variation.get(spec.name) is True for spec in specs if spec.output_shape_arg is not None):
+            return []
+    return [spec.name for spec in specs if observed_variation.get(spec.name) is False]
+
+
+def _handle_request(
+    request: dict[str, Any],
+    *,
+    allow_extended_numpy_whitelist: bool = True,
+    enable_degenerate_constant_screen: bool = False,
+) -> dict[str, Any]:
     t0 = time.perf_counter()
     template_id = str(request["template_id"])
     template_version = str(request["template_version"])
@@ -41,6 +149,8 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     time_budget_ms = request.get("solve_deadline_ms", request.get("time_budget_ms", 500.0))
     capture_merge_sequence = bool(request.get("capture_merge_sequence", False))
     strict = request.get("strict_hook_outputs")
+    allow_extended_numpy_whitelist = request.get("allow_extended_numpy_whitelist", allow_extended_numpy_whitelist)
+    enable_degenerate_constant_screen = request.get("enable_degenerate_constant_screen", enable_degenerate_constant_screen)
 
     try:
         tpl = get_template_spec(template_id, template_version)
@@ -73,6 +183,10 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
         derive_outer_timeout_s(len(instances), time_budget_ms)
         if strict is not None and not isinstance(strict, bool):
             raise ValueError("invalid_strict_hook_outputs")
+        if not isinstance(allow_extended_numpy_whitelist, bool):
+            raise ValueError("invalid_allow_extended_numpy_whitelist")
+        if not isinstance(enable_degenerate_constant_screen, bool):
+            raise ValueError("invalid_enable_degenerate_constant_screen")
         if postprocess_mode not in tpl.allowed_postprocess_modes:
             raise ValueError("unsupported_postprocess_mode")
         if implementations is not None:
@@ -94,9 +208,14 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
     if tpl.hook_specs and implementations is None:
         implementations = {tpl.hook_name: hook_code}
     if implementations is None:
-        g1, g2 = validate_hook_ast(hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
+        g1, g2 = validate_hook_ast(
+            hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature,
+            allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+        )
     else:
-        g1, g2 = validate_hook_bundle(specs, implementations)
+        g1, g2 = validate_hook_bundle(
+            specs, implementations, allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+        )
     if g1 or g2:
         all_f = [*g1, *g2]
         return {
@@ -110,11 +229,18 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
             "inner_compute_ms": round((time.perf_counter() - t0) * 1000.0, 4),
         }
 
-    try:
+    def compile_hooks() -> Callable[..., Any] | Mapping[str, Callable[..., Any]]:
         if implementations is None:
-            hook_fn = compile_hook_function(hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
-        else:
-            hook_fn = compile_hook_bundle(specs, implementations)
+            return compile_hook_function(
+                hook_code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature,
+                allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+            )
+        return compile_hook_bundle(
+            specs, implementations, allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+        )
+
+    try:
+        hook_fn = compile_hooks()
     except Exception as exc:
         return {
             "valid": False,
@@ -126,6 +252,31 @@ def _handle_request(request: dict[str, Any]) -> dict[str, Any]:
             "template_source_sha256": tpl.template_source_sha256,
             "inner_compute_ms": round((time.perf_counter() - t0) * 1000.0, 4),
         }
+
+    if enable_degenerate_constant_screen and any(spec.output_shape_arg is not None for spec in specs):
+        constant_hooks = _constant_output_hooks(
+            tpl, hook_fn,
+            protocol_id=adapter.protocol_id,
+            distance_convention=distance_convention,
+            template_options=template_options,
+            strict_hook_outputs=strict,
+        )
+        if constant_hooks:
+            return {
+                "valid": False,
+                "completed": False,
+                "protocol_id": adapter.protocol_id,
+                "objective": None,
+                "instance_objectives": [],
+                "error_code": "degenerate_constant_output",
+                "error_detail": "Constant score vectors on synthetic probes: " + ", ".join(constant_hooks),
+                "failures": [],
+                "records": [],
+                "template_source_sha256": tpl.template_source_sha256,
+                "inner_compute_ms": round((time.perf_counter() - t0) * 1000.0, 4),
+            }
+        # Give dev evaluation a fresh namespace even if a probe modified hook-local state.
+        hook_fn = compile_hooks()
 
     records: list[dict[str, Any]] = []
     objectives: list[float] = []

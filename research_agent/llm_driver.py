@@ -136,6 +136,9 @@ class OpenAIAgentDriver:
             allowed_templates=self.config.allowed_templates,
             allowed_postprocess_modes=self.config.allowed_postprocess_modes,
             instance_time_budget_ms=self.config.instance_time_budget_ms,
+            enable_stagnation_diagnostic_gate=self.config.enable_stagnation_diagnostic_gate,
+            early_stop_no_jump_requests=self.config.early_stop_no_jump_requests,
+            basin_restart_on_stagnation=self.config.basin_restart_on_stagnation,
         )
         full_msgs = [{"role": "system", "content": sys_prompt}, *[dict(m) for m in messages]]
         if last_tool_result is not None:
@@ -255,7 +258,7 @@ class OpenAIAgentDriver:
                         if not isinstance(targs, dict):
                             decision = {"action": "invalid_response", "error": "tool_arguments_must_be_object", "raw": str(fn.get("arguments") or "")[:300]}
                         elif tname == "submit_plan_and_evolve":
-                            decision = {"action": "submit_plan", **targs, "tool_call_id": tc.get("id")}
+                            decision = {**targs, "action": "submit_plan", "tool_call_id": tc.get("id")}
                         elif tname == "finish_round":
                             decision = {"action": "finish_round", **targs, "tool_call_id": tc.get("id")}
                         else:

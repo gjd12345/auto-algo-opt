@@ -482,12 +482,17 @@ def execute_task(root, task_id):
         args.round_context_file=str(root/rd["round_context_ref"])
         args.suite_file = str(root / "dev_suite.json")
         inheritance_mode = row["inheritance_mode"] if "inheritance_mode" in row.keys() else "incumbent_only"
+        fresh_template = (plan.get("interface_selection") or {}).get("fresh_template") is True
         args.parent_skill = (
             str(root / rd["incumbent_before_ref"])
-            if rd["incumbent_before_ref"] and inheritance_mode not in {"population_seeds", "explicit_seeds"}
+            if not fresh_template and rd["incumbent_before_ref"] and inheritance_mode not in {"population_seeds", "explicit_seeds"}
             else None
         )
-        args.seed_codes = str(root/rd["seed_selection_ref"]) if rd["seed_selection_ref"] and inheritance_mode in {"population_seeds", "explicit_seeds"} else None
+        args.seed_codes = (
+            str(root / rd["seed_selection_ref"])
+            if not fresh_template and rd["seed_selection_ref"] and inheritance_mode in {"population_seeds", "explicit_seeds"}
+            else None
+        )
         args.metric_spec_hash = row["metric_spec_hash"] if "metric_spec_hash" in row.keys() else None
         args.data_manifest_hash = row["data_manifest_hash"] if "data_manifest_hash" in row.keys() else None
         args.problem_spec_hash = row["problem_spec_hash"] if "problem_spec_hash" in row.keys() else None
@@ -581,6 +586,7 @@ def collect_facts(root, con, run, rd, task):
                     ("complete" if result["valid"] else "failed",result["objective"],int(result["valid"]),result["error_code"],item["evaluation_id"]))
     plan_doc = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8")) if rd["normalized_plan_ref"] else {}
     m2_interface_sel = plan_doc.get("interface_selection") if isinstance(plan_doc, dict) else None
+    m2_summary = {}
     if m2_interface_sel is not None:
         m2_summary = json.loads((output / "summary.json").read_text(encoding="utf-8")) if (output / "summary.json").is_file() else {}
         exported = {
@@ -740,6 +746,7 @@ def collect_facts(root, con, run, rd, task):
             "search_progress": progress,
             "interface_selection": m2_interface_sel,
             "frozen_solver_ref": f"{prefix}/{exported['frozen_solver_manifest']}" if exported.get("frozen_solver_manifest") else None,
+            **({"stop_reason": m2_summary["stop_reason"]} if "stop_reason" in m2_summary else {}),
             "terminal_reason":task["terminal_reason"]}
 
 

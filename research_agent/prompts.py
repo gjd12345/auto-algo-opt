@@ -152,6 +152,7 @@ AGENT_TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "hypothesis": {"type": "string"},
                     "cited_kb_ids": {"type": "array", "items": {"type": "string"}},
                     "rationale": {"type": "string"},
+                    "fresh_template": {"type": "boolean", "description": "Start with the template baseline when the round observation marks a fresh start available."},
                 },
                 "required": ["template_id", "direction", "hypothesis"],
             },
@@ -203,6 +204,9 @@ def build_round_system_prompt(
     allowed_templates: Sequence[str],
     allowed_postprocess_modes: Sequence[str],
     instance_time_budget_ms: float,
+    enable_stagnation_diagnostic_gate: bool = False,
+    early_stop_no_jump_requests: int | None = None,
+    basin_restart_on_stagnation: bool = False,
 ) -> str:
     mode_desc = (
         "You have full access to deterministic diagnostic tools, KB search/read, AST-whitelisted NumPy math sandbox, "
@@ -220,12 +224,27 @@ def build_round_system_prompt(
         if tools_enabled
         else "Respond with ONE strict JSON object only (`submit_plan` during diagnose phase, `finish_round` during reflect phase)."
     )
+    trajectory_guidance = []
+    if enable_stagnation_diagnostic_gate and tools_enabled:
+        trajectory_guidance.append(
+            "If the round observation requires a diagnostic, call `diagnose_suite` or `run_math_sandbox` before submitting the plan."
+        )
+    if early_stop_no_jump_requests:
+        trajectory_guidance.append(
+            f"Inner evolution may stop after {early_stop_no_jump_requests} generated evaluations without a strict development objective improvement."
+        )
+    if basin_restart_on_stagnation:
+        trajectory_guidance.append(
+            'When `fresh_template_available` is true, include `"fresh_template": true` in the plan to start with the template baseline.'
+        )
+    trajectory_desc = " ".join(trajectory_guidance) + "\n" if trajectory_guidance else ""
     return (
         f"You are an autonomous combinatorial optimization research scientist (`{arm_id}`) working on `{problem_family}` "
         f"under a strict per-instance time budget of {instance_time_budget_ms:.1f} ms.\n"
         f"{mode_desc}\n"
         f"Allowed templates: {tpl_desc}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
         f"{protocol_desc}\n"
+        f"{trajectory_desc}"
         '1) {"action":"call_tool","tool":"<name>","arguments":{...}}\n'
         '2) {"action":"submit_plan","template_id":"...","postprocess_mode":"...","direction":"...","hypothesis":"...","cited_kb_ids":[...],"rationale":"..."}\n'
         '3) {"action":"finish_round","summary":"...","hypothesis_updates":[...]}'
@@ -241,6 +260,7 @@ def build_round_observation_message(
     archive_state: Mapping[str, Any] | None,
     previous_round_summary: Mapping[str, Any] | None,
     open_hypotheses: Sequence[Mapping[str, Any]],
+    trajectory_control: Mapping[str, Any] | None = None,
 ) -> str:
     payload = {
         "round_id": round_id,
@@ -251,4 +271,6 @@ def build_round_observation_message(
         "previous_round_summary": previous_round_summary,
         "open_hypotheses": list(open_hypotheses),
     }
+    if trajectory_control is not None:
+        payload["trajectory_control"] = dict(trajectory_control)
     return json.dumps(payload, ensure_ascii=False, indent=2)

@@ -7,6 +7,7 @@ checkpoint barriers, deterministic OpenCode Go strong/weak routing, and 2000ms t
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -15,11 +16,13 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import numpy as np
+from eoh.eoh.eoh import EOH
 
 from agent_skill_loop.contracts import EOH_COMMIT, EvaluationResult, SkillVersion
+from agent_skill_loop.evidence.behavior import BehaviorTraceRecorder
 from agent_skill_loop.milestone_checkpoint import (
     claim_latest_pending_attempt_token,
     get_run_wall_offset_seconds,
@@ -37,12 +40,13 @@ from .dynamic_eoh import (
     DEFAULT_MOCK_MERGE_CANDIDATES,
     DynamicInterfaceProblem,
     MockEoHLLMServer,
+    _DynamicCandidateEoH,
     _default_mock_candidates,
     derive_effective_batch_timeout_s,
 )
 from .model_routing import ModelRoutingPolicy, allocate_logical_route, compute_attempt_cost_usd, extract_provider_usage
 from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template, parse_hook_candidate
-from .runtime import resolve_problem_adapter, validate_hook_ast, validate_hook_bundle
+from .runtime import resolve_problem_adapter, validate_hook_ast
 from .templates import get_template_spec
 from .validator import InterfaceValidator
 
@@ -57,6 +61,7 @@ INTERFACE_SELECTION_KEYS = frozenset({
     "cited_kb_ids",
     "diagnostic_ref",
     "rationale",
+    "fresh_template",
 })
 
 
@@ -72,6 +77,15 @@ def _validate_positive_budget_ms(value: Any, *, field_name: str) -> float:
     if not math.isfinite(val) or val <= 0.0:
         raise ValueError(f"{field_name}_must_be_positive")
     return val
+
+
+def _early_stop_limit(options: Mapping[str, Any]) -> int:
+    value = options.get("early_stop_no_jump_requests")
+    if value is None:
+        return 0
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("early_stop_no_jump_requests_must_be_nonnegative_integer")
+    return value
 
 
 def resolve_session_time_budget_ms(
@@ -180,6 +194,19 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("interface_selection_template_options_must_be_object")
     else:
         opts = dict(opts)
+    for name in (
+        "allow_extended_numpy_whitelist", "enable_n200_latency_screen", "enable_degenerate_constant_screen",
+    ):
+        if name in opts and not isinstance(opts[name], bool):
+            raise ValueError(f"interface_selection_{name}_must_be_boolean")
+    if "n200_latency_multiplier" in opts:
+        opts["n200_latency_multiplier"] = _validate_positive_budget_ms(
+            opts["n200_latency_multiplier"], field_name="n200_latency_multiplier",
+        )
+    _early_stop_limit(opts)
+    fresh_template = raw.get("fresh_template", False)
+    if not isinstance(fresh_template, bool):
+        raise ValueError("interface_selection_fresh_template_must_be_boolean")
 
     cited = raw.get("cited_kb_ids", [])
     if not isinstance(cited, list) or any(not isinstance(x, str) or not x.strip() for x in cited):
@@ -206,6 +233,8 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         parsed["time_budget_ms"] = _validate_positive_budget_ms(
             raw["time_budget_ms"], field_name="interface_selection_time_budget_ms"
         )
+    if fresh_template:
+        parsed["fresh_template"] = True
     return parsed
 
 
@@ -417,6 +446,10 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         state["bridge_ref"] = None
         return state
 
+    def _start_generated_evaluations(self) -> None:
+        super()._start_generated_evaluations()
+        self.seed_origins.clear()
+
     def evaluate_detailed(self, code_string: str) -> dict[str, Any]:
         self._seq += 1
         eval_id = uuid.uuid4().hex
@@ -455,7 +488,17 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         }
         solver_event(self.session, start_payload)
 
-        resp = super().evaluate_detailed(code_str)
+        prev_origin = getattr(self, "_current_eval_origin", None)
+        self._current_eval_origin = origin
+        try:
+            super_eval = super().evaluate_detailed
+            params = inspect.signature(super_eval).parameters
+            if "origin" in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+                resp = super_eval(code_str, origin=origin)
+            else:
+                resp = super_eval(code_str)
+        finally:
+            self._current_eval_origin = prev_origin
         inst_objs = tuple(float(x) for x in (resp.get("instance_objectives") or []))
         if resp.get("valid") and inst_objs:
             exact_obj = sum(inst_objs) / len(inst_objs)
@@ -463,6 +506,36 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
             exact_obj = float(resp["objective"])
         else:
             exact_obj = None
+        metrics: dict[str, Any] = {}
+        if records := resp.get("records"):
+            recorder = BehaviorTraceRecorder(
+                contract={
+                    "mode": "dynamic_interface_instance_profile/v1",
+                    "template_id": self.design.template_id,
+                    "template_version": self.design.template_version,
+                    "postprocess_mode": self.design.postprocess_mode,
+                    "solve_deadline_ms": self.instance_time_budget_ms,
+                },
+                suite_hash=self.suite_hash,
+            )
+            complete = bool(resp.get("valid"))
+            for index, record in enumerate(records):
+                completed = record.get("completed") is True
+                complete &= completed
+                recorder.begin_instance(instance_id=str(record.get("instance_id", "")), instance_index=index)
+                obj = record.get("objective")
+                recorder.record({
+                    "outcome_class": record.get("outcome_class"),
+                    "feasible": record.get("feasible", record.get("valid")),
+                    "completed": completed,
+                    "exact_k_feasible": record.get("exact_k_feasible", record.get("exact_vehicle_count")),
+                    "route_count": record.get("route_count"),
+                    "objective_r6": round(float(obj), 6) if obj is not None and math.isfinite(obj) else None,
+                })
+                recorder.finish_instance(status="complete" if completed else "partial")
+            metrics["behavior_evidence"] = recorder.finalize(status="complete" if complete else "partial")
+        if "n200_latency_diagnostics" in resp:
+            metrics["n200_latency_diagnostics"] = resp["n200_latency_diagnostics"]
         ev_result = EvaluationResult(
             valid=bool(resp.get("valid")),
             objective=exact_obj,
@@ -471,6 +544,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
             error_code=resp.get("error_code"),
             error_detail=resp.get("error_detail"),
             elapsed_seconds=float(resp.get("worker_wall_ms") or 0.0) / 1000.0,
+            metrics=metrics or None,
         )
         done_payload = {
             **start_payload,
@@ -583,6 +657,70 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
 
     def _append_eval_log(self, code_string: str, resp: Mapping[str, Any]) -> None:
         return None
+
+
+class StagnationEarlyStop(Exception):
+    """Internal signal for a completed search stopped by the no-improvement limit."""
+
+
+class _StagnationAwareEoH(_DynamicCandidateEoH):
+    """Check the durable evaluation journal between official EoH sample claims."""
+
+    def __init__(self, config: Any, problem: DynamicInterfaceProblem, *, evaluation_log: Path, no_jump_limit: int) -> None:
+        super().__init__(config, problem)
+        if self.num_samplers != 1 or self.num_evaluators != 1:
+            raise ValueError("stagnation_early_stop_requires_serial_sampling")
+        self.evaluation_log = evaluation_log
+        self.no_jump_limit = no_jump_limit
+        self.no_jump_count = 0
+        self._trajectory_error: Exception | None = None
+
+    def _sampler_worker(self, population_ref: list, target: int, t0: float) -> None:
+        best_key: tuple[int, float] = (-1, -math.inf)
+        seen: set[str] = set()
+
+        def consume_rows(rows: Iterable[str]) -> None:
+            nonlocal best_key
+            for line in rows:
+                row = json.loads(line)
+                evaluation_id = row["evaluation_id"]
+                if evaluation_id in seen:
+                    continue
+                seen.add(evaluation_id)
+                evaluation = row["evaluation"]
+                objective = evaluation.get("objective")
+                be_status = (evaluation.get("metrics") or {}).get("behavior_evidence", {}).get("status")
+                is_complete = int(bool(evaluation.get("completed", True)) and be_status != "partial")
+                cand_key = (
+                    (is_complete, -float(objective))
+                    if (evaluation.get("valid") and objective is not None and math.isfinite(objective))
+                    else None
+                )
+                improved = cand_key is not None and cand_key > best_key
+                if improved:
+                    best_key = cand_key
+                if row["origin"] == "generated":
+                    self.no_jump_count = 0 if improved else self.no_jump_count + 1
+
+        try:
+            with self.evaluation_log.open(encoding="utf-8") as journal:
+                consume_rows(journal)
+                # EoH registers the offspring before this call returns. Limit each
+                # invocation to one claim so the triggering sample is retained.
+                for sample_target in range(1, target + 1):
+                    super()._sampler_worker(population_ref, sample_target, t0)
+                    consume_rows(journal)
+                    if self.no_jump_count >= self.no_jump_limit:
+                        return
+        except Exception as exc:
+            self._trajectory_error = exc
+
+    def run(self) -> None:
+        super().run()
+        if self._trajectory_error is not None:
+            raise self._trajectory_error
+        if self.no_jump_count >= self.no_jump_limit:
+            raise StagnationEarlyStop
 
 
 def _build_session_bridge(
@@ -955,8 +1093,6 @@ def execute_m2_session_task(
     """Execute one Session round using validated dynamic interface inside Session authority."""
     from eoh import LLMConfig
     from eoh.config import EoHConfig
-    from eoh.eoh.eoh import EOH
-
     from agent_skill_loop.client import ProviderFailure, load_local_env
 
     t_run0 = time.monotonic()
@@ -989,6 +1125,12 @@ def execute_m2_session_task(
     combined_ctx = (round_context_text + "\n\n" + kb_clue).strip() if kb_clue else round_context_text
 
     budget_ms = resolve_session_time_budget_ms(plan.get("interface_selection"), config, design)
+    options = design.template_options
+    no_jump_limit = _early_stop_limit(options)
+    extended_numpy = options.get("allow_extended_numpy_whitelist", True)
+    fresh_template = (plan.get("interface_selection") or {}).get("fresh_template") is True
+    if fresh_template:
+        parent_skill_path = seed_selection_path = None
     kb_release_id, kb_manifest_sha256 = resolve_session_kb_release(config, session_root=root)
     effective_cand_timeout = derive_effective_batch_timeout_s(
         len(instances), budget_ms, floor_s=float(row["solver_timeout"]),
@@ -1096,6 +1238,10 @@ def execute_m2_session_task(
         vehicle_limit_policy=str(suite.get("vehicle_limit_policy") or ("unconstrained" if design.problem_family == "cvrp" else "not_applicable")),
         candidate_timeout_s=effective_cand_timeout,
         instance_time_budget_ms=budget_ms,
+        allow_extended_numpy_whitelist=extended_numpy,
+        enable_n200_latency_screen=options.get("enable_n200_latency_screen", False),
+        enable_degenerate_constant_screen=options.get("enable_degenerate_constant_screen", False),
+        n200_latency_multiplier=options.get("n200_latency_multiplier", 1.0),
         evaluation_log=eval_log,
         round_context=combined_ctx,
     )
@@ -1124,14 +1270,18 @@ def execute_m2_session_task(
             continue
         if len(tpl.effective_hook_specs) > 1:
             try:
-                impls = parse_hook_candidate(tpl.template_id, tpl.template_version, code)
-                g1, g2 = validate_hook_bundle(tpl.effective_hook_specs, impls)
+                parse_hook_candidate(
+                    tpl.template_id, tpl.template_version, code, allow_extended_numpy_whitelist=extended_numpy,
+                )
             except (ValueError, SyntaxError):
                 continue
         else:
-            g1, g2 = validate_hook_ast(code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature)
-        if g1 or g2:
-            continue
+            g1, g2 = validate_hook_ast(
+                code, hook_name=tpl.hook_name, expected_args=tpl.hook_signature,
+                allow_extended_numpy_whitelist=extended_numpy,
+            )
+            if g1 or g2:
+                continue
         seed_origin_by_hash[checksum] = origin
         seed_entries.append({"algorithm": f"Inherited {origin} ({checksum[:12]}).", "code": code})
     _atomic_write_text(output / "interface_seed_receipt.json", json.dumps({
@@ -1139,7 +1289,9 @@ def execute_m2_session_task(
         "used_inherited_seeds": len(seed_entries) - 1,
         "skipped_inherited_seeds": len(inherited) - len(seed_entries) + 1,
         "previous_design_sha256": previous_design.design_sha256 if previous_design is not None else None,
-        "reason": "no_compatible_seed_restarted_from_template" if inherited and len(seed_entries) == 1 else None,
+        "reason": "fresh_template" if fresh_template else (
+            "no_compatible_seed_restarted_from_template" if inherited and len(seed_entries) == 1 else None
+        ),
         "seed_origins": seed_origin_by_hash,
     }, indent=2) + "\n")
     task.seed_origins = seed_origin_by_hash
@@ -1176,12 +1328,18 @@ def execute_m2_session_task(
             seed_path=str(seed_path),
             output_dir=str(output),
         )
-        engine = EOH(engine_cfg, task)
+        if no_jump_limit:
+            engine = _StagnationAwareEoH(engine_cfg, task, evaluation_log=eval_log, no_jump_limit=no_jump_limit)
+        else:
+            engine = _DynamicCandidateEoH(engine_cfg, task)
         base_seed = int(config.get("search_seed", config["suite_generation"]["seed"]))
         s_seed = base_seed + int(rd["round_id"]) - 1
         random.seed(s_seed)
         np.random.seed(s_seed % (2**32))
         engine.run()
+    except StagnationEarlyStop:
+        status = "stopped"
+        stop_reason = "stagnation_early_stop"
     except Exception as exc:
         msg = str(exc)
         bridge_err = getattr(bridge, "last_error", None) if bridge is not None else None

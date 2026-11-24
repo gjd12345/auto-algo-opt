@@ -18,6 +18,7 @@ import json
 import math
 import os
 import random
+import subprocess
 import threading
 import time
 import uuid
@@ -103,6 +104,10 @@ class DynamicInterfaceProblem(BaseProblem):
         evaluation_log: str | Path | None = None,
         round_context: str | None = None,
         n_processes: int = 1,
+        allow_extended_numpy_whitelist: bool = True,
+        enable_n200_latency_screen: bool = False,
+        enable_degenerate_constant_screen: bool = False,
+        n200_latency_multiplier: float = 1.0,
     ) -> None:
         assert_milestone_suite_not_blind(suite_id)
         self.design = design
@@ -113,8 +118,30 @@ class DynamicInterfaceProblem(BaseProblem):
         effective_batch_timeout = derive_effective_batch_timeout_s(
             len(instances), instance_time_budget_ms, floor_s=float(candidate_timeout_s),
         )
+        if (isinstance(n200_latency_multiplier, bool) or not math.isfinite(n200_latency_multiplier)
+                or n200_latency_multiplier <= 0):
+            raise ValueError("invalid_n200_latency_multiplier")
+        self.allow_extended_numpy_whitelist = allow_extended_numpy_whitelist
+        self.enable_n200_latency_screen = enable_n200_latency_screen
+        self.enable_degenerate_constant_screen = enable_degenerate_constant_screen
+        self.n200_latency_multiplier = float(n200_latency_multiplier)
+        self._n200_timeout_s = (
+            derive_outer_timeout_s(
+                2, instance_time_budget_ms * self.n200_latency_multiplier,
+                minimum_s=5.0,
+            )
+            if enable_n200_latency_screen and design.problem_family == "cvrp" else 0.0
+        )
+        if enable_degenerate_constant_screen:
+            if self._n200_timeout_s:
+                self._n200_timeout_s += 3.0
+            else:
+                effective_batch_timeout += 3.0
         # EoH outer process timeout receives >= 10s headroom above our inner serial batch subprocess timeout
-        super().__init__(timeout=max(10, int(math.ceil(effective_batch_timeout)) + 10), n_processes=n_processes)
+        super().__init__(
+            timeout=max(10, math.ceil(effective_batch_timeout + self._n200_timeout_s) + 10),
+            n_processes=n_processes,
+        )
         self.instances = [dict(inst) for inst in instances]
         self.suite_id = str(suite_id)
         self.suite_hash = suite_hash
@@ -124,6 +151,8 @@ class DynamicInterfaceProblem(BaseProblem):
         self.instance_time_budget_ms = float(instance_time_budget_ms)
         self.evaluation_log = str(evaluation_log) if evaluation_log is not None else None
         self.round_context = round_context.strip() if isinstance(round_context, str) and round_context.strip() else None
+        baseline_program = self.tpl.default_template_program if len(self.tpl.effective_hook_specs) > 1 else design.baseline_hook_code
+        self._seed_code_hashes = {sha256_text(baseline_program), design.baseline_hook_sha256}
         self._log_lock = threading.Lock()
 
     def __getstate__(self) -> dict[str, Any]:
@@ -149,21 +178,21 @@ class DynamicInterfaceProblem(BaseProblem):
     @property
     def task_description(self) -> str:
         specs = self.tpl.effective_hook_specs
+        contract = capability_contract_dict(
+            hook_name=self.design.hook_name,
+            hook_signature=self.design.hook_signature,
+            template_id=self.design.template_id,
+            template_version=self.design.template_version,
+            allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+        )
         if len(specs) > 1:
-            contract = {
+            contract.update({
                 "schema_version": "interface-capability-bundle-contract/v1",
                 "template_id": self.design.template_id,
                 "template_version": self.design.template_version,
                 "protocol_id": self.adapter.protocol_id,
                 "hooks": [spec.to_dict() for spec in specs],
-            }
-        else:
-            contract = capability_contract_dict(
-                hook_name=self.design.hook_name,
-                hook_signature=self.design.hook_signature,
-                template_id=self.design.template_id,
-                template_version=self.design.template_version,
-            )
+            })
         text = (
             self.design.hook_task_description
             + "\n\nEVALUATOR CAPABILITY CONTRACT (machine-derived; mandatory):\n"
@@ -182,15 +211,24 @@ class DynamicInterfaceProblem(BaseProblem):
     def evaluate_program(self, program_str: str, callable_func: Any = None) -> float | None:
         return self.evaluate(program_str)
 
+    def _start_generated_evaluations(self) -> None:
+        self._seed_code_hashes.clear()
+
     def _resolve_hook_payload(self, code_string: str) -> tuple[str | None, dict[str, str] | None]:
         specs = self.tpl.effective_hook_specs
         if len(specs) <= 1 and not self.design.hook_specs:
             return str(code_string), None
-        implementations = parse_hook_candidate(self.design.template_id, self.design.template_version, str(code_string))
+        implementations = parse_hook_candidate(
+            self.design.template_id, self.design.template_version, str(code_string),
+            allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+        )
         return implementations[self.tpl.hook_name], implementations
 
-    def evaluate_detailed(self, code_string: str) -> dict[str, Any]:
-        evaluator = DynamicSubprocessEvaluator(candidate_timeout_s=self.candidate_timeout_s)
+    def evaluate_detailed(self, code_string: str, *, origin: str | None = None) -> dict[str, Any]:
+        if origin is None:
+            origin = getattr(self, "_current_eval_origin", None)
+        if origin is None:
+            origin = "baseline" if sha256_text(str(code_string)) in self._seed_code_hashes else "generated"
         try:
             primary_code, implementations = self._resolve_hook_payload(str(code_string))
         except (ValueError, SyntaxError) as exc:
@@ -209,6 +247,51 @@ class DynamicInterfaceProblem(BaseProblem):
             }
             self._append_eval_log(str(code_string), resp)
             return resp
+        screen_constant = origin == "generated" and self.enable_degenerate_constant_screen
+        if origin == "generated" and self._n200_timeout_s:
+            latency_budget_ms = self.instance_time_budget_ms * self.n200_latency_multiplier
+            validator = InterfaceValidator(
+                candidate_timeout_s=self._n200_timeout_s,
+                instance_time_budget_ms=latency_budget_ms,
+                allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+                enable_degenerate_constant_screen=screen_constant,
+            )
+            try:
+                latency = validator.validate_evolved_hook_n200_latency(
+                    self.design, hook_code_override=primary_code, hook_implementations=implementations,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                timed_out = isinstance(exc, (TimeoutError, subprocess.TimeoutExpired))
+                latency = {
+                    "passed": False, "budget_ms": latency_budget_ms,
+                    "error_code": "candidate_timeout" if timed_out else "worker_start_failed",
+                    "error_detail": str(exc), "timeout_kind": "outer_worker" if timed_out else None,
+                }
+            if not latency["passed"]:
+                lat_err = latency.get("error_code")
+                max_solve = latency.get("max_solve_ms")
+                is_timeout = bool(
+                    lat_err in {"candidate_timeout", "budget_exhausted", "outer_timeout", "worker_start_failed", None}
+                    or latency.get("timeout_kind") is not None
+                    or (max_solve is not None and float(max_solve) > float(latency_budget_ms))
+                )
+                resp = {
+                    "valid": False, "completed": False, "objective": None, "instance_objectives": [],
+                    "records": [], "protocol_id": self.adapter.protocol_id,
+                    "error_code": "n200_latency_exceeded" if is_timeout else str(lat_err),
+                    "error_detail": latency.get("error_detail") or "Candidate did not complete the synthetic n=200 probes.",
+                    "failures": latency.get("failures") or [],
+                    "timeout_kind": latency.get("timeout_kind"),
+                    "outer_timeout_s": latency.get("outer_timeout_s", self._n200_timeout_s),
+                    "worker_wall_ms": latency.get("worker_wall_ms"),
+                    "n200_latency_diagnostics": latency,
+                }
+                self._append_eval_log(str(code_string), resp)
+                return resp
+            # The latency worker already checked constant output before its n=200 solves.
+            screen_constant = False
+
+        evaluator = DynamicSubprocessEvaluator(candidate_timeout_s=self.candidate_timeout_s)
         resp = evaluator.evaluate(
             template_id=self.design.template_id,
             template_version=self.design.template_version,
@@ -223,6 +306,8 @@ class DynamicInterfaceProblem(BaseProblem):
             protocol_id=self.adapter.protocol_id,
             solve_deadline_ms=self.instance_time_budget_ms,
             outer_timeout_s=self.candidate_timeout_s,
+            allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+            enable_degenerate_constant_screen=screen_constant,
         )
         self._append_eval_log(str(code_string), resp)
         return resp
@@ -258,12 +343,24 @@ class DynamicInterfaceProblem(BaseProblem):
             "worker_wall_ms": resp.get("worker_wall_ms"),
             "subprocess_overhead_ms": resp.get("subprocess_overhead_ms"),
         }
+        if "n200_latency_diagnostics" in resp:
+            row["n200_latency_diagnostics"] = resp["n200_latency_diagnostics"]
         path = Path(self.evaluation_log)
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._log_lock:
             with path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n")
                 handle.flush()
+
+
+class _DynamicCandidateEoH(EOH):
+    def _init_population(self, t0: float):
+        population, generation = super()._init_population(t0)
+        # Seed evaluations have finished in their workers. A later generation
+        # with matching source still counts as a generated evaluation.
+        if isinstance(self.problem, DynamicInterfaceProblem):
+            self.problem._start_generated_evaluations()
+        return population, generation
 
 
 class MockEoHLLMServer:
@@ -596,6 +693,10 @@ def run_dynamic_eoh_evolution(
         instance_time_budget_ms=instance_time_budget_ms,
         evaluation_log=eval_log,
         round_context=round_context,
+        allow_extended_numpy_whitelist=design.template_options.get("allow_extended_numpy_whitelist", True),
+        enable_n200_latency_screen=design.template_options.get("enable_n200_latency_screen", False),
+        enable_degenerate_constant_screen=design.template_options.get("enable_degenerate_constant_screen", False),
+        n200_latency_multiplier=design.template_options.get("n200_latency_multiplier", 1.0),
     )
 
     # Evaluate baseline hook first so we have an exact same-skeleton baseline objective
@@ -617,6 +718,7 @@ def run_dynamic_eoh_evolution(
             csha = sha256_text(code)
             if csha not in seen_seed_shas:
                 seen_seed_shas.add(csha)
+                task._seed_code_hashes.add(csha)
                 seed_entries.append({
                     "algorithm": str(item.get("algorithm") or "Carried-over valid seed"),
                     "code": code,
@@ -702,7 +804,10 @@ def run_dynamic_eoh_evolution(
             seed_path=str(seed_path),
             output_dir=str(output_dir),
         )
-        engine = EOH(engine_cfg, task)
+        engine_type = (
+            _DynamicCandidateEoH if task.enable_n200_latency_screen or task.enable_degenerate_constant_screen else EOH
+        )
+        engine = engine_type(engine_cfg, task)
         random.seed(int(search_seed))
         np.random.seed(int(search_seed) % (2**32))
         engine.run()

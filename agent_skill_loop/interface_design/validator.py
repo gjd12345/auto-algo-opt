@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from functools import partial
 import hashlib
+import math
 import random
 from typing import Any, Callable, Mapping, Sequence
 
@@ -385,11 +386,20 @@ class InterfaceValidator:
         evaluator: DynamicSubprocessEvaluator | None = None,
         solve_deadline_ms: float | None = None,
         outer_timeout_s: float | None = None,
+        allow_extended_numpy_whitelist: bool | None = None,
+        enable_degenerate_constant_screen: bool = False,
     ) -> None:
         self.candidate_timeout_s = float(candidate_timeout_s)
         self.instance_time_budget_ms = float(instance_time_budget_ms if solve_deadline_ms is None else solve_deadline_ms)
         self.outer_timeout_s = outer_timeout_s
         self.evaluator = evaluator or DynamicSubprocessEvaluator(candidate_timeout_s=self.candidate_timeout_s)
+        self.allow_extended_numpy_whitelist = allow_extended_numpy_whitelist
+        self.enable_degenerate_constant_screen = enable_degenerate_constant_screen
+
+    def _allow_extended_numpy(self, design: InterfaceDesign) -> bool:
+        if self.allow_extended_numpy_whitelist is not None:
+            return self.allow_extended_numpy_whitelist
+        return design.template_options.get("allow_extended_numpy_whitelist", True)
 
     def validate(
         self,
@@ -403,6 +413,7 @@ class InterfaceValidator:
     ) -> ValidationReport:
         """Run all 5 validation gates sequentially and return a structured ``ValidationReport``."""
         hook_code = hook_code_override if hook_code_override is not None else design.baseline_hook_code
+        allow_extended_numpy = self._allow_extended_numpy(design)
         hook_sha = sha256_text(hook_code)
         gates_summary: list[dict[str, Any]] = []
         failures: list[GateFailure] = []
@@ -441,7 +452,10 @@ class InterfaceValidator:
             from .planner import parse_hook_candidate
 
             try:
-                implementations = parse_hook_candidate(tpl.template_id, tpl.template_version, hook_code_override)
+                implementations = parse_hook_candidate(
+                    tpl.template_id, tpl.template_version, hook_code_override,
+                    allow_extended_numpy_whitelist=allow_extended_numpy,
+                )
             except (ValueError, SyntaxError) as exc:
                 candidate_error = GateFailure(
                     2, "template_and_signature", "invalid_hook_bundle_program", None, None,
@@ -452,7 +466,9 @@ class InterfaceValidator:
             if hook_code_override is not None and len(specs) == 1:
                 implementations[design.hook_name] = hook_code_override
         if implementations is not None:
-            g1_failures, g2_sig_failures = validate_hook_bundle(specs, implementations)
+            g1_failures, g2_sig_failures = validate_hook_bundle(
+                specs, implementations, allow_extended_numpy_whitelist=allow_extended_numpy,
+            )
             if not g2_sig_failures:
                 hook_sha = sha256_text(implementations[expected_hook_name])
                 diagnostics["hook_bundle"] = hook_bundle_metadata(specs, implementations)
@@ -465,6 +481,7 @@ class InterfaceValidator:
         else:
             g1_failures, g2_sig_failures = validate_hook_ast(
                 hook_code, hook_name=expected_hook_name, expected_args=expected_args,
+                allow_extended_numpy_whitelist=allow_extended_numpy,
             )
         if candidate_error is not None:
             g2_sig_failures.append(candidate_error)
@@ -564,6 +581,7 @@ class InterfaceValidator:
             template_options=design.template_options,
             protocol_id=protocol_id,
             instance_time_budget_ms=self.instance_time_budget_ms,
+            allow_extended_numpy_whitelist=allow_extended_numpy,
             **({"outer_timeout_s": self.outer_timeout_s} if self.outer_timeout_s is not None else {}),
         )
         if probe_spec is not None:
@@ -873,7 +891,9 @@ class InterfaceValidator:
             "protocol_id": tpl.effective_protocol_id,
             "hook_code": hook_code,
             "instances": n200_insts,
-            "instance_time_budget_ms": self.instance_time_budget_ms,
+            "solve_deadline_ms": self.instance_time_budget_ms,
+            "allow_extended_numpy_whitelist": self._allow_extended_numpy(design),
+            "enable_degenerate_constant_screen": self.enable_degenerate_constant_screen,
         }
         if hook_implementations is not None:
             eval_kwargs["hook_implementations"] = dict(hook_implementations)
@@ -881,12 +901,21 @@ class InterfaceValidator:
             eval_kwargs["outer_timeout_s"] = self.outer_timeout_s
         resp = self.evaluator.evaluate(**eval_kwargs)
         records = list(resp.get("records") or [])
-        solve_times = [float(r["solve_ms"]) for r in records if isinstance(r.get("solve_ms"), (int, float))]
-        timeouts = sum(1 for r in records if r.get("budget_exhausted") is True or r.get("completed") is False)
+        solve_times = [
+            float(r["solve_ms"]) for r in records
+            if isinstance(r.get("solve_ms"), (int, float)) and math.isfinite(r["solve_ms"])
+        ]
+        timeouts = sum(
+            1 for r in records if r.get("budget_exhausted") is True or r.get("completed") is not True
+            or (isinstance(r.get("solve_ms"), (int, float)) and r["solve_ms"] > self.instance_time_budget_ms)
+        )
         feasible_count = sum(1 for r in records if r.get("valid") is True and r.get("objective") is not None)
         max_solve_ms = max(solve_times) if solve_times else None
         return {
-            "passed": bool(resp.get("valid") and len(records) == len(n200_insts) and timeouts == 0 and feasible_count == len(n200_insts)),
+            "passed": bool(
+                n200_insts and resp.get("valid") and len(records) == len(n200_insts)
+                and timeouts == 0 and len(solve_times) == feasible_count == len(n200_insts)
+            ),
             "budget_ms": self.instance_time_budget_ms,
             "n_instances": len(n200_insts),
             "feasible_count": feasible_count,
@@ -894,6 +923,13 @@ class InterfaceValidator:
             "max_solve_ms": round(max_solve_ms, 4) if max_solve_ms is not None else None,
             "budget_headroom_ms": round(self.instance_time_budget_ms - max_solve_ms, 4) if max_solve_ms is not None else None,
             "error_code": resp.get("error_code"),
+            "error_detail": resp.get("error_detail"),
+            "timeout_kind": resp.get("timeout_kind") or next(
+                (record["timeout_kind"] for record in records if record.get("timeout_kind")), None,
+            ),
+            "outer_timeout_s": resp.get("outer_timeout_s"),
+            "worker_wall_ms": resp.get("worker_wall_ms"),
+            "failures": resp.get("failures") or [],
         }
 
     @staticmethod

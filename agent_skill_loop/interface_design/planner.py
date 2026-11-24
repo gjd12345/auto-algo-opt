@@ -163,7 +163,13 @@ def build_interface_design(
 build_design_for_template = build_interface_design
 
 
-def parse_hook_candidate(template_id: str, template_version: str, candidate: str | Mapping[str, str]) -> dict[str, str]:
+def parse_hook_candidate(
+    template_id: str,
+    template_version: str,
+    candidate: str | Mapping[str, str],
+    *,
+    allow_extended_numpy_whitelist: bool = True,
+) -> dict[str, str]:
     """Split EoH Python source or take a named source map, then validate each hook.
 
     Shared import statements from a Python program are copied into each unit.
@@ -189,7 +195,9 @@ def parse_hook_candidate(template_id: str, template_version: str, candidate: str
                 raise ValueError("invalid_hook_bundle_program")
         implementations = {name: "\n".join([*imports, source]) + "\n" for name, source in definitions.items()}
 
-    first, second = validate_hook_bundle(specs, implementations)
+    first, second = validate_hook_bundle(
+        specs, implementations, allow_extended_numpy_whitelist=allow_extended_numpy_whitelist,
+    )
     if first or second:
         failure = (first + second)[0]
         raise ValueError(f"{failure.error_code}:{failure.symbol or failure.detail}")

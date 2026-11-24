@@ -25,11 +25,13 @@ class HypothesisLedgerTool:
         self.ledger_path = self.run_dir / "hypotheses.jsonl"
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
         self._by_id: dict[str, dict[str, Any]] = {}
+        self._last_record: dict[str, Any] | None = None
         if self.ledger_path.is_file():
             for line in self.ledger_path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     rec = json.loads(line)
                     self._by_id[str(rec["hypothesis_id"])] = rec
+                    self._last_record = rec
 
     def list_records(self) -> list[dict[str, Any]]:
         return list(self._by_id.values())
@@ -53,9 +55,10 @@ class HypothesisLedgerTool:
         status: str,
         rationale: str = "",
         evidence_artifacts: Sequence[Mapping[str, Any]] = (),
+        round_id: int = 0,
     ) -> dict[str, Any]:
-        if hypothesis_id not in self._by_id:
-            raise ValueError(f"unknown_hypothesis:{hypothesis_id}")
+        if not hypothesis_id or not hypothesis_id.strip():
+            raise ValueError("hypothesis_id_required")
         if status not in ALLOWED_HYPOTHESIS_STATUSES:
             raise ValueError(f"invalid_hypothesis_status:{status}")
         verified_refs: list[EvidenceArtifactRef] = []
@@ -76,7 +79,17 @@ class HypothesisLedgerTool:
         if status in EVIDENCE_REQUIRED_STATUSES and not verified_refs:
             raise ValueError(f"hypothesis_evidence_required_for_status:{status}")
 
-        prev = dict(self._by_id[hypothesis_id])
+        prev = self._by_id.get(hypothesis_id)
+        if prev is None:
+            prev = HypothesisRecord(
+                hypothesis_id=hypothesis_id,
+                round_id=round_id,
+                statement=f"Auto-registered hypothesis {hypothesis_id}.",
+                status="proposed",
+                auto_registered=True,
+            ).to_dict()
+            self._append(prev)
+
         existing_refs = [EvidenceArtifactRef(**r) for r in prev.get("evidence_artifacts", [])]
         merged = {r.path: r for r in existing_refs}
         for r in verified_refs:
@@ -91,7 +104,13 @@ class HypothesisLedgerTool:
             evidence_artifacts=tuple(merged.values()),
             created_at_utc=str(prev["created_at_utc"]),
             updated_at_utc=utc_now(),
+            auto_registered=prev.get("auto_registered") is True,
         ).to_dict()
+        last = self._last_record
+        if last is not None and all(last.get(key) == updated.get(key) for key in (
+            "hypothesis_id", "status", "rationale", "evidence_artifacts",
+        )):
+            return dict(last)
         self._append(updated)
         return updated
 
@@ -103,7 +122,8 @@ class HypothesisLedgerTool:
         return out
 
     def _append(self, rec: dict[str, Any]) -> None:
-        self._by_id[str(rec["hypothesis_id"])] = rec
         with self.ledger_path.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(json.dumps(rec, ensure_ascii=False) + "\n")
             handle.flush()
+        self._by_id[str(rec["hypothesis_id"])] = rec
+        self._last_record = rec
