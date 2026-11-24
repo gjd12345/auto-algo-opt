@@ -16,6 +16,9 @@ from typing import Any, Mapping, Sequence
 SCHEMA_VERSION = "algorithm-optimization-search-progress/v1"
 POLICY_SCHEMA_VERSION = "algorithm-optimization-search-progress-policy/v1"
 PHASES = ("exploration", "exploitation")
+# Match the absolute objective comparison tolerance in benchmark/harness.py.
+# Configured gain minima can raise this floor but cannot disable it.
+OBJECTIVE_PRECISION_FLOOR = 1e-12
 DEFAULT_POLICY = {
     "schema_version": POLICY_SCHEMA_VERSION,
     "enabled": False,
@@ -130,37 +133,43 @@ def _generated(item: Mapping[str, Any]) -> bool:
 
 
 def _all_candidates(facts: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
-    rows: list[Mapping[str, Any]] = []
-    for facts_item in facts:
-        values = facts_item.get("candidates")
-        if isinstance(values, list):
-            rows.extend(item for item in values if isinstance(item, Mapping))
-    return rows
+    return [candidate for item in facts for candidate in _ordered_candidates(item)]
+
+
+def _ordered_candidates(facts: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    values = facts.get("candidates")
+    if not isinstance(values, list):
+        return []
+    candidates = [item for item in values if isinstance(item, Mapping)]
+    ledger = facts.get("solver_attempts")
+    if not isinstance(ledger, list):
+        return candidates
+    order = {(call.get("evaluation_id"), call.get("code_sha256")): index
+             for index, call in enumerate(ledger) if isinstance(call, Mapping)}
+    return sorted(candidates, key=lambda item: order.get((item.get("evaluation_id"), item.get("code_sha256")), len(ledger)))
 
 
 def _source_metrics(previous: list[Mapping[str, Any]], current: list[Mapping[str, Any]]) -> dict[str, Any]:
-    seen = {str(item.get("code_sha256")) for item in previous if item.get("code_sha256")}
-    seen.update(str(item.get("code_sha256")) for item in current
-                if not _generated(item) and item.get("code_sha256"))
-    generated = [item for item in current if _generated(item)]
-    duplicate = 0
-    for item in generated:
+    seen = {item["code_sha256"] for item in previous if item.get("code_sha256")}
+    generated = repairs = duplicate = repair_duplicate = 0
+    for item in current:
         code_hash = item.get("code_sha256")
-        if code_hash in seen:
-            duplicate += 1
+        if _generated(item):
+            generated += 1
+            duplicate += code_hash in seen
+        elif item.get("origin") == "generated_repair":
+            repairs += 1
+            repair_duplicate += code_hash in seen
         if code_hash:
-            seen.add(str(code_hash))
-    repairs = [item for item in current if item.get("origin") == "generated_repair"]
-    repair_seen = {str(item.get("code_sha256")) for item in previous if item.get("code_sha256")}
-    repair_duplicate = sum(1 for item in repairs if item.get("code_sha256") in repair_seen)
+            seen.add(code_hash)
     return {
-        "source_duplicate_rate": duplicate / len(generated) if generated else None,
+        "source_duplicate_rate": duplicate / generated if generated else None,
         "source_duplicate_count": duplicate,
-        "source_observable_generated": len(generated),
-        "source_duplicate_denominator": len(generated),
-        "repair_source_duplicate_rate": repair_duplicate / len(repairs) if repairs else None,
+        "source_observable_generated": generated,
+        "source_duplicate_denominator": generated,
+        "repair_source_duplicate_rate": repair_duplicate / repairs if repairs else None,
         "repair_source_duplicate_count": repair_duplicate,
-        "repair_source_observable": len(repairs),
+        "repair_source_observable": repairs,
     }
 
 
@@ -175,27 +184,31 @@ def _behavior_metrics(previous: list[Mapping[str, Any]], current: list[Mapping[s
         return (str(contract), str(suite), str(signature)) if signature and contract and suite else None
 
     seen = {value for value in (key(item) for item in previous) if value is not None}
-    seen.update(value for value in (key(item) for item in current if not _generated(item)) if value is not None)
-    generated = [item for item in current if _generated(item)]
-    comparable = [item for item in generated if key(item) is not None]
-    duplicate = 0
-    novel = 0
-    for item in comparable:
+    generated = comparable = duplicate = repair_comparable = repair_duplicate = 0
+    for item in current:
+        original = _generated(item)
+        generated += original
         value = key(item)
-        if value is not None:
-            if value in seen:
-                duplicate += 1
-            else:
-                novel += 1
-            seen.add(value)
+        if value is None:
+            continue
+        if original:
+            comparable += 1
+            duplicate += value in seen
+        elif item.get("origin") == "generated_repair":
+            repair_comparable += 1
+            repair_duplicate += value in seen
+        seen.add(value)
     return {
-        "behavior_duplicate_rate": duplicate / len(comparable) if comparable else None,
+        "behavior_duplicate_rate": duplicate / comparable if comparable else None,
         "behavior_duplicate_count": duplicate,
-        "behavior_novel_count": novel,
-        "behavior_comparable_count": len(comparable),
-        "behavior_comparable_coverage": len(comparable) / len(generated) if generated else None,
-        "behavior_generated_denominator": len(generated),
-        "behavior_incomplete_or_unavailable_count": len(generated) - len(comparable),
+        "behavior_novel_count": comparable - duplicate,
+        "behavior_comparable_count": comparable,
+        "behavior_comparable_coverage": comparable / generated if generated else None,
+        "behavior_generated_denominator": generated,
+        "behavior_incomplete_or_unavailable_count": generated - comparable,
+        "repair_behavior_duplicate_count": repair_duplicate,
+        "repair_behavior_duplicate_rate": repair_duplicate / repair_comparable if repair_comparable else None,
+        "repair_behavior_comparable_count": repair_comparable,
     }
 
 
@@ -365,7 +378,7 @@ def build_search_progress(
     """Build current-window and cumulative SearchProgress from verified facts."""
     facts = [item for item in facts_history if isinstance(item, Mapping)]
     current = facts[-1] if facts else {}
-    current_candidates = [item for item in current.get("candidates", []) if isinstance(item, Mapping)]
+    current_candidates = _ordered_candidates(current)
     prior_candidates = _all_candidates(facts[:-1])
     source = _source_metrics(prior_candidates, current_candidates)
     behavior = _behavior_metrics(prior_candidates, current_candidates)
@@ -450,15 +463,20 @@ def evaluate_stagnation(progress_history: Sequence[Mapping[str, Any]], policy: M
     if first is not None and last is not None:
         absolute_gain = first - last if direction == "minimize" else last - first
     relative_gain = None
-    if absolute_gain is not None and _number(first) not in (None, 0.0):
-        relative_gain = absolute_gain / abs(float(first))
+    if absolute_gain is not None and first != 0.0:
+        relative_gain = absolute_gain / abs(first)
     complete = sum(bool(event.get("behavior_comparable")) for _round_id, event in selected if event.get("generated"))
     generated = sum(bool(event.get("generated")) for _round_id, event in selected)
     coverage = complete / generated if generated else 0.0
-    absolute_gate = absolute_gain is not None and absolute_gain >= normalized["min_absolute_gain"]
-    relative_gate = None if first in (None, 0.0) else (
-        relative_gain is not None and relative_gain >= normalized["min_relative_gain"])
-    gain_gate = absolute_gate and (relative_gate is True if relative_gate is not None else True)
+    absolute_gate = (absolute_gain is not None and math.isfinite(absolute_gain)
+                     and absolute_gain > OBJECTIVE_PRECISION_FLOOR
+                     and absolute_gain >= normalized["min_absolute_gain"])
+    # A verified zero is a valid absolute-only reference. Missing scores
+    # fail the gain gate even when a policy sets both configured minima to zero.
+    relative_gate = None if first == 0.0 else (
+        relative_gain is not None and math.isfinite(relative_gain)
+        and relative_gain > 0 and relative_gain >= normalized["min_relative_gain"])
+    gain_gate = absolute_gate and (first == 0.0 or relative_gate is True)
     coverage_gate = coverage >= normalized["min_behavior_coverage"]
     return {
         "status": "progress" if gain_gate and coverage_gate else "stagnated",
@@ -474,5 +492,6 @@ def evaluate_stagnation(progress_history: Sequence[Mapping[str, Any]], policy: M
         "absolute_gain_gate": bool(absolute_gate),
         "relative_gain_gate": relative_gate,
         "coverage_gate": bool(coverage_gate),
-        "reason": None if gain_gate and coverage_gate else "gain_or_behavior_coverage_gate_not_met",
+        "reason": (None if gain_gate and coverage_gate else "verified_objective_missing"
+                   if first is None or last is None else "gain_or_behavior_coverage_gate_not_met"),
     }

@@ -67,6 +67,8 @@ class RequestSlot:
     owner_epoch: str | None = None
     attempt_token: str | None = None
     reserved_event: dict[str, Any] | None = field(default=None, repr=False)
+    delivered_at_utc: str | None = None
+    delivery_http_status: int | None = None
 
 
 class RequestBudget:

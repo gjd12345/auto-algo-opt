@@ -1,7 +1,7 @@
 """Read-only Memory consumption projection from durable Session evidence.
 
-"Compiled" and "gateway attempted" are deliberately distinct.  Neither
-state asserts that a provider understood the memory or improved a candidate.
+Compilation, dispatch attempts, and observed HTTP responses are distinct
+evidence. None asserts that the provider used the advisory text.
 """
 
 from __future__ import annotations
@@ -61,10 +61,21 @@ def project_memory_consumption(root: Path, con: Any, run: Any, rd: Any, task: An
     if task is not None:
         from agent_skill_loop.session_supervisor import task_output
         output = task_output(root, con, task)
-        for request in con.execute("SELECT * FROM requests WHERE task_id=? AND purpose IN ('eoh_generation','eoh_repair') ORDER BY sequence", (task["task_id"],)):
+        for request_row in con.execute("SELECT * FROM requests WHERE task_id=? AND purpose IN ('eoh_generation','eoh_repair') ORDER BY sequence", (task["task_id"],)):
+            request = dict(request_row)
+            attempted_at = request.get("attempted_send_at_utc") or request.get("sent_at_utc")
+            # Older rows recorded the HTTP status only on terminal settlement.
+            http_status = request.get("delivery_http_status")
+            if http_status is None and type(request.get("status")) is int and 100 <= request["status"] <= 599:
+                http_status = request["status"]
+            delivered_at = request.get("delivered_at_utc")
+            attempted = attempted_at is not None or http_status is not None
+            transport_status = "delivered" if http_status is not None else "attempted_send" if attempted else "not_attempted"
             ref = (output / "results/request_inputs" / f"request_{request['sequence']}.json").relative_to(root).as_posix()
             entry = {"request_id": request["request_id"], "sequence": request["sequence"],
                      "purpose": request["purpose"], "request_state": request["state"],
+                     "transport_status": transport_status, "attempted_send_at_utc": attempted_at,
+                     "delivered_at_utc": delivered_at, "delivery_http_status": http_status,
                      "input_ref": None, "input_sha256": None,
                      "context_status": "not_sent", "memory": []}
             input_path = root / ref
@@ -76,7 +87,7 @@ def project_memory_consumption(root: Path, con: Any, run: Any, rd: Any, task: An
                     raise ValueError("memory_request_payload_invalid")
                 prompt = "\n".join(item.get("content", "") for item in messages if isinstance(item, dict) and isinstance(item.get("content"), str))
                 entry.update(input_ref=ref, input_sha256=digest)
-                if request["state"] != "reserved":
+                if attempted:
                     if context is not None and prompt.count(context) == 1:
                         # The entire canonical context, including its parsed
                         # excerpts, occurs once in the final gateway payload.
@@ -88,7 +99,7 @@ def project_memory_consumption(root: Path, con: Any, run: Any, rd: Any, task: An
                         entry["context_status"] = "missing_or_modified_context"
                         entry["memory"] = [{"reference":x["reference"],"status":"omitted_at_gateway"}
                                            for x in manifest.get("injected", [])]
-            elif request["state"] != "reserved":
+            elif attempted:
                 raise ValueError("memory_request_input_missing")
             request_receipts.append(entry)
     return {

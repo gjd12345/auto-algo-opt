@@ -923,10 +923,12 @@ def _build_session_bridge(
                             self.request_log.parent / "request_inputs" / f"request_{slot.index}.json",
                             json.dumps(payload, ensure_ascii=False),
                         )
-                    self.budget.mark_sent(slot)
+                    body_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                    self._log_event(self.budget.mark_attempted_send(slot))
                     status, raw = self._perform_post(
-                        self.target_url, headers, json.dumps(payload).encode("utf-8"), req_timeout, slot=slot, prompt=prompt,
+                        self.target_url, headers, body_bytes, req_timeout, slot=slot, prompt=prompt,
                     )
+                    self._log_event(self.budget.mark_delivered(slot, status))
                     parsed = json.loads(raw.decode("utf-8"))
                     if not isinstance(parsed, dict):
                         raise ValueError("invalid_completion_object")
@@ -940,6 +942,8 @@ def _build_session_bridge(
                 except ProviderFailure as exc:
                     last_exc = exc
                     elapsed = time.monotonic() - started
+                    if exc.status is not None and slot.delivered_at_utc is None:
+                        self._log_event(self.budget.mark_delivered(slot, exc.status))
                     if exc.error_code == "request_deadline":
                         self._record(slot, "killed_unknown", error_code="request_deadline", elapsed_seconds=elapsed, requested_model=chosen_model)
                     elif exc.error_code in {"provider_auth_invalid"} or str(exc.error_code).startswith("http_"):

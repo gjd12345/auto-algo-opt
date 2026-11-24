@@ -27,6 +27,10 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _encode(brief: dict) -> str:
+    return json.dumps(brief, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+
+
 def _checked_ref(root: Path, item: dict) -> tuple[Path, str]:
     ref, expected = item["ref"], item["sha256"]
     path = (root / ref).resolve()
@@ -155,7 +159,7 @@ def build(run: Path, round_id: int) -> dict:
         "request_costs": facts.get("request_costs"),
         "terminal_reason": facts.get("terminal_reason"),
     }
-    encoded = json.dumps(brief, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    encoded = _encode(brief)
     if len(encoded) > MAX_BRIEF_CHARS:
         raise ValueError(f"brief_too_large:{len(encoded)}")
     return brief
@@ -165,7 +169,7 @@ def write(run: Path, round_id: int) -> dict:
     run = Path(run).resolve()
     brief = build(run, round_id)
     path = run / f"rounds/round_{round_id:04d}/controller_brief.json"
-    encoded = json.dumps(brief, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+    encoded = _encode(brief)
     if path.exists() and path.read_text(encoding="utf-8") != encoded:
         raise ValueError("brief_existing_content_conflict")
     path.write_text(encoded, encoding="utf-8")
