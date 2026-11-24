@@ -172,7 +172,7 @@ def cmd_probe_models(args: argparse.Namespace) -> int:
     return _probe_models(argparse.Namespace(
         endpoint=args.endpoint,
         api_key_env=args.api_key_env,
-        weak_model=DEFAULT_DEEPSEEK,
+        weak_model=args.model1 or DEFAULT_DEEPSEEK,
         strong_candidates=[args.model2 or DEFAULT_MODEL2],
     ))
 
@@ -246,6 +246,9 @@ def cmd_emit_mux(args: argparse.Namespace) -> int:
     out_dir = _output_dir(args)
     protocol = _require_protocol(out_dir)
     model2 = _check_model2(args, protocol)
+    model1 = getattr(args, "model1", None)
+    if model1 is not None and model1.casefold() != DEFAULT_DEEPSEEK.casefold():
+        raise ValueError("model1_does_not_match_m5_deepseek_family")
     panes = []
     for cell in protocol["roster_cells"]:
         arm, seed = _parts(cell)
@@ -255,6 +258,8 @@ def cmd_emit_mux(args: argparse.Namespace) -> int:
             "--model2", model2, "--endpoint", args.endpoint, "--api-key-env", args.api_key_env,
             "--request-timeout-s", str(args.request_timeout_s), "--wall-seconds", str(args.wall_seconds),
         ]
+        if model1:
+            command.extend(["--model1", model1])
         if args.resume:
             command.append("--resume")
         if args.rate_card_json:
@@ -270,7 +275,10 @@ def _build_arm_config(args: argparse.Namespace) -> AgentConfig:
     arm, seed = args.arm, args.seed
     if arm not in ARMS:
         raise ValueError(f"unknown_m5_arm:{arm}")
-    model = (args.model2 or DEFAULT_MODEL2) if arm in M5_MODEL2_ARMS else DEFAULT_DEEPSEEK
+    model1 = getattr(args, "model1", None) or DEFAULT_DEEPSEEK
+    if model1.casefold() != DEFAULT_DEEPSEEK.casefold():
+        raise ValueError("model1_does_not_match_m5_deepseek_family")
+    model = (args.model2 or DEFAULT_MODEL2) if arm in M5_MODEL2_ARMS else model1
     screens = arm in SCREENS
     control = arm in CONTROLS
     return AgentConfig(
@@ -353,8 +361,11 @@ def _verify_run_config(out_dir: Path, arm: str, seed: int, model2: str) -> str:
         str(persisted.endpoint).startswith("mock://") or os.environ.get("AGENT_SKILL_M2_MOCK") == "1"
     ):
         raise ValueError(f"live_mode_with_mock_endpoint_or_env:{arm}:{seed}")
+    model1 = persisted.planner_model if (
+        arm in M5_DEEPSEEK_ARMS and str(persisted.planner_model).casefold() == DEFAULT_DEEPSEEK.casefold()
+    ) else None
     expected = _build_arm_config(argparse.Namespace(
-        output_dir=out_dir, arm=arm, seed=seed, model2=model2, mode=persisted.mode,
+        output_dir=out_dir, arm=arm, seed=seed, model1=model1, model2=model2, mode=persisted.mode,
         endpoint=persisted.endpoint, api_key_env=persisted.api_key_env,
         request_timeout_s=persisted.request_timeout_s, wall_seconds=persisted.wall_seconds, rate_card_json=None,
     )).to_dict()
@@ -1099,6 +1110,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def _provider_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--model1", default=None, help=f"Primary DeepSeek model alias (default {DEFAULT_DEEPSEEK}).")
     parser.add_argument("--model2", default=None, help=f"Second model alias (default {DEFAULT_MODEL2}).")
     parser.add_argument("--endpoint", default=os.environ.get(
         "OPENCODE_GO_ENDPOINT", "https://opencode.ai/zen/go/v1/chat/completions",

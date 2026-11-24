@@ -891,3 +891,42 @@ def test_codex_review_closure_guards(tmp_path: Path, monkeypatch: pytest.MonkeyP
             commitment_path=blind_eval_m5.M5_BLIND_COMMITMENT_PATH,
             custody_dir=None,
         ))
+
+
+def test_m5_model1_case_variant_mux_and_verify(tmp_path: Path) -> None:
+    import tempfile
+    from types import SimpleNamespace
+    import tools.run_m5_trajectory_control as runner
+    from agent_skill_loop.interface_design import blind_eval_m5
+
+    out_dir = tmp_path / "m5_para"
+    commitment = tmp_path / "commitment.json"
+    with tempfile.TemporaryDirectory(prefix="m5-para-custody-") as ext_dir:
+        custody = Path(ext_dir) / "custody"
+        seal = blind_eval_m5.seal_m5_blind_120(commitment_path=commitment, custody_dir=custody)
+        assert seal["instance_count"] == 120
+        assert runner.cmd_seal_blind(SimpleNamespace(
+            output_dir=out_dir, custody_dir=custody, commitment_path=commitment,
+            model2="Qwen4-Max", arm_seeds_json=None,
+        )) == 0
+        manifest = out_dir / "mux_m5_para.json"
+        assert runner.cmd_emit_mux(SimpleNamespace(
+            output_dir=out_dir, custody_dir=custody, commitment_path=commitment,
+            model1="DeepSeek-V4.1-Flash", model2="Qwen4-Max", mode="live",
+            endpoint="https://llmapi.paratera.com/v1/chat/completions", api_key_env="PARATERA_API_KEY",
+            request_timeout_s=90.0, wall_seconds=14400.0, resume=True,
+            rate_card_json=Path("configs/paratera_rate_card.json"), manifest_path=manifest,
+        )) == 0
+    panes = json.loads(manifest.read_text(encoding="utf-8"))["panes"]
+    assert len(panes) == 21
+    assert "--model1" in panes[0]["command"] and "DeepSeek-V4.1-Flash" in panes[0]["command"]
+    run_dir = runner._run_dir(out_dir, "legacy_baseline_500ms", 20261124)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    cfg = runner._build_arm_config(SimpleNamespace(
+        output_dir=out_dir, arm="legacy_baseline_500ms", seed=20261124,
+        model1="DeepSeek-V4.1-Flash", model2="Qwen4-Max", mode="live",
+        endpoint="https://llmapi.paratera.com/v1/chat/completions", api_key_env="PARATERA_API_KEY",
+        request_timeout_s=90.0, wall_seconds=14400.0, rate_card_json=None,
+    ))
+    (run_dir / "agent_config.json").write_text(json.dumps(cfg.to_dict()), encoding="utf-8")
+    assert runner._verify_run_config(out_dir, "legacy_baseline_500ms", 20261124, "Qwen4-Max") == "live"
