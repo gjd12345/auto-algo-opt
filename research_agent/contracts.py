@@ -6,6 +6,7 @@ import datetime as _dt
 import hashlib
 import json
 import math
+import re
 import os
 import tempfile
 import uuid
@@ -127,6 +128,15 @@ class AgentConfig:
     enable_stagnation_diagnostic_gate: bool = False
     early_stop_no_jump_requests: int | None = None
     basin_restart_on_stagnation: bool = False
+    memory_enabled: bool = False
+    memory_store_path: str | None = None
+    memory_mode: str = "off"
+    kb_enabled: bool = True
+    pinned_kb_release_id: str | None = None
+    pinned_kb_manifest_sha256: str | None = None
+    memory_max_solution_cards: int = 1
+    memory_mmr_lambda: float = 0.7
+    memory_cooldown_rounds: int = 2
 
     def __post_init__(self) -> None:
         multiplier = self.n200_latency_multiplier
@@ -135,6 +145,24 @@ class AgentConfig:
         threshold = self.early_stop_no_jump_requests
         if threshold is not None and (type(threshold) is not int or threshold < 0):
             raise ValueError("early_stop_no_jump_requests_must_be_nonnegative_integer")
+        if self.memory_mode not in ("off", "naive_static", "m35_l12", "m35_full"):
+            raise ValueError("memory_mode_invalid")
+        if type(self.memory_enabled) is not bool or type(self.kb_enabled) is not bool:
+            raise ValueError("memory_and_kb_enabled_must_be_boolean")
+        if type(self.memory_max_solution_cards) is not int or not 0 <= self.memory_max_solution_cards <= 3:
+            raise ValueError("memory_max_solution_cards_out_of_range")
+        if type(self.memory_mmr_lambda) not in (int, float) or not 0 <= self.memory_mmr_lambda <= 1:
+            raise ValueError("memory_mmr_lambda_out_of_range")
+        if type(self.memory_cooldown_rounds) is not int or self.memory_cooldown_rounds < 0:
+            raise ValueError("memory_cooldown_rounds_must_be_nonnegative_integer")
+        release, digest = self.pinned_kb_release_id, self.pinned_kb_manifest_sha256
+        if (release is None) != (digest is None):
+            raise ValueError("pinned_kb_release_and_digest_required")
+        if release is not None and (
+            not isinstance(release, str) or not release.strip()
+            or not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+        ):
+            raise ValueError("pinned_kb_release_or_digest_invalid")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
