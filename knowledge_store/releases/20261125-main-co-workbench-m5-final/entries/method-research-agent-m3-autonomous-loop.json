@@ -1,0 +1,125 @@
+{
+  "type": "method",
+  "title": "无人值守组合优化自主研究代理与持久预算状态机 (M3 ResearchAgent · research_agent)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "research-agent",
+    "milestone-3",
+    "persistent-budget",
+    "wal-ledger",
+    "ast-sandbox",
+    "hypothesis-ledger"
+  ],
+  "status": "reviewed",
+  "summary": "里程碑三独立工程交付的无人值守多轮自主研究代理引擎（research_agent/）：以 SQLite WAL PersistentRequestBudget（reserved -> sent -> unknown 崩溃恢复）统一管辖外层工具推理与内层 EoH 全部 LLM 请求；通过 AST 只读数学沙箱（dev_24 隔离）、证据 SHA-256 绑定假设账本、AST 查重护栏及五关界面校验驱动闭环探索；在 500 ms 与 25 ms 各 3 粒随机种子上 100% 严守 36 次总请求硬上限、零选优集/盲测泄露且显著消灭小预算下的演化随机方差。",
+  "attributes": {
+    "method_family": "autonomous_research_agent",
+    "online_offline": "offline",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "not_mappable",
+      "entrypoint": null,
+      "notes": "Search orchestration outer agent controlling interface selection, diagnostics, sandbox checks, and multi-round EoH sessions."
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "applicable_regimes": {
+      "strong_on": [
+        "small_budget_multi_seed_stability",
+        "tool_grounded_interface_and_postprocess_selection",
+        "crash_resumable_unattended_search"
+      ],
+      "weak_on": [
+        "extreme_zero_budget_pure_random_mutation"
+      ],
+      "scale_notes": "全自主 3 轮闭环在 B_total=36 下跨越 M3-0/M3-1 的 ~21.9–23.0 高方差区间，将 3 粒种子 select_64 稳定压至 20.67–20.88。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/request_budget.py",
+        "sha256": "5b25c2aafc1d3ce05ad15aa72a1bde18a8b03fe036b78b513b20a585694c7542"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/session_runtime.py",
+        "sha256": "190090e0abf2f4d59c73db32bd982edb0e14d4415d4c9e39d667359dd13fca2b"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/loop.py",
+        "sha256": "3950f7bd832758db1e4f232aa98224dabf6a21748c1e52d214e14a65a43a370c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/sandbox_worker.py",
+        "sha256": "b377039131bfa901c75ff297240e083732152412150b730686fdf83dfe01daf3"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/tools/session_tools.py",
+        "sha256": "911bffa570c40c00c99925a710a85c9a9d89e6b5326921454ba1ac2780ef27e9"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "research_agent/tools/archive_tools.py",
+        "sha256": "bc11077825946a38a23fb2222f6072a9429d2d1f4d5a20566d50308f5a492636"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_m3_blind_120",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_tour_length",
+        "value": 23.3325,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "500ms 下最优研究代理冻结体在盲测 120 题均长 23.3325",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m3_blind_120",
+        "run_id": "milestone3_phase3d_25ms",
+        "algorithm_id": "m3_3c_tight_25ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_tour_length",
+        "value": 23.3083,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "25ms 下最优研究代理冻结体在盲测 120 题均长 23.3083",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-ahd-eoh",
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone3-research-agent-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone3-research-agent-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3/phase3c_four_arm/phase3c_report_standard_500ms.json",
+    "report:experiments/milestone3/phase3c_four_arm/phase3c_report_tight_25ms.json"
+  ],
+  "code_refs": [],
+  "id": "method-research-agent-m3-autonomous-loop",
+  "content_sha256": "e1c5fa0459149db774c978c8d6af91929420f9577769047bf0ddd910428f3816"
+}

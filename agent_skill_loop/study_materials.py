@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 
 from agent_skill_loop import session_runtime as db
-from agent_skill_loop.memory.backend import open_memory_backend
 from agent_skill_loop.session_actions import complete_reads
+from agent_skill_loop.session_memory import open_session_memory_backend
 
 
 STUDY_ID = "island605_bp_memory_content_control_v1"
@@ -129,7 +129,7 @@ def prepare_material(run: Path, round_id: int) -> dict[str, Any]:
             selected = _published_reference(root, con, row["run_id"], round_id)
             if selected:
                 reference, source = selected
-                page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(reference)
+                page = open_session_memory_backend(row).read_version(reference)
                 provenance = page.get("provenance") or {}
                 if (page["truncated"] or provenance.get("source_run_id") != row["run_id"]
                         or provenance.get("round_id") != source["round_id"]):

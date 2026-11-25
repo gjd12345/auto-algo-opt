@@ -1,0 +1,726 @@
+{
+  "suite_id": "cvrp_s2_multiscale_blind_120",
+  "suite_role": "final_blind_acceptance",
+  "exposure_status": "locked_s2_blind",
+  "problem_family": "cvrp",
+  "protocol_id": "cvrp/v1",
+  "split": "blind",
+  "distance_convention": "euc_2d_float",
+  "vehicle_limit_policy": "unconstrained",
+  "generator_version": "cvrp_s2_multiscale_blind_generator/v1",
+  "generator_source_sha256": "20b8509d3b7e01c46758730324392c702da2505fbbe1f8495fad48c682921b8c",
+  "instance_count": 120,
+  "suite_content_sha256": "a639f65f7f888ebc7cc13c35f2bb7a124422b749baea252148f69437ea3441a7",
+  "stratification_spec": {
+    "by_cell": {
+      "n50_uniform_centre_loose_uniform": 2,
+      "n50_uniform_centre_loose_bimodal": 1,
+      "n50_uniform_centre_tight_uniform": 1,
+      "n50_uniform_centre_tight_bimodal": 1,
+      "n50_uniform_eccentric_loose_uniform": 1,
+      "n50_uniform_eccentric_loose_bimodal": 1,
+      "n50_uniform_eccentric_tight_uniform": 1,
+      "n50_uniform_eccentric_tight_bimodal": 2,
+      "n50_clustered_centre_loose_uniform": 2,
+      "n50_clustered_centre_loose_bimodal": 1,
+      "n50_clustered_centre_tight_uniform": 1,
+      "n50_clustered_centre_tight_bimodal": 1,
+      "n50_clustered_eccentric_loose_uniform": 1,
+      "n50_clustered_eccentric_loose_bimodal": 1,
+      "n50_clustered_eccentric_tight_uniform": 1,
+      "n50_clustered_eccentric_tight_bimodal": 2,
+      "n50_mixed_centre_loose_uniform": 2,
+      "n50_mixed_centre_loose_bimodal": 1,
+      "n50_mixed_centre_tight_uniform": 1,
+      "n50_mixed_centre_tight_bimodal": 1,
+      "n50_mixed_eccentric_loose_uniform": 1,
+      "n50_mixed_eccentric_loose_bimodal": 1,
+      "n50_mixed_eccentric_tight_uniform": 1,
+      "n50_mixed_eccentric_tight_bimodal": 2,
+      "n100_uniform_centre_loose_uniform": 1,
+      "n100_uniform_centre_loose_bimodal": 2,
+      "n100_uniform_centre_tight_uniform": 1,
+      "n100_uniform_centre_tight_bimodal": 1,
+      "n100_uniform_eccentric_loose_uniform": 1,
+      "n100_uniform_eccentric_loose_bimodal": 1,
+      "n100_uniform_eccentric_tight_uniform": 2,
+      "n100_uniform_eccentric_tight_bimodal": 1,
+      "n100_clustered_centre_loose_uniform": 1,
+      "n100_clustered_centre_loose_bimodal": 2,
+      "n100_clustered_centre_tight_uniform": 1,
+      "n100_clustered_centre_tight_bimodal": 1,
+      "n100_clustered_eccentric_loose_uniform": 1,
+      "n100_clustered_eccentric_loose_bimodal": 1,
+      "n100_clustered_eccentric_tight_uniform": 2,
+      "n100_clustered_eccentric_tight_bimodal": 1,
+      "n100_mixed_centre_loose_uniform": 1,
+      "n100_mixed_centre_loose_bimodal": 2,
+      "n100_mixed_centre_tight_uniform": 1,
+      "n100_mixed_centre_tight_bimodal": 1,
+      "n100_mixed_eccentric_loose_uniform": 1,
+      "n100_mixed_eccentric_loose_bimodal": 1,
+      "n100_mixed_eccentric_tight_uniform": 2,
+      "n100_mixed_eccentric_tight_bimodal": 1,
+      "n150_uniform_centre_loose_uniform": 1,
+      "n150_uniform_centre_loose_bimodal": 1,
+      "n150_uniform_centre_tight_uniform": 2,
+      "n150_uniform_centre_tight_bimodal": 1,
+      "n150_uniform_eccentric_loose_uniform": 1,
+      "n150_uniform_eccentric_loose_bimodal": 2,
+      "n150_uniform_eccentric_tight_uniform": 1,
+      "n150_uniform_eccentric_tight_bimodal": 1,
+      "n150_clustered_centre_loose_uniform": 1,
+      "n150_clustered_centre_loose_bimodal": 1,
+      "n150_clustered_centre_tight_uniform": 2,
+      "n150_clustered_centre_tight_bimodal": 1,
+      "n150_clustered_eccentric_loose_uniform": 1,
+      "n150_clustered_eccentric_loose_bimodal": 2,
+      "n150_clustered_eccentric_tight_uniform": 1,
+      "n150_clustered_eccentric_tight_bimodal": 1,
+      "n150_mixed_centre_loose_uniform": 1,
+      "n150_mixed_centre_loose_bimodal": 1,
+      "n150_mixed_centre_tight_uniform": 2,
+      "n150_mixed_centre_tight_bimodal": 1,
+      "n150_mixed_eccentric_loose_uniform": 1,
+      "n150_mixed_eccentric_loose_bimodal": 2,
+      "n150_mixed_eccentric_tight_uniform": 1,
+      "n150_mixed_eccentric_tight_bimodal": 1,
+      "n200_uniform_centre_loose_uniform": 1,
+      "n200_uniform_centre_loose_bimodal": 1,
+      "n200_uniform_centre_tight_uniform": 1,
+      "n200_uniform_centre_tight_bimodal": 2,
+      "n200_uniform_eccentric_loose_uniform": 2,
+      "n200_uniform_eccentric_loose_bimodal": 1,
+      "n200_uniform_eccentric_tight_uniform": 1,
+      "n200_uniform_eccentric_tight_bimodal": 1,
+      "n200_clustered_centre_loose_uniform": 1,
+      "n200_clustered_centre_loose_bimodal": 1,
+      "n200_clustered_centre_tight_uniform": 1,
+      "n200_clustered_centre_tight_bimodal": 2,
+      "n200_clustered_eccentric_loose_uniform": 2,
+      "n200_clustered_eccentric_loose_bimodal": 1,
+      "n200_clustered_eccentric_tight_uniform": 1,
+      "n200_clustered_eccentric_tight_bimodal": 1,
+      "n200_mixed_centre_loose_uniform": 1,
+      "n200_mixed_centre_loose_bimodal": 1,
+      "n200_mixed_centre_tight_uniform": 1,
+      "n200_mixed_centre_tight_bimodal": 2,
+      "n200_mixed_eccentric_loose_uniform": 2,
+      "n200_mixed_eccentric_loose_bimodal": 1,
+      "n200_mixed_eccentric_tight_uniform": 1,
+      "n200_mixed_eccentric_tight_bimodal": 1
+    },
+    "by_size": {
+      "50": 30,
+      "100": 30,
+      "150": 30,
+      "200": 30
+    }
+  },
+  "reference_baseline": "nearest_neighbor",
+  "exact_k_reference": "nearest_neighbor_route_count",
+  "schema_version": "milestone-blind-commitment/v1",
+  "commitment_status": "sealed",
+  "instances": [
+    {
+      "instance_id": "s2blind_n50_uniform_centre_loose_uniform-000",
+      "cell": "n50_uniform_centre_loose_uniform",
+      "instance_sha256": "676097a9ef156ac7d0f7c4df53cc90771b23dace294f833483ab1131a9fcd3d3"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_centre_loose_bimodal-001",
+      "cell": "n50_uniform_centre_loose_bimodal",
+      "instance_sha256": "9a8140ed5d833055187c13bc3a0cdcfd14ebe2e8ba65f22c8eda04c6d1fbda15"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_centre_tight_uniform-002",
+      "cell": "n50_uniform_centre_tight_uniform",
+      "instance_sha256": "1b9f71334f6f748863dda2d2f8c1accf9b59908b20c56cb0ce1d38cda4199269"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_centre_tight_bimodal-003",
+      "cell": "n50_uniform_centre_tight_bimodal",
+      "instance_sha256": "199879cf7dbf8b23702a4b1205f416912851932083a97f86a3ee3a493885f5b5"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_eccentric_loose_uniform-004",
+      "cell": "n50_uniform_eccentric_loose_uniform",
+      "instance_sha256": "0a491086004cf43c610eef0f04a66589bba52da015567e514f9185e0327a23ee"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_eccentric_loose_bimodal-005",
+      "cell": "n50_uniform_eccentric_loose_bimodal",
+      "instance_sha256": "7506fd463a0eb17f58d6067814ce3edfae6acad4a773a2f588b9983a7825de28"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_eccentric_tight_uniform-006",
+      "cell": "n50_uniform_eccentric_tight_uniform",
+      "instance_sha256": "91ac9bf0cdd619d3b9b6d35b20c190505326e14386d81d9a5181427742caf213"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_eccentric_tight_bimodal-007",
+      "cell": "n50_uniform_eccentric_tight_bimodal",
+      "instance_sha256": "0226764ca4945a6f39b9537ff497a8f1bb82d4e67791c56a95cca9d8bae138e6"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_centre_loose_uniform-008",
+      "cell": "n50_clustered_centre_loose_uniform",
+      "instance_sha256": "10b6555b76f7f5a470fa3c5e5f31457f9ff4b60326944c28fe3ed75d04ad9af8"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_centre_loose_bimodal-009",
+      "cell": "n50_clustered_centre_loose_bimodal",
+      "instance_sha256": "5eb50ff48f0b1286d36a500ec9e960e84ead41e9d8521b6286b519f1e8114f80"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_centre_tight_uniform-010",
+      "cell": "n50_clustered_centre_tight_uniform",
+      "instance_sha256": "8abbf333ac408d2e2bf24e5c1261310242fe4438c547b62deb3bda444b907b82"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_centre_tight_bimodal-011",
+      "cell": "n50_clustered_centre_tight_bimodal",
+      "instance_sha256": "4869d3d929dfd59e04d7d36aa51f7c38745b4a4d25bfb858d4a98d443bb6b371"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_eccentric_loose_uniform-012",
+      "cell": "n50_clustered_eccentric_loose_uniform",
+      "instance_sha256": "4079dc7cf359423960fed3e087a89785bb39b61c4817cc8691c2742716350bb3"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_eccentric_loose_bimodal-013",
+      "cell": "n50_clustered_eccentric_loose_bimodal",
+      "instance_sha256": "8e22d15adff3ff220b7313fdc2d2bd04351249621d3c021e1b24e9e1702ed463"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_eccentric_tight_uniform-014",
+      "cell": "n50_clustered_eccentric_tight_uniform",
+      "instance_sha256": "30835ca76830f49f0d986700e22fe435dfc1934315cf2c56d0213484f83b810a"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_eccentric_tight_bimodal-015",
+      "cell": "n50_clustered_eccentric_tight_bimodal",
+      "instance_sha256": "90148bac8c4445306e8b5c95f98585636c6a3dd04c52e59d91945493fcff7482"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_centre_loose_uniform-016",
+      "cell": "n50_mixed_centre_loose_uniform",
+      "instance_sha256": "7b97a08e5780857f0ece081864db1a2437fd15a9afb1dae2824d49cb1d78a77b"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_centre_loose_bimodal-017",
+      "cell": "n50_mixed_centre_loose_bimodal",
+      "instance_sha256": "e658a841b761373dbe4cd1be59527fc1216cbe00625a37ecd130da7422ee6aa4"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_centre_tight_uniform-018",
+      "cell": "n50_mixed_centre_tight_uniform",
+      "instance_sha256": "e6c4c32e1e0af38589a43030efe89838175dacd83b7b2b92008db6b0463f7c09"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_centre_tight_bimodal-019",
+      "cell": "n50_mixed_centre_tight_bimodal",
+      "instance_sha256": "4fd15286ed68b3aaaff8546963d8079e14c2d9139751a26d0f2b28db83668161"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_eccentric_loose_uniform-020",
+      "cell": "n50_mixed_eccentric_loose_uniform",
+      "instance_sha256": "a5c993fad33028f3e826a36d11a460fa14daa8f01c6b324e91ed0ed15ede57c7"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_eccentric_loose_bimodal-021",
+      "cell": "n50_mixed_eccentric_loose_bimodal",
+      "instance_sha256": "a5213ddbf9f186a7a7063f9f06799ecfa409ad5a6c51af6911b7f031adf1d41a"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_eccentric_tight_uniform-022",
+      "cell": "n50_mixed_eccentric_tight_uniform",
+      "instance_sha256": "543fde5b14c3178209321bf4d14c6777240ff844b6dd14f497e2b8b405042410"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_eccentric_tight_bimodal-023",
+      "cell": "n50_mixed_eccentric_tight_bimodal",
+      "instance_sha256": "4cd9ad62f034adc0972073f7327d9843b367418510ca05c852b9cf14c7c69044"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_centre_loose_uniform-024",
+      "cell": "n50_uniform_centre_loose_uniform",
+      "instance_sha256": "4a9b2eaecd02263541c7064ae325eb0c0af5cd64d1a05d699b245b6b70fa3f49"
+    },
+    {
+      "instance_id": "s2blind_n50_uniform_eccentric_tight_bimodal-025",
+      "cell": "n50_uniform_eccentric_tight_bimodal",
+      "instance_sha256": "199471129aedccffd65b6d6135c6e3cecf127dfbc9809061494a6d4db61f79f9"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_centre_loose_uniform-026",
+      "cell": "n50_clustered_centre_loose_uniform",
+      "instance_sha256": "78bcfcc341eec6200808abd456c20567465a44471cddbf709552d0556fe577cc"
+    },
+    {
+      "instance_id": "s2blind_n50_clustered_eccentric_tight_bimodal-027",
+      "cell": "n50_clustered_eccentric_tight_bimodal",
+      "instance_sha256": "a3468f60f010969ae34526f2b648464232ea51e8b53bbcfeec4e7302b4781209"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_centre_loose_uniform-028",
+      "cell": "n50_mixed_centre_loose_uniform",
+      "instance_sha256": "ea361852f80f52ba8511ce67192b884ad2d47dd646d56e4164864737c0e5e125"
+    },
+    {
+      "instance_id": "s2blind_n50_mixed_eccentric_tight_bimodal-029",
+      "cell": "n50_mixed_eccentric_tight_bimodal",
+      "instance_sha256": "382a0b20c47be5b4b7a7687359308499d5d34a1c1662296f92926f7710a24fc8"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_centre_loose_uniform-030",
+      "cell": "n100_uniform_centre_loose_uniform",
+      "instance_sha256": "199ebcc15b02ea671b4ad4508f660b4918e77df4a93be16a2575a1c2dfd5e5d4"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_centre_loose_bimodal-031",
+      "cell": "n100_uniform_centre_loose_bimodal",
+      "instance_sha256": "f7e84bb62abd3e5b4a97a864f4ab22d392b30bf65b498387e4bf8d4a8165a42c"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_centre_tight_uniform-032",
+      "cell": "n100_uniform_centre_tight_uniform",
+      "instance_sha256": "797aa7fd1ca202cfba338e2dd2c1671e42d6e21e22acd31dcb73a45c46762306"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_centre_tight_bimodal-033",
+      "cell": "n100_uniform_centre_tight_bimodal",
+      "instance_sha256": "de3d5decabaf82181be8e69c643dd56b7d43cd24f180fd1f5aefd8aeeab2e373"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_eccentric_loose_uniform-034",
+      "cell": "n100_uniform_eccentric_loose_uniform",
+      "instance_sha256": "1a9f8d5daa927ff736ae0b770cc40fc13dfd2210230e1624b55383a8c354b9c2"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_eccentric_loose_bimodal-035",
+      "cell": "n100_uniform_eccentric_loose_bimodal",
+      "instance_sha256": "37297cf29472cf422fcb3e63aeb28cb739c1b82f1fd52fce65199bfda2c447e7"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_eccentric_tight_uniform-036",
+      "cell": "n100_uniform_eccentric_tight_uniform",
+      "instance_sha256": "5f2a9cc9a726d8c21ebf04093f52f52685ccf93ddbef517f8f3fff8f2ed20540"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_eccentric_tight_bimodal-037",
+      "cell": "n100_uniform_eccentric_tight_bimodal",
+      "instance_sha256": "c177a9126343e11601809f6845847226dddb4a3e9a0a7b5f74890a7ea086fd3f"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_centre_loose_uniform-038",
+      "cell": "n100_clustered_centre_loose_uniform",
+      "instance_sha256": "0f517dfd27e1ad5886c4268b2fb2c71b2c62002209d5e2c375ce759ad4568964"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_centre_loose_bimodal-039",
+      "cell": "n100_clustered_centre_loose_bimodal",
+      "instance_sha256": "76cdc93402333e746879e334eb0da3c2dfba5d4a817ac3b0ed80907fc12cbf1a"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_centre_tight_uniform-040",
+      "cell": "n100_clustered_centre_tight_uniform",
+      "instance_sha256": "8015b2e9bce3585519544b0536b640a9a7a614f3b974ceddc277378255a6066c"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_centre_tight_bimodal-041",
+      "cell": "n100_clustered_centre_tight_bimodal",
+      "instance_sha256": "7c2107cc69786cb04ea71b5fdf4d6e8bd5c4db063061d00ee8c4d9f95b038846"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_eccentric_loose_uniform-042",
+      "cell": "n100_clustered_eccentric_loose_uniform",
+      "instance_sha256": "586fb8122f6cebc4fa3817d32179bdc51b392454042c1c75b4305d763164a3d5"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_eccentric_loose_bimodal-043",
+      "cell": "n100_clustered_eccentric_loose_bimodal",
+      "instance_sha256": "ec7e660b9ddf3c7de65f55f9bbfd9b7c6da379fbcec52bdf2bcfd2c67e3644d1"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_eccentric_tight_uniform-044",
+      "cell": "n100_clustered_eccentric_tight_uniform",
+      "instance_sha256": "d2f8f94684e420d1db5ace475576a19eece89b5b5ff6ee2689e9040a1d237b9e"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_eccentric_tight_bimodal-045",
+      "cell": "n100_clustered_eccentric_tight_bimodal",
+      "instance_sha256": "7ec0539e9ac9f9606714a03b5756f69605ddc08aadff4ab448f56c9e59e1e7a6"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_centre_loose_uniform-046",
+      "cell": "n100_mixed_centre_loose_uniform",
+      "instance_sha256": "67b490ebe9bf90c862cdf37fa473cf46606e0e7664af54445a0e5121b63efa58"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_centre_loose_bimodal-047",
+      "cell": "n100_mixed_centre_loose_bimodal",
+      "instance_sha256": "db0446e487b7297d7b388b491a9317057f951c2a00f6203ba04a0131a674ed44"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_centre_tight_uniform-048",
+      "cell": "n100_mixed_centre_tight_uniform",
+      "instance_sha256": "9211d716aa13c889070194c40e014d933f124368601e0d71327e0bef18b16fee"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_centre_tight_bimodal-049",
+      "cell": "n100_mixed_centre_tight_bimodal",
+      "instance_sha256": "2552a512f0398b07ee460a6caf1c9d4428262512569a052c66b708d2041a45eb"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_eccentric_loose_uniform-050",
+      "cell": "n100_mixed_eccentric_loose_uniform",
+      "instance_sha256": "b2fff32d5ad1a2f6be27f694bb828ac31038615908a889e43c76e4a1bc08998d"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_eccentric_loose_bimodal-051",
+      "cell": "n100_mixed_eccentric_loose_bimodal",
+      "instance_sha256": "10cd19d558d1d3cca468ffd3ad34bc4165d68480083197d0d350c436028428b7"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_eccentric_tight_uniform-052",
+      "cell": "n100_mixed_eccentric_tight_uniform",
+      "instance_sha256": "f838c622ed21e4079795a9cc54b30737bc063dcd9e6a0b3c1511ad6b9404ad08"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_eccentric_tight_bimodal-053",
+      "cell": "n100_mixed_eccentric_tight_bimodal",
+      "instance_sha256": "977c55cfd422e4fd028db56e944a7d2a31d28e98615b1bb87cb8c5e46f606b40"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_centre_loose_bimodal-054",
+      "cell": "n100_uniform_centre_loose_bimodal",
+      "instance_sha256": "6435d8c5de079df7d8303b6e5baa9d575e6e0c812c6f9ea8364f9a699a6fa0a1"
+    },
+    {
+      "instance_id": "s2blind_n100_uniform_eccentric_tight_uniform-055",
+      "cell": "n100_uniform_eccentric_tight_uniform",
+      "instance_sha256": "78a73aa28819272cea087803b4131ab5266df3beb1a49e7f732261313bd88fd1"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_centre_loose_bimodal-056",
+      "cell": "n100_clustered_centre_loose_bimodal",
+      "instance_sha256": "57c9b8666155fee6668049265b5e74cff7e29129d483215356d9cd7b85b1d44e"
+    },
+    {
+      "instance_id": "s2blind_n100_clustered_eccentric_tight_uniform-057",
+      "cell": "n100_clustered_eccentric_tight_uniform",
+      "instance_sha256": "920ac1c96c55944ad800fcec46fd3ec923a4b5460c8975aee5d78633b26662fe"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_centre_loose_bimodal-058",
+      "cell": "n100_mixed_centre_loose_bimodal",
+      "instance_sha256": "4e1bb879f3225860b0de7064529a744e21551a42469521ee655eabb5c8197bf4"
+    },
+    {
+      "instance_id": "s2blind_n100_mixed_eccentric_tight_uniform-059",
+      "cell": "n100_mixed_eccentric_tight_uniform",
+      "instance_sha256": "c149ba8f63691be1a2742d936c22ae0e6d6cb36a9fd9a8203a223dd4208dcc90"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_centre_loose_uniform-060",
+      "cell": "n150_uniform_centre_loose_uniform",
+      "instance_sha256": "753ef2fc36a3bbd6ece23e80415565729e40eff799cd9b3f073ac975b1a27ba3"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_centre_loose_bimodal-061",
+      "cell": "n150_uniform_centre_loose_bimodal",
+      "instance_sha256": "9f6fb598c6fd5bf1b41e6c576c72ebda4236ce13c90940b538c9c7fc301c03ed"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_centre_tight_uniform-062",
+      "cell": "n150_uniform_centre_tight_uniform",
+      "instance_sha256": "a79cd31b2c1049f3dd611ab0977ada4f471935f4c0011adfa4e7df8df02a81b0"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_centre_tight_bimodal-063",
+      "cell": "n150_uniform_centre_tight_bimodal",
+      "instance_sha256": "16a488fbcca247a6ffba9e475bed76a06e7a022540894cfe7b297398de53639a"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_eccentric_loose_uniform-064",
+      "cell": "n150_uniform_eccentric_loose_uniform",
+      "instance_sha256": "7d57f5ddc2793fa7a76b567737800841beab591a9c7dd693a83802d814df4ac4"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_eccentric_loose_bimodal-065",
+      "cell": "n150_uniform_eccentric_loose_bimodal",
+      "instance_sha256": "378600b6a398a2e313e93b64528ed4dbd257bad74cfc9d72b2c410a765960051"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_eccentric_tight_uniform-066",
+      "cell": "n150_uniform_eccentric_tight_uniform",
+      "instance_sha256": "346e99150d634cea1163ce79bad98e4ec89800bc241e9cd370b551daddb5aafd"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_eccentric_tight_bimodal-067",
+      "cell": "n150_uniform_eccentric_tight_bimodal",
+      "instance_sha256": "09188de94ba0cc14669b340b81ad46dd73e27b0235c96e8a1db255d8e9565ce6"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_centre_loose_uniform-068",
+      "cell": "n150_clustered_centre_loose_uniform",
+      "instance_sha256": "a7a994f597d330316df2e6954444839876ed37e760930c0221142e115410be06"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_centre_loose_bimodal-069",
+      "cell": "n150_clustered_centre_loose_bimodal",
+      "instance_sha256": "1e22daddadd827cc0acfb1134b3191f120a2ab6e049fe24339b5d36a5bafb168"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_centre_tight_uniform-070",
+      "cell": "n150_clustered_centre_tight_uniform",
+      "instance_sha256": "3f9674e7b82a53291ecf5a907d541c27dd9763103c61db49f9068add8f7aa639"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_centre_tight_bimodal-071",
+      "cell": "n150_clustered_centre_tight_bimodal",
+      "instance_sha256": "fd31de4104be62fcaac447bd25c74d1a63b1566cceb1b361ecd1a88f0d127067"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_eccentric_loose_uniform-072",
+      "cell": "n150_clustered_eccentric_loose_uniform",
+      "instance_sha256": "d66a9e8e94bfa95994af430f8282ed98b7784ea23f832375f327c4f188e792e1"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_eccentric_loose_bimodal-073",
+      "cell": "n150_clustered_eccentric_loose_bimodal",
+      "instance_sha256": "081546c5a2c6a60042ee69d14b93f9732090748b5b396e7867866dd25c889860"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_eccentric_tight_uniform-074",
+      "cell": "n150_clustered_eccentric_tight_uniform",
+      "instance_sha256": "0c32a7e48b4ff0d49b32d741dd3329d55fcb987066e450d2b956c6f6d49204a7"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_eccentric_tight_bimodal-075",
+      "cell": "n150_clustered_eccentric_tight_bimodal",
+      "instance_sha256": "e74a39cd9cfd53c304ce50d1f722d1abdde21ef5fc115a132ed462d0c81bc61a"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_centre_loose_uniform-076",
+      "cell": "n150_mixed_centre_loose_uniform",
+      "instance_sha256": "7828c999d15db1948aabb03e45936ebf45bd3154e4aa81d50cae93bc299b9be0"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_centre_loose_bimodal-077",
+      "cell": "n150_mixed_centre_loose_bimodal",
+      "instance_sha256": "97fdee50b2b6b27ee93344622a6f0a414ff8208c822e49b21e027b6c1d11e738"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_centre_tight_uniform-078",
+      "cell": "n150_mixed_centre_tight_uniform",
+      "instance_sha256": "92a41dc53ed7175d9387a9a40895f036fd154ca5379fe15c23733097bec64916"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_centre_tight_bimodal-079",
+      "cell": "n150_mixed_centre_tight_bimodal",
+      "instance_sha256": "fb9281a51bc0593ca00c6144d1023ab23720c5ab05d246e716981543b1619e52"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_eccentric_loose_uniform-080",
+      "cell": "n150_mixed_eccentric_loose_uniform",
+      "instance_sha256": "aea4546e524c57a75bc9bc84d1d40860538f85ec89e12394478efaa04e0b6805"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_eccentric_loose_bimodal-081",
+      "cell": "n150_mixed_eccentric_loose_bimodal",
+      "instance_sha256": "eac63e9cf1d0455cad3f1d2187c6ecdd82205195dbb66ca9c082b0c84737188a"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_eccentric_tight_uniform-082",
+      "cell": "n150_mixed_eccentric_tight_uniform",
+      "instance_sha256": "42647305e019dcdfe7be04641ca44e62f10425fe2db5ec5abd52f3a06bb3035a"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_eccentric_tight_bimodal-083",
+      "cell": "n150_mixed_eccentric_tight_bimodal",
+      "instance_sha256": "e4907865364d049c25ca6079c420fb11b5f1a37c64ce29d4437aba0f918da23b"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_centre_tight_uniform-084",
+      "cell": "n150_uniform_centre_tight_uniform",
+      "instance_sha256": "a7f7063e5207b855c440462b083a0f44ff4be1dbc7882879466ba8aec4b72cd1"
+    },
+    {
+      "instance_id": "s2blind_n150_uniform_eccentric_loose_bimodal-085",
+      "cell": "n150_uniform_eccentric_loose_bimodal",
+      "instance_sha256": "0fd7e1c079e287d9aac0d533c14032c3c19dff0e8e3d640e8972dae8d95212de"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_centre_tight_uniform-086",
+      "cell": "n150_clustered_centre_tight_uniform",
+      "instance_sha256": "c3f4978eeeab3fceb41302d2ff2216d58f901f093e049d3a2a03c795a351c3db"
+    },
+    {
+      "instance_id": "s2blind_n150_clustered_eccentric_loose_bimodal-087",
+      "cell": "n150_clustered_eccentric_loose_bimodal",
+      "instance_sha256": "b675fc21de0e8524ecb2f32561b754c6cfe8a2098cb67cfdbc270fd8614cd809"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_centre_tight_uniform-088",
+      "cell": "n150_mixed_centre_tight_uniform",
+      "instance_sha256": "3d5324eb2ca4da30ac1ee520843e37bd5d82ead79e2a16af02ee29c5e756b98a"
+    },
+    {
+      "instance_id": "s2blind_n150_mixed_eccentric_loose_bimodal-089",
+      "cell": "n150_mixed_eccentric_loose_bimodal",
+      "instance_sha256": "68be4251e53c63f1f77d52c6b68a0eec2b65a86692ba29c40cf3dda59f6ad88e"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_centre_loose_uniform-090",
+      "cell": "n200_uniform_centre_loose_uniform",
+      "instance_sha256": "8eab8606f57841f69ebcc89a984b87f1b3b0de8ff02db731c59718ccee5ff947"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_centre_loose_bimodal-091",
+      "cell": "n200_uniform_centre_loose_bimodal",
+      "instance_sha256": "70bdb7432952493adcc48d1157a44f52d7d58ff571df78b78c1a2da45cb9ecf2"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_centre_tight_uniform-092",
+      "cell": "n200_uniform_centre_tight_uniform",
+      "instance_sha256": "6e708a9e6c743e4ce46ff64acf45971a9a4f6919f88d83626d5300714248c341"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_centre_tight_bimodal-093",
+      "cell": "n200_uniform_centre_tight_bimodal",
+      "instance_sha256": "f36d3f5d57c0f9774932dcdfcff2b466523dd03a6496abcbfbb6bc4b4b289019"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_eccentric_loose_uniform-094",
+      "cell": "n200_uniform_eccentric_loose_uniform",
+      "instance_sha256": "8cb8304cb8a7f5b133c296c14c78f77b457eb6931cdd446eb43be394c2c042cd"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_eccentric_loose_bimodal-095",
+      "cell": "n200_uniform_eccentric_loose_bimodal",
+      "instance_sha256": "6eaf0b375e862aeee3c3f41be60aa1695ed5d73f71570c5475338df4e79c8a10"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_eccentric_tight_uniform-096",
+      "cell": "n200_uniform_eccentric_tight_uniform",
+      "instance_sha256": "beff1619a5dced348daac8ddea77aa6c1a51592eaf50f1177f8c2fde57fa538d"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_eccentric_tight_bimodal-097",
+      "cell": "n200_uniform_eccentric_tight_bimodal",
+      "instance_sha256": "f3abdf308b36f15b4c8da7bf2e67eb4d05856699fc5d198527a3c424974c6e33"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_centre_loose_uniform-098",
+      "cell": "n200_clustered_centre_loose_uniform",
+      "instance_sha256": "5794c8ec419a7ea3c0aad4ae522ffed2c92b13abe555c82a7b379c3bb7318348"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_centre_loose_bimodal-099",
+      "cell": "n200_clustered_centre_loose_bimodal",
+      "instance_sha256": "55e118ea7c9299fb6ae7cddd7f0acb628d497953f8e100cb4f7c484901ec7164"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_centre_tight_uniform-100",
+      "cell": "n200_clustered_centre_tight_uniform",
+      "instance_sha256": "af2af0266578d29fd0cb3637a311558b18001f430026221b0e77b2f512527741"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_centre_tight_bimodal-101",
+      "cell": "n200_clustered_centre_tight_bimodal",
+      "instance_sha256": "c94f950707d94fb287a67147c5d58083225adbf57da9255daa33d25ba8ed3cf2"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_eccentric_loose_uniform-102",
+      "cell": "n200_clustered_eccentric_loose_uniform",
+      "instance_sha256": "3adf68a5ab101ef27c8b66bb4de7b1d530dbb2f349a905eec3520a28f06cf020"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_eccentric_loose_bimodal-103",
+      "cell": "n200_clustered_eccentric_loose_bimodal",
+      "instance_sha256": "c37c3decedea8009cd4dfe031ca63ab5123c9b4819b123a8936ddbe352fe5bb9"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_eccentric_tight_uniform-104",
+      "cell": "n200_clustered_eccentric_tight_uniform",
+      "instance_sha256": "06fb529aa5bf0909efe6ae909d173a180dbd679eed4f684069783d58232238ee"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_eccentric_tight_bimodal-105",
+      "cell": "n200_clustered_eccentric_tight_bimodal",
+      "instance_sha256": "5a7656d2fe2a89997988e54e47d9cbee23f68acac8ad4ef7fce1c3d57f507d9e"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_centre_loose_uniform-106",
+      "cell": "n200_mixed_centre_loose_uniform",
+      "instance_sha256": "43578aea861476c6668e5a24cb7f721ed2d7ec90c6b50bd50afc68bb3e5c75f9"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_centre_loose_bimodal-107",
+      "cell": "n200_mixed_centre_loose_bimodal",
+      "instance_sha256": "edd528fdc823974810e828eef5cb4a7c037affa47ae314b74f5593bc4baa4dee"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_centre_tight_uniform-108",
+      "cell": "n200_mixed_centre_tight_uniform",
+      "instance_sha256": "6ebdc599993232efcf78d045a6d09b3ec494fec9643a5f9d9e51e4d78e4c9882"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_centre_tight_bimodal-109",
+      "cell": "n200_mixed_centre_tight_bimodal",
+      "instance_sha256": "73bc9ec6134101f75a638c7cd48589e03ee012c7dd0c947869e86bf75a6ce08b"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_eccentric_loose_uniform-110",
+      "cell": "n200_mixed_eccentric_loose_uniform",
+      "instance_sha256": "91db99a83d38fec8c62ff2bbd4d0f34999375845180a5c1fe845701c631c6f12"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_eccentric_loose_bimodal-111",
+      "cell": "n200_mixed_eccentric_loose_bimodal",
+      "instance_sha256": "3222e60ca07030a2600212637ca97cc4a0f01451afb26a1fe55527dd927b6508"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_eccentric_tight_uniform-112",
+      "cell": "n200_mixed_eccentric_tight_uniform",
+      "instance_sha256": "694b07448b8ea47717e1ffdb35aa26e67ade69a18bb0184e37baefd7edaa2efe"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_eccentric_tight_bimodal-113",
+      "cell": "n200_mixed_eccentric_tight_bimodal",
+      "instance_sha256": "2c6a5338d7070430e495d29ebe72b0bfc95f9451665cef8ec675ba7632ace8ff"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_centre_tight_bimodal-114",
+      "cell": "n200_uniform_centre_tight_bimodal",
+      "instance_sha256": "26e14a46f0ce1a6b17365bc1ed9e3169bcf35966cbc1fe9b2f7f62fff35e76c1"
+    },
+    {
+      "instance_id": "s2blind_n200_uniform_eccentric_loose_uniform-115",
+      "cell": "n200_uniform_eccentric_loose_uniform",
+      "instance_sha256": "c67ddf4afc8ec45e25662f0613775a9f4f2fc510dbc741eb73b83e043c0f4350"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_centre_tight_bimodal-116",
+      "cell": "n200_clustered_centre_tight_bimodal",
+      "instance_sha256": "1d335a6b997cf9a117fd7034f95a5312d8a3413ab9378e924985e7cf631c202e"
+    },
+    {
+      "instance_id": "s2blind_n200_clustered_eccentric_loose_uniform-117",
+      "cell": "n200_clustered_eccentric_loose_uniform",
+      "instance_sha256": "338a504948e1b45b66474eebd396758d0b6c4557633c109018574908215f7dbd"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_centre_tight_bimodal-118",
+      "cell": "n200_mixed_centre_tight_bimodal",
+      "instance_sha256": "b60bbc8dd1ee36948d6a7caa281b5542f1355996851c473d8f0e995d11f2780b"
+    },
+    {
+      "instance_id": "s2blind_n200_mixed_eccentric_loose_uniform-119",
+      "cell": "n200_mixed_eccentric_loose_uniform",
+      "instance_sha256": "e236597aba368eaac1d17c6a1b32a4370314a0d5799343ec9fd11d55f6b32cd9"
+    }
+  ]
+}

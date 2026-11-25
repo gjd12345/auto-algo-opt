@@ -1,0 +1,78 @@
+{
+  "type": "evidence",
+  "title": "里程碑 3.5 攻关三：统一基础知识库同起点记忆闭环纯净重测（12 格 432 请求 + 双口径全集）",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3.5",
+    "memory-loop",
+    "unified-base-kb",
+    "common-completed",
+    "penalized-2x"
+  ],
+  "status": "reviewed",
+  "summary": "基于 690a2c36 终审修补代码构建同起点四臂对照（所有臂挂载一致基础静态 KB 20261124-main-co-workbench-m4，12 格 = 432 请求）：明确区分 online_writeback（arm1）、离线整理记忆读取 + 合并式 L3 KB 切换（无在线写回 arm2）与 full_closed_loop（arm3）。在独立评测集 cvrp_final_accept_120（120/120 全完赛）上 arm2 在 20261125 (-0.0764, p_holm=8.52e-5) 与 20261126 (-0.0441, p_holm=0.0109) 显著优于无记忆底座，在 ABP-74 全员 74/74 完赛且显著缩短 8.93–10.42 (约 1.0%–1.14%, p_holm<=4.71e-6)；在 Set X-100 共同完赛交集下记忆/L3 臂稳定领先 -246.92 至 -430.73 (p_holm<=0.00011412)，但在未完成 2x 加罚全集下因 3–5% 超时算例反向拉高加罚均值（69,627.50–71,920.36 vs 66,352.22），揭示了记忆提升局部质量时并发的复杂度膨胀风险。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "empirical",
+    "interface": "score_ruin_nodes",
+    "applicable_regimes": {
+      "strong_on": [
+        "unified_base_kb_isolation",
+        "abp74_and_blind120_quality_gain",
+        "common_completed_setx_quality_gain"
+      ],
+      "weak_on": [
+        "unscreened_memory_complexity_bloat_on_set_x_penalized_2x"
+      ],
+      "scale_notes": "arm2 明确标注为“离线整理记忆读取 + 合并式 L3 KB 切换（无在线写回）”。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_m35_pure_kb_retest.py",
+        "sha256": "71e71aebfd8af44bb95dedf8e64c33d6ef0e7570c19339cb445000a118ddbd45",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/m35_pure_kb_analysis.py",
+        "sha256": "aaa138fed0a8f4933d2b1d34a8a51acfd42ead55ec811abdd5337f760e51c5ac",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tests/test_m35_pure_kb_retest.py",
+        "sha256": "82469edb73537e3685522dc3819a4bd6b9f0568d029420340e30574a399d9423",
+        "worktree_base_commit": "d5e8984c"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-research-agent-m3-autonomous-loop",
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone5-stage1-causal-closure-20261125"
+    ]
+  },
+  "source_refs": [
+    "src-milestone5-stage1-causal-closure-20261125"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3_5_pure_kb_retest/runs/m35_pure_kb_retest_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-m35-pure-kb-memory-retest-20261125",
+  "content_sha256": "85b1370ca935f9c1cda79f5f59c8ff10fa72b9c088d3c434005963263ea4a968"
+}

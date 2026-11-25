@@ -1,0 +1,39 @@
+{
+  "type": "method",
+  "title": "Mixer split: cut volume by smallest fitting listed capacity",
+  "category": "method",
+  "problem_family": "mixer_split",
+  "tags": [
+    "mixer-split",
+    "greedy"
+  ],
+  "status": "reviewed",
+  "summary": "Sort vehicle capacities descending, then repeatedly assign the smallest capacity that still covers the remainder.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "SplitOrders",
+    "objective": "extra vehicles + suborder count + travel/mix time"
+  },
+  "relations": {
+    "problems": [
+      "problem-mixer-split"
+    ],
+    "sources": [],
+    "implementations": [
+      "impl-mixer-split-greedy"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/mixer_split/mixer_split_solver.go",
+      "sha256": "d2ec22a1d1473375660ed16b2d278782feac20dbcdc598bd8a3714941d429dc0"
+    }
+  ],
+  "id": "method-mixer-greedy-capacity-split",
+  "content_sha256": "d2ce0d5ba8787c770cd35352445a81eb9dbb375e96fc61a28eab4ee42a530a02"
+}

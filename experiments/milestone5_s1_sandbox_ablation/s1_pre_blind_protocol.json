@@ -1,0 +1,101 @@
+{
+  "schema_version": "s1-pre-blind-protocol/v1",
+  "commitment_sha256": "972054cc67061545d0062e72f0b1c0fd75e6389d410f2675ed57a68d6bdd33f3",
+  "blind_suite_id": "cvrp_s1_sandbox_blind_120",
+  "run_mode": "live",
+  "arms": {
+    "arm_s1_0_free_tool": "off",
+    "arm_s1_1_slice_only": "slice_only",
+    "arm_s1_2_sandbox_only": "sandbox_only"
+  },
+  "pilot_cells": [
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261126",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261126",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261126"
+  ],
+  "full_cells": [
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261124",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261125",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261126",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261126",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261126",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261127",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261127",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261127",
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261128",
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261128",
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261128",
+    "Qwen4-Max:arm_s1_0_free_tool:20261124",
+    "Qwen4-Max:arm_s1_1_slice_only:20261124",
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261124",
+    "Qwen4-Max:arm_s1_0_free_tool:20261125",
+    "Qwen4-Max:arm_s1_1_slice_only:20261125",
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261125",
+    "Qwen4-Max:arm_s1_0_free_tool:20261126",
+    "Qwen4-Max:arm_s1_1_slice_only:20261126",
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261126",
+    "Qwen4-Max:arm_s1_0_free_tool:20261127",
+    "Qwen4-Max:arm_s1_1_slice_only:20261127",
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261127",
+    "Qwen4-Max:arm_s1_0_free_tool:20261128",
+    "Qwen4-Max:arm_s1_1_slice_only:20261128",
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261128"
+  ],
+  "dev_suite_id": "cvrp_dev_hetero_24",
+  "request_cap": 36,
+  "solve_deadline_ms": 500.0,
+  "templates": [
+    "cvrp_sequential_construct",
+    "cvrp_parallel_merge_static",
+    "cvrp_parallel_merge_dynamic",
+    "cvrp_ruin_recreate"
+  ],
+  "postprocess_modes": [
+    "none",
+    "intra_2opt",
+    "relocate_2opt"
+  ],
+  "static_kb": {
+    "release_id": "20261124-main-co-workbench-m4",
+    "manifest_sha256": "3c9e5507de4a503bb7f9a577dac4dbbc164ab9cb3d1cc5ec193ba39112003b3f"
+  },
+  "pairwise_contrasts": [
+    [
+      "arm_s1_1_slice_only",
+      "arm_s1_0_free_tool"
+    ],
+    [
+      "arm_s1_2_sandbox_only",
+      "arm_s1_0_free_tool"
+    ],
+    [
+      "arm_s1_2_sandbox_only",
+      "arm_s1_1_slice_only"
+    ]
+  ],
+  "denominators": [
+    "common_completed",
+    "penalized_2x"
+  ],
+  "bootstrap_replicates": 10000,
+  "holm_family": [
+    "suite_id",
+    "model",
+    "fleet",
+    "denominator"
+  ],
+  "endpoint": "https://llmapi.paratera.com/v1/chat/completions",
+  "api_key_env": "PARATERA_API_KEY",
+  "request_timeout_s": 90.0,
+  "wall_seconds": 14400.0
+}

@@ -1,0 +1,2453 @@
+{
+  "schema_version": "subproblem-catalog/v1",
+  "notes": "Thirty secondary problems per literature-standard family. mixer_split and insertships_routing must not be padded. target_heuristics are search/screen hints, not claims that main implements them.",
+  "families": {
+    "tsp": {
+      "label": "Traveling salesman",
+      "registered_eoh": [
+        "tsp_construct",
+        "tsp_2opt"
+      ],
+      "fill_policy": "require_30",
+      "subproblems": [
+        {
+          "id": "tsp_euclidean",
+          "label": "Euclidean TSP",
+          "definition": "Complete graph with Euclidean distances.",
+          "search_query": "Euclidean traveling salesman nearest neighbor heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nearest Neighbor",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Farthest Insertion",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_asymmetric",
+          "label": "Asymmetric TSP",
+          "definition": "Directed distances, d(i,j) may differ from d(j,i).",
+          "search_query": "asymmetric traveling salesman ATSP nearest neighbor heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Directed Nearest Neighbor",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Directed 3-opt",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_metric",
+          "label": "Metric TSP",
+          "definition": "Distances satisfy the triangle inequality.",
+          "search_query": "metric TSP approximation Christofides nearest neighbor",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nearest Neighbor",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Christofides",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_open",
+          "label": "Open TSP / Hamiltonian path",
+          "definition": "Path visits each city once, no return.",
+          "search_query": "open traveling salesman Hamiltonian path heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Path Nearest Neighbor",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Cheapest Insertion path",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_tw",
+          "label": "TSP with time windows",
+          "definition": "Visit cities inside time windows.",
+          "search_query": "TSP with time windows insertion heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "I1 insertion TSPTW",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Time-window NN",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_sop",
+          "label": "Sequential ordering / precedences",
+          "definition": "Precedence constraints on visit order.",
+          "search_query": "sequential ordering problem heuristic SOP",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Precedence insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Asymmetric SOP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_clustered",
+          "label": "Clustered TSP",
+          "definition": "Cities grouped; visit clusters as units.",
+          "search_query": "clustered traveling salesman heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Cluster-first NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Intra-cluster 2-opt",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_gtsp",
+          "label": "Generalized TSP",
+          "definition": "Visit exactly one city per cluster.",
+          "search_query": "generalized traveling salesman GTSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "NN among clusters",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "GI3 local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_prize",
+          "label": "Prize-collecting TSP",
+          "definition": "Optional cities with prizes and penalties.",
+          "search_query": "prize collecting TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Prize insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Goemans-Williamson PCTSP",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_orienteering",
+          "label": "Orienteering / selective TSP",
+          "definition": "Max prize under a length budget.",
+          "search_query": "orienteering problem heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Prize/distance greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "S-algorithm orienteering",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_mtsp",
+          "label": "Multiple TSP",
+          "definition": "Several salesmen from a depot.",
+          "search_query": "multiple traveling salesman mTSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "mTSP NN assignment",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "mTSP 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_minmax",
+          "label": "Min-max mTSP",
+          "definition": "Minimise the longest salesman tour.",
+          "search_query": "min-max multiple TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Balanced NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Min-max 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_pdp",
+          "label": "TSP with pickups and deliveries",
+          "definition": "Paired pickup-delivery.",
+          "search_query": "pickup delivery TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Paired insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "PDP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_dynamic",
+          "label": "Dynamic / online TSP",
+          "definition": "Cities revealed over time.",
+          "search_query": "online traveling salesman heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Online NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Replanning 2-opt",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_stochastic",
+          "label": "Stochastic TSP",
+          "definition": "Random distances or presence.",
+          "search_query": "stochastic TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Expected-cost NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Recourse 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_time_dependent",
+          "label": "Time-dependent TSP",
+          "definition": "Travel time depends on departure.",
+          "search_query": "time dependent TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Time-dependent NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "TD 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_neighborhoods",
+          "label": "TSP with neighborhoods",
+          "definition": "Visit a region not a point.",
+          "search_query": "TSP with neighborhoods heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Region-greedy visit",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "TspN sampling",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_bottleneck",
+          "label": "Bottleneck TSP",
+          "definition": "Minimise the longest edge.",
+          "search_query": "bottleneck traveling salesman heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Bottleneck NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Threshold binary search + MST",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_multiobjective",
+          "label": "Multi-objective TSP",
+          "definition": "Several cost functions.",
+          "search_query": "multiobjective TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Weighted-sum NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Pareto 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_colored",
+          "label": "Colored TSP",
+          "definition": "Color/class visit constraints.",
+          "search_query": "colored traveling salesman heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Color-feasible NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Colored local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_large",
+          "label": "Large-scale Euclidean TSP",
+          "definition": "n in thousands; locality matters.",
+          "search_query": "large scale TSP Lin Kernighan heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "move_selector"
+          },
+          "target_heuristics": [
+            {
+              "name": "Lin-Kernighan",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Candidate-list 2-opt",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_noisy",
+          "label": "Noisy / black-box distances",
+          "definition": "Distance oracle is noisy.",
+          "search_query": "noisy TSP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Robust NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Repeated 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_forbidden",
+          "label": "Forbidden edges",
+          "definition": "Some edges cannot be used.",
+          "search_query": "TSP forbidden edges heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Constrained NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Infeasible-edge 2-opt",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_covering",
+          "label": "Covering salesman",
+          "definition": "A vertex covers neighbors.",
+          "search_query": "covering salesman problem heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Covering greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Set-cover + TSP",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_purchaser",
+          "label": "Traveling purchaser",
+          "definition": "Buy items from markets.",
+          "search_query": "traveling purchaser problem heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "TPP savings",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Market insertion",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_drone",
+          "label": "TSP with drone",
+          "definition": "Truck plus UAV.",
+          "search_query": "TSP with drone heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Truck-drone NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Drone launch local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_fuel",
+          "label": "Fuel / replenishment TSP",
+          "definition": "Must visit refill points.",
+          "search_query": "refueling traveling salesman heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Refuel insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Fuel-feasible NN",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_angular",
+          "label": "Angular-metric TSP",
+          "definition": "Cost uses turning angles.",
+          "search_query": "angular metric TSP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Angle-aware NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Or-opt for turning cost",
+              "adapter_kind": "move_selector"
+            }
+          ]
+        },
+        {
+          "id": "tsp_construct",
+          "label": "Constructive-only TSP",
+          "definition": "Build a tour city by city.",
+          "search_query": "nearest neighbor cheapest insertion TSP constructive heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nearest Neighbor",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Cheapest Insertion",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "tsp_local",
+          "label": "Local-search TSP",
+          "definition": "Improve a complete tour.",
+          "search_query": "2-opt 3-opt or-opt TSP local search",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "move_selector"
+          },
+          "target_heuristics": [
+            {
+              "name": "2-opt",
+              "adapter_kind": "move_selector"
+            },
+            {
+              "name": "Or-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        }
+      ]
+    },
+    "cvrp": {
+      "label": "Vehicle routing",
+      "registered_eoh": [
+        "cvrp_construct"
+      ],
+      "fill_policy": "require_30",
+      "subproblems": [
+        {
+          "id": "cvrp_basic",
+          "label": "Capacitated VRP",
+          "definition": "One depot, capacity, visit each customer once.",
+          "search_query": "capacitated vehicle routing nearest neighbor Clarke Wright",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nearest feasible customer",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Clarke-Wright savings as next-node score",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "vrptw",
+          "label": "VRP with time windows",
+          "definition": "Customers have time windows.",
+          "search_query": "VRPTW Solomon insertion heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Solomon I1",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Solomon I2",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "mdvrp",
+          "label": "Multi-depot VRP",
+          "definition": "Several depots.",
+          "search_query": "multi depot VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Depot assignment + NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "MD savings",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "sdvrp",
+          "label": "Split-delivery VRP",
+          "definition": "A customer may be split.",
+          "search_query": "split delivery VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Split-delivery savings",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Split local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "ovrp",
+          "label": "Open VRP",
+          "definition": "Routes need not return.",
+          "search_query": "open vehicle routing heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Open NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Open savings",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "hfvrp",
+          "label": "Heterogeneous fleet VRP",
+          "definition": "Vehicle types differ.",
+          "search_query": "heterogeneous fleet VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Type-aware savings",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Fleet mix local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "fsmvrp",
+          "label": "Fleet size and mix",
+          "definition": "Choose fleet composition.",
+          "search_query": "fleet size mix VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Golden FSM constructive",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "FSM local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "vrppd",
+          "label": "VRP with pickups and deliveries",
+          "definition": "Paired pickup and delivery.",
+          "search_query": "VRP pickup delivery heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Paired insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "PDP VND",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "pdptw",
+          "label": "PDPTW",
+          "definition": "Pickup-delivery with windows.",
+          "search_query": "pickup delivery time windows heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "PDPTW insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "PDPTW ALNS",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrpb",
+          "label": "VRP with backhauls",
+          "definition": "Linehaul then backhaul.",
+          "search_query": "vehicle routing backhauls heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Backhaul insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Linehaul-first NN",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "vrpsdp",
+          "label": "Simultaneous pickup and delivery",
+          "definition": "Both at the same stop.",
+          "search_query": "VRP simultaneous pickup delivery heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "SDP NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "SDP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "pvrp",
+          "label": "Periodic VRP",
+          "definition": "Planning over several days.",
+          "search_query": "periodic vehicle routing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Day assignment + CWS",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Periodic local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "irp",
+          "label": "Inventory routing",
+          "definition": "Routing plus inventory.",
+          "search_query": "inventory routing problem heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "IRP greedy replenishment",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "IRP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "darp",
+          "label": "Dial-a-ride",
+          "definition": "Passenger transport with windows.",
+          "search_query": "dial a ride problem heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "DARP insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "DARP regret",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_multitrip",
+          "label": "Multi-trip VRP",
+          "definition": "A vehicle may do several routes.",
+          "search_query": "multi trip VRP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Multi-trip NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Trip packing + routing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_site",
+          "label": "Site-dependent VRP",
+          "definition": "Some vehicles cannot serve some sites.",
+          "search_query": "site dependent VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Site-feasible NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Restricted savings",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_td",
+          "label": "Time-dependent VRP",
+          "definition": "Travel time varies with clock.",
+          "search_query": "time dependent VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "TD NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "TD local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_stochastic",
+          "label": "Stochastic-demand VRP",
+          "definition": "Demands random.",
+          "search_query": "stochastic demand VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Expected-demand NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Recourse restocking",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_dynamic",
+          "label": "Dynamic VRP",
+          "definition": "Requests arrive online.",
+          "search_query": "dynamic vehicle routing heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Online feasible NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Rolling-horizon 2-opt",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "evrp",
+          "label": "Electric VRP",
+          "definition": "Charging constraints.",
+          "search_query": "electric vehicle routing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Charge-feasible NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "EVRP insertion",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_2e",
+          "label": "Two-echelon VRP",
+          "definition": "Satellites between depot and customers.",
+          "search_query": "two echelon VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Satellite assignment + CWS",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "2E-VRP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_clustered",
+          "label": "Clustered VRP",
+          "definition": "Customers in clusters.",
+          "search_query": "clustered VRP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Cluster-first NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Sweep-like angular NN",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_prize",
+          "label": "Prize-collecting VRP",
+          "definition": "Optional customers.",
+          "search_query": "prize collecting VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Prize/distance greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Selective VRP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_minveh",
+          "label": "Minimise number of vehicles",
+          "definition": "Primary objective is fleet size.",
+          "search_query": "minimise vehicles VRP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Parallel cheapest insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Capacity-tight NN",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "dcvrp",
+          "label": "Distance-constrained VRP",
+          "definition": "Route length cap.",
+          "search_query": "distance constrained VRP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Length-feasible NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "DCVRP savings",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_loading",
+          "label": "VRP with loading",
+          "definition": "LIFO or 3D loading.",
+          "search_query": "VRP loading constraints heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "LIFO insertion",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "3D packing + routing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_mo",
+          "label": "Multi-objective VRP",
+          "definition": "Several routing objectives.",
+          "search_query": "multiobjective VRP heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Weighted NN",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Pareto local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_construct",
+          "label": "Constructive CVRP",
+          "definition": "Build routes customer by customer.",
+          "search_query": "Clarke Wright savings nearest neighbor VRP constructive",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nearest feasible",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Savings as next-node score",
+              "adapter_kind": "next_node_score"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_local",
+          "label": "Local-search CVRP",
+          "definition": "Improve complete routes.",
+          "search_query": "granular tabu VRP local search",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Granular tabu",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Relocate/exchange VND",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cvrp_large",
+          "label": "Large-scale CVRP",
+          "definition": "Hundreds of customers.",
+          "search_query": "large scale VRP heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "next_node_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Restricted NN",
+              "adapter_kind": "next_node_score"
+            },
+            {
+              "name": "Ruin-and-recreate",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        }
+      ]
+    },
+    "online_bin_packing": {
+      "label": "Bin packing",
+      "registered_eoh": [
+        "obp_online"
+      ],
+      "fill_policy": "require_30",
+      "subproblems": [
+        {
+          "id": "obp_1d",
+          "label": "1D online bin packing",
+          "definition": "Irrevocable assignment of arriving items.",
+          "search_query": "online bin packing First Fit Best Fit Harmonic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "First Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Best Fit",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "bp_1d_offline",
+          "label": "1D offline bin packing",
+          "definition": "Full list known; sorting allowed.",
+          "search_query": "First Fit Decreasing Karmarkar Karp bin packing",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "First Fit Decreasing",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Karmarkar-Karp",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_variable",
+          "label": "Variable-sized bins",
+          "definition": "Several bin sizes.",
+          "search_query": "variable sized bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Any Fit variable bins",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Variable-size FFD",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_cardinality",
+          "label": "Cardinality-constrained packing",
+          "definition": "Max items per bin.",
+          "search_query": "cardinality constrained bin packing heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Cardinality-aware Best Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Cardinality FFD",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "strip_2d",
+          "label": "2D strip packing",
+          "definition": "Pack rectangles into a strip.",
+          "search_query": "two dimensional strip packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Bottom-Left",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Best-Fit skyline",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_2d",
+          "label": "2D bin packing",
+          "definition": "Pack rectangles into bins.",
+          "search_query": "two dimensional bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Maxrects",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Guillotine 2D",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_3d",
+          "label": "3D bin packing",
+          "definition": "Pack boxes.",
+          "search_query": "three dimensional bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Deepest-Bottom-Left",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Extreme-point 3D",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "vector_bp",
+          "label": "Vector bin packing",
+          "definition": "Multi-dimensional capacities.",
+          "search_query": "vector bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Vector FFD",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Norm-based Best Fit",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "cutting_stock",
+          "label": "1D cutting stock",
+          "definition": "Few item types, many copies.",
+          "search_query": "cutting stock heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Pattern generation greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "FFD cutting stock",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "obp_harmonic",
+          "label": "Harmonic online family",
+          "definition": "Size classes and class bins.",
+          "search_query": "Harmonic_M online bin packing Lee Lee",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Harmonic_M score over residuals",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Refined Harmonic",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "obp_bounded_space",
+          "label": "Bounded-space online packing",
+          "definition": "Only k bins open.",
+          "search_query": "bounded space online bin packing heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Bounded-space Best Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "K-bounded Harmonic",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "bp_fragile",
+          "label": "Fragile objects",
+          "definition": "Items cannot support others.",
+          "search_query": "fragile objects bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Fragile FFD",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Load-limit packing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_colored",
+          "label": "Colored bin packing",
+          "definition": "Color constraints.",
+          "search_query": "colored bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Color-aware FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Colored Best Fit",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_conflicts",
+          "label": "Bin packing with conflicts",
+          "definition": "Some pairs cannot share a bin.",
+          "search_query": "bin packing with conflicts heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Conflict-aware FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Graph coloring + packing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_dynamic",
+          "label": "Dynamic packing",
+          "definition": "Insert and delete over time.",
+          "search_query": "dynamic bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Dynamic FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Repacking local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_stochastic",
+          "label": "Stochastic packing",
+          "definition": "Item sizes random.",
+          "search_query": "stochastic bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Expected-size BF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Distribution-aware Harmonic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "obp_advice",
+          "label": "Online packing with advice",
+          "definition": "Limited future bits.",
+          "search_query": "online bin packing advice complexity",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Advice-assisted FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Advice Harmonic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_mo",
+          "label": "Multi-objective packing",
+          "definition": "Bins plus another objective.",
+          "search_query": "multiobjective bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Weighted FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Pareto packing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "obp_irrevocable",
+          "label": "Irrevocable online packing",
+          "definition": "No repacking; matches EoH OBP.",
+          "search_query": "irrevocable online bin packing score function",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Worst Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Residual-utilization score",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "bp_batch",
+          "label": "Batch packing",
+          "definition": "Items arrive in batches.",
+          "search_query": "batch bin packing heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Batch Best Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Sort-within-batch FFD",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_types",
+          "label": "Few item types",
+          "definition": "Many copies of few sizes.",
+          "search_query": "bin packing item types heuristic",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Type-aware Best Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Grouping Harmonic",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "obp_lookahead",
+          "label": "k-lookahead online packing",
+          "definition": "See k future items.",
+          "search_query": "lookahead online bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "k-lookahead BF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Lookahead Harmonic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_open_end",
+          "label": "Open-end packing",
+          "definition": "Last item may overflow slightly.",
+          "search_query": "open end bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Open-end FF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Open-end BF",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_guillotine",
+          "label": "Guillotine packing",
+          "definition": "Cuts must be guillotine.",
+          "search_query": "guillotine bin packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Guillotine BF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Recursive guillotine",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_resource",
+          "label": "Resource-constrained packing",
+          "definition": "Extra resources besides size.",
+          "search_query": "resource constrained packing heuristic",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Multi-resource BF",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Resource FFD",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "obp_bestfit_family",
+          "label": "Best-Fit online family",
+          "definition": "Prefer tight residual.",
+          "search_query": "Best Fit online bin packing worst case Johnson",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Best Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Almost Best Fit",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "obp_worstfit_family",
+          "label": "Worst-Fit online family",
+          "definition": "Prefer emptiest bin.",
+          "search_query": "Worst Fit online bin packing",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Worst Fit",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Almost Worst Fit",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "obp_score",
+          "label": "Score-based online packing",
+          "definition": "Learned or designed score over residuals.",
+          "search_query": "online bin packing scoring heuristic residual",
+          "eoh_map": {
+            "status": "possible",
+            "adapter_kind": "bin_score"
+          },
+          "target_heuristics": [
+            {
+              "name": "Residual-utilization score",
+              "adapter_kind": "bin_score"
+            },
+            {
+              "name": "Piecewise residual score",
+              "adapter_kind": "bin_score"
+            }
+          ]
+        },
+        {
+          "id": "bp_offline_ffd",
+          "label": "FFD/BFD offline",
+          "definition": "Sort then First/Best Fit.",
+          "search_query": "First Fit Decreasing bin packing",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "First Fit Decreasing",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Best Fit Decreasing",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "bp_offline_kk",
+          "label": "Karmarkar-Karp / differencing",
+          "definition": "Offline LP or differencing.",
+          "search_query": "Karmarkar Karp bin packing approximation",
+          "eoh_map": {
+            "status": "not_mappable",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Karmarkar-Karp differencing",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Multifit",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        }
+      ]
+    },
+    "knapsack": {
+      "label": "Knapsack",
+      "registered_eoh": [],
+      "fill_policy": "require_30",
+      "subproblems": [
+        {
+          "id": "kp_01",
+          "label": "0-1 knapsack",
+          "definition": "Take or leave each item.",
+          "search_query": "0-1 knapsack greedy heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Greedy + swap",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_unbounded",
+          "label": "Unbounded knapsack",
+          "definition": "Unlimited copies.",
+          "search_query": "unbounded knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Unbounded density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Greedy by value",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_bounded",
+          "label": "Bounded knapsack",
+          "definition": "Bounded copies.",
+          "search_query": "bounded knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Bounded density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Core algorithm heuristic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_multiple",
+          "label": "Multiple knapsack",
+          "definition": "Several knapsacks.",
+          "search_query": "multiple knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "MKP greedy assign",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "MKP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_md",
+          "label": "Multidimensional knapsack",
+          "definition": "Several resource constraints.",
+          "search_query": "multidimensional knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Surrogate density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "MDKP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_quadratic",
+          "label": "Quadratic knapsack",
+          "definition": "Pairwise profits.",
+          "search_query": "quadratic knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "QKP greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "QKP local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_mckp",
+          "label": "Multiple-choice knapsack",
+          "definition": "Choose from classes.",
+          "search_query": "multiple choice knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "MCKP greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Class-wise DP heuristic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_discount",
+          "label": "Discount knapsack",
+          "definition": "Discounts on combinations.",
+          "search_query": "discount knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Discount greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Combo local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_online",
+          "label": "Online knapsack",
+          "definition": "Items arrive online.",
+          "search_query": "online knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Threshold online knapsack",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Secretary-style take",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_stochastic",
+          "label": "Stochastic knapsack",
+          "definition": "Random profits or weights.",
+          "search_query": "stochastic knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Expected-density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Recourse knapsack",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_fuzzy",
+          "label": "Fuzzy knapsack",
+          "definition": "Fuzzy weights/profits.",
+          "search_query": "fuzzy knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Fuzzy density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Defuzzified greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_mo",
+          "label": "Multi-objective knapsack",
+          "definition": "Several profits.",
+          "search_query": "multiobjective knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Weighted-sum greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Pareto greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "subset_sum",
+          "label": "Subset sum",
+          "definition": "Hit a target sum.",
+          "search_query": "subset sum heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Greedy subset sum",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Differencing subset sum",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_collapsing",
+          "label": "Collapsing knapsack",
+          "definition": "Capacity depends on selection.",
+          "search_query": "collapsing knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Collapsing greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Collapsing local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_nonlinear",
+          "label": "Nonlinear knapsack",
+          "definition": "Nonlinear profit.",
+          "search_query": "nonlinear knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Nonlinear greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Linearisation heuristic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_setup",
+          "label": "Knapsack with setups",
+          "definition": "Class setup costs.",
+          "search_query": "knapsack with setups heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Setup-aware greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Class open/close local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_prec",
+          "label": "Precedence knapsack",
+          "definition": "Item precedences.",
+          "search_query": "precedence constrained knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Precedence greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Topo-order greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_time",
+          "label": "Time-dependent knapsack",
+          "definition": "Profits vary with time.",
+          "search_query": "time dependent knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Time-slot greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "TD knapsack local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_circular",
+          "label": "Circular knapsack",
+          "definition": "Circular arrangement.",
+          "search_query": "circular knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Circular greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Break-circle greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_group",
+          "label": "Group knapsack",
+          "definition": "Groups of items.",
+          "search_query": "group knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Group greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Group local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_generalized",
+          "label": "Generalized knapsack",
+          "definition": "Generalised assignment flavour.",
+          "search_query": "generalized knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "GAP greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "GAP regret",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_compartment",
+          "label": "Compartmentalized knapsack",
+          "definition": "Compartments inside the knapsack.",
+          "search_query": "compartmentalized knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Compartment greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Compartment local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_bilevel",
+          "label": "Bilevel knapsack",
+          "definition": "Leader-follower.",
+          "search_query": "bilevel knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Leader greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Reaction heuristic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_robust",
+          "label": "Robust knapsack",
+          "definition": "Uncertainty sets.",
+          "search_query": "robust knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Worst-case density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Budgeted uncertainty greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_integer",
+          "label": "Integer knapsack",
+          "definition": "Integer copies.",
+          "search_query": "integer knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Integer density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Rounding heuristic",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_minmax",
+          "label": "Min-max knapsack",
+          "definition": "Minimise the worst load.",
+          "search_query": "minmax knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Min-max greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Load-balance local search",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_assign",
+          "label": "Assignment knapsack",
+          "definition": "Assign items to agents with budgets.",
+          "search_query": "assignment knapsack heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Assign greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Regret assignment",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_order_greedy",
+          "label": "Order-greedy 0-1 (matches main Go solver)",
+          "definition": "Take items in file order if they fit.",
+          "search_query": "greedy knapsack first fit order",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Order-greedy take-if-fits",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "First-fit knapsack",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_density",
+          "label": "Profit/weight density greedy",
+          "definition": "Sort by density then take.",
+          "search_query": "knapsack density greedy heuristic",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Dantzig density greedy",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "Critical-item greedy",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        },
+        {
+          "id": "kp_dp_fptas",
+          "label": "DP / FPTAS",
+          "definition": "Exact or approximate DP, not a constructive EoH elite.",
+          "search_query": "knapsack FPTAS dynamic programming",
+          "eoh_map": {
+            "status": "not_registered",
+            "adapter_kind": "not_mappable"
+          },
+          "target_heuristics": [
+            {
+              "name": "Ibarra-Kim FPTAS",
+              "adapter_kind": "not_mappable"
+            },
+            {
+              "name": "DP by capacity",
+              "adapter_kind": "not_mappable"
+            }
+          ]
+        }
+      ]
+    },
+    "mixer_split": {
+      "label": "Mixer split",
+      "registered_eoh": [],
+      "fill_policy": "do_not_pad",
+      "subproblems": []
+    },
+    "insertships_routing": {
+      "label": "Insertships",
+      "registered_eoh": [],
+      "fill_policy": "do_not_pad",
+      "subproblems": []
+    }
+  }
+}

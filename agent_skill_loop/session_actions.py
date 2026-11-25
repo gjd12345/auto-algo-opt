@@ -19,10 +19,10 @@ from agent_skill_loop.session_contracts import (
     compile_round_context,
     strict_json_object,
 )
-from agent_skill_loop.memory import open_memory_backend
 from agent_skill_loop.memory.api import MEMORY_CARD_TYPES, _validate_entry
 from agent_skill_loop.memory.problem_vocab import problem_family
 from agent_skill_loop.memory.retrieval_m35 import admission_allowed
+from agent_skill_loop.session_memory import open_session_memory_backend
 from agent_skill_loop.problems.base import get_problem
 from agent_skill_loop.skill_store import load_skill
 
@@ -422,7 +422,7 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         memories, error, diagnostics = [], None, []
         if row["memory_enabled"]:
             try:
-                backend_result = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read(
+                backend_result = open_session_memory_backend(row).read(
                     query, project=row["problem"], scene=search_scene,
                     memory_type=memory_type, limit=min(limit+1,100), offset=offset,
                     include_shared=include_shared, include_cross_project=include_cross_project,
@@ -477,7 +477,7 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None,
             selection = _memory_selection(interface_selection, template_id)
             applicability = _memory_applicability(root, row, action, selection)
             try:
-                page = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"]).read_version(
+                page = open_session_memory_backend(row).read_version(
                     reference, max_chars=limit, offset=offset, require_active=True,
                     applicability_context=applicability)
             except (ValueError, OSError) as exc:
@@ -528,7 +528,7 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 bodies = []
                 treatment = str(_manifest_extra(root).get("treatment") or "")
                 if plan.memory_basis:
-                    backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                    backend = open_session_memory_backend(row)
                     applicability = _memory_applicability(root, row, action, plan.interface_selection)
                 for ref in plan.memory_basis:
                     try:
@@ -698,7 +698,7 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                         fail("MEMORY_REFERENCE_INVALID", action)
                     context = json.loads(context_bytes.decode("utf-8").split("\n", 1)[1])
                     if context["memory"]:
-                        backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                        backend = open_session_memory_backend(row)
                         applicability = _memory_applicability(root, row, action, normalized_plan.get("interface_selection"))
                         for item in context["memory"]:
                             try:
@@ -986,6 +986,8 @@ def parse_evaluation(raw, enabled, evidence_refs):
 def validate_memory_publication(memory, row, *, treatment="", action="submit-evaluation"):
     if memory.kind not in MEMORY_CARD_TYPES:
         return
+    if not db.memory_online_writeback_enabled(row):
+        fail("MEMORY_ONLINE_WRITEBACK_DISABLED", action)
     if memory.project != row["problem"] or memory.scene != get_problem(row["problem"]).entrypoint:
         fail("MEMORY_SCENE_IDENTITY_MISMATCH", action)
     try:
@@ -1011,6 +1013,8 @@ def memory_revise(*, run, operation_id, expected_state_version, file, expected_r
         with db._transaction(con):
             row, rd, ih, result = begin(con, action, operation_id, expected_state_version, {"document_sha256": db._sha256(text)})
             if result is None:
+                if not db.memory_online_writeback_enabled(row):
+                    fail("MEMORY_ONLINE_WRITEBACK_DISABLED", action)
                 require_state(row, rd, action, "READY_TO_FINISH")
                 if rd["memory_commit_status"] not in {"failed", "rejected"}:
                     fail("MEMORY_REVISION_NOT_ALLOWED", action)
@@ -1048,7 +1052,7 @@ def memory_revise(*, run, operation_id, expected_state_version, file, expected_r
                     validate_revision(root, binding, memory, facts)
                 except ValueError as exc:
                     fail(str(exc).upper(), action)
-                backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+                backend = open_session_memory_backend(row)
                 if backend.card_head(memory.to_entry()) != binding["card_head"]:
                     fail("MEMORY_CARD_HEAD_CONFLICT", action)
                 ref = f"rounds/round_{rd['round_id']:04d}/memory_revisions/{db._sha256(operation_id)}.json"

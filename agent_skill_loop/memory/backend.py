@@ -26,8 +26,8 @@ class MemoryBackend(Protocol):
               operation_key: str | None = None, format_version: int | None = None) -> dict[str, Any]: ...
 
 
-def open_memory_backend(store: Path, *, policy_id: str = "markdown-memory") -> MemoryBackend:
+def open_memory_backend(store: Path, *, policy_id: str = "markdown-memory", read_only: bool = False) -> MemoryBackend:
     """Resolve the frozen policy without coupling Session code to its class."""
     if policy_id != "markdown-memory":
         raise ValueError("memory_policy_not_supported")
-    return MemoryAPI(store)
+    return MemoryAPI(store, read_only=read_only)

@@ -42,6 +42,7 @@ from .contracts import (
     hook_bundle_metadata,
     sha256_text,
 )
+from .multiscale import multiscale_options, probe_timeout_s
 from .planner import parse_hook_candidate
 from .runtime import DynamicSubprocessEvaluator, capability_contract_dict, derive_outer_timeout_s, resolve_problem_adapter
 from .session_baseline import load_dev_or_public_suite
@@ -108,6 +109,11 @@ class DynamicInterfaceProblem(BaseProblem):
         enable_n200_latency_screen: bool = False,
         enable_degenerate_constant_screen: bool = False,
         n200_latency_multiplier: float = 1.0,
+        enable_multiscale_latency_ratio_screen: bool = False,
+        max_n200_n100_ratio: float = 8.0,
+        multiscale_ratio_min_t200_ms: float = 10.0,
+        multiscale_n200_abs_cap_ms: float | None = None,
+        checkpoint_validation_workers: int = 0,
     ) -> None:
         assert_milestone_suite_not_blind(suite_id)
         self.design = design
@@ -125,6 +131,22 @@ class DynamicInterfaceProblem(BaseProblem):
         self.enable_n200_latency_screen = enable_n200_latency_screen
         self.enable_degenerate_constant_screen = enable_degenerate_constant_screen
         self.n200_latency_multiplier = float(n200_latency_multiplier)
+        self.multiscale_options = multiscale_options({
+            "enable_multiscale_latency_ratio_screen": enable_multiscale_latency_ratio_screen,
+            "max_n200_n100_ratio": max_n200_n100_ratio,
+            "multiscale_ratio_min_t200_ms": multiscale_ratio_min_t200_ms,
+            "multiscale_n200_abs_cap_ms": multiscale_n200_abs_cap_ms,
+            "enable_n200_latency_screen": enable_n200_latency_screen,
+        })
+        self.enable_multiscale_latency_ratio_screen = enable_multiscale_latency_ratio_screen
+        if enable_multiscale_latency_ratio_screen and design.problem_family != "cvrp":
+            raise ValueError("multiscale_latency_screen_requires_cvrp")
+        self.multiscale_probe_timeout_s = (
+            probe_timeout_s(instance_time_budget_ms, constant_screen=False)
+            if enable_multiscale_latency_ratio_screen else 0.0
+        )
+        self.checkpoint_validation_worker_timeout_s = effective_batch_timeout
+
         self._n200_timeout_s = (
             derive_outer_timeout_s(
                 2, instance_time_budget_ms * self.n200_latency_multiplier,
@@ -137,9 +159,13 @@ class DynamicInterfaceProblem(BaseProblem):
                 self._n200_timeout_s += 3.0
             else:
                 effective_batch_timeout += 3.0
-        # EoH outer process timeout receives >= 10s headroom above our inner serial batch subprocess timeout
+        # EoH encloses both serial workers and any synchronous checkpoint gates.
+        self.enclosing_candidate_timeout_s = math.ceil(
+            effective_batch_timeout + self._n200_timeout_s + self.multiscale_probe_timeout_s
+            + checkpoint_validation_workers * self.checkpoint_validation_worker_timeout_s
+        ) + 10
         super().__init__(
-            timeout=max(10, math.ceil(effective_batch_timeout + self._n200_timeout_s) + 10),
+            timeout=self.enclosing_candidate_timeout_s,
             n_processes=n_processes,
         )
         self.instances = [dict(inst) for inst in instances]
@@ -248,6 +274,36 @@ class DynamicInterfaceProblem(BaseProblem):
             self._append_eval_log(str(code_string), resp)
             return resp
         screen_constant = origin == "generated" and self.enable_degenerate_constant_screen
+        multiscale_latency = None
+        if origin == "generated" and self.multiscale_probe_timeout_s:
+            validator = InterfaceValidator(
+                candidate_timeout_s=self.multiscale_probe_timeout_s,
+                outer_timeout_s=self.multiscale_probe_timeout_s,
+                instance_time_budget_ms=self.instance_time_budget_ms,
+                allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+                enable_degenerate_constant_screen=False,
+            )
+            multiscale_latency = validator.validate_evolved_hook_multiscale_latency(
+                self.design,
+                hook_code_override=primary_code,
+                hook_implementations=implementations,
+                **{name: value for name, value in self.multiscale_options.items()
+                   if name != "enable_multiscale_latency_ratio_screen"},
+            )
+            if not multiscale_latency["passed"]:
+                resp = {
+                    "valid": False, "completed": False, "objective": None, "instance_objectives": [],
+                    "records": [], "protocol_id": self.adapter.protocol_id,
+                    "error_code": multiscale_latency["error_code"],
+                    "error_detail": multiscale_latency["error_detail"],
+                    "failures": multiscale_latency["failures"],
+                    "timeout_kind": multiscale_latency["timeout_kind"],
+                    "outer_timeout_s": multiscale_latency["outer_timeout_s"],
+                    "worker_wall_ms": multiscale_latency["worker_wall_ms"],
+                    "multiscale_latency_diagnostics": multiscale_latency,
+                }
+                self._append_eval_log(str(code_string), resp)
+                return resp
         if origin == "generated" and self._n200_timeout_s:
             latency_budget_ms = self.instance_time_budget_ms * self.n200_latency_multiplier
             validator = InterfaceValidator(
@@ -309,6 +365,8 @@ class DynamicInterfaceProblem(BaseProblem):
             allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
             enable_degenerate_constant_screen=screen_constant,
         )
+        if multiscale_latency is not None:
+            resp["multiscale_latency_diagnostics"] = multiscale_latency
         self._append_eval_log(str(code_string), resp)
         return resp
 
@@ -343,8 +401,9 @@ class DynamicInterfaceProblem(BaseProblem):
             "worker_wall_ms": resp.get("worker_wall_ms"),
             "subprocess_overhead_ms": resp.get("subprocess_overhead_ms"),
         }
-        if "n200_latency_diagnostics" in resp:
-            row["n200_latency_diagnostics"] = resp["n200_latency_diagnostics"]
+        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics"):
+            if key in resp:
+                row[key] = resp[key]
         path = Path(self.evaluation_log)
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._log_lock:
@@ -697,6 +756,7 @@ def run_dynamic_eoh_evolution(
         enable_n200_latency_screen=design.template_options.get("enable_n200_latency_screen", False),
         enable_degenerate_constant_screen=design.template_options.get("enable_degenerate_constant_screen", False),
         n200_latency_multiplier=design.template_options.get("n200_latency_multiplier", 1.0),
+        **multiscale_options(design.template_options),
     )
 
     # Evaluate baseline hook first so we have an exact same-skeleton baseline objective
@@ -805,7 +865,10 @@ def run_dynamic_eoh_evolution(
             output_dir=str(output_dir),
         )
         engine_type = (
-            _DynamicCandidateEoH if task.enable_n200_latency_screen or task.enable_degenerate_constant_screen else EOH
+            _DynamicCandidateEoH if (
+                task.enable_n200_latency_screen or task.enable_degenerate_constant_screen
+                or task.enable_multiscale_latency_ratio_screen
+            ) else EOH
         )
         engine = engine_type(engine_cfg, task)
         random.seed(int(search_seed))

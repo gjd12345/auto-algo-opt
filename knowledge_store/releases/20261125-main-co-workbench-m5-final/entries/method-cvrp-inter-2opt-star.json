@@ -1,0 +1,100 @@
+{
+  "type": "method",
+  "title": "Standard CVRP inter-route 2-opt* (tail exchange)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "2-opt*",
+    "2opt-star",
+    "2optstar",
+    "local-search",
+    "inter-route",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Breaks one edge in each of two CVRP routes and cross-reconnects their tails (normal or reversed) when prefix+suffix loads satisfy capacity Q.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "local_search",
+    "complexity_class": "O(k*n^2)",
+    "interface": "local_move_operator",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "crossing_routes",
+        "clustered_spatial",
+        "medium_to_large_routes"
+      ],
+      "weak_on": [
+        "extremely_short_routes_len_1_or_2"
+      ],
+      "scale_notes": "单次 O(1) 校验（借助每条路径预计算的前缀需求数组）即可整体交换两条相交路径的尾部，比逐点 relocate 更直接解开双路径交叉。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "为每条路径维护前缀和需求数组 pref_load；对任意两条不同路径 (r_a, r_b) 枚举断点 (i, j)，O(1) 判断顺接 (head_a + tail_b, head_b + tail_a) 与反接 (head_a + rev(head_b), rev(tail_a) + tail_b) 的容量与路程增量",
+      "evolvable_hook": "two_opt_star_priority(delta, orientation, load_balance)",
+      "state_maintained": [
+        "routes",
+        "prefix_loads",
+        "total_loads"
+      ],
+      "invariants_and_constraints": [
+        "顺接容量：pref_a[i] + (tot_b - pref_b[j]) <= Q 且 pref_b[j] + (tot_a - pref_a[i]) <= Q",
+        "反接容量：pref_a[i] + pref_b[j] <= Q 且 (tot_a - pref_a[i]) + (tot_b - pref_b[j]) <= Q",
+        "若产生空路径则直接移除实现车数缩减"
+      ],
+      "typical_pitfalls": [
+        "遗漏对称 CVRP 下的反接方向（头接反转头 + 尾接反转尾），丢失一半可行解",
+        "修改路径后未刷新 prefix_loads 导致容量越界"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "Delta_direct = d(a_i, b_{j+1}) + d(b_j, a_{i+1}) - d(a_i, a_{i+1}) - d(b_j, b_{j+1})",
+        "variables": {
+          "(a_i, a_{i+1})": "路径 A 断开的边",
+          "(b_j, b_{j+1})": "路径 B 断开的边"
+        },
+        "preconditions": "顺接重连：pref_load(A,i) + suff_load(B,j+1) <= Q 且 pref_load(B,j) + suff_load(A,i+1) <= Q"
+      },
+      {
+        "expr": "Delta_rev = d(a_i, b_j) + d(a_{i+1}, b_{j+1}) - d(a_i, a_{i+1}) - d(b_j, b_{j+1})",
+        "variables": {
+          "a_i, b_j": "两路径前半段末尾",
+          "a_{i+1}, b_{j+1}": "两路径后半段起点"
+        },
+        "preconditions": "对称距离下反接重连：pref_load(A,i) + pref_load(B,j) <= Q 且 suff_load(A,i+1) + suff_load(B,j+1) <= Q"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-intra-2opt",
+      "method-cvrp-inter-relocate",
+      "method-cvrp-vns"
+    ],
+    "sources": [
+      "src-potvin-rousseau-1995-2opt-star"
+    ]
+  },
+  "source_refs": [
+    "src-potvin-rousseau-1995-2opt-star"
+  ],
+  "evidence_refs": [
+    "literature:10.1057/jors.1995.204"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-inter-2opt-star",
+  "content_sha256": "62d94f4350af6762a360f75fafcec4afc92325da4868adef304b2e011a329c82"
+}

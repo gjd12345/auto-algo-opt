@@ -300,6 +300,7 @@ def cmd_session_init(args: argparse.Namespace) -> int:
         repair_max_requests=args.repair_max_requests,
         memory_store=args.memory_store,
         memory_enabled=args.memory_enabled,
+        memory_online_writeback_enabled=args.memory_online_writeback,
         solution_threshold=args.solution_min_relative_improvement,
         seed=args.seed,
         size=args.size if args.size is not None else DEFAULT_SIZE,
@@ -577,6 +578,8 @@ def build_parser() -> argparse.ArgumentParser:
     memory_group.add_argument("--no-memory", dest="memory_enabled", action="store_false",
                               help="Disable Memory for this Session")
     session_init.set_defaults(memory_enabled=None)
+    session_init.add_argument("--memory-online-writeback", action=argparse.BooleanOptionalAction, default=True,
+                              help="Allow online card publication for this Session")
     session_init.add_argument("--solution-min-relative-improvement", type=float, default=None)
     session_init.add_argument("--seed", type=int, default=DEFAULT_SEED)
     session_init.add_argument("--size", type=int, default=None)

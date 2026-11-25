@@ -587,8 +587,20 @@ def collect_facts(root, con, run, rd, task):
     plan_doc = json.loads((root / rd["normalized_plan_ref"]).read_text(encoding="utf-8")) if rd["normalized_plan_ref"] else {}
     m2_interface_sel = plan_doc.get("interface_selection") if isinstance(plan_doc, dict) else None
     m2_summary = {}
+    trajectory_evidence = {}
     if m2_interface_sel is not None:
         m2_summary = json.loads((output / "summary.json").read_text(encoding="utf-8")) if (output / "summary.json").is_file() else {}
+        trigger_ordinal = m2_summary.get("stagnation_trigger_ordinal")
+        if type(trigger_ordinal) is int and trigger_ordinal > 0:
+            trajectory_evidence["stagnation_trigger_ordinal"] = trigger_ordinal
+        if m2_interface_sel.get("fresh_template") is True:
+            receipt_path = output / "interface_seed_receipt.json"
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.is_file() else {}
+            trajectory_evidence["fresh_template_applied"] = (
+                receipt.get("reason") == "fresh_template"
+                and receipt.get("requested_inherited_seeds") == 0
+                and receipt.get("used_inherited_seeds") == 0
+            )
         exported = {
             "best_generated_path": m2_summary.get("best_generated_path"),
             "exported_skill": m2_summary.get("exported_skill"),
@@ -747,6 +759,7 @@ def collect_facts(root, con, run, rd, task):
             "interface_selection": m2_interface_sel,
             "frozen_solver_ref": f"{prefix}/{exported['frozen_solver_manifest']}" if exported.get("frozen_solver_manifest") else None,
             **({"stop_reason": m2_summary["stop_reason"]} if "stop_reason" in m2_summary else {}),
+            **trajectory_evidence,
             "terminal_reason":task["terminal_reason"]}
 
 

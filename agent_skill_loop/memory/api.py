@@ -373,8 +373,11 @@ def _atomic_text(path: Path, content: str) -> None:
 
 
 class MemoryAPI:
-    def __init__(self, store: Path) -> None:
+    def __init__(self, store: Path, *, read_only: bool = False) -> None:
         self.store = Path(store).resolve()
+        self._read_only = read_only
+        if read_only:
+            return
         self.store.mkdir(parents=True, exist_ok=True)
         if next(self.store.glob(f"*/*{_PENDING_SUFFIX}"), None) is not None:
             try:
@@ -533,11 +536,14 @@ class MemoryAPI:
     def read_version(self, reference: str, *, max_chars: int = 8000, offset: int = 0,
                      require_active: bool = False,
                      applicability_context: Mapping[str, Any] | None = None) -> dict[str, Any]:
-        if require_active:
+        if require_active and not self._read_only:
             with self._writer():
                 return self._read_version(reference, max_chars=max_chars, offset=offset, require_active=True,
                                           applicability_context=applicability_context)
-        return self._read_version(reference, max_chars=max_chars, offset=offset)
+        # A read-only Session must keep active-card validation without entering
+        # the writer, which can publish a staged version during recovery.
+        return self._read_version(reference, max_chars=max_chars, offset=offset, require_active=require_active,
+                                  applicability_context=applicability_context)
 
     def _read_version(self, reference: str, *, max_chars: int, offset: int, require_active: bool = False,
                       applicability_context: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -585,6 +591,8 @@ class MemoryAPI:
 
     @contextmanager
     def _writer(self):
+        if self._read_only:
+            raise ValueError("memory_store_read_only")
         from agent_skill_loop.file_lock import exclusive_file_lock
         with exclusive_file_lock(self.store / ".writer.lock", busy="memory_writer_busy", legacy_pid=True):
             if self._recover_publications():
@@ -798,6 +806,8 @@ class MemoryAPI:
                 "project": entry.project, "type": entry.type, "based_on": based_on}
 
     def reindex(self) -> Path:
+        if self._read_only:
+            raise ValueError("memory_store_read_only")
         groups: dict[str, list[str]] = {}
         for path, entry, _version, _metadata in self._iter():
             groups.setdefault(entry.project, []).append(

@@ -19,10 +19,10 @@ from agent_skill_loop.cvrp_workbench.suites import BENCHMARK_ID
 from agent_skill_loop.interface_design.blind_eval_m32 import assert_milestone_suite_allowed_for_interactive_role
 from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
 from agent_skill_loop.interface_design.dynamic_eoh import derive_effective_batch_timeout_s
+from agent_skill_loop.interface_design.multiscale import MULTISCALE_DEFAULTS
 from agent_skill_loop.interface_design.runtime import evaluate_frozen_interface_solver
 from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
 from agent_skill_loop.interface_design.session_bridge import resolve_session_kb_release
-from agent_skill_loop.memory import open_memory_backend
 from agent_skill_loop.memory.api import _validate_entry
 from agent_skill_loop.memory.retrieval_m35 import CooldownLedger, admission_allowed, iter_attributed_outcomes, rerank_mmr
 from agent_skill_loop.problems.base import get_problem
@@ -43,6 +43,7 @@ from agent_skill_loop.session_actions import (
     submit_plan,
 )
 from agent_skill_loop.session_runtime import initialize_session, read_state
+from agent_skill_loop.session_memory import open_session_memory_backend
 from agent_skill_loop.session_contracts import MemoryAction
 from agent_skill_loop.skill_store import load_skill
 from research_agent.contracts import AgentConfig, atomic_write_json, sha256_text
@@ -156,6 +157,10 @@ class SessionRunnerTool:
             (state.get("task") or {}).get("terminal_reason"),
         )
 
+    @staticmethod
+    def _round_trajectory_evidence(facts: Mapping[str, Any]) -> dict[str, Any]:
+        return {key: facts[key] for key in ("fresh_template_applied", "stagnation_trigger_ordinal") if key in facts}
+
     def ensure_initialized(self) -> dict[str, Any]:
         if self.config.memory_enabled:
             if self.config.dev_split not in {"dev", "dev_train"}:
@@ -173,6 +178,8 @@ class SessionRunnerTool:
             }
         if (self.session_dir / "session.sqlite3").is_file():
             state = read_state(run=self.session_dir)
+            if state["memory"]["online_writeback_enabled"] is not self.config.memory_online_writeback_enabled:
+                raise ValueError("session_memory_online_writeback_enabled_mismatch")
             if self._kb_pin:
                 frozen = json.loads((self.session_dir / "config_frozen.json").read_text(encoding="utf-8"))
                 lock_path = self.session_dir / "kb_release_lock.json"
@@ -220,6 +227,7 @@ class SessionRunnerTool:
             "solver_timeout": eff_solver_timeout,
             "request_timeout": self.config.request_timeout_s,
             "memory_enabled": bool(self.config.memory_enabled),
+            "memory_online_writeback_enabled": self.config.memory_online_writeback_enabled,
             "agent_guidance": bool(self.config.agent_guidance),
             "seed": self.config.search_seed,
             "max_rounds": max(1, int(self.config.max_rounds)),
@@ -267,7 +275,7 @@ class SessionRunnerTool:
             require_state(row, rd, action, "WAITING_FOR_PLAN")
             context = _memory_applicability(root, row, action, selection)
             scene = get_problem(row["problem"]).entrypoint
-            backend = open_memory_backend(Path(row["memory_store"]), policy_id=row["memory_policy_id"])
+            backend = open_session_memory_backend(row)
             ledger = self._cooldown()
             candidates = []
             limit = 100
@@ -364,6 +372,8 @@ class SessionRunnerTool:
     def _memory_action(self, facts: Mapping[str, Any]) -> dict[str, Any]:
         if not self.config.memory_enabled:
             return {"kind": "disabled"}
+        if not self.config.memory_online_writeback_enabled:
+            return {"kind": "none", "reason": "Online memory writeback is disabled."}
         if self.config.memory_mode not in _SCOPED_MEMORY_MODES:
             return {"kind": "none", "reason": "Static or inactive memory mode."}
         if facts.get("terminal_reason") in {"PROVIDER_TERMINAL", "STARTUP_FAILED", "EVIDENCE_STORAGE_FAILED"}:
@@ -403,12 +413,19 @@ class SessionRunnerTool:
             return {"kind": "none", "reason": "Generated evaluation has no verified evidence reference."}
         objective = candidate["objective"]
         selection = facts.get("interface_selection")
+        code_anchor = {"code_sha256": candidate["code_sha256"]}
+        candidate_code = candidate.get("code")
+        if isinstance(candidate_code, str) and sha256_text(candidate_code) == candidate["code_sha256"]:
+            try:
+                code_anchor["canonical_ast_sha256"] = sha256_text(ast.unparse(ast.parse(candidate_code)))
+            except (SyntaxError, RecursionError):
+                pass
         action = {
             "kind": "insight", "project": spec.problem_id, "scene": spec.entrypoint,
             "name": f"round-{facts['round_id']}-{candidate['code_sha256'][:12]}",
             "description": f"Observed generated candidate objective {objective:.8g}.",
             "evidence_ref": evidence_ref, "validity_status": "active", "evidence_tier": "single_run",
-            "code_anchor": {"code_sha256": candidate["code_sha256"]},
+            "code_anchor": code_anchor,
             "body": (f"**Why:** A generated candidate evaluated at {objective:.8g} on the dev suite.\n"
                      "**How to apply:** Compare the anchored candidate and baseline under the same evaluator.\n"
                      "**Limitations:** A single dev run does not establish transfer or a causal mechanism."),
@@ -586,7 +603,7 @@ class SessionRunnerTool:
             cur_round > target_round
             or (cur_round == target_round and st.get("run_state") in {"COMPLETED", "STOPPED", "FAILED"} and round_state == "ROUND_COMPLETED")
         ):
-            ev_facts_rec = json.loads(target_eval_path.read_text(encoding="utf-8")) if target_eval_path.is_file() else {}
+            ev_facts_rec = read_evaluation(run=self.session_dir, round_id=target_round)["result"]
             f_ref = ev_facts_rec.get("frozen_solver_ref")
             frozen_rec = json.loads((self.session_dir / f_ref).read_text(encoding="utf-8")) if (f_ref and (self.session_dir / f_ref).is_file()) else None
             dev_eval_rec = self._evaluate_frozen_on_dev(frozen_rec) if eval_dev_suite else None
@@ -604,6 +621,7 @@ class SessionRunnerTool:
                 "requests_before": prev_used,
                 "requests_after": prev_used,
                 "recovered_completed_round": True,
+                **self._round_trajectory_evidence(ev_facts_rec),
             }
 
         if st.get("run_state") in {"COMPLETED", "STOPPED", "FAILED"}:
@@ -632,6 +650,10 @@ class SessionRunnerTool:
                 value = getattr(self.config, name)
                 if value != default and not (name == "early_stop_no_jump_requests" and value == 0):
                     template_options[name] = value
+            if self.config.enable_multiscale_latency_ratio_screen or any(
+                getattr(self.config, name) != default for name, default in MULTISCALE_DEFAULTS.items()
+            ):
+                template_options.update({name: getattr(self.config, name) for name in MULTISCALE_DEFAULTS})
             plan_doc = {
                 "round_id": cur_round,
                 "direction": direction,
@@ -826,4 +848,5 @@ class SessionRunnerTool:
             "crossed_checkpoints": crossed,
             "requests_before": prev_used,
             "requests_after": curr_used,
+            **self._round_trajectory_evidence(ev_facts),
         }

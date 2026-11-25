@@ -24,11 +24,14 @@ import numpy as np
 
 from agent_skill_loop.client import ProviderFailure, http_post_with_deadline, load_local_env
 from agent_skill_loop.cvrp_workbench.baselines_2026 import (
+    dual_timing_fields,
     evaluate_portfolio_solver,
     fit_selectors,
     load_portfolio,
     select_complementary,
     solve_pyvrp,
+    summarize_solve_timing,
+    timing_value as _number,
     validate_training_suite,
 )
 from agent_skill_loop.cvrp_workbench.solvers import evaluate_algorithm_on_instance
@@ -61,6 +64,7 @@ FLEET_POLICIES = {"exact-k": "strict_max_vehicles", "free_fleet": "free_fleet_mi
 METHODS = {"reevo": "ReEvo", "eohs": "EoH-S"}
 TEMPLATES = ("cvrp_ruin_recreate", "cvrp_parallel_merge_static")
 SELECTOR_NAMES = ("SATzilla", "AutoFolio", "Hydra", "SBS")
+TIMING_PROTOCOL = "solve-only-deadline/nearest-rank-right-censor-bounds/v1"
 
 
 def _load_suite(suite_id: str, split: str, role: str, count: int) -> dict[str, Any]:
@@ -105,14 +109,7 @@ def _target_instances(suite: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return targeted
 
 
-def _number(value: Any) -> float | None:
-    if isinstance(value, (int, float, np.integer, np.floating)) and not isinstance(value, bool):
-        if math.isfinite(value) and value >= 0:
-            return float(value)
-    return None
-
-
-def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str) -> dict[str, Any]:
+def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str, budget_ms: float) -> dict[str, Any]:
     reference = _number(instance.get("reference_objective"))
     if not reference:
         raise ValueError(f"invalid_reference_objective:{instance['instance_id']}")
@@ -148,11 +145,9 @@ def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str) 
         "stop_reason": result.get("stop_reason"),
         "budget_exhausted": result.get("budget_exhausted") is True,
         "time_limit_reached": result.get("time_limit_reached"),
-        "deadline_overrun_ms": _number(result.get("deadline_overrun_ms")),
         "timeout_kind": result.get("timeout_kind"),
-        "preprocess_ms": _number(result.get("preprocess_ms")),
-        "solve_ms": _number(result.get("solve_ms")),
-        "verify_ms": _number(result.get("verify_ms")),
+        **dual_timing_fields(result, budget_ms=budget_ms, feasible=feasible),
+        "incumbent_ms": _number(result.get("incumbent_ms")),
         "source_solver": result.get("source_solver"),
         "selector_ms": _number(result.get("selector_ms")),
         "set_member_count": result.get("set_member_count"),
@@ -160,8 +155,8 @@ def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str) 
 
 
 def _best_result(instance: Mapping[str, Any], results: Mapping[str, Mapping[str, Any]],
-                 policy: str) -> dict[str, Any]:
-    scored = {name: _score(instance, result, policy) for name, result in results.items()}
+                 policy: str, budget_ms: float) -> dict[str, Any]:
+    scored = {name: _score(instance, result, policy, budget_ms) for name, result in results.items()}
     name = min(scored, key=lambda key: (
         not scored[key]["completed"], not scored[key]["feasible"],
         scored[key]["scored_objective"] if scored[key]["completed"] else
@@ -176,7 +171,6 @@ def _summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     feasible_count = sum(row["feasible"] for row in rows)
     total = sum(row["scored_objective"] for row in rows)
     references = sum(row["reference_objective"] for row in rows)
-    times = [row["solve_ms"] for row in rows if row["solve_ms"] is not None]
     checked = [row for row in rows if row["exact_vehicle_count"] is not None]
     matches = sum(row["valid"] and row["exact_vehicle_count"] is True for row in checked)
     return {
@@ -194,8 +188,7 @@ def _summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "exact_k_count": matches,
         "exact_k_compliance_rate": matches / len(checked) if checked else None,
         "budget_exhausted_count": sum(row["budget_exhausted"] for row in rows),
-        "solve_ms_p50": statistics.median(times) if times else None,
-        "solve_ms_p95": float(np.quantile(times, 0.95)) if times else None,
+        **summarize_solve_timing(rows),
     }
 
 
@@ -234,7 +227,7 @@ def _evaluate_lane(suite: Mapping[str, Any], instances: Sequence[Mapping[str, An
             result = solve(instance, budget_ms=budget_ms, seed=seed,
                            distance_convention=suite.get("distance_convention", "euc_2d_float"),
                            vehicle_limit_policy=policy)
-            rows[name].append({"algorithm_id": name, **_score(instance, result, policy)})
+            rows[name].append({"algorithm_id": name, **_score(instance, result, policy, budget_ms)})
     all_indices = list(range(len(instances)))
     common = [i for i in all_indices if all(values[i]["completed"] for values in rows.values())]
     return {
@@ -262,6 +255,7 @@ def evaluate_external(suites: Sequence[Mapping[str, Any]],
         "schema_version": "cvrp-external-baselines-2026/v1",
         "seed": seed,
         "budget_ms": budget_ms,
+        "timing_protocol": TIMING_PROTOCOL,
         "overall_noncompletion_penalty": "2 * reference_objective",
         "paired_statistics": {"bootstrap_samples": bootstrap_samples, "bootstrap_seed": seed,
                               "test": "two_sided_wilcoxon_signed_rank",
@@ -304,7 +298,7 @@ def _fit_portfolio(dev: Mapping[str, Any], selection: Mapping[str, Any], portfol
                         solver, instance, budget_ms=budget_ms, vehicle_limit_policy=policy,
                         distance_convention=suite["distance_convention"],
                     )
-                    row = _score(instance, result, policy)
+                    row = _score(instance, result, policy, budget_ms)
                     costs[iid][name] = row["scored_objective"] / row["reference_objective"]
         fitted[policy] = fit_selectors((dev, selection), costs, solver_names=tuple(portfolio),
                                        hydra_k=hydra_k, seed=seed)
@@ -340,9 +334,14 @@ def _portfolio_callbacks(portfolio: Mapping[str, Any], fitted: Mapping[str, Any]
             return results[member]
 
         if name == "VBS":
-            return _best_result(instance, {member: run(member) for member in portfolio}, vehicle_limit_policy)
+            return _best_result(instance, {member: run(member) for member in portfolio},
+                                vehicle_limit_policy, budget_ms)
         member = picks[name]
-        return {**run(member), "source_solver": member, "selector_ms": selector_ms if name != "SBS" else 0.0}
+        result = run(member)
+        selection_ms = selector_ms if name != "SBS" else 0.0
+        preprocess_ms = _number(result.get("preprocess_ms"))
+        return {**result, "source_solver": member, "selector_ms": selection_ms,
+                "preprocess_ms": preprocess_ms + selection_ms if preprocess_ms is not None else None}
 
     def callback(name: str) -> Callable:
         return lambda instance, **kwargs: evaluate(name, instance, **kwargs)
@@ -444,15 +443,29 @@ def frozen_set_solver(winners: Sequence[FrozenInterfaceSolver], *, portfolio_siz
 
     def solve(instance: Mapping[str, Any], *, budget_ms: float, seed: int,
               distance_convention: str, vehicle_limit_policy: str) -> dict[str, Any]:
+        member_budget = budget_ms / portfolio_size
         results = {
-            solver.solver_id: _frozen_result(solver, instance, budget_ms=budget_ms / portfolio_size,
+            solver.solver_id: _frozen_result(solver, instance, budget_ms=member_budget,
                                             distance_convention=distance_convention,
                                             vehicle_limit_policy=vehicle_limit_policy)
             for solver in winners
         }
-        chosen = _best_result(instance, results, vehicle_limit_policy)
+        chosen = _best_result(instance, results, vehicle_limit_policy, member_budget)
+        elapsed = 0.0
+        incumbent = False
+        member_censored = False
+        for result in results.values():
+            member = _score(instance, result, vehicle_limit_policy, member_budget)
+            if member["feasible_before_deadline"] and elapsed + member_budget <= budget_ms:
+                incumbent = True
+            elapsed += member["solve_ms"] if member["solve_ms"] is not None else math.inf
+            member_censored |= member["solve_censored"]
         for field in ("solve_ms", "preprocess_ms", "verify_ms"):
-            chosen[field] = sum(_number(row.get(field)) or 0.0 for row in results.values())
+            values = [_number(row.get(field)) for row in results.values()]
+            chosen[field] = sum(values) if all(value is not None for value in values) else None
+        chosen["feasible_before_deadline"] = incumbent
+        chosen["solve_censored"] = member_censored
+        chosen.pop("deadline_overrun_ms", None)
         chosen["set_member_count"] = len(winners)
         return chosen
 
@@ -466,7 +479,7 @@ def _dev_candidate(solver: FrozenInterfaceSolver, suite: Mapping[str, Any], budg
     for instance in suite["instances"]:
         result = _frozen_result(solver, instance, budget_ms=budget_ms, vehicle_limit_policy=policy,
                                 distance_convention=suite.get("distance_convention", "euc_2d_float"))
-        outcomes.append(_score(instance, result, policy))
+        outcomes.append(_score(instance, result, policy, budget_ms))
     costs = [row["scored_objective"] / row["reference_objective"] for row in outcomes]
     return {"solver": solver.to_dict(), "costs": costs, "mean_cost": statistics.mean(costs),
             "feasible_count": sum(row["feasible"] for row in outcomes),
@@ -702,6 +715,7 @@ def write_report(report: Mapping[str, Any], stem: Path) -> None:
         "Overall assigns twice the reference objective to noncompletions. "
         "Common-completed summaries use the all-algorithm intersection. "
         "Paired comparisons use the intersection for the two algorithms in each comparison.", "",
+        "The deadline applies to the solve stage. A ≥ prefix marks a latency quantile reported as a lower bound.", "",
         "Positive paired gain favors the candidate. VBS is the retrospectively best verified portfolio pick.",
     ]
     for suite_id, suite in report["suites"].items():
@@ -711,13 +725,18 @@ def write_report(report: Mapping[str, Any], stem: Path) -> None:
             for denominator in ("overall", "common_completed"):
                 lines += [
                     "", f"### {lane} / {denominator}", "",
-                    "| Algorithm | Instances | Completed | Feasible | Penalized | Gap (%) | Median solve (ms) |",
-                    "|---|---:|---:|---:|---:|---:|---:|",
+                    "| Algorithm | Instances | Completed | Feasible | Feasible by deadline | Returned by deadline | Penalized | Gap (%) | P50 solve (ms) | P95 solve (ms) |",
+                    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
                 ]
                 for name, row in section[denominator].items():
+                    p50, p95 = [
+                        ("≥" if row.get(f"{key}_is_lower_bound") else "") + _display(row[key])
+                        for key in ("solve_ms_p50", "solve_ms_p95")
+                    ]
                     lines.append(f"| {name} | {row['n_instances']} | {row['completed_count']} | "
-                                 f"{row['feasible_count']} | {row['penalized_count']} | "
-                                 f"{_display(row['relative_gap_pct'])} | {_display(row['solve_ms_p50'])} |")
+                                 f"{row['feasible_count']} | {row['feasible_before_deadline_count']} | "
+                                 f"{row['returned_before_deadline_count']} | {row['penalized_count']} | "
+                                 f"{_display(row['relative_gap_pct'])} | {p50} | {p95} |")
                 comparisons = section["comparisons"][denominator]
                 if comparisons:
                     lines += ["", "| Comparison | Pairs | Gain (%) | Bootstrap 95% CI | Wilcoxon p (Holm) |",
@@ -790,6 +809,60 @@ def _run_benchmark(args: argparse.Namespace) -> None:
     print(stem.with_suffix(".json"))
 
 
+def recompute_dual_timing(report: dict[str, Any]) -> dict[str, Any]:
+    """Refresh timing fields and summaries in a Track 3 report using stored rows."""
+    if report.get("schema_version") != "cvrp-external-baselines-2026/v1":
+        raise ValueError("invalid_track3_schema")
+    budget_ms = _number(report["budget_ms"])
+    if budget_ms is None or budget_ms <= 0:
+        raise ValueError("invalid_track3_budget")
+    for suite in report["suites"].values():
+        for lane in FLEET_POLICIES:
+            section = suite[lane]
+            overall: dict[str, list] = {name: [] for name in section["overall"]}
+            common_ids = set(section["common_completed_instance_ids"])
+            for row in section["rows"]:
+                if "feasible_before_deadline" not in row and row["algorithm_id"] == "PyVRP":
+                    # The original runner used the wall-limited callback result.
+                    row["feasible_before_deadline"] = row["feasible"] is True
+                # Old selector rows recorded prediction overhead separately.
+                if "total_e2e_ms" not in row and row.get("preprocess_ms") is not None:
+                    row["preprocess_ms"] += _number(row.get("selector_ms")) or 0.0
+                row.update(dual_timing_fields(row, budget_ms=budget_ms, feasible=row["feasible"] is True))
+                overall[row["algorithm_id"]].append(row)
+            for name, rows in overall.items():
+                section["overall"][name].update(summarize_solve_timing(rows))
+                section["common_completed"][name].update(summarize_solve_timing(
+                    [row for row in rows if row["instance_id"] in common_ids],
+                ))
+    report["timing_protocol"] = TIMING_PROTOCOL
+    report["timing_recompute"] = {
+        "llm_requests": 0,
+        "legacy_pyvrp_incumbent_evidence": "verified wall-limited callback return",
+        "other_legacy_incumbent_evidence": "verified return with observed solve time within budget",
+    }
+    return report
+
+
+def _run_timing_audit(args: argparse.Namespace) -> None:
+    if args.input_report:
+        default_name = f"{args.input_report.stem}_dual_timing"
+    else:
+        default_name = f"pyvrp_dual_timing_s{args.seed}_b{args.budget_ms}"
+    stem = args.output or args.output_dir / default_name
+    if any(stem.with_suffix(ext).exists() for ext in (".json", ".md")):
+        raise ValueError(f"timing_audit_output_exists:{stem}")
+    if args.input_report:
+        report = recompute_dual_timing(json.loads(args.input_report.read_bytes()))
+    else:
+        names = (args.suite,) if args.suite else EXTERNAL_COUNTS
+        suites = [_load_suite(name, "heldout", "external_evaluation", EXTERNAL_COUNTS[name]) for name in names]
+        report = evaluate_external(suites, {"PyVRP": solve_pyvrp}, seed=args.seed, budget_ms=args.budget_ms)
+        report["dependencies"] = {"pyvrp": version("pyvrp")}
+    write_report(report, stem)
+    print(stem.with_suffix(".json"))
+
+
 def _run_evolution(args: argparse.Namespace) -> None:
     driver = MockDriver() if args.mode == "mock" else ParateraDriver(args.model, args.request_timeout_s)
     run_dir = _run_dir(args.output_dir, args.command, args.seed, args.mode)
@@ -855,6 +928,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     benchmark.add_argument("--budget-ms", type=int, choices=BUDGETS, default=BUDGETS[0])
     benchmark.add_argument("--hydra-k", type=int, default=3)
     benchmark.add_argument("--with-evolution", choices=("mock", "live"), help="Load both finished evolution arms for this seed")
+    audit = commands.add_parser("recompute-dual-timing", help="Re-summarize Track 3 or rerun only PyVRP, offline")
+    source = audit.add_mutually_exclusive_group(required=True)
+    source.add_argument("--input-report", type=Path)
+    source.add_argument("--rerun-pyvrp", action="store_true")
+    audit.add_argument("--suite", choices=EXTERNAL_COUNTS, help="Restrict a PyVRP rerun to one external suite")
+    audit.add_argument("--seed", type=int, choices=SEEDS, default=SEEDS[0])
+    audit.add_argument("--budget-ms", type=int, choices=BUDGETS, default=BUDGETS[0])
+    audit.add_argument("--output", type=Path, help="Output stem for the JSON and Markdown reports")
     for method, label in METHODS.items():
         evolution = commands.add_parser(method, aliases=["eoh-s"] if method == "eohs" else [],
                                         help=f"Run or resume one development-only {label} arm")
@@ -868,7 +949,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     mux.add_argument("--manifest", type=Path)
     args = parser.parse_args(argv)
     args.output_dir = args.output_dir.resolve()
-    if args.command == "benchmark":
+    if args.command == "recompute-dual-timing":
+        if args.input_report and args.suite:
+            parser.error("--suite requires --rerun-pyvrp")
+        _run_timing_audit(args)
+    elif args.command == "benchmark":
         if args.hydra_k < 1:
             parser.error("--hydra-k must be positive")
         _run_benchmark(args)

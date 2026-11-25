@@ -1,0 +1,243 @@
+{
+  "type": "method",
+  "title": "HeurAgenix: Two-stage heuristic evolution + online LLM hyper-heuristic selection (MSRA 2025)",
+  "category": "optimization_frameworks_experiments",
+  "problem_family": "unknown",
+  "tags": [
+    "heuragenix",
+    "llm-ahd",
+    "hyper-heuristic",
+    "online-selection",
+    "cvrplib",
+    "tsplib"
+  ],
+  "status": "reviewed",
+  "summary": "HeurAgenix (Microsoft Research Asia 2025, arXiv:2506.15196) decouples offline multi-operator heuristic evolution from online state-conditioned hyper-heuristic selection across TSP, CVRP, MKP, JSSP, and MaxCut.",
+  "attributes": {
+    "method_family": "llm_ahd_framework",
+    "online_offline": "offline",
+    "objective": "cross-problem combinatorial optimization gap",
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "llm_ahd_framework",
+    "complexity_class": "empirical",
+    "interface": "solve_cvrp",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "automated_heuristic_design",
+        "cross_problem_benchmarking"
+      ],
+      "weak_on": [
+        "zero_budget_single_pass_without_evolution"
+      ],
+      "scale_notes": "顶会 LLM-AHD 方法横向对比卡，严格分轨记录本机同协议复跑 (evidence_bindings) 与原论文发表成绩 (paper_reported_results)。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "两阶段架构：阶段一基于问题状态提取与算子进化构建多样化启发式池（构造+局部搜索）；阶段二在求解每步按当前解状态动态选择最合适算子执行",
+      "evolvable_hook": "状态条件化移动算子 operator(problem_state, algorithm_data) -> (Operator, dict) 与在线选择策略",
+      "state_maintained": [
+        "current_solution",
+        "vehicle_loads",
+        "unvisited_nodes",
+        "problem_state_features",
+        "evolved_operator_pool"
+      ],
+      "invariants_and_constraints": [
+        "算子通过显式 Operator 对象（Insert / MergeRoutes / ReverseSegment / Relocate）原子更新解状态并保持可行性"
+      ],
+      "typical_pitfalls": [
+        "在线步级调用大模型推理延迟高、部署成本昂贵（文中通过微调 Qwen-7B 缓解）；传统基础算子如 saving_algorithm_710e 原版存在局部合并条件限制"
+      ]
+    },
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "heuragenix_min_cost_ins",
+        "metric": "mean_rel_gap",
+        "value": 0.322826,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=74, ok=74, exact_k=58/74(gap=0.295617), mean=1150.2162, solve_ms P50=0.4324/P95=0.8144",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "heuragenix_min_cost_ins",
+        "metric": "mean_rel_gap",
+        "value": 0.518863,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=100, ok=100, common_completed(59)_gap=0.468508, mean=93581.88, solve_ms P50=5.7416/P95=42.7553",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "heuragenix_min_cost_ins",
+        "metric": "mean_rel_gap",
+        "value": 0.284223,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=256, ok=256, mean=19.9046, solve_ms P50=1.417/P95=5.8003",
+        "artifact_path": "results/per_instance_records.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "cvrp_workbench_v2_standard_500ms",
+        "algorithm_id": "heuragenix_min_cost_ins",
+        "metric": "mean_rel_gap",
+        "value": 0.093839,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "N=120, ok=120, mean=32.5874, solve_ms P50=0.8925/P95=3.0836",
+        "artifact_path": "results/per_instance_records.json"
+      }
+    ],
+    "paper_reported_results": [
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 6 (CVRPLib 6-instance Avg)",
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "subset": "CVRPLib_HeurAgenix_6",
+        "method_name": "HeurAgenix (GPT-4o Hyper-Heuristic)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "mean_opt_gap_pct",
+        "value": 6.49,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 6 (p.27) CVRPLib 6 个大例（A-n80-k10, B-n78-k10, E-n101-k14, F-n135-k7, M-n200-k17, P-n101-k4）GPT-4o 在线超启发式选择平均最优差距（%）。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 5 (CVRP Evolution Avg)",
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "subset": "CVRPLib_HeurAgenix_6",
+        "method_name": "Cheapest Insertion (HeurAgenix Evolved)",
+        "paradigm": "insertion",
+        "metric": "mean_opt_gap_pct",
+        "value": 25.7,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 5 (p.26) 进化前后确定性单启发式在 6 例 CVRPLib 上的平均差距（%）。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 5 (CVRP Evolution Avg)",
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "subset": "CVRPLib_HeurAgenix_6",
+        "method_name": "Farthest Insertion (HeurAgenix Evolved)",
+        "paradigm": "insertion",
+        "metric": "mean_opt_gap_pct",
+        "value": 30.56,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 5 (p.26) 进化前后确定性单启发式在 6 例 CVRPLib 上的平均差距（%）。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 5 (CVRP Evolution Avg)",
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "subset": "CVRPLib_HeurAgenix_6",
+        "method_name": "Nearest Neighbor (HeurAgenix Evolved)",
+        "paradigm": "sequential_construct",
+        "metric": "mean_opt_gap_pct",
+        "value": 36.55,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 5 (p.26) 进化前后确定性单启发式在 6 例 CVRPLib 上的平均差距（%）。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 6 (TSPLIB 13-instance Avg)",
+        "suite_id": "tsp_ext_tsplib_euc2d",
+        "subset": "TSPLIB_HeurAgenix_13",
+        "method_name": "HeurAgenix (GPT-4o Hyper-Heuristic)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.5,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 6 (p.27) TSPLIB 13 例（kroA100..pr2392）平均最优差距（%）。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 6 (MKP 10-instance Avg)",
+        "suite_id": "heuragenix_mkp_paper_ref",
+        "subset": "ORLib_MKP_10",
+        "method_name": "HeurAgenix (Ours)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.68,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 6 (p.27) 跨组合优化问题基准均值。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 6 (JSSP 20-instance Avg)",
+        "suite_id": "heuragenix_jssp_paper_ref",
+        "subset": "ORLib_JSSP_LA20",
+        "method_name": "HeurAgenix (Ours)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.25,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 6 (p.27) 跨组合优化问题基准均值。"
+      },
+      {
+        "paper_source_id": "src-msra-2025-heuragenix",
+        "table_ref": "Appendix F Table 6 (MaxCut 10-instance Avg)",
+        "suite_id": "heuragenix_maxcut_paper_ref",
+        "subset": "OPTSICOM_MaxCut_10",
+        "method_name": "HeurAgenix (Ours)",
+        "paradigm": "llm_ahd_framework",
+        "metric": "mean_opt_gap_pct",
+        "value": 0.6,
+        "unit": "percent",
+        "reference_kind": "best_known",
+        "comparison_mode": "paper_reported_reference",
+        "verification_status": "verified_from_paper_table",
+        "protocol_boundary_note": "HeurAgenix Appendix F Table 6 (p.27) 跨组合优化问题基准均值。"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-tsp",
+      "problem-online-bin-packing"
+    ],
+    "sources": [
+      "src-cvrp-workbench-20261121",
+      "src-msra-2025-heuragenix"
+    ]
+  },
+  "source_refs": [
+    "src-cvrp-workbench-20261121",
+    "src-msra-2025-heuragenix"
+  ],
+  "evidence_refs": [
+    "report:docs/cvrp-kb-benchmark-frontend-final-plan.md"
+  ],
+  "code_refs": [],
+  "id": "method-lit-ahd-heuragenix",
+  "content_sha256": "0c171d6adde132b3657ce3d23716eed6262fe45e748c0b720013e224299d7cc4"
+}

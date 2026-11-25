@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Go OBP solver with ScoreBin plus First/Best Fit baselines",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "packWithScore uses ScoreBin = capacity - (remaining-item), i.e. fill after placement; higher score prefers a tighter fill (Best-Fit-like). The same file also implements firstFit (first residual that fits) and bestFit (mi",
+  "attributes": {
+    "interface": "ScoreBin(item, remaining, capacity); firstFit; bestFit",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go"
+  ],
+  "code_refs": [
+    {
+      "path": "eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go",
+      "sha256": "2c185f07c02f75a7e5d9ec55be81b19f4289075adc862ed032d2b96a67df63b5"
+    }
+  ],
+  "id": "impl-obp-go-solver",
+  "content_sha256": "78d56abce3197f600c930a77c55bbc8d07a2ea483c1776012ba767902f8813c6"
+}

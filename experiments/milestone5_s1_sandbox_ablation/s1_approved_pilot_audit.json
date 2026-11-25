@@ -1,0 +1,179 @@
+{
+  "schema_version": "s1-script-audit/v1",
+  "protocol_sha256": "29284e9e3533e8b261153c45ac19c9e685610aafea4c4b2aa55337eef6744082",
+  "eligible_for_approval": true,
+  "runs": {
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": {
+        "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+        "artifact_sha256": "960ac297b0ec54a8af94ebf062b0256533248d1e2fe98f8f1f67220105aa0a14",
+        "script_ref": "agent_artifacts/sandbox/run_0002.py",
+        "script_sha256": "6d37d3e4b5c7ac2cb99918b1f67aea9951f6319b06bbdbfe6d583626fff6b5e4"
+      },
+      "sandbox_success_count": 1,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "ab95258667a6f679695c5c60759ddc031a4a9d356fef5f8a25fdfa2bf116b65b",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "e2d712d3f0d68426e30b02533ea9a5b1b2f0e4fc9383b8129eeea24f23c263bd",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T07:26:13Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "\nimport numpy as np\n\n# Probe dev_24 characteristics if accessible; else produce finite structural diagnostics.\ntry:\n    from dev_24 import load_suite\n    suite = load_suite()\n    names = list(suite.keys())\n    print(\"n_instances\", len(names))\n    sizes, scales, tight = [], [], []\n    for k in names:\n        inst = suite[k]\n        D = np.asarray(inst[\"distance_matrix\"], dtype=float)\n        q = np.asarray(inst[\"demands\"], dtype=float)\n        Q = float(inst[\"capacity\"])\n        n = D.shape[0] - 1\n        sizes.append(n)\n        scales.append(float(np.mean(D[0, 1:])))\n        tight.append(float(q[1:].sum() / Q) / n)  # vehicles per customer proxy\n    RESULT = {\n        \"n_instances\": len(names),\n        \"mean_size\": float(np.mean(sizes)),\n        \"mean_depot_scale\": float(np.mean(scales)),\n        \"cv_depot_scale\": float(np.std(scales) / (np.mean(scales) + 1e-12)),\n        \"mean_tightness\": float(np.mean(tight)),\n    }\nexcept Exception as e:\n    # Finite structural surrogate: scale-invariance check of normalized generalized savings\n    rng = np.random.default_rng(0)\n    n = 60\n    X = rng.random((n, 2))\n    D = np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)\n    lam, mu = 1.05, 0.10\n    d0i = D[0, 1:]\n    d0j = d0i\n    dij = D[1:, 1:]\n    I, J = np.triu_indices(n - 1, k=1)\n    scale = np.mean(d0i)\n    s = (d0i[I] + d0j[J] - lam * dij[I, J] + mu * np.abs(d0i[I] - d0j[J])) / scale\n    # scale invariance\n    s2 = (d0i[I] * 1e-3 + d0j[J] * 1e-3 - lam * dij[I, J] * 1e-3 + mu * np.abs(d0i[I] - d0j[J]) * 1e-3) / (scale * 1e-3)\n    RESULT = {\n        \"probe_fallback\": 1,\n        \"n\": n,\n        \"score_mean\": float(np.mean(s)),\n        \"score_std\": float(np.std(s)),\n        \"frac_positive\": float(np.mean(s > 0)),\n        \"scale_invariance_max_abs_diff\": float(np.max(np.abs(s - s2))),\n        \"radius_priority_corr\": float(np.corrcoef(s, d0i[I] + d0j[J])[0, 1]),\n    }\nprint(RESULT)\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "float",
+            "len",
+            "list",
+            "load_suite",
+            "print"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "960ac297b0ec54a8af94ebf062b0256533248d1e2fe98f8f1f67220105aa0a14",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "6d37d3e4b5c7ac2cb99918b1f67aea9951f6319b06bbdbfe6d583626fff6b5e4",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": true,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T07:26:18Z",
+          "ok": true,
+          "finite_numeric_evidence": true,
+          "script": "\nimport numpy as np\n\n# Structural diagnostic on L2a generalized normalized savings score:\n# quantify radius priority preservation, scale invariance, and clamp/robustness.\nrng = np.random.default_rng(0)\nn = 60\nX = rng.random((n, 2))\nD = np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)\nlam, mu, beta = 1.05, 0.10, 0.10\nd0 = D[0, 1:]\nI, J = np.triu_indices(n - 1, k=1)\ndij = D[1:, 1:]\nscale = np.mean(d0)\ns = (d0[I] + d0[J] - lam * dij[I, J] + mu * np.abs(d0[I] - d0[J])) / scale\ns_scaled = (d0[I] * 1e-3 + d0[J] * 1e-3 - lam * dij[I, J] * 1e-3\n            + mu * np.abs(d0[I] - d0[J]) * 1e-3) / (scale * 1e-3)\nrank = lambda v: np.argsort(np.argsort(v))\nRESULT = {\n    \"n\": n,\n    \"pairs\": int(len(I)),\n    \"score_mean\": round(float(np.mean(s)), 6),\n    \"score_std\": round(float(np.std(s)), 6),\n    \"frac_positive\": round(float(np.mean(s > 0)), 6),\n    \"scale_invariance_max_abs_diff\": float(np.max(np.abs(s - s_scaled))),\n    \"rank_corr_scaled\": float(np.corrcoef(rank(s), rank(s_scaled))[0, 1]),\n    \"radius_priority_corr\": round(float(np.corrcoef(s, d0[I] + d0[J])[0, 1]), 6),\n    \"lam_sensitivity_mean_s\": {str(l): round(float(np.mean(\n        (d0[I] + d0[J] - l * dij[I, J] + mu * np.abs(d0[I] - d0[J])) / scale)), 6)\n        for l in (1.0, 1.05, 1.15, 1.3)},\n}\nprint(RESULT)\n",
+          "result": {
+            "n": 60,
+            "pairs": 1711,
+            "score_mean": 0.810163,
+            "score_std": 0.78273,
+            "frac_positive": 0.931034,
+            "scale_invariance_max_abs_diff": 8.881784197001252e-16,
+            "rank_corr_scaled": 1.0,
+            "radius_priority_corr": 0.692954,
+            "lam_sensitivity_mean_s": {
+              "1.0": 0.869478,
+              "1.05": 0.810163,
+              "1.15": 0.691533,
+              "1.3": 0.513588
+            }
+          },
+          "stdout": "{'n': 60, 'pairs': 1711, 'score_mean': 0.810163, 'score_std': 0.78273, 'frac_positive': 0.931034, 'scale_invariance_max_abs_diff': 8.881784197001252e-16, 'rank_corr_scaled': 1.0, 'radius_priority_corr': 0.692954, 'lam_sensitivity_mean_s': {'1.0': 0.869478, '1.05': 0.810163, '1.15': 0.691533, '1.3': 0.513588}}",
+          "output_truncated": false,
+          "error_code": null,
+          "script_function_calls": [
+            "float",
+            "int",
+            "len",
+            "print",
+            "rank",
+            "round",
+            "str"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    }
+  }
+}

@@ -149,6 +149,8 @@ def _handle_request(
     time_budget_ms = request.get("solve_deadline_ms", request.get("time_budget_ms", 500.0))
     capture_merge_sequence = bool(request.get("capture_merge_sequence", False))
     strict = request.get("strict_hook_outputs")
+    fresh_hooks_per_instance = request.get("fresh_hooks_per_instance", False)
+    capture_timed_incumbents = request.get("capture_timed_incumbents", False)
     allow_extended_numpy_whitelist = request.get("allow_extended_numpy_whitelist", allow_extended_numpy_whitelist)
     enable_degenerate_constant_screen = request.get("enable_degenerate_constant_screen", enable_degenerate_constant_screen)
 
@@ -187,6 +189,10 @@ def _handle_request(
             raise ValueError("invalid_allow_extended_numpy_whitelist")
         if not isinstance(enable_degenerate_constant_screen, bool):
             raise ValueError("invalid_enable_degenerate_constant_screen")
+        if type(fresh_hooks_per_instance) is not bool:
+            raise ValueError("invalid_fresh_hooks_per_instance")
+        if type(capture_timed_incumbents) is not bool:
+            raise ValueError("invalid_capture_timed_incumbents")
         if postprocess_mode not in tpl.allowed_postprocess_modes:
             raise ValueError("unsupported_postprocess_mode")
         if implementations is not None:
@@ -284,7 +290,9 @@ def _handle_request(
     first_error_code: str | None = None
     first_error_detail: str | None = None
 
-    for inst in instances:
+    for index, inst in enumerate(instances):
+        if fresh_hooks_per_instance and index:
+            hook_fn = compile_hooks()
         try:
             rec = evaluate_hook_on_instance_inprocess(
                 template_id=template_id,
@@ -299,6 +307,7 @@ def _handle_request(
                 capture_merge_sequence=capture_merge_sequence,
                 protocol_id=adapter.protocol_id,
                 strict_hook_outputs=strict,
+                **({"capture_timed_incumbents": True} if capture_timed_incumbents else {}),
             )
         except (ValueError, TypeError, KeyError) as exc:
             if tpl.protocol_id is None and not tpl.hook_specs:

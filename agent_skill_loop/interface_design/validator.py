@@ -16,6 +16,7 @@ from functools import partial
 import hashlib
 import math
 import random
+import subprocess
 from typing import Any, Callable, Mapping, Sequence
 
 from agent_skill_loop.benchmark.catalog import load_profile_suite
@@ -33,6 +34,7 @@ from .contracts import (
     hook_bundle_metadata,
     sha256_text,
 )
+from .multiscale import FLOOR_MS, ONLINE_PROBES, generate_stress_probe, reject, screening_pairs
 from .runtime import DynamicSubprocessEvaluator, validate_hook_ast, validate_hook_bundle
 from .templates import _load_interface_extensions, get_template_spec
 
@@ -866,6 +868,105 @@ class InterfaceValidator:
         failures.extend(g5_failures)
 
         return report()
+
+    def validate_evolved_hook_multiscale_latency(
+        self,
+        design: InterfaceDesign,
+        *,
+        hook_code_override: str | None = None,
+        hook_implementations: Mapping[str, str] | None = None,
+        max_n200_n100_ratio: float = 8.0,
+        multiscale_ratio_min_t200_ms: float = 10.0,
+        multiscale_n200_abs_cap_ms: float | None = None,
+    ) -> dict[str, Any]:
+        """Apply the locked pairwise latency policy to four independent synthetic solves."""
+        from agent_skill_loop.cvrp_workbench.baselines_2026 import dual_timing_fields
+
+        if design.problem_family != "cvrp":
+            raise ValueError("multiscale_latency_screen_requires_cvrp")
+        instances = [generate_stress_probe(size, replicate=rep) for rep, size in ONLINE_PROBES]
+        tpl = get_template_spec(design.template_id, design.template_version)
+        timeout_s = self.candidate_timeout_s if self.outer_timeout_s is None else self.outer_timeout_s
+        try:
+            response = self.evaluator.evaluate(
+                template_id=design.template_id,
+                template_version=design.template_version,
+                postprocess_mode=design.postprocess_mode,
+                template_options=design.template_options,
+                problem_family=design.problem_family,
+                protocol_id=tpl.effective_protocol_id,
+                hook_code=design.baseline_hook_code if hook_code_override is None else hook_code_override,
+                **({"hook_implementations": hook_implementations} if hook_implementations is not None else {}),
+                instances=instances,
+                distance_convention="euc_2d_float",
+                vehicle_limit_policy="free_fleet_min_k_lb",
+                solve_deadline_ms=self.instance_time_budget_ms,
+                outer_timeout_s=timeout_s,
+                allow_extended_numpy_whitelist=self._allow_extended_numpy(design),
+                enable_degenerate_constant_screen=self.enable_degenerate_constant_screen,
+                fresh_hooks_per_instance=True,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            timed_out = isinstance(exc, (TimeoutError, subprocess.TimeoutExpired))
+            response = {
+                "error_code": "candidate_timeout" if timed_out else "worker_start_failed",
+                "error_detail": str(exc),
+                "timeout_kind": "outer_worker" if timed_out else None,
+            }
+
+        policy = {
+            "floor_ms": FLOOR_MS,
+            "max_ratio_200_100": max_n200_n100_ratio,
+            "min_t200_trigger_ms": multiscale_ratio_min_t200_ms,
+            "n200_abs_cap_ms": multiscale_n200_abs_cap_ms,
+        }
+        diagnostics = {
+            "passed": False,
+            "policy": policy,
+            "n_instances": len(instances),
+            "budget_ms": self.instance_time_budget_ms,
+            "outer_timeout_s": response.get("outer_timeout_s", timeout_s),
+            "worker_wall_ms": response.get("worker_wall_ms"),
+            "timeout_kind": response.get("timeout_kind"),
+            "error_code": response.get("error_code"),
+            "error_detail": response.get("error_detail"),
+            "failures": response.get("failures") or [],
+            "observations": [],
+            "pairs": [],
+        }
+        records = response.get("records")
+        if not isinstance(records, list) or len(records) != len(instances) or any(
+            not isinstance(row, Mapping) or row.get("instance_id") != instance["instance_id"]
+            for row, instance in zip(records, instances)
+        ):
+            diagnostics["error_code"] = diagnostics["error_code"] or "multiscale_probe_protocol"
+            return diagnostics
+
+        observations = []
+        for record, (replicate, size) in zip(records, ONLINE_PROBES, strict=True):
+            timing = dual_timing_fields(
+                record, budget_ms=self.instance_time_budget_ms, feasible=record.get("valid") is True,
+            )
+            on_time = timing["returned_before_deadline"]
+            deadline_miss = timing["solve_censored"] or (timing["deadline_overrun_ms"] or 0) > 0
+            observations.append({
+                "replicate": replicate,
+                "size": size,
+                "solve_ms": timing["solve_ms"],
+                "latency_label": "on_time" if on_time else "deadline_miss" if deadline_miss else "unclassified",
+                "returned_before_deadline": on_time,
+            })
+        diagnostics["observations"] = observations
+        pairs = screening_pairs(observations, FLOOR_MS, stride=2)
+        diagnostics["pairs"] = [{**pair, "rejected": reject([pair], policy)} for pair in pairs]
+        if reject(pairs, policy):
+            diagnostics["error_code"] = "multiscale_latency_exceeded"
+        elif any(row["latency_label"] == "unclassified" for row in observations):
+            diagnostics["error_code"] = diagnostics["error_code"] or "multiscale_probe_unclassified"
+        else:
+            diagnostics["passed"] = True
+            diagnostics["error_code"] = None
+        return diagnostics
 
     def validate_evolved_hook_n200_latency(
         self,

@@ -315,6 +315,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             runtime_version TEXT NOT NULL,
             runtime_source_sha256 TEXT NOT NULL,
             memory_enabled INTEGER NOT NULL CHECK (memory_enabled IN (0,1)),
+            memory_online_writeback_enabled INTEGER NOT NULL DEFAULT 1 CHECK (memory_online_writeback_enabled IN (0,1)),
             memory_store TEXT,
             memory_policy_id TEXT,
             memory_policy_version TEXT,
@@ -566,6 +567,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
         "experiment_manifest_sha256": "TEXT",
         "max_rounds": "INTEGER",
         "round_budget": "INTEGER",
+        "memory_online_writeback_enabled": "INTEGER NOT NULL DEFAULT 1 CHECK (memory_online_writeback_enabled IN (0,1))",
     }.items():
         if name not in table_columns["runs"]:
             connection.execute(f"ALTER TABLE runs ADD COLUMN {name} {definition}")
@@ -652,6 +654,13 @@ def _require_schema(connection: sqlite3.Connection, *, action: str) -> None:
     row = _row(connection, "SELECT value FROM schema_meta WHERE key='schema_version'", ())
     if row is None or row["value"] != SCHEMA_VERSION:
         raise SessionError("SCHEMA_MISMATCH", "create a new session; legacy config lacks frozen execution parameters", action=action)
+
+
+def memory_online_writeback_enabled(run: sqlite3.Row) -> bool:
+    # Older Sessions implicitly enabled writeback whenever memory was enabled.
+    if "memory_online_writeback_enabled" not in run.keys():
+        return True
+    return run["memory_online_writeback_enabled"] == 1
 
 
 def _round(connection: sqlite3.Connection, run: sqlite3.Row) -> sqlite3.Row:
@@ -830,6 +839,8 @@ def _envelope(
         actions = ["state", "collect", "stop"]
     if not current_round["evaluation_facts_ref"]:
         actions = [x for x in actions if x != "read_evaluation"]
+    if not memory_online_writeback_enabled(run):
+        actions = [x for x in actions if x != "memory_revise"]
     return {
         "ok": True,
         "action": action,
@@ -908,6 +919,10 @@ def _verify_files(output: Path, run, *, action: str):
             raise ValueError("config_hash_mismatch")
         if config.get("schema_version") != CONFIG_SCHEMA and not read_only:
             raise ValueError("config_schema_mismatch")
+        frozen_memory = config.get("memory", {})
+        if (not isinstance(frozen_memory, Mapping)
+                or frozen_memory.get("online_writeback_enabled", True) is not memory_online_writeback_enabled(run)):
+            raise ValueError("memory_online_writeback_enabled_mismatch")
         suite = json.loads((output / "dev_suite.json").read_text(encoding="utf-8"))
         spec = get_problem(run["problem"])
         spec.validate_suite(suite)
@@ -1313,6 +1328,7 @@ def initialize_session(
     repair_max_requests: int | None = None,
     memory_store: str | None = None,
     memory_enabled: bool | None = None,
+    memory_online_writeback_enabled: bool = True,
     solution_threshold: float | None = None,
     seed: int = DEFAULT_SEED,
     size: int = DEFAULT_SIZE,
@@ -1364,6 +1380,8 @@ def initialize_session(
             memory_enabled = benchmark_id is None
     if not isinstance(memory_enabled, bool):
         raise SessionError("INVALID_ARGUMENT", "memory_enabled must be boolean", action=action)
+    if type(memory_online_writeback_enabled) is not bool:
+        raise SessionError("INVALID_ARGUMENT", "memory_online_writeback_enabled must be boolean", action=action)
     if not memory_enabled and memory_store is not None:
         raise SessionError("INVALID_ARGUMENT", "memory_store conflicts with disabled memory", action=action)
     memory_store = str(Path(memory_store).expanduser().resolve()) if memory_store else (
@@ -1627,6 +1645,9 @@ def initialize_session(
         round_budget=round_budget,
         explicit_seed_set_sha256=explicit_seed_set_sha256,
     )
+    # The implicit enabled value preserves legacy init operation identities.
+    if not memory_online_writeback_enabled:
+        input_payload["memory_online_writeback_enabled"] = False
     kb_pin = {}
     if any(value is not None for value in (kb_release_path, kb_release_id, kb_manifest_sha256)):
         if not all(isinstance(value, str) and value.strip() for value in (kb_release_path, kb_release_id, kb_manifest_sha256)):
@@ -1791,6 +1812,7 @@ def initialize_session(
         },
         "memory": {
             "enabled": memory_path is not None,
+            "online_writeback_enabled": memory_online_writeback_enabled,
             "store": memory_path,
             "policy_id": MEMORY_POLICY_ID if memory_path else None,
             "policy_version": MEMORY_POLICY_VERSION if memory_path else None,
@@ -1858,7 +1880,7 @@ def initialize_session(
                     suite_hash, evaluator_hash, objective_direction,
                     baseline_code_sha256, optimization_skill_id, optimization_skill_version,
                     optimization_skill_sha256, runtime_version, runtime_source_sha256,
-                    memory_enabled, memory_store, memory_policy_id, memory_policy_version,
+                    memory_enabled, memory_online_writeback_enabled, memory_store, memory_policy_id, memory_policy_version,
                     eoh_commit, eoh_model, eoh_endpoint, eoh_api_key_env,
                     repair_mode, repair_policy_version, eoh_max_requests,
                     eoh_round_max_requests, max_solver_calls, repair_max_requests,
@@ -1872,7 +1894,7 @@ def initialize_session(
                     ?,?,?,?,?,?,?,?,?,?,
                     ?,?,?,?,?,?,?,?,?,?,
                     ?,?,?,?,?,?,?,?,?,?,
-                    ?,?,?,?
+                    ?,?,?,?,?
                 )
                 """,
                 (
@@ -1884,7 +1906,7 @@ def initialize_session(
                     suite_hash, evaluator_hash, spec.objective_direction,
                     _sha256(spec.baseline_code), OPTIMIZATION_SKILL_ID, OPTIMIZATION_SKILL_VERSION,
                     skill_hash, RUNTIME_VERSION, runtime_hash,
-                    1 if memory_path else 0, memory_path,
+                    1 if memory_path else 0, int(memory_online_writeback_enabled), memory_path,
                     MEMORY_POLICY_ID if memory_path else None, MEMORY_POLICY_VERSION if memory_path else None,
                     EOH_COMMIT, eoh_model, eoh_endpoint, eoh_api_key_env,
                     repair_mode, REPAIR_POLICY_VERSION if repair_mode == "bounded" else None,
@@ -2024,6 +2046,7 @@ def read_state(*, run: Path, expected_run_id: str | None = None) -> dict[str, An
             "config_sha256": current_run["config_sha256"],
             "memory": {
                 "enabled": bool(current_run["memory_enabled"]),
+                "online_writeback_enabled": memory_online_writeback_enabled(current_run),
                 "store": current_run["memory_store"],
                 "publication_status": current_round["memory_commit_status"] if current_round else None,
                 "writes": [dict(x) for x in connection.execute(

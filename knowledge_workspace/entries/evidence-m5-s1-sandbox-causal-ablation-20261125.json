@@ -1,0 +1,79 @@
+{
+  "type": "evidence",
+  "title": "里程碑 5 攻关一：自编数值沙箱严格单变量因果消融（双模型 5 种子 1,080 请求 + Blind-120 / Set X）",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-5",
+    "causal-ablation",
+    "numerical-sandbox",
+    "stagnation-diagnosis",
+    "cvrp_s1_sandbox_blind_120"
+  ],
+  "status": "reviewed",
+  "summary": "固定接口集合、提示材料、统一基础知识库与 36 请求预算，仅改变停滞后必做诊断动作完成 3 臂 × 2 模型 × 5 种子 = 30 格（1,080 请求）：DeepSeek-V4.1-Flash 三臂在 cvrp_s1_sandbox_blind_120 均达 100.0% 完赛（加罚均值 24.8747–24.9243）；Qwen4-Max 显现强烈因果差异，自由工具 arm_s1_0 完赛率仅 60.0%（加罚 43.8948, SD=10.6765），仅切片诊断 arm_s1_1 升至 80.0%（34.3668, SD=13.0595），强制自编数值沙箱 arm_s1_2 达 100.0% 完赛与 24.8900±0.0719 极低方差；独立 Set X-100 上 Qwen 完赛率由 23.0% -> 59.0% -> 96.6%（加罚 114,164.12 -> 69,889.96），同时如实披露 10 路 sandbox_only 中共记录 14 份脚本、2 次成功校验与 6 次因达到 outer_step_cap（round_diagnostic_blocks=0）触发的门禁绕过。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "empirical",
+    "interface": "score_ruin_nodes",
+    "applicable_regimes": {
+      "strong_on": [
+        "cross_model_variance_compression",
+        "qwen4_max_stagnation_recovery",
+        "large_scale_set_x_stability"
+      ],
+      "weak_on": [
+        "outer_step_cap_gate_bypass_under_tight_round_limits"
+      ],
+      "scale_notes": "双模型 5 种子独立配对评测，严格分种子列报 Holm-Bonferroni p 值与跨种子样本标准差，绝不混池。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_s1_sandbox_ablation.py",
+        "sha256": "07e7e898bb26162b3163a5a45aaae482551964e83a7f8919bc363b15f135320f",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "research_agent/tools/math_sandbox.py",
+        "sha256": "2579f1b1de15eff7969cef84199437f8227aac2f1a127aad60600d8f5cd2b2ff",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tests/test_s1_sandbox_ablation.py",
+        "sha256": "f2bf6f013932221e02a21c1fa3f7eb372e70edcc8b636f95ffae2dbe611c5d5d",
+        "worktree_base_commit": "d5e8984c"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-research-agent-m3-autonomous-loop",
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone5-stage1-causal-closure-20261125"
+    ]
+  },
+  "source_refs": [
+    "src-milestone5-stage1-causal-closure-20261125"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone5_s1_sandbox_ablation/s1_sandbox_ablation_report.json",
+    "report:experiments/milestone5_s1_sandbox_ablation/s1_locked_script_audit.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-m5-s1-sandbox-causal-ablation-20261125",
+  "content_sha256": "18719c3a5dadf9395f317e4147b884ee22bded7518ccfc3863edc4c1392bb391"
+}

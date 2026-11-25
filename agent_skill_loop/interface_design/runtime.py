@@ -21,6 +21,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,7 +29,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from agent_skill_loop.cvrp_workbench.protocol import prepare_instance_arrays, verify_cvrp_solution
+from agent_skill_loop.cvrp_workbench.protocol import normalize_routes, prepare_instance_arrays, verify_cvrp_solution
 from agent_skill_loop.evaluator import (
     _ALLOWED_IMPORT_ROOTS,
     _CONTAINER_METHODS,
@@ -639,6 +640,105 @@ def derive_outer_timeout_s(
     return max(minimum_s, 3.0 + 1.25 * instance_count * solve_deadline_ms / 1000.0)
 
 
+def _timed_outcome_fields(
+    solve_ms: float | None,
+    budget_ms: float,
+    budget_exhausted: bool,
+    returned_objective: float | None = None,
+    returned_exact_k: bool = False,
+    incumbents: Mapping[str, tuple[float, float]] | None = None,
+) -> dict[str, Any]:
+    """Project verified deadline evidence without emitting route snapshots."""
+    from .timed_cvrp import TIMED_CVRP_PROTOCOL, TIMED_CVRP_SOURCE_SHA256
+
+    returned = (
+        returned_objective is not None and solve_ms is not None
+        and solve_ms <= budget_ms and not budget_exhausted
+    )
+    outcome = {
+        "timed_incumbent_protocol": TIMED_CVRP_PROTOCOL,
+        "timed_incumbent_source_sha256": TIMED_CVRP_SOURCE_SHA256,
+        "solve_censored": budget_exhausted or (solve_ms is not None and solve_ms > budget_ms),
+        "deadline_overrun_ms": max(0.0, solve_ms - budget_ms) if solve_ms is not None else None,
+    }
+    for fleet_suffix in ("", "_exact_k"):
+        fleet_returned = returned and (not fleet_suffix or returned_exact_k)
+        incumbent = None if incumbents is None else incumbents.get(fleet_suffix)
+        if fleet_returned and (incumbent is None or returned_objective < incumbent[0]):
+            incumbent = (returned_objective, solve_ms)
+        outcome[f"returned_before_deadline{fleet_suffix}"] = fleet_returned
+        outcome[f"returned_before_deadline{fleet_suffix}_objective"] = returned_objective if fleet_returned else None
+        outcome[f"feasible_before_deadline{fleet_suffix}"] = incumbent is not None
+        outcome[f"feasible_before_deadline{fleet_suffix}_objective"] = incumbent[0] if incumbent else None
+        outcome[f"feasible_before_deadline{fleet_suffix}_ms"] = incumbent[1] if incumbent else None
+    return outcome
+
+
+class _TimedCvrpIncumbents:
+    """Keep a candidate snapshot per fleet and verify after the solve clock stops."""
+
+    def __init__(
+        self, start_s: float, budget_ms: float, distance_matrix: np.ndarray, target_k: int | None,
+        *, enforce_fleet_cap: bool,
+    ) -> None:
+        self.start_s = start_s
+        self.budget_ms = budget_ms
+        self.distance_matrix = distance_matrix
+        self.target_k = target_k
+        self.enforce_fleet_cap = enforce_fleet_cap
+        self.candidates: dict[str, tuple[float, float, Sequence[Sequence[int]]]] = {}
+
+    def record(
+        self, routes: Collection[Sequence[int]], objective_hint: float | None = None,
+        *, stable_routes: bool = False,
+    ) -> None:
+        elapsed_ms = (time.perf_counter() - self.start_s) * 1000.0
+        if elapsed_ms > self.budget_ms or not routes:
+            return
+        count = len(routes)
+        if self.enforce_fleet_cap and self.target_k is not None and count > self.target_k:
+            return
+        snapshot: Sequence[Sequence[int]] | None = None
+        if objective_hint is None:
+            snapshot = normalize_routes(tuple(routes))
+            objective_hint = float(sum(
+                self.distance_matrix[left, right]
+                for route in snapshot
+                for left, right in zip(route, route[1:])
+            ))
+        applicable = ("", "_exact_k") if count == self.target_k else ("",)
+        for fleet_suffix in applicable:
+            current = self.candidates.get(fleet_suffix)
+            if current is None or objective_hint < current[0]:
+                if snapshot is None:
+                    # Merge steps replace route lists. Their prior lists can be
+                    # borrowed and normalized after the solve clock stops.
+                    snapshot = tuple(routes) if stable_routes else normalize_routes(tuple(routes))
+                self.candidates[fleet_suffix] = (objective_hint, elapsed_ms, snapshot)
+
+    def verified(
+        self,
+        instance: Mapping[str, Any],
+        orig_refs: Mapping[str, Any],
+        *,
+        distance_convention: str,
+        vehicle_limit_policy: str,
+    ) -> dict[str, tuple[float, float]]:
+        results: dict[str, tuple[float, float]] = {}
+        verified_snapshots: dict[int, dict[str, Any]] = {}
+        for suffix, (_, elapsed_ms, routes) in self.candidates.items():
+            snapshot_id = id(routes)
+            if snapshot_id not in verified_snapshots:
+                verified_snapshots[snapshot_id] = _cvrp_verify_solution(
+                    instance, normalize_routes(routes), orig_refs,
+                    distance_convention=distance_convention, vehicle_limit_policy=vehicle_limit_policy,
+                )
+            evidence = verified_snapshots[snapshot_id]
+            if evidence["valid"] and (suffix != "_exact_k" or evidence["exact_vehicle_count"] is True):
+                results[suffix] = (float(evidence["tour_length"]), elapsed_ms)
+        return results
+
+
 def evaluate_hook_on_instance_inprocess(
     *,
     template_id: str,
@@ -655,6 +755,7 @@ def evaluate_hook_on_instance_inprocess(
     protocol_id: str | None = None,
     solve_deadline_ms: float | None = None,
     strict_hook_outputs: bool | None = None,
+    capture_timed_incumbents: bool = False,
 ) -> dict[str, Any]:
     """Run one registered template + compiled hook on one instance via ``PROBLEM_ADAPTERS``."""
     tpl = get_template_spec(template_id, template_version)
@@ -664,6 +765,14 @@ def evaluate_hook_on_instance_inprocess(
     if solve_deadline_ms is not None:
         time_budget_ms = solve_deadline_ms
     derive_outer_timeout_s(1, time_budget_ms)
+    runner = tpl.runner
+    if capture_timed_incumbents:
+        from .timed_cvrp import TIMED_CVRP_RUNNERS
+
+        timed_runner = TIMED_CVRP_RUNNERS.get((template_id, template_version))
+        if adapter.problem_family != "cvrp" or timed_runner is None or time_budget_ms is None:
+            raise ValueError("unsupported_timed_incumbent_evaluator")
+        runner = timed_runner
     specs = tpl.effective_hook_specs
     if isinstance(hook_fn, Mapping):
         if set(hook_fn) != {spec.name for spec in specs}:
@@ -689,15 +798,27 @@ def evaluate_hook_on_instance_inprocess(
     solution: Any = None
     meta: dict[str, Any] = {}
     sink = _QuietSink()
+    incumbents = None
+    incumbent_kwargs = {}
+    if capture_timed_incumbents:
+        target_k = instance.get("k_vehicles")
+        if target_k is None:
+            target_k = instance.get("max_vehicles")
+        incumbents = _TimedCvrpIncumbents(
+            t_solve0, time_budget_ms, solver_args[0], int(target_k) if target_k is not None else None,
+            enforce_fleet_cap=vehicle_limit_policy == "strict_max_vehicles",
+        )
+        incumbent_kwargs["record_incumbent"] = incumbents.record
     try:
         with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink), np.errstate(all="ignore"):
-            solution, meta = tpl.runner(
+            solution, meta = runner(
                 *solver_args,
                 runner_hook,
                 postprocess_mode=postprocess_mode,
                 time_budget_ms=time_budget_ms,
                 template_options=template_options,
                 capture_merge_sequence=capture_merge_sequence,
+                **incumbent_kwargs,
             )
     except Exception as exc:
         status = "error"
@@ -788,6 +909,17 @@ def evaluate_hook_on_instance_inprocess(
         out["anytime_curve"] = meta["anytime_curve"]
     if "iterations_completed" in meta:
         out["iterations_completed"] = int(meta["iterations_completed"])
+    if incumbents is not None:
+        started_verify = time.perf_counter()
+        evidence = incumbents.verified(
+            instance, orig_refs,
+            distance_convention=distance_convention, vehicle_limit_policy=vehicle_limit_policy,
+        )
+        out.update(_timed_outcome_fields(
+            solve_ms, time_budget_ms, budget_exhausted, objective,
+            verification.get("exact_vehicle_count") is True, evidence,
+        ))
+        out["verify_ms"] = round(out["verify_ms"] + (time.perf_counter() - started_verify) * 1000.0, 4)
     return out
 
 
@@ -824,6 +956,7 @@ class DynamicSubprocessEvaluator:
         strict_hook_outputs: bool | None = None,
         allow_extended_numpy_whitelist: bool = True,
         enable_degenerate_constant_screen: bool = False,
+        fresh_hooks_per_instance: bool = False,
     ) -> dict[str, Any]:
         """Evaluate a hook across ``instances`` in a dedicated subprocess with hard kill on timeout."""
         budget = solve_deadline_ms if solve_deadline_ms is not None else instance_time_budget_ms
@@ -845,6 +978,8 @@ class DynamicSubprocessEvaluator:
             "enable_degenerate_constant_screen": enable_degenerate_constant_screen,
             "parent_pid": os.getpid(),
         }
+        if fresh_hooks_per_instance:
+            request["fresh_hooks_per_instance"] = fresh_hooks_per_instance
         if hook_implementations is not None:
             request["hook_implementations"] = dict(hook_implementations)
         if problem_family is not None:
@@ -1020,6 +1155,7 @@ def evaluate_frozen_interface_solver(
     outer_timeout_s: float | None = None,
     strict_hook_outputs: bool | None = None,
     enforce_wall_deadline: bool = True,
+    capture_timed_incumbents: bool = False,
 ) -> dict[str, Any]:
     """Unified M1 Workbench adapter for a frozen M2 solver.
 
@@ -1051,11 +1187,19 @@ def evaluate_frozen_interface_solver(
     budget = time_budget_ms if time_budget_ms is not None else frozen_solver.default_budget_ms
     if solve_deadline_ms is not None:
         budget = solve_deadline_ms
+    if capture_timed_incumbents:
+        from .timed_cvrp import TIMED_CVRP_PROTOCOL, TIMED_CVRP_RUNNERS, TIMED_CVRP_SOURCE_SHA256
+
+        if (
+            not enforce_wall_deadline or budget is None or adapter.problem_family != "cvrp"
+            or (frozen_solver.template_id, frozen_solver.template_version) not in TIMED_CVRP_RUNNERS
+        ):
+            raise ValueError("unsupported_timed_incumbent_evaluator")
     worker_deadline_ms = budget if enforce_wall_deadline else None
     default_min_s = 5.0 if enforce_wall_deadline else max(15.0, 4.0 * float(budget or 500.0) / 1000.0 + 3.0)
     timeout = derive_outer_timeout_s(1, budget, minimum_s=default_min_s if outer_timeout_s is None else outer_timeout_s)
     started = time.perf_counter()
-    response = _FROZEN_WORKER.call({
+    request = {
         "template_id": frozen_solver.template_id,
         "template_version": frozen_solver.template_version,
         "hook_code": frozen_solver.hook_code,
@@ -1072,7 +1216,10 @@ def evaluate_frozen_interface_solver(
         "solve_deadline_ms": worker_deadline_ms,
         "capture_merge_sequence": capture_merge_sequence,
         "parent_pid": os.getpid(),
-    }, timeout_s=timeout)
+    }
+    if capture_timed_incumbents:
+        request["capture_timed_incumbents"] = True
+    response = _FROZEN_WORKER.call(request, timeout_s=timeout)
     records = response.get("records")
     if records:
         if response.get("template_source_sha256") != frozen_solver.template_source_sha256:
@@ -1082,6 +1229,11 @@ def evaluate_frozen_interface_solver(
         if frozen_solver.hook_specs and response.get("bundle_hash") != frozen_solver.bundle_hash:
             raise ValueError("worker_bundle_hash_mismatch")
         rec0 = records[0]
+        if capture_timed_incumbents and (
+            rec0.get("timed_incumbent_protocol") != TIMED_CVRP_PROTOCOL
+            or rec0.get("timed_incumbent_source_sha256") != TIMED_CVRP_SOURCE_SHA256
+        ):
+            raise ValueError("worker_timed_incumbent_protocol_mismatch")
         if not enforce_wall_deadline and budget is not None and float(rec0.get("solve_ms") or 0.0) > float(budget):
             rec0["budget_exhausted"] = True
             rec0["timeout_kind"] = "solve_deadline"
@@ -1110,6 +1262,9 @@ def evaluate_frozen_interface_solver(
         "verify_ms": 0.0,
     }
     if adapter.problem_family == "cvrp":
+        if capture_timed_incumbents:
+            failure.update(_timed_outcome_fields(None, budget, status == "timeout"))
+            failure["solve_ms"] = None
         legacy = _cvrp_failure_verification(code, response.get("error_detail"), instance, {})
         legacy.pop("capacity")
         legacy["target_vehicles"] = instance.get("k_vehicles", instance.get("max_vehicles"))

@@ -41,6 +41,85 @@ PORTFOLIO_ALGORITHMS = (
 PortfolioSolver = SolverSpec | FrozenInterfaceSolver
 
 
+def timing_value(value: Any) -> float | None:
+    if isinstance(value, (int, float, np.integer, np.floating)) and not isinstance(value, bool):
+        if math.isfinite(value) and value >= 0:
+            return float(value)
+    return None
+
+
+def dual_timing_fields(result: Mapping[str, Any], *, budget_ms: float, feasible: bool) -> dict[str, Any]:
+    """Apply the solve-only deadline to a result verified under the target fleet."""
+    preprocess_ms = timing_value(result.get("preprocess_ms"))
+    solve_ms = timing_value(result.get("solve_ms"))
+    verify_ms = timing_value(result.get("verify_ms"))
+    stages = (preprocess_ms, solve_ms, verify_ms)
+    overrun_ms = timing_value(result.get("deadline_overrun_ms"))
+    if solve_ms is not None:
+        overrun_ms = max(overrun_ms or 0.0, solve_ms - budget_ms, 0.0)
+    within_deadline = solve_ms is not None and solve_ms <= budget_ms and overrun_ms == 0
+    exhausted = (
+        result.get("budget_exhausted") is True or result.get("time_limit_reached") is True
+        or result.get("status") == "timeout" or bool(result.get("timeout_kind"))
+        or result.get("solve_censored") is True
+    )
+    incumbent = result.get("feasible_before_deadline")
+    returned = bool(feasible and within_deadline and not exhausted)
+    return {
+        "budget_ms": budget_ms,
+        "preprocess_ms": preprocess_ms,
+        "solve_ms": solve_ms,
+        "verify_ms": verify_ms,
+        "total_e2e_ms": sum(stages) if all(stage is not None for stage in stages) else None,
+        "deadline_overrun_ms": overrun_ms,
+        "solve_censored": exhausted,
+        "feasible_before_deadline": returned or incumbent is True or (
+            feasible and incumbent is None and within_deadline
+        ),
+        "returned_before_deadline": returned,
+    }
+
+
+def summarize_solve_timing(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Report nearest-rank latency bounds, retaining every timed-out observation.
+
+    Right-censored solves contribute their observed duration (or the budget when
+    duration is missing). A lower-bound flag marks quantiles that could increase
+    if the censored solves had been allowed to finish.
+    """
+    lower, upper = [], []
+    censored = 0
+    for row in rows:
+        elapsed = timing_value(row.get("solve_ms"))
+        is_censored = bool(
+            row.get("solve_censored") or row.get("budget_exhausted")
+            or row.get("time_limit_reached") or row.get("status") == "timeout"
+            or row.get("timeout_kind")
+        )
+        censored += is_censored
+        if is_censored and elapsed is None:
+            elapsed = timing_value(row.get("budget_ms"))
+        if elapsed is not None:
+            lower.append(elapsed)
+            upper.append(math.inf if is_censored else elapsed)
+    lower.sort()
+    upper.sort()
+    summary = {
+        "solve_ms_observation_count": len(lower),
+        "solve_ms_missing_count": len(rows) - len(lower),
+        "solve_ms_censored_count": censored,
+    }
+    for label, fraction in (("solve_ms_p50", 0.50), ("solve_ms_p95", 0.95)):
+        index = math.ceil(fraction * len(lower)) - 1
+        summary[label] = lower[index] if lower else None
+        summary[f"{label}_is_lower_bound"] = bool(lower and lower[index] < upper[index])
+    for field in ("feasible_before_deadline", "returned_before_deadline"):
+        count = sum(row.get(field) is True for row in rows)
+        summary[f"{field}_count"] = count
+        summary[f"{field}_rate"] = count / len(rows) if rows else None
+    return summary
+
+
 def solve_pyvrp(
     instance: Mapping[str, Any],
     *,
@@ -107,16 +186,18 @@ def solve_pyvrp(
     max_runtime = MaxRuntime(budget_ms / 1000.0)
     deadline = started + budget_ms / 1000.0
     stopped_at_limit = False
-    best_in_time = None
+    incumbents = []
+    exact_k = vehicle_limit_policy == "strict_max_vehicles" and target is not None
 
     class IncumbentRecorder(IteratedLocalSearchCallbacks):
         def on_start(self, ils):
             self.on_best(ils.initial_solution)
 
         def on_best(self, best):
-            nonlocal best_in_time
-            if time.perf_counter() <= deadline and best.is_feasible():
-                best_in_time = best
+            observed = time.perf_counter()
+            if (observed <= deadline and best.is_feasible()
+                    and (not exact_k or len(best.routes()) == target)):
+                incumbents.append((best, (observed - started) * 1000.0))
 
     def stop(best_cost: int) -> bool:
         nonlocal stopped_at_limit
@@ -128,28 +209,56 @@ def solve_pyvrp(
     params = SolveParams(ils=IteratedLocalSearchParams(callbacks=IncumbentRecorder()))
     result = solve(data, stop, seed=seed, collect_stats=False, display=False, params=params)
     solve_ms = (time.perf_counter() - started) * 1000.0
-    best = best_in_time if enforce_wall_deadline else result.best
     # PyVRP 0.14.x iterates ScheduledActivity objects. A client activity index
     # is zero-based among clients, whereas the workbench reserves node 0.
-    routes = [
-        [0, *(int(activity.idx) + 1 for activity in route if activity.is_client()), 0]
-        for route in best.routes()
-    ] if best is not None else []
-    verified_float = verify_cvrp_solution(
-        instance, routes, distance_convention="euc_2d_float", vehicle_limit_policy=verification_policy,
-    )
-    verified = verified_float
-    if distance_convention != "euc_2d_float" and verified_float["valid"]:
-        verified = verify_cvrp_solution(
-            instance, routes, distance_convention=distance_convention,
-            vehicle_limit_policy=verification_policy,
+    def extract_routes(solution):
+        return [
+            [0, *(int(activity.idx) + 1 for activity in route if activity.is_client()), 0]
+            for route in solution.routes()
+        ] if solution is not None else []
+
+    def fleet_feasible(verification):
+        return verification["valid"] is True and (not exact_k or verification["exact_vehicle_count"] is True)
+
+    def verify(solution):
+        routes = extract_routes(solution)
+        verified_float = verify_cvrp_solution(
+            instance, routes, distance_convention="euc_2d_float", vehicle_limit_policy=verification_policy,
         )
-    feasible = verified["valid"] is True
+        verified = verified_float
+        if distance_convention != "euc_2d_float" and verified_float["valid"]:
+            verified = verify_cvrp_solution(
+                instance, routes, distance_convention=distance_convention,
+                vehicle_limit_policy=verification_policy,
+            )
+        return routes, verified_float, verified
+
+    verify_started = time.perf_counter()
+    best_in_time, incumbent_ms, incumbent_verification = None, None, None
+    for candidate, observed_ms in reversed(incumbents):
+        verification = verify(candidate)
+        if fleet_feasible(verification[2]):
+            best_in_time, incumbent_ms, incumbent_verification = candidate, observed_ms, verification
+            break
+    best = result.best
+    if enforce_wall_deadline and (best_in_time is not None or solve_ms > budget_ms):
+        best = best_in_time
+    routes, verified_float, verified = (
+        incumbent_verification if best is best_in_time and incumbent_verification is not None else verify(best)
+    )
+    feasible = fleet_feasible(verified)
     # Reaching the configured time limit is normal for this time-boxed solver.
     # Ignore improvements produced by a native iteration that crosses the deadline.
-    time_limit_reached = stopped_at_limit or solve_ms >= budget_ms
+    time_limit_reached = stopped_at_limit or solve_ms > budget_ms
     exhausted = time_limit_reached and not feasible
     status = "ok" if feasible else "timeout" if exhausted else "infeasible"
+    timing = dual_timing_fields({
+        "preprocess_ms": (started - preprocess_started) * 1000.0,
+        "solve_ms": solve_ms,
+        "verify_ms": (time.perf_counter() - verify_started) * 1000.0,
+        "budget_exhausted": exhausted,
+        "time_limit_reached": time_limit_reached,
+    }, budget_ms=budget_ms, feasible=feasible)
     return {
         **verified,
         "algorithm_id": "PyVRP",
@@ -163,20 +272,17 @@ def solve_pyvrp(
         "feasible": feasible,
         "completed": feasible,
         "status": status,
-        "error_code": "no_incumbent_by_deadline" if exhausted and best is None else verified["error_code"],
+        "error_code": ("no_incumbent_by_deadline" if exhausted and best is None
+                       else "exact_vehicle_count_mismatch" if verified["valid"] and not feasible
+                       else verified["error_code"]),
         "outcome_class": classify_outcome(valid=feasible, status=status, budget_exhausted=exhausted),
-        "budget_ms": budget_ms,
         "budget_exhausted": exhausted,
         "time_limit_reached": time_limit_reached,
         "stop_reason": "time_limit" if time_limit_reached else "completed",
         "timeout_kind": "solve_deadline" if exhausted else None,
-        "deadline_overrun_ms": round(max(0.0, solve_ms - budget_ms), 4),
-        "preprocess_ms": round((started - preprocess_started) * 1000.0, 4),
-        "solve_ms": round(solve_ms, 4),
-        "verify_ms": round(
-            verified_float["verify_ms"] + (verified["verify_ms"] if verified is not verified_float else 0.0),
-            4,
-        ),
+        **timing,
+        "feasible_before_deadline": best_in_time is not None or timing["feasible_before_deadline"],
+        "incumbent_ms": incumbent_ms,
         "reference_objective": instance.get("reference_objective"),
         "reference_kind": instance.get("reference_kind"),
         "solver_meta": {

@@ -129,16 +129,18 @@ class OpenAIAgentDriver:
         )
         rate_card = self.config.rate_card if self.config.rate_card is not None else policy.rate_card
         rate_card_version = self.config.rate_card_version or policy.rate_card_version
+        is_s2_factorial = self.config.arm_id.startswith("arm_s2_")
         sys_prompt = build_round_system_prompt(
-            arm_id=self.config.arm_id,
+            arm_id="s2" if is_s2_factorial else self.config.arm_id,
             problem_family=self.config.problem_family,
             tools_enabled=self.config.tools_enabled,
             allowed_templates=self.config.allowed_templates,
             allowed_postprocess_modes=self.config.allowed_postprocess_modes,
             instance_time_budget_ms=self.config.instance_time_budget_ms,
             enable_stagnation_diagnostic_gate=self.config.enable_stagnation_diagnostic_gate,
-            early_stop_no_jump_requests=self.config.early_stop_no_jump_requests,
-            basin_restart_on_stagnation=self.config.basin_restart_on_stagnation,
+            stagnation_diagnostic_mode=self.config.effective_stagnation_diagnostic_mode,
+            early_stop_no_jump_requests=None if is_s2_factorial else self.config.early_stop_no_jump_requests,
+            basin_restart_on_stagnation=not is_s2_factorial and self.config.basin_restart_on_stagnation,
         )
         full_msgs = [{"role": "system", "content": sys_prompt}, *[dict(m) for m in messages]]
         if last_tool_result is not None:

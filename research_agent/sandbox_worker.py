@@ -44,7 +44,7 @@ _FORBIDDEN_CALLS = frozenset({
 })
 _FORBIDDEN_STRINGS = (
     "cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_m5_control_blind_120",
-    "cvrp_select_multiscale_64",
+    "cvrp_select_multiscale_64", "cvrp_s1_sandbox_blind_120",
     "tsp_m31_select_36", "tsp_m31_blind_72",
     "obp_m31_select_36", "obp_m31_blind_72",
     "bpp_m31_select_36", "bpp_m31_blind_72",
@@ -89,6 +89,8 @@ def validate_sandbox_ast(script: str) -> None:
 
 
 def _safe_load_dev_suite(suite_id: str = "cvrp_dev_hetero_24", max_instances: int | None = None) -> list[dict[str, Any]]:
+    if suite_id == "cvrp_s1_sandbox_blind_120":
+        raise ValueError(f"blind_suite_forbidden_in_dev_pipeline:{suite_id}")
     assert_milestone_suite_allowed_for_interactive_role(suite_id, role="interactive_sandbox")
     suite = load_dev_or_public_suite(suite_id, split="dev_train", role="interactive_sandbox")
     assert_milestone_suite_allowed_for_interactive_role(suite_id, suite, role="interactive_sandbox")
@@ -318,8 +320,8 @@ def main() -> int:
             "result": None,
             "elapsed_ms": 0.0,
         }
-    sys.stdout.write(json.dumps(out, ensure_ascii=False, default=str) + "\n")
-    sys.stdout.flush()
+    sys.stdout.buffer.write((json.dumps(out, ensure_ascii=False, default=str) + "\n").encode("utf-8"))
+    sys.stdout.buffer.flush()
     return 0
 
 

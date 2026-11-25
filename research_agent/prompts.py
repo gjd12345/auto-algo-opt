@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any, Mapping, Sequence
 
+from research_agent.contracts import effective_stagnation_diagnostic_mode
+
 RESEARCH_POLICY_MD = """# Autonomous CO Research Charter (Milestone 3)
 
 ## Non-Negotiable Audit Rules
@@ -64,7 +66,7 @@ AGENT_TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "run_math_sandbox",
-            "description": "Run restricted AST-whitelisted Python/NumPy diagnostic code on dev_24 with 15s hard kill.",
+            "description": "Run restricted Python/NumPy diagnostic code on dev_24 with a 15s hard timeout. Assign structured numeric evidence to RESULT for a hash-bound script and result.",
             "parameters": {
                 "type": "object",
                 "properties": {"script": {"type": "string"}},
@@ -125,7 +127,7 @@ AGENT_TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "hypothesis_update",
-            "description": "Update hypothesis status; supported/refuted/abandoned requires evidence_artifacts with SHA-256.",
+            "description": "Update hypothesis status. Cite evidence_artifacts by path and SHA-256, or pass use_latest_sandbox=true in an evidence item to cite the latest verified sandbox result and script.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -195,6 +197,13 @@ _TEMPLATE_HINTS = {
     "bpp_offline_reorder_repack": "bpp_offline_reorder_repack(Offline BPP item priority `score_item`)",
 }
 
+_STAGNATION_GUIDANCE = {
+    "off": "Stagnation diagnostics are optional.",
+    "any": "If the round observation requires a diagnostic, call `diagnose_suite` or `run_math_sandbox` before submitting the plan.",
+    "slice_only": "If the round observation requires a diagnostic, call `diagnose_suite` successfully before submitting the plan.",
+    "sandbox_only": "If the round observation requires a diagnostic, call `run_math_sandbox` successfully and return finite numeric evidence in RESULT before submitting the plan.",
+}
+
 
 def build_round_system_prompt(
     *,
@@ -205,6 +214,7 @@ def build_round_system_prompt(
     allowed_postprocess_modes: Sequence[str],
     instance_time_budget_ms: float,
     enable_stagnation_diagnostic_gate: bool = False,
+    stagnation_diagnostic_mode: str = "any",
     early_stop_no_jump_requests: int | None = None,
     basin_restart_on_stagnation: bool = False,
 ) -> str:
@@ -224,11 +234,11 @@ def build_round_system_prompt(
         if tools_enabled
         else "Respond with ONE strict JSON object only (`submit_plan` during diagnose phase, `finish_round` during reflect phase)."
     )
+    diagnostic_mode = effective_stagnation_diagnostic_mode(
+        stagnation_diagnostic_mode, enable_stagnation_diagnostic_gate
+    )
+    stagnation_line = _STAGNATION_GUIDANCE[diagnostic_mode] + "\n" if tools_enabled else ""
     trajectory_guidance = []
-    if enable_stagnation_diagnostic_gate and tools_enabled:
-        trajectory_guidance.append(
-            "If the round observation requires a diagnostic, call `diagnose_suite` or `run_math_sandbox` before submitting the plan."
-        )
     if early_stop_no_jump_requests:
         trajectory_guidance.append(
             f"Inner evolution may stop after {early_stop_no_jump_requests} generated evaluations without a strict development objective improvement."
@@ -238,12 +248,14 @@ def build_round_system_prompt(
             'When `fresh_template_available` is true, include `"fresh_template": true` in the plan to start with the template baseline.'
         )
     trajectory_desc = " ".join(trajectory_guidance) + "\n" if trajectory_guidance else ""
+    prompt_arm = "s1" if arm_id.startswith("arm_s1_") else arm_id
     return (
-        f"You are an autonomous combinatorial optimization research scientist (`{arm_id}`) working on `{problem_family}` "
+        f"You are an autonomous combinatorial optimization research scientist (`{prompt_arm}`) working on `{problem_family}` "
         f"under a strict per-instance time budget of {instance_time_budget_ms:.1f} ms.\n"
         f"{mode_desc}\n"
         f"Allowed templates: {tpl_desc}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
         f"{protocol_desc}\n"
+        f"{stagnation_line}"
         f"{trajectory_desc}"
         '1) {"action":"call_tool","tool":"<name>","arguments":{...}}\n'
         '2) {"action":"submit_plan","template_id":"...","postprocess_mode":"...","direction":"...","hypothesis":"...","cited_kb_ids":[...],"rationale":"..."}\n'

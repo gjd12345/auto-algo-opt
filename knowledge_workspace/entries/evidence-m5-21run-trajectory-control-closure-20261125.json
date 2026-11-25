@@ -1,0 +1,61 @@
+{
+  "type": "evidence",
+  "title": "里程碑 5 21 路轨迹控制闭环全量实测收口证据（21/21 完备）",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-5",
+    "trajectory-control",
+    "21-run-closure",
+    "paratera"
+  ],
+  "status": "reviewed",
+  "summary": "完成里程碑 5 全部 21 路在线搜索与盲测汇总（正式替代早期 13/21 中间态）：DeepSeek-V4.1-Flash 三组（legacy_baseline_500ms / whitelist_latency_500ms / trajectory_ctrl_full_500ms，各 5 种子）在 Blind-120 均获 100.0% 完赛（加罚均值 24.6404 / 24.6472 / 24.6979）；Qwen4-Max 组 model2_legacy_500ms（3 种子）达 100.0%（24.6097），而未接入统一白名单+多尺度筛查的 model2_ctrl_full_500ms（3 种子）出现 6.67/120 超时（free_fleet 完赛 94.44%, 原始可行 24.4856, 加罚 27.2350；exact-k 完赛 63.89%, 原始可行 23.3435, 加罚 38.8252），直接驱动并促成第一阶段攻关一与攻关二的严格归因闭环。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "empirical",
+    "interface": "score_ruin_nodes",
+    "applicable_regimes": {
+      "strong_on": [
+        "deepseek_v41_flash_100pct_completion",
+        "full_21_cell_matrix_audit"
+      ],
+      "weak_on": [
+        "legacy_unscreened_qwen_control_arm_without_multiscale_gate"
+      ],
+      "scale_notes": "本条证据作为历史全量归档，与后续攻关一（1,080 请求）及攻关二纯净 2×2（2,400 请求）配合解读。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "d5e8984c",
+        "path": "tools/run_m5_trajectory_control.py",
+        "sha256": "4faff9b184974efa6f24df17c900e5dce5d3e0d35de85603d67319ebb968bf1c"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-research-agent-m3-autonomous-loop",
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone5-stage1-causal-closure-20261125"
+    ]
+  },
+  "source_refs": [
+    "src-milestone5-stage1-causal-closure-20261125"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone5_paratera/m5_trajectory_control_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-m5-21run-trajectory-control-closure-20261125",
+  "content_sha256": "7295cdd33d3ee78b363664d88dd2481b2c39808681d3188fadc1de100315c5af"
+}

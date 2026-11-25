@@ -12,9 +12,11 @@ import json
 import math
 import os
 import random
+import sqlite3
 import threading
 import time
 import uuid
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -45,6 +47,7 @@ from .dynamic_eoh import (
     derive_effective_batch_timeout_s,
 )
 from .model_routing import ModelRoutingPolicy, allocate_logical_route, compute_attempt_cost_usd, extract_provider_usage
+from .multiscale import MULTISCALE_DEFAULTS, multiscale_options
 from .planner import KB_ROUND_CONTEXT_BY_TEMPLATE, build_design_for_template, parse_hook_candidate
 from .runtime import resolve_problem_adapter, validate_hook_ast
 from .templates import get_template_spec
@@ -217,6 +220,11 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         opts["n200_latency_multiplier"] = _validate_positive_budget_ms(
             opts["n200_latency_multiplier"], field_name="n200_latency_multiplier",
         )
+    latency_options = multiscale_options(opts)
+    for name in MULTISCALE_DEFAULTS.keys() & opts.keys():
+        opts[name] = latency_options[name]
+    if latency_options["enable_multiscale_latency_ratio_screen"] and tpl.problem_family != "cvrp":
+        raise ValueError("multiscale_latency_screen_requires_cvrp")
     _early_stop_limit(opts)
     fresh_template = raw.get("fresh_template", False)
     if not isinstance(fresh_template, bool):
@@ -548,8 +556,9 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                 })
                 recorder.finish_instance(status="complete" if completed else "partial")
             metrics["behavior_evidence"] = recorder.finalize(status="complete" if complete else "partial")
-        if "n200_latency_diagnostics" in resp:
-            metrics["n200_latency_diagnostics"] = resp["n200_latency_diagnostics"]
+        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics"):
+            if key in resp:
+                metrics[key] = resp[key]
         ev_result = EvaluationResult(
             valid=bool(resp.get("valid")),
             objective=exact_obj,
@@ -597,9 +606,9 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                     else:
                         if code_sha not in self._val_cache:
                             validator = InterfaceValidator(
-                                candidate_timeout_s=self.candidate_timeout_s,
+                                candidate_timeout_s=self.checkpoint_validation_worker_timeout_s,
                                 instance_time_budget_ms=self.instance_time_budget_ms,
-                                outer_timeout_s=self.candidate_timeout_s,
+                                outer_timeout_s=self.checkpoint_validation_worker_timeout_s,
                             )
                             vrep = validator.validate(
                                 self.design,
@@ -680,52 +689,82 @@ class StagnationEarlyStop(Exception):
 class _StagnationAwareEoH(_DynamicCandidateEoH):
     """Check the durable evaluation journal between official EoH sample claims."""
 
-    def __init__(self, config: Any, problem: DynamicInterfaceProblem, *, evaluation_log: Path, no_jump_limit: int) -> None:
+    def __init__(
+        self, config: Any, problem: DynamicInterfaceProblem, *, evaluation_log: Path, no_jump_limit: int,
+        generation_attempts: Any | None = None,
+    ) -> None:
         super().__init__(config, problem)
         if self.num_samplers != 1 or self.num_evaluators != 1:
             raise ValueError("stagnation_early_stop_requires_serial_sampling")
         self.evaluation_log = evaluation_log
         self.no_jump_limit = no_jump_limit
         self.no_jump_count = 0
+        self.trigger_ordinal: int | None = None
+        self._generation_attempts = generation_attempts
         self._trajectory_error: Exception | None = None
+        self._best_key: tuple[int, float] = (-1, -math.inf)
+        self._seen_evaluations: set[str] = set()
+        self._seen_ordinals: set[int] = set()
+        self._trajectory_lock = threading.Lock()
+
+    def _observe(self, row: Mapping[str, Any] | None, *, generated: bool) -> None:
+        evaluation = row["evaluation"] if row is not None else {}
+        objective = evaluation.get("objective")
+        be_status = (evaluation.get("metrics") or {}).get("behavior_evidence", {}).get("status")
+        is_complete = int(bool(evaluation.get("completed", True)) and be_status != "partial")
+        candidate = (
+            (is_complete, -float(objective))
+            if evaluation.get("valid") and objective is not None and math.isfinite(objective) else None
+        )
+        improved = candidate is not None and candidate > self._best_key
+        if improved:
+            self._best_key = candidate
+        if generated:
+            self.no_jump_count = 0 if improved else self.no_jump_count + 1
+
+    def reached_stagnation(self) -> bool:
+        with self._trajectory_lock:
+            if self.no_jump_count >= self.no_jump_limit:
+                return True
+            rows = []
+            if self.evaluation_log.is_file():
+                rows = [
+                    json.loads(line) for line in self.evaluation_log.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+            if self._generation_attempts is None:
+                for row in rows:
+                    if row["evaluation_id"] not in self._seen_evaluations:
+                        self._seen_evaluations.add(row["evaluation_id"])
+                        self._observe(row, generated=row["origin"] == "generated")
+                return self.no_jump_count >= self.no_jump_limit
+
+            by_token = {}
+            for row in rows:
+                if row["origin"] == "generated":
+                    if row.get("attempt_token"):
+                        by_token[row["attempt_token"]] = row
+                elif row["evaluation_id"] not in self._seen_evaluations:
+                    self._seen_evaluations.add(row["evaluation_id"])
+                    self._observe(row, generated=False)
+            for ordinal, token in self._generation_attempts():
+                if ordinal in self._seen_ordinals:
+                    continue
+                self._seen_ordinals.add(ordinal)
+                self._observe(by_token.get(token), generated=True)
+                if self.no_jump_count >= self.no_jump_limit:
+                    self.trigger_ordinal = ordinal
+                    return True
+            return False
 
     def _sampler_worker(self, population_ref: list, target: int, t0: float) -> None:
-        best_key: tuple[int, float] = (-1, -math.inf)
-        seen: set[str] = set()
-
-        def consume_rows(rows: Iterable[str]) -> None:
-            nonlocal best_key
-            for line in rows:
-                row = json.loads(line)
-                evaluation_id = row["evaluation_id"]
-                if evaluation_id in seen:
-                    continue
-                seen.add(evaluation_id)
-                evaluation = row["evaluation"]
-                objective = evaluation.get("objective")
-                be_status = (evaluation.get("metrics") or {}).get("behavior_evidence", {}).get("status")
-                is_complete = int(bool(evaluation.get("completed", True)) and be_status != "partial")
-                cand_key = (
-                    (is_complete, -float(objective))
-                    if (evaluation.get("valid") and objective is not None and math.isfinite(objective))
-                    else None
-                )
-                improved = cand_key is not None and cand_key > best_key
-                if improved:
-                    best_key = cand_key
-                if row["origin"] == "generated":
-                    self.no_jump_count = 0 if improved else self.no_jump_count + 1
-
         try:
-            with self.evaluation_log.open(encoding="utf-8") as journal:
-                consume_rows(journal)
-                # EoH registers the offspring before this call returns. Limit each
-                # invocation to one claim so the triggering sample is retained.
-                for sample_target in range(1, target + 1):
-                    super()._sampler_worker(population_ref, sample_target, t0)
-                    consume_rows(journal)
-                    if self.no_jump_count >= self.no_jump_limit:
-                        return
+            # EoH registers the offspring before returning. Limit each call to
+            # a single sample so it can register the triggering offspring.
+            for sample_target in range(1, target + 1):
+                if self.reached_stagnation():
+                    break
+                super()._sampler_worker(population_ref, sample_target, t0)
         except Exception as exc:
             self._trajectory_error = exc
 
@@ -733,7 +772,7 @@ class _StagnationAwareEoH(_DynamicCandidateEoH):
         super().run()
         if self._trajectory_error is not None:
             raise self._trajectory_error
-        if self.no_jump_count >= self.no_jump_limit:
+        if self.reached_stagnation():
             raise StagnationEarlyStop
 
 
@@ -754,6 +793,7 @@ def _build_session_bridge(
     use_mock: bool,
     mock_candidates: Sequence[str],
     mock_failure_hook: Any | None = None,
+    owner_epoch: str | None = None,
     run_started_monotonic: float,
 ):
     from agent_skill_loop.client import ProviderFailure, http_post_with_deadline
@@ -785,6 +825,30 @@ def _build_session_bridge(
             self._pending_attempt_token: str | None = None
             self._token_lock = threading.Lock()
             self._run_started = run_started_monotonic
+            self.before_generation_claim = None
+
+        def settled_generation_attempts(self) -> list[tuple[int, str]]:
+            self.settle_trailing_pending()
+            if self._ledger_path is None:
+                return []
+            with closing(sqlite3.connect(f"{self._ledger_path.resolve().as_uri()}?mode=ro", uri=True)) as con:
+                return con.execute(
+                    "SELECT r.idx, p.attempt_token FROM budget_requests r "
+                    "JOIN candidate_provenance p ON p.physical_request_id=r.request_id "
+                    "WHERE r.run_id=? AND r.owner_epoch=? AND r.purpose='eoh_generation' "
+                    "AND p.generation_status!='pending' ORDER BY r.idx",
+                    (self._run_id, owner_epoch),
+                ).fetchall()
+
+        def _has_prior_probe(self) -> bool:
+            if self._ledger_path is None or self._routing_policy.enabled or not self._strict_barriers:
+                return False
+            with closing(sqlite3.connect(f"{self._ledger_path.resolve().as_uri()}?mode=ro", uri=True)) as con:
+                return con.execute(
+                    "SELECT 1 FROM budget_requests WHERE run_id=? AND purpose='eoh_probe' "
+                    "AND state='complete' AND error_code IS NULL AND requested_model=? LIMIT 1",
+                    (self._run_id, self.model),
+                ).fetchone() is not None
 
         def consume_pending_attempt_token(self) -> str | None:
             with self._token_lock:
@@ -854,6 +918,9 @@ def _build_session_bridge(
                 raise BudgetExhausted("wall_time_exhausted")
             if purpose is None:
                 purpose = "eoh_probe" if prompt.strip() == "1+1=?" else "eoh_generation"
+            if (purpose == "eoh_probe" and prompt.strip() == "1+1=?"
+                    and self.budget.remaining == 1 and self._has_prior_probe()):
+                return "2"
             if purpose == "eoh_repair" and self.repair_limit is not None and self.repair_used >= self.repair_limit:
                 raise BudgetExhausted("repair_request_limit")
 
@@ -876,6 +943,9 @@ def _build_session_bridge(
             backoff_schedule = (5.0, 15.0, 30.0) if not self._use_mock else (0.01, 0.01)
             last_exc: Exception | None = None
             for retry_idx in range(len(backoff_schedule) + 1):
+                if (purpose == "eoh_generation" and self.before_generation_claim is not None
+                        and self.before_generation_claim()):
+                    raise BudgetExhausted("stagnation_early_stop")
                 rem_wall = self._remaining_wall()
                 if rem_wall is not None and rem_wall <= 0:
                     self.last_error = "wall_time_exhausted"
@@ -1227,6 +1297,7 @@ def execute_m2_session_task(
             strict_barriers=strict_barriers,
             use_mock=use_mock,
             mock_candidates=mock_pool,
+            owner_epoch=owner_epoch,
             run_started_monotonic=t_wall_origin,
         )
         local_url = bridge.start()
@@ -1260,6 +1331,8 @@ def execute_m2_session_task(
         enable_n200_latency_screen=options.get("enable_n200_latency_screen", False),
         enable_degenerate_constant_screen=options.get("enable_degenerate_constant_screen", False),
         n200_latency_multiplier=options.get("n200_latency_multiplier", 1.0),
+        checkpoint_validation_workers=7 if strict_barriers and design.problem_family == "cvrp" else 0,
+        **multiscale_options(options),
         evaluation_log=eval_log,
         round_context=combined_ctx,
     )
@@ -1332,6 +1405,7 @@ def execute_m2_session_task(
     stop_reason = "eoh_completed"
     loop_completed = True
     provider_error_code = None
+    stagnation_trigger_ordinal = None
     try:
         llm_cfg = LLMConfig(use_local=True, local_url=local_url, timeout=int(request_timeout) + 5)
         engine_cfg = EoHConfig(
@@ -1347,7 +1421,13 @@ def execute_m2_session_task(
             output_dir=str(output),
         )
         if no_jump_limit:
-            engine = _StagnationAwareEoH(engine_cfg, task, evaluation_log=eval_log, no_jump_limit=no_jump_limit)
+            durable_attempts = bridge.settled_generation_attempts if bridge is not None and strict_barriers else None
+            engine = _StagnationAwareEoH(
+                engine_cfg, task, evaluation_log=eval_log, no_jump_limit=no_jump_limit,
+                generation_attempts=durable_attempts,
+            )
+            if durable_attempts is not None:
+                bridge.before_generation_claim = engine.reached_stagnation
         else:
             engine = _DynamicCandidateEoH(engine_cfg, task)
         base_seed = int(config.get("search_seed", config["suite_generation"]["seed"]))
@@ -1355,9 +1435,14 @@ def execute_m2_session_task(
         random.seed(s_seed)
         np.random.seed(s_seed % (2**32))
         engine.run()
+        # The upstream sampler can absorb a gateway failure while registering
+        # an empty sample. Recover the bridge's durable terminal reason here.
+        if bridge is not None and bridge.terminal:
+            raise BudgetExhausted(bridge.last_error or "request_budget_exhausted")
     except StagnationEarlyStop:
         status = "stopped"
         stop_reason = "stagnation_early_stop"
+        stagnation_trigger_ordinal = engine.trigger_ordinal
     except Exception as exc:
         msg = str(exc)
         bridge_err = getattr(bridge, "last_error", None) if bridge is not None else None
@@ -1378,7 +1463,8 @@ def execute_m2_session_task(
         elif "wall_time_exhausted" in msg or bridge_err == "wall_time_exhausted":
             status = "stopped"
             stop_reason = "wall_time_limit"
-        elif "budget_exhausted" in msg or "request_limit" in msg or "checkpoint_pending" in msg:
+        elif (bridge_err == "request_budget_exhausted" or "budget_exhausted" in msg
+              or "request_limit" in msg or "checkpoint_pending" in msg):
             status = "stopped"
             stop_reason = "request_limit"
         else:
@@ -1506,7 +1592,9 @@ def execute_m2_session_task(
         "template_source_sha256": tpl.template_source_sha256,
         "design_sha256": design.design_sha256,
         "instance_time_budget_ms": budget_ms,
-        "effective_candidate_timeout_s": effective_cand_timeout,
+        "effective_candidate_timeout_s": task.candidate_timeout_s,
+        "multiscale_probe_timeout_s": task.multiscale_probe_timeout_s,
+        "enclosing_candidate_timeout_s": task.enclosing_candidate_timeout_s,
         "kb_release_id": kb_release_id,
         "kb_manifest_sha256": kb_manifest_sha256,
         "static_kb_clues_injected": inject_static_kb_clues,
@@ -1517,6 +1605,7 @@ def execute_m2_session_task(
         "status": status,
         "stop_reason": stop_reason,
         "provider_error_code": provider_error_code,
+        "stagnation_trigger_ordinal": stagnation_trigger_ordinal,
         "loop_completed": loop_completed,
         "baseline": baseline_resp.get("objective"),
         "best_generated_path": best_rel,

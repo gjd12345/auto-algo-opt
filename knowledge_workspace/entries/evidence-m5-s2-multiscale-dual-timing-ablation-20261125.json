@@ -1,0 +1,101 @@
+{
+  "type": "evidence",
+  "title": "里程碑 5 攻关二：双计时口径统一（Track 3）、零泄露多尺度锁阈与纯净 2×2 消融（2,400 请求）",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-5",
+    "dual-timing",
+    "multiscale-screening",
+    "factorial-ablation",
+    "cvrplib-set-x"
+  ],
+  "status": "reviewed",
+  "summary": "统一列报 feasible_before_deadline 与 returned_before_deadline 双计时口径及 preprocess/solve/verify 边界：(1) Track 3 重校显示 PyVRP 在 EoH-S-256 与 Set X-100 上 feasible=100% 但严格按时返回 returned=0.0%；(2) 严格仅用合成 N=100/200/400/500 锁定阈值（max_ratio_200_100=8.0, n200_abs_cap_ms=50.5964, min_t200_trigger_ms=10.0），在零泄露 Set X-100（4,700 对，free_fleet）上对超时逃逸拦截召回达 88.60%（785/886）、误杀率仅 3.02%（115/3,814）；(3) 统一白名单下完成 2×2 在线因子消融（24 格 = 2,400 请求），Qwen4-Max 在 Set X-100 严格 returned_before_deadline 口径由 arm_s2_00 的 41.3%（104,687.57±31,251.52）与 arm_s2_01 的 43.3%（104,193.37±30,865.06）跃升至开启多尺度筛查后的 98.7%（67,809.34±1,875.02 与 67,940.49±1,317.77，penalized_2x 下 3 种子 multiscale_main 原始 p<=4.15e-16、报告舍入 p_holm=0；共同完赛交集 n=16/10/18 下均长差 +386.09/+265.05/+201.06，p_holm=0.4126/1.0/1.0），且在 blind_120 由 84.2%/90.8% 恢复至 100.0%（120/120）。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "empirical",
+    "interface": "score_ruin_nodes",
+    "applicable_regimes": {
+      "strong_on": [
+        "strict_returned_before_deadline_enforcement",
+        "large_scale_timeout_interception_n200_to_n1000",
+        "synthetic_only_threshold_calibration"
+      ],
+      "weak_on": [
+        "feasible_only_deadline_reporting_masks_timeouts"
+      ],
+      "scale_notes": "Set X-100 分尺段拦截召回：100-200=100.0%，201-400=100.0%，401-600=96.15%，601-800=80.58%，801-1000=56.13%。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/s2_multiscale_calibration.py",
+        "sha256": "52ca846e45899f66d580c723361106c67bcab7f9cdb82ca1d87f9d8567877e9f",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_s2_multiscale_ablation.py",
+        "sha256": "5cfa3ad7273eeab22fb96c98b52b0e97dd38c353ea6e12f7582d21cada33edc6",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_external_baselines_2026.py",
+        "sha256": "6173869c2290a27cf3562aa2bf977589e932c0673811aac694b7cb25628056dc",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tests/test_s2_timing_and_calibration.py",
+        "sha256": "6c792f6a463092e67ec0987bde9b17d407e86dbea0892e2616c9c9fcb1c1cb18",
+        "worktree_base_commit": "d5e8984c"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tests/test_s2_multiscale_ablation.py",
+        "sha256": "21a5748d88b19864dd3bbf37aa621674daca73ca4b7ca10e97a791eb532ea401",
+        "worktree_base_commit": "d5e8984c"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-lit-cvrp-large"
+    ],
+    "methods": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-research-agent-m3-autonomous-loop"
+    ],
+    "sources": [
+      "src-milestone5-stage1-causal-closure-20261125"
+    ]
+  },
+  "source_refs": [
+    "src-milestone5-stage1-causal-closure-20261125"
+  ],
+  "evidence_refs": [
+    "report:experiments/baselines_2026/dual_timing_s20261124_b500.json",
+    "report:experiments/baselines_2026/dual_timing_s20261124_b2000.json",
+    "report:experiments/baselines_2026/dual_timing_s20261125_b500.json",
+    "report:experiments/baselines_2026/dual_timing_s20261125_b2000.json",
+    "report:experiments/baselines_2026/dual_timing_s20261126_b500.json",
+    "report:experiments/baselines_2026/dual_timing_s20261126_b2000.json",
+    "report:experiments/milestone5_s2_multiscale/multiscale_threshold_lock.json",
+    "report:experiments/milestone5_s2_multiscale/setx_validation.json",
+    "report:experiments/milestone5_s2_multiscale/exp2c/s2_multiscale_ablation_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-m5-s2-multiscale-dual-timing-ablation-20261125",
+  "content_sha256": "eceab0cf0966f44486860864cfe63366389055d985c7e01543f837cdef45d899"
+}

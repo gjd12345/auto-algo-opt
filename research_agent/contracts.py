@@ -14,6 +14,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from agent_skill_loop.interface_design.multiscale import MULTISCALE_DEFAULTS, multiscale_options
+
 ALLOWED_HYPOTHESIS_STATUSES: frozenset[str] = frozenset({
     "proposed",
     "testing",
@@ -70,6 +72,20 @@ def atomic_write_json(path: Path, payload: Any) -> str:
     return sha256_text(text)
 
 
+def effective_stagnation_diagnostic_mode(mode: str, enabled: bool) -> str:
+    if mode not in ("off", "any", "slice_only", "sandbox_only"):
+        raise ValueError("stagnation_diagnostic_mode_invalid")
+    return "off" if mode == "any" and not enabled else mode
+
+
+STAGNATION_DIAGNOSTIC_TOOLS = {
+    "off": (),
+    "any": ("diagnose_suite", "run_math_sandbox"),
+    "slice_only": ("diagnose_suite",),
+    "sandbox_only": ("run_math_sandbox",),
+}
+
+
 @dataclass(frozen=True)
 class AgentConfig:
     """Immutable run configuration for an autonomous M3/M3.1/M3.2 research run."""
@@ -123,6 +139,10 @@ class AgentConfig:
     sandbox_timeout_s: float = 15.0
     allow_extended_numpy_whitelist: bool = True
     enable_n200_latency_screen: bool = False
+    enable_multiscale_latency_ratio_screen: bool = False
+    max_n200_n100_ratio: float = 8.0
+    multiscale_ratio_min_t200_ms: float = 10.0
+    multiscale_n200_abs_cap_ms: float | None = None
     enable_degenerate_constant_screen: bool = False
     n200_latency_multiplier: float = 1.0
     enable_stagnation_diagnostic_gate: bool = False
@@ -137,8 +157,17 @@ class AgentConfig:
     memory_max_solution_cards: int = 1
     memory_mmr_lambda: float = 0.7
     memory_cooldown_rounds: int = 2
+    memory_online_writeback_enabled: bool = True
+    stagnation_diagnostic_mode: str = "any"
 
     def __post_init__(self) -> None:
+        effective_stagnation_diagnostic_mode(
+            self.stagnation_diagnostic_mode, self.enable_stagnation_diagnostic_gate
+        )
+        multiscale_options({
+            **{name: getattr(self, name) for name in MULTISCALE_DEFAULTS},
+            "enable_n200_latency_screen": self.enable_n200_latency_screen,
+        })
         multiplier = self.n200_latency_multiplier
         if type(multiplier) not in {float, int} or not math.isfinite(multiplier) or multiplier <= 0:
             raise ValueError("n200_latency_multiplier_must_be_positive_finite")
@@ -149,6 +178,8 @@ class AgentConfig:
             raise ValueError("memory_mode_invalid")
         if type(self.memory_enabled) is not bool or type(self.kb_enabled) is not bool:
             raise ValueError("memory_and_kb_enabled_must_be_boolean")
+        if type(self.memory_online_writeback_enabled) is not bool:
+            raise ValueError("memory_online_writeback_enabled_must_be_boolean")
         if type(self.memory_max_solution_cards) is not int or not 0 <= self.memory_max_solution_cards <= 1:
             raise ValueError("memory_max_solution_cards_out_of_range")
         if type(self.memory_mmr_lambda) not in (int, float) or not 0 <= self.memory_mmr_lambda <= 1:
@@ -163,6 +194,14 @@ class AgentConfig:
             or not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
         ):
             raise ValueError("pinned_kb_release_or_digest_invalid")
+
+    @property
+    def effective_stagnation_diagnostic_mode(self) -> str:
+        if not self.tools_enabled:
+            return "off"
+        return effective_stagnation_diagnostic_mode(
+            self.stagnation_diagnostic_mode, self.enable_stagnation_diagnostic_gate
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -254,6 +293,11 @@ class AgentCheckpoint:
     trajectory_best_dev_objective: float | None = None
     restart_eligible_round_id: int | None = None
     trajectory_control_events: list[dict[str, Any]] = field(default_factory=list)
+    last_sandbox_ref: dict[str, Any] | None = None
+    sandbox_run_refs: list[dict[str, Any]] = field(default_factory=list)
+    sandbox_success_count: int = 0
+    gate_bypass_count: int = 0
+    gate_bypass_events: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         self.updated_at_utc = utc_now()

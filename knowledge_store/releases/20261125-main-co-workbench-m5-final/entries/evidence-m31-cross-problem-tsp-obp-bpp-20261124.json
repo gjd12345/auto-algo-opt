@@ -1,0 +1,86 @@
+{
+  "type": "evidence",
+  "title": "里程碑 3.1 跨问题泛化（TSP / 在线 OBP / 独立离线 BPP）72 例盲测与外部标准库证据",
+  "category": "evidence",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "obp",
+    "bpp",
+    "milestone-3.1",
+    "cross-problem",
+    "blind-72",
+    "tsplib",
+    "bpplib"
+  ],
+  "status": "reviewed",
+  "summary": "在不改动 research_agent 核心闭环的前提下完成 TSP (tsp/v1)、严格在线 OBP (obp_online/v1) 与独立离线 BPP (bpp_offline/v1) 实测（12 槽位 432 请求实费 $0.1639）：TSP Blind-72 上 tsp_l2 达 83,833.4340 显著击败 tsp_nn_2opt (84,610.3681, -0.9182%, 43/0/29, p_holm=0.0400)；在线 OBP 在 Blind-72 (28.2222) 与 BPPLib-70 (72.9143) 均逼平 Best-Fit；离线 BPP (27.7500) 持平 FFD；TSPLIB-18 确定性基准下 tsp_nn_2opt=54,830.7222，tsp_l1 (58,916.1667) 优于纯最近邻 tsp_nn (64,150.6667) 达 -8.16%。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_tsp",
+    "variant_adaptation_note": "Extends the CVRP ResearchAgent loop and 5-gate validator to TSP (tsp/v1), strict online OBP (obp_online/v1), and separate offline BPP (bpp_offline/v1).",
+    "paradigm": "insertion",
+    "complexity_class": "empirical",
+    "interface": "score_insertion",
+    "applicable_regimes": {
+      "strong_on": [
+        "tsp_guided_insertion_n50_n100",
+        "strict_online_prefix_invariance"
+      ],
+      "weak_on": [
+        "tsplib_n2392_global_insertion_extrapolation",
+        "stateless_tight_greedy_obp_fixed_point"
+      ],
+      "scale_notes": "每问题新增适配与探针代码量仅 387–573 LOC；在线 OBP 与离线 BPP 严格分表隔离。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tools/run_m31_cross_problem.py",
+        "sha256": "159bfcf2784f5c38dbc2546b946bccd8e5a2424387a4b738d31b8e34582ed126"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "agent_skill_loop/interface_design/tsp_templates.py",
+        "sha256": "1b63ad5d1a5151bbf35bc35865e0329f437a72b0968b861e13fdd95474815ef4"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "agent_skill_loop/interface_design/obp_templates.py",
+        "sha256": "0e4153897fff503594e3cc20aef47ce76eed06c3484f6799d671c25f64ce35ee"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "agent_skill_loop/interface_design/bpp_templates.py",
+        "sha256": "24be70df5b6b4958953df7c1d425e1e2652583a41b3508256bfe1db5c41d03d0"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp",
+      "problem-online-bin-packing",
+      "problem-lit-bp-1d-offline"
+    ],
+    "methods": [
+      "method-research-agent-m3-autonomous-loop"
+    ],
+    "sources": [
+      "src-milestone4-m31-m32-math-closure-20261124"
+    ]
+  },
+  "source_refs": [
+    "src-milestone4-m31-m32-math-closure-20261124"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3_1/m31_cross_problem_report.json",
+    "report:experiments/milestone3_1/external_benchmarks_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-m31-cross-problem-tsp-obp-bpp-20261124",
+  "content_sha256": "4d3dfc068fe8a3049268b2a80302cfbaff256f4c107319305a87e450255aaf61"
+}

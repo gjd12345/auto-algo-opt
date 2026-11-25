@@ -20,6 +20,13 @@ _TEMPLATE_LABEL = re.compile(
 )
 
 
+def open_session_memory_backend(row):
+    return open_memory_backend(
+        Path(row["memory_store"]), policy_id=row["memory_policy_id"],
+        read_only=not db.memory_online_writeback_enabled(row),
+    )
+
+
 def _body_claim_text(body):
     """Ignore template labels and Markdown presentation, retaining claim text."""
     lines = []
@@ -81,6 +88,42 @@ def validate_revision(root, binding, memory, facts):
         raise ValueError("memory_revision_new_verified_evidence_required")
 
 
+def _observation_provenance(root, row, facts, memory):
+    anchor = memory.code_anchor or {}
+    if "canonical_ast_sha256" not in anchor:
+        return {}
+    candidate = next((item for item in facts["candidates"]
+                      if f"evaluation:{item['evaluation_id']}" == memory.evidence_ref), None)
+    code = candidate.get("code") if candidate is not None else None
+    if (not isinstance(code, str) or candidate.get("valid") is not True
+            or db._sha256(code) != candidate.get("code_sha256")
+            or anchor.get("code_sha256") != candidate["code_sha256"]):
+        raise ValueError("memory_candidate_evidence_identity_mismatch")
+    canonical = db._sha256(ast.unparse(ast.parse(code)))
+    if canonical != anchor["canonical_ast_sha256"] or candidate.get("canonical_ast_sha256", canonical) != canonical:
+        raise ValueError("memory_candidate_canonical_ast_hash_mismatch")
+    provenance = {
+        "source_evaluation_id": candidate["evaluation_id"],
+        "candidate_code_sha256": candidate["code_sha256"],
+        "canonical_ast_sha256": canonical,
+        "suite_hash": row["suite_hash"],
+        "evaluator_hash": row["evaluator_hash"],
+    }
+    if ref := facts.get("best_generated_ref"):
+        skill_path = (root / ref).resolve()
+        if not skill_path.is_relative_to(root.resolve()):
+            raise ValueError("memory_candidate_reference_outside_session")
+        try:
+            skill = load_skill(skill_path)
+        except (ValueError, OSError):
+            return provenance
+        if (skill.valid and skill.problem == row["problem"] and skill.suite_hash == row["suite_hash"]
+                and skill.evaluator_hash == row["evaluator_hash"] and skill.code_sha256 == candidate["code_sha256"]
+                and skill.mean_objective == candidate["objective"] and skill.parent_version_id is not None):
+            provenance["parent_version_id"] = skill.parent_version_id
+    return provenance
+
+
 def commit_pending(root, operation_id):
     from agent_skill_loop.file_lock import exclusive_file_lock
     try:
@@ -105,6 +148,8 @@ def _commit_pending(root, operation_id):
         db._verify_files(root,row,action="memory-commit")
         status,error,reference="rejected",None,None
         try:
+            if not db.memory_online_writeback_enabled(row):
+                raise ValueError("memory_online_writeback_disabled")
             receipt = json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?", (operation_id,)).fetchone()[0])
             binding = receipt["result"]
             submitted = _verified_json(root, rd["submitted_evaluation_ref"], rd["submitted_evaluation_sha256"])
@@ -183,12 +228,14 @@ def _commit_pending(root, operation_id):
                 if skill.parent_version_id is not None:
                     provenance["parent_version_id"] = skill.parent_version_id
                 provenance["interface_id"] = spec.entrypoint
-            elif raw.get("evidence_ref") and raw["evidence_ref"] not in facts["evidence_refs"]:
-                raise ValueError("memory_evidence_reference_mismatch")
+            elif raw.get("evidence_ref"):
+                if raw["evidence_ref"] not in facts["evidence_refs"]:
+                    raise ValueError("memory_evidence_reference_mismatch")
+                provenance.update(_observation_provenance(root, row, facts, expected))
             with db._transaction(con):
                 _record_status(con,proposal,operation_id,"accepted",None,None)
             status="failed"
-            backend=open_memory_backend(Path(row["memory_store"]),policy_id=row["memory_policy_id"])
+            backend=open_session_memory_backend(row)
             written=backend.write(expected.to_entry(), based_on=memory_based_on, provenance=provenance,
                                   operation_key=f"{row['run_id']}:{operation_id}", format_version=3)
             reference=written["reference"]
@@ -199,12 +246,14 @@ def _commit_pending(root, operation_id):
             return
         except (ValueError, OSError, KeyError, TypeError, SyntaxError, RecursionError) as exc:
             error=str(exc)[:256]
+        lineage = ({key: provenance[key] for key in ("canonical_ast_sha256", "parent_version_id") if key in provenance}
+                   if status == "published" else None)
         with db._transaction(con):
-            _record_status(con,proposal,operation_id,status,error,reference)
+            _record_status(con, proposal, operation_id, status, error, reference, lineage=lineage)
     finally: con.close()
 
 
-def _record_status(con, proposal, operation_id, status, error, reference):
+def _record_status(con, proposal, operation_id, status, error, reference, *, lineage=None):
     # Concurrent stop may advance the version while filesystem work runs.
     row=db._require_run(con,action="memory-commit",run_id=None)
     version=row["state_version"]+1
@@ -215,7 +264,7 @@ def _record_status(con, proposal, operation_id, status, error, reference):
     rd=con.execute("SELECT * FROM rounds WHERE run_id=? AND round_id=?",(row["run_id"],proposal["round_id"])).fetchone()
     previous=json.loads(con.execute("SELECT receipt_json FROM operations WHERE operation_id=?",(operation_id,)).fetchone()[0])
     result=previous["result"]
-    result["memory"]={"status":status,"error_code":error,"reference":reference}
+    result["memory"]={"status":status,"error_code":error,"reference":reference, **(lineage or {})}
     receipt=db._envelope(con,row,rd,action=previous["action"],operation_id=operation_id,result=result)
     con.execute("UPDATE operations SET receipt_json=?,result_state_version=? WHERE operation_id=?",(db._json(receipt),version,operation_id))
     db._queue_audit(con,row["run_id"],version,[("state_transition",{"memory_status":status,"operation_id":operation_id,"reference":reference})])

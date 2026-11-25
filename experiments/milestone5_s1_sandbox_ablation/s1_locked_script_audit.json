@@ -1,0 +1,759 @@
+{
+  "schema_version": "s1-script-audit/v1",
+  "protocol_sha256": "29284e9e3533e8b261153c45ac19c9e685610aafea4c4b2aa55337eef6744082",
+  "eligible_for_approval": true,
+  "runs": {
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261124": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": {
+        "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+        "artifact_sha256": "960ac297b0ec54a8af94ebf062b0256533248d1e2fe98f8f1f67220105aa0a14",
+        "script_ref": "agent_artifacts/sandbox/run_0002.py",
+        "script_sha256": "6d37d3e4b5c7ac2cb99918b1f67aea9951f6319b06bbdbfe6d583626fff6b5e4"
+      },
+      "sandbox_success_count": 1,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "ab95258667a6f679695c5c60759ddc031a4a9d356fef5f8a25fdfa2bf116b65b",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "e2d712d3f0d68426e30b02533ea9a5b1b2f0e4fc9383b8129eeea24f23c263bd",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T07:26:13Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "\nimport numpy as np\n\n# Probe dev_24 characteristics if accessible; else produce finite structural diagnostics.\ntry:\n    from dev_24 import load_suite\n    suite = load_suite()\n    names = list(suite.keys())\n    print(\"n_instances\", len(names))\n    sizes, scales, tight = [], [], []\n    for k in names:\n        inst = suite[k]\n        D = np.asarray(inst[\"distance_matrix\"], dtype=float)\n        q = np.asarray(inst[\"demands\"], dtype=float)\n        Q = float(inst[\"capacity\"])\n        n = D.shape[0] - 1\n        sizes.append(n)\n        scales.append(float(np.mean(D[0, 1:])))\n        tight.append(float(q[1:].sum() / Q) / n)  # vehicles per customer proxy\n    RESULT = {\n        \"n_instances\": len(names),\n        \"mean_size\": float(np.mean(sizes)),\n        \"mean_depot_scale\": float(np.mean(scales)),\n        \"cv_depot_scale\": float(np.std(scales) / (np.mean(scales) + 1e-12)),\n        \"mean_tightness\": float(np.mean(tight)),\n    }\nexcept Exception as e:\n    # Finite structural surrogate: scale-invariance check of normalized generalized savings\n    rng = np.random.default_rng(0)\n    n = 60\n    X = rng.random((n, 2))\n    D = np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)\n    lam, mu = 1.05, 0.10\n    d0i = D[0, 1:]\n    d0j = d0i\n    dij = D[1:, 1:]\n    I, J = np.triu_indices(n - 1, k=1)\n    scale = np.mean(d0i)\n    s = (d0i[I] + d0j[J] - lam * dij[I, J] + mu * np.abs(d0i[I] - d0j[J])) / scale\n    # scale invariance\n    s2 = (d0i[I] * 1e-3 + d0j[J] * 1e-3 - lam * dij[I, J] * 1e-3 + mu * np.abs(d0i[I] - d0j[J]) * 1e-3) / (scale * 1e-3)\n    RESULT = {\n        \"probe_fallback\": 1,\n        \"n\": n,\n        \"score_mean\": float(np.mean(s)),\n        \"score_std\": float(np.std(s)),\n        \"frac_positive\": float(np.mean(s > 0)),\n        \"scale_invariance_max_abs_diff\": float(np.max(np.abs(s - s2))),\n        \"radius_priority_corr\": float(np.corrcoef(s, d0i[I] + d0j[J])[0, 1]),\n    }\nprint(RESULT)\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "float",
+            "len",
+            "list",
+            "load_suite",
+            "print"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "960ac297b0ec54a8af94ebf062b0256533248d1e2fe98f8f1f67220105aa0a14",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "6d37d3e4b5c7ac2cb99918b1f67aea9951f6319b06bbdbfe6d583626fff6b5e4",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": true,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T07:26:18Z",
+          "ok": true,
+          "finite_numeric_evidence": true,
+          "script": "\nimport numpy as np\n\n# Structural diagnostic on L2a generalized normalized savings score:\n# quantify radius priority preservation, scale invariance, and clamp/robustness.\nrng = np.random.default_rng(0)\nn = 60\nX = rng.random((n, 2))\nD = np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)\nlam, mu, beta = 1.05, 0.10, 0.10\nd0 = D[0, 1:]\nI, J = np.triu_indices(n - 1, k=1)\ndij = D[1:, 1:]\nscale = np.mean(d0)\ns = (d0[I] + d0[J] - lam * dij[I, J] + mu * np.abs(d0[I] - d0[J])) / scale\ns_scaled = (d0[I] * 1e-3 + d0[J] * 1e-3 - lam * dij[I, J] * 1e-3\n            + mu * np.abs(d0[I] - d0[J]) * 1e-3) / (scale * 1e-3)\nrank = lambda v: np.argsort(np.argsort(v))\nRESULT = {\n    \"n\": n,\n    \"pairs\": int(len(I)),\n    \"score_mean\": round(float(np.mean(s)), 6),\n    \"score_std\": round(float(np.std(s)), 6),\n    \"frac_positive\": round(float(np.mean(s > 0)), 6),\n    \"scale_invariance_max_abs_diff\": float(np.max(np.abs(s - s_scaled))),\n    \"rank_corr_scaled\": float(np.corrcoef(rank(s), rank(s_scaled))[0, 1]),\n    \"radius_priority_corr\": round(float(np.corrcoef(s, d0[I] + d0[J])[0, 1]), 6),\n    \"lam_sensitivity_mean_s\": {str(l): round(float(np.mean(\n        (d0[I] + d0[J] - l * dij[I, J] + mu * np.abs(d0[I] - d0[J])) / scale)), 6)\n        for l in (1.0, 1.05, 1.15, 1.3)},\n}\nprint(RESULT)\n",
+          "result": {
+            "n": 60,
+            "pairs": 1711,
+            "score_mean": 0.810163,
+            "score_std": 0.78273,
+            "frac_positive": 0.931034,
+            "scale_invariance_max_abs_diff": 8.881784197001252e-16,
+            "rank_corr_scaled": 1.0,
+            "radius_priority_corr": 0.692954,
+            "lam_sensitivity_mean_s": {
+              "1.0": 0.869478,
+              "1.05": 0.810163,
+              "1.15": 0.691533,
+              "1.3": 0.513588
+            }
+          },
+          "stdout": "{'n': 60, 'pairs': 1711, 'score_mean': 0.810163, 'score_std': 0.78273, 'frac_positive': 0.931034, 'scale_invariance_max_abs_diff': 8.881784197001252e-16, 'rank_corr_scaled': 1.0, 'radius_priority_corr': 0.692954, 'lam_sensitivity_mean_s': {'1.0': 0.869478, '1.05': 0.810163, '1.15': 0.691533, '1.3': 0.513588}}",
+          "output_truncated": false,
+          "error_code": null,
+          "script_function_calls": [
+            "float",
+            "int",
+            "len",
+            "print",
+            "rank",
+            "round",
+            "str"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261125": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261126": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261127": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261127": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261127": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 1,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "fd58ec7805c548aae46f3f6aad30dd73631c22d436aae0d84255154e1539b1f0",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "2839b683bd1f25a29f419efea71439252b3f59e2e03ef2d73bee3b52e954da05",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:18:31Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\n# Probe what is available for dev_24\nnames = [n for n in dir() if not n.startswith('_')]\nprint(names)\nprint('numpy version', np.__version__)",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "dir",
+            "print"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "5caed18ff42468d89818fb0fb811c38798ed143dbbe4f407e2dc45db091fcab6",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "32ab2526d01bd087fbe14b79c07b9c4d40d619f4342cadd66fb623dbfed65d1f",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:18:34Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "names = [n for n in dir() if not n.startswith('_')]\nRESULT = {\"names\": names}",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "dir"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_0_free_tool:20261128": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_0_free_tool_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_1_slice_only:20261128": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_1_slice_only_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 1,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "slice_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "DeepSeek-V4.1-Flash:arm_s1_2_sandbox_only:20261128": {
+      "run_id": "m5_s1_DeepSeek-V4.1-Flash_arm_s1_2_sandbox_only_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 1,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "b6997cfb3e20e18096469ed2527f219c4970cea04d9068c6eef0f7105d2f20f1",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "60b26da525e39fd67b6b84a93601c370c64e3c9aeb4e7df74b5f291121eeb5f5",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:10:47Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "\nimport numpy as np\n# Probe available dev_24 data in sandbox\nnames = [n for n in dir() if not n.startswith('_')]\nprint(\"GLOBALS:\", names)\ntry:\n    print(\"problem\", problem)\nexcept Exception as e:\n    print(\"no problem\", e)\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "dir",
+            "print"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "6567b17dbeb52bb133c7b42b1440ece1d4e5c85ada535650ed562e28ce927c67",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "88572983d6459654ba9e3908cbd525e8b4820128dd45e4bd37a7506bcc470539",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:17:30Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\nnames = [k for k in dir() if not k.startswith('_')]\nprint(\"VISIBLE_NAMES\", names)\nprint(\"HAS_dev_24\", 'dev_24' in names, type(globals().get('dev_24', None)))\nd = globals().get('dev_24', None)\ntry:\n    print(\"LEN\", len(d))\n    print(\"FIRST_KEYS\", list(d[0].keys()))\nexcept Exception as e:\n    print(\"ERR\", e)\nRESULT = {\"visible\": names[:50]}\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "dir",
+            "globals",
+            "len",
+            "list",
+            "print",
+            "type"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "01c061fb607b7ff262b9745b352dc999d5b0deea31f2d149aa522b9c20a1f4ad",
+          "script_ref": "agent_artifacts/sandbox/run_0003.py",
+          "script_sha256": "0e19e58e5b046162fa444beb91d7809c04b8269c1724c0a2b8e6faa4284fbf25",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:17:32Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\ntry:\n    print(\"LEN\", len(dev_24))\n    print(\"FIRST\", dev_24[0])\nexcept Exception as e:\n    print(\"ERR\", repr(e))\nRESULT = {\"ok\": 1}\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "NameError",
+          "script_function_calls": [
+            "len",
+            "print",
+            "repr"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_0_free_tool:20261124": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_0_free_tool_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_1_slice_only:20261124": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_1_slice_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261124": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_2_sandbox_only_s20261124",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": {
+        "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+        "artifact_sha256": "e4340913a9b60b429412738988824b148497ef486820c4bc5be666f23acb8ca8",
+        "script_ref": "agent_artifacts/sandbox/run_0003.py",
+        "script_sha256": "65d44b2759d471222b0597a7e7ea218a58b1818ac65b428cd04e9ec92c338c47"
+      },
+      "sandbox_success_count": 1,
+      "gate_bypass_count": 1,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "19843887bb4badc48e2e1c4222a8b2938db72e21a5cb69b9f4c2c3f45f666cbc",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "02a2da7f76b3e05419beb4988561c287114becf632cc7e4e491520f18c0de8f5",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:47:45Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\n# Introspect sandbox environment to find dev_24 instance access\nnames = sorted([k for k in globals().keys() if not k.startswith('__')])\ninfo = {'globals': names}\nfor cand in ['instances', 'DEV24', 'dev24', 'suite', 'data', 'load_instances', 'get_instances']:\n    if cand in globals():\n        obj = globals()[cand]\n        info[cand] = str(type(obj))\nRESULT = info",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "globals",
+            "sorted",
+            "str",
+            "type"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "dd2bbc4d00cbcebc4059eb00e3e668398f779ee7c35e93630c589c55fd424858",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "1a75fddcee86e2c3452e1493b784af54a6130a55fefa3640dab21c6a6352d96f",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:47:50Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\nprobes = {}\nfor name in ['dev24', 'DEV24', 'dev_24', 'instances', 'INSTANCES', 'suite', 'SUITE', 'load_dev24', 'load_instances', 'get_instances', 'load_suite', 'DATA', 'data']:\n    try:\n        obj = eval(name)\n        probes[name] = str(type(obj))\n    except Exception as e:\n        probes[name] = 'missing'\nRESULT = probes",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "eval",
+            "str",
+            "type"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "e4340913a9b60b429412738988824b148497ef486820c4bc5be666f23acb8ca8",
+          "script_ref": "agent_artifacts/sandbox/run_0003.py",
+          "script_sha256": "65d44b2759d471222b0597a7e7ea218a58b1818ac65b428cd04e9ec92c338c47",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": true,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:57:39Z",
+          "ok": true,
+          "finite_numeric_evidence": true,
+          "script": "import numpy as np\n\n# Decision diagnostic for round 3: is the static-merge interface saturated,\n# and does the unused time budget justify switching to L3 ruin-recreate?\n# All inputs are verified archive numbers + KB blind-suite measurements.\n\nbudget_ms = 500.0\nsolve_ms_mean = 2.649          # archive: session_r0002 static merge\nsbs_dev = 16.102339            # archive SBS mean objective on dev_24\nsbs_total = 386.4561\nvbs_total = 385.6849\n\n# 1) Time utilization / headroom of current interface\nutil_pct = 100.0 * solve_ms_mean / budget_ms\nheadroom_x = budget_ms / solve_ms_mean\n\n# 2) Portfolio diversification exhaustion (2 static-merge variants only)\ngap_over_sbs_pct = 100.0 * (sbs_total - vbs_total) / sbs_total\n\n# 3) KB cross-interface evidence on blind_120 @ 500ms\nblind_static_merge = 24.2003   # method-cvrp-m2-l2a-generalized-savings\nblind_l3_ctrl = 23.3474        # method-cvrp-m3-ruin-recreate-l3 (worst-cost removal)\nblind_l3_evolved = 23.3186     # evolved L3 ruin hook\ngain_ctrl_pct = 100.0 * (blind_static_merge - blind_l3_ctrl) / blind_static_merge\ngain_evolved_pct = 100.0 * (blind_static_merge - blind_l3_evolved) / blind_static_merge\n\n# 4) Transfer estimate to dev_24 (multiplicative transfer of blind gain)\nproj_dev_ctrl = sbs_dev * blind_l3_ctrl / blind_static_merge\nproj_dev_evolved = sbs_dev * blind_l3_evolved / blind_static_merge\nproj_abs_gain = sbs_dev - proj_dev_ctrl\n\n# 5) Latency safety: KB evidence says n<=100 finishes 100% within 500ms;\n#    dev_24 max size is 100, L3-ctrl p50 = 171.2ms -> margin factor\nl3_p50_ms = 171.2138\nlatency_margin_x = budget_ms / l3_p50_ms\n\nRESULT = {\n    \"current_time_utilization_pct\": float(util_pct),\n    \"time_headroom_factor\": float(headroom_x),\n    \"portfolio_gap_over_sbs_pct\": float(gap_over_sbs_pct),\n    \"blind_gain_l3_ctrl_pct\": float(gain_ctrl_pct),\n    \"blind_gain_l3_evolved_pct\": float(gain_evolved_pct),\n    \"projected_dev_mean_l3_ctrl\": float(proj_dev_ctrl),\n    \"projected_dev_mean_l3_evolved\": float(proj_dev_evolved),\n    \"projected_dev_abs_gain\": float(proj_abs_gain),\n    \"l3_latency_margin_factor\": float(latency_margin_x),\n}\n",
+          "result": {
+            "current_time_utilization_pct": 0.5297999999999999,
+            "time_headroom_factor": 188.7504718761797,
+            "portfolio_gap_over_sbs_pct": 0.19955694838300259,
+            "blind_gain_l3_ctrl_pct": 3.5243364751676562,
+            "blind_gain_l3_evolved_pct": 3.6433432643396926,
+            "projected_dev_mean_l3_ctrl": 15.534838393267854,
+            "projected_dev_mean_l3_evolved": 15.515675516642357,
+            "projected_dev_abs_gain": 0.5675006067321462,
+            "l3_latency_margin_factor": 2.9203253476063264
+          },
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": null,
+          "script_function_calls": [
+            "float"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_0_free_tool:20261125": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_0_free_tool_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_1_slice_only:20261125": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_1_slice_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261125": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_2_sandbox_only_s20261125",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 1,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "32c9c7f78ebb2ba9c74c3c6b4ff514ee170049ec456c1abdaf12d406fe7e4f59",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "f83966b9641dc9653a28f42f223ace79a8f61561c52281f0a65620e00938625c",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:58:31Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\n# Probe sandbox environment for dev_24 data bindings\nnames = [k for k in globals().keys() if not k.startswith('_')]\ninfo = {'globals': names}\nRESULT = info",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "globals"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "0ecd8711caac926de10796a745c2fec11bf8e9be0672d63d851d7126e28bdd86",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "29e53807d30b5e128a140d17a928ed2e3bb5a271d4c537f03301e56b8efd476b",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T09:58:37Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\nfound = {}\nfor name in ['dev_24','instances','suite','data','DEV24','dev','problem','coords','distance_matrix','demands','capacity','INSTANCES','SUITE']:\n    try:\n        v = eval(name)\n        found[name] = str(type(v))\n    except Exception as e:\n        pass\nRESULT = {'found_count': len(found), 'names': list(found.keys()), 'types': list(found.values())}",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "eval",
+            "len",
+            "list",
+            "str",
+            "type"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_0_free_tool:20261126": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_0_free_tool_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_1_slice_only:20261126": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_1_slice_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261126": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_2_sandbox_only_s20261126",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_0_free_tool:20261127": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_0_free_tool_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_1_slice_only:20261127": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_1_slice_only_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261127": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_2_sandbox_only_s20261127",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 2,
+      "gate_bypass_events": [
+        {
+          "round_id": 2,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        },
+        {
+          "round_id": 3,
+          "reason": "outer_step_cap",
+          "stagnation_diagnostic_mode": "sandbox_only",
+          "round_diagnostic_blocks": 0
+        }
+      ],
+      "scripts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "257b79f306186930227db5f89c84cfc739bdc8790e8acd9c8c8793c6c7583306",
+          "script_ref": "agent_artifacts/sandbox/run_0001.py",
+          "script_sha256": "1156e2dfa2513a71cc40e87541892870c5315e8c58dbf8a9fd41d6100ca6a021",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T10:22:22Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\n\n# Try to locate real dev_24 data; fall back to factor-matched synthetic replicas.\ndata = None\nfor name in ('dev_24', 'DEV_24', 'instances', 'suite'):\n    obj = globals().get(name)\n    if obj is not None:\n        data = obj\n        break\nif data is None:\n    loader = globals().get('load_suite') or globals().get('load_instances')\n    if callable(loader):\n        try:\n            data = loader('cvrp_dev_hetero_24')\n        except Exception:\n            data = None\n\nused_real = data is not None\ninsts = []\nif used_real:\n    try:\n        for it in data:\n            coords = np.asarray(it['coords'], dtype=float)\n            demands = np.asarray(it['demands'], dtype=float)\n            cap = float(it['capacity'])\n            insts.append((coords, demands, cap))\n    except Exception:\n        insts = []\n        used_real = False\n\nif not insts:\n    rng = np.random.default_rng(20261124)\n    # 24 replicas matching dev_24 orthogonal factors: size{50,100} x spatial{clustered,uniform}\n    # x depot{centre,eccentric} x capacity{tight,loose} x demand{uniform,bimodal}\n    for k in range(24):\n        n = 50 if k % 2 == 0 else 100\n        clustered = (k // 2) % 3 == 0\n        eccentric = (k // 3) % 2 == 0\n        tight = (k // 4) % 2 == 0\n        bimodal = (k // 6) % 2 == 0\n        if clustered:\n            centers = rng.uniform(0, 1, size=(4, 2))\n            pts = centers[rng.integers(0, 4, size=n)] + rng.normal(0, 0.06, size=(n, 2))\n        else:\n            pts = rng.uniform(0, 1, size=(n, 2))\n        depot = np.array([[0.5, 0.5]]) if not eccentric else np.array([[0.02, 0.02]])\n        coords = np.vstack([depot, pts])\n        if bimodal:\n            demands = np.where(rng.random(n) < 0.5, rng.uniform(1, 4, n), rng.uniform(12, 18, n))\n        else:\n            demands = rng.uniform(1, 15, n)\n        total = demands.sum()\n        cap = total / (n / 6.0) if tight else total / (n / 12.0)\n        insts.append((coords, demands, float(cap)))\n\ndef cw(coords, demands, cap, lam, mu, beta):\n    n = len(demands)\n    d = np.linalg.norm(coords[:, None, :] - coords[None, :, :], axis=2)\n    scale = float(np.mean(d[0, 1:]))\n    ii, jj = np.triu_indices(n, k=1)\n    ii = ii + 1; jj = jj + 1\n    d0i, d0j, dij = d[0, ii], d[0, jj], d[ii, jj]\n    sav = d0i + d0j - dij\n    m = sav > 1e-12\n    ii, jj, d0i, d0j, dij, sav = ii[m], jj[m], d0i[m], d0j[m], dij[m], sav[m]\n    fill = np.clip((demands[ii - 1] + demands[jj - 1]) / cap, 0, 1)\n    score = (d0i + d0j - lam * dij + mu * np.abs(d0i - d0j)) / scale + beta * fill\n    order = np.argsort(-score, kind='stable')\n    routes = {i: [i] for i in range(1, n + 1)}\n    loads = {i: float(demands[i - 1]) for i in range(1, n + 1)}\n    owner = {i: i for i in range(1, n + 1)}\n    for t in order:\n        a, b = int(ii[t]), int(jj[t])\n        ra, rb = owner[a], owner[b]\n        if ra == rb:\n            continue\n        if loads[ra] + loads[rb] > cap + 1e-9:\n            continue\n        Ra, Rb = routes[ra], routes[rb]\n        if Ra[0] == a and Rb[-1] == b:\n            new = Rb + Ra\n        elif Ra[-1] == a and Rb[0] == b:\n            new = Ra + Rb\n        elif Ra[0] == a and Rb[0] == b:\n            new = Ra[::-1] + Rb\n        elif Ra[-1] == a and Rb[-1] == b:\n            new = Ra + Rb[::-1]\n        else:\n            continue\n        routes[ra] = new\n        loads[ra] += loads[rb]\n        for v in Rb:\n            owner[v] = ra\n        del routes[rb]; del loads[rb]\n    total = 0.0\n    for r in routes.values():\n        seq = [0] + r + [0]\n        total += float(sum(d[seq[t2], seq[t2 + 1]] for t2 in range(len(seq) - 1)))\n    return total\n\nvariants = {'classic': (1.0, 0.0, 0.0), 'gen_1.05': (1.05, 0.10, 0.10),\n            'gen_1.10': (1.10, 0.10, 0.10), 'gen_1.15': (1.15, 0.12, 0.08)}\nmeans = {}\nfor name, (lam, mu, beta) in variants.items():\n    vals = [cw(c, q, Q, lam, mu, beta) for c, q, Q in insts]\n    means[name] = float(np.mean(vals))\nbase = means['classic']\nRESULT = {\n    'used_real_dev24': bool(used_real),\n    'n_instances': len(insts),\n    'mean_tour_by_variant': means,\n    'pct_gain_vs_classic': {k: round(100.0 * (base - v) / base, 4) for k, v in means.items()},\n    'best_variant': min(means, key=means.get),\n}\n",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "bool",
+            "callable",
+            "cw",
+            "float",
+            "globals",
+            "int",
+            "len",
+            "loader",
+            "min",
+            "range",
+            "round",
+            "sum"
+          ]
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "656eeb7682e3e2116246bff13f861a43f31307b7cb15436c4dad35afcdad307e",
+          "script_ref": "agent_artifacts/sandbox/run_0002.py",
+          "script_sha256": "417fee8d89a62e0847f440995c58fff7b84d6b9f95aabaff34271f72f4e36ce5",
+          "bindings_ok": true,
+          "has_checkpoint_or_round_binding": false,
+          "has_call_receipt": true,
+          "uncommitted": false,
+          "executed_at": "2026-11-25T10:28:20Z",
+          "ok": false,
+          "finite_numeric_evidence": false,
+          "script": "import numpy as np\n# Probe available globals for dev_24 instance access\nnames = [k for k in globals().keys() if not k.startswith('_')]\nRESULT = {'globals': names}",
+          "result": null,
+          "stdout": "",
+          "output_truncated": false,
+          "error_code": "ValueError",
+          "script_function_calls": [
+            "globals"
+          ]
+        }
+      ],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_0_free_tool:20261128": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_0_free_tool_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_1_slice_only:20261128": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_1_slice_only_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    },
+    "Qwen4-Max:arm_s1_2_sandbox_only:20261128": {
+      "run_id": "m5_s1_Qwen4-Max_arm_s1_2_sandbox_only_s20261128",
+      "final_phase": "budget_stopped",
+      "last_sandbox_ref": null,
+      "sandbox_success_count": 0,
+      "gate_bypass_count": 0,
+      "gate_bypass_events": [],
+      "scripts": [],
+      "errors": [],
+      "orphan_scripts": []
+    }
+  }
+}
