@@ -1779,7 +1779,7 @@ def activate_verified_release(store: Path, release: Path) -> dict[str, Any]:
     return {**result, "pointer": _atomic_pointer(store, release)}
 
 
-def validate_release(release: Path) -> dict[str, Any]:
+def validate_release(release: Path, *, json_only: bool = False) -> dict[str, Any]:
     path = resolve_release(release)
     errors: list[str] = []
     try:
@@ -1827,12 +1827,14 @@ def validate_release(release: Path) -> dict[str, Any]:
             errors.append(f"invalid release hash: {relative}")
         elif not target.is_file():
             errors.append(f"missing release file: {relative}")
-        elif sha256_file(target) != digest:
+        elif (not json_only or target.suffix == ".json") and sha256_file(target) != digest:
             errors.append(f"release hash mismatch: {relative}")
     actual_paths = {
         candidate.relative_to(path).as_posix()
         for candidate in path.rglob("*")
-        if candidate.is_file() and candidate.name not in {"manifest.json", "manifest.sha256"}
+        if candidate.is_file() and candidate.relative_to(path).as_posix() not in {
+            "manifest.json", "manifest.sha256", manifest.get("self_hash_file", "manifest.sha256"),
+        }
     }
     for extra in sorted(actual_paths - listed_paths):
         errors.append(f"unlisted release file: {extra}")
@@ -1857,6 +1859,11 @@ def validate_release(release: Path) -> dict[str, Any]:
                 continue
             if not target.is_file():
                 errors.append(f"index entry body missing: {relative}")
+            elif json_only and target.suffix != ".json":
+                declared = next((item.get("sha256") for item in manifest_files
+                                 if isinstance(item, Mapping) and item.get("path") == relative), None)
+                if entry.get("content_sha256") != declared or declared is None:
+                    errors.append(f"index manifest hash mismatch: {entry.get('id')}")
             elif entry.get("content_sha256") != sha256_file(target):
                 errors.append(f"index content hash mismatch: {entry.get('id')}")
     except (FileNotFoundError, ValueError, TypeError) as exc:
@@ -1876,7 +1883,7 @@ def validate_release(release: Path) -> dict[str, Any]:
                     target = path / rel
                     if not target.is_file():
                         errors.append(f"missing workbench release file: {rel}")
-                    elif sha256_file(target) != item.get("sha256"):
+                    elif (not json_only or target.suffix == ".json") and sha256_file(target) != item.get("sha256"):
                         errors.append(f"workbench release hash mismatch: {rel}")
                 for required_rel in ("suites/index.json", "results/per_instance_records.json", "results/summary.json"):
                     req_path = path / required_rel
@@ -1892,13 +1899,14 @@ def validate_release(release: Path) -> dict[str, Any]:
     except (TypeError, ValueError) as exc:
         detached = None
         errors.append(f"unsafe manifest self hash path: {exc}")
-    if detached is not None and detached.exists():
-        fields = detached.read_text(encoding="utf-8").split()
+    if detached is not None and detached.exists() and (not json_only or detached.suffix == ".json"):
+        fields = ([read_json(detached).get("manifest_sha256")] if detached.suffix == ".json"
+                  else detached.read_text(encoding="utf-8").split())
         expected = fields[0] if fields else ""
         actual = sha256_file(path / "manifest.json")
         if expected != actual:
             errors.append("manifest.sha256 does not match manifest.json")
-    elif detached is not None:
+    elif detached is not None and not detached.exists():
         errors.append("missing manifest.sha256")
     return {
         "release": str(path),

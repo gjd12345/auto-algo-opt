@@ -1,0 +1,44 @@
+{
+  "type": "method",
+  "title": "Nearest neighbor on a k-NN candidate list",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "nearest-neighbor",
+    "construct"
+  ],
+  "status": "reviewed",
+  "summary": "Official TSP template: argmin distance among at most 50 nearest unvisited cities; last city is forced.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "offline",
+    "interface": "select_next_node on truncated neighbor list",
+    "objective": "mean tour length"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "sources": [
+      "src-rosenkrantz-insertion"
+    ],
+    "implementations": [
+      "impl-tsp-official-construct"
+    ]
+  },
+  "source_refs": [
+    "src-rosenkrantz-insertion"
+  ],
+  "evidence_refs": [
+    "code:official_eoh/examples/tsp_construct/prob.py"
+  ],
+  "code_refs": [
+    {
+      "path": "official_eoh/examples/tsp_construct/prob.py",
+      "sha256": "85a20115c73176c77aa4c3b2fea3b36f93dfd84a1e60e2161794def52d453f45"
+    }
+  ],
+  "id": "method-tsp-nearest-neighbor-construct",
+  "content_sha256": "63588519483937d4ea84e365f01e09b7d06a119e5b77a916a26ddce8af0b44e9"
+}

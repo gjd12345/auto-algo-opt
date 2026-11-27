@@ -1,0 +1,2972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OptBench · 组合优化研究工作台 (20261127-main-co-workbench-m6-final)</title>
+<style>
+:root {
+  --bg-canvas: #f5f7fa;
+  --bg-surface: #ffffff;
+  --bg-plot: #fafbfc;
+  --bg-subtle: #f0f2f5;
+  --paper-warm: #faf9f6;
+  --surface-warm: #fffefa;
+  --border-warm: #ddded4;
+  --ink: #1d2129;
+  --ink-sec: #4e5969;
+  --ink-muted: #86909c;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --brand: #165dff;
+  --brand-soft: #eff4ff;
+  --teal: #0f766e;
+  --teal-soft: #eef7f6;
+  --terra: #c2410c;
+  --terra-soft: #fdf2ee;
+  --slate-ref: #94a3b8;
+  --font-sans: "PingFang SC", "Microsoft YaHei", "HarmonyOS Sans SC", system-ui, -apple-system, sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.presentation-mode { font-size: 15.5px; }
+body.presentation-mode .main { max-width: 1440px; }
+
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: var(--font-mono); font-size: 12.5px; }
+.serif { font-family: var(--font-serif); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.muted { color: var(--ink-muted); }
+.sec { color: var(--ink-sec); }
+
+/* Single 52px Sticky Header */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  min-height: 52px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: 1320px;
+  min-height: 52px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.seg {
+  display: inline-flex;
+  background: var(--bg-subtle);
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-sec);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 4px 11px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.seg button.active {
+  background: var(--bg-surface);
+  color: var(--brand);
+  font-weight: 600;
+}
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 52px;
+}
+.nav-link {
+  position: relative;
+  min-height: 52px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-sec);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 0 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-link:hover { color: var(--ink); }
+.nav-link.active { color: var(--brand); font-weight: 600; }
+.nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--brand);
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.release-tag {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover:enabled { border-color: var(--brand); color: var(--brand); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.active, .btn.primary {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+.btn.link { border: 0; background: transparent; color: var(--brand); padding: 4px 6px; }
+.btn.link:hover { text-decoration: underline; }
+.btn.sm { padding: 3px 9px; font-size: 12px; }
+
+select, input[type="search"], input[type="text"] {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+select:focus, input[type="search"]:focus, input[type="text"]:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+/* L0 Canvas Header */
+.overview-header {
+  text-align: center;
+  padding: 12px 0 32px;
+}
+.overview-header h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.overview-header .subtitle {
+  margin: 0 0 20px;
+  font-size: 14.5px;
+  color: var(--ink-sec);
+}
+.fact-strip {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13.5px;
+  color: var(--ink-sec);
+}
+.fact-item {
+  padding: 0 20px;
+  border-right: 1px solid var(--border-strong);
+}
+.fact-item:last-child { border-right: 0; }
+.fact-item b { color: var(--ink); font-weight: 600; }
+
+/* Surfaces & Hairline Tables */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 26px;
+  margin-bottom: 18px;
+}
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.panel-sub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.controls-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--ink-sec);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-label input { accent-color: var(--brand); cursor: pointer; }
+
+.jargon-tip {
+  border-bottom: 1px dotted var(--ink-muted);
+  cursor: help;
+}
+
+.table-wrap { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+thead th.num { text-align: right; }
+thead th.sortable { cursor: pointer; user-select: none; }
+thead th.sortable:hover { color: var(--brand); }
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr.active-row td { background: #fafbfc; font-weight: 600; }
+.matrix-table tbody tr { cursor: pointer; }
+.matrix-table tbody tr:hover td { background: #fafbfc; }
+td.cell-best {
+  background: var(--brand-soft) !important;
+  color: var(--brand);
+  font-weight: 600;
+}
+.cell-click { cursor: pointer; }
+.cell-click:hover { text-decoration: underline; }
+.cell-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-muted);
+  margin-top: 1px;
+}
+.row-title { font-weight: 500; color: var(--ink); }
+.row-sub { font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; }
+
+/* Overview 3-Family Visual Strip */
+.cover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 960px) { .cover-grid { grid-template-columns: 1fr; } }
+.cover-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.cover-head {
+  padding: 15px 18px 12px;
+}
+.cover-code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 3px;
+}
+.cover-head h3 {
+  margin: 0 0 4px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cover-head p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.cover-plot {
+  background: var(--bg-plot);
+  border-block: 1px solid var(--border);
+  height: 128px;
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+}
+.cover-links {
+  list-style: none;
+  margin: 0;
+  padding: 8px 18px 12px;
+}
+.cover-links li a, .cover-links li button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.cover-links li:last-child a, .cover-links li:last-child button { border-bottom: 0; }
+.cover-links li a:hover, .cover-links li button:hover { color: var(--brand); }
+
+/* Subtabs (Text Underline) */
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.subnav-btn {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 10px 2px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-sec);
+  cursor: pointer;
+}
+.subnav-btn:hover { color: var(--ink); }
+.subnav-btn.active { color: var(--brand); font-weight: 600; }
+.subnav-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--brand);
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  background: var(--bg-subtle);
+  color: var(--ink-sec);
+}
+.status-tag.good { background: var(--teal-soft); color: var(--teal); }
+.status-tag.warn { background: var(--terra-soft); color: var(--terra); }
+
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+@media (max-width: 820px) { .summary-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.summary-item .k { font-size: 12px; color: var(--ink-muted); }
+.summary-item .v { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--ink); margin-top: 2px; }
+.summary-item .s { font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; }
+
+/* Comparator 66% / 34% Split */
+.cmp-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cmp-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1040px) { .cmp-split { grid-template-columns: 1fr; } }
+.canvas-panel, .inspector-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+.dual-plots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 780px) { .dual-plots { grid-template-columns: 1fr; } }
+.plot-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin: 0 0 2px; }
+.plot-sub { font-size: 12px; color: var(--ink-muted); margin: 0 0 8px; }
+.plot-box {
+  background: var(--bg-plot);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.scrubber-bar {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scrubber-bar input[type="range"] { width: 100%; accent-color: var(--brand); cursor: pointer; }
+.scrubber-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-sec);
+}
+.kpi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.kpi-row:first-child { padding-top: 2px; }
+.kpi-row:last-child { border-bottom: 0; }
+.kpi-k { font-size: 13px; color: var(--ink-sec); }
+.kpi-v { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+.kpi-v.good { color: var(--teal); }
+.kpi-v.warn { color: var(--terra); }
+.route-mini-table td, .route-mini-table th { padding: 7px 6px; font-size: 12px; }
+.route-mini-row { cursor: pointer; }
+.route-mini-row.active td { background: var(--brand-soft); }
+.load-bar {
+  display: inline-block;
+  width: 54px;
+  height: 5px;
+  background: var(--bg-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.load-fill { display: block; height: 100%; background: var(--teal); }
+.diag-note {
+  margin-top: 14px;
+  padding: 11px 13px;
+  background: var(--bg-plot);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--ink-sec);
+  line-height: 1.6;
+}
+
+/* L3 Warm-Paper Editorial Reading Stream & KB Reader */
+.editorial-col {
+  max-width: 840px;
+  margin: 0 auto;
+  background: var(--surface-warm);
+  border: 1px solid var(--border-warm);
+  border-radius: 8px;
+  padding: 28px 36px;
+  line-height: 1.72;
+}
+.crumb-line { font-size: 12px; color: var(--ink-muted); margin-bottom: 12px; }
+.formula-center {
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--ink);
+  padding: 16px 14px;
+  margin: 10px 0 16px;
+  background: var(--paper-warm);
+  border: 1px solid var(--border-warm);
+  border-radius: 6px;
+}
+.microlab-frame {
+  border: 1px solid var(--border-warm);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin: 18px 0 24px;
+  background: var(--bg-surface);
+}
+.microlab-frame input[type="range"] { width: 100%; accent-color: var(--brand); cursor: pointer; }
+.rank-bar-track { height: 4px; background: var(--bg-subtle); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+.rank-bar-fill { height: 100%; background: var(--brand); }
+.blueprint-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+@media (max-width: 720px) { .blueprint-grid { grid-template-columns: 1fr; } }
+.blueprint-box {
+  background: var(--bg-plot);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+.blueprint-box h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.blueprint-box ul { margin: 0; padding-left: 16px; color: var(--ink-sec); }
+
+.kb-grid {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) { .kb-grid { grid-template-columns: 1fr; } }
+.kb-list-panel {
+  max-height: 700px;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.kb-list-item {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.kb-list-item:last-child { border-bottom: 0; }
+.kb-list-item:hover { background: var(--bg-plot); }
+.kb-list-item.active { background: var(--brand-soft); }
+.kb-list-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+.kb-list-meta { font-size: 11.5px; color: var(--ink-muted); margin-top: 3px; }
+
+details.source-box {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: var(--bg-plot);
+  font-size: 13px;
+  color: var(--ink-sec);
+  margin-top: 12px;
+}
+details.source-box summary, details > summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--ink);
+}
+pre.md-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-plot);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+</style>
+</head>
+<body>
+<header id="app-topbar" class="topbar"></header>
+<main id="app-main" class="main">
+  <div class="panel">正在初始化研究工作台 (20261127-main-co-workbench-m6-final) ...</div>
+</main>
+<script src="./workbench_data/core.js"></script>
+<script>
+/* === labels.js === */
+/* Single-source label formatters, glossary tooltips, and dynamic metrics extractors. */
+(function () {
+  "use strict";
+
+  const PALETTE = [
+    "#165dff",
+    "#0f766e",
+    "#c2410c",
+    "#475569",
+    "#0284c7",
+    "#7c3aed",
+    "#b45309",
+    "#0369a1"
+  ];
+
+  const FAMILY_LABELS = {
+    cvrp: { short: "CVRP", name: "容量约束车辆路径问题 (CVRP)" },
+    tsp: { short: "TSP", name: "旅行商问题 (TSP)" },
+    obp: { short: "OBP", name: "在线一维装箱问题 (OBP)" }
+  };
+
+  const PARADIGM_LABELS = {
+    sequential_construct: "顺序步进构造",
+    parallel_merge: "并行路径合并",
+    insertion: "全局最小代价插入",
+    cluster_first: "先聚类后路径 (Sweep)",
+    local_search: "合并 + 局部搜索",
+    complementary_constructive_set: "互补构造集合 (CPI)",
+    llm_ahd_framework: "LLM-AHD 框架",
+    metaheuristic: "元启发式",
+    neural_attention_reshaping: "NCO 注意力重塑",
+    neural_local_search: "神经局部搜索",
+    math_mechanism: "数学机理分析",
+    selector_portfolio: "算法选择组合",
+    ruin_recreate: "破坏修复 (LNS)",
+    ruin_and_recreate: "破坏修复 (LNS)"
+  };
+
+  const TIER_LABELS = {
+    verified_experiment: "本机实证结果",
+    literature_abstract: "论文原表参照",
+    local_implementation: "算法实现组件",
+    math_observation: "数学机理解析",
+    failure_antipattern: "边界反例与约束"
+  };
+
+  const SUITE_ROLE_LABELS = {
+    external_top_venue: "文献同协议对照",
+    external_or_standard: "OR 标准测试库",
+    dev_search: "开发诊断集",
+    selection_tuning: "算法选择训练集",
+    historical_regression: "历史对照集",
+    final_acceptance: "独立冻结验证集"
+  };
+
+  const EXPOSURE_LABELS = {
+    external_public: "公开外部基准",
+    public_standard: "公开标准基准",
+    fresh_isolated: "独立隔离测试集",
+    historically_exposed: "已开发回归集"
+  };
+
+  const SUITE_DISPLAY = {
+    cvrp_ext_eohs_256: "EoH-S 多分布协议 (256 例)",
+    cvrp_ext_reevo_scale: "ReEvo 跨规模合成集",
+    cvrp_ext_cvrplib_abp_74: "CVRPLib Set A·B·P (74 例)",
+    cvrp_ext_cvrplib_x_100: "Uchoa Set X (100 例)",
+    tsp_ext_eohs_128: "EoH-S TSP 多分布 (128 例)",
+    tsp_ext_tsplib_euc2d: "TSPLIB EUC_2D (18 例)",
+    obp_ext_eoh_weibull: "Weibull 在线装箱 (173 例)",
+    obp_ext_bpplib: "BPPLib 装箱标准库 (70 例)",
+    cvrp_dev_hetero_24: "Dev-24 缩尺压力测试",
+    cvrp_select_multiscale_64: "Selection Multiscale-64",
+    cvrp_hist_p0_120: "P0 多规模盲测 (120 例)",
+    cvrp_hist_hetero_288: "Hetero-288 多工况回归",
+    cvrp_final_accept_120: "Final-Accept-120 独立验证",
+    cvrp_m2_blind_120: "M2 启封盲测 (120 例)",
+    cvrp_m3_blind_120: "M3 启封盲测 (120 例)",
+    shared_diagnostic_6: "Shared-6 轨迹诊断集"
+  };
+
+  const ALG_DISPLAY = {
+    nn: "最近邻构造 NN",
+    savings_pointwise: "逐点节约 Savings",
+    s2_r5_spiral: "R5 螺旋构造",
+    s2_r7_iso: "R7 状态隔离规则",
+    s2_ctrl_best: "黑盒对照组",
+    s2_r3_rho: "R3 过拟合对照",
+    v0: "P0 基线 V0",
+    c: "Frozen C 规则",
+    a: "早返原型 A",
+    b: "探索变体 B",
+    dd_load: "需求距离均衡",
+    radial: "纯径向参考",
+    cw_parallel_merge: "CW 并行合并",
+    cw_2opt: "CW + 2-opt",
+    cw_relocate_2opt: "CW + 局部搜索",
+    eohs_cvrp_f1: "EoH-S 单规则 F1",
+    eohs_cvrp_set10_cpi: "EoH-S 规则集 (CPI)",
+    eoh_cvrp_f1: "EoH 单规则",
+    heuragenix_min_cost_ins: "HeurAgenix 插入",
+    s2_r4_cos: "R4 余弦角互补规则",
+    cvrp_sweep_2opt: "真坐标极角扫描 + 2-opt",
+    cvrp_farthest_insertion: "经典最远插入",
+    i605_cvrp_c1_tworegime: "岛屿 C1 · 两段切换+早返",
+    i605_cvrp_c8_radial_early: "岛屿 C8 · 径向偏置+早返",
+    i605_cvrp_c17_phase_noreturn: "岛屿 C17 · 纯中程切换",
+    i605_cvrp_c22_band_savings: "岛屿 C22 · 相对带节约",
+    tsp_nn: "TSP 最近邻",
+    tsp_farthest_insertion: "TSP 最远插入",
+    tsp_nn_2opt: "TSP NN + 2-opt",
+    eohs_tsp_f1: "EoH-S TSP 规则",
+    eoh_tsp_f1: "EoH TSP 规则",
+    i605_tsp_t1_rollout: "岛屿 T1 · 一步前瞻 Rollout",
+    i605_tsp_t46_farness: "岛屿 T46 · 平均孤立度",
+    i605_tsp_t69_dest_regret: "岛屿 T69 · 极速终点引力",
+    i605_tsp_t81_norm_smooth: "岛屿 T81 · 无量纲平滑度",
+    obp_first_fit: "First-Fit",
+    obp_best_fit: "Best-Fit",
+    eohs_obp_f1: "EoH-S 装箱规则",
+    eoh_obp_f1: "EoH 装箱规则",
+    funsearch_obp_f1: "FunSearch 装箱规则",
+    reevo_obp_f1: "ReEvo 装箱规则",
+    i605_obp_b1_exp_deadzone: "岛屿 B1 · 指数+死区惩罚",
+    i605_obp_b50_sqrt_tier: "岛屿 B50 · 85%封箱阶跃",
+    i605_obp_b16_log_half: "岛屿 B16 · 半满对数+冲顶",
+    i605_obp_b117_hardcap_anti: "岛屿 B117 · 硬编码C=100反例"
+  };
+
+  const JARGON_GLOSS = {
+    CPI: "Complementary Performance Index：规模为 K 的启发式集合在逐例取最优后再平均的事后指标，不同于单规则单次求解。",
+    N_common: "共同完成交集：全部参与对比的算法都在 500 ms 预算内完成求解的算例交集，用于消除超时算法导致的样本偏差。",
+    L1: "装箱理论下界：ceil(sum(item_sizes) / C)。",
+    BKS: "Best Known Solution / OPT：标准库经核验的全局最优或已知最优整数解。",
+    SBS: "Single Best Solver：在测试集上固定选用表现最好的单一算法。",
+    VBS: "Virtual Best Solver (Oracle)：在每个算例上事后选取最优算法所对应的理论上界。",
+    euc_2d_nint: "TSPLIB / CVRPLib 标准整数欧氏距离公约：floor(sqrt(dx^2 + dy^2) + 0.5)。",
+    OOD: "Out-of-Distribution：训练分布之外的新规模或新空间集群工况。"
+  };
+
+  const POLICY_LABELS = {
+    unconstrained: "自由车数 (仅容量可行)",
+    min_vehicles_advisory: "参考车数 k (不强制上限)",
+    free_fleet_min_k_lb: "自由车数 (k 为最小车数下界)",
+    fixed_k_unconstrained_eval: "官方 BKS 为固定 k (当前自由车数对比 + ==k 合规统计)",
+    strict_max_vehicles: "严格车数上限 (<=k)",
+    not_applicable: "不适用"
+  };
+
+  function esc(val) {
+    if (val === null || val === undefined) return "";
+    return String(val)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function fmtPct(ratio, digits) {
+    if (ratio === null || ratio === undefined || !Number.isFinite(Number(ratio))) return "—";
+    const d = digits === undefined ? 2 : digits;
+    const pct = Number(ratio) * 100;
+    return (pct > 0 ? "+" : "") + pct.toFixed(d) + "%";
+  }
+
+  function fmtRatioAsPctPlain(ratio, digits) {
+    if (ratio === null || ratio === undefined || !Number.isFinite(Number(ratio))) return "—";
+    return (Number(ratio) * 100).toFixed(digits === undefined ? 2 : digits) + "%";
+  }
+
+  function fmtValPct(pctVal, digits) {
+    if (pctVal === null || pctVal === undefined || !Number.isFinite(Number(pctVal))) return "—";
+    return Number(pctVal).toFixed(digits === undefined ? 2 : digits) + "%";
+  }
+
+  function fmtNum(val, digits) {
+    if (val === null || val === undefined || !Number.isFinite(Number(val))) return "—";
+    return Number(val).toFixed(digits === undefined ? 4 : digits);
+  }
+
+  function fmtObj(val) {
+    if (val === null || val === undefined || !Number.isFinite(Number(val))) return "—";
+    const n = Number(val);
+    return Math.abs(n - Math.round(n)) < 1e-6 ? Math.round(n).toLocaleString("en-US") : n.toFixed(4);
+  }
+
+  function fmtMs(val) {
+    if (val === null || val === undefined || !Number.isFinite(Number(val))) return "—";
+    const n = Number(val);
+    return n >= 100 ? n.toFixed(1) + " ms" : n.toFixed(2) + " ms";
+  }
+
+  function suiteTitle(suiteOrId) {
+    const sid = typeof suiteOrId === "string" ? suiteOrId : (suiteOrId && suiteOrId.suite_id) || "";
+    return SUITE_DISPLAY[sid] || (suiteOrId && suiteOrId.metadata && suiteOrId.metadata.title) || sid;
+  }
+
+  function algTitle(core, algId) {
+    const a = getAlg(core, algId);
+    return ALG_DISPLAY[algId] || (a && a.display_name) || algId;
+  }
+
+  function getSuite(core, suiteId) {
+    return (core && core.suites || []).find((s) => s.suite_id === suiteId) || null;
+  }
+
+  function getAlg(core, algId) {
+    return (core && core.algorithms || []).find((a) => a.algorithm_id === algId) || null;
+  }
+
+  function kbMap(core) {
+    const m = {};
+    (core && core.kb_entries || []).forEach((e) => { if (e && e.id) m[e.id] = e; });
+    return m;
+  }
+
+  function resolveAlgKbId(core, algId) {
+    const a = getAlg(core, algId);
+    const map = kbMap(core);
+    return (a && a.kb_entry_id && map[a.kb_entry_id]) ? a.kb_entry_id : "";
+  }
+
+  function getAlgMechanism(core, algId) {
+    const kbId = resolveAlgKbId(core, algId);
+    const entry = kbId ? kbMap(core)[kbId] : null;
+    if (entry && entry.attributes && entry.attributes.interface_blueprint && entry.attributes.interface_blueprint.skeleton_role) {
+      return entry.attributes.interface_blueprint.skeleton_role;
+    }
+    if (entry && entry.summary) return entry.summary;
+    const a = getAlg(core, algId);
+    return (a && a.description) || "—";
+  }
+
+  function jargon(key, label) {
+    return '<span class="jargon-tip" title="' + esc(JARGON_GLOSS[key] || "") + '">' + esc(label || key) + "</span>";
+  }
+
+  function getSuiteSummary(core, suiteId) {
+    return (core && core.summary && core.summary.suites && core.summary.suites[suiteId]) || null;
+  }
+
+  function hasPartialCompletion(suiteSum) {
+    return Boolean(
+      suiteSum &&
+      suiteSum.common_completed_count &&
+      suiteSum.n_instances &&
+      suiteSum.common_completed_count < suiteSum.n_instances
+    );
+  }
+
+  function resolveScope(suiteSum, requestedScope) {
+    if (requestedScope === "overall") return "overall";
+    if (requestedScope === "common_completed") {
+      return (suiteSum && suiteSum.common_completed_count) ? "common_completed" : "overall";
+    }
+    return hasPartialCompletion(suiteSum) ? "common_completed" : "overall";
+  }
+
+  function getAlgStats(suiteSum, algId, scope) {
+    if (!suiteSum || !suiteSum.algorithms || !suiteSum.algorithms[algId]) return null;
+    const a = suiteSum.algorithms[algId];
+    if (scope === "common_completed" && a.common_completed) return a.common_completed;
+    if (scope === "strict_all_common_completed" && a.strict_all_common_completed) return a.strict_all_common_completed;
+    return a.overall || null;
+  }
+
+  function computeHeroSnapshot(core) {
+    const suites = (core && core.suites) || [];
+    const kbEntries = (core && core.kb_entries) || [];
+    const pub = (core && core.published_results) || {};
+    const orGoldIds = ["cvrp_ext_cvrplib_abp_74", "cvrp_ext_cvrplib_x_100", "tsp_ext_tsplib_euc2d"];
+    const orGoldInstances = suites
+      .filter((s) => orGoldIds.includes(s.suite_id))
+      .reduce((acc, s) => acc + Number(s.instance_count || 0), 0);
+
+    const hp = (core && core.h003_preview) || null;
+    const p0 = getSuiteSummary(core, "cvrp_hist_p0_120");
+    const setX = getSuiteSummary(core, "cvrp_ext_cvrplib_x_100");
+    const eohs256 = getSuiteSummary(core, "cvrp_ext_eohs_256");
+    const fa120 = getSuiteSummary(core, "cvrp_final_accept_120");
+
+    const analyses = (core && core.selection && core.selection.analyses) || {};
+    const h288 = analyses.hetero_288__pointwise_plus_s2 || null;
+    const faSel = analyses.final_accept_120__pointwise_plus_s2_frozen || null;
+    const faProtoKey = faSel && faSel.protocols ? Object.keys(faSel.protocols)[0] : null;
+    const stressRecs = (core && core.scale_stress && core.scale_stress.records) || [];
+
+    function maxDrift(aid) {
+      const rows = stressRecs.filter((r) => r.algorithm_id === aid && Number.isFinite(Number(r.scale_drift_pct)));
+      return rows.length ? Math.max.apply(null, rows.map((r) => Math.abs(Number(r.scale_drift_pct)))) : null;
+    }
+
+    return {
+      suiteCount: suites.length,
+      algorithmCount: (core && core.algorithms || []).length,
+      kbCount: kbEntries.length,
+      sourcesCount: Number((core && core.sources_count) || 0),
+      orGoldInstances: orGoldInstances,
+      pubVerifiedCount: Number(pub.verified_count || 0),
+      pubPendingCount: Number(pub.pending_count || 0),
+      h003Summary: hp && hp.summary ? hp.summary : null,
+      h003DepotOnly: hp && hp.depot_only ? hp.depot_only : null,
+      r5P0: getAlgStats(p0, "s2_r5_spiral", "overall"),
+      ctrlP0: getAlgStats(p0, "s2_ctrl_best", "overall"),
+      nnP0: getAlgStats(p0, "nn", "overall"),
+      setX: setX,
+      xCommonN: setX ? Number(setX.common_completed_count || 0) : 0,
+      r5XAll: getAlgStats(setX, "s2_r5_spiral", "overall"),
+      r5XCommon: getAlgStats(setX, "s2_r5_spiral", "common_completed"),
+      eohsF1XAll: getAlgStats(setX, "eohs_cvrp_f1", "overall"),
+      eohsF1XCommon: getAlgStats(setX, "eohs_cvrp_f1", "common_completed"),
+      cwRelXCommon: getAlgStats(setX, "cw_relocate_2opt", "common_completed"),
+      cwRelXAll: getAlgStats(setX, "cw_relocate_2opt", "overall"),
+      eohs256Cpi: getAlgStats(eohs256, "eohs_cvrp_set10_cpi", "overall"),
+      cwRelFa: getAlgStats(fa120, "cw_relocate_2opt", "overall"),
+      hxFa: getAlgStats(fa120, "heuragenix_min_cost_ins", "overall"),
+      r5Fa: getAlgStats(fa120, "s2_r5_spiral", "overall"),
+      h288: h288,
+      h288Cv12: h288 && h288.protocols && h288.protocols.cv12 && h288.protocols.cv12.selectors ? h288.protocols.cv12.selectors.rf_reg : null,
+      h288Loso3: h288 && h288.protocols && h288.protocols.loso3 && h288.protocols.loso3.selectors ? h288.protocols.loso3.selectors.rf_reg : null,
+      faSel: faSel,
+      faSelRf: (faProtoKey && faSel.protocols[faProtoKey].selectors) ? faSel.protocols[faProtoKey].selectors.rf_reg : null,
+      driftC: maxDrift("c"),
+      driftV0: maxDrift("v0"),
+      driftR5: maxDrift("s2_r5_spiral")
+    };
+  }
+
+  window.WB_LABELS = {
+    PALETTE: PALETTE,
+    FAMILY_LABELS: FAMILY_LABELS,
+    PARADIGM_LABELS: PARADIGM_LABELS,
+    TIER_LABELS: TIER_LABELS,
+    SUITE_ROLE_LABELS: SUITE_ROLE_LABELS,
+    EXPOSURE_LABELS: EXPOSURE_LABELS,
+    POLICY_LABELS: POLICY_LABELS,
+    esc: esc,
+    fmtPct: fmtPct,
+    fmtRatioAsPctPlain: fmtRatioAsPctPlain,
+    fmtValPct: fmtValPct,
+    fmtNum: fmtNum,
+    fmtObj: fmtObj,
+    fmtMs: fmtMs,
+    suiteTitle: suiteTitle,
+    algTitle: algTitle,
+    getSuite: getSuite,
+    getAlg: getAlg,
+    kbMap: kbMap,
+    resolveAlgKbId: resolveAlgKbId,
+    getAlgMechanism: getAlgMechanism,
+    jargon: jargon,
+    getSuiteSummary: getSuiteSummary,
+    hasPartialCompletion: hasPartialCompletion,
+    resolveScope: resolveScope,
+    getAlgStats: getAlgStats,
+    computeHeroSnapshot: computeHeroSnapshot
+  };
+})();
+
+
+/* === exporters.js === */
+/* Publication-grade asset exporters: SVG, 300 DPI PNG, LaTeX booktabs .tex, CSV, JSON.
+ * 100% client-side offline export using exact release data.
+ */
+(function () {
+  "use strict";
+
+  function triggerDownload(filename, mimeType, content) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function serializeSvg(svgEl) {
+    if (!svgEl) return null;
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const vb = clone.getAttribute("viewBox");
+    let w = Number(clone.getAttribute("width")) || 0;
+    let h = Number(clone.getAttribute("height")) || 0;
+    if ((!w || !h) && vb) {
+      const parts = vb.trim().split(/[\s,]+/).map(Number);
+      if (parts.length === 4) {
+        w = parts[2];
+        h = parts[3];
+      }
+    }
+    if (!w) w = svgEl.clientWidth || 720;
+    if (!h) h = svgEl.clientHeight || 420;
+    clone.setAttribute("width", String(w));
+    clone.setAttribute("height", String(h));
+    return {
+      xml: '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone),
+      width: w,
+      height: h
+    };
+  }
+
+  function exportSvg(svgEl, filename) {
+    const res = serializeSvg(svgEl);
+    if (!res) return false;
+    triggerDownload(filename || "figure.svg", "image/svg+xml;charset=utf-8", res.xml);
+    return true;
+  }
+
+  function exportPng300Dpi(svgEl, filename) {
+    const res = serializeSvg(svgEl);
+    if (!res) return false;
+    const scale = 300 / 96; // 3.125x rasterization for 300 DPI print clarity
+    const img = new Image();
+    const svgBlob = new Blob([res.xml], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(res.width * scale);
+      canvas.height = Math.round(res.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fffefa";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function (pngBlob) {
+        if (pngBlob) triggerDownload(filename || "figure_300dpi.png", "image/png", pngBlob);
+      }, "image/png");
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+    return true;
+  }
+
+  function latexEscape(text) {
+    return String(text || "")
+      .replace(/\\/g, "\\textbackslash{}")
+      .replace(/([_%&#${}])/g, "\\$1");
+  }
+
+  function generateLatexLocalTable(core, suiteId, scope) {
+    const L = window.WB_LABELS;
+    const suite = L.getSuite(core, suiteId);
+    const sum = L.getSuiteSummary(core, suiteId);
+    if (!suite || !sum) return "% Suite summary unavailable";
+
+    const effScope = L.resolveScope(sum, scope);
+    const useCommon = effScope === "common_completed" && sum.common_completed_count;
+    const commonN = sum.common_completed_count || suite.instance_count;
+    const rows = Object.keys(sum.algorithms || {}).map(function (aid) {
+      const stats = L.getAlgStats(sum, aid, effScope);
+      return { aid: aid, stats: stats, allStats: L.getAlgStats(sum, aid, "overall") };
+    }).filter(function (r) { return Boolean(r.stats); });
+
+    rows.sort(function (a, b) {
+      const ga = a.stats.mean_rel_gap !== null && a.stats.mean_rel_gap !== undefined ? a.stats.mean_rel_gap : 999;
+      const gb = b.stats.mean_rel_gap !== null && b.stats.mean_rel_gap !== undefined ? b.stats.mean_rel_gap : 999;
+      return ga - gb;
+    });
+
+    const scopeDesc = useCommon
+      ? ("Common completed intersection $N_{\\text{common}}=" + commonN + "$ / " + suite.instance_count)
+      : ("Per-algorithm completed samples (out of $N=" + suite.instance_count + "$)");
+
+    const lines = [
+      "% Auto-generated by CO-Workbench (" + (core.release_id || "") + ") — local_recomputed track ONLY",
+      "\\begin{table}[t]",
+      "  \\centering",
+      "  \\caption{" + latexEscape(L.suiteTitle(suite)) + " (\\texttt{" + latexEscape(suiteId) + "}, " + scopeDesc + ", Budget " + (sum.budget_ms || 500) + "\\,ms)}",
+      "  \\begin{tabular}{llrrrr}",
+      "    \\toprule",
+      "    Algorithm & Paradigm & ok/$N$ & Mean Obj. & Mean Gap (\\%) & $P_{50}/P_{95}$ Solve (ms) \\\\",
+      "    \\midrule"
+    ];
+
+    rows.forEach(function (r) {
+      const a = L.getAlg(core, r.aid);
+      const st = r.stats;
+      const allSt = r.allStats || st;
+      const okStr = allSt.ok_count + "/" + allSt.n_instances;
+      const objStr = st.mean_tour_length !== null && st.mean_tour_length !== undefined ? Number(st.mean_tour_length).toFixed(4) : "--";
+      const gapStr = st.mean_rel_gap !== null && st.mean_rel_gap !== undefined ? (Number(st.mean_rel_gap) * 100).toFixed(2) + "\\%" : "--";
+      const msStr = (st.solve_ms_p50 !== null && st.solve_ms_p50 !== undefined ? Number(st.solve_ms_p50).toFixed(2) : "--") +
+        " / " + (st.solve_ms_p95 !== null && st.solve_ms_p95 !== undefined ? Number(st.solve_ms_p95).toFixed(2) : "--");
+      lines.push(
+        "    \\texttt{" + latexEscape(r.aid) + "} & " +
+        latexEscape((a && a.paradigm) || "") + " & " +
+        okStr + " & " + objStr + " & " + gapStr + " & " + msStr + " \\\\"
+      );
+    });
+
+    lines.push(
+      "    \\bottomrule",
+      "  \\end{tabular}",
+      "  \\vspace{2pt}",
+      "  \\footnotesize{\\emph{Notes:} Mode=\\texttt{local\\_recomputed}; Ref=\\texttt{" + latexEscape(sum.reference_kind || "") + "}; Dist=\\texttt{" + latexEscape(sum.distance_convention || "") + "}. Separate from paper-reported tables.}",
+      "\\end{table}"
+    );
+    return lines.join("\n");
+  }
+
+  function exportCsv(rows, columns, filename) {
+    if (!rows || !rows.length) return false;
+    const header = columns.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(",");
+    const body = rows.map(function (r) {
+      return columns.map(function (c) {
+        const v = r[c];
+        if (v === null || v === undefined) return "";
+        return '"' + String(v).replace(/"/g, '""') + '"';
+      }).join(",");
+    }).join("\n");
+    triggerDownload(filename || "records.csv", "text/csv;charset=utf-8", "\uFEFF" + header + "\n" + body);
+    return true;
+  }
+
+  function exportJson(payload, filename) {
+    triggerDownload(filename || "records.json", "application/json;charset=utf-8", JSON.stringify(payload, null, 2));
+    return true;
+  }
+
+  window.WB_EXPORT = {
+    exportSvg: exportSvg,
+    exportPng300Dpi: exportPng300Dpi,
+    generateLatexLocalTable: generateLatexLocalTable,
+    exportCsv: exportCsv,
+    exportJson: exportJson,
+    downloadText: function (filename, text) {
+      triggerDownload(filename, "text/plain;charset=utf-8", text);
+    }
+  };
+})();
+
+
+/* === overview_view.js === */
+/* L0 · Low-density Canvas Header, Cross-Suite Matrix & Visual Directory. */
+(function () {
+  "use strict";
+
+  const OVERVIEW_CFG = {
+    cvrp: {
+      suites: [
+        "cvrp_ext_cvrplib_abp_74",
+        "cvrp_ext_cvrplib_x_100",
+        "cvrp_ext_eohs_256",
+        "cvrp_hist_p0_120",
+        "cvrp_final_accept_120"
+      ],
+      algs: ["nn", "eohs_cvrp_f1", "s2_r5_spiral", "cw_relocate_2opt", "heuragenix_min_cost_ins"]
+    },
+    tsp: {
+      suites: ["tsp_ext_tsplib_euc2d", "tsp_ext_eohs_128"],
+      algs: ["tsp_nn", "eoh_tsp_f1", "eohs_tsp_f1", "tsp_nn_2opt"]
+    },
+    obp: {
+      suites: ["obp_ext_eoh_weibull", "obp_ext_bpplib"],
+      algs: ["obp_first_fit", "obp_best_fit", "funsearch_obp_f1", "eohs_obp_f1"]
+    }
+  };
+
+  function drawCvrpMiniCover(core) {
+    const hp = core.h003_preview;
+    if (!hp || !hp.instances || !hp.instances.length) {
+      return '<div class="muted" style="font-size:12px;">P0-120 出发步路线结构对比</div>';
+    }
+    const inst = hp.instances.find(function (x) { return x.id === hp.example; }) || hp.instances[0];
+    const pts = inst.coords || [];
+    const rOrig = (inst.routes && inst.routes[0] && inst.routes[0][0]) || [];
+    const rNew = (inst.routes && inst.routes[1] && inst.routes[1][0]) || [];
+    const W = 310, H = 114, size = 94, ox = (W - size) / 2, oy = (H - size) / 2;
+    const px = function (p) { return [ox + p[0] * size, oy + (1 - p[1]) * size]; };
+    function poly(r, col, dash) {
+      const s = r.map(function (idx) {
+        const c = pts[idx];
+        return c ? px(c).map(function (v) { return v.toFixed(1); }).join(",") : "";
+      }).filter(Boolean).join(" ");
+      return s ? '<polyline fill="none" stroke="' + col + '" stroke-width="1.6" ' + (dash ? 'stroke-dasharray="3,2" ' : "") + 'points="' + s + '"/>' : "";
+    }
+    const dep = pts[0] ? px(pts[0]) : [W / 2, H / 2];
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="114">' +
+      poly(rOrig, "#4e5969", true) +
+      poly(rNew, "#165dff", false) +
+      '<rect x="' + (dep[0] - 3.5).toFixed(1) + '" y="' + (dep[1] - 3.5).toFixed(1) + '" width="7" height="7" fill="#1d2129" transform="rotate(45 ' + dep[0].toFixed(1) + " " + dep[1].toFixed(1) + ')"/>' +
+      "</svg>";
+  }
+
+  function drawBarMiniCover(core, suiteId, algs, L) {
+    const sum = L.getSuiteSummary(core, suiteId);
+    if (!sum || !sum.algorithms) return '<div class="muted" style="font-size:12px;">—</div>';
+    const items = algs.map(function (aid) {
+      const st = L.getAlgStats(sum, aid, "overall");
+      if (!st || st.mean_rel_gap === null || st.mean_rel_gap === undefined) return null;
+      return { label: L.algTitle(core, aid), pct: Math.max(0.5, Number(st.mean_rel_gap) * 100) };
+    }).filter(Boolean);
+    if (!items.length) return '<div class="muted" style="font-size:12px;">—</div>';
+    const maxPct = Math.max.apply(null, items.map(function (x) { return x.pct; }));
+    const minPct = Math.min.apply(null, items.map(function (x) { return x.pct; }));
+    const W = 310, H = 114, padX = 112, rightPad = 48;
+    const rowH = (H - 16) / items.length;
+    const rows = items.map(function (it, idx) {
+      const bw = Math.max(8, (it.pct / Math.max(1e-6, maxPct)) * (W - padX - rightPad));
+      const y = 10 + idx * rowH;
+      const isBest = Math.abs(it.pct - minPct) < 1e-6;
+      return '<text x="' + (padX - 8) + '" y="' + (y + rowH * 0.62).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="#4e5969">' + L.esc(it.label) + "</text>" +
+        '<rect x="' + padX + '" y="' + (y + 3).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(6, rowH - 8).toFixed(1) + '" rx="2" fill="' + (isBest ? "#165dff" : "#94a3b8") + '"/>' +
+        '<text x="' + (padX + bw + 5).toFixed(1) + '" y="' + (y + rowH * 0.62).toFixed(1) + '" font-size="10" font-family="monospace" fill="' + (isBest ? "#165dff" : "#4e5969") + '">+' + it.pct.toFixed(1) + "%</text>";
+    }).join("");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="114">' + rows + "</svg>";
+  }
+
+  function render(core, state) {
+    const L = window.WB_LABELS;
+    const snap = L.computeHeroSnapshot(core);
+    const fam = state.family || "cvrp";
+    const cfg = OVERVIEW_CFG[fam] || OVERVIEW_CFG.cvrp;
+    const reqScope = state.scope || "";
+
+    const hasPartial = cfg.suites.some(function (sid) {
+      const s = L.getSuiteSummary(core, sid);
+      return L.hasPartialCompletion(s);
+    });
+    const autoUsingCommon = reqScope !== "overall" && hasPartial;
+
+    const rowsHtml = cfg.suites.map(function (sid) {
+      const sum = L.getSuiteSummary(core, sid);
+      const sMeta = L.getSuite(core, sid);
+      if (!sum || !sMeta) return "";
+      const effScope = L.resolveScope(sum, reqScope);
+      const useCommon = effScope === "common_completed";
+
+      const vals = cfg.algs.map(function (aid) {
+        const st = L.getAlgStats(sum, aid, effScope);
+        const ov = L.getAlgStats(sum, aid, "overall");
+        return { aid: aid, gap: st ? st.mean_rel_gap : null, ok: ov ? ov.ok_count : sum.n_instances, n: sum.n_instances };
+      });
+      const valid = vals.filter(function (v) { return v.gap !== null && v.gap !== undefined; }).map(function (v) { return Number(v.gap); });
+      const minGap = valid.length ? Math.min.apply(null, valid) : null;
+
+      const polTag = sMeta.vehicle_limit_policy === "fixed_k_unconstrained_eval" ? " · 固定k合规另列" : "";
+      const subText = useCommon
+        ? ("共同完成交集 " + sum.common_completed_count + "/" + sum.n_instances + " 例 · " + L.esc(sMeta.distance_convention) + polTag)
+        : (sum.n_instances + " 例 · " + L.esc(sMeta.distance_convention) + polTag);
+
+      const cells = vals.map(function (v) {
+        if (v.gap === null || v.gap === undefined) return '<td class="num muted">—</td>';
+        const isBest = minGap !== null && Math.abs(Number(v.gap) - minGap) < 1e-6;
+        const partial = (!useCommon && v.ok < v.n) ? ('<span class="cell-sub">(' + v.ok + "/" + v.n + ")</span>") : "";
+        const navScope = useCommon ? "&scope=common_completed" : (v.ok < v.n ? "&scope=overall" : "");
+        return '<td class="num cell-click ' + (isBest ? "cell-best" : "") + '" data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(sid) + navScope + '">' +
+          L.fmtPct(v.gap, 2) + partial + "</td>";
+      }).join("");
+
+      return '<tr data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(sid) + '">' +
+        '<td><div class="row-title">' + L.esc(L.suiteTitle(sMeta)) + '</div><div class="row-sub">' + subText + "</div></td>" +
+        cells + "</tr>";
+    }).join("");
+
+    const xCommonGap = snap.cwRelXCommon ? L.fmtRatioAsPctPlain(snap.cwRelXCommon.mean_rel_gap, 2) : "—";
+    const h003Gain = snap.h003Summary ? L.fmtRatioAsPctPlain(snap.h003Summary.rel_gain, 2) : "—";
+
+    return [
+      '<section class="overview-header">',
+      '  <h1>组合优化求解基准与算法机理工作台</h1>',
+      '  <p class="subtitle">面向 CVRP、TSP 与 OBP 的统一 ' + L.esc(core.budget_ms) + ' ms 同协议评测、双解结构对照与可复现算法知识库</p>',
+      '  <div class="fact-strip">',
+      '    <div class="fact-item"><b>' + snap.suiteCount + '</b> 套标准基准套件</div>',
+      '    <div class="fact-item"><b>' + snap.orGoldInstances + '</b> 例官方 OR 零误差核验</div>',
+      '    <div class="fact-item"><b>' + snap.kbCount + '</b> 条结构化算法知识</div>',
+      '  </div>',
+      '</section>',
+
+      '<section class="panel">',
+      '  <div class="panel-head">',
+      '    <div>',
+      '      <h2 class="panel-title">代表基准集与算法范式对比（' + L.esc((L.FAMILY_LABELS[fam] || {}).short || fam) + '）</h2>',
+      '      <p class="panel-sub">数值为平均相对参考差距（越低越优；点击任意行或数值查看详表与论文原表对照）</p>',
+      '    </div>',
+      '    <div class="controls-inline">',
+      hasPartial ? ('<label class="toggle-label"><input type="checkbox" id="ov-common-ck"' + (autoUsingCommon ? " checked" : "") + "/> 仅看共同完成集</label>") : "",
+      '      <button class="btn link" data-nav="page=benchmarks&family=' + L.esc(fam) + '&tab=panorama&expandAll=true">展开全部 ' + snap.suiteCount + ' 套件 →</button>',
+      '    </div>',
+      '  </div>',
+      '  <div class="table-wrap">',
+      '    <table class="matrix-table">',
+      '      <thead><tr><th>基准测试集</th>' + cfg.algs.map(function (a) { return '<th class="num" title="' + L.esc(a) + '">' + L.esc(L.algTitle(core, a)) + "</th>"; }).join("") + "</tr></thead>",
+      '      <tbody>' + rowsHtml + "</tbody>",
+      '    </table>',
+      '  </div>',
+      '</section>',
+
+      '<section class="cover-grid">',
+      '  <article class="cover-card">',
+      '    <div class="cover-head"><div class="cover-code">CVRP</div><h3>容量约束车辆路径</h3><p>顺序规则机理（H-003 / H-001 / R5）与并行局部搜索上界</p></div>',
+      '    <div class="cover-plot">' + drawCvrpMiniCover(core) + "</div>",
+      '    <ul class="cover-links">',
+      '      <li><button type="button" data-nav="page=knowledge&tab=stories&story=h003"><span>P0-120 出发步相变 (H-003)</span><span class="mono">-' + h003Gain + "</span></button></li>",
+      '      <li><button type="button" data-nav="family=cvrp&page=comparator&suite=shared_diagnostic_6&algA=s2_r5_spiral&algB=cw_relocate_2opt&preset=early_return"><span>Shared-6 主动早返轨迹</span><span class="mono">回放</span></button></li>',
+      '      <li><button type="button" data-nav="family=cvrp&page=benchmarks&suite=cvrp_ext_cvrplib_x_100&scope=common_completed"><span>Set X 交集 (' + snap.xCommonN + '/100)</span><span class="mono">' + xCommonGap + "</span></button></li>",
+      '    </ul>',
+      '  </article>',
+
+      '  <article class="cover-card">',
+      '    <div class="cover-head"><div class="cover-code">TSP</div><h3>旅行商闭合巡回</h3><p>TSPLIB EUC_2D 官方最优路线对比与 2-opt 改进幅度</p></div>',
+      '    <div class="cover-plot">' + drawBarMiniCover(core, "tsp_ext_tsplib_euc2d", OVERVIEW_CFG.tsp.algs, L) + "</div>",
+      '    <ul class="cover-links">',
+      '      <li><button type="button" data-nav="family=tsp&page=benchmarks&suite=tsp_ext_tsplib_euc2d"><span>TSPLIB EUC_2D 标准榜单</span><span class="mono">18 例</span></button></li>',
+      '      <li><button type="button" data-nav="family=tsp&page=comparator&suite=tsp_ext_tsplib_euc2d&inst=eil51&algA=tsp_nn_2opt&algB=eohs_tsp_f1&showOpt=1"><span>eil51 闭合路线对照</span><span class="mono">OPT 426</span></button></li>',
+      '      <li><button type="button" data-nav="family=tsp&page=benchmarks&suite=tsp_ext_eohs_128"><span>EoH-S TSP 多分布协议</span><span class="mono">128 例</span></button></li>',
+      '    </ul>',
+      '  </article>',
+
+      '  <article class="cover-card">',
+      '    <div class="cover-head"><div class="cover-code">OBP</div><h3>在线一维装箱</h3><p>Weibull 在线流与 BPPLib 填充效率及理论 L1 下界对比</p></div>',
+      '    <div class="cover-plot">' + drawBarMiniCover(core, "obp_ext_eoh_weibull", OVERVIEW_CFG.obp.algs, L) + "</div>",
+      '    <ul class="cover-links">',
+      '      <li><button type="button" data-nav="family=obp&page=benchmarks&suite=obp_ext_eoh_weibull"><span>Weibull 在线装箱榜单</span><span class="mono">173 例</span></button></li>',
+      '      <li><button type="button" data-nav="family=obp&page=comparator&suite=obp_ext_eoh_weibull&algA=obp_best_fit&algB=eohs_obp_f1"><span>箱位填充分布对照</span><span class="mono">L1 对照</span></button></li>',
+      '      <li><button type="button" data-nav="family=obp&page=benchmarks&suite=obp_ext_bpplib"><span>BPPLib 标准装箱库</span><span class="mono">70 例</span></button></li>',
+      '    </ul>',
+      '  </article>',
+      '</section>'
+    ].join("\n");
+  }
+
+  function bind(rootEl, core, state, nav) {
+    const ck = rootEl.querySelector("#ov-common-ck");
+    if (ck) {
+      ck.addEventListener("change", function () {
+        nav({ scope: ck.checked ? "common_completed" : "overall" });
+      });
+    }
+  }
+
+  window.WB_VIEWS = window.WB_VIEWS || {};
+  window.WB_VIEWS.overview = { render: render, bind: bind };
+})();
+
+
+/* === benchmarks_view.js === */
+/* L1/L2 · Unified Benchmark Leaderboard, Paper Baselines, Pareto, Selection & Panorama Hub. */
+(function () {
+  "use strict";
+
+  const CURATED_SUITES = {
+    cvrp: [
+      "cvrp_ext_cvrplib_abp_74",
+      "cvrp_ext_cvrplib_x_100",
+      "cvrp_ext_eohs_256",
+      "cvrp_ext_reevo_scale",
+      "cvrp_hist_p0_120",
+      "cvrp_hist_hetero_288",
+      "cvrp_final_accept_120"
+    ],
+    tsp: ["tsp_ext_tsplib_euc2d", "tsp_ext_eohs_128"],
+    obp: ["obp_ext_eoh_weibull", "obp_ext_bpplib"]
+  };
+
+  const CURATED_ALGS = {
+    cvrp: ["nn", "savings_pointwise", "s2_r5_spiral", "cw_parallel_merge", "cw_relocate_2opt", "eohs_cvrp_f1", "eohs_cvrp_set10_cpi", "heuragenix_min_cost_ins"],
+    tsp: ["tsp_nn", "tsp_farthest_insertion", "tsp_nn_2opt", "eohs_tsp_f1", "eoh_tsp_f1"],
+    obp: ["obp_first_fit", "obp_best_fit", "funsearch_obp_f1", "eoh_obp_f1", "eohs_obp_f1", "reevo_obp_f1"]
+  };
+
+  function renderGeoPreviewSvg(inst, family, L) {
+    const W = 440, H = 280, pad = 24;
+    if (family === "obp") {
+      const hist = (inst.item_stats && inst.item_stats.ratio_histogram_10) || [];
+      const maxH = Math.max(1, Math.max.apply(null, hist.concat([1])));
+      const bw = (W - pad * 2) / Math.max(1, hist.length);
+      const bars = hist.map(function (c, i) {
+        const bh = (c / maxH) * (H - pad * 2 - 22);
+        const x = pad + i * bw + 4, y = H - pad - bh;
+        return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + Math.max(4, bw - 8).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="#165dff" opacity="0.82"/>' +
+          '<text x="' + (x + bw / 2 - 4).toFixed(1) + '" y="' + (H - 8) + '" font-size="10" fill="#86909c" text-anchor="middle">' + (i * 10) + "%</text>";
+      }).join("");
+      return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="260"><rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' +
+        '<text x="' + pad + '" y="18" font-size="12" font-weight="600" fill="#1d2129">' + L.esc(inst.instance_id) + " · 尺寸占箱容比 (C=" + L.esc(inst.capacity) + ", N=" + L.esc(inst.size) + ")</text>" + bars + "</svg>";
+    }
+
+    const pts = family === "tsp" ? (inst.coordinates || []) : ([inst.depot || [0, 0]].concat(inst.customer_coordinates || []));
+    if (!pts.length) return '<div class="muted">暂无几何坐标</div>';
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    pts.forEach(function (p) {
+      if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0];
+      if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
+    });
+    const span = Math.max(1e-9, maxX - minX, maxY - minY);
+    const scale = Math.min(W - pad * 2, H - pad * 2) / span;
+    const ox = (W - (maxX - minX) * scale) / 2, oy = (H - (maxY - minY) * scale) / 2;
+    const sx = function (x) { return ox + (x - minX) * scale; };
+    const sy = function (y) { return H - (oy + (y - minY) * scale); };
+    const demands = inst.demands || [];
+    const maxQ = Math.max(1, Math.max.apply(null, demands.concat([1])));
+    const dots = pts.map(function (p, idx) {
+      const cx = sx(p[0]), cy = sy(p[1]);
+      if (family === "cvrp" && idx === 0) return '<rect x="' + (cx - 4.5).toFixed(1) + '" y="' + (cy - 4.5).toFixed(1) + '" width="9" height="9" fill="#c2410c" stroke="#fff" stroke-width="1.2"/>';
+      const r = (family === "cvrp" && demands[idx] !== undefined) ? (2.1 + 2.4 * (demands[idx] / maxQ)) : 2.5;
+      return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="#0f766e" opacity="0.78"/>';
+    }).join("");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="260"><rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' + dots +
+      '<text x="' + pad + '" y="16" font-size="11.5" font-weight="600" fill="#1d2129">' + L.esc(inst.instance_id) + " (n=" + pts.length + ")</text></svg>";
+  }
+
+  function renderPanoramaTab(core, state, suiteBundle, fam, activeSuite, L) {
+    const showAll = Boolean(state.expandAll);
+    const famSuites = (core.suites || []).filter(function (s) { return s.problem_family === fam; });
+    const displaySuites = showAll ? famSuites : famSuites.filter(function (s) { return (CURATED_SUITES[fam] || []).includes(s.suite_id); });
+    const famAlgs = (core.algorithms || []).filter(function (a) { return a.problem_family === fam; });
+    const displayAlgs = showAll ? famAlgs : famAlgs.filter(function (a) { return (CURATED_ALGS[fam] || []).includes(a.algorithm_id); });
+
+    const matrixHeader = displayAlgs.map(function (a) {
+      return '<th class="num" title="' + L.esc(a.algorithm_id) + '"><div>' + L.esc(L.algTitle(core, a.algorithm_id)) + '</div><div class="row-sub mono">' + L.esc(a.algorithm_id) + "</div></th>";
+    }).join("");
+
+    const matrixRows = displaySuites.map(function (s) {
+      const sum = L.getSuiteSummary(core, s.suite_id);
+      const effScope = L.resolveScope(sum, state.scope);
+      const useCommon = effScope === "common_completed";
+      const gaps = displayAlgs.map(function (a) {
+        const st = L.getAlgStats(sum, a.algorithm_id, effScope);
+        return st && st.mean_rel_gap !== null && st.mean_rel_gap !== undefined ? Number(st.mean_rel_gap) : null;
+      });
+      const valid = gaps.filter(function (g) { return g !== null; });
+      const bestG = valid.length ? Math.min.apply(null, valid) : null;
+      const cells = displayAlgs.map(function (a, i) {
+        const st = L.getAlgStats(sum, a.algorithm_id, effScope);
+        const ov = L.getAlgStats(sum, a.algorithm_id, "overall");
+        const g = gaps[i];
+        if (!st || g === null) return '<td class="num muted">—</td>';
+        const isBest = bestG !== null && Math.abs(g - bestG) < 1e-6;
+        const okTag = (!useCommon && ov && ov.ok_count < ov.n_instances) ? ('<span class="cell-sub">(' + ov.ok_count + "/" + ov.n_instances + ")</span>") : "";
+        return '<td class="num cell-click ' + (isBest ? "cell-best" : "") + '" data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(s.suite_id) + (useCommon ? "&scope=common_completed" : "") + '&tab=leaderboard">' +
+          L.fmtPct(g, 2) + okTag + "</td>";
+      }).join("");
+      const scopeTag = useCommon ? (" · 共同交集 " + sum.common_completed_count + "/" + s.instance_count) : "";
+      return '<tr data-nav="page=benchmarks&family=' + L.esc(fam) + "&suite=" + L.esc(s.suite_id) + '&tab=leaderboard">' +
+        '<td><div class="row-title">' + L.esc(L.suiteTitle(s)) + '</div><div class="row-sub mono">' + L.esc(s.suite_id) + " · N=" + s.instance_count + scopeTag + " · " + L.esc(s.distance_convention) + "</div></td>" + cells + "</tr>";
+    }).join("");
+
+    let previewHtml = '<div class="muted">正在载入测试集 <code>' + L.esc(activeSuite.suite_id) + "</code> 算例坐标…</div>";
+    if (suiteBundle && suiteBundle.suite && suiteBundle.suite.suite_id === activeSuite.suite_id) {
+      const instances = suiteBundle.suite.instances || [];
+      const curInstId = state.inst || (instances[0] && instances[0].instance_id) || "";
+      const instObj = instances.find(function (x) { return x.instance_id === curInstId; }) || instances[0];
+      const opts = instances.slice(0, 120).map(function (x) {
+        return '<option value="' + L.esc(x.instance_id) + '"' + (instObj && x.instance_id === instObj.instance_id ? " selected" : "") + ">" + L.esc(x.instance_id) + " (n=" + (x.size || "") + ")</option>";
+      }).join("");
+      const bksNote = (instObj && instObj.bks_reported_cost !== undefined)
+        ? ("官方 BKS = <b>" + instObj.bks_reported_cost + "</b> · 独立 <code>" + L.esc(activeSuite.distance_convention) + "</code> 重算 = <b>" + instObj.bks_recomputed_nint_cost + "</b>")
+        : (instObj && instObj.opt_recomputed_nint !== undefined)
+          ? ("官方 OPT = <b>" + instObj.reference_objective + "</b> · 重算 = <b>" + instObj.opt_recomputed_nint + "</b>")
+          : ("参考基准：" + L.esc(instObj ? instObj.reference_kind : "") + " = " + L.fmtObj(instObj ? instObj.reference_objective : null));
+
+      previewHtml = '<div class="grid-2">' +
+        '  <div>' +
+        '    <div class="controls-inline" style="margin-bottom:12px;"><span class="sec">算例预览：</span><select id="l1-inst-select">' + opts + "</select></div>" +
+        '    <div class="diag-note" style="margin-top:0;margin-bottom:12px;">' + bksNote + '<div class="mono muted" style="margin-top:4px;">manifest: ' + L.esc((activeSuite.data_manifest_hash || "").slice(0, 20)) + "…</div></div>" +
+        '    <div class="controls-inline"><button class="btn primary sm" data-nav="page=comparator&family=' + L.esc(fam) + "&suite=" + L.esc(activeSuite.suite_id) + "&inst=" + L.esc(instObj ? instObj.instance_id : "") + '">进入路线对照 →</button></div>' +
+        "  </div>" +
+        '  <div class="plot-box">' + (instObj ? renderGeoPreviewSvg(instObj, fam, L) : "") + "</div>" +
+        "</div>";
+    }
+
+    return '<div class="panel">' +
+      '  <div class="panel-head">' +
+      '    <div><h2 class="panel-title">跨测试集 × 算法全景矩阵（' + L.esc((L.FAMILY_LABELS[fam] || {}).short || fam) + '）</h2><p class="panel-sub">统一 ' + L.esc(core.budget_ms) + " ms 预算下的平均相对参考差距，点击单元格跳转对应详表</p></div>" +
+      '    <button class="btn sm ' + (showAll ? "active" : "") + '" id="l1-expand-btn">' + (showAll ? "收起为精选视角" : "展开全部 " + famSuites.length + " 套件与 " + famAlgs.length + " 算法") + "</button>" +
+      "  </div>" +
+      '  <div class="table-wrap"><table class="matrix-table"><thead><tr><th>测试集与公约</th>' + matrixHeader + "</tr></thead><tbody>" + matrixRows + "</tbody></table></div>" +
+      "</div>" +
+      '<div class="panel"><div class="panel-head"><h3 class="panel-title">算例几何与真值核验快照（' + L.esc(L.suiteTitle(activeSuite)) + "）</h3></div>" + previewHtml + "</div>";
+  }
+
+  function render(core, state, suiteBundle) {
+    const L = window.WB_LABELS;
+    const PARTS = window.WB_RESULTS_PARTS;
+    const fam = state.family || "cvrp";
+    const famSuites = (core.suites || []).filter(function (s) { return s.problem_family === fam; });
+    const activeSuite = L.getSuite(core, state.suite) || famSuites[0] || core.suites[0];
+    const suiteId = activeSuite.suite_id;
+    const sum = L.getSuiteSummary(core, suiteId);
+    const tab = state.tab || "leaderboard";
+    const scope = L.resolveScope(sum, state.scope);
+    const sortBy = state.sortBy || "mean_rel_gap";
+    const sortDir = state.sortDir || "asc";
+
+    const suiteOpts = core.suites.map(function (s) {
+      const fTag = (L.FAMILY_LABELS[s.problem_family] && L.FAMILY_LABELS[s.problem_family].short) || s.problem_family;
+      return '<option value="' + L.esc(s.suite_id) + '"' + (s.suite_id === suiteId ? " selected" : "") + ">" + L.esc(fTag) + " · " + L.esc(L.suiteTitle(s)) + " (N=" + s.instance_count + ")</option>";
+    }).join("");
+
+    const hasPartial = sum && sum.algorithms && Object.keys(sum.algorithms).some(function (aid) {
+      const ov = L.getAlgStats(sum, aid, "overall");
+      return ov && ov.ok_count < ov.n_instances;
+    });
+    const commonN = (sum && sum.common_completed_count) || 0;
+    const commonToggle = (hasPartial && commonN > 0)
+      ? '<label class="toggle-label"><input type="checkbox" id="bm-common-ck"' + (scope === "common_completed" ? " checked" : "") + "/> 仅看共同完成集 (" + L.jargon("N_common", commonN + "/" + activeSuite.instance_count) + ")</label>"
+      : "";
+
+    const tabs = [
+      { id: "leaderboard", label: "本机同协议榜单" },
+      { id: "published", label: "顶会论文原表对照" },
+      { id: "pareto", label: "质量–耗时 Pareto 前沿" },
+      { id: "selection", label: "实例级算法选择评估" },
+      { id: "panorama", label: "全基准对比矩阵" }
+    ];
+
+    let bodyHtml = "";
+    if (tab === "pareto") {
+      bodyHtml = '<div class="panel">' +
+        '  <div class="panel-head">' +
+        '    <div><h2 class="panel-title">质量–耗时 Pareto 前沿（' + L.esc(L.suiteTitle(activeSuite)) + '）</h2><p class="panel-sub">横轴为求解 P50 耗时（对数刻度），纵轴为平均相对差距；点击散点直接查看路线对比</p></div>' +
+        '    <div class="controls-inline"><button class="btn sm" id="l2-export-svg">导出 SVG</button><button class="btn sm" id="l2-export-png">导出 300 DPI PNG</button></div>' +
+        "  </div>" +
+        '  <div class="plot-box">' + PARTS.renderParetoSvg(core, suiteId, scope, L) + "</div>" +
+        "</div>";
+    } else if (tab === "published") {
+      bodyHtml = PARTS.renderPublishedTrack(core, activeSuite, fam, Boolean(state.showAllPapers), L);
+    } else if (tab === "selection") {
+      bodyHtml = PARTS.renderSelectionPanel(core, activeSuite, state, L);
+    } else if (tab === "panorama") {
+      bodyHtml = renderPanoramaTab(core, state, suiteBundle, fam, activeSuite, L);
+    } else {
+      const algRows = Object.keys((sum && sum.algorithms) || {}).map(function (aid) {
+        return { aid: aid, meta: L.getAlg(core, aid), st: L.getAlgStats(sum, aid, scope), ov: L.getAlgStats(sum, aid, "overall") };
+      }).filter(function (r) { return Boolean(r.st); });
+
+      algRows.sort(function (a, b) {
+        let va = sortBy === "solve_ms_p50" ? a.st.solve_ms_p50 : sortBy === "mean_tour_length" ? a.st.mean_tour_length : a.st.mean_rel_gap;
+        let vb = sortBy === "solve_ms_p50" ? b.st.solve_ms_p50 : sortBy === "mean_tour_length" ? b.st.mean_tour_length : b.st.mean_rel_gap;
+        va = va === null || va === undefined ? 1e9 : Number(va);
+        vb = vb === null || vb === undefined ? 1e9 : Number(vb);
+        return sortDir === "desc" ? vb - va : va - vb;
+      });
+
+      const isFixedKSuite = activeSuite.vehicle_limit_policy === "fixed_k_unconstrained_eval";
+      const bestGap = algRows.length && algRows[0].st.mean_rel_gap !== null && sortBy === "mean_rel_gap" && sortDir === "asc" ? Number(algRows[0].st.mean_rel_gap) : null;
+      const trs = algRows.map(function (r) {
+        const kbId = L.resolveAlgKbId(core, r.aid);
+        const okBex = r.ov.ok_budget_exhausted_count !== undefined ? r.ov.ok_budget_exhausted_count : (r.ov.budget_exhausted_count || 0);
+        const toCnt = r.ov.timeout_count !== undefined ? r.ov.timeout_count : (r.ov.n_instances - r.ov.ok_count);
+        const fullRate = r.ov.full_completion_rate;
+        const isPartial = r.ov.ok_count < r.ov.n_instances || (fullRate != null && fullRate < 1);
+        const iterationLimit = r.ov.iteration_limit_count || 0;
+        const convRate = fullRate ?? r.ov.local_opt_convergence_rate;
+        const convNote = (convRate !== null && convRate !== undefined && convRate < 1.0)
+          ? (" · " + (fullRate != null ? "完整完成 " : "收敛 ") + L.fmtRatioAsPctPlain(Math.max(0, convRate), 0))
+          : "";
+        const okText = (fullRate != null ? "可行 " : "") + r.ov.ok_count + "/" + r.ov.n_instances +
+          (toCnt > 0 ? " · 超时 " + toCnt : "") +
+          (okBex > 0 ? " · 预算终止 " + okBex : "") +
+          (iterationLimit > 0 ? " · 迭代上限 " + iterationLimit : "") +
+          convNote;
+        const isBest = bestGap !== null && r.st.mean_rel_gap !== null && Math.abs(Number(r.st.mean_rel_gap) - bestGap) < 1e-6;
+        let exactKCell = "";
+        if (isFixedKSuite) {
+          const exCnt = r.st.exact_k_count;
+          const exChk = r.st.exact_k_checked;
+          const exGap = r.st.exact_k_mean_rel_gap;
+          exactKCell = '<td class="num">' +
+            (exCnt !== undefined && exChk ? (exCnt + "/" + exChk + " (" + L.fmtRatioAsPctPlain(r.st.exact_k_compliance_rate, 1) + ")" + (exGap !== null && exGap !== undefined ? ("<div class=\"row-sub\">" + L.fmtPct(exGap, 2) + "</div>") : "")) : "—") +
+            "</td>";
+        }
+        return "<tr>" +
+          '<td><div class="row-title">' + L.esc(L.algTitle(core, r.aid)) + '</div><div class="row-sub mono">' + L.esc(r.aid) + "</div></td>" +
+          '<td class="sec">' + L.esc((r.meta && L.PARADIGM_LABELS[r.meta.paradigm]) || (r.meta && r.meta.paradigm) || "—") + "</td>" +
+          '<td><span class="status-tag ' + (isPartial ? "warn" : "good") + '">' + L.esc(okText) + "</span></td>" +
+          '<td class="num">' + L.fmtObj(r.st.mean_tour_length) + "</td>" +
+          '<td class="num ' + (isBest ? "cell-best" : "") + '">' + L.fmtPct(r.st.mean_rel_gap, 2) + "</td>" +
+          exactKCell +
+          '<td class="num">' + L.fmtMs(r.st.solve_ms_p50) + " / " + L.fmtMs(r.st.solve_ms_p95) + "</td>" +
+          '<td class="num">' + (r.st.total_voluntary_early_returns || 0) + "</td>" +
+          '<td class="num">' + (kbId ? ('<button class="btn link sm" data-nav="page=knowledge&tab=library&entry=' + L.esc(kbId) + '">知识卡</button> ') : "") +
+          '<button class="btn link sm" data-nav="page=comparator&family=' + L.esc(fam) + "&suite=" + L.esc(suiteId) + "&algA=" + L.esc(r.aid) + '">路线对照</button></td>' +
+          "</tr>";
+      }).join("");
+
+      const p0Block = suiteId === "cvrp_hist_p0_120" ? PARTS.renderH003P0Spotlight(core, L) : "";
+      const policyDesc = (L.POLICY_LABELS && L.POLICY_LABELS[activeSuite.vehicle_limit_policy]) || activeSuite.vehicle_limit_policy || "";
+
+      bodyHtml = '<div class="panel">' +
+        '  <div class="panel-head">' +
+        '    <div><h2 class="panel-title">' + L.esc(L.suiteTitle(activeSuite)) + '</h2><p class="panel-sub">参考基准：' + L.esc(activeSuite.reference_kind) + " · 距离公约：" + L.esc(activeSuite.distance_convention) + (policyDesc ? (" · 车数口径：" + L.esc(policyDesc)) : "") + " · CPU 上限 " + L.esc(sum && sum.budget_ms) + " ms" + (scope === "common_completed" && commonN ? (" · 当前按共同完成集 N_common=" + commonN + "/" + activeSuite.instance_count + " 例同样本排名") : (hasPartial ? " · 当前为含部分完成算例的原始完成率统计" : "")) + "</p></div>" +
+        '    <div class="controls-inline"><button class="btn sm" id="l2-export-latex">LaTeX 表</button><button class="btn sm" id="l2-export-csv">CSV</button><button class="btn sm" id="l2-export-json">JSON</button></div>' +
+        "  </div>" +
+        '  <div class="table-wrap"><table>' +
+        '    <thead><tr><th>算法</th><th>范式</th><th>完成情况</th><th class="sortable num" data-sort="mean_tour_length">均目标值 ⇅</th><th class="sortable num" data-sort="mean_rel_gap">平均差距 ⇅</th>' + (isFixedKSuite ? '<th class="num">固定 k 合规 (==k · 同 k 均差)</th>' : "") + '<th class="sortable num" data-sort="solve_ms_p50">P50 / P95 ⇅</th><th class="num">主动早返</th><th class="num">操作</th></tr></thead>' +
+        "    <tbody>" + trs + "</tbody>" +
+        "  </table></div>" +
+        '  <div id="l2-latex-preview" style="margin-top:14px;"></div>' +
+        "</div>" +
+        PARTS.renderTierBreakdown(core, suiteId, sum, L) +
+        p0Block;
+    }
+
+    return '<div class="panel-head" style="margin-bottom:10px;">' +
+      '  <div class="controls-inline"><span class="sec">测试集：</span><select id="l2-suite-select">' + suiteOpts + "</select>" + commonToggle + "</div>" +
+      '  <div class="controls-inline"><button class="btn link sm" data-nav="page=knowledge&tab=stories&story=' + (suiteId === "cvrp_hist_hetero_288" ? "h010" : suiteId === "cvrp_hist_p0_120" ? "h003" : "r5") + '">关联机理分析 →</button></div>' +
+      "</div>" +
+      '<div class="subnav">' +
+      tabs.map(function (t) { return '<button class="subnav-btn ' + (tab === t.id ? "active" : "") + '" data-tab="' + t.id + '">' + t.label + "</button>"; }).join("") +
+      "</div>" +
+      bodyHtml;
+  }
+
+  function bind(rootEl, core, state, nav, suiteBundle) {
+    const L = window.WB_LABELS;
+    const sSel = rootEl.querySelector("#l2-suite-select");
+    if (sSel) {
+      sSel.addEventListener("change", function () {
+        const sObj = L.getSuite(core, sSel.value);
+        nav({ suite: sSel.value, family: (sObj && sObj.problem_family) || state.family, scope: "", inst: "" });
+      });
+    }
+    const ck = rootEl.querySelector("#bm-common-ck");
+    if (ck) ck.addEventListener("change", function () { nav({ scope: ck.checked ? "common_completed" : "overall" }); });
+    rootEl.querySelectorAll("[data-tab]").forEach(function (b) {
+      b.addEventListener("click", function () { nav({ tab: b.getAttribute("data-tab") }); });
+    });
+    rootEl.querySelectorAll("th[data-sort]").forEach(function (th) {
+      th.addEventListener("click", function () {
+        const col = th.getAttribute("data-sort");
+        nav({ sortBy: col, sortDir: (state.sortBy === col && state.sortDir === "asc") ? "desc" : "asc" });
+      });
+    });
+
+    const expBtn = rootEl.querySelector("#l1-expand-btn");
+    if (expBtn) expBtn.addEventListener("click", function () { nav({ expandAll: !state.expandAll }); });
+    const instSel = rootEl.querySelector("#l1-inst-select");
+    if (instSel) instSel.addEventListener("change", function () { nav({ inst: instSel.value }); });
+    const paperBtn = rootEl.querySelector("#l2-toggle-all-papers");
+    if (paperBtn) paperBtn.addEventListener("click", function () { nav({ showAllPapers: !state.showAllPapers }); });
+    const selAn = rootEl.querySelector("#l2-sel-analysis");
+    if (selAn) selAn.addEventListener("change", function () { nav({ selAnalysis: selAn.value, selProto: "" }); });
+    const selPr = rootEl.querySelector("#l2-sel-proto");
+    if (selPr) selPr.addEventListener("change", function () { nav({ selProto: selPr.value }); });
+
+    const sid = state.suite || (core.suites[0] && core.suites[0].suite_id);
+    const scope = state.scope || "overall";
+    const texBtn = rootEl.querySelector("#l2-export-latex");
+    if (texBtn) {
+      texBtn.addEventListener("click", function () {
+        const tex = window.WB_EXPORT.generateLatexLocalTable(core, sid, scope);
+        const box = rootEl.querySelector("#l2-latex-preview");
+        if (box) {
+          box.innerHTML = '<div class="panel-head" style="margin-bottom:8px;"><span class="panel-title">LaTeX booktabs 源码</span>' +
+            '<button class="btn sm primary" id="l2-dl-tex">下载 .tex</button></div><pre class="md-pre">' + L.esc(tex) + "</pre>";
+          const dl = box.querySelector("#l2-dl-tex");
+          if (dl) dl.addEventListener("click", function () { window.WB_EXPORT.downloadText(sid + "_" + scope + ".tex", tex); });
+        }
+      });
+    }
+    const csvBtn = rootEl.querySelector("#l2-export-csv");
+    if (csvBtn) {
+      csvBtn.addEventListener("click", function () {
+        const recs = (suiteBundle && suiteBundle.records) || [];
+        const cols = ["suite_id", "instance_id", "algorithm_id", "status", "tour_length", "reference_objective", "rel_gap", "solve_ms", "voluntary_early_return_count"];
+        window.WB_EXPORT.exportCsv(recs, cols, sid + "_records.csv");
+      });
+    }
+    const jsonBtn = rootEl.querySelector("#l2-export-json");
+    if (jsonBtn) {
+      jsonBtn.addEventListener("click", function () {
+        window.WB_EXPORT.exportJson((suiteBundle && suiteBundle.records) || L.getSuiteSummary(core, sid), sid + "_records.json");
+      });
+    }
+    const svgBtn = rootEl.querySelector("#l2-export-svg");
+    if (svgBtn) svgBtn.addEventListener("click", function () { window.WB_EXPORT.exportSvg(rootEl.querySelector("#pareto-svg"), sid + "_pareto.svg"); });
+    const pngBtn = rootEl.querySelector("#l2-export-png");
+    if (pngBtn) pngBtn.addEventListener("click", function () { window.WB_EXPORT.exportPng300Dpi(rootEl.querySelector("#pareto-svg"), sid + "_pareto_300dpi.png"); });
+  }
+
+  window.WB_VIEWS = window.WB_VIEWS || {};
+  window.WB_VIEWS.benchmarks = { render: render, bind: bind };
+})();
+
+
+/* === knowledge_view.js === */
+/* L3 · Distill-Style Warm-Paper Mechanism Stream + Full Structured KB Reader. */
+(function () {
+  "use strict";
+
+  const STORIES = {
+    h003: { id: "h003", kbId: "evidence-cvrp-depot-start-phase-h003", label: "1. 出发步相变 (H-003)", title: "仓库出发步 α=1 相位反转与反事实替换" },
+    h001: { id: "h001", kbId: "evidence-cvrp-scale-collapse-h001", label: "2. 标度不变性 (H-001)", title: "绝对带宽门控 × O(1/s²) 载荷导致的缩尺崩塌" },
+    r5: { id: "r5", kbId: "evidence-cvrp-stage2-math-discoveries-h004-h009", label: "3. 主动早返 (R5)", title: "无量纲内旋与容量自适应主动早返阈值" },
+    h010: { id: "h010", kbId: "evidence-cvrp-selection-complementarity-h010", label: "4. 互补边界 (H-010)", title: "折外选择边界与单步接口范式上限" }
+  };
+
+  function dist2d(a, b) {
+    return Math.hypot(a[0] - b[0], a[1] - b[1]);
+  }
+
+  function renderH003Body(core, alpha, L) {
+    const hp = core.h003_preview;
+    const inst = hp.instances.find(function (x) { return x.id === hp.example; }) || hp.instances[0];
+    const depot = inst.coords[0];
+    const all = [];
+    for (let j = 1; j < inst.coords.length; j++) {
+      const dj = dist2d(depot, inst.coords[j]);
+      all.push({ j: j, d0: dj, score: (1 - alpha) * dj, q: inst.demands[j], coord: inst.coords[j] });
+    }
+    all.sort(function (a, b) { return a.score - b.score; });
+    const top5 = all.slice(0, 5);
+    const maxS = Math.max(1e-6, Math.max.apply(null, top5.map(function (c) { return Math.abs(c.score); })));
+    const picks = {};
+    top5.slice(0, 3).forEach(function (c) { picks[c.j] = true; });
+
+    const W = 400, H = 260, pad = 24;
+    const sx = function (x) { return pad + x * (W - pad * 2); };
+    const sy = function (y) { return H - pad - y * (H - pad * 2); };
+    const lineCol = alpha > 1 ? "#0f766e" : (Math.abs(alpha - 1) < 0.005 ? "#94a3b8" : "#c2410c");
+    const lines = top5.slice(0, 3).map(function (c) {
+      return '<line x1="' + sx(depot[0]).toFixed(1) + '" y1="' + sy(depot[1]).toFixed(1) + '" x2="' + sx(c.coord[0]).toFixed(1) + '" y2="' + sy(c.coord[1]).toFixed(1) + '" stroke="' + lineCol + '" stroke-width="1.8" stroke-dasharray="4,3"/>';
+    }).join("");
+    const dots = inst.coords.map(function (p, idx) {
+      if (idx === 0) return '<rect x="' + (sx(p[0]) - 4.5).toFixed(1) + '" y="' + (sy(p[1]) - 4.5).toFixed(1) + '" width="9" height="9" fill="#1d2129"/>';
+      const isPick = Boolean(picks[idx]);
+      return '<circle cx="' + sx(p[0]).toFixed(1) + '" cy="' + sy(p[1]).toFixed(1) + '" r="' + (isPick ? 4.5 : 2.3) + '" fill="' + (isPick ? lineCol : "#94a3b8") + '" opacity="' + (isPick ? "0.95" : "0.5") + '"/>';
+    }).join("");
+
+    const bars = top5.map(function (c) {
+      const pct = Math.min(100, (Math.abs(c.score) / maxS) * 100);
+      return '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>客户 #' + c.j + " (d0=" + c.d0.toFixed(3) + ')</span><span class="mono">' + c.score.toFixed(4) + '</span></div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct.toFixed(1) + "%;background:" + lineCol + ';"></div></div></div>';
+    }).join("");
+
+    const stateDesc = Math.abs(alpha - 1) < 0.005 ? "α = 1.00：所有候选得分恒为 0（临界中性）"
+      : alpha < 1 ? "α < 1：最近邻优先（近端先出，远端残留至尾部）" : "α > 1：远端优先（先赴外围，回程顺路服务近郊）";
+
+    return '<div style="font-size:13px;font-weight:600;color:' + lineCol + ';margin-bottom:10px;">' + L.esc(stateDesc) + "</div>" +
+      '<div class="grid-2"><div class="plot-box"><svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="235"><rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc"/>' + lines + dots + "</svg></div><div>" + bars + "</div></div>";
+  }
+
+  function renderH001Body(core, scaleVal, L) {
+    const recs = (core.scale_stress && core.scale_stress.records) || [];
+    const byAlg = {};
+    recs.forEach(function (r) {
+      const aid = r.algorithm_id;
+      byAlg[aid] = Math.max(byAlg[aid] || 0, Math.abs(Number(r.scale_drift_pct || 0)));
+    });
+    const order = ["c", "eohs_cvrp_f1", "v0", "s2_r5_spiral", "s2_r7_iso", "nn", "cw_relocate_2opt"];
+    return order.filter(function (id) { return byAlg[id] !== undefined; }).map(function (aid) {
+      const real = byAlg[aid];
+      const est = aid === "c" ? Math.min(250, real * Math.pow(0.001 / Math.max(1e-4, scaleVal), 1.4))
+        : (real > 0 ? real * Math.min(2, 0.001 / Math.max(1e-4, scaleVal)) : 0);
+      const shown = Math.abs(scaleVal - 0.001) < 1e-6 ? real : est;
+      const col = shown > 1 ? "var(--terra)" : "var(--teal)";
+      return "<tr><td>" + L.esc(L.algTitle(core, aid)) + '</td><td class="num">' + real.toFixed(2) + '%</td><td class="num" style="color:' + col + ';font-weight:600;">' + shown.toFixed(2) + "%</td></tr>";
+    }).join("");
+  }
+
+  function renderR5Body(pressPct) {
+    const p = pressPct / 100, tau = 0.25 + 0.5 * p;
+    const W = 500, H = 200, pl = 46, pr = 20, pt = 18, pb = 34;
+    const px = pl + p * (W - pl - pr), py = H - pb - Math.min(1, tau) * (H - pt - pb);
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="190" style="background:#fafbfc;border:1px solid #e5e7eb;border-radius:6px;">' +
+      '<line x1="' + pl + '" y1="' + (H - pb) + '" x2="' + (W - pr) + '" y2="' + (H - pb) + '" stroke="#cbd5e1"/>' +
+      '<line x1="' + pl + '" y1="' + pt + '" x2="' + pl + '" y2="' + (H - pb) + '" stroke="#cbd5e1"/>' +
+      '<line x1="' + pl + '" y1="' + (H - pb - 0.25 * (H - pt - pb)).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + (H - pb - 0.75 * (H - pt - pb)).toFixed(1) + '" stroke="#c2410c" stroke-width="2"/>' +
+      '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="5" fill="#165dff" stroke="#fff" stroke-width="1.5"/>' +
+      '<text x="' + (pl + 12) + '" y="' + (pt + 16) + '" font-size="11.5" fill="#0f766e">阈值上方：顺路继续访问可行客户</text>' +
+      '<text x="' + (pl + 12) + '" y="' + (H - pb - 10) + '" font-size="11.5" fill="#c2410c">阈值下方：触发主动早返 (return 0)</text>' +
+      "</svg>";
+  }
+
+  function renderBlueprintGrid(entry, L) {
+    const bp = entry && entry.attributes && entry.attributes.interface_blueprint;
+    if (!bp) return "";
+    return '<div class="blueprint-grid">' +
+      '<div class="blueprint-box"><h4>外层骨架 (Skeleton)</h4><div>' + L.esc(bp.skeleton_role || "") + "</div></div>" +
+      '<div class="blueprint-box"><h4>进化入口 (Evolvable Hook)</h4><div class="mono">' + L.esc(bp.evolvable_hook || "") + "</div></div>" +
+      '<div class="blueprint-box"><h4>数学不变式</h4><ul>' + (bp.invariants_and_constraints || []).map(function (x) { return "<li>" + L.esc(x) + "</li>"; }).join("") + "</ul></div>" +
+      '<div class="blueprint-box"><h4>工程约束提示</h4><ul>' + (bp.typical_pitfalls || []).map(function (x) { return "<li>" + L.esc(x) + "</li>"; }).join("") + "</ul></div>" +
+      "</div>";
+  }
+
+  function renderStoryView(core, state, L) {
+    const key = (state.topic && STORIES[state.topic]) ? state.topic : (state.story && STORIES[state.story]) ? state.story : "h003";
+    const meta = STORIES[key];
+    const map = L.kbMap(core);
+    const entry = map[meta.kbId];
+    const alpha = state.mlAlpha !== undefined ? Number(state.mlAlpha) : 1.15;
+    const scaleVal = state.mlScale !== undefined ? Number(state.mlScale) : 0.001;
+    const pressPct = state.mlPress !== undefined ? Number(state.mlPress) : 65;
+
+    let labHtml = "";
+    if (key === "h003" && core.h003_preview) {
+      labHtml = '<div class="formula-center"><i>s</i><sub>α</sub>(0, <i>j</i>) = (1 − α) <i>d</i>(0, <i>j</i>)</div>' +
+        '<div class="microlab-frame">' +
+        '  <div class="controls-inline" style="justify-content:space-between;margin-bottom:8px;"><span>径向偏置参数 α = <b id="ml-alpha-val" class="mono">' + alpha.toFixed(2) + '</b></span><div class="controls-inline"><button class="btn sm" data-alpha-preset="0.80">0.80 (近邻优先)</button><button class="btn sm active" data-alpha-preset="1.15">1.15 (远端优先)</button></div></div>' +
+        '  <input id="ml-alpha-slider" type="range" min="0.60" max="1.40" step="0.01" value="' + alpha.toFixed(2) + '"/>' +
+        '  <div id="ml-h003-out" style="margin-top:12px;">' + renderH003Body(core, alpha, L) + "</div>" +
+        "</div>";
+    } else if (key === "h001") {
+      labHtml = '<div class="formula-center"><i>f</i>(λ<i>D</i>, <i>q</i>, <i>Q</i>) = λ<sup><i>k</i></sup> <i>f</i>(<i>D</i>, <i>q</i>, <i>Q</i>)</div>' +
+        '<div class="microlab-frame">' +
+        '  <div class="controls-inline" style="justify-content:space-between;margin-bottom:8px;"><span>坐标缩放比例 s = <b class="mono" id="ml-scale-val">' + scaleVal.toFixed(4) + '×</b></span><div class="controls-inline"><button class="btn sm" data-scale-preset="0.001">10⁻³× (压力实测)</button><button class="btn sm" data-scale-preset="1">1× (原尺度)</button></div></div>' +
+        '  <input id="ml-scale-slider" type="range" min="-3.0" max="0.5" step="0.5" value="' + Math.log10(scaleVal).toFixed(1) + '"/>' +
+        '  <div class="table-wrap" style="margin-top:12px;"><table><thead><tr><th>算法</th><th class="num">实测 10⁻³× 漂移</th><th class="num">当前比例估算漂移</th></tr></thead><tbody id="ml-h001-out">' + renderH001Body(core, scaleVal, L) + "</tbody></table></div>" +
+        "</div>";
+    } else if (key === "r5") {
+      const anti = map["evidence-cvrp-antipattern-falsified-hypotheses"];
+      labHtml = '<div class="formula-center">return 0 &nbsp;⟺&nbsp; 1 − ρ<sub>best</sub> &lt; 0.25 + 0.50 · <i>p</i></div>' +
+        '<div class="microlab-frame">' +
+        '  <div class="controls-inline" style="justify-content:space-between;margin-bottom:8px;"><span>容量压力比 p = mean(<i>q</i><sub>F</sub>) / <i>Q</i><sub>rem</sub></span><span class="mono" id="ml-press-lbl">' + pressPct + "% → τ = " + (0.25 + 0.5 * pressPct / 100).toFixed(3) + "</span></div>" +
+        '  <input id="ml-press-slider" type="range" min="10" max="100" step="5" value="' + pressPct + '"/>' +
+        '  <div id="ml-r5-out" style="margin-top:10px;">' + renderR5Body(pressPct) + "</div>" +
+        (anti ? ('<div class="diag-note" style="margin-top:12px;">反模式对照（<code>' + L.esc(anti.id) + "</code>）：" + L.esc(anti.summary) + "</div>") : "") +
+        "</div>";
+    } else {
+      labHtml = '<div class="grid-2">' +
+        '  <div><h3 style="font-size:14px;margin:0 0 6px;">单步构造契约 (EoH-S)</h3>' + renderBlueprintGrid(map["method-lit-ahd-eohs"], L) + "</div>" +
+        '  <div><h3 style="font-size:14px;margin:0 0 6px;">全解算子契约 (HeurAgenix)</h3>' + renderBlueprintGrid(map["method-lit-ahd-heuragenix"], L) + "</div>" +
+        "</div>";
+    }
+
+    const bpEntry = (entry && entry.attributes && entry.attributes.interface_blueprint) ? entry : map["method-cvrp-s2-r5-spiral"];
+
+    return '<div class="editorial-col">' +
+      '  <div class="crumb-line">机理专题 / ' + L.esc(meta.kbId) + "</div>" +
+      '  <div class="subnav" style="margin-bottom:18px;">' +
+      Object.keys(STORIES).map(function (k) { return '<button class="subnav-btn ' + (k === key ? "active" : "") + '" data-story="' + k + '">' + L.esc(STORIES[k].label) + "</button>"; }).join("") +
+      "  </div>" +
+      '  <h2 class="serif" style="font-size:21px;margin:0 0 8px;">' + L.esc(meta.title) + "</h2>" +
+      '  <p class="sec" style="margin:0 0 14px;">' + L.esc((entry && entry.summary) || "") + "</p>" +
+      labHtml +
+      renderBlueprintGrid(bpEntry, L) +
+      (entry ? ('<details class="source-box"><summary>查看知识条目完整 Markdown 原文与源码索引</summary><pre class="md-pre" style="margin-top:10px;">' + L.esc(entry.body || "") + "</pre></details>") : "") +
+      '  <div class="controls-inline" style="margin-top:16px;">' +
+      '    <button class="btn sm" data-nav="page=comparator&suite=shared_diagnostic_6&algA=s2_r5_spiral&algB=cw_relocate_2opt&preset=early_return">查看轨迹回放 →</button>' +
+      '    <button class="btn sm" data-nav="page=knowledge&tab=library&entry=' + L.esc(meta.kbId) + '">在知识库中打开全文</button>' +
+      "  </div>" +
+      "</div>";
+  }
+
+  function renderLibraryView(core, state, L) {
+    const entries = core.kb_entries || [];
+    const q = (state.kbQuery || "").trim().toLowerCase();
+    const fFam = state.kbFam || "", fTier = state.kbTier || "", fMode = state.kbMode || "";
+
+    const matched = entries.filter(function (e) {
+      const attrs = e.attributes || {};
+      if (fFam && String(e.problem_family || "") !== fFam) return false;
+      if (fTier && String(attrs.knowledge_tier || "") !== fTier) return false;
+      if (fMode === "local_recomputed" && !(attrs.evidence_bindings && attrs.evidence_bindings.length)) return false;
+      if (fMode === "paper_reported_reference" && !(attrs.paper_reported_results && attrs.paper_reported_results.length)) return false;
+      if (q && ![e.id, e.title, e.summary, (e.tags || []).join(" "), e.body].join(" ").toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    const activeId = (state.entry && matched.some(function (e) { return e.id === state.entry; })) ? state.entry : ((matched[0] && matched[0].id) || (entries[0] && entries[0].id));
+    const activeEntry = entries.find(function (e) { return e.id === activeId; }) || matched[0];
+
+    const listHtml = matched.slice(0, 140).map(function (e) {
+      const attrs = e.attributes || {};
+      const tLbl = (attrs.knowledge_tier && (L.TIER_LABELS[attrs.knowledge_tier] || attrs.knowledge_tier)) || e.type;
+      return '<div class="kb-list-item ' + (activeEntry && e.id === activeEntry.id ? "active" : "") + '" data-kb-id="' + L.esc(e.id) + '">' +
+        '<div class="kb-list-title">' + L.esc(e.title) + '</div><div class="kb-list-meta">' + L.esc(tLbl) + " · " + L.esc(String(e.problem_family || "").toUpperCase()) + "</div></div>";
+    }).join("");
+
+    let detailHtml = '<div class="panel muted">未找到匹配的知识条目</div>';
+    if (activeEntry) {
+      const attrs = activeEntry.attributes || {};
+      const evRows = (attrs.evidence_bindings || []).map(function (b) {
+        return '<tr><td class="mono"><a href="#page=benchmarks&suite=' + L.esc(b.suite_id) + '">' + L.esc(L.suiteTitle(b.suite_id)) + '</a></td><td class="mono">' + L.esc(L.algTitle(core, b.algorithm_id)) + "</td><td>" + L.esc(b.metric) + '</td><td class="num">' + L.esc(b.value) + "</td></tr>";
+      }).join("");
+      const prRows = (attrs.paper_reported_results || []).map(function (p) {
+        return "<tr><td>" + L.esc(p.paper_source_id) + " (" + L.esc(p.table_ref) + ")</td><td>" + L.esc(p.method_name || p.method_id) + '</td><td class="num">' + (p.value === null || p.value === undefined ? "待提取" : L.esc(p.value)) + "</td><td>" + L.esc(p.verification_status || "") + "</td></tr>";
+      }).join("");
+
+      detailHtml = '<div class="panel">' +
+        '<div class="crumb-line">' + L.esc(String(activeEntry.problem_family || "").toUpperCase()) + " / " + L.esc((attrs.knowledge_tier && L.TIER_LABELS[attrs.knowledge_tier]) || activeEntry.type) + " / " + L.esc(activeEntry.id) + "</div>" +
+        '<h2 class="serif" style="margin:0 0 8px;font-size:19px;">' + L.esc(activeEntry.title) + "</h2>" +
+        '<p class="sec">' + L.esc(activeEntry.summary) + "</p>" +
+        renderBlueprintGrid(activeEntry, L) +
+        (evRows ? ('<h3 style="font-size:13.5px;margin:16px 0 8px;">本机实测证据绑定</h3><div class="table-wrap"><table><thead><tr><th>测试集</th><th>算法</th><th>指标</th><th class="num">数值</th></tr></thead><tbody>' + evRows + "</tbody></table></div>") : "") +
+        (prRows ? ('<h3 style="font-size:13.5px;margin:16px 0 8px;">论文原表绑定</h3><div class="table-wrap"><table><thead><tr><th>文献位置</th><th>方法</th><th class="num">原表值</th><th>状态</th></tr></thead><tbody>' + prRows + "</tbody></table></div>") : "") +
+        '<details open class="source-box"><summary>完整正文与工程关联</summary><pre class="md-pre" style="margin-top:8px;">' + L.esc(activeEntry.body || "") + "</pre></details>" +
+        "</div>";
+    }
+
+    const opt = function (v, cur, lbl) { return '<option value="' + L.esc(v) + '"' + (v === cur ? " selected" : "") + ">" + L.esc(lbl) + "</option>"; };
+    return '<div class="panel-head" style="margin-bottom:14px;">' +
+      '  <div class="controls-inline">' +
+      '    <input id="kb-search-in" type="search" placeholder="检索关键词 / ID / 算子…" value="' + L.esc(state.kbQuery || "") + '" style="min-width:220px;"/>' +
+      '    <select id="kb-f-fam">' + opt("", fFam, "全部问题族") + opt("cvrp", fFam, "CVRP") + opt("tsp", fFam, "TSP") + opt("obp", fFam, "OBP") + opt("unknown", fFam, "通用") + "</select>" +
+      '    <select id="kb-f-tier">' + opt("", fTier, "全部知识层级") + Object.keys(L.TIER_LABELS).map(function (k) { return opt(k, fTier, L.TIER_LABELS[k]); }).join("") + "</select>" +
+      '    <select id="kb-f-mode">' + opt("", fMode, "全部证据轨道") + opt("local_recomputed", fMode, "本机复跑证据") + opt("paper_reported_reference", fMode, "论文原表证据") + "</select>" +
+      "  </div>" +
+      '  <span class="sec mono" style="font-size:12.5px;">匹配 ' + matched.length + " / " + entries.length + "</span>" +
+      "</div>" +
+      '<div class="kb-grid"><div class="kb-list-panel">' + (listHtml || '<div class="muted" style="padding:14px;">无匹配条目</div>') + "</div><div>" + detailHtml + "</div></div>";
+  }
+
+  function render(core, state) {
+    const L = window.WB_LABELS;
+    const subTab = state.tab === "library" ? "library" : "stories";
+    const total = (core.kb_entries || []).length;
+    const subNav = '<div class="subnav" style="max-width:840px;margin:0 auto 18px;">' +
+      '<button class="subnav-btn ' + (subTab === "stories" ? "active" : "") + '" data-kb-tab="stories">代表机理专题 (4)</button>' +
+      '<button class="subnav-btn ' + (subTab === "library" ? "active" : "") + '" data-kb-tab="library">完整知识条目库 (' + total + ")</button>" +
+      "</div>";
+    return subNav + (subTab === "library" ? renderLibraryView(core, state, L) : renderStoryView(core, state, L));
+  }
+
+  function bind(rootEl, core, state, nav) {
+    rootEl.querySelectorAll("[data-kb-tab]").forEach(function (el) { el.addEventListener("click", function () { nav({ tab: el.getAttribute("data-kb-tab") }); }); });
+    rootEl.querySelectorAll("[data-story]").forEach(function (el) { el.addEventListener("click", function () { nav({ story: el.getAttribute("data-story"), tab: "stories" }); }); });
+
+    const alphaSl = rootEl.querySelector("#ml-alpha-slider");
+    if (alphaSl) {
+      alphaSl.addEventListener("input", function () {
+        const val = Number(alphaSl.value);
+        state.mlAlpha = val;
+        const valEl = rootEl.querySelector("#ml-alpha-val"), outEl = rootEl.querySelector("#ml-h003-out");
+        if (valEl) valEl.textContent = val.toFixed(2);
+        if (outEl) outEl.innerHTML = renderH003Body(core, val, window.WB_LABELS);
+      });
+    }
+    rootEl.querySelectorAll("[data-alpha-preset]").forEach(function (el) {
+      el.addEventListener("click", function () { nav({ mlAlpha: Number(el.getAttribute("data-alpha-preset")) }); });
+    });
+
+    const scaleSl = rootEl.querySelector("#ml-scale-slider");
+    if (scaleSl) {
+      scaleSl.addEventListener("input", function () {
+        const val = Math.pow(10, Number(scaleSl.value));
+        state.mlScale = val;
+        const vEl = rootEl.querySelector("#ml-scale-val"), oEl = rootEl.querySelector("#ml-h001-out");
+        if (vEl) vEl.textContent = val.toFixed(4) + "×";
+        if (oEl) oEl.innerHTML = renderH001Body(core, val, window.WB_LABELS);
+      });
+    }
+    rootEl.querySelectorAll("[data-scale-preset]").forEach(function (el) {
+      el.addEventListener("click", function () { nav({ mlScale: Number(el.getAttribute("data-scale-preset")) }); });
+    });
+
+    const pressSl = rootEl.querySelector("#ml-press-slider");
+    if (pressSl) {
+      pressSl.addEventListener("input", function () {
+        const val = Number(pressSl.value);
+        state.mlPress = val;
+        const lEl = rootEl.querySelector("#ml-press-lbl"), oEl = rootEl.querySelector("#ml-r5-out");
+        if (lEl) lEl.textContent = val + "% → τ = " + (0.25 + 0.5 * val / 100).toFixed(3);
+        if (oEl) oEl.innerHTML = renderR5Body(val);
+      });
+    }
+
+    const qIn = rootEl.querySelector("#kb-search-in");
+    if (qIn) {
+      qIn.addEventListener("keydown", function (ev) { if (ev.key === "Enter") nav({ kbQuery: qIn.value }); });
+      qIn.addEventListener("change", function () { nav({ kbQuery: qIn.value }); });
+    }
+    const fFam = rootEl.querySelector("#kb-f-fam");
+    if (fFam) fFam.addEventListener("change", function () { nav({ kbFam: fFam.value, entry: "" }); });
+    const fTier = rootEl.querySelector("#kb-f-tier");
+    if (fTier) fTier.addEventListener("change", function () { nav({ kbTier: fTier.value, entry: "" }); });
+    const fMode = rootEl.querySelector("#kb-f-mode");
+    if (fMode) fMode.addEventListener("change", function () { nav({ kbMode: fMode.value, entry: "" }); });
+    rootEl.querySelectorAll("[data-kb-id]").forEach(function (el) {
+      el.addEventListener("click", function () { nav({ entry: el.getAttribute("data-kb-id") }); });
+    });
+  }
+
+  window.WB_VIEWS = window.WB_VIEWS || {};
+  window.WB_VIEWS.knowledge = { render: render, bind: bind };
+})();
+
+
+/* === comparator_view.js === */
+/* L2 · 66/34 Route & Packing Comparator, Directional Departure Plot & Dynamic Trace Replay. */
+(function () {
+  "use strict";
+
+  function computeSharedBounds(inst, family) {
+    const pts = family === "tsp"
+      ? (inst.coordinates || [])
+      : ([inst.depot || [0, 0]].concat(inst.customer_coordinates || []));
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    pts.forEach(function (p) {
+      if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0];
+      if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
+    });
+    if (!Number.isFinite(minX)) return { minX: 0, maxX: 1, minY: 0, maxY: 1, pts: pts };
+    return { minX: minX, maxX: maxX, minY: minY, maxY: maxY, pts: pts };
+  }
+
+  function normCvrpRoute(r) {
+    if (!r || !r.length) return [];
+    const out = r.slice();
+    if (out[0] !== 0) out.unshift(0);
+    if (out[out.length - 1] !== 0) out.push(0);
+    return out;
+  }
+
+  function drawSpatialSvg(svgId, inst, family, routeData, rec, primaryColor, bounds, optOverlay, highlightIdx, focusOnly, traceUpTo, L) {
+    const W = 480, H = 390, pad = 28;
+    const span = Math.max(1e-9, bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+    const scale = Math.min(W - pad * 2, H - pad * 2) / span;
+    const ox = (W - (bounds.maxX - bounds.minX) * scale) / 2;
+    const oy = (H - (bounds.maxY - bounds.minY) * scale) / 2;
+    const sx = function (x) { return ox + (x - bounds.minX) * scale; };
+    const sy = function (y) { return H - (oy + (y - bounds.minY) * scale); };
+
+    const grid = [];
+    for (let i = 0; i <= 4; i++) {
+      const gx = ox + ((bounds.maxX - bounds.minX) * scale * i) / 4;
+      const gy = H - (oy + ((bounds.maxY - bounds.minY) * scale * i) / 4);
+      grid.push('<line x1="' + gx.toFixed(1) + '" y1="' + pad + '" x2="' + gx.toFixed(1) + '" y2="' + (H - pad) + '" stroke="#e5e7eb"/>');
+      grid.push('<line x1="' + pad + '" y1="' + gy.toFixed(1) + '" x2="' + (W - pad) + '" y2="' + gy.toFixed(1) + '" stroke="#e5e7eb"/>');
+    }
+
+    // Explicit Timeout / Missing Solution Frame
+    const emptyRoutes = family === "tsp"
+      ? !(routeData && routeData.tour && routeData.tour.length)
+      : !(routeData && routeData.routes && routeData.routes.length);
+    if ((rec && rec.status && rec.status !== "ok") || emptyRoutes) {
+      const dots = bounds.pts.map(function (p, idx) {
+        if (family === "cvrp" && idx === 0) return "";
+        return '<circle cx="' + sx(p[0]).toFixed(1) + '" cy="' + sy(p[1]).toFixed(1) + '" r="1.5" fill="#94a3b8" opacity="0.5"/>';
+      }).join("");
+      const msTxt = rec && rec.solve_ms !== null && rec.solve_ms !== undefined ? L.fmtMs(rec.solve_ms) : "—";
+      const stTxt = rec && rec.status ? rec.status : "no_solution";
+      return '<svg id="' + L.esc(svgId) + '" viewBox="0 0 ' + W + " " + H + '" width="100%" height="365">' +
+        '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' +
+        grid.join("") + dots +
+        '<rect x="' + (W / 2 - 140) + '" y="' + (H / 2 - 28) + '" width="280" height="56" rx="6" fill="#fffefa" stroke="#c2410c"/>' +
+        '<text x="' + (W / 2) + '" y="' + (H / 2 - 4) + '" text-anchor="middle" font-size="12.5" font-weight="600" fill="#c2410c">预算约束边界 (' + L.esc(stTxt) + " · " + L.esc(msTxt) + ")</text>" +
+        '<text x="' + (W / 2) + '" y="' + (H / 2 + 16) + '" text-anchor="middle" font-size="11.5" fill="#4e5969">时限内未生成完整可行路径，保持真实状态显示</text>' +
+        "</svg>";
+    }
+
+    const layers = [];
+    // Dashed BKS/OPT reference overlay
+    if (optOverlay) {
+      const refs = family === "tsp"
+        ? (optOverlay.tour ? [optOverlay.tour[0] === optOverlay.tour[optOverlay.tour.length - 1] ? optOverlay.tour : optOverlay.tour.concat([optOverlay.tour[0]])] : [])
+        : ((optOverlay.routes || (Array.isArray(optOverlay) ? optOverlay : [])).map(normCvrpRoute));
+      refs.forEach(function (r) {
+        const ptsAttr = r.map(function (idx) {
+          const p = bounds.pts[idx];
+          return p ? (sx(p[0]).toFixed(1) + "," + sy(p[1]).toFixed(1)) : null;
+        }).filter(Boolean).join(" ");
+        if (ptsAttr) layers.push('<polyline fill="none" stroke="#94a3b8" stroke-opacity="0.6" stroke-width="1.3" stroke-dasharray="4,3" points="' + ptsAttr + '"/>');
+      });
+    }
+
+    let focalRoute = null;
+    if (family === "tsp") {
+      const rawT = routeData.tour;
+      const closed = rawT[0] === rawT[rawT.length - 1] ? rawT : rawT.concat([rawT[0]]);
+      const ptsAttr = closed.map(function (i) {
+        return bounds.pts[i] ? (sx(bounds.pts[i][0]).toFixed(1) + "," + sy(bounds.pts[i][1]).toFixed(1)) : "";
+      }).filter(Boolean).join(" ");
+      layers.push('<polyline fill="none" stroke="' + primaryColor + '" stroke-width="1.9" points="' + ptsAttr + '"/>');
+      focalRoute = closed;
+    } else {
+      const targetIdx = (highlightIdx >= 0 && highlightIdx < routeData.routes.length) ? highlightIdx : 0;
+      focalRoute = normCvrpRoute(routeData.routes[targetIdx]);
+      // Draw non-focal routes first (dimmed when focusing or when a specific route row is selected)
+      routeData.routes.forEach(function (r, rIdx) {
+        if (rIdx === targetIdx) return;
+        const nr = normCvrpRoute(r);
+        const ptsAttr = nr.map(function (i) { return bounds.pts[i] ? (sx(bounds.pts[i][0]).toFixed(1) + "," + sy(bounds.pts[i][1]).toFixed(1)) : ""; }).filter(Boolean).join(" ");
+        const op = (highlightIdx >= 0 || focusOnly) ? "0.22" : "0.78";
+        const wd = (highlightIdx >= 0 || focusOnly) ? "1.05" : "1.55";
+        layers.push('<polyline fill="none" stroke="' + primaryColor + '" stroke-opacity="' + op + '" stroke-width="' + wd + '" points="' + ptsAttr + '"/>');
+      });
+      // Focal route on top
+      const fAttr = focalRoute.map(function (i) { return bounds.pts[i] ? (sx(bounds.pts[i][0]).toFixed(1) + "," + sy(bounds.pts[i][1]).toFixed(1)) : ""; }).filter(Boolean).join(" ");
+      layers.push('<polyline fill="none" stroke="' + primaryColor + '" stroke-width="2.2" points="' + fAttr + '"/>');
+    }
+
+    // Active step replay overlay (preserving chronological partial decisions & voluntary returns)
+    let activeStepBadge = null;
+    if (traceUpTo && traceUpTo.steps && traceUpTo.steps.length) {
+      traceUpTo.steps.forEach(function (st) {
+        const p1 = bounds.pts[st.current_node], p2 = bounds.pts[st.next_node];
+        if (!p1 || !p2) return;
+        const isVol = st.action_type === "voluntary_early_return";
+        layers.push('<line x1="' + sx(p1[0]).toFixed(1) + '" y1="' + sy(p1[1]).toFixed(1) + '" x2="' + sx(p2[0]).toFixed(1) + '" y2="' + sy(p2[1]).toFixed(1) + '" stroke="' + (isVol ? "#c2410c" : "#165dff") + '" stroke-width="' + (isVol ? "2.6" : "2.1") + '"' + (isVol ? ' stroke-dasharray="5,3"' : "") + "/>");
+      });
+      const last = traceUpTo.steps[traceUpTo.steps.length - 1];
+      activeStepBadge = last;
+      const curP = bounds.pts[last.next_node];
+      if (curP) {
+        layers.push('<circle cx="' + sx(curP[0]).toFixed(1) + '" cy="' + sy(curP[1]).toFixed(1) + '" r="6" fill="none" stroke="' + (last.action_type === "voluntary_early_return" ? "#c2410c" : "#165dff") + '" stroke-width="2.2"/>');
+      }
+    }
+
+    // Customer & depot nodes
+    const focalSet = {};
+    if (focalRoute) focalRoute.forEach(function (n) { focalSet[n] = true; });
+    const smallDot = bounds.pts.length > 140;
+    const nodes = bounds.pts.map(function (p, idx) {
+      const cx = sx(p[0]), cy = sy(p[1]);
+      if (family === "cvrp" && idx === 0) {
+        return '<rect x="' + (cx - 4.5).toFixed(1) + '" y="' + (cy - 4.5).toFixed(1) + '" width="9" height="9" fill="#1d2129" transform="rotate(45 ' + cx.toFixed(1) + " " + cy.toFixed(1) + ')"/>';
+      }
+      const inFocal = Boolean(focalSet[idx]);
+      return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (inFocal ? (smallDot ? 2.1 : 2.6) : (smallDot ? 1.2 : 1.7)) + '" fill="#ffffff" stroke="' + (inFocal ? primaryColor : "#86909c") + '" stroke-width="' + (inFocal ? "1.3" : "0.8") + '"/>';
+    }).join("");
+
+    // Departure arrow & anti-overlap first-visit badge (adopted from showcase visual polish)
+    let arrowSvg = "";
+    if (family === "cvrp" && focalRoute && focalRoute.length >= 2 && bounds.pts[0] && bounds.pts[focalRoute[1]]) {
+      const dPt = bounds.pts[0], fPt = bounds.pts[focalRoute[1]];
+      const x0 = sx(dPt[0]), y0 = sy(dPt[1]), x1 = sx(fPt[0]), y1 = sy(fPt[1]);
+      const ang = Math.atan2(y1 - y0, x1 - x0);
+      const mx = x0 + 0.58 * (x1 - x0), my = y0 + 0.58 * (y1 - y0);
+      const tri = [[6.5, ang], [6.5, ang + 2.52], [6.5, ang - 2.52]].map(function ( pair) {
+        return (mx + pair[0] * Math.cos(pair[1])).toFixed(1) + "," + (my + pair[0] * Math.sin(pair[1])).toFixed(1);
+      }).join(" ");
+      arrowSvg += '<polygon points="' + tri + '" fill="' + primaryColor + '"/>';
+      arrowSvg += '<circle cx="' + x1.toFixed(1) + '" cy="' + y1.toFixed(1) + '" r="4.2" fill="' + primaryColor + '" stroke="#ffffff" stroke-width="1.3"/>';
+      if (!smallDot || focusOnly) {
+        const alignLeft = x1 > x0;
+        const label = activeStepBadge && activeStepBadge.action_type === "voluntary_early_return"
+          ? "早返"
+          : ("#" + String(focalRoute[1]).padStart(2, "0"));
+        arrowSvg += '<text x="' + (x1 + (alignLeft ? -7 : 7)).toFixed(1) + '" y="' + (y1 + 4).toFixed(1) + '" text-anchor="' + (alignLeft ? "end" : "start") + '" font-size="11" font-weight="600" fill="' + primaryColor + '" stroke="#fafbfc" stroke-width="3" paint-order="stroke">' + L.esc(label) + "</text>";
+      }
+    }
+
+    return '<svg id="' + L.esc(svgId) + '" viewBox="0 0 ' + W + " " + H + '" width="100%" height="365">' +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' +
+      grid.join("") + layers.join("") + nodes + arrowSvg + "</svg>";
+  }
+
+  function drawObpSvg(svgId, routeData, inst, primaryColor, L) {
+    const W = 480, H = 300, pad = 32;
+    const fills = (routeData && routeData.sample_bin_fills) || [];
+    if (!fills.length) return '<div class="muted" style="padding:20px;">无箱位填充记录</div>';
+    const show = fills.slice(0, 32);
+    const bw = (W - pad * 2) / show.length;
+    const bars = show.map(function (f, i) {
+      const ratio = Math.max(0, Math.min(1, Number(f)));
+      const bh = ratio * (H - pad * 2 - 20);
+      const x = pad + i * bw + 1.5, y = H - pad - bh;
+      const col = ratio >= 0.9 ? primaryColor : ratio >= 0.7 ? "#64748b" : "#c2410c";
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + Math.max(2, bw - 3).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + col + '"/>';
+    }).join("");
+    return '<svg id="' + L.esc(svgId) + '" viewBox="0 0 ' + W + " " + H + '" width="100%" height="285">' +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' +
+      '<line x1="' + pad + '" y1="' + (pad + 18) + '" x2="' + (W - pad) + '" y2="' + (pad + 18) + '" stroke="#94a3b8" stroke-dasharray="4,3"/>' +
+      '<text x="' + (W - pad) + '" y="' + (pad + 13) + '" font-size="10.5" fill="#4e5969" text-anchor="end">容量 100% (C=' + L.esc(inst.capacity) + ")</text>" +
+      bars + "</svg>";
+  }
+
+  function pickPresetInstance(suiteBundle, algA, algB, presetKind) {
+    const recs = (suiteBundle && suiteBundle.records) || [];
+    const byA = {}, byB = {};
+    recs.forEach(function (r) {
+      if (r.algorithm_id === algA) byA[r.instance_id] = r;
+      if (r.algorithm_id === algB) byB[r.instance_id] = r;
+    });
+    const pairs = Object.keys(byA).filter(function (id) { return byB[id]; }).map(function (id) { return { id: id, a: byA[id], b: byB[id] }; });
+    if (!pairs.length) return null;
+    if (presetKind === "early_return") {
+      pairs.sort(function (x, y) { return Number(y.a.voluntary_early_return_count || 0) - Number(x.a.voluntary_early_return_count || 0); });
+      if (Number(pairs[0].a.voluntary_early_return_count || 0) > 0) return pairs[0].id;
+      const alt = recs.filter(function (r) { return Number(r.voluntary_early_return_count || 0) > 0; })
+        .sort(function (x, y) { return Number(y.voluntary_early_return_count) - Number(x.voluntary_early_return_count); });
+      if (alt.length) return alt[0].instance_id;
+    }
+    if (presetKind === "worst_loss") {
+      const toPair = pairs.find(function (p) { return p.a.status !== "ok" || p.b.status !== "ok"; });
+      if (toPair) return toPair.id;
+      pairs.sort(function (x, y) { return (Number(y.a.rel_gap || 0) - Number(y.b.rel_gap || 0)) - (Number(x.a.rel_gap || 0) - Number(x.b.rel_gap || 0)); });
+      return pairs[0].id;
+    }
+    const okPairs = pairs.filter(function (p) { return p.a.status === "ok" && p.b.status === "ok" && p.a.rel_gap !== null && p.b.rel_gap !== null; });
+    const pool = okPairs.length ? okPairs : pairs;
+    pool.sort(function (x, y) { return (Number(x.a.rel_gap || 0) - Number(x.b.rel_gap || 0)) - (Number(y.a.rel_gap || 0) - Number(y.b.rel_gap || 0)); });
+    return pool[0].id;
+  }
+
+  function render(core, state, suiteBundle) {
+    const L = window.WB_LABELS;
+    const fam = state.family || "cvrp";
+    const famSuites = (core.suites || []).filter(function (s) { return s.problem_family === fam; });
+    const activeSuite = L.getSuite(core, state.suite) || famSuites[0] || core.suites[0];
+    const suiteId = activeSuite.suite_id;
+
+    if (!suiteBundle || !suiteBundle.suite || suiteBundle.suite.suite_id !== suiteId) {
+      return '<div class="panel">正在载入测试集 <code>' + L.esc(suiteId) + "</code> 算例坐标与路径…</div>";
+    }
+
+    const algs = activeSuite.algorithms_evaluated || [];
+    const algA = (state.algA && algs.includes(state.algA)) ? state.algA : (algs.includes("s2_r5_spiral") ? "s2_r5_spiral" : algs[0]);
+    let algB = (state.algB && algs.includes(state.algB)) ? state.algB : (algs.includes("cw_relocate_2opt") ? "cw_relocate_2opt" : (algs[1] || algs[0]));
+    if (algA === algB && algs.length > 1) algB = algs.find(function (x) { return x !== algA; }) || algA;
+
+    const instances = suiteBundle.suite.instances || [];
+    let instId = state.inst;
+    if (!instId || !instances.some(function (x) { return x.instance_id === instId; })) {
+      instId = pickPresetInstance(suiteBundle, algA, algB, state.preset || "best_gain") || (instances[0] && instances[0].instance_id);
+    }
+    const instObj = instances.find(function (x) { return x.instance_id === instId; }) || instances[0];
+    const instRoutes = (suiteBundle.routes && suiteBundle.routes.routes_by_instance && suiteBundle.routes.routes_by_instance[instId]) || {};
+    const routeA = instRoutes[algA] || null, routeB = instRoutes[algB] || null;
+    const optOverlay = state.showOpt ? (fam === "tsp" ? instRoutes.__opt__ : (instRoutes.__bks__ || (instObj.bks_routes ? { routes: instObj.bks_routes } : null))) : null;
+
+    const recA = (suiteBundle.records || []).find(function (r) { return r.instance_id === instId && r.algorithm_id === algA; }) || null;
+    const recB = (suiteBundle.records || []).find(function (r) { return r.instance_id === instId && r.algorithm_id === algB; }) || null;
+
+    const tracesByInst = (suiteBundle.traces && suiteBundle.traces.traces_by_instance && suiteBundle.traces.traces_by_instance[instId]) || {};
+    const traceAlg = tracesByInst[algA] ? algA : (tracesByInst[algB] ? algB : null);
+    const traceSteps = traceAlg ? tracesByInst[traceAlg] : null;
+    let stepIdx = state.stepIdx !== undefined && state.stepIdx !== null ? Number(state.stepIdx) : -1;
+    if (traceSteps && stepIdx < 0 && state.preset === "early_return") {
+      const firstVol = traceSteps.findIndex(function (s) { return s.action_type === "voluntary_early_return"; });
+      if (firstVol >= 0) stepIdx = firstVol;
+    }
+    if (traceSteps && stepIdx >= traceSteps.length) stepIdx = traceSteps.length - 1;
+    const activeSlice = (traceSteps && stepIdx >= 0) ? { alg: traceAlg, steps: traceSteps.slice(0, stepIdx + 1) } : null;
+    const focusOnly = state.cmpFocus !== "all";
+    const hi = state.hlRoute !== undefined && state.hlRoute !== null ? Number(state.hlRoute) : -1;
+
+    let canvasInner = "";
+    if (fam === "obp") {
+      canvasInner = '<div class="dual-plots">' +
+        '  <div><div class="plot-title">' + L.esc(L.algTitle(core, algA)) + '</div><div class="plot-sub">箱容 C=' + L.esc(instObj.capacity) + '</div><div class="plot-box">' + drawObpSvg("cmp-svg-a", routeA, instObj, "#0f766e", L) + "</div></div>" +
+        '  <div><div class="plot-title">' + L.esc(L.algTitle(core, algB)) + '</div><div class="plot-sub">箱容 C=' + L.esc(instObj.capacity) + '</div><div class="plot-box">' + drawObpSvg("cmp-svg-b", routeB, instObj, "#c2410c", L) + "</div></div>" +
+        "</div>";
+    } else {
+      const bounds = computeSharedBounds(instObj, fam);
+      canvasInner = '<div class="dual-plots">' +
+        '  <div><div class="plot-title">' + L.esc(L.algTitle(core, algA)) + '</div><div class="plot-sub">' + (recA && recA.status === "ok" ? (L.fmtObj(recA.tour_length) + " · " + L.fmtPct(recA.rel_gap, 2)) : "未完成/超时") + '</div><div class="plot-box">' + drawSpatialSvg("cmp-svg-a", instObj, fam, routeA, recA, "#0f766e", bounds, optOverlay, hi, focusOnly, traceAlg === algA ? activeSlice : null, L) + "</div></div>" +
+        '  <div><div class="plot-title">' + L.esc(L.algTitle(core, algB)) + '</div><div class="plot-sub">' + (recB && recB.status === "ok" ? (L.fmtObj(recB.tour_length) + " · " + L.fmtPct(recB.rel_gap, 2)) : "未完成/超时") + '</div><div class="plot-box">' + drawSpatialSvg("cmp-svg-b", instObj, fam, routeB, recB, "#c2410c", bounds, optOverlay, hi, focusOnly, traceAlg === algB ? activeSlice : null, L) + "</div></div>" +
+        "</div>";
+    }
+
+    let scrubberHtml = "";
+    if (traceSteps && traceSteps.length) {
+      const curSt = stepIdx >= 0 ? traceSteps[stepIdx] : null;
+      const volCount = traceSteps.filter(function (s) { return s.action_type === "voluntary_early_return"; }).length;
+      const statusInfo = curSt
+        ? ("第 " + (stepIdx + 1) + "/" + traceSteps.length + " 步 · Route #" + (curSt.route_idx + 1) + " (" + curSt.current_node + " → " + curSt.next_node + ") · Q=" + curSt.rest_capacity_before + "→" + curSt.rest_capacity_after + (curSt.action_type === "voluntary_early_return" ? " · 触发主动早返" : ""))
+        : ("轨迹总步数 " + traceSteps.length + "（含 " + volCount + " 次主动早返，拖动或点击跳转查看）");
+      scrubberHtml = '<div class="scrubber-bar">' +
+        '  <input id="cmp-step-slider" type="range" min="-1" max="' + (traceSteps.length - 1) + '" step="1" value="' + stepIdx + '"/>' +
+        '  <div class="scrubber-controls">' +
+        '    <div class="controls-inline">' +
+        '      <button class="btn sm" id="cmp-step-reset">总览</button>' +
+        '      <button class="btn sm" id="cmp-step-prev">上一步</button>' +
+        '      <button class="btn sm" id="cmp-step-next">下一步</button>' +
+        '      <button class="btn sm active" id="cmp-step-next-vol">跳至主动早返 (' + volCount + ")</button>" +
+        "    </div>" +
+        '    <span class="mono">' + L.esc(statusInfo) + "</span>" +
+        "  </div>" +
+        "</div>";
+    }
+
+    // Inspector right card (3 KPIs + compact clickable route load table + concise diagnostic note)
+    let diffCls = "";
+    let gapTxt = "—";
+    if (recA && recB && recA.status === "ok" && recB.status === "ok" && recB.tour_length) {
+      const d = (recA.tour_length - recB.tour_length) / recB.tour_length;
+      diffCls = d < -1e-6 ? "good" : d > 1e-6 ? "warn" : "";
+      gapTxt = L.fmtPct(recA.rel_gap, 2) + " vs " + L.fmtPct(recB.rel_gap, 2);
+    }
+
+    let routeMiniHtml = "";
+    if (fam === "cvrp" && routeA && routeA.routes && routeA.routes.length) {
+      const cap = Number(instObj.capacity || 1), loads = routeA.route_loads || [], dists = routeA.route_distances || [];
+      const rows = routeA.routes.slice(0, 10).map(function (r, rIdx) {
+        const ld = loads[rIdx] !== undefined ? loads[rIdx] : 0;
+        const pct = Math.min(100, (ld / cap) * 100);
+        const active = hi === rIdx ? " active" : "";
+        return '<tr class="route-mini-row' + active + '" data-hl-route="' + (hi === rIdx ? -1 : rIdx) + '">' +
+          '<td class="mono">#' + (rIdx + 1) + "</td>" +
+          '<td><span class="load-bar"><span class="load-fill" style="width:' + pct.toFixed(0) + '%;"></span></span><span class="mono">' + ld + "/" + cap + "</span></td>" +
+          '<td class="num">' + (dists[rIdx] !== undefined ? L.fmtNum(dists[rIdx], 2) : "—") + "</td>" +
+          "</tr>";
+      }).join("");
+      routeMiniHtml = '<h3 style="font-size:13.5px;font-weight:600;margin:16px 0 8px;">Algorithm A 路线负荷（点击高亮）</h3>' +
+        '<div class="table-wrap"><table class="route-mini-table"><thead><tr><th>车次</th><th>载重 / Q</th><th class="num">路程</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+        (routeA.routes.length > 10 ? ('<div class="muted" style="font-size:11.5px;margin-top:6px;">仅列前 10 条（共 ' + routeA.routes.length + " 条）</div>") : "");
+    }
+
+    let diagText = "同一实例输入下的双算法结构对照；图内箭头标示焦距路径的仓口出发首跳。";
+    if ((recA && recA.status !== "ok") || (recB && recB.status !== "ok")) {
+      diagText = "存在预算耗时上限截断（A: " + (recA ? recA.status : "—") + " / B: " + (recB ? recB.status : "—") + "），如实呈现未完成边界。";
+    } else if (fam === "cvrp" && recA && recB) {
+      const vrA = recA.voluntary_early_return_count || 0, vrB = recB.voluntary_early_return_count || 0;
+      diagText = "路线数 A=" + (recA.route_count || "—") + " vs B=" + (recB.route_count || "—") + "，主动早返 A=" + vrA + " 次 / B=" + vrB + " 次；可叠加官方 BKS (" + L.fmtObj(instObj.reference_objective) + ") 检查尾部绕行。";
+    }
+
+    const kbA = L.resolveAlgKbId(core, algA), kbB = L.resolveAlgKbId(core, algB);
+
+    return [
+      '<div class="cmp-bar">',
+      '  <div class="controls-inline">',
+      '    <select id="cmp-suite-sel">' + core.suites.map(function (s) { return '<option value="' + L.esc(s.suite_id) + '"' + (s.suite_id === suiteId ? " selected" : "") + ">" + L.esc(L.suiteTitle(s)) + "</option>"; }).join("") + "</select>",
+      '    <select id="cmp-inst-sel">' + instances.slice(0, 150).map(function (x) { return '<option value="' + L.esc(x.instance_id) + '"' + (x.instance_id === instId ? " selected" : "") + ">" + L.esc(x.instance_id) + " (n=" + x.size + ")</option>"; }).join("") + "</select>",
+      '    <select id="cmp-alg-a">' + algs.map(function (id) { return '<option value="' + L.esc(id) + '"' + (id === algA ? " selected" : "") + ">A: " + L.esc(L.algTitle(core, id)) + "</option>"; }).join("") + "</select>",
+      '    <select id="cmp-alg-b">' + algs.map(function (id) { return '<option value="' + L.esc(id) + '"' + (id === algB ? " selected" : "") + ">B: " + L.esc(L.algTitle(core, id)) + "</option>"; }).join("") + "</select>",
+      "  </div>",
+      '  <div class="controls-inline">',
+      '    <button class="btn sm" id="cmp-preset-gain">改善例</button>',
+      '    <button class="btn sm" id="cmp-preset-loss">边界/超时例</button>',
+      fam === "cvrp" ? '<button class="btn sm" id="cmp-preset-early">早返例</button>' : "",
+      fam !== "obp" ? ('<label class="toggle-label"><input type="checkbox" id="cmp-focus-ck"' + (focusOnly ? " checked" : "") + "/> 重点路线聚焦</label>") : "",
+      fam !== "obp" ? ('<label class="toggle-label"><input type="checkbox" id="cmp-opt-overlay"' + (state.showOpt ? " checked" : "") + "/> 叠加官方参考</label>") : "",
+      "  </div>",
+      "</div>",
+
+      '<div class="cmp-split">',
+      '  <div class="canvas-panel">',
+      canvasInner,
+      scrubberHtml,
+      "  </div>",
+      '  <aside class="inspector-card">',
+      '    <div class="panel-head" style="margin-bottom:8px;"><h3 class="panel-title">算例检验指标</h3><div class="controls-inline"><button class="btn link sm" id="cmp-export-svg-a">SVG</button><button class="btn link sm" id="cmp-export-png-a">PNG</button></div></div>',
+      '    <div class="kpi-row"><span class="kpi-k">目标长度 (A / B)</span><span class="kpi-v ' + diffCls + '">' + (recA && recA.status === "ok" ? L.fmtObj(recA.tour_length) : "超时") + " vs " + (recB && recB.status === "ok" ? L.fmtObj(recB.tour_length) : "超时") + "</span></div>",
+      '    <div class="kpi-row"><span class="kpi-k">相对参考差距</span><span class="kpi-v">' + L.esc(gapTxt) + "</span></div>",
+      '    <div class="kpi-row"><span class="kpi-k">求解耗时</span><span class="kpi-v">' + (recA ? L.fmtMs(recA.solve_ms) : "—") + " vs " + (recB ? L.fmtMs(recB.solve_ms) : "—") + "</span></div>",
+      routeMiniHtml,
+      '    <div class="diag-note">' + L.esc(diagText) + "</div>",
+      (kbA || kbB) ? ('<div class="controls-inline" style="margin-top:12px;">' + (kbA ? '<button class="btn sm" data-nav="page=knowledge&tab=library&entry=' + L.esc(kbA) + '">A 知识卡</button>' : "") + (kbB ? '<button class="btn sm" data-nav="page=knowledge&tab=library&entry=' + L.esc(kbB) + '">B 知识卡</button>' : "") + "</div>") : "",
+      "  </aside>",
+      "</div>"
+    ].join("\n");
+  }
+
+  function bind(rootEl, core, state, nav, suiteBundle) {
+    const L = window.WB_LABELS;
+    const sSel = rootEl.querySelector("#cmp-suite-sel");
+    if (sSel) sSel.addEventListener("change", function () {
+      const s = L.getSuite(core, sSel.value);
+      nav({ suite: sSel.value, family: (s && s.problem_family) || state.family, inst: "", stepIdx: -1, hlRoute: -1 });
+    });
+    const iSel = rootEl.querySelector("#cmp-inst-sel");
+    if (iSel) iSel.addEventListener("change", function () { nav({ inst: iSel.value, stepIdx: -1, hlRoute: -1 }); });
+    const aSel = rootEl.querySelector("#cmp-alg-a");
+    if (aSel) aSel.addEventListener("change", function () { nav({ algA: aSel.value, stepIdx: -1, hlRoute: -1 }); });
+    const bSel = rootEl.querySelector("#cmp-alg-b");
+    if (bSel) bSel.addEventListener("change", function () { nav({ algB: bSel.value, stepIdx: -1 }); });
+
+    const algs = (L.getSuite(core, state.suite) || {}).algorithms_evaluated || [];
+    const curA = (state.algA && algs.includes(state.algA)) ? state.algA : (algs.includes("s2_r5_spiral") ? "s2_r5_spiral" : algs[0]);
+    const curB = (state.algB && algs.includes(state.algB)) ? state.algB : (algs.includes("cw_relocate_2opt") ? "cw_relocate_2opt" : (algs[1] || algs[0]));
+
+    const gBtn = rootEl.querySelector("#cmp-preset-gain");
+    if (gBtn) gBtn.addEventListener("click", function () { nav({ inst: pickPresetInstance(suiteBundle, curA, curB, "best_gain") || "", preset: "best_gain", stepIdx: -1, hlRoute: -1 }); });
+    const lBtn = rootEl.querySelector("#cmp-preset-loss");
+    if (lBtn) lBtn.addEventListener("click", function () { nav({ inst: pickPresetInstance(suiteBundle, curA, curB, "worst_loss") || "", preset: "worst_loss", stepIdx: -1, hlRoute: -1 }); });
+    const eBtn = rootEl.querySelector("#cmp-preset-early");
+    if (eBtn) eBtn.addEventListener("click", function () {
+      const targetId = pickPresetInstance(suiteBundle, curA, curB, "early_return") || "";
+      const trInst = (suiteBundle && suiteBundle.traces && suiteBundle.traces.traces_by_instance && suiteBundle.traces.traces_by_instance[targetId]) || {};
+      const tList = trInst[curA] || trInst.s2_r5_spiral || null;
+      const firstVol = Array.isArray(tList) ? tList.findIndex(function (s) { return s.action_type === "voluntary_early_return"; }) : -1;
+      nav({ inst: targetId, preset: "early_return", stepIdx: firstVol >= 0 ? firstVol : -1, hlRoute: -1 });
+    });
+
+    const fCk = rootEl.querySelector("#cmp-focus-ck");
+    if (fCk) fCk.addEventListener("change", function () { nav({ cmpFocus: fCk.checked ? "focus" : "all" }); });
+    const optCk = rootEl.querySelector("#cmp-opt-overlay");
+    if (optCk) optCk.addEventListener("change", function () { nav({ showOpt: optCk.checked }); });
+    rootEl.querySelectorAll("[data-hl-route]").forEach(function (el) {
+      el.addEventListener("click", function () { nav({ hlRoute: Number(el.getAttribute("data-hl-route")) }); });
+    });
+
+    const instId = state.inst || ((suiteBundle && suiteBundle.suite && suiteBundle.suite.instances[0] && suiteBundle.suite.instances[0].instance_id) || "");
+    const tMap = (suiteBundle && suiteBundle.traces && suiteBundle.traces.traces_by_instance && suiteBundle.traces.traces_by_instance[instId]) || {};
+    const tAlg = tMap[curA] ? curA : (tMap[curB] ? curB : null);
+    const steps = tAlg ? tMap[tAlg] : null;
+    const curIdx = state.stepIdx !== undefined && state.stepIdx !== null ? Number(state.stepIdx) : -1;
+
+    const slider = rootEl.querySelector("#cmp-step-slider");
+    if (slider) slider.addEventListener("change", function () { nav({ stepIdx: Number(slider.value) }); });
+    const rBtn = rootEl.querySelector("#cmp-step-reset");
+    if (rBtn) rBtn.addEventListener("click", function () { nav({ stepIdx: -1 }); });
+    const pBtn = rootEl.querySelector("#cmp-step-prev");
+    if (pBtn && steps) pBtn.addEventListener("click", function () { nav({ stepIdx: Math.max(-1, curIdx - 1) }); });
+    const nBtn = rootEl.querySelector("#cmp-step-next");
+    if (nBtn && steps) nBtn.addEventListener("click", function () { nav({ stepIdx: Math.min(steps.length - 1, curIdx + 1) }); });
+    const vBtn = rootEl.querySelector("#cmp-step-next-vol");
+    if (vBtn && steps) {
+      vBtn.addEventListener("click", function () {
+        let nxt = steps.findIndex(function (s, idx) { return idx > curIdx && s.action_type === "voluntary_early_return"; });
+        if (nxt < 0) nxt = steps.findIndex(function (s) { return s.action_type === "voluntary_early_return"; });
+        if (nxt >= 0) nav({ stepIdx: nxt });
+      });
+    }
+
+    const svgBtn = rootEl.querySelector("#cmp-export-svg-a");
+    if (svgBtn) svgBtn.addEventListener("click", function () { window.WB_EXPORT.exportSvg(rootEl.querySelector("#cmp-svg-a"), instId + "_" + curA + ".svg"); });
+    const pngBtn = rootEl.querySelector("#cmp-export-png-a");
+    if (pngBtn) pngBtn.addEventListener("click", function () { window.WB_EXPORT.exportPng300Dpi(rootEl.querySelector("#cmp-svg-a"), instId + "_" + curA + "_300dpi.png"); });
+  }
+
+  window.WB_VIEWS = window.WB_VIEWS || {};
+  window.WB_VIEWS.comparator = { render: render, bind: bind };
+})();
+
+
+/* === results_view.js === */
+/* Shared Results Sub-Renderers: Pareto SVG, Tier Breakdown, Published Tables, Selection Panel. */
+(function () {
+  "use strict";
+
+  function renderParetoSvg(core, suiteId, scope, L) {
+    const sum = L.getSuiteSummary(core, suiteId);
+    if (!sum || !sum.algorithms) return '<div class="muted">暂无数据</div>';
+    const pts = Object.keys(sum.algorithms).map(function (aid, i) {
+      const st = L.getAlgStats(sum, aid, scope);
+      const ov = L.getAlgStats(sum, aid, "overall");
+      if (!st || st.mean_rel_gap === null || st.solve_ms_p50 === null) return null;
+      return {
+        aid: aid,
+        label: L.algTitle(core, aid),
+        gapPct: Number(st.mean_rel_gap) * 100,
+        ms: Math.max(0.05, Number(st.solve_ms_p50)),
+        color: L.PALETTE[i % L.PALETTE.length],
+        ok: ov ? ov.ok_count : 0,
+        n: ov ? ov.n_instances : 0
+      };
+    }).filter(Boolean);
+    if (!pts.length) return '<div class="muted">暂无可绘图点</div>';
+
+    const sortedByMs = pts.slice().sort(function (a, b) { return a.ms - b.ms; });
+    const frontier = [];
+    let bestGap = Infinity;
+    sortedByMs.forEach(function (p) {
+      if (p.gapPct < bestGap) { bestGap = p.gapPct; frontier.push(p); }
+    });
+
+    const W = 780, H = 360, pl = 68, pr = 40, pt = 28, pb = 50;
+    const minLog = Math.log10(Math.min.apply(null, pts.map(function (p) { return p.ms; })));
+    const maxLog = Math.log10(Math.max.apply(null, pts.map(function (p) { return p.ms; })));
+    const spanLog = Math.max(0.5, maxLog - minLog);
+    const gaps = pts.map(function (p) { return p.gapPct; });
+    const minG = Math.min.apply(null, gaps), maxG = Math.max.apply(null, gaps);
+    const padG = Math.max(1.5, (maxG - minG) * 0.12);
+    const gLo = minG - padG, gHi = maxG + padG;
+
+    const sx = function (ms) { return pl + ((Math.log10(ms) - minLog) / spanLog) * (W - pl - pr); };
+    const sy = function (g) { return H - pb - ((g - gLo) / Math.max(1e-6, gHi - gLo)) * (H - pt - pb); };
+
+    const grid = [];
+    for (let i = 0; i <= 4; i++) {
+      const yg = gLo + ((gHi - gLo) * i) / 4;
+      const y = sy(yg);
+      grid.push('<line x1="' + pl + '" y1="' + y.toFixed(1) + '" x2="' + (W - pr) + '" y2="' + y.toFixed(1) + '" stroke="#e5e7eb"/>');
+      grid.push('<text x="' + (pl - 8) + '" y="' + (y + 4).toFixed(1) + '" font-size="11" fill="#86909c" text-anchor="end">' + yg.toFixed(1) + "%</text>");
+    }
+    [0.1, 1, 10, 100, 500].forEach(function (tickMs) {
+      const l = Math.log10(tickMs);
+      if (l >= minLog - 0.12 && l <= maxLog + 0.12) {
+        const x = Math.max(pl, Math.min(W - pr, sx(tickMs)));
+        grid.push('<line x1="' + x.toFixed(1) + '" y1="' + pt + '" x2="' + x.toFixed(1) + '" y2="' + (H - pb) + '" stroke="#e5e7eb"/>');
+        grid.push('<text x="' + x.toFixed(1) + '" y="' + (H - pb + 18) + '" font-size="11" fill="#86909c" text-anchor="middle">' + tickMs + "ms</text>");
+      }
+    });
+
+    const fPath = frontier.length > 1
+      ? '<polyline fill="none" stroke="#165dff" stroke-width="1.8" stroke-dasharray="4,3" points="' + frontier.map(function (p) { return sx(p.ms).toFixed(1) + "," + sy(p.gapPct).toFixed(1); }).join(" ") + '"/>'
+      : "";
+
+    const circles = pts.map(function (p) {
+      const cx = sx(p.ms), cy = sy(p.gapPct), isF = frontier.indexOf(p) >= 0;
+      return '<g style="cursor:pointer;" data-nav="page=comparator&suite=' + L.esc(suiteId) + "&algA=" + L.esc(p.aid) + '">' +
+        '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (isF ? 6 : 4.5) + '" fill="' + (isF ? "#165dff" : "#94a3b8") + '" stroke="#fff" stroke-width="1.5"/>' +
+        '<text x="' + (cx + 8).toFixed(1) + '" y="' + (cy + 3.5).toFixed(1) + '" font-size="11.5" font-weight="' + (isF ? "600" : "400") + '" fill="#1d2129">' + L.esc(p.label) + " (" + p.gapPct.toFixed(1) + "%)</text>" +
+        "</g>";
+    }).join("");
+
+    return '<svg id="pareto-svg" viewBox="0 0 ' + W + " " + H + '" width="100%" height="360">' +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fafbfc" rx="6"/>' +
+      grid.join("") +
+      '<line x1="' + pl + '" y1="' + (H - pb) + '" x2="' + (W - pr) + '" y2="' + (H - pb) + '" stroke="#cbd5e1"/>' +
+      '<line x1="' + pl + '" y1="' + pt + '" x2="' + pl + '" y2="' + (H - pb) + '" stroke="#cbd5e1"/>' +
+      '<text x="' + ((pl + W - pr) / 2) + '" y="' + (H - 12) + '" font-size="12" fill="#4e5969" text-anchor="middle">求解耗时中位数 P50 (ms，对数刻度)</text>' +
+      '<text x="18" y="' + ((pt + H - pb) / 2) + '" font-size="12" fill="#4e5969" text-anchor="middle" transform="rotate(-90 18 ' + ((pt + H - pb) / 2) + ')">相对差距 % Gap (越低越优)</text>' +
+      fPath + circles + "</svg>";
+  }
+
+  function renderTierBreakdown(core, suiteId, sum, L) {
+    if (!sum || !sum.algorithms) return "";
+    const algs = Object.keys(sum.algorithms);
+    let bucketField = "by_scale", title = "多规模分档质量对照";
+    if (suiteId === "cvrp_ext_cvrplib_x_100") {
+      bucketField = "by_x_tier";
+      title = "Set X 三档规模分组（X-S 100–250 / X-M 251–500 / X-L 501–1000）";
+    } else if (suiteId === "cvrp_ext_cvrplib_abp_74") {
+      bucketField = "by_cvrplib_set";
+      title = "CVRPLib 子集 A / B / P 分组对照";
+    } else if (suiteId.indexOf("obp_") === 0) {
+      bucketField = "by_obp_regime";
+      title = "OBP 容量与流长分组对照";
+    }
+
+    const keysSet = {};
+    algs.forEach(function (aid) {
+      const m = sum.algorithms[aid][bucketField];
+      if (m) Object.keys(m).forEach(function (k) { keysSet[k] = true; });
+    });
+    const tierKeys = Object.keys(keysSet);
+    if (!tierKeys.length) return "";
+
+    const bodyRows = algs.map(function (aid) {
+      const m = sum.algorithms[aid][bucketField] || {};
+      const cells = tierKeys.map(function (tk) {
+        const st = m[tk];
+        if (!st) return '<td class="num muted">—</td>';
+        const okNote = st.ok_count < st.n_instances ? (' <span class="muted">(' + st.ok_count + "/" + st.n_instances + ")</span>") : "";
+        return '<td class="num">' + L.fmtPct(st.mean_rel_gap, 2) + okNote + "</td>";
+      }).join("");
+      return '<tr><td><div class="row-title">' + L.esc(L.algTitle(core, aid)) + '</div><div class="row-sub mono">' + L.esc(aid) + "</div></td>" + cells + "</tr>";
+    }).join("");
+
+    return '<div class="panel"><div class="panel-head"><h3 class="panel-title">' + L.esc(title) + '</h3></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>算法</th>' + tierKeys.map(function (k) { return '<th class="num">' + L.esc(k) + "</th>"; }).join("") +
+      "</tr></thead><tbody>" + bodyRows + "</tbody></table></div></div>";
+  }
+
+  function renderPublishedTrack(core, suite, fam, showAllPapers, L) {
+    const pub = (core.published_results && core.published_results.records) || [];
+    const filtered = showAllPapers ? pub : pub.filter(function (r) {
+      return r.suite_id === suite.suite_id || r.problem_family === fam;
+    });
+
+    const rows = filtered.map(function (r) {
+      const isPend = r.verification_status !== "verified_from_paper_table" || r.value === null || r.value === undefined;
+      const valDisplay = isPend
+        ? '<span class="muted">原表未提供数值</span>'
+        : ('<span class="mono" style="font-weight:600;">' + L.fmtNum(r.value, r.unit === "percent" ? 2 : r.unit === "score" ? 3 : 4) + (r.unit === "percent" ? "%" : "") + "</span>");
+      const statusHtml = isPend
+        ? '<span class="status-tag">待提取</span>'
+        : '<span class="status-tag good">原表核实</span>';
+      return "<tr>" +
+        '<td><div class="row-title">' + L.esc(r.paper_citation) + '</div><div class="row-sub mono">' + L.esc(r.table_ref) + " · " + L.esc(r.subset) + "</div></td>" +
+        '<td><div>' + L.esc(r.method_display_name) + '</div><div class="row-sub">' + L.esc(L.PARADIGM_LABELS[r.paradigm] || r.paradigm) + "</div></td>" +
+        '<td class="mono">' + L.esc(r.metric_name) + "</td>" +
+        '<td class="num">' + valDisplay + "</td>" +
+        "<td>" + statusHtml + "</td>" +
+        '<td class="sec" style="font-size:12px;max-width:340px;">' + L.esc(r.protocol_boundary_note) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    return '<div class="panel">' +
+      '<div class="panel-head">' +
+      '  <div>' +
+      '    <h2 class="panel-title">顶会论文原表参照（物理隔离对照）</h2>' +
+      '    <p class="panel-sub">保留异机硬件、10 规则 ' + L.jargon("CPI", "CPI") + ' 与线上推理口径边界，不与本机 ' + L.esc(core.budget_ms) + " ms 复跑混排。当前展示 " + filtered.length + " / 共 " + pub.length + " 条。</p>" +
+      "  </div>" +
+      '  <div class="controls-inline"><button class="btn sm" id="l2-toggle-all-papers">' + (showAllPapers ? "仅看关联基准原表" : "展开全部顶会记录") + "</button></div>" +
+      "</div>" +
+      '<div class="table-wrap" style="max-height:540px;overflow-y:auto;"><table>' +
+      '<thead><tr><th>文献与表号定位</th><th>发表方法与范式</th><th>指标</th><th class="num">原表值</th><th>状态</th><th>协议边界说明</th></tr></thead>' +
+      "<tbody>" + (rows || '<tr><td colspan="6" class="muted">当前问题族暂无绑定原表条目</td></tr>') + "</tbody>" +
+      "</table></div></div>";
+  }
+
+  function renderH003P0Spotlight(core, L) {
+    const hp = core.h003_preview;
+    if (!hp || !hp.summary) return "";
+    const s = hp.summary;
+    const arch = hp.archived_theory;
+    const bySize = hp.by_size || {};
+    const rows = ["50", "100", "200"].map(function (sz) {
+      const b = bySize[sz];
+      if (!b) return "";
+      return "<tr><td>n = " + sz + " (N=" + b.n + ")</td>" +
+        '<td class="num">' + L.fmtNum(b.means[0], 4) + "</td>" +
+        '<td class="num">' + L.fmtNum(b.means[1], 4) + "</td>" +
+        '<td class="num" style="color:var(--teal);font-weight:600;">-' + L.fmtRatioAsPctPlain(b.rel_gain, 2) + "</td>" +
+        '<td class="num">[' + L.fmtRatioAsPctPlain(b.ci95[0], 2) + ", " + L.fmtRatioAsPctPlain(b.ci95[1], 2) + "]</td>" +
+        '<td class="num">' + b.wtl.wins + " / " + b.wtl.losses + "</td></tr>";
+    }).join("");
+
+    const archNote = arch
+      ? (" · 历史 V0_decoupled_theory 另改写中程破平 1/24,397 步，均长 " + L.fmtNum(arch.mean, 4) + "，降幅 -" + L.fmtRatioAsPctPlain(arch.rel_gain, 2))
+      : "";
+
+    return '<div class="panel">' +
+      '<div class="panel-head">' +
+      '  <div><h3 class="panel-title">P0-120 配对检验：原始 V0 vs 严格出仓反事实替换</h3><p class="panel-sub">严格保留冻结 V0 中程逻辑、仅替换出仓步：总体降幅 -' + L.fmtRatioAsPctPlain(s.rel_gain, 2) + "（均值 " + L.fmtNum(s.means[1], 4) + "，95% CI [" + L.fmtRatioAsPctPlain(s.ci95[0], 2) + ", " + L.fmtRatioAsPctPlain(s.ci95[1], 2) + "]，胜/负 " + s.wtl.wins + "/" + s.wtl.losses + L.esc(archNote) + "）</p></div>" +
+      '  <button class="btn sm" data-nav="page=knowledge&tab=stories&story=h003">进入 H-003 机理页 →</button>' +
+      "</div>" +
+      '<div class="table-wrap"><table><thead><tr><th>规模分组</th><th class="num">V0 均值</th><th class="num">严格出仓替换均值</th><th class="num">相对降幅</th><th class="num">95% Bootstrap CI</th><th class="num">胜 / 负</th></tr></thead>' +
+      "<tbody>" + rows + "</tbody></table></div></div>";
+  }
+
+  function renderSelectionPanel(core, suite, state, L) {
+    const analyses = (core.selection && core.selection.analyses) || {};
+    const keys = Object.keys(analyses);
+    if (!keys.length) return '<div class="panel muted">暂无算法选择记录</div>';
+    let selKey = state.selAnalysis;
+    if (!selKey || !analyses[selKey]) selKey = keys.find(function (k) { return analyses[k].suite_id === suite.suite_id; }) || keys[0];
+    const analysis = analyses[selKey];
+    const protoKeys = Object.keys(analysis.protocols || {});
+    let protoKey = state.selProto;
+    if (!protoKey || !analysis.protocols[protoKey]) protoKey = protoKeys[0];
+    const proto = analysis.protocols[protoKey];
+
+    const selEntries = Object.keys(proto.selectors || {}).map(function (sid) { return proto.selectors[sid]; });
+    const selRows = selEntries.map(function (s) {
+      const hl = s.selector_id === "rf_reg" || s.selector_id === "oracle_vbs";
+      const picksSummary = s.picks ? Object.keys(s.picks).map(function (k) { return k + ":" + s.picks[k]; }).join(", ") : "—";
+      const gainColor = (s.gain_vs_sbs || 0) > 0 ? "var(--teal)" : (s.gain_vs_sbs || 0) < 0 ? "var(--terra)" : "var(--ink)";
+      return '<tr' + (hl ? ' class="active-row"' : "") + ">" +
+        '<td>' + L.esc(s.selector_id) + (s.uses_features ? ' <span class="status-tag">特征驱动</span>' : "") + "</td>" +
+        '<td class="num">' + L.fmtNum(s.mean, 4) + "</td>" +
+        '<td class="num" style="color:' + gainColor + ';font-weight:600;">' + L.fmtPct(s.gain_vs_sbs, 2) + "</td>" +
+        '<td class="num">' + L.fmtPct(s.gap_to_vbs, 2) + "</td>" +
+        '<td class="num">' + (s.p_boot_one_sided !== null && s.p_boot_one_sided !== undefined ? L.fmtNum(s.p_boot_one_sided, 4) : "—") + "</td>" +
+        '<td class="num">' + (s.mistake_count_vs_oracle !== undefined ? (s.mistake_count_vs_oracle + "/" + s.n_instances) : "—") + "</td>" +
+        '<td class="num">' + L.fmtNum(s.mean_feat_ms, 2) + " + " + L.fmtNum(s.mean_infer_ms, 2) + " + " + L.fmtNum(s.mean_solve_ms, 2) + " = <b>" + L.fmtMs(s.mean_total_ms) + "</b></td>" +
+        '<td class="mono muted" style="font-size:11px;">' + L.esc(picksSummary) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    const decMap = proto.per_instance_decisions || {};
+    const decKey = (state.selModel && decMap[state.selModel]) ? state.selModel : (decMap.rf_reg ? "rf_reg" : Object.keys(decMap)[0]);
+    const decisions = (decKey ? decMap[decKey] : []) || [];
+    const mistakes = decisions.filter(function (d) { return d.is_mistake_vs_oracle; })
+      .slice().sort(function (a, b) { return Number(b.regret_rel || 0) - Number(a.regret_rel || 0); });
+
+    const mistakeRows = mistakes.slice(0, 30).map(function (d) {
+      return "<tr>" +
+        '<td class="mono">' + L.esc(d.instance_id) + "</td>" +
+        '<td class="num">' + d.size + "</td>" +
+        "<td>" + L.esc(d.spatial) + "</td>" +
+        '<td class="mono">' + L.esc(L.algTitle(core, d.selected_algorithm)) + " (" + L.fmtNum(d.selected_cost, 4) + ")</td>" +
+        '<td class="mono" style="color:var(--teal);">' + L.esc(L.algTitle(core, d.oracle_algorithm)) + " (" + L.fmtNum(d.oracle_cost, 4) + ")</td>" +
+        '<td class="num" style="color:var(--terra);">' + L.fmtPct(d.regret_rel, 2) + "</td>" +
+        '<td><button class="btn link sm" data-nav="page=comparator&suite=' + L.esc(analysis.suite_id) + "&inst=" + L.esc(d.instance_id) + "&algA=" + L.esc(d.selected_algorithm) + "&algB=" + L.esc(d.oracle_algorithm) + '">路线对照</button></td>' +
+        "</tr>";
+    }).join("");
+
+    return '<div class="summary-bar">' +
+      '  <div class="summary-item"><div class="k">全局 ' + L.jargon("SBS", "SBS") + '</div><div class="v">' + L.esc(analysis.global_sbs_algorithm) + '</div><div class="s">总长 ' + L.fmtNum(analysis.global_sbs_total, 2) + "</div></div>" +
+      '  <div class="summary-item"><div class="k">理论 ' + L.jargon("VBS", "Oracle VBS") + '</div><div class="v">' + L.fmtNum(analysis.global_vbs_total, 2) + '</div><div class="s">样本数 N=' + analysis.n_instances + "</div></div>" +
+      '  <div class="summary-item"><div class="k">池内互补间隙</div><div class="v">' + L.fmtRatioAsPctPlain(analysis.global_sbs_gap_to_vbs, 2) + '</div><div class="s">候选数 ' + (analysis.members || []).length + "</div></div>" +
+      '  <div class="summary-item"><div class="k">失误例 (' + L.esc(decKey || "") + ')</div><div class="v">' + mistakes.length + "/" + decisions.length + '</div><div class="s">相对事后最优遗憾</div></div>' +
+      "</div>" +
+      '<div class="panel">' +
+      '  <div class="panel-head">' +
+      '    <div><h2 class="panel-title">实例级算法选择评估</h2><p class="panel-sub">严格分离特征提取、推理与求解三段耗时，区分同分布交叉验证与独立迁移泛化边界</p></div>' +
+      '    <div class="controls-inline">' +
+      '      <select id="l2-sel-analysis">' + keys.map(function (k) { return '<option value="' + L.esc(k) + '"' + (k === selKey ? " selected" : "") + ">" + L.esc(k) + " (" + L.esc(analyses[k].evaluation_mode) + ")</option>"; }).join("") + "</select>" +
+      '      <select id="l2-sel-proto">' + protoKeys.map(function (pk) { return '<option value="' + L.esc(pk) + '"' + (pk === protoKey ? " selected" : "") + ">" + L.esc(pk) + " (folds=" + analysis.protocols[pk].n_folds + ")</option>"; }).join("") + "</select>" +
+      "    </div>" +
+      "  </div>" +
+      '  <div class="table-wrap"><table>' +
+      '    <thead><tr><th>策略 / 选择器</th><th class="num">均路程</th><th class="num">相对 SBS 变化</th><th class="num">距 VBS</th><th class="num">p 值</th><th class="num">失误样本</th><th class="num">分离计时 (特征+推理+求解)</th><th>选出分布</th></tr></thead>' +
+      "    <tbody>" + selRows + "</tbody>" +
+      "  </table></div>" +
+      '  <details class="source-box"><summary>展开最大遗憾失误样本（' + L.esc(decKey || "") + "，显示前 " + Math.min(30, mistakes.length) + " / 共 " + mistakes.length + " 例）</summary>" +
+      '    <div class="table-wrap" style="margin-top:10px;max-height:360px;overflow-y:auto;"><table>' +
+      '      <thead><tr><th>算例</th><th class="num">n</th><th>空间分布</th><th>选出算法 (Obj)</th><th>Oracle 最优 (Obj)</th><th class="num">选择遗憾</th><th>查看</th></tr></thead>' +
+      "      <tbody>" + (mistakeRows || '<tr><td colspan="7" class="muted">当前协议下零失误样本</td></tr>') + "</tbody>" +
+      "    </table></div>" +
+      "  </details>" +
+      "</div>";
+  }
+
+  window.WB_RESULTS_PARTS = {
+    renderParetoSvg: renderParetoSvg,
+    renderTierBreakdown: renderTierBreakdown,
+    renderPublishedTrack: renderPublishedTrack,
+    renderH003P0Spotlight: renderH003P0Spotlight,
+    renderSelectionPanel: renderSelectionPanel
+  };
+
+  // Preserve compatibility for #page=results hashes by routing through unified benchmarks view.
+  window.WB_VIEWS = window.WB_VIEWS || {};
+  window.WB_VIEWS.results = {
+    render: function (core, state, bundle) { return window.WB_VIEWS.benchmarks.render(core, state, bundle); },
+    bind: function (el, core, state, nav, bundle) { return window.WB_VIEWS.benchmarks.bind(el, core, state, nav, bundle); }
+  };
+})();
+
+
+/* === app.js === */
+/* Main SPA Coordinator: Single-Row Topbar, Progressive View Routing, Offline Script Bundle Loader. */
+(function () {
+  "use strict";
+
+  const PAGE_META = {
+    overview: "总览",
+    benchmarks: "基准对比",
+    comparator: "路线对照",
+    knowledge: "机理与知识库"
+  };
+
+  function parseHash() {
+    const raw = (window.location.hash || "").replace(/^#/, "");
+    const params = new URLSearchParams(raw);
+    const rawPage = params.get("page") || "overview";
+    const normPage = rawPage === "results" ? "benchmarks" : rawPage;
+    return {
+      page: PAGE_META[normPage] ? normPage : "overview",
+      family: params.get("family") || "cvrp",
+      suite: params.get("suite") || "",
+      tab: params.get("tab") || "",
+      scope: params.get("scope") || "",
+      sortBy: params.get("sortBy") || "mean_rel_gap",
+      sortDir: params.get("sortDir") || "asc",
+      inst: params.get("inst") || "",
+      algA: params.get("algA") || "",
+      algB: params.get("algB") || "",
+      preset: params.get("preset") || "",
+      cmpFocus: params.get("cmpFocus") || "focus",
+      showOpt: params.get("showOpt") === "1",
+      stepIdx: params.get("stepIdx") !== null ? Number(params.get("stepIdx")) : -1,
+      hlRoute: params.get("hlRoute") !== null ? Number(params.get("hlRoute")) : -1,
+      story: params.get("story") || "h003",
+      topic: params.get("topic") || "",
+      entry: params.get("entry") || "",
+      kbQuery: params.get("kbQuery") || "",
+      kbFam: params.get("kbFam") || "",
+      kbTier: params.get("kbTier") || "",
+      kbMode: params.get("kbMode") || "",
+      expandAll: params.get("expandAll") === "1",
+      showAllPapers: params.get("showAllPapers") === "1",
+      selAnalysis: params.get("selAnalysis") || "",
+      selProto: params.get("selProto") || "",
+      present: params.get("present") === "1",
+      mlAlpha: params.get("mlAlpha") !== null ? Number(params.get("mlAlpha")) : 1.15,
+      mlScale: params.get("mlScale") !== null ? Number(params.get("mlScale")) : 0.001,
+      mlPress: params.get("mlPress") !== null ? Number(params.get("mlPress")) : 65
+    };
+  }
+
+  function serializeHash(st) {
+    const p = new URLSearchParams();
+    p.set("page", st.page || "overview");
+    if (st.family && st.family !== "cvrp") p.set("family", st.family);
+    if (st.suite) p.set("suite", st.suite);
+    if (st.tab) p.set("tab", st.tab);
+    if (st.scope) p.set("scope", st.scope);
+    if (st.sortBy && st.sortBy !== "mean_rel_gap") p.set("sortBy", st.sortBy);
+    if (st.sortDir && st.sortDir !== "asc") p.set("sortDir", st.sortDir);
+    if (st.inst) p.set("inst", st.inst);
+    if (st.algA) p.set("algA", st.algA);
+    if (st.algB) p.set("algB", st.algB);
+    if (st.preset) p.set("preset", st.preset);
+    if (st.cmpFocus && st.cmpFocus !== "focus") p.set("cmpFocus", st.cmpFocus);
+    if (st.showOpt) p.set("showOpt", "1");
+    if (st.stepIdx !== undefined && st.stepIdx >= 0) p.set("stepIdx", String(st.stepIdx));
+    if (st.hlRoute !== undefined && st.hlRoute >= 0) p.set("hlRoute", String(st.hlRoute));
+    if (st.story && st.story !== "h003") p.set("story", st.story);
+    if (st.entry) p.set("entry", st.entry);
+    if (st.kbQuery) p.set("kbQuery", st.kbQuery);
+    if (st.kbFam) p.set("kbFam", st.kbFam);
+    if (st.kbTier) p.set("kbTier", st.kbTier);
+    if (st.kbMode) p.set("kbMode", st.kbMode);
+    if (st.expandAll) p.set("expandAll", "1");
+    if (st.showAllPapers) p.set("showAllPapers", "1");
+    if (st.selAnalysis) p.set("selAnalysis", st.selAnalysis);
+    if (st.selProto) p.set("selProto", st.selProto);
+    if (st.present) p.set("present", "1");
+    return "#" + p.toString();
+  }
+
+  let currentState = parseHash();
+  const loadingBundles = {};
+
+  function ensureSuiteBundle(suiteId, onReady) {
+    window.__WB_SUITE_BUNDLES__ = window.__WB_SUITE_BUNDLES__ || {};
+    if (!suiteId) { onReady(null); return; }
+    if (window.__WB_SUITE_BUNDLES__[suiteId]) { onReady(window.__WB_SUITE_BUNDLES__[suiteId]); return; }
+    if (loadingBundles[suiteId]) return;
+    loadingBundles[suiteId] = true;
+    const sc = document.createElement("script");
+    sc.src = "./workbench_data/suite_" + encodeURIComponent(suiteId) + ".js";
+    sc.onload = function () { loadingBundles[suiteId] = false; onReady(window.__WB_SUITE_BUNDLES__[suiteId] || null); };
+    sc.onerror = function () { loadingBundles[suiteId] = false; onReady(null); };
+    document.head.appendChild(sc);
+  }
+
+  function defaultSuiteForFamily(core, fam) {
+    const preferred = { cvrp: "cvrp_ext_cvrplib_x_100", tsp: "tsp_ext_tsplib_euc2d", obp: "obp_ext_eoh_weibull" };
+    if (preferred[fam] && window.WB_LABELS.getSuite(core, preferred[fam])) return preferred[fam];
+    const match = (core.suites || []).find(function (s) { return s.problem_family === fam; });
+    return (match && match.suite_id) || (core.suites[0] && core.suites[0].suite_id) || "";
+  }
+
+  function renderTopbar(core, state) {
+    const L = window.WB_LABELS;
+    const topEl = document.getElementById("app-topbar");
+    const fam = state.family || "cvrp";
+    const famBtns = ["cvrp", "tsp", "obp"].map(function (f) {
+      return '<button type="button" class="' + (f === fam ? "active" : "") + '" data-family="' + f + '">' + L.esc(L.FAMILY_LABELS[f].short) + "</button>";
+    }).join("");
+
+    const navOrder = ["overview", "benchmarks", "comparator", "knowledge"];
+    const navLinks = navOrder.map(function (p) {
+      return '<button type="button" class="nav-link ' + (state.page === p ? "active" : "") + '" data-page="' + p + '">' + L.esc(PAGE_META[p]) + "</button>";
+    }).join("");
+
+    topEl.innerHTML = [
+      '<div class="topbar-inner">',
+      '  <div class="topbar-left">',
+      '    <div class="brand">',
+      '      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#165dff" stroke-width="1.9"><polygon points="12 2.5 20.5 7.5 20.5 16.5 12 21.5 3.5 16.5 3.5 7.5"/><circle cx="12" cy="12" r="2.2" fill="#165dff" stroke="none"/><line x1="12" y1="2.5" x2="12" y2="9.8"/><line x1="20.5" y1="16.5" x2="14" y2="13"/><line x1="3.5" y1="16.5" x2="10" y2="13"/></svg>',
+      '      <span>OptBench · 组合优化研究工作台</span>',
+      '    </div>',
+      '    <div class="seg">' + famBtns + "</div>",
+      "  </div>",
+      '  <nav class="nav-tabs">' + navLinks + "</nav>",
+      '  <div class="topbar-actions">',
+      '    <span class="release-tag">' + L.esc(core.budget_ms) + " ms · " + L.esc(core.release_id || "") + "</span>",
+      '    <button type="button" class="btn sm ' + (state.present ? "active" : "") + '" id="top-present-btn">' + (state.present ? "退出宽屏" : "宽屏") + "</button>",
+      "  </div>",
+      "</div>"
+    ].join("\n");
+
+    topEl.querySelectorAll("[data-family]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const nf = btn.getAttribute("data-family");
+        navigate({ family: nf, suite: defaultSuiteForFamily(core, nf), inst: "", algA: "", algB: "", stepIdx: -1, hlRoute: -1 });
+      });
+    });
+    topEl.querySelectorAll("[data-page]").forEach(function (btn) {
+      btn.addEventListener("click", function () { navigate({ page: btn.getAttribute("data-page"), tab: "" }); });
+    });
+    const pBtn = topEl.querySelector("#top-present-btn");
+    if (pBtn) pBtn.addEventListener("click", function () { navigate({ present: !state.present }); });
+  }
+
+  function bindGlobalNav(container) {
+    container.querySelectorAll("[data-nav]").forEach(function (el) {
+      if (el.__wbBoundNav) return;
+      el.__wbBoundNav = true;
+      el.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        const p = new URLSearchParams(el.getAttribute("data-nav") || "");
+        const patch = {};
+        p.forEach(function (v, k) {
+          if (v === "true") patch[k] = true;
+          else if (v === "false") patch[k] = false;
+          else patch[k] = v;
+        });
+        navigate(patch);
+      });
+    });
+  }
+
+  function renderApp() {
+    const core = window.__WB_CORE__;
+    const mainEl = document.getElementById("app-main");
+    if (!core) {
+      mainEl.innerHTML = '<div class="panel">未检测到 <code>workbench_data/core.js</code> 数据包。请确认通过完整打包输出目录打开。</div>';
+      return;
+    }
+
+    if (!currentState.suite) currentState.suite = defaultSuiteForFamily(core, currentState.family);
+    document.body.classList.toggle("presentation-mode", Boolean(currentState.present));
+
+    renderTopbar(core, currentState);
+
+    const page = currentState.page || "overview";
+    const view = (window.WB_VIEWS && window.WB_VIEWS[page]) || window.WB_VIEWS.overview;
+    const activeSuiteId = currentState.suite;
+    const needsBundle = page === "benchmarks" || page === "comparator";
+
+    if (needsBundle && activeSuiteId && !(window.__WB_SUITE_BUNDLES__ && window.__WB_SUITE_BUNDLES__[activeSuiteId])) {
+      mainEl.innerHTML = view.render(core, currentState, null);
+      bindGlobalNav(mainEl);
+      if (view.bind) view.bind(mainEl, core, currentState, navigate, null);
+      ensureSuiteBundle(activeSuiteId, function (bundle) {
+        if (currentState.suite === activeSuiteId) {
+          mainEl.innerHTML = view.render(core, currentState, bundle);
+          bindGlobalNav(mainEl);
+          if (view.bind) view.bind(mainEl, core, currentState, navigate, bundle);
+        }
+      });
+      return;
+    }
+
+    const bundle = (window.__WB_SUITE_BUNDLES__ && activeSuiteId) ? window.__WB_SUITE_BUNDLES__[activeSuiteId] : null;
+    mainEl.innerHTML = view.render(core, currentState, bundle);
+    bindGlobalNav(mainEl);
+    if (view.bind) view.bind(mainEl, core, currentState, navigate, bundle);
+  }
+
+  function navigate(patch, silentInPlace) {
+    const cleanPatch = Object.assign({}, patch);
+    if (cleanPatch.page === "results") cleanPatch.page = "benchmarks";
+    if (cleanPatch.page && cleanPatch.page !== currentState.page) {
+      if (cleanPatch.tab === undefined) cleanPatch.tab = "";
+      if (cleanPatch.preset === undefined) cleanPatch.preset = "";
+      if (cleanPatch.stepIdx === undefined) cleanPatch.stepIdx = -1;
+      if (cleanPatch.hlRoute === undefined) cleanPatch.hlRoute = -1;
+    }
+    if (cleanPatch.suite && cleanPatch.suite !== currentState.suite && cleanPatch.inst === undefined) {
+      cleanPatch.inst = "";
+    }
+    currentState = Object.assign({}, currentState, cleanPatch);
+    if (!silentInPlace) {
+      const nextHash = serializeHash(currentState);
+      if (window.location.hash !== nextHash) window.history.replaceState(null, "", nextHash);
+    }
+    renderApp();
+  }
+
+  window.addEventListener("hashchange", function () { currentState = parseHash(); renderApp(); });
+  document.addEventListener("DOMContentLoaded", renderApp);
+  if (document.readyState !== "loading") renderApp();
+})();
+
+</script>
+</body>
+</html>

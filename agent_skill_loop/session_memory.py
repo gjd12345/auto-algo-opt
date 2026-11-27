@@ -228,6 +228,21 @@ def _commit_pending(root, operation_id):
                 if skill.parent_version_id is not None:
                     provenance["parent_version_id"] = skill.parent_version_id
                 provenance["interface_id"] = spec.entrypoint
+                sel = facts.get("interface_selection") or {}
+                if (sel.get("template_options") or {}).get("enable_c2_joint_screen") is True:
+                    from agent_skill_loop.memory.auto_dream import screen_cvrp_c2_solution
+
+                    t_id = str(sel.get("template_id") or "")
+                    telemetry, c2_reason = screen_cvrp_c2_solution(
+                        skill.code,
+                        template_id=t_id,
+                        template_version=str(sel.get("template_version") or "v2"),
+                        postprocess_mode=str(sel.get("postprocess_mode") or "none"),
+                    )
+                    if c2_reason is not None:
+                        raise ValueError(f"solution_c2_admission_failed:{c2_reason}")
+                    provenance.update(telemetry)
+                    provenance["interface_id"] = t_id
             elif raw.get("evidence_ref"):
                 if raw["evidence_ref"] not in facts["evidence_refs"]:
                     raise ValueError("memory_evidence_reference_mismatch")

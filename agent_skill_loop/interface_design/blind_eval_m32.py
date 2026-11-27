@@ -37,6 +37,7 @@ _M31_CUSTODY_NAME = ".agent_skill_custody_m31"
 _M32_CUSTODY_NAME = ".agent_skill_custody_m32"
 SEALED_M5_BLIND_SUITE_ID = "cvrp_m5_control_blind_120"
 SEALED_S2_BLIND_SUITE_ID = "cvrp_s2_multiscale_blind_120"
+SEALED_B2_BLIND_SUITE_ID = "cvrp_b2_clean_blind_120"
 M32_BLIND_COMMITMENT_PATH = MANIFESTS_DIR / f"{SEALED_M32_BLIND_SUITE_ID}_commitment.json"
 M32_PROTOCOL_ID = "cvrp_m32_scaling_blind/v1"
 M32_CHECKPOINTS = (36, 100, 200, 400)
@@ -45,6 +46,7 @@ M32_CONTROLS = ("model_routing", "l3b_dual_hook", "timeout_2000ms")
 M32_REQUEST_CAP = M32_CHECKPOINTS[-1]
 MILESTONE_BLIND_SUITE_IDS = m31.M31_BLIND_SUITE_IDS | {
     SEALED_M32_BLIND_SUITE_ID, SEALED_M5_BLIND_SUITE_ID, SEALED_S2_BLIND_SUITE_ID,
+    SEALED_B2_BLIND_SUITE_ID,
 }
 ALL_BLIND_SUITE_IDS = _LEGACY_BLIND_SUITE_IDS | MILESTONE_BLIND_SUITE_IDS
 SELECTION_ROLES = frozenset({"selection", "selection_tuning"})

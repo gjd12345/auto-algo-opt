@@ -36,7 +36,7 @@ def _resolve_kb_target(kb_store_path: str | Path | None, repo_root: Path) -> Pat
 
 
 def verify_pinned_release(
-    target: Path, *, release_id: str, manifest_sha256: str | None = None,
+    target: Path, *, release_id: str, manifest_sha256: str | None = None, json_only: bool = False,
 ) -> dict[str, Any]:
     """Resolve the Git current pointer, then forbid links within its release tree."""
     root = resolve_release(target).resolve(strict=True)
@@ -56,7 +56,7 @@ def verify_pinned_release(
             elif not stat.S_ISREG(info.st_mode):
                 raise ValueError(f"kb_release_nonregular_file:{child.relative_to(root).as_posix()}")
 
-    verified = validate_release(root)
+    verified = validate_release(root, json_only=True) if json_only else validate_release(root)
     if not verified["ok"]:
         raise ValueError(f"kb_release_validation_failed:{'; '.join(verified['errors'])}")
     if verified["release_id"] != release_id:
@@ -78,6 +78,7 @@ class KnowledgeBaseTool:
         enabled: bool = True,
         pinned_release_id: str | None = None,
         pinned_manifest_sha256: str | None = None,
+        json_only: bool = False,
     ) -> None:
         self.run_dir = Path(run_dir).resolve()
         self.repo_root = Path(repo_root).resolve()
@@ -85,6 +86,7 @@ class KnowledgeBaseTool:
         self.enabled = enabled
         self.pinned_release_id = pinned_release_id
         self.pinned_manifest_sha256 = pinned_manifest_sha256
+        self.json_only = json_only
         self.release_dir: Path | None = None
         self.manifest: dict[str, Any] = {}
         self.release_id = "uninitialized" if enabled else "disabled"
@@ -111,6 +113,7 @@ class KnowledgeBaseTool:
         if self.pinned_release_id is not None:
             verified = verify_pinned_release(
                 target, release_id=self.pinned_release_id, manifest_sha256=self.pinned_manifest_sha256,
+                **({"json_only": True} if self.json_only else {}),
             )
             release_dir = Path(verified["release"])
         else:
@@ -155,7 +158,24 @@ class KnowledgeBaseTool:
     def read(self, *, entry_id: str) -> dict[str, Any]:
         rel_dir = self._ensure_loaded(strict=True)
         assert rel_dir is not None
-        entry = read_entry(rel_dir, entry_id)
+        if self.json_only:
+            index = json.loads((rel_dir / "index.json").read_text(encoding="utf-8"))
+            entry = next((item for item in index["entries"] if item["id"] == entry_id), None)
+            if entry is None:
+                raise KeyError(f"entry not found: {entry_id}")
+            body = entry.get("search_text") or entry.get("summary") or ""
+            body_source = "verified_index_text" if entry.get("search_text") else "verified_index_summary"
+            entry = {key: value for key, value in entry.items() if key != "search_text"}
+            entry.update(release_id=self.release_id, body=body, body_source=body_source)
+            relative = Path(entry["path"])
+            if relative.suffix == ".json":
+                data = read_entry(rel_dir, entry_id)
+                body = json.loads(data["body"])
+                entry.update(body=body.get("body", data["body"]) if isinstance(body, dict) else data["body"],
+                             body_source=body.get("body_source", "verified_json_entry") if isinstance(body, dict)
+                             else "verified_json_entry")
+        else:
+            entry = read_entry(rel_dir, entry_id)
         digest = sha256_text(json.dumps(entry, ensure_ascii=False, sort_keys=True))
         self._log({
             "timestamp": utc_now(),

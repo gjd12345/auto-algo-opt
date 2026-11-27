@@ -108,12 +108,13 @@ def build_interface_design(
             diagnostic_ref=diagnostic_ref,
             rationale=rationale or "L1 sequential construct template.",
         )
-    if template_id == "cvrp_parallel_merge_static" and template_version == "v1":
+    if template_id == "cvrp_parallel_merge_static" and template_version in ("v1", "v2"):
         return build_classic_cw_static_design(
             design_id=design_id or "m2_l2a_merge_static",
             postprocess_mode=postprocess_mode,
             diagnostic_ref=diagnostic_ref,
             rationale=rationale or "L2a static parallel merge template.",
+            template_version=template_version,
         )
     if template_id == "cvrp_parallel_merge_dynamic" and template_version == "v1":
         return build_parallel_merge_dynamic_design(
@@ -212,6 +213,7 @@ def probe_template_budget_headroom(
         ("cvrp_select_multiscale_64", "selection", 8),  # includes n=200 tail check below
     ),
     include_n200_probe: bool = True,
+    candidate_templates: Sequence[tuple[str, str]] = CANDIDATE_TEMPLATE_ORDER,
 ) -> dict[str, Any]:
     """Zero-LLM-Token baseline timing & outcome probe for L1, L2a, L2b-ctrl under ``time_budget_ms``."""
     t0 = time.perf_counter()
@@ -228,7 +230,7 @@ def probe_template_budget_headroom(
             probe_instances.extend(insts[:limit] if limit is not None else insts)
 
     per_template: dict[str, Any] = {}
-    for tid, tver in CANDIDATE_TEMPLATE_ORDER:
+    for tid, tver in candidate_templates:
         tpl = get_template_spec(tid, tver)
         hook_fn = compile_hook_function(
             tpl.default_baseline_hook_code,
@@ -323,6 +325,7 @@ def select_interface_by_diagnostic_rule(
     target_budget_ms: float = 500.0,
     dynamic_headroom_threshold_ratio: float = 0.45,
     diagnostic_ref: dict[str, Any] | None = None,
+    static_template_version: str = "v1",
 ) -> dict[str, Any]:
     """Arm 4a: Deterministic 0-LLM-Token diagnostic-driven interface selection policy.
 
@@ -350,7 +353,7 @@ def select_interface_by_diagnostic_rule(
     min_pw_remaining = min(pw_remaining_gaps) if pw_remaining_gaps else 0.0
 
     tpl_probes = budget_probe.get("templates") or {}
-    l2a_p = tpl_probes.get("cvrp_parallel_merge_static/v1") or {}
+    l2a_p = tpl_probes.get(f"cvrp_parallel_merge_static/{static_template_version}") or {}
     l2b_p = tpl_probes.get("cvrp_parallel_merge_dynamic/v1") or {}
 
     trace: list[str] = []
@@ -363,11 +366,11 @@ def select_interface_by_diagnostic_rule(
         l2b_p95 = float(l2b_p.get("solve_ms_p95", target_budget_ms))
         max_allowed_ms = (1.0 - dynamic_headroom_threshold_ratio) * float(target_budget_ms)
         if l2b_full < 1.0 or l2b_p95 > max_allowed_ms:
-            chosen_id, chosen_ver = "cvrp_parallel_merge_static", "v1"
+            chosen_id, chosen_ver = "cvrp_parallel_merge_static", static_template_version
             trace.append(
                 f"Step 2 (target budget={target_budget_ms} ms headroom check): L2b-ctrl full_completion={l2b_full:.2%}, "
                 f"p95={l2b_p95:.2f} ms > threshold {max_allowed_ms:.2f} ms (vs L2a p95={l2a_p.get('solve_ms_p95')} ms) "
-                f"-> select cvrp_parallel_merge_static/v1 (L2a) to protect completion & budget headroom."
+                f"-> select cvrp_parallel_merge_static/{chosen_ver} (L2a) to protect completion & budget headroom."
             )
             cited = ("method-cvrp-cw-parallel", "method-cvrp-i605-tworegime-savings")
         else:
@@ -419,8 +422,10 @@ def select_interface_by_llm_planner(
     diagnostic_ref: dict[str, Any] | None = None,
     timeout_s: float = 60.0,
     request_budget: RequestBudget | None = None,
+    static_template_version: str = "v1",
 ) -> dict[str, Any]:
     """Arm 4b: LLM planning agent reading the exact same diagnostic & timing probe as Arm 4a (1 request)."""
+    get_template_spec("cvrp_parallel_merge_static", static_template_version)
     budget = request_budget if request_budget is not None else RequestBudget(5)
     initial_attempts = budget.used
     load_local_env()
@@ -441,7 +446,7 @@ def select_interface_by_llm_planner(
             },
             {
                 "template_id": "cvrp_parallel_merge_static",
-                "template_version": "v1",
+                "template_version": static_template_version,
                 "kb_clue": "method-cvrp-cw-parallel: one-shot vectorized static pair scoring; ultra-fast (~1-3 ms even on n=200), reproduces CW.",
             },
             {

@@ -1,0 +1,155 @@
+{
+  "type": "method",
+  "title": "CVRP 动态路线状态反馈并行合并与候选刷新归因 (M2 L2b & L2b-ctrl · score_merge_dynamic)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-2",
+    "parallel-merge",
+    "l2b",
+    "l2b-ctrl",
+    "score_merge_dynamic",
+    "budget-headroom"
+  ],
+  "status": "reviewed",
+  "summary": "里程碑二 cvrp_parallel_merge_dynamic/v1 (L2b) 模板在每次合并后向量化收缩可行候选对并暴露实时 load_i, load_j, route_dist_i, route_dist_j, remaining_routes。三方受控归因证实：L2b-ctrl（动态刷新+静态CW）在 500ms 下与裸 CW 零误差全等（blind_120=24.1791），但刷新机制使 p95 耗时增加约 3.7 倍；在 25ms 紧预算下 L2b-ctrl 在 blind_120 有 40/120 题触发预算耗尽降级（均长退化至 55.4430），确立了接口粒度与时间预算裕度的定量边界。",
+  "attributes": {
+    "method_family": "parallel_merge",
+    "online_offline": "offline",
+    "interface": "score_merge_dynamic",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score_merge_dynamic"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "parallel_merge",
+    "complexity_class": "O(n^3)",
+    "applicable_regimes": {
+      "strong_on": [
+        "standard_500ms_budget",
+        "medium_scale_n50_n100",
+        "complementary_dynamic_load_consolidation"
+      ],
+      "weak_on": [
+        "tight_25ms_budget_on_n200"
+      ],
+      "scale_notes": "500ms 预算下 100% 完整收敛（dev_24=16.1926, select_64=20.9555, blind_120=24.2883）；但在 25ms 紧预算下 n=200 实例因每步调用钩子产生约 25-60 ms 开销而触发协作式早停。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "L2b 动态状态反馈并行合并骨架（cvrp_parallel_merge_dynamic/v1）：利用合法合并集单调收缩性质向量化过滤当前可行端点对，每步传入实时两路负载、两路累计距离与剩余车数并取 argmax 合并",
+      "evolvable_hook": "score_merge_dynamic(distance_matrix, demands, capacity, i_idx, j_idx, load_i, load_j, route_dist_i, route_dist_j, remaining_routes) -> np.ndarray",
+      "state_maintained": [
+        "active_candidate_pair_indices",
+        "route_loads",
+        "route_distances",
+        "remaining_routes"
+      ],
+      "invariants_and_constraints": [
+        "当钩子仅依赖静态 (distance_matrix, i_idx, j_idx) 时（L2b-ctrl），未截断下合并序列与路线必须 100% 精确等于 L2a 与原版裸 CW",
+        "每次合并前检查 deadline，超时前安全返回当前合法驻留路线（budget_exhausted_feasible_incumbent）"
+      ],
+      "typical_pitfalls": [
+        "动态状态权重过大（如 >0.5）会压过首轮大节约边排序；且在 25ms 紧预算下未做裕度探针直接选 L2b 会导致 n=200 算例中途截断"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score_t(i,j) = (d(0,i) + d(0,j) - d(i,j)) / mean(d(0, 1..n)) + 0.12 * clip((load_i + load_j)/Q, 0, 1) + 0.03 / max(remaining_routes, 1)",
+        "variables": {
+          "load_i, load_j": "当前时刻端点 i, j 所在路线的实时累计载重",
+          "remaining_routes": "当前时刻尚未合并的活跃路线总数"
+        },
+        "preconditions": "每步仅在 owner[i]!=owner[j]、两端均为路线端点且 load_i+load_j <= Q 的存活候选集上求值"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "agent_skill_loop/interface_design/templates.py",
+        "sha256": "f9959bcda83e38c1fce75b9b96107e25309223a29a1ab98486ba18f47c073725"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2b_l2_attribution/l2_attribution_report.json",
+        "sha256": "08af000ebaf517ff51ed28fd2b21dc5affb7afd91dd1d8420322687ebeac4c7f"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "51c078ff",
+        "path": "experiments/milestone2/phase2b_four_arm/standard_500ms/seed_20261123/diagnostic_rule_planner/frozen_solver_manifest.json",
+        "sha256": "8468844c144f765af5a2a8cc10f17d93e47bfb62258b67a7e6bdff90026531b5"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_dev_hetero_24",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 16.1926,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "L2b 进化求解器在 dev_24 均长 16.1926（优于裸 CW 16.2225）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 20.9555,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "L2b 进化求解器在 select_64 均长 20.9555（500ms 下 64/64 完成）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_l2b_ctrl_static_refresh",
+        "metric": "mean_tour_length",
+        "value": 24.1791,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "L2b-ctrl 在 500ms 盲测集上与裸 CW 零误差一致",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m2_blind_120",
+        "run_id": "milestone2_phase2c_500ms",
+        "algorithm_id": "m2_2b_standard_500ms_diagnostic_rule_planner_s20261123",
+        "metric": "mean_tour_length",
+        "value": 24.2883,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "L2b 进化求解器在 500ms 盲测 120 题均长 24.2883",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-lit-cvrp-construct-clarke-wright-savings-merge",
+      "method-cvrp-m2-l2a-generalized-savings"
+    ],
+    "sources": [
+      "src-clarke-wright",
+      "src-milestone2-interface-design-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-clarke-wright",
+    "src-milestone2-interface-design-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone2/phase2b_l2_attribution/l2_attribution_report.json",
+    "report:experiments/milestone2/phase2c_blind_eval/blind_120_evaluation_report.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-m2-l2b-dynamic-state-merge",
+  "content_sha256": "1463860e17c26fa24e080fb960a9309668b3c72bf71012515817bc8375d714d9"
+}

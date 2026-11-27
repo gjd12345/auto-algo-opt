@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import inspect
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib import import_module
 from typing import Any, Callable, Mapping, Sequence
 
@@ -526,6 +526,369 @@ def run_cvrp_parallel_merge_static_v1(
         "outer_passes": int(post_meta.get("outer_passes", 0)),
         "budget_exhausted": budget_exhausted,
         "stop_reason": stop_reason,
+    }
+    if capture_merge_sequence:
+        meta["merge_sequence"] = merge_sequence
+        meta["pre_postprocess_routes"] = pre_routes
+    return final_routes, meta
+
+
+# ---------------------------------------------------------------------------
+# L2a: cvrp_parallel_merge_static/v2
+# ---------------------------------------------------------------------------
+
+_ANYTIME_SAFETY_EXIT = "anytime_safety_margin_exit"
+
+
+def _effective_solve_deadline(
+    deadline: float | None, budget_ms: float | None, safety_margin_ms: float | None,
+) -> float | None:
+    if deadline is None:
+        return None
+    if safety_margin_ms is None:
+        safety_margin_ms = 8.0 if budget_ms is None else max(6.0, min(15.0, 0.015 * float(budget_ms)))
+    if not np.isfinite(safety_margin_ms) or safety_margin_ms < 0:
+        raise ValueError("invalid_safety_margin_ms")
+    return deadline - safety_margin_ms / 1000.0
+
+
+def _two_opt_single_route_guarded(
+    customers: list[int],
+    dmat: np.ndarray,
+    *,
+    effective_deadline: float | None = None,
+    max_passes: int = 200,
+) -> tuple[list[int], int, int, str]:
+    """Apply complete segment reversals and poll inside the quadratic scan."""
+    seq = list(customers)
+    size = len(seq)
+    if size < 2:
+        return seq, 0, 0, "no_improvement"
+    moves = 0
+    for passes in range(1, max_passes + 1):
+        prior_moves = moves
+        for i in range(size - 1):
+            if effective_deadline is not None and time.perf_counter() >= effective_deadline:
+                return seq, moves, passes, _ANYTIME_SAFETY_EXIT
+            a = 0 if i == 0 else seq[i - 1]
+            b = seq[i]
+            d_ab = float(dmat[a, b])
+            for j in range(i + 1, size):
+                if (effective_deadline is not None and (j - i) % 64 == 0
+                        and time.perf_counter() >= effective_deadline):
+                    return seq, moves, passes, _ANYTIME_SAFETY_EXIT
+                c = seq[j]
+                d = 0 if j == size - 1 else seq[j + 1]
+                delta = float(dmat[a, c]) + float(dmat[b, d]) - d_ab - float(dmat[c, d])
+                if delta < -1e-9:
+                    seq[i:j + 1] = seq[i:j + 1][::-1]
+                    moves += 1
+                    b = seq[i]
+                    d_ab = float(dmat[a, b])
+        if moves == prior_moves:
+            return seq, moves, passes, "no_improvement"
+    return seq, moves, max_passes, "max_passes"
+
+
+def _find_relocate_destination_guarded(
+    routes: list[list[int]],
+    loads: list[float],
+    route_idx: int,
+    pos: int,
+    demand: float,
+    capacity: float,
+    dmat: np.ndarray,
+    effective_deadline: float | None,
+) -> tuple[int, int] | None:
+    """Return a completed best-move scan, or None if the scan was interrupted."""
+    src = routes[route_idx]
+    node = src[pos]
+    prev_s = 0 if pos == 0 else src[pos - 1]
+    next_s = 0 if pos == len(src) - 1 else src[pos + 1]
+    removal_delta = float(dmat[prev_s, next_s]) - float(dmat[prev_s, node]) - float(dmat[node, next_s])
+    best_delta = -1e-9
+    best_move = (-1, -1)
+    for d_idx, dst in enumerate(routes):
+        if effective_deadline is not None and d_idx % 16 == 0 and time.perf_counter() >= effective_deadline:
+            return None
+        same_route = d_idx == route_idx
+        if (same_route and len(src) <= 2) or (not same_route and loads[d_idx] + demand > capacity + 1e-12):
+            continue
+        for ins in range(len(dst) + 1):
+            if (effective_deadline is not None and ins > 0 and ins % 64 == 0
+                    and time.perf_counter() >= effective_deadline):
+                return None
+            if same_route and ins in (pos, pos + 1):
+                continue
+            p_node = 0 if ins == 0 else dst[ins - 1]
+            n_node = 0 if ins == len(dst) else dst[ins]
+            insertion_delta = float(dmat[p_node, node]) + float(dmat[node, n_node]) - float(dmat[p_node, n_node])
+            delta = removal_delta + insertion_delta
+            if delta < best_delta:
+                best_delta = delta
+                best_move = (d_idx, ins)
+    if effective_deadline is not None and time.perf_counter() >= effective_deadline:
+        return None
+    return best_move
+
+
+def apply_relocate_2opt_guarded(
+    init_routes: Sequence[Sequence[int]],
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    *,
+    budget_ms: float | None = None,
+    deadline: float | None = None,
+    safety_margin_ms: float | None = None,
+    max_outer_passes: int = 80,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Apply budgeted relocate and 2-opt with a return margin and atomic moves."""
+    t0 = time.perf_counter()
+    effective_deadline = _effective_solve_deadline(deadline, budget_ms, safety_margin_ms)
+    routes = [[int(c) for c in route if int(c) != 0] for route in init_routes]
+    routes = [route for route in routes if route]
+    loads = [float(sum(demands[c] for c in route)) for route in routes]
+    total_relocates = 0
+    total_two_opt = 0
+    stop_reason = "no_improvement"
+    for idx, route in enumerate(routes):
+        if effective_deadline is not None and time.perf_counter() >= effective_deadline:
+            stop_reason = _ANYTIME_SAFETY_EXIT
+            break
+        routes[idx], moves, _, stop_reason = _two_opt_single_route_guarded(
+            route, distance_matrix, effective_deadline=effective_deadline, max_passes=100,
+        )
+        total_two_opt += moves
+        if stop_reason != "no_improvement":
+            break
+
+    outer_pass = 0
+    while stop_reason == "no_improvement" and outer_pass < max_outer_passes:
+        outer_pass += 1
+        prior_relocates = total_relocates
+        r_idx = 0
+        while r_idx < len(routes) and stop_reason == "no_improvement":
+            pos = 0
+            removed_source = False
+            while pos < len(routes[r_idx]):
+                if effective_deadline is not None and time.perf_counter() >= effective_deadline:
+                    stop_reason = _ANYTIME_SAFETY_EXIT
+                    break
+                src = routes[r_idx]
+                node = src[pos]
+                demand = float(demands[node])
+                move = _find_relocate_destination_guarded(
+                    routes, loads, r_idx, pos, demand, capacity, distance_matrix, effective_deadline,
+                )
+                if move is None:
+                    stop_reason = _ANYTIME_SAFETY_EXIT
+                    break
+                d_idx, ins = move
+                if d_idx < 0:
+                    pos += 1
+                    continue
+
+                # Update the complete move before any more clock checks.
+                src.pop(pos)
+                if d_idx == r_idx:
+                    src.insert(ins - int(ins > pos), node)
+                else:
+                    routes[d_idx].insert(ins, node)
+                    loads[r_idx] -= demand
+                    loads[d_idx] += demand
+                total_relocates += 1
+
+                routes[d_idx], moves, _, stop_reason = _two_opt_single_route_guarded(
+                    routes[d_idx], distance_matrix, effective_deadline=effective_deadline, max_passes=50,
+                )
+                total_two_opt += moves
+                if not src:
+                    routes.pop(r_idx)
+                    loads.pop(r_idx)
+                    removed_source = True
+                    break
+                if stop_reason == "no_improvement" and d_idx != r_idx:
+                    routes[r_idx], moves, _, stop_reason = _two_opt_single_route_guarded(
+                        src, distance_matrix, effective_deadline=effective_deadline, max_passes=50,
+                    )
+                    total_two_opt += moves
+                if stop_reason != "no_improvement":
+                    break
+            if not removed_source:
+                r_idx += 1
+        if total_relocates == prior_relocates:
+            break
+
+    if stop_reason == "no_improvement" and outer_pass >= max_outer_passes:
+        stop_reason = "max_passes"
+    final_routes = normalize_routes(routes)
+    returned_at = time.perf_counter()
+    if effective_deadline is not None and returned_at >= effective_deadline:
+        stop_reason = _ANYTIME_SAFETY_EXIT
+    anytime_return = stop_reason == _ANYTIME_SAFETY_EXIT
+    return final_routes, {
+        "relocate_moves": total_relocates,
+        "two_opt_moves": total_two_opt,
+        "outer_passes": outer_pass,
+        "stop_reason": stop_reason,
+        "budget_exhausted": False,
+        "voluntary_anytime_return": anytime_return,
+        "local_search_truncated": anytime_return or stop_reason == "max_passes",
+        "return_margin_ms": (deadline - returned_at) * 1000.0 if deadline is not None else None,
+        "postprocess_ms": round((returned_at - t0) * 1000.0, 4),
+    }
+
+
+def run_cvrp_parallel_merge_static_v2(
+    distance_matrix: np.ndarray,
+    demands: np.ndarray,
+    capacity: float,
+    hook_fn: Callable[..., Any],
+    *,
+    postprocess_mode: str = "none",
+    time_budget_ms: float | None = 500.0,
+    template_options: Mapping[str, Any] | None = None,
+    capture_merge_sequence: bool = False,
+    record_incumbent: Callable[..., None] | None = None,
+) -> tuple[list[list[int]], dict[str, Any]]:
+    """Run static parallel merge while reserving time to return valid routes."""
+    if postprocess_mode not in ALLOWED_POSTPROCESS_MODES:
+        raise ValueError(f"unsupported_postprocess_mode:{postprocess_mode}")
+    opts = dict(template_options or {})
+    positive_savings_only = bool(opts.get("positive_savings_only", True))
+    safety_margin_ms = opts.get("safety_margin_ms")
+
+    t0 = time.perf_counter()
+    deadline = t0 + time_budget_ms / 1000.0 if time_budget_ms is not None else None
+    effective_deadline = _effective_solve_deadline(deadline, time_budget_ms, safety_margin_ms)
+    n = int(distance_matrix.shape[0] - 1)
+    routes = {i: [i] for i in range(1, n + 1)}
+    route_load = {i: float(demands[i]) for i in routes}
+    owner = list(range(n + 1))
+    incumbent_cost = 0.0
+    if record_incumbent is not None:
+        incumbent_cost = float(2.0 * np.sum(distance_matrix[0, 1:]))
+        record_incumbent(routes.values(), incumbent_cost, stable_routes=True)
+
+    candidate_gen_ms = 0.0
+    candidate_pair_count = 0
+    hook_call_count = 0
+    hook_ms = 0.0
+    order = np.empty(0, dtype=np.int64)
+    stop_reason = "completed"
+    if n > 1 and (effective_deadline is None or time.perf_counter() < effective_deadline):
+        t_cand0 = time.perf_counter()
+        i_idx, j_idx = np.triu_indices(n, k=1)
+        i_idx = (i_idx + 1).astype(np.int64, copy=False)
+        j_idx = (j_idx + 1).astype(np.int64, copy=False)
+        if positive_savings_only:
+            positive = distance_matrix[0, i_idx] + distance_matrix[0, j_idx] - distance_matrix[i_idx, j_idx] > 1e-12
+            i_idx, j_idx = i_idx[positive], j_idx[positive]
+        i_idx_orig, j_idx_orig = i_idx.copy(), j_idx.copy()
+        i_idx.flags.writeable = False
+        j_idx.flags.writeable = False
+        candidate_pair_count = int(i_idx.size)
+        candidate_gen_ms = (time.perf_counter() - t_cand0) * 1000.0
+        if i_idx.size and (effective_deadline is None or time.perf_counter() < effective_deadline):
+            t_hook0 = time.perf_counter()
+            raw_scores = hook_fn(distance_matrix, demands, float(capacity), i_idx, j_idx)
+            hook_ms = (time.perf_counter() - t_hook0) * 1000.0
+            hook_call_count = 1
+            if not np.array_equal(i_idx, i_idx_orig) or not np.array_equal(j_idx, j_idx_orig):
+                raise ValueError("candidate_mutated_input:pair_indices")
+            scores = np.asarray(raw_scores, dtype=np.float64)
+            if scores.ndim != 1 or scores.shape[0] != i_idx.size:
+                raise ValueError(f"invalid_return:expected_shape=({i_idx.size},)_got={scores.shape}")
+            if not np.all(np.isfinite(scores)):
+                raise ValueError("nonfinite_hook_scores")
+            if effective_deadline is None or time.perf_counter() < effective_deadline:
+                order = np.argsort(-scores, kind="mergesort")
+
+    t_merge0 = time.perf_counter()
+    merges = 0
+    merge_sequence: list[list[int]] = []
+    for step_idx, k in enumerate(order):
+        if effective_deadline is not None and step_idx % 512 == 0 and time.perf_counter() >= effective_deadline:
+            stop_reason = _ANYTIME_SAFETY_EXIT
+            break
+        i, j = int(i_idx[k]), int(j_idx[k])
+        ri, rj = owner[i], owner[j]
+        if ri == rj or route_load[ri] + route_load[rj] > capacity + 1e-12:
+            continue
+        seq_i, seq_j = routes[ri], routes[rj]
+        i_start, i_end = seq_i[0] == i, seq_i[-1] == i
+        j_start, j_end = seq_j[0] == j, seq_j[-1] == j
+        if not ((i_start or i_end) and (j_start or j_end)):
+            continue
+        if i_start and not i_end:
+            seq_i = seq_i[::-1]
+        if j_end and not j_start:
+            seq_j = seq_j[::-1]
+        routes[ri] = seq_i + seq_j
+        route_load[ri] += route_load[rj]
+        for node in seq_j:
+            owner[node] = ri
+        del routes[rj]
+        del route_load[rj]
+        merges += 1
+        if capture_merge_sequence:
+            merge_sequence.append([i, j])
+        if record_incumbent is not None:
+            incumbent_cost += float(distance_matrix[i, j] - distance_matrix[0, i] - distance_matrix[0, j])
+            record_incumbent(routes.values(), incumbent_cost, stable_routes=True)
+
+    pre_routes = normalize_routes([routes[rid] for rid in sorted(routes)])
+    t_post0 = time.perf_counter()
+    post_meta: dict[str, Any] = {}
+    final_routes = pre_routes
+    if effective_deadline is not None and t_post0 >= effective_deadline:
+        stop_reason = _ANYTIME_SAFETY_EXIT
+    elif postprocess_mode == "relocate_2opt":
+        final_routes, post_meta = apply_relocate_2opt_guarded(
+            pre_routes, distance_matrix, demands, capacity,
+            budget_ms=time_budget_ms, deadline=deadline, safety_margin_ms=safety_margin_ms,
+        )
+        stop_reason = post_meta["stop_reason"]
+    elif postprocess_mode == "intra_2opt":
+        final_routes = []
+        two_opt_moves = 0
+        outer_passes = 0
+        for idx, route in enumerate(pre_routes):
+            optimized, moves, passes, stop_reason = _two_opt_single_route_guarded(
+                route[1:-1], distance_matrix, effective_deadline=effective_deadline,
+            )
+            two_opt_moves += moves
+            outer_passes += passes
+            final_routes.append([0, *optimized, 0])
+            if stop_reason != "no_improvement":
+                final_routes.extend(pre_routes[idx + 1:])
+                break
+        post_meta = {"two_opt_moves": two_opt_moves, "outer_passes": outer_passes}
+
+    postprocess_ms = (time.perf_counter() - t_post0) * 1000.0 if post_meta else 0.0
+    returned_at = time.perf_counter()
+    if effective_deadline is not None and returned_at >= effective_deadline:
+        stop_reason = _ANYTIME_SAFETY_EXIT
+    anytime_return = stop_reason == _ANYTIME_SAFETY_EXIT
+    meta: dict[str, Any] = {
+        "merges_applied": merges,
+        "hook_call_count": hook_call_count,
+        "candidate_pair_count": candidate_pair_count,
+        "positive_savings_only": positive_savings_only,
+        "postprocess_mode": postprocess_mode,
+        "candidate_gen_ms": round(candidate_gen_ms, 4),
+        "hook_ms": round(hook_ms, 4),
+        "merge_ms": round((t_post0 - t_merge0) * 1000.0, 4),
+        "postprocess_ms": round(postprocess_ms, 4),
+        "two_opt_moves": post_meta.get("two_opt_moves", 0),
+        "relocate_moves": post_meta.get("relocate_moves", 0),
+        "outer_passes": post_meta.get("outer_passes", 0),
+        "budget_exhausted": False,
+        "stop_reason": stop_reason,
+        "voluntary_anytime_return": anytime_return,
+        "local_search_truncated": anytime_return or stop_reason == "max_passes",
+        "return_margin_ms": (deadline - returned_at) * 1000.0 if deadline is not None else None,
     }
     if capture_merge_sequence:
         meta["merge_sequence"] = merge_sequence
@@ -1711,14 +2074,29 @@ def register_template(spec: TemplateSpec) -> None:
     TEMPLATE_REGISTRY[key] = spec
 
 
+register_template(replace(
+    TEMPLATE_REGISTRY[("cvrp_parallel_merge_static", "v1")],
+    template_version="v2",
+    runner=run_cvrp_parallel_merge_static_v2,
+    template_source_sha256=compute_template_source_sha256(
+        run_cvrp_parallel_merge_static_v2,
+        apply_relocate_2opt_guarded,
+        _find_relocate_destination_guarded,
+        _two_opt_single_route_guarded,
+        _effective_solve_deadline,
+    ),
+))
+
+
 def _load_interface_extensions(*, probes: bool = False) -> None:
     # The worker starts a fresh interpreter. Load only repository-owned modules,
     # and never accept an import path from a request or a generated candidate.
     names = (
         "tsp_adapter", "packing_adapters", "tsp_templates", "obp_templates", "bpp_templates", "cvrp_l3b",
+        "fleet_exact_k",
     )
     if probes:
-        names += ("tsp_probes", "packing_probes", "cvrp_l3b_probes")
+        names += ("tsp_probes", "packing_probes", "cvrp_l3b_probes", "fleet_exact_k_probes")
     for name in names:
         module = f"{__package__}.{name}"
         try:
@@ -1743,6 +2121,7 @@ def build_classic_cw_static_design(
     postprocess_mode: str = "none",
     diagnostic_ref: dict[str, Any] | None = None,
     positive_savings_only: bool = True,
+    template_version: str = "v1",
     rationale: str = (
         "Exploratory 2x3 gap decomposition on dev_24 and select_64 shows pointwise rules "
         "(R5, i605_cvrp_c1_tworegime) still trail bare cw_parallel_merge even after identical "
@@ -1750,7 +2129,7 @@ def build_classic_cw_static_design(
         "priority scoring under cvrp_parallel_merge_static/v1."
     ),
 ) -> InterfaceDesign:
-    spec = get_template_spec("cvrp_parallel_merge_static", "v1")
+    spec = get_template_spec("cvrp_parallel_merge_static", template_version)
     return InterfaceDesign(
         design_id=design_id,
         problem_family=spec.problem_family,

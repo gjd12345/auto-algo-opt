@@ -1,0 +1,184 @@
+{
+  "schema_version": "wave4-b2-pilot-audit/v1",
+  "protocol_sha256": "5f683529a6d81af7b8e9667f52c2bac995de25566012c7177756d28f252a0dbb",
+  "run_mode": "live",
+  "models": {
+    "DeepSeek-V4.1-Flash": {
+      "scripts_executed": 4,
+      "valid_scripts": 4,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 2,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "cell_count": 2,
+      "success_cells": 2,
+      "valid_script_execution_rate": 1.0,
+      "post_repair_diagnostic_round_completion_rate": 0.5,
+      "fail_to_pass_rate": null,
+      "cell_sandbox_success_rate": 1.0
+    },
+    "Qwen4-Max": {
+      "scripts_executed": 6,
+      "valid_scripts": 6,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 3,
+      "diagnostic_rounds_completed": 2,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "cell_count": 2,
+      "success_cells": 2,
+      "valid_script_execution_rate": 1.0,
+      "post_repair_diagnostic_round_completion_rate": 0.6666666666666666,
+      "fail_to_pass_rate": null,
+      "cell_sandbox_success_rate": 1.0
+    }
+  },
+  "overall": {
+    "scripts_executed": 10,
+    "valid_scripts": 10,
+    "gate_bypass_count": 0,
+    "diagnostic_rounds_required": 5,
+    "diagnostic_rounds_completed": 3,
+    "self_repair_rounds": 0,
+    "rounds_with_failed_scripts": 0,
+    "cell_count": 4,
+    "success_cells": 4,
+    "valid_script_execution_rate": 1.0,
+    "post_repair_diagnostic_round_completion_rate": 0.6,
+    "fail_to_pass_rate": null,
+    "cell_sandbox_success_rate": 1.0
+  },
+  "cells": {
+    "DeepSeek-V4.1-Flash/20261124/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 1,
+      "valid_scripts": 1,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 0,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "7b021781ed2f0ac583727b1f07353016d4d08152287853bcf951bea30d222497",
+          "script_sha256": "8f516fc77651640534c4d975b4e8f0f90906ecd5f4cd218466d9d65032b0a394",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "DeepSeek-V4.1-Flash/20261125/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 3,
+      "valid_scripts": 3,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "3a2b63061907da55a5b47c1db4c44ae7d23b7d51a95097717cc77d7a35e49f9e",
+          "script_sha256": "f5c63e4b5a5b03a7523ca040d7465b99270b71763ef8f2a6a54fc991405eb5aa",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "52d641955d1db63ee77ba2e1ae892870c193f7f9a685efd188e5af93e69b1f0e",
+          "script_sha256": "0ced8c29337bb3c9705d72a87970d3656ea0f34e9cbdbc941f5d0f88f36d447c",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "171dee7ff3f63d237a40efa20bfd8adf899b38b26b9571c78be6d387ef74a46f",
+          "script_sha256": "eea1316b5146721994a9aad3f73d1d7f0139746015511a015df5589c370a271b",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "Qwen4-Max/20261124/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 5,
+      "valid_scripts": 5,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "95c8db35889cd75492c6d51aaa3dc1b5546e45fe238e056bf4d91bca4067aa4e",
+          "script_sha256": "e7340345a021c2e28ab625abd444b444a2791f3f9b42b8206faa05f3fb23749e",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "5ee8e6bab406f11d2b169599295c9fdd0bf62968b38b015d624c1058f0a719a3",
+          "script_sha256": "2779a1e5a8981f3fb44992fd4579860ae6bf6bf12550589c66fd337429f066f8",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "4d7b5e553a8508d4d5eeb09a9c078524d7ee9b7cf734e95f5f411a497e1d2285",
+          "script_sha256": "b8d2d335a2471d142c8f3c94bea6c0e1268cc4c4bd32a79a38de2279f805a9f3",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0004.json",
+          "artifact_sha256": "f8d53dec4dca71c835e2b54280ae2827fa1e88792648499500bd3b1aadf40d28",
+          "script_sha256": "8f426dc9bf3514178cb108445c4ce194cdaf815b38cb4869dc4ee51e18214091",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0005.json",
+          "artifact_sha256": "9de2b8e03f5b976a2ae27d489b433c5656148e958f8c3526b4bb2c6e5106d695",
+          "script_sha256": "8798a39a37e3e9870999ecca28f7adda0201ebebcec4354da7435a46aa71ba0c",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "Qwen4-Max/20261125/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 1,
+      "valid_scripts": 1,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 2,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "22f42a1cd8eede53955c32ae696ed516985eb50b3e49079ec85571d557545a71",
+          "script_sha256": "149eccc1b8c14891b8c276b21c6b64bf817161fd9f6232a1612a8d549f1dd96e",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    }
+  },
+  "missing_cells": [],
+  "definitions": {
+    "valid_script_execution_rate": "ok and finite-numeric scripts divided by executed scripts",
+    "cell_sandbox_success_rate": "cells with at least one valid script divided by audited cells",
+    "post_repair_diagnostic_round_completion_rate": "required rounds with verified evidence divided by required rounds",
+    "fail_to_pass_rate": "rounds with valid evidence after a script failure divided by rounds with failures"
+  },
+  "passed": true
+}

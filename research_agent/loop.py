@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import math
+import sqlite3
 import time
+from contextlib import closing
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 from agent_skill_loop.client import ProviderFailure
 from agent_skill_loop.interface_design.contracts import FrozenInterfaceSolver
@@ -14,6 +16,7 @@ from agent_skill_loop.interface_design.model_routing import ModelRoutingPolicy
 from agent_skill_loop.interface_design.planner import build_design_for_template
 from agent_skill_loop.interface_design.runtime import evaluate_frozen_interface_solver, resolve_problem_adapter
 from agent_skill_loop.interface_design.session_baseline import load_dev_or_public_suite
+from agent_skill_loop.interface_design.session_bridge import _summarize_records_for_checkpoint
 from agent_skill_loop.interface_design.templates import get_template_spec
 from agent_skill_loop.milestone_checkpoint import (
     export_sealed_checkpoints,
@@ -125,6 +128,98 @@ def _extract_eval_objective(eval_obj: Mapping[str, Any] | None) -> float | None:
     return None
 
 
+def evaluate_global_stopping_decision(
+    config: AgentConfig,
+    *,
+    t: int,
+    candidate_provenance: Sequence[Mapping[str, Any]],
+    restart_eligible_round_id: int | None = None,
+    pending_restart: bool = False,
+    last_restart_ordinal: int | None = None,
+) -> dict[str, Any]:
+    """Apply the run-level stopping policy to an ordinal prefix of the ledger."""
+    mode = config.global_early_stop_mode
+    H = config.total_request_cap
+    h = max(0, H - t)
+    cooldown_met = t - (0 if last_restart_ordinal is None else last_restart_ordinal) >= config.risk_stop_cooldown
+    P_t = int(restart_eligible_round_id is not None or pending_restart or not cooldown_met)
+    incumbent = None
+    incumbent_ordinal = None
+    non_improving = 0
+    excluded_non_candidate_attempts = 0
+    attempts: list[bool] = []
+    jump_rel_gains: list[float] = []
+    for row in sorted(candidate_provenance, key=lambda row: row["global_ordinal"]):
+        ordinal = row["global_ordinal"]
+        status = row["generation_status"]
+        if ordinal > t or status in {"pending", "probe", "eoh_probe"} or row.get("purpose") == "eoh_probe":
+            continue
+        key = None
+        objective = row.get("dev_penalized_mean")
+        if row.get("eligible") and objective is not None and math.isfinite(objective):
+            key = (bool(row["dev_all_feasible"]), float(row["dev_completion_rate"]), -objective, -ordinal)
+        improved = key is not None and (incumbent is None or key > incumbent)
+        if improved:
+            if (
+                incumbent is not None and incumbent[0] and incumbent[1] >= 1.0 - 1e-12
+                and key[0] and key[1] >= 1.0 - 1e-12
+                and key[2] > incumbent[2] and incumbent[2] != 0
+            ):
+                jump_rel_gains.append((key[2] - incumbent[2]) / abs(incumbent[2]))
+            incumbent = key
+            incumbent_ordinal = ordinal
+        if status in {"valid_candidate", "invalid_candidate"}:
+            attempts.append(improved)
+            non_improving = 0 if improved else non_improving + 1
+        elif status != "baseline_seed":
+            excluded_non_candidate_attempts += 1
+
+    top_tier = incumbent is not None and incumbent[0] and incumbent[1] >= 1.0 - 1e-12
+    window = attempts[-config.risk_stop_window:]
+    jumps = sum(window)
+    a_t = config.risk_stop_prior_a + jumps
+    b_t = config.risk_stop_prior_b + len(window) - jumps
+    # log(1-q) = -sum(log(1 + a/(b+j))). expm1 retains accuracy for small risks.
+    q_t = -math.expm1(-math.fsum(math.log1p(a_t / (b_t + j)) for j in range(h)))
+    recent_gains = jump_rel_gains[-3:]
+    D_t = max(config.risk_stop_d_floor, max(recent_gains, default=0.015))
+    expected_regret = D_t * q_t
+    tail_bound = min(q_t, expected_regret / 0.10)
+    stop = False
+    if h > 0 and top_tier and P_t == 0:
+        if mode == "naive_patience":
+            stop = non_improving >= config.global_early_stop_patience
+        elif mode == "risk_bounded_beta_geom":
+            stop = (
+                len(window) > 0
+                and t >= config.risk_stop_min_requests
+                and expected_regret <= config.risk_stop_eps
+                and tail_bound <= config.risk_stop_alpha
+            )
+    return {
+        "mode": mode, "stop": stop, "t": t, "H": H, "h": h,
+        "top_tier": top_tier, "incumbent_ordinal": incumbent_ordinal, "P_t": P_t,
+        "restart_eligible_round_id": restart_eligible_round_id, "pending_restart": pending_restart,
+        "last_restart_ordinal": last_restart_ordinal, "cooldown_met": cooldown_met,
+        "non_improving_attempts": non_improving, "window_attempts": len(window), "window_jumps": jumps,
+        "excluded_non_candidate_attempts": excluded_non_candidate_attempts,
+        "a_t": a_t, "b_t": b_t, "q_t": q_t, "D_t": D_t,
+        "last_3_jump_rel_gains": recent_gains, "expected_regret_bound": expected_regret, "tail_bound": tail_bound,
+    }
+
+
+def _read_stopping_provenance(budget: PersistentRequestBudget, through: int) -> list[dict[str, Any]]:
+    with closing(sqlite3.connect(budget.ledger_path)) as con:
+        con.row_factory = sqlite3.Row
+        return [dict(row) for row in con.execute(
+            """SELECT global_ordinal, purpose, generation_status, eligible,
+                      dev_all_feasible, dev_completion_rate, dev_penalized_mean
+               FROM candidate_provenance
+               WHERE run_id=? AND global_ordinal<=? ORDER BY global_ordinal""",
+            (budget.run_id, through),
+        )]
+
+
 def _append_tool_result(
     messages: list[dict[str, Any]],
     decision: Mapping[str, Any],
@@ -153,7 +248,7 @@ def _append_tool_result(
 
 
 def _build_initial_baseline_solver(config: AgentConfig) -> FrozenInterfaceSolver:
-    tpl = get_template_spec(config.initial_template_id, "v1")
+    tpl = get_template_spec(config.initial_template_id, config.version_for_template(config.initial_template_id))
     adapter = resolve_problem_adapter(tpl)
     design = build_design_for_template(
         tpl.template_id,
@@ -191,6 +286,7 @@ def run_research_agent(
     config: AgentConfig,
     *,
     driver: AgentDriver | None = None,
+    session_factory: Callable[..., SessionRunnerTool] | None = None,
     resume: bool = False,
     common_start: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -202,6 +298,7 @@ def run_research_agent(
     policy_path = run_dir / "research_policy.md"
     tsv_path = run_dir / "results.tsv"
     fork_path = run_dir / "common_start_sha256.json"
+    global_stopping_enabled = config.global_early_stop_mode != "off"
 
     if not resume and ckpt_path.exists():
         raise FileExistsError(f"research_agent_checkpoint_already_exists:{ckpt_path}")
@@ -258,9 +355,23 @@ def run_research_agent(
             "n200_latency_multiplier",
             "enable_stagnation_diagnostic_gate",
             "stagnation_diagnostic_mode",
+            "strict_diagnostic_gate",
             "early_stop_no_jump_requests",
             "basin_restart_on_stagnation",
+            "template_version",
+            "enable_c2_joint_screen",
+            "global_early_stop_mode",
+            "global_early_stop_patience",
+            "risk_stop_window",
+            "risk_stop_prior_a",
+            "risk_stop_prior_b",
+            "risk_stop_eps",
+            "risk_stop_alpha",
+            "risk_stop_d_floor",
+            "risk_stop_min_requests",
+            "risk_stop_cooldown",
             "memory_enabled",
+            "require_c2_multiscale_admission",
             "memory_online_writeback_enabled",
             "memory_store_path",
             "memory_mode",
@@ -345,7 +456,7 @@ def run_research_agent(
     )
     archive_tool = SteppingStoneArchiveTool(run_dir, dev_suite_id=config.dev_suite_id, dev_split=config.dev_split)
     ledger_tool = HypothesisLedgerTool(run_dir)
-    session_tool = SessionRunnerTool(run_dir=run_dir, config=config, budget=budget)
+    session_tool = (session_factory or SessionRunnerTool)(run_dir=run_dir, config=config, budget=budget)
 
     if driver is None:
         if config.mode == "mock":
@@ -367,10 +478,12 @@ def run_research_agent(
         _flush_wall_clock()
         atomic_write_json(ckpt_path, ckpt.to_dict())
 
-    def _sync_strict_checkpoints() -> None:
+    def _sync_strict_checkpoints(*, reconcile_orphans: bool = False) -> None:
         if not config.strict_checkpoint_barriers:
             return
         total_wall = _flush_wall_clock()
+        if reconcile_orphans:
+            budget.reconcile_orphaned_inflight()
         settle_pending_provenance_for_terminal_requests(budget.ledger_path, config.run_id)
         try_seal_draining_checkpoints(
             budget.ledger_path,
@@ -381,9 +494,13 @@ def run_research_agent(
         for cp_key, abs_path in exported.items():
             ckpt.frozen_checkpoints[cp_key] = str(Path(abs_path).resolve().relative_to(run_dir).as_posix())
 
-    if config.strict_checkpoint_barriers:
-        mstatus = read_milestone_status(budget.ledger_path, config.run_id)
-        if not mstatus["checkpoints"]:
+    if config.strict_checkpoint_barriers or global_stopping_enabled:
+        initialize_schedule = (
+            config.strict_checkpoint_barriers
+            and not read_milestone_status(budget.ledger_path, config.run_id)["checkpoints"]
+        )
+        initialize_baseline = global_stopping_enabled and not _read_stopping_provenance(budget, 0)
+        if initialize_schedule or initialize_baseline:
             session_tool.ensure_initialized()
             baseline_solver = _build_initial_baseline_solver(config)
             if config.use_benchmark_dev_suite:
@@ -392,10 +509,13 @@ def run_research_agent(
                     split=config.dev_split,
                     role="diagnostic_interactive",
                 )
-                if common_start is None:
+                if common_start is not None:
+                    baseline_solver = FrozenInterfaceSolver.from_dict(common_start["frozen_solver"])
+                if common_start is None or (
+                    global_stopping_enabled and not (common_start.get("baseline_dev_eval") or {}).get("records")
+                ):
                     base_dev_eval = session_tool._evaluate_frozen_on_dev(baseline_solver.to_dict())
                 else:
-                    baseline_solver = FrozenInterfaceSolver.from_dict(common_start["frozen_solver"])
                     base_dev_eval = dict(common_start["baseline_dev_eval"])
             else:
                 suite_obj = json.loads((session_tool.session_dir / "dev_suite.json").read_text(encoding="utf-8"))
@@ -427,16 +547,22 @@ def run_research_agent(
                     "all_feasible": bool(n_b > 0 and len(valid_vals) == n_b),
                     "valid_only_mean_tour_length": round(sum(valid_vals) / len(valid_vals), 6) if valid_vals else None,
                     "penalized_mean_tour_length": round(sum(pen_vals) / max(1, n_b), 6),
+                    "records": base_recs,
                 }
             dev_suite_hash = sha256_text(
                 json.dumps(suite_obj["instances"], ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
             )
             if common_start is not None and dev_suite_hash != common_start["dev_suite_hash"]:
                 raise ValueError("common_start_dev_suite_mismatch")
+            if global_stopping_enabled:
+                base_dev_eval = _summarize_records_for_checkpoint(
+                    suite_obj["instances"], base_dev_eval["records"],
+                    dev_suite_hash=dev_suite_hash, solve_budget_ms=config.instance_time_budget_ms,
+                )
             initialize_milestone_schedule(
                 budget.ledger_path,
                 run_id=config.run_id,
-                checkpoint_budgets=config.checkpoint_budgets,
+                checkpoint_budgets=config.checkpoint_budgets if config.strict_checkpoint_barriers else (),
                 baseline_solver=baseline_solver.to_dict(),
                 baseline_dev_eval=base_dev_eval,
                 dev_suite_hash=dev_suite_hash,
@@ -467,11 +593,57 @@ def run_research_agent(
     round_summaries: list[dict[str, Any]] = list(ckpt.round_summaries)
     diagnostic_mode = config.effective_stagnation_diagnostic_mode
     diagnostic_tools = STAGNATION_DIAGNOSTIC_TOOLS[diagnostic_mode]
+    strict_diagnostic_gate = config.strict_diagnostic_gate and bool(diagnostic_tools)
     explicit_diagnostic_mode = config.stagnation_diagnostic_mode != "any"
     track_round_stagnation = bool(diagnostic_tools) or explicit_diagnostic_mode or config.basin_restart_on_stagnation
     deterministic_restart = bool(config.basin_restart_on_stagnation and config.early_stop_no_jump_requests)
     is_s1 = config.arm_id.startswith("arm_s1_")
     hide_arm_label = is_s1 or config.arm_id.startswith("arm_s2_")
+
+    def _global_stopping_at(
+        round_id: int, boundary: str, *, pending_restart: bool, terminal_phase: str | None,
+    ) -> dict[str, Any]:
+        settle_pending_provenance_for_terminal_requests(budget.ledger_path, config.run_id)
+        t = budget.used
+        last_restart_ordinal = next((
+            event["request_ordinal"] for event in reversed(ckpt.trajectory_control_events)
+            if event["event"] == "basin_restart" and "request_ordinal" in event
+        ), None)
+        decision = evaluate_global_stopping_decision(
+            config,
+            t=t,
+            candidate_provenance=_read_stopping_provenance(budget, t),
+            restart_eligible_round_id=ckpt.restart_eligible_round_id,
+            pending_restart=pending_restart,
+            last_restart_ordinal=last_restart_ordinal,
+        )
+        if terminal_phase == "budget_stopped":
+            decision["stop"] = False
+        path = run_dir / "stopping_decisions.jsonl"
+        row = {"round_id": round_id, "boundary": boundary, "session_terminal_phase": terminal_phase, **decision}
+        line = json.dumps(row, allow_nan=False) + "\n"
+        if not (resume and path.is_file() and path.read_text(encoding="utf-8").endswith(line)):
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(line)
+        return decision
+
+    def _seal_global_champion(decision: Mapping[str, Any]) -> None:
+        ordinal = decision["incumbent_ordinal"]
+        with closing(sqlite3.connect(budget.ledger_path)) as con:
+            row = con.execute(
+                """SELECT solver_manifest_json, dev_penalized_mean, dev_completion_rate
+                   FROM candidate_provenance
+                   WHERE run_id=? AND global_ordinal=? AND eligible=1""",
+                (config.run_id, ordinal),
+            ).fetchone()
+        if row is None or row[0] is None:
+            raise RuntimeError(f"global_early_stop_champion_missing:{ordinal}")
+        ref = "checkpoints/global_early_stop_champion.json"
+        atomic_write_json(run_dir / ref, json.loads(row[0]))
+        ckpt.best_solver_manifest_ref = ref
+        ckpt.best_dev_objective = float(row[1])
+        ckpt.best_completion_rate = float(row[2])
+        ckpt.best_all_feasible = True
 
     def _diagnostic_required(round_id: int) -> bool:
         return (
@@ -481,6 +653,8 @@ def run_research_agent(
         )
 
     def _record_gate_bypass(round_id: int, reason: str) -> None:
+        if strict_diagnostic_gate:
+            raise RuntimeError(f"strict_diagnostic_gate_bypass:{round_id}:{reason}")
         if any(event["round_id"] == round_id for event in ckpt.gate_bypass_events):
             return
         ckpt.gate_bypass_events.append({
@@ -497,6 +671,27 @@ def run_research_agent(
                 else "stagnation_diagnostic_bypassed_on_submit"
             ),
         })
+
+    def _satisfy_diagnostic_gate(round_id: int, tool_name: str) -> None:
+        if strict_diagnostic_gate and _diagnostic_required(round_id):
+            ckpt.trajectory_control_events.append({
+                "round_id": round_id,
+                "event": "strict_diagnostic_round_satisfied",
+                "tool": tool_name,
+            })
+        ckpt.round_diagnostic_called = True
+        ckpt.diagnostic_ever_called = True
+
+    def _stop_for_missing_diagnostic(round_id: int, reason: str) -> None:
+        ckpt.trajectory_control_events.append({
+            "round_id": round_id,
+            "event": "strict_diagnostic_gate_stopped",
+            "reason": reason,
+        })
+        ckpt.round_plan_args = None
+        ckpt.pending_submit_tool_call = None
+        ckpt.phase = "budget_stopped"
+        _save_ckpt()
 
     def _plan_sandbox_evidence() -> dict[str, Any]:
         return {"sandbox_ref": dict(ckpt.last_sandbox_ref)} if ckpt.last_sandbox_ref is not None else {}
@@ -529,14 +724,22 @@ def run_research_agent(
             return kb_tool.search(query=str(args.get("query", "")), limit=int(args.get("limit", 5)), problem_family=config.problem_family)
         if tool_name == "kb_read":
             return kb_tool.read(entry_id=str(args["entry_id"]))
+        if tool_name in {"memory_search", "memory_read"}:
+            if not (config.memory_enabled and config.require_c2_multiscale_admission and ckpt.phase == "diagnose"):
+                raise PermissionError("planner_memory_tools_unavailable")
+            return session_tool.planner_memory(
+                tool_name, args, template_id=ckpt.active_template_id,
+                postprocess_mode=ckpt.active_postprocess_mode,
+            )
         if tool_name == "diagnose_suite":
             max_instances = args.get("max_instances")
-            if is_s1 and max_instances is not None and (
+            if (is_s1 or strict_diagnostic_gate) and max_instances is not None and (
                 type(max_instances) is not int or max_instances < 1
             ):
                 raise ValueError("diagnose_suite_max_instances_must_be_positive_integer")
             res = diag_tool.diagnose_suite(
                 template_id=str(args.get("template_id") or ckpt.active_template_id),
+                template_version=config.version_for_template(str(args.get("template_id") or ckpt.active_template_id)),
                 hook_code=args.get("hook_code"),
                 postprocess_mode=str(args.get("postprocess_mode") or ckpt.active_postprocess_mode),
                 time_budget_ms=float(args.get("time_budget_ms") or config.instance_time_budget_ms),
@@ -548,8 +751,12 @@ def run_research_agent(
                 and res.get("ok") is not False
             ):
                 if tool_name in diagnostic_tools:
-                    ckpt.round_diagnostic_called = True
-                    ckpt.diagnostic_ever_called = True
+                    if strict_diagnostic_gate:
+                        analysis = res.get("analysis") or res
+                        valid_count = analysis.get("valid_count")
+                        if type(valid_count) is not int or valid_count <= 0:
+                            return {**res, "error_code": "stagnation_slice_no_valid_evidence"}
+                    _satisfy_diagnostic_gate(round_id, tool_name)
                 if res.get("artifact_ref") and res.get("artifact_sha256"):
                     ckpt.last_diag_ref = {key: res[key] for key in ("artifact_ref", "artifact_sha256")}
                     last_diag = ckpt.last_diag_ref
@@ -562,21 +769,37 @@ def run_research_agent(
                 res.get("ok") is True
                 and _has_finite_numeric_evidence(res.get("result"))
             )
+            if config.strict_diagnostic_gate:
+                attempt = {
+                    "round_id": round_id,
+                    "event": "strict_sandbox_attempt",
+                    "artifact_ref": binding["artifact_ref"],
+                    "has_finite_numeric_evidence": verified,
+                }
+                if res.get("repair_hint"):
+                    attempt["repair_hint"] = res["repair_hint"]
+                ckpt.trajectory_control_events.append(attempt)
             if verified:
                 ckpt.last_sandbox_ref = binding
                 ckpt.sandbox_success_count += 1
             if (
                 tool_name in diagnostic_tools and res.get("ok") is True
-                and (diagnostic_mode == "any" or verified)
+                and (verified or (diagnostic_mode == "any" and not strict_diagnostic_gate))
             ):
-                ckpt.round_diagnostic_called = True
-                ckpt.diagnostic_ever_called = True
+                _satisfy_diagnostic_gate(round_id, tool_name)
             return {**res, "has_finite_numeric_evidence": verified}
         if tool_name == "list_interfaces":
-            return iface_tool.list_interfaces()
+            interfaces = iface_tool.list_interfaces()
+            interfaces["templates"] = [
+                item for item in interfaces["templates"]
+                if item["template_id"] != "cvrp_parallel_merge_static"
+                or item["template_version"] == config.template_version
+            ]
+            return interfaces
         if tool_name == "propose_and_validate_interface":
             return iface_tool.propose_and_validate(
                 template_id=str(args["template_id"]),
+                template_version=config.version_for_template(str(args["template_id"])),
                 postprocess_mode=str(args.get("postprocess_mode", "none")),
                 time_budget_ms=float(args.get("time_budget_ms") or config.instance_time_budget_ms),
                 diagnostic_ref=args.get("diagnostic_ref"),
@@ -607,7 +830,7 @@ def run_research_agent(
         raise ValueError(f"unknown_tool:{tool_name}")
 
     while ckpt.current_round <= config.max_rounds:
-        if ckpt.phase in {"completed", "budget_stopped", "no_champion"}:
+        if ckpt.phase in {"completed", "budget_stopped", "no_champion", "early_stopped_global"}:
             break
         r_id = ckpt.current_round
         if r_id in ckpt.completed_rounds:
@@ -625,9 +848,27 @@ def run_research_agent(
             _save_ckpt()
             continue
 
+        strict_required_round = False
+        if strict_diagnostic_gate and ckpt.phase == "diagnose":
+            strict_required_round = any(
+                event["round_id"] == r_id and event["event"] == "strict_diagnostic_round_required"
+                for event in ckpt.trajectory_control_events
+            )
+            if _diagnostic_required(r_id) and not strict_required_round:
+                strict_required_round = True
+                ckpt.trajectory_control_events.append({
+                    "round_id": r_id,
+                    "event": "strict_diagnostic_round_required",
+                    "stagnation_diagnostic_mode": diagnostic_mode,
+                })
+                _save_ckpt()
+
         if budget.remaining is not None and budget.remaining <= 0 and ckpt.phase == "diagnose":
-            ckpt.phase = "budget_stopped"
-            _save_ckpt()
+            if strict_required_round and _diagnostic_required(r_id):
+                _stop_for_missing_diagnostic(r_id, "request_budget_exhausted")
+            else:
+                ckpt.phase = "budget_stopped"
+                _save_ckpt()
             break
 
         restart_available = config.basin_restart_on_stagnation and ckpt.restart_eligible_round_id == r_id
@@ -667,19 +908,27 @@ def run_research_agent(
         if ckpt.phase == "diagnose":
             while ckpt.round_plan_args is None:
                 if budget.remaining is not None and budget.remaining <= 0:
-                    ckpt.phase = "budget_stopped"
-                    _save_ckpt()
+                    if strict_required_round and _diagnostic_required(r_id):
+                        _stop_for_missing_diagnostic(r_id, "request_budget_exhausted")
+                    else:
+                        ckpt.phase = "budget_stopped"
+                        _save_ckpt()
                     break
 
-                effective_outer_cap = config.outer_requests_per_round_cap + (
-                    ckpt.round_diagnostic_blocks if diagnostic_mode == "any" else 0
-                )
+                effective_outer_cap = config.outer_requests_per_round_cap
+                if strict_required_round:
+                    effective_outer_cap = max(effective_outer_cap, 6)
+                elif diagnostic_mode == "any":
+                    effective_outer_cap += ckpt.round_diagnostic_blocks
                 reserve_restart_slot = (
                     restart_trigger is not None and budget.remaining is not None
                     and budget.remaining <= _CONTROLLER_ATTEMPT_LIMIT
                 )
                 if ckpt.round_outer_requests >= effective_outer_cap or reserve_restart_slot:
                     bypassed_diag = _diagnostic_required(r_id)
+                    if strict_diagnostic_gate and bypassed_diag:
+                        _stop_for_missing_diagnostic(r_id, "reserve_restart_slot" if reserve_restart_slot else "outer_step_cap")
+                        break
                     if bypassed_diag:
                         _record_gate_bypass(r_id, "outer_step_cap")
                     ckpt.round_plan_args = {
@@ -749,8 +998,11 @@ def run_research_agent(
                         _sync_strict_checkpoints()
                         _save_ckpt()
                         continue
-                    ckpt.phase = "budget_stopped"
-                    _save_ckpt()
+                    if strict_required_round and _diagnostic_required(r_id):
+                        _stop_for_missing_diagnostic(r_id, "request_budget_exhausted")
+                    else:
+                        ckpt.phase = "budget_stopped"
+                        _save_ckpt()
                     break
                 ckpt.round_outer_requests += 1
                 if act == "call_tool":
@@ -766,7 +1018,8 @@ def run_research_agent(
                     _save_ckpt()
                     continue
                 if act == "submit_plan":
-                    if _diagnostic_required(r_id) and ckpt.round_diagnostic_blocks < 2:
+                    diagnostic_required = _diagnostic_required(r_id)
+                    if diagnostic_required and (strict_diagnostic_gate or ckpt.round_diagnostic_blocks < 2):
                         ckpt.round_diagnostic_blocks += 1
                         requirement = " or ".join(diagnostic_tools)
                         if diagnostic_mode == "sandbox_only":
@@ -775,8 +1028,18 @@ def run_research_agent(
                             "error_code": "stagnation_diagnostic_required",
                             "error": f"Call {requirement}, then resubmit the plan.",
                             "recommended_tools": list(diagnostic_tools),
-                            "remaining_blocks": 2 - ckpt.round_diagnostic_blocks,
                         }
+                        if strict_diagnostic_gate:
+                            last_tool_res["outer_steps_remaining"] = effective_outer_cap - ckpt.round_outer_requests
+                            if diagnostic_mode == "sandbox_only":
+                                repair_hint = next((
+                                    event.get("repair_hint") for event in reversed(ckpt.trajectory_control_events)
+                                    if event["round_id"] == r_id and event["event"] == "strict_sandbox_attempt"
+                                ), None)
+                                if repair_hint is not None:
+                                    last_tool_res["repair_hint"] = repair_hint
+                        else:
+                            last_tool_res["remaining_blocks"] = 2 - ckpt.round_diagnostic_blocks
                         ckpt.trajectory_control_events.append({
                             "round_id": r_id,
                             "event": "stagnation_diagnostic_required",
@@ -797,7 +1060,7 @@ def run_research_agent(
                         chosen_tpl = ckpt.active_template_id
                     if not config.tools_enabled or chosen_pp not in config.allowed_postprocess_modes:
                         chosen_pp = ckpt.active_postprocess_mode
-                    if _diagnostic_required(r_id):
+                    if diagnostic_required:
                         _record_gate_bypass(r_id, "submit_after_two_blocks")
                     ckpt.round_plan_args = {
                         "template_id": chosen_tpl,
@@ -810,8 +1073,10 @@ def run_research_agent(
                     }
                     if restart_trigger is not None or (restart_available and dec.get("fresh_template") is True):
                         ckpt.round_plan_args["fresh_template"] = True
-                        if not deterministic_restart:
-                            ckpt.trajectory_control_events.append({"round_id": r_id, "event": "basin_restart"})
+                        if not deterministic_restart and not global_stopping_enabled:
+                            ckpt.trajectory_control_events.append({
+                                "round_id": r_id, "event": "basin_restart",
+                            })
                     if dec.get("tool_call_id"):
                         ckpt.pending_submit_tool_call = {
                             "id": str(dec["tool_call_id"]),
@@ -842,16 +1107,22 @@ def run_research_agent(
                 break
             if ckpt.phase == "diagnose":
                 # Older checkpoints may have persisted a fallback plan before changing phase.
+                if strict_diagnostic_gate and _diagnostic_required(r_id):
+                    _stop_for_missing_diagnostic(r_id, "session_entry")
+                    break
                 ckpt.phase = "session_evolve"
                 _save_ckpt()
 
         # Phase 2: Execute / Resume Official Session Runtime EoH Round
         session_out: dict[str, Any] = {}
         if ckpt.phase == "session_evolve":
+            if strict_diagnostic_gate and _diagnostic_required(r_id):
+                _stop_for_missing_diagnostic(r_id, "session_entry")
+                break
             pargs = dict(ckpt.round_plan_args or {})
             if restart_trigger is not None:
                 pargs["fresh_template"] = True
-            if deterministic_restart:
+            if deterministic_restart or (global_stopping_enabled and pargs.get("fresh_template") is True):
                 pargs.setdefault("session_requests_before", budget.used)
             ckpt.round_plan_args = pargs
             sandbox_evidence = {"sandbox_ref": pargs["sandbox_ref"]} if "sandbox_ref" in pargs else {}
@@ -884,7 +1155,7 @@ def run_research_agent(
                 )
             except ProviderFailure:
                 if config.strict_checkpoint_barriers:
-                    _sync_strict_checkpoints()
+                    _sync_strict_checkpoints(reconcile_orphans=True)
                 _save_ckpt()
                 raise
             ckpt.session_initialized = True
@@ -892,13 +1163,14 @@ def run_research_agent(
             ckpt.round_inner_requests = _round_inner_requests(session_out, budget.used)
             if deterministic_restart:
                 ckpt.round_inner_requests = budget.used - pargs["session_requests_before"]
-            if restart_trigger is not None and session_out.get("fresh_template_applied") is True:
-                ckpt.trajectory_control_events.append({
-                    "round_id": r_id,
-                    "event": "basin_restart",
-                    "trigger_round_id": r_id - 1,
-                    "stagnation_trigger_ordinal": restart_trigger.get("stagnation_trigger_ordinal"),
-                })
+            if session_out.get("fresh_template_applied") is True and (restart_trigger is not None or global_stopping_enabled):
+                restart_event = {"round_id": r_id, "event": "basin_restart", "trigger_round_id": r_id - 1}
+                if restart_trigger is not None:
+                    restart_event["stagnation_trigger_ordinal"] = restart_trigger.get("stagnation_trigger_ordinal")
+                if global_stopping_enabled:
+                    restart_event["request_ordinal"] = pargs["session_requests_before"]
+                    ckpt.restart_eligible_round_id = None
+                ckpt.trajectory_control_events.append(restart_event)
 
             # Record best dev frozen solver + archive stepping stones (enforce completion rate & penalized score)
             frozen = session_out.get("frozen_solver")
@@ -935,7 +1207,7 @@ def run_research_agent(
 
             # Re-check checkpoints in case frozen solver improved right during this round
             if config.strict_checkpoint_barriers:
-                _sync_strict_checkpoints()
+                _sync_strict_checkpoints(reconcile_orphans=True)
             else:
                 for cp in session_out.get("crossed_checkpoints") or ():
                     _freeze_checkpoint(int(cp), int(budget.used))
@@ -1040,8 +1312,26 @@ def run_research_agent(
                 and reflect_payload_now.get("stop_reason") == "stagnation_early_stop"
                 and _session_terminal_phase(reflect_payload_now) is None
             )
+            terminal_phase = _session_terminal_phase(reflect_payload_now)
+            inner_stopped = reflect_payload_now.get("stop_reason") == "stagnation_early_stop"
+            dev_obj = _extract_eval_objective(reflect_payload_now)
+            global_decision = None
+            if global_stopping_enabled and ckpt.round_reflect_requests == 0:
+                previous = ckpt.trajectory_best_dev_objective
+                pending_heuristic_restart = (
+                    config.basin_restart_on_stagnation and not deterministic_restart and r_id < config.max_rounds
+                    and (inner_stopped or dev_obj is None or (previous is not None and dev_obj >= previous))
+                )
+                decision = _global_stopping_at(
+                    r_id, "session_early_stop" if inner_stopped else "session_end",
+                    pending_restart=pending_restart or pending_heuristic_restart,
+                    terminal_phase=terminal_phase,
+                )
+                if decision["stop"]:
+                    global_decision = decision
             reflection_attempt_floor = _CONTROLLER_ATTEMPT_LIMIT if pending_restart else 0
-            while (not ckpt.round_reflection_finished and ckpt.round_reflect_requests < config.outer_reflect_cap
+            while (global_decision is None and not ckpt.round_reflection_finished
+                   and ckpt.round_reflect_requests < config.outer_reflect_cap
                    and (budget.remaining is None or budget.remaining > reflection_attempt_floor)):
                 try:
                     dec = driver.decide_step(
@@ -1112,7 +1402,6 @@ def run_research_agent(
                     continue
                 break
 
-            dev_obj = _extract_eval_objective(reflect_payload_now)
             prev_cmp = ckpt.round_prev_best_dev
             delta_str = ""
             if dev_obj is not None and prev_cmp is not None:
@@ -1120,8 +1409,6 @@ def run_research_agent(
             if dev_obj is not None and (prev_best_dev is None or float(dev_obj) < float(prev_best_dev)):
                 prev_best_dev = float(dev_obj)
 
-            inner_stopped = reflect_payload_now.get("stop_reason") == "stagnation_early_stop"
-            terminal_phase = _session_terminal_phase(reflect_payload_now)
             if inner_stopped:
                 event = {"round_id": r_id, "event": "stagnation_early_stop"}
                 if "stagnation_trigger_ordinal" in reflect_payload_now:
@@ -1147,6 +1434,16 @@ def run_research_agent(
                     ckpt.restart_eligible_round_id = r_id + 1
                 else:
                     ckpt.restart_eligible_round_id = None
+
+            if global_stopping_enabled and global_decision is None:
+                decision = _global_stopping_at(
+                    r_id, "round_end", pending_restart=pending_restart and budget.remaining != 0,
+                    terminal_phase=terminal_phase,
+                )
+                if decision["stop"]:
+                    global_decision = decision
+            if global_decision is not None:
+                _seal_global_champion(global_decision)
 
             h_counts = ledger_tool.counts()
             r_summary = {
@@ -1179,7 +1476,7 @@ def run_research_agent(
             ckpt.round_summaries.append(r_summary)
             ckpt.completed_rounds.append(r_id)
             ckpt.current_round += 1
-            ckpt.phase = terminal_phase or "diagnose"
+            ckpt.phase = "early_stopped_global" if global_decision is not None else terminal_phase or "diagnose"
             ckpt.round_step_index = 0
             ckpt.round_outer_requests = 0
             ckpt.round_reflect_requests = 0
@@ -1192,13 +1489,42 @@ def run_research_agent(
             ckpt.pending_reflect_payload = None
             ckpt.pending_submit_tool_call = None
             _save_ckpt()
+            if ckpt.phase == "early_stopped_global":
+                break
 
+    budget.reconcile_orphaned_inflight()
     if config.strict_checkpoint_barriers:
-        _sync_strict_checkpoints()
+        _sync_strict_checkpoints(reconcile_orphans=True)
+    strict_gate_stop = ckpt.phase == "budget_stopped" and any(
+        event["round_id"] == ckpt.current_round and event["event"] == "strict_diagnostic_gate_stopped"
+        for event in ckpt.trajectory_control_events
+    )
     has_champion = bool(ckpt.best_solver_manifest_ref and ckpt.best_dev_objective is not None)
-    if not has_champion:
+    below_cap_completed = (
+        budget.used < config.total_request_cap
+        and ckpt.phase not in {"budget_stopped", "early_stopped_global"}
+    )
+    if config.strict_checkpoint_barriers and (not has_champion or below_cap_completed):
+        with closing(sqlite3.connect(budget.ledger_path)) as con:
+            row = con.execute(
+                """SELECT solver_manifest_json, dev_penalized_mean, dev_completion_rate, dev_all_feasible
+                   FROM candidate_provenance
+                   WHERE run_id=? AND global_ordinal <= ? AND eligible=1 AND solver_manifest_json IS NOT NULL
+                   ORDER BY dev_all_feasible DESC, dev_completion_rate DESC, dev_penalized_mean ASC, global_ordinal ASC
+                   LIMIT 1""",
+                (config.run_id, budget.used),
+            ).fetchone()
+        if row is not None and row[0] is not None:
+            ref = "best_solver_manifest.json"
+            atomic_write_json(run_dir / ref, json.loads(row[0]))
+            ckpt.best_solver_manifest_ref = ref
+            ckpt.best_dev_objective = float(row[1]) if row[1] is not None else None
+            ckpt.best_completion_rate = float(row[2]) if row[2] is not None else 0.0
+            ckpt.best_all_feasible = bool(row[3])
+            has_champion = bool(ckpt.best_solver_manifest_ref and ckpt.best_dev_objective is not None)
+    if not has_champion and not strict_gate_stop:
         ckpt.phase = "no_champion"
-    elif ckpt.phase != "budget_stopped":
+    elif ckpt.phase not in {"budget_stopped", "early_stopped_global"}:
         ckpt.phase = "completed"
     _save_ckpt()
 
@@ -1249,7 +1575,11 @@ def run_research_agent(
 
     milestone_status = read_milestone_status(budget.ledger_path, config.run_id) if config.strict_checkpoint_barriers else None
     last_round = round_summaries[-1] if round_summaries else {}
-    if budget.remaining == 0:
+    if ckpt.phase == "early_stopped_global":
+        stop_reason = "global_early_stop_" + config.global_early_stop_mode
+    elif strict_gate_stop:
+        stop_reason = "strict_diagnostic_gate_stopped"
+    elif budget.remaining == 0:
         stop_reason = "request_budget_exhausted"
     elif last_round.get("completion_reason"):
         stop_reason = last_round["completion_reason"]

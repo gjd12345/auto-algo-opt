@@ -405,7 +405,8 @@ def _memory_selection(interface_selection, template_id):
 
 def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
                   include_shared=False, include_cross_project=False, cursor=None,
-                  expected_run_id=None, interface_selection=None, template_id=None):
+                  expected_run_id=None, interface_selection=None, template_id=None,
+                  require_c2_multiscale_admission=False):
     action = "memory_search"
     with opened(run, action, expected_run_id) as (root, con):
         row = db._require_run(con, action=action, run_id=None)
@@ -422,12 +423,19 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
         memories, error, diagnostics = [], None, []
         if row["memory_enabled"]:
             try:
-                backend_result = open_session_memory_backend(row).read(
+                backend = open_session_memory_backend(row)
+                context = applicability if applicability is not None else _memory_applicability(root, row, action)
+                backend_result = backend.read(
                     query, project=row["problem"], scene=search_scene,
                     memory_type=memory_type, limit=min(limit+1,100), offset=offset,
                     include_shared=include_shared, include_cross_project=include_cross_project,
-                    applicability_context=applicability if applicability is not None else _memory_applicability(root, row, action))
+                    applicability_context=context)
                 records = backend_result["memories"]
+                if require_c2_multiscale_admission:
+                    from agent_skill_loop.memory.retrieval_m35 import admission_allowed
+                    context["require_c2_multiscale_admission"] = True
+                    records = [card for card in records if card["type"] != "solution" or admission_allowed(
+                        backend.read_version(card["reference"]), context)]
                 diagnostics = list(backend_result.get("diagnostics") or [])
                 records = [x for x in records if x["project"] == row["problem"]
                            or include_shared and x["project"] == "_shared"
@@ -465,7 +473,7 @@ def memory_search(*, run, query="", memory_type=None, scene=None, limit=8,
 
 
 def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None,
-                interface_selection=None, template_id=None):
+                interface_selection=None, template_id=None, require_c2_multiscale_admission=False):
     action = "memory_read"
     with opened(run, action, expected_run_id) as (root, con):
         with db._transaction(con):
@@ -480,6 +488,11 @@ def memory_read(*, run, reference, offset=0, limit=4096, expected_run_id=None,
                 page = open_session_memory_backend(row).read_version(
                     reference, max_chars=limit, offset=offset, require_active=True,
                     applicability_context=applicability)
+                if require_c2_multiscale_admission:
+                    from agent_skill_loop.memory.retrieval_m35 import admission_allowed
+                    applicability["require_c2_multiscale_admission"] = True
+                    if not admission_allowed(page, applicability):
+                        raise ValueError("memory_c2_admission_required")
             except (ValueError, OSError) as exc:
                 con.execute("INSERT INTO memory_reads(run_id,round_id,reference,body_sha256,offset_chars,returned_chars,total_chars,read_at_utc,status,error_code) VALUES (?,?,?,?,?,?,?,?,?,?)",
                             (row["run_id"],rd["round_id"],reference,"",offset,0,0,db._utc_now(),"failed",type(exc).__name__))
@@ -530,6 +543,8 @@ def submit_plan(*, run, operation_id, expected_state_version, file, expected_run
                 if plan.memory_basis:
                     backend = open_session_memory_backend(row)
                     applicability = _memory_applicability(root, row, action, plan.interface_selection)
+                    if ((plan.interface_selection or {}).get("template_options") or {}).get("enable_c2_joint_screen") is True:
+                        applicability["require_c2_multiscale_admission"] = True
                 for ref in plan.memory_basis:
                     try:
                         body = backend.read_version(ref, require_active=True, applicability_context=applicability)
@@ -700,6 +715,8 @@ def execute(*, run, operation_id, expected_state_version, expected_run_id=None):
                     if context["memory"]:
                         backend = open_session_memory_backend(row)
                         applicability = _memory_applicability(root, row, action, normalized_plan.get("interface_selection"))
+                        if ((normalized_plan.get("interface_selection") or {}).get("template_options") or {}).get("enable_c2_joint_screen") is True:
+                            applicability["require_c2_multiscale_admission"] = True
                         for item in context["memory"]:
                             try:
                                 current = backend.read_version(item["reference"], require_active=True,

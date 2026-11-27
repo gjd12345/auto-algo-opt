@@ -6,6 +6,7 @@ import json
 from typing import Any, Mapping, Sequence
 
 from research_agent.contracts import effective_stagnation_diagnostic_mode
+from research_agent.tools.math_sandbox import SANDBOX_RESULT_EXAMPLE
 
 RESEARCH_POLICY_MD = """# Autonomous CO Research Charter (Milestone 3)
 
@@ -66,7 +67,7 @@ AGENT_TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "run_math_sandbox",
-            "description": "Run restricted Python/NumPy diagnostic code on dev_24 with a 15s hard timeout. Assign structured numeric evidence to RESULT for a hash-bound script and result.",
+            "description": "Run restricted Python/NumPy diagnostic code on dev_24 with a 15s hard timeout. Use pre-injected helpers and assign a dict of finite numbers to RESULT. A failed or nonnumeric result includes a repair_hint.",
             "parameters": {
                 "type": "object",
                 "properties": {"script": {"type": "string"}},
@@ -183,6 +184,35 @@ AGENT_DIAGNOSE_TOOL_SCHEMAS: list[dict[str, Any]] = [
 AGENT_REFLECT_TOOL_SCHEMAS: list[dict[str, Any]] = [
     t for t in AGENT_TOOL_SCHEMAS if t["function"]["name"] in {"hypothesis_update", "archive_summary", "kb_read", "finish_round"}
 ]
+AGENT_MEMORY_TOOL_SCHEMAS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "memory_search",
+            "description": "Search admissible memory cards for the current development plan.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "memory_read",
+            "description": "Read an admissible memory card using the reference returned by memory_search.",
+            "parameters": {
+                "type": "object",
+                "properties": {"reference": {"type": "string"}},
+                "required": ["reference"],
+            },
+        },
+    },
+]
 
 
 _TEMPLATE_HINTS = {
@@ -203,6 +233,23 @@ _STAGNATION_GUIDANCE = {
     "slice_only": "If the round observation requires a diagnostic, call `diagnose_suite` successfully before submitting the plan.",
     "sandbox_only": "If the round observation requires a diagnostic, call `run_math_sandbox` successfully and return finite numeric evidence in RESULT before submitting the plan.",
 }
+_SANDBOX_GUIDANCE = (
+    "Sandbox helpers are pre-injected. No import is needed. Only numpy and math imports are allowed.\n"
+    'Use `np`, `math`, `load_dev_suite(suite_id="cvrp_dev_hetero_24", max_instances=None)`, '
+    '`eval_hook(code, template_id, inst, postprocess_mode="none", time_budget_ms=500.0)`, '
+    '`eval_baseline(algorithm_id, inst, time_budget_ms=500.0)`, `slice_stats(records)`, '
+    '`scale_invariance_audit(code, template_id, inst)`, and `radial_share_stats(routes, inst)`. '
+    "Pass `inst` positionally and use keywords for optional evaluation settings.\n"
+    "Never call `dir()`, `globals()`, `locals()`, `eval()`, `exec()`, or `open()`. Never import "
+    "`os`, `sys`, or `pathlib`, or access `.__version__` or other dunder attributes. "
+    "Assign a dict of finite `int` or `float` statistics directly to `RESULT` without wrapping it in `repr`. "
+    "`load_dev_suite` instances contain ONLY keys: `instance_id`, `size`, `capacity`, `depot`, `customer_coordinates`, `demands`, `spatial`, `demand_dist`, `depot_style`, `reference_objective` (NO `distance_matrix` or `dimension` key — compute distances from `[depot] + customer_coordinates` if needed). "
+    "`eval_hook`/`eval_baseline` return keys: `valid`, `tour_length`, `reference_objective`, `rel_gap`, `route_count`, `routes`, `route_loads`, `route_distances`, `solve_ms`, `status`, `error_code`.\n"
+    "Inside evolved `hook` strings passed to `eval_hook`, only whitelisted NumPy helpers are allowed (`np.zeros`, `np.ones`, `np.full`, `np.arange`, `np.asarray`, `np.where`, `np.clip`, `np.argsort`, `np.sqrt`, `np.exp`, `np.power`); NEVER use `np.empty`, `np.linspace`, `np.ix_`, or `np.fill_diagonal` inside `hook` code.\n"
+    "Use `repair_hint` to repair and rerun a failed script. Runnable CVRP example:\n"
+    "# Compare dev baseline tour lengths to their references.\n"
+    f"{SANDBOX_RESULT_EXAMPLE}\n"
+)
 
 
 def build_round_system_prompt(
@@ -217,6 +264,8 @@ def build_round_system_prompt(
     stagnation_diagnostic_mode: str = "any",
     early_stop_no_jump_requests: int | None = None,
     basin_restart_on_stagnation: bool = False,
+    strict_diagnostic_gate: bool = False,
+    memory_tools_enabled: bool = False,
 ) -> str:
     mode_desc = (
         "You have full access to deterministic diagnostic tools, KB search/read, AST-whitelisted NumPy math sandbox, "
@@ -238,6 +287,18 @@ def build_round_system_prompt(
         stagnation_diagnostic_mode, enable_stagnation_diagnostic_gate
     )
     stagnation_line = _STAGNATION_GUIDANCE[diagnostic_mode] + "\n" if tools_enabled else ""
+    if tools_enabled and strict_diagnostic_gate and diagnostic_mode != "off":
+        stagnation_line += "A required diagnostic must succeed before the plan can proceed. Repair failed diagnostics and retry within the available outer steps.\n"
+    memory_desc = ""
+    if tools_enabled and (memory_tools_enabled or arm_id.startswith("arm_b3_")):
+        memory_desc = (
+            "During planning, call `kb_search` for a relevant entry, then `kb_read` with its entry ID. "
+            "Include IDs of any KB entries used in `cited_kb_ids`.\n"
+        )
+        if memory_tools_enabled:
+            memory_desc += (
+                "Also call `memory_search` for the active template and `memory_read` with a matching returned reference before submitting your plan.\n"
+            )
     trajectory_guidance = []
     if early_stop_no_jump_requests:
         trajectory_guidance.append(
@@ -255,7 +316,9 @@ def build_round_system_prompt(
         f"{mode_desc}\n"
         f"Allowed templates: {tpl_desc}. Allowed postprocess modes: {list(allowed_postprocess_modes)}.\n"
         f"{protocol_desc}\n"
+        f"{_SANDBOX_GUIDANCE if tools_enabled else ''}"
         f"{stagnation_line}"
+        f"{memory_desc}"
         f"{trajectory_desc}"
         '1) {"action":"call_tool","tool":"<name>","arguments":{...}}\n'
         '2) {"action":"submit_plan","template_id":"...","postprocess_mode":"...","direction":"...","hypothesis":"...","cited_kb_ids":[...],"rationale":"..."}\n'

@@ -1,0 +1,412 @@
+{
+  "schema_version": "m6-wave3-tightness-feasibility/v1",
+  "theorist_model": "gpt-6.2-sol",
+  "verifier": "scratch/verify_sol_wave3_tightness_theory.py",
+  "safeguards": {
+    "v1_sha256": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "v2_sha256": "7e6d9b3294d9703f38e9a5ad3b095c391bebf46e71518fb84697b148e3130ffa",
+    "wave3_md_count": 0
+  },
+  "theorems_and_counterexamples": {
+    "ce1_outcomes": {
+      "cw": {
+        "routes": [
+          [
+            1,
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ]
+        ],
+        "loads": [
+          6.0,
+          6.0,
+          8.0
+        ]
+      },
+      "reversed_cw": {
+        "routes": [
+          [
+            1,
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ]
+        ],
+        "loads": [
+          6.0,
+          6.0,
+          8.0
+        ]
+      },
+      "m5_legacy": {
+        "routes": [
+          [
+            1,
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ]
+        ],
+        "loads": [
+          6.0,
+          6.0,
+          8.0
+        ]
+      }
+    },
+    "ce1_family_k2_to_7": {
+      "2": {
+        "terminal_routes": 3,
+        "expected": 3,
+        "rho": 1.0
+      },
+      "3": {
+        "terminal_routes": 4,
+        "expected": 4,
+        "rho": 1.0
+      },
+      "4": {
+        "terminal_routes": 6,
+        "expected": 6,
+        "rho": 1.0
+      },
+      "5": {
+        "terminal_routes": 7,
+        "expected": 7,
+        "rho": 1.0
+      },
+      "6": {
+        "terminal_routes": 9,
+        "expected": 9,
+        "rho": 1.0
+      },
+      "7": {
+        "terminal_routes": 10,
+        "expected": 10,
+        "rho": 1.0
+      }
+    },
+    "ce2_first_block_size": 64,
+    "ce2_terminal_blocked_routes": 18,
+    "ce3_final_loads": [
+      7.0,
+      7.0
+    ],
+    "ce4_repacked_routes": [
+      [
+        8,
+        12
+      ],
+      [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        10,
+        11
+      ]
+    ],
+    "ce4_k8_global_witness_routes": 8
+  },
+  "calibration_430": {
+    "500": {
+      "suites": {
+        "cvrp_ext_eohs_256": {
+          "summary": [
+            256,
+            41,
+            43,
+            43,
+            43,
+            43,
+            43
+          ],
+          "rho_min": "68/135",
+          "rho_max": "1",
+          "delta_max_min": "7/124",
+          "delta_max_max": "9/10"
+        },
+        "cvrp_ext_cvrplib_abp_74": {
+          "summary": [
+            74,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24
+          ],
+          "rho_min": "407/500",
+          "rho_max": "697/700",
+          "delta_max_min": "41/400",
+          "delta_max_max": "31/35"
+        },
+        "cvrp_ext_cvrplib_x_100": {
+          "summary": [
+            100,
+            56,
+            56,
+            44,
+            43,
+            45,
+            44
+          ],
+          "rho_min": "5689/6375",
+          "rho_max": "1",
+          "delta_max_min": "1/23",
+          "delta_max_max": "4/5"
+        }
+      },
+      "total": [
+        430,
+        121,
+        123,
+        111,
+        110,
+        112,
+        111
+      ],
+      "rho_eq_1_count": 4,
+      "rho_eq_1_y00_overshoots": 1,
+      "rho_strata": {
+        "rho<0.90": [
+          109,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "0.90<=rho<0.95": [
+          105,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11
+        ],
+        "0.95<=rho<0.98": [
+          102,
+          35,
+          36,
+          36,
+          36,
+          36,
+          36
+        ],
+        "0.98<=rho<=1.00": [
+          114,
+          73,
+          74,
+          62,
+          61,
+          63,
+          62
+        ]
+      },
+      "delta_strata": {
+        "delta_max<0.10": [
+          141,
+          8,
+          9,
+          8,
+          7,
+          8,
+          8
+        ],
+        "0.10<=delta_max<0.20": [
+          106,
+          24,
+          24,
+          20,
+          20,
+          21,
+          20
+        ],
+        "0.20<=delta_max": [
+          183,
+          89,
+          90,
+          83,
+          83,
+          83,
+          83
+        ]
+      },
+      "high_rho_by_delta": {
+        "delta_max<0.10": {
+          "y00_overshoots": 8,
+          "n": 21
+        },
+        "0.10<=delta_max<0.20": {
+          "y00_overshoots": 17,
+          "n": 34
+        },
+        "0.20<=delta_max": {
+          "y00_overshoots": 49,
+          "n": 59
+        }
+      }
+    },
+    "2000": {
+      "suites": {
+        "cvrp_ext_eohs_256": {
+          "summary": [
+            256,
+            41,
+            43,
+            43,
+            43,
+            43,
+            43
+          ],
+          "rho_min": "68/135",
+          "rho_max": "1",
+          "delta_max_min": "7/124",
+          "delta_max_max": "9/10"
+        },
+        "cvrp_ext_cvrplib_abp_74": {
+          "summary": [
+            74,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24
+          ],
+          "rho_min": "407/500",
+          "rho_max": "697/700",
+          "delta_max_min": "41/400",
+          "delta_max_max": "31/35"
+        },
+        "cvrp_ext_cvrplib_x_100": {
+          "summary": [
+            100,
+            56,
+            56,
+            44,
+            43,
+            45,
+            44
+          ],
+          "rho_min": "5689/6375",
+          "rho_max": "1",
+          "delta_max_min": "1/23",
+          "delta_max_max": "4/5"
+        }
+      },
+      "total": [
+        430,
+        121,
+        123,
+        111,
+        110,
+        112,
+        111
+      ],
+      "rho_eq_1_count": 4,
+      "rho_eq_1_y00_overshoots": 1,
+      "rho_strata": {
+        "rho<0.90": [
+          109,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "0.90<=rho<0.95": [
+          105,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11
+        ],
+        "0.95<=rho<0.98": [
+          102,
+          35,
+          36,
+          36,
+          36,
+          36,
+          36
+        ],
+        "0.98<=rho<=1.00": [
+          114,
+          73,
+          74,
+          62,
+          61,
+          63,
+          62
+        ]
+      },
+      "delta_strata": {
+        "delta_max<0.10": [
+          141,
+          8,
+          9,
+          8,
+          7,
+          8,
+          8
+        ],
+        "0.10<=delta_max<0.20": [
+          106,
+          24,
+          24,
+          20,
+          20,
+          21,
+          20
+        ],
+        "0.20<=delta_max": [
+          183,
+          89,
+          90,
+          83,
+          83,
+          83,
+          83
+        ]
+      },
+      "high_rho_by_delta": {
+        "delta_max<0.10": {
+          "y00_overshoots": 8,
+          "n": 21
+        },
+        "0.10<=delta_max<0.20": {
+          "y00_overshoots": 17,
+          "n": 34
+        },
+        "0.20<=delta_max": {
+          "y00_overshoots": 49,
+          "n": 59
+        }
+      }
+    }
+  }
+}

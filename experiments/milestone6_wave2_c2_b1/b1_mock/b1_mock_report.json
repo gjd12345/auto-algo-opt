@@ -1,0 +1,45 @@
+{
+  "schema_version": "m6-b1-mock/v1",
+  "seed": 20261124,
+  "total_request_cap": 100,
+  "arms": {
+    "no_early_stop": {
+      "phase": "budget_stopped",
+      "stop_reason": "request_budget_exhausted",
+      "realized_request_spend": 100,
+      "best_solver_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json",
+      "restart_count": 0,
+      "stopping_decision_count": 0,
+      "passed": true
+    },
+    "naive_patience_24": {
+      "phase": "early_stopped_global",
+      "stop_reason": "global_early_stop_naive_patience",
+      "realized_request_spend": 32,
+      "best_solver_manifest_ref": "checkpoints/global_early_stop_champion.json",
+      "restart_count": 0,
+      "stopping_decision_count": 7,
+      "passed": true
+    },
+    "stagnation_restart_only": {
+      "phase": "budget_stopped",
+      "stop_reason": "request_budget_exhausted",
+      "realized_request_spend": 100,
+      "best_solver_manifest_ref": "agent_artifacts/round_0001_frozen_solver.json",
+      "restart_count": 11,
+      "stopping_decision_count": 0,
+      "passed": true
+    },
+    "risk_bounded_adaptive_stop": {
+      "phase": "early_stopped_global",
+      "stop_reason": "global_early_stop_risk_bounded_beta_geom",
+      "realized_request_spend": 79,
+      "best_solver_manifest_ref": "checkpoints/global_early_stop_champion.json",
+      "restart_count": 0,
+      "stopping_decision_count": 15,
+      "passed": true
+    }
+  },
+  "passed": true,
+  "simulation": "scripted_inner_session_with_production_controller_and_request_ledger"
+}

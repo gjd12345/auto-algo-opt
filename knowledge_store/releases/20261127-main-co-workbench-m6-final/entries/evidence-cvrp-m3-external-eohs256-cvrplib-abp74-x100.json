@@ -1,0 +1,102 @@
+{
+  "type": "evidence",
+  "title": "里程碑二/三冻结求解器在国际顶会与 OR 黄金标准库 (EoH-S 256 / CVRPLib A·B·P 74 / Set X 100) 外部大考证据",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3",
+    "external-benchmark",
+    "eoh-s-256",
+    "cvrplib-abp",
+    "cvrplib-set-x",
+    "exact-k"
+  ],
+  "status": "reviewed",
+  "summary": "统一 500 ms 预算、严格相同距离公约（EoH-S 为 euc_2d_float，CVRPLib A/B/P 与 Set X 为 euc_2d_nint）下首次横向评测 M2 与 M3 冻结冠军：EoH-S 256 相对 LKH 均 gap：M3 最优 m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126 达 +5.91% vs CW +7.89% / C1 +27.47%；CVRPLib A/B/P 74 相对官方 BKS 均 gap：+4.06%（精确-k 合规率 66.2%）；CVRPLib Set X 100（含 501-1000 大图）相对官方 BKS 均 gap：+5.15%（X-S/M/L 全完成）。",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "parallel_merge",
+    "complexity_class": "O(n^2 log n)",
+    "interface": "solve_cvrp",
+    "applicable_regimes": {
+      "strong_on": [
+        "external_eoh_s_256_generalization",
+        "cvrplib_abp_74_and_set_x_100_scaling_to_n1000"
+      ],
+      "weak_on": [
+        "strict_exact_k_bin_packing_when_unconstrained"
+      ],
+      "scale_notes": "对 CVRPLib A/B/P 74 严格同步报告自由车数全体 gap 与 ==k 精确车数子集违规统计；对 Set X 100 分 X-S (100-250)、X-M (251-500)、X-L (501-1000) 三档报告。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/cvrp_workbench/runner.py",
+        "sha256": "60114d08c05e25c4813c12f912c80b3eac0fa995447d8f355f8f23a9545fc9bf"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/cvrp_workbench/suites.py",
+        "sha256": "2f2011a5964e1b4f15290ba38805b627cb6fb3da65682e68da517c81eeb568bc"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_rel_gap",
+        "value": 0.059133,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "EoH-S 256 相对 LKH 平均差距",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_rel_gap",
+        "value": 0.04055,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib Set A/B/P 74 相对官方 BKS 平均差距",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_2_fixed_l2a_s20261126",
+        "metric": "mean_rel_gap",
+        "value": 0.051472,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib Uchoa Set X 100 相对官方 BKS 平均差距",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-research-agent-m3-autonomous-loop"
+    ],
+    "sources": [
+      "src-milestone3-research-agent-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone3-research-agent-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3/phase3d_blind_eval/external_benchmarks_report.json"
+  ],
+  "code_refs": [],
+  "id": "evidence-cvrp-m3-external-eohs256-cvrplib-abp74-x100",
+  "content_sha256": "7dc1d75ad2a133379f0ce4d3a913fd85b9387532a91aabbe3f7809553c3cb500"
+}

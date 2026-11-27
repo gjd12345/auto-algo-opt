@@ -159,11 +159,28 @@ class AgentConfig:
     memory_cooldown_rounds: int = 2
     memory_online_writeback_enabled: bool = True
     stagnation_diagnostic_mode: str = "any"
+    template_version: str = "v1"
+    enable_c2_joint_screen: bool = False
+    global_early_stop_mode: str = "off"
+    global_early_stop_patience: int = 24
+    risk_stop_window: int = 32
+    risk_stop_prior_a: float = 0.5
+    risk_stop_prior_b: float = 19.5
+    risk_stop_eps: float = 0.0010
+    risk_stop_alpha: float = 0.15
+    risk_stop_d_floor: float = 0.002
+    risk_stop_min_requests: int = 30
+    risk_stop_cooldown: int = 18
+    strict_diagnostic_gate: bool = False
+    require_c2_multiscale_admission: bool = False
 
     def __post_init__(self) -> None:
         effective_stagnation_diagnostic_mode(
             self.stagnation_diagnostic_mode, self.enable_stagnation_diagnostic_gate
         )
+        for name in ("strict_diagnostic_gate", "require_c2_multiscale_admission"):
+            if type(getattr(self, name)) is not bool:
+                raise ValueError(f"{name}_must_be_boolean")
         multiscale_options({
             **{name: getattr(self, name) for name in MULTISCALE_DEFAULTS},
             "enable_n200_latency_screen": self.enable_n200_latency_screen,
@@ -174,6 +191,27 @@ class AgentConfig:
         threshold = self.early_stop_no_jump_requests
         if threshold is not None and (type(threshold) is not int or threshold < 0):
             raise ValueError("early_stop_no_jump_requests_must_be_nonnegative_integer")
+        if self.template_version not in ("v1", "v2"):
+            raise ValueError("template_version_invalid")
+        if type(self.enable_c2_joint_screen) is not bool:
+            raise ValueError("enable_c2_joint_screen_must_be_boolean")
+        if self.enable_c2_joint_screen and self.problem_family != "cvrp":
+            raise ValueError("c2_joint_screen_requires_cvrp")
+        if self.global_early_stop_mode not in ("off", "naive_patience", "risk_bounded_beta_geom"):
+            raise ValueError("global_early_stop_mode_invalid")
+        for name, minimum in (
+            ("global_early_stop_patience", 1), ("risk_stop_window", 1),
+            ("risk_stop_min_requests", 0), ("risk_stop_cooldown", 0),
+        ):
+            value = getattr(self, name)
+            if type(value) is not int or value < minimum:
+                raise ValueError(f"{name}_out_of_range")
+        for name in ("risk_stop_prior_a", "risk_stop_prior_b", "risk_stop_eps", "risk_stop_alpha", "risk_stop_d_floor"):
+            value = getattr(self, name)
+            if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                raise ValueError(f"{name}_must_be_nonnegative_finite")
+        if self.risk_stop_prior_a == 0 or self.risk_stop_prior_b == 0 or self.risk_stop_alpha > 1:
+            raise ValueError("risk_stop_prior_or_alpha_out_of_range")
         if self.memory_mode not in ("off", "naive_static", "m35_l12", "m35_full"):
             raise ValueError("memory_mode_invalid")
         if type(self.memory_enabled) is not bool or type(self.kb_enabled) is not bool:
@@ -196,6 +234,15 @@ class AgentConfig:
             raise ValueError("pinned_kb_release_or_digest_invalid")
 
     @property
+    def effective_early_stop_no_jump_requests(self) -> int | None:
+        if self.global_early_stop_mode == "naive_patience" and not self.basin_restart_on_stagnation:
+            return self.global_early_stop_patience
+        return self.early_stop_no_jump_requests
+
+    def version_for_template(self, template_id: str) -> str:
+        return self.template_version if template_id == "cvrp_parallel_merge_static" else "v1"
+
+    @property
     def effective_stagnation_diagnostic_mode(self) -> str:
         if not self.tools_enabled:
             return "off"
@@ -204,7 +251,11 @@ class AgentConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        for name in ("strict_diagnostic_gate", "require_c2_multiscale_admission"):
+            if not data[name]:
+                del data[name]
+        return data
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, Any]) -> "AgentConfig":
@@ -263,7 +314,7 @@ class AgentCheckpoint:
     schema_version: str = "m3-research-agent-checkpoint/v1"
     run_id: str = ""
     current_round: int = 1
-    phase: str = "diagnose"  # diagnose | session_evolve | reflect | completed | budget_stopped | no_champion
+    phase: str = "diagnose"  # Also supports the terminal phase early_stopped_global.
     round_step_index: int = 0
     round_outer_requests: int = 0
     round_reflect_requests: int = 0

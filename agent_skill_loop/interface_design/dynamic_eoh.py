@@ -13,6 +13,7 @@ whitelist, registered template, and M1 ``verify_cvrp_solution`` verifier used by
 from __future__ import annotations
 
 import datetime as _dt
+import ast
 import hashlib
 import json
 import math
@@ -42,7 +43,8 @@ from .contracts import (
     hook_bundle_metadata,
     sha256_text,
 )
-from .multiscale import multiscale_options, probe_timeout_s
+from .fleet_exact_k import FLEET_EXACT_K_MOCK_CANDIDATES, FLEET_EXACT_K_TEMPLATE_KEY
+from .multiscale import ONLINE_C2_JOINT_PROBES, multiscale_options, probe_timeout_s
 from .planner import parse_hook_candidate
 from .runtime import DynamicSubprocessEvaluator, capability_contract_dict, derive_outer_timeout_s, resolve_problem_adapter
 from .session_baseline import load_dev_or_public_suite
@@ -85,6 +87,7 @@ def _default_mock_candidates() -> dict[str, tuple[str, ...]]:
         candidates["cvrp_ruin_recreate_dual"] = L3B_MOCK_CANDIDATES
     except ImportError:
         pass
+    candidates[FLEET_EXACT_K_TEMPLATE_KEY[0]] = FLEET_EXACT_K_MOCK_CANDIDATES
     return candidates
 
 
@@ -114,6 +117,7 @@ class DynamicInterfaceProblem(BaseProblem):
         multiscale_ratio_min_t200_ms: float = 10.0,
         multiscale_n200_abs_cap_ms: float | None = None,
         checkpoint_validation_workers: int = 0,
+        enable_c2_joint_screen: bool = False,
     ) -> None:
         assert_milestone_suite_not_blind(suite_id)
         self.design = design
@@ -145,6 +149,15 @@ class DynamicInterfaceProblem(BaseProblem):
             probe_timeout_s(instance_time_budget_ms, constant_screen=False)
             if enable_multiscale_latency_ratio_screen else 0.0
         )
+        if type(enable_c2_joint_screen) is not bool:
+            raise ValueError("enable_c2_joint_screen_must_be_boolean")
+        if enable_c2_joint_screen and design.problem_family != "cvrp":
+            raise ValueError("c2_joint_screen_requires_cvrp")
+        self.enable_c2_joint_screen = enable_c2_joint_screen
+        self.c2_joint_probe_timeout_s = (
+            derive_outer_timeout_s(len(ONLINE_C2_JOINT_PROBES), instance_time_budget_ms, minimum_s=3.0)
+            if enable_c2_joint_screen else 0.0
+        )
         self.checkpoint_validation_worker_timeout_s = effective_batch_timeout
 
         self._n200_timeout_s = (
@@ -162,6 +175,7 @@ class DynamicInterfaceProblem(BaseProblem):
         # EoH encloses both serial workers and any synchronous checkpoint gates.
         self.enclosing_candidate_timeout_s = math.ceil(
             effective_batch_timeout + self._n200_timeout_s + self.multiscale_probe_timeout_s
+            + self.c2_joint_probe_timeout_s
             + checkpoint_validation_workers * self.checkpoint_validation_worker_timeout_s
         ) + 10
         super().__init__(
@@ -224,6 +238,11 @@ class DynamicInterfaceProblem(BaseProblem):
             + "\n\nEVALUATOR CAPABILITY CONTRACT (machine-derived; mandatory):\n"
             + json.dumps(contract, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         )
+        if (
+            (self.design.template_id, self.design.template_version) == FLEET_EXACT_K_TEMPLATE_KEY
+            and "frozen_static_hook_code" in self.design.template_options
+        ):
+            text += "\nStatic merge scoring is frozen. Include a valid static hook and evolve score_fleet_adjustment."
         if self.round_context:
             text += "\n\n" + self.round_context
         return text
@@ -248,7 +267,20 @@ class DynamicInterfaceProblem(BaseProblem):
             self.design.template_id, self.design.template_version, str(code_string),
             allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
         )
+        if (self.design.template_id, self.design.template_version) == FLEET_EXACT_K_TEMPLATE_KEY:
+            frozen = self.design.template_options.get("frozen_static_hook_code")
+            if frozen is not None:
+                implementations = parse_hook_candidate(
+                    self.design.template_id, self.design.template_version,
+                    {**implementations, self.tpl.hook_name: frozen},
+                    allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+                )
         return implementations[self.tpl.hook_name], implementations
+
+    def _fleet_adjustment_signature(self, code: str) -> str:
+        _, implementations = self._resolve_hook_payload(code)
+        source = implementations["score_fleet_adjustment"]
+        return ast.dump(ast.parse(source), include_attributes=False)
 
     def evaluate_detailed(self, code_string: str, *, origin: str | None = None) -> dict[str, Any]:
         if origin is None:
@@ -301,6 +333,31 @@ class DynamicInterfaceProblem(BaseProblem):
                     "outer_timeout_s": multiscale_latency["outer_timeout_s"],
                     "worker_wall_ms": multiscale_latency["worker_wall_ms"],
                     "multiscale_latency_diagnostics": multiscale_latency,
+                }
+                self._append_eval_log(str(code_string), resp)
+                return resp
+        c2_joint_latency = None
+        if origin == "generated" and self.c2_joint_probe_timeout_s:
+            validator = InterfaceValidator(
+                candidate_timeout_s=self.c2_joint_probe_timeout_s,
+                outer_timeout_s=self.c2_joint_probe_timeout_s,
+                instance_time_budget_ms=self.instance_time_budget_ms,
+                allow_extended_numpy_whitelist=self.allow_extended_numpy_whitelist,
+            )
+            c2_joint_latency = validator.validate_evolved_hook_c2_joint_screen(
+                self.design,
+                hook_code_override=primary_code,
+                hook_implementations=implementations,
+                max_n200_n100_ratio=self.multiscale_options["max_n200_n100_ratio"],
+            )
+            if not c2_joint_latency["passed"]:
+                resp = {
+                    "valid": False, "completed": False, "objective": None, "instance_objectives": [],
+                    "records": [], "protocol_id": self.adapter.protocol_id,
+                    **{key: c2_joint_latency[key] for key in (
+                        "error_code", "error_detail", "failures", "timeout_kind", "outer_timeout_s", "worker_wall_ms",
+                    )},
+                    "c2_joint_latency_diagnostics": c2_joint_latency,
                 }
                 self._append_eval_log(str(code_string), resp)
                 return resp
@@ -367,6 +424,8 @@ class DynamicInterfaceProblem(BaseProblem):
         )
         if multiscale_latency is not None:
             resp["multiscale_latency_diagnostics"] = multiscale_latency
+        if c2_joint_latency is not None:
+            resp["c2_joint_latency_diagnostics"] = c2_joint_latency
         self._append_eval_log(str(code_string), resp)
         return resp
 
@@ -401,7 +460,7 @@ class DynamicInterfaceProblem(BaseProblem):
             "worker_wall_ms": resp.get("worker_wall_ms"),
             "subprocess_overhead_ms": resp.get("subprocess_overhead_ms"),
         }
-        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics"):
+        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics", "c2_joint_latency_diagnostics"):
             if key in resp:
                 row[key] = resp[key]
         path = Path(self.evaluation_log)
@@ -756,6 +815,7 @@ def run_dynamic_eoh_evolution(
         enable_n200_latency_screen=design.template_options.get("enable_n200_latency_screen", False),
         enable_degenerate_constant_screen=design.template_options.get("enable_degenerate_constant_screen", False),
         n200_latency_multiplier=design.template_options.get("n200_latency_multiplier", 1.0),
+        enable_c2_joint_screen=design.template_options.get("enable_c2_joint_screen", False),
         **multiscale_options(design.template_options),
     )
 
@@ -867,7 +927,7 @@ def run_dynamic_eoh_evolution(
         engine_type = (
             _DynamicCandidateEoH if (
                 task.enable_n200_latency_screen or task.enable_degenerate_constant_screen
-                or task.enable_multiscale_latency_ratio_screen
+                or task.enable_multiscale_latency_ratio_screen or task.enable_c2_joint_screen
             ) else EOH
         )
         engine = engine_type(engine_cfg, task)
@@ -893,23 +953,41 @@ def run_dynamic_eoh_evolution(
                 eval_rows.append(json.loads(line))
 
     valid_rows = [r for r in eval_rows if r.get("valid") and r.get("objective") is not None]
-    evolved_rows = [r for r in valid_rows if r.get("hook_code_sha256") != design.baseline_hook_sha256]
+    fleet_exact_k = (design.template_id, design.template_version) == FLEET_EXACT_K_TEMPLATE_KEY
+    if fleet_exact_k:
+        baseline_adjustment = task._fleet_adjustment_signature(baseline_code)
+        if design.template_options.get("frozen_static_hook_code") is not None:
+            evolved_rows = [
+                r for r in valid_rows if task._fleet_adjustment_signature(r["hook_code"]) != baseline_adjustment
+            ]
+        else:
+            _, baseline_impls = task._resolve_hook_payload(baseline_code)
+            evolved_rows = [r for r in valid_rows if task._resolve_hook_payload(r["hook_code"])[1] != baseline_impls]
+    else:
+        evolved_rows = [r for r in valid_rows if r.get("hook_code_sha256") != design.baseline_hook_sha256]
     if require_evolved and not evolved_rows:
         raise RuntimeError(f"no_valid_evolved_eoh_candidate_produced:eoh_status={eoh_status}:{eoh_error}")
     pool = evolved_rows if evolved_rows else valid_rows
     if not pool:
         raise RuntimeError(f"no_valid_eoh_candidate_produced:{eoh_error}")
-    best_row = min(pool, key=lambda r: float(r["objective"]))
-
     # Re-validate winning candidate hook through all 5 gates before freezing!
     tpl = get_template_spec(design.template_id, design.template_version)
     adapter = resolve_problem_adapter(tpl, problem_family=design.problem_family, protocol_id=design.protocol_id)
-    win_primary, win_impls = task._resolve_hook_payload(str(best_row["hook_code"]))
-    winner_validation = validator.validate(
-        design,
-        hook_code_override=win_primary,
-        hook_implementations=win_impls,
-    )
+    ranked = sorted(pool, key=lambda r: float(r["objective"]))
+    seen_programs = set()
+    for best_row in ranked if fleet_exact_k else ranked[:1]:
+        win_primary, win_impls = task._resolve_hook_payload(str(best_row["hook_code"]))
+        program = tuple(sorted((win_impls or {design.hook_name: win_primary}).items()))
+        if program in seen_programs:
+            continue
+        seen_programs.add(program)
+        winner_validation = validator.validate(
+            design,
+            hook_code_override=win_primary,
+            hook_implementations=win_impls,
+        )
+        if winner_validation.passed:
+            break
     (output_dir / "winner_validation_report.json").write_text(
         json.dumps(winner_validation.as_dict(), ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

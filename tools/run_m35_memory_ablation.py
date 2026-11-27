@@ -532,7 +532,7 @@ def cmd_init_fork(args: argparse.Namespace) -> int:
             raise FileExistsError("m35_fork_already_frozen")
         seeds = sorted(set(args.seed or SEEDS))
         settings = _agent_settings(args.mode)
-        kb = verify_pinned_release(REPO / "knowledge_store" / "current", release_id=RELEASE_ID)
+        kb = verify_pinned_release(REPO / "knowledge_store" / "releases" / RELEASE_ID, release_id=RELEASE_ID)
         suite = _suite(DEV)
         common = _common_start(settings, suite)
         stores, dev_artifacts = args.source_store, args.dev_artifact

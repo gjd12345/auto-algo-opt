@@ -61,8 +61,74 @@ def _family(value: Any) -> str | None:
     return problem_family(value.split("/", 1)[0])
 
 
+def _regimes(value: Any) -> set[str]:
+    values = [value] if isinstance(value, str) else value
+    if not isinstance(values, (list, tuple)) or any(not isinstance(item, str) or not item.strip() for item in values):
+        return set()
+    return {re.sub(r"[\s-]+", "_", item.strip().casefold()) for item in values}
+
+
+def _c2_admission_allowed(card: Mapping[str, Any], context: Mapping[str, Any]) -> bool:
+    sources = []
+    for key in ("provenance", "attributes", "applicability_scope"):
+        source = card.get(key)
+        if isinstance(source, Mapping):
+            sources.append(source)
+            if isinstance(source.get("geometry_scale"), Mapping):
+                sources.append(source["geometry_scale"])
+    verdicts = [source["c2_multiscale_screen_passed"] for source in sources if "c2_multiscale_screen_passed" in source]
+    if not verdicts or any(verdict is not True for verdict in verdicts):
+        return False
+
+    target_sizes = [context[key] for key in ("target_min_n", "target_max_n") if key in context]
+    if len(target_sizes) == 2 and (any(type(size) is not int for size in target_sizes)
+                                   or target_sizes[0] > target_sizes[1]):
+        return False
+    if "target_scale_range" in context:
+        requested = context["target_scale_range"]
+        if (not isinstance(requested, (list, tuple)) or len(requested) != 2
+                or any(type(size) is not int for size in requested) or requested[0] > requested[1]):
+            return False
+        target_sizes.extend(requested)
+    if target_sizes:
+        if any(type(size) is not int or size <= 0 for size in target_sizes):
+            return False
+        ranges = [source["scale_range"] for source in sources if "scale_range" in source]
+        if not ranges or any(
+            not isinstance(bounds, (list, tuple)) or len(bounds) != 2
+            or any(type(bound) is not int or bound <= 0 for bound in bounds)
+            or not all(bounds[0] <= size <= bounds[1] for size in target_sizes)
+            for bounds in ranges
+        ):
+            return False
+
+    names = ("spatial_regime", "demand_cv_regime", "eccentricity_regime")
+    requested_geometry = context.get("target_geometry_regimes", {})
+    if not isinstance(requested_geometry, Mapping) or set(requested_geometry) - set(names):
+        return False
+    for name in names:
+        targets = [context[f"target_{name}"]] if f"target_{name}" in context else []
+        if name in requested_geometry:
+            targets.append(requested_geometry[name])
+        if not targets:
+            continue
+        choices = []
+        for source in sources:
+            if name in source:
+                choices.append(_regimes(source[name]))
+            geometry = source.get("geometry_regimes")
+            if isinstance(geometry, Mapping) and name in geometry:
+                choices.append(_regimes(geometry[name]))
+            elif name == "spatial_regime" and isinstance(geometry, (list, tuple)):
+                choices.append(_regimes(geometry))
+        if not choices or any(not (required := _regimes(target)) or any(required - allowed for allowed in choices)
+                              for target in targets):
+            return False
+    return True
+
+
 def admission_allowed(card: Mapping[str, Any], context: Mapping[str, Any]) -> bool:
-    """Keep offline packing and unproven prefix behavior out of online OBP."""
+    """Apply scoped retrieval, opt-in C2 admission, and online OBP prefix guards."""
     target = context.get("problem")
     if not isinstance(target, str) or not target:
         return False
@@ -71,6 +137,9 @@ def admission_allowed(card: Mapping[str, Any], context: Mapping[str, Any]) -> bo
     except (TypeError, ValueError):
         return False
     if not active:
+        return False
+    if (context.get("require_c2_multiscale_admission") is True and card.get("type") == "solution"
+            and not _c2_admission_allowed(card, context)):
         return False
     family = _family(target)
     # Provenance and evidence carry evaluator observations in Sidecar cards

@@ -1,0 +1,146 @@
+{
+  "type": "method",
+  "title": "CVRP 基于节点破坏评分与 Regret-2 重插的 L3 破坏修复框架 (M3 L3 · score_ruin_nodes)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3",
+    "l3",
+    "ruin-recreate",
+    "lns",
+    "regret-2",
+    "anytime",
+    "score_ruin_nodes"
+  ],
+  "status": "reviewed",
+  "summary": "里程碑三新增 cvrp_ruin_recreate/v1 (L3) 单钩子大邻域搜索模板：以统一 deadline（含 CW + 初始 intra_2opt + LNS）记录 first_feasible_ms 与 anytime_curve，演化破坏优先级钩子 score_ruin_nodes 并配套确定性 Regret-2 重插、受扰路径 intra_2opt 与 Record-to-Record 接收；L3-ctrl (Worst-Cost Removal) 作为零演化骨架对照在 cvrp_m3_blind_120 (500ms) 达 23.3474（p50=171.2138 ms），M3-3 seed_20261124 第 2 轮跨接口切换后自主演化出的 m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124 在盲测达 23.3186（较 L3-ctrl 变化 +0.12%, p < 1e-8）。",
+  "attributes": {
+    "method_family": "ruin_recreate",
+    "online_offline": "offline",
+    "interface": "score_ruin_nodes",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score_ruin_nodes"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "O(n^3)",
+    "applicable_regimes": {
+      "strong_on": [
+        "500ms_budget",
+        "complementary_to_l2a_merge",
+        "stagnation_aware_diversification"
+      ],
+      "weak_on": [
+        "tight_25ms_budget_exhaustion"
+      ],
+      "scale_notes": "first_feasible_ms 均值约 2–3 ms 保障任何预算必返可行解；500 ms 下 L3-ctrl 在 select_64 5/64 触及截止时间，25 ms 下 64/64 触及预算上限早停。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "L3 破坏修复骨架 (cvrp_ruin_recreate/v1)：CW + 初始 intra_2opt 构建驻留解后迭代执行 Ruin(top-q) -> 确定性 Regret-2 可行重插 -> 局部 intra_2opt -> R2R 接收",
+      "evolvable_hook": "score_ruin_nodes(distance_matrix, demands, capacity, route_ids, route_loads, route_dists, removal_savings, stagnation_ratio, iter_frac) -> np.ndarray",
+      "state_maintained": [
+        "routes",
+        "route_loads",
+        "route_dists",
+        "best_incumbent",
+        "stagnation_count",
+        "anytime_curve"
+      ],
+      "invariants_and_constraints": [
+        "统一时钟 deadline 覆盖 CW 构造、初始 2-opt 与全部 LNS 迭代",
+        "第 4 关双动作探针使用 6 客户 n=6, q=4 无平分集合 [1,2,3,4] vs [3,4,5,6] 严格校验因果敏感性"
+      ],
+      "typical_pitfalls": [
+        "25 ms 紧预算下无先验裕度探针直接启用 L3 会退化为仅完成初始构造+少量迭代的预算早停态"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score_i = rank_power(|removal_savings_i| / scale * gate_load * gate_depot * gate_demand * gate_rdist, p(iter_frac, stagnation_ratio))",
+        "variables": {
+          "removal_savings_i": "移除客户 i 节省的邻边增量 d(prev,i)+d(i,next)-d(prev,next)",
+          "stagnation_ratio": "连续未改进步占最大耐心阈值之比"
+        },
+        "preconditions": "输出长度 n 有限浮点向量；所有状态数组只读，确定性破平不依赖全局 RNG"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/interface_design/templates.py",
+        "sha256": "479eb3e7881e6d8764efe5cd32f4a4018aec1265bf24da94dc0aec65783cff38"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "agent_skill_loop/interface_design/validator.py",
+        "sha256": "33e61b889b74e4fbedd6637aeaf8682a0c21837052ea1ef631e8c2d57d8da782"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "12bb3fbb",
+        "path": "tools/run_phase3c_four_arm.py",
+        "sha256": "dc850fc10f8ce204b41c4c7d582d336907a7e4fc18f00df490ef48b967980223"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_m3_blind_120",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_l3_ctrl_500ms",
+        "metric": "mean_tour_length",
+        "value": 23.3474,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "L3-ctrl Worst Removal 在盲测 120 题 (500ms) 均长 23.3474",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_m3_blind_120",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+        "metric": "mean_tour_length",
+        "value": 23.3186,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "M3-3 R2 自主切换至 L3 演化出的 score_ruin_nodes 在盲测 120 题均长 23.3186",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone3_phase3d_500ms",
+        "algorithm_id": "m3_3c_standard_500ms_arm_m3_3_r2_l3_evolved_s20261124",
+        "metric": "mean_tour_length",
+        "value": 20.6947,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "select_64 均长并构成 m3_cross_paradigm 方向二互补核心",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m2-l2a-generalized-savings",
+      "method-cvrp-lns-shaw-regret"
+    ],
+    "sources": [
+      "src-milestone3-research-agent-20261123"
+    ]
+  },
+  "source_refs": [
+    "src-milestone3-research-agent-20261123"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone3/phase3c_four_arm/backbone_attribution_report.json",
+    "report:experiments/milestone3/phase3d_blind_eval/backbone_blind120_report.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-m3-ruin-recreate-l3",
+  "content_sha256": "94f7d539a727aad6d5b81131e76903176b5672516612a48027d962c1774600b4"
+}

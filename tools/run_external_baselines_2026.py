@@ -120,8 +120,14 @@ def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str, 
     valid = result.get("valid") is True and objective is not None
     exact = result.get("exact_vehicle_count")
     feasible = valid and (policy != "strict_max_vehicles" or exact is True)
+    timing = dual_timing_fields(result, budget_ms=budget_ms, feasible=feasible)
+    uncensored_overrun = (
+        (not timing["solve_censored"])
+        and (timing["deadline_overrun_ms"] is not None)
+        and (timing["deadline_overrun_ms"] > 0.0)
+    )
     default_completed = result.get("status") == "ok" and not result.get("budget_exhausted", False)
-    completed = feasible and result.get("completed", default_completed) is True
+    completed = feasible and result.get("completed", default_completed) is True and not uncensored_overrun
     return {
         "instance_id": instance["instance_id"],
         "size": instance.get("size", len(instance["demands"])),
@@ -133,6 +139,9 @@ def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str, 
         "valid": valid,
         "feasible": feasible,
         "completed": completed,
+        "uncensored_deadline_overrun": uncensored_overrun,
+        "completed_feasible_before_deadline": completed and (timing["feasible_before_deadline"] is not False),
+        "completed_returned_before_deadline": completed and (timing["returned_before_deadline"] is not False),
         "scored_objective": objective if completed else 2 * reference,
         "target_vehicles": instance.get("k_vehicles", instance.get("max_vehicles")),
         "exact_k_target_source": instance.get("exact_k_target_source"),
@@ -146,7 +155,7 @@ def _score(instance: Mapping[str, Any], result: Mapping[str, Any], policy: str, 
         "budget_exhausted": result.get("budget_exhausted") is True,
         "time_limit_reached": result.get("time_limit_reached"),
         "timeout_kind": result.get("timeout_kind"),
-        **dual_timing_fields(result, budget_ms=budget_ms, feasible=feasible),
+        **timing,
         "incumbent_ms": _number(result.get("incumbent_ms")),
         "source_solver": result.get("source_solver"),
         "selector_ms": _number(result.get("selector_ms")),
@@ -173,10 +182,38 @@ def _summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     references = sum(row["reference_objective"] for row in rows)
     checked = [row for row in rows if row["exact_vehicle_count"] is not None]
     matches = sum(row["valid"] and row["exact_vehicle_count"] is True for row in checked)
+    feasible_before_completed = sum(
+        bool(row.get("completed")) and (row.get("feasible_before_deadline") is not False)
+        for row in rows
+    )
+    returned_before_completed = sum(
+        bool(row.get("completed")) and (row.get("returned_before_deadline") is not False)
+        for row in rows
+    )
+    uncensored_overrun_cnt = sum(
+        bool(row.get("uncensored_deadline_overrun"))
+        or (
+            (not row.get("solve_censored"))
+            and (row.get("deadline_overrun_ms") is not None)
+            and (float(row["deadline_overrun_ms"]) > 0.0)
+        )
+        for row in rows
+    )
+    censored_callback_overrun_cnt = sum(
+        bool(row.get("completed"))
+        and bool(row.get("solve_censored"))
+        and (row.get("deadline_overrun_ms") is not None)
+        and (float(row["deadline_overrun_ms"]) > 0.0)
+        for row in rows
+    )
     return {
         "n_instances": count,
         "completed_count": len(completed),
         "completion_rate": len(completed) / count if count else None,
+        "feasible_before_deadline_completed_count": feasible_before_completed,
+        "returned_before_deadline_completed_count": returned_before_completed,
+        "uncensored_overrun_penalized_count": uncensored_overrun_cnt,
+        "censored_callback_overrun_count": censored_callback_overrun_cnt,
         "feasible_count": feasible_count,
         "feasible_rate": feasible_count / count if count else None,
         "penalized_count": count - len(completed),

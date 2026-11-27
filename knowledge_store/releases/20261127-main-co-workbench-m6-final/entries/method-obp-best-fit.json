@@ -1,0 +1,38 @@
+{
+  "type": "method",
+  "title": "Best Fit as implemented in the Go OBP solver",
+  "category": "method",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "obp",
+    "best-fit"
+  ],
+  "status": "reviewed",
+  "summary": "Place into the feasible bin with the smallest leftover; ScoreBin is a fill-after-placement score with the same preference.",
+  "attributes": {
+    "method_family": "construction",
+    "online_offline": "online",
+    "interface": "bestFit / ScoreBin",
+    "objective": "bin count"
+  },
+  "relations": {
+    "problems": [
+      "problem-online-bin-packing"
+    ],
+    "sources": [
+      "src-johnson-packing"
+    ],
+    "implementations": [
+      "impl-obp-go-solver"
+    ]
+  },
+  "source_refs": [
+    "src-johnson-packing"
+  ],
+  "evidence_refs": [
+    "code:eoh_rag_workspace/problems/bin_packing_online/bin_packing_solver.go"
+  ],
+  "code_refs": [],
+  "id": "method-obp-best-fit",
+  "content_sha256": "6268f7c6c1b81580120f3f7af793d442e8156d16203ddd5253118a23fc15f947"
+}

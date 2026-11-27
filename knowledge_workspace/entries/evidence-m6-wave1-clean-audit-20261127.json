@@ -1,0 +1,59 @@
+{
+  "id": "evidence-m6-wave1-clean-audit-20261127",
+  "type": "evidence",
+  "title": "M6 Wave 1 · Clean deadline audit and no-contention wall timings",
+  "category": "evidence",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-6",
+    "deadline-audit",
+    "factorial-ablation",
+    "wall-timing"
+  ],
+  "status": "reviewed",
+  "summary": "The A1, A2, A3, A4 audit found 6 uncensored overruns and 5,101 censored callback overruns. At 25 ms the strict common-completed counts were 80 for M2 and 0 for M3.",
+  "attributes": {
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_m6_wave1_clean_audit.py",
+        "sha256": "1ac87b8e16233713fbfbcbddd056cf10f5c765c75c42001bbd0f9e5db1ab5ab9",
+        "worktree_base_commit": "36d60204"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "worktree",
+        "path": "tools/run_external_baselines_2026.py",
+        "sha256": "43826dfc5e2a9073203f1862aa8ebb59e971cbcb61be25935ad7cd2f1f56f81d",
+        "worktree_base_commit": "36d60204"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp",
+      "problem-lit-cvrp-large"
+    ],
+    "methods": [
+      "method-cvrp-m3-ruin-recreate-l3",
+      "method-research-agent-m3-autonomous-loop"
+    ],
+    "sources": [
+      "src-milestone6-waves1to4-closure-20261127"
+    ]
+  },
+  "source_refs": [
+    "src-milestone6-waves1to4-closure-20261127"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone6_wave1_clean_audit/wave1_master_summary.json",
+    "report:experiments/milestone6_wave1_clean_audit/wave1_theoretical_abstraction_verified.json"
+  ],
+  "code_refs": [],
+  "content_sha256": "a790afabaf9ee0734237e74bc88d9f804c5556d96a59b30620271fd7e9b43a5b"
+}

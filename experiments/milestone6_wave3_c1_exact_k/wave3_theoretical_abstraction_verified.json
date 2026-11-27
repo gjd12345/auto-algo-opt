@@ -1,0 +1,307 @@
+{
+  "schema_version": "m6-wave3-theory-verified/v1",
+  "verifier": "scratch/verify_astra_wave3_theory.py",
+  "theorist_model": "gpt-6.2-astra",
+  "auditor_model": "gpt-6.2-sol",
+  "safeguards": {
+    "v1_template_sha256_preserved": "3bca783d3de8eaf5ec4fe559c71f92ccd98afc89d1e69adeb56a85a2d18e53ac",
+    "v2_template_sha256_preserved": "7e6d9b3294d9703f38e9a5ad3b095c391bebf46e71518fb84697b148e3130ffa",
+    "wave3_markdown_files_count": 0
+  },
+  "proposition_1_deadline_vs_contraction": {
+    "y11_max_observed_solve_ms_500": {
+      "20261124": 492.9677,
+      "20261125": 492.9974,
+      "20261126": 492.9068
+    },
+    "endpoint_table": {
+      "20261124": {
+        "full_430_500": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 417,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 419
+        },
+        "official_or_174_500": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 161,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 168
+        },
+        "full_430_2000": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 417,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 419
+        },
+        "official_or_174_2000": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 161,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 170
+        },
+        "blind_120_500": {
+          "y11_strict_free": 120,
+          "y11_strict_exact_k": 120,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 120
+        }
+      },
+      "20261125": {
+        "full_430_500": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 419,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 421
+        },
+        "official_or_174_500": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 163,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 168
+        },
+        "full_430_2000": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 419,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 422
+        },
+        "official_or_174_2000": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 163,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 170
+        },
+        "blind_120_500": {
+          "y11_strict_free": 120,
+          "y11_strict_exact_k": 120,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 120
+        }
+      },
+      "20261126": {
+        "full_430_500": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 418,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 419
+        },
+        "official_or_174_500": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 162,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 168
+        },
+        "full_430_2000": {
+          "y11_strict_free": 430,
+          "y11_strict_exact_k": 418,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 421
+        },
+        "official_or_174_2000": {
+          "y11_strict_free": 174,
+          "y11_strict_exact_k": 162,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 170
+        },
+        "blind_120_500": {
+          "y11_strict_free": 120,
+          "y11_strict_exact_k": 120,
+          "pyvrp_strict_returns": 0,
+          "pyvrp_exact_incumbents_by_deadline": 120
+        }
+      }
+    },
+    "wave1_boundary_ref_score": 25.895949372864116,
+    "wave2_offline_430_strict": 430
+  },
+  "proposition_2_factorial_interaction": {
+    "seed_interactions_full_or_blind": {
+      "20261124": [
+        -12,
+        -2,
+        -1
+      ],
+      "20261125": [
+        -19,
+        -3,
+        -13
+      ],
+      "20261126": [
+        -1,
+        2,
+        -2
+      ]
+    },
+    "seed25_full430_bit_patterns": {
+      "1_1_1_1": 300,
+      "0_1_0_1": 84,
+      "0_1_1_1": 27,
+      "1_1_0_1": 7,
+      "0_0_0_0": 11,
+      "0_0_0_1": 1
+    },
+    "seed25_overlap_0111_exact_sources": {
+      "ffd_witness": 11,
+      "repair": 16
+    },
+    "causal_scope_p1_verified": "fleet_repair_enabled bundles 4-tier repair + 60/40 construction budget split + apply_relocate_2opt_guarded fallback vs _polish_exact; Y_11 vs Y_01 and Y_10 vs Y_00 remain isolated single-factor adjustment contrasts."
+  },
+  "proposition_3_load_matching_and_tail": {
+    "cauchy_schwarz_min_dispersion_factor": "K/(K-1)*(m-rho)^2",
+    "seed26_block_protection_margin": "0.54*u vs (1+0.05u)*delta_b + u*delta(s^1.08)",
+    "nonmonotonicity_witness": {
+      "0": {
+        "first_pair": [
+          0,
+          1
+        ],
+        "complement": [
+          2,
+          3
+        ],
+        "total_length": 30.279493
+      },
+      "25": {
+        "first_pair": [
+          1,
+          3
+        ],
+        "complement": [
+          0,
+          2
+        ],
+        "total_length": 30.130407
+      },
+      "100": {
+        "first_pair": [
+          0,
+          3
+        ],
+        "complement": [
+          1,
+          2
+        ],
+        "total_length": 32.288788
+      }
+    },
+    "x_n233_k16_tail_table": {
+      "20261124": {
+        "C_v2": 20254.0,
+        "C_01": 26485.0,
+        "C_11": 33816.0,
+        "exact_source_11": "ffd_witness",
+        "diff_vs_y01": 7331.0,
+        "pct_diff_vs_y01_over_v2": 36.2,
+        "pct_increase_over_v2": 66.96
+      },
+      "20261125": {
+        "C_v2": 20254.0,
+        "C_01": 26485.0,
+        "C_11": 34747.0,
+        "exact_source_11": "ffd_witness",
+        "diff_vs_y01": 8262.0,
+        "pct_diff_vs_y01_over_v2": 40.79,
+        "pct_increase_over_v2": 71.56
+      },
+      "20261126": {
+        "C_v2": 20254.0,
+        "C_01": 26485.0,
+        "C_11": 27969.0,
+        "exact_source_11": "repair",
+        "diff_vs_y01": 1484.0,
+        "pct_diff_vs_y01_over_v2": 7.33,
+        "pct_increase_over_v2": 38.09
+      }
+    },
+    "seed25_leave_one_out_x_n233_euc_ratio_500": 1.030225,
+    "seed25_leave_one_out_x_n233_nint_ratio_500": 1.03027,
+    "seed26_max_individual_ratio_500": {
+      "instance": "X-n195-k51",
+      "ratio": 1.46644
+    }
+  },
+  "proposition_4_capacity_witness_and_counterexamples": {
+    "aggregate_capacity_counterexample": {
+      "Q": 10,
+      "K": 2,
+      "q": [
+        6,
+        6,
+        6
+      ],
+      "ffd_bins": 3
+    },
+    "ffd_incompleteness_counterexample": {
+      "Q": 10,
+      "K": 2,
+      "q": [
+        6,
+        5,
+        3,
+        2,
+        2,
+        2
+      ],
+      "ffd_bins": 3,
+      "exact_2_exists": true
+    },
+    "x_n101_k25_bundle_regression": {
+      "Y_00_routes": 29,
+      "Y_00_obj": 29020,
+      "Y_00_euc_len": 29023.794412,
+      "Y_01_routes": 29,
+      "Y_01_obj": 29108,
+      "Y_01_euc_len": 29111.482311
+    },
+    "set_x_manifest_ffd_eq_k": 84,
+    "set_x_manifest_ffd_gt_k": 16,
+    "missed_with_manifest_reference_witness": {
+      "20261124": {
+        "total_misses": 13,
+        "manifest_valid_k_witnesses": 5,
+        "ids": [
+          "X-n480-k70",
+          "X-n586-k159",
+          "X-n627-k43",
+          "X-n837-k142",
+          "X-n916-k207"
+        ]
+      },
+      "20261125": {
+        "total_misses": 11,
+        "manifest_valid_k_witnesses": 3,
+        "ids": [
+          "X-n586-k159",
+          "X-n837-k142",
+          "X-n916-k207"
+        ]
+      },
+      "20261126": {
+        "total_misses": 12,
+        "manifest_valid_k_witnesses": 4,
+        "ids": [
+          "X-n480-k70",
+          "X-n586-k159",
+          "X-n837-k142",
+          "X-n916-k207"
+        ]
+      }
+    }
+  },
+  "proposition_5_dev_floor_regret": {
+    "seed24_generation_finish_reasons": {
+      "length": 21,
+      "stop": 10
+    },
+    "seed24_eligible_dev_means": {
+      "0": 16.01751918268616,
+      "4": 16.10141308,
+      "23": 16.05982198
+    },
+    "seed24_sealed_winner_ordinal": 0,
+    "seed24_deployed_evolved_ordinal": 23,
+    "dev_floor_regret_abs": 0.0423027973,
+    "dev_floor_regret_pct": 0.2641
+  }
+}

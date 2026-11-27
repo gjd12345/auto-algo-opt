@@ -1,0 +1,593 @@
+{
+  "schema_version": "wave4-theory-verified/v1",
+  "verification_status": "ALL_WAVE4_THEORY_ASSERTIONS_PASSED",
+  "verified_by": "scratch/verify_sol_wave4_theory.py",
+  "source_codex_session": "01a21d27-797e-7ec3-a14a-fc2c90ccd217",
+  "unified_4wave_framework": {
+    "thesis": "Treat deadline observability, computational admission, fleet feasibility, and information transfer as separate conditions on the same solver decision. Once all arms meet the free-fleet deadline, their free-fleet comparison measures route quality. An exact-k requirement can still expose a separate feasibility barrier.",
+    "evidence_scope": "Read-only review of the 14 specified JSON files. Empirical numeric literals below come from the reports. The counterexamples use synthetic parameters. Seed-level comparisons retain their original pairing, and averages across seed-level means are descriptive.",
+    "source_index": {
+      "W1_summary": "experiments/milestone6_wave1_clean_audit/wave1_master_summary.json",
+      "W1_theory": "experiments/milestone6_wave1_clean_audit/wave1_theoretical_abstraction_verified.json",
+      "W2_C2": "experiments/milestone6_wave2_c2_b1/c2_offline/c2_offline_430_report.json",
+      "W2_B1": "experiments/milestone6_wave2_c2_b1/eval/b1_eval_report.json",
+      "W2_theory": "experiments/milestone6_wave2_c2_b1/wave2_theoretical_abstraction_verified.json",
+      "W3_offline": "experiments/milestone6_wave3_c1_exact_k/c1_offline/c1_offline_430_report.json",
+      "W3_eval": "experiments/milestone6_wave3_c1_exact_k/eval/c1_eval_report.json",
+      "W3_theory": "experiments/milestone6_wave3_c1_exact_k/wave3_theoretical_abstraction_verified.json",
+      "W3_tightness": "experiments/milestone6_wave3_c1_exact_k/wave3_tightness_feasibility_theory_verified.json",
+      "W4_B2_attempt1": "experiments/milestone6_wave4_b2_b3/b2_sandbox_pilot_attempt1/b2_pilot_audit.json",
+      "W4_B2_pilot": "experiments/milestone6_wave4_b2_b3/b2_sandbox/b2_pilot_audit.json",
+      "W4_B2_eval": "experiments/milestone6_wave4_b2_b3/b2_sandbox/b2_evaluation.json",
+      "W4_B3_roster": "experiments/milestone6_wave4_b2_b3/b3_memory_kb/b3_fork_roster.json",
+      "W4_B3_eval": "experiments/milestone6_wave4_b2_b3/b3_memory_kb/b3_evaluation.json"
+    },
+    "common_estimand": {
+      "equations": [
+        "For instance i, fleet contract m, and deadline D, F_i^m(D) indicates a certified feasible incumbent by D and R_i^m(D) indicates a valid contract-compliant return by D. With a common clock and consistent validation, R_i^m(D) <= F_i^m(D).",
+        "P_i^m = R_i^m L_i^m + (1 - R_i^m) 2 Ref_i, where L_i^m is the returned objective and Ref_i is the fixed scoring reference.",
+        "Delta_penalized = (1/N) sum_i (P_base,i - P_candidate,i). Partition this sum by (R_base,i, R_candidate,i). Delta_common instead averages L_base,i - L_candidate,i only where both return successfully.",
+        "When both arms return successfully on every instance under the same fleet contract, common_completed and penalized_2x select the same pairs and give the same objective contrast."
+      ],
+      "invariants": [
+        "Index each comparison by fleet contract, evaluation deadline, training deadline, search request budget, suite, and seed. Charge requests to the search ledger and wall time to the solve deadline.",
+        "Compute paired Wilcoxon tests and paired bootstrap intervals within each seed, with Holm adjustment in the reported comparison family. A seed-by-arm cell count describes coverage. Instances reused across seeds do not supply independent replicated samples.",
+        "Use dev_24 for development, select_64 for selection, and sealed blind suites for final evaluation under their declared roles. Preserve null endpoints and censored timing observations."
+      ]
+    },
+    "wave_1": {
+      "result": "Deadline-accounting invariance holds for a fixed event history through D. Later events and changes to request-accounting presentation leave that prefix and its strict score unchanged. Training or evaluation budget changes can alter the event history itself.",
+      "hypothesis": "Cross training deadline and evaluation deadline at a fixed search request cap. For cell means mu_ab, the training-by-evaluation interaction is mu_11 - mu_10 - mu_01 + mu_00. A diagonal contrast mixes changes in both deadlines.",
+      "observed": {
+        "uncensored_overrun_anomalies": 6,
+        "censored_callback_overruns": {
+          "free_fleet": 2580,
+          "exact_k": 2521,
+          "total": 5101
+        },
+        "reevo_boundary_example": {
+          "solve_ms": 500.0699,
+          "old_score": 14.268941210873841,
+          "strict_score": 25.895949372864116,
+          "expected_2x_reference": 25.895949372864116
+        },
+        "m2_h4a_quadrants": {
+          "both_completed": 80,
+          "candidate_only_completed": 40,
+          "baseline_only_completed": 0,
+          "both_penalized": 0,
+          "completion_divergence_share_pct": 99.6006
+        },
+        "seed_20261124_blind_free_fleet_factorial": {
+          "average_training_effect": 4.9942,
+          "average_evaluation_effect": -7.3993,
+          "interaction": -10.3586,
+          "diagonal_difference": -2.4051
+        }
+      },
+      "sources": [
+        "W1_summary#/a1_highlights",
+        "W1_theory#/wave1_propositions_verified"
+      ]
+    },
+    "wave_2": {
+      "geometry_scale_control": {
+        "model": "Let z = (geometry, scale, fleet regime). Admit a candidate on represented joint regimes only when its measured runtime and quality satisfy the admission rules. A deadline guarantee additionally needs a valid upper envelope over the deployment regime, or a guarded fallback with return time reserved.",
+        "observed": {
+          "strict_free_fleet_at_500_ms": {
+            "cw_relocate_2opt": [
+              428,
+              430
+            ],
+            "cw_static": [
+              430,
+              430
+            ],
+            "each_reported_M5_C2_arm": [
+              430,
+              430
+            ]
+          },
+          "cw_static_cost_ties_common_completed_at_500_ms": [
+            428,
+            428
+          ],
+          "cw_static_cost_ties_at_2000_ms": [
+            430,
+            430
+          ],
+          "baseline_Set_X_free_fleet_at_500_ms": [
+            98,
+            100
+          ],
+          "baseline_missed_instance_share_of_500_ms_total_difference_pct": 91.2007,
+          "cw_static_exact_k_at_500_ms": [
+            306,
+            430
+          ],
+          "exact_k_evaluation": "Projection of returned free-fleet routes onto the exact target.",
+          "baseline_Set_X_profile_example": {
+            "instance": "X-n936-k151",
+            "static_ms": 190.43,
+            "relocate_2opt_ms": 751.17,
+            "total_unbounded_solve_ms": 943.22
+          }
+        },
+        "sources": [
+          "W2_C2#/budgets_ms",
+          "W2_theory#/c2_verification",
+          "W1_theory#/c2_setx_micro_profiling"
+        ]
+      },
+      "early_stop_and_restart": {
+        "equations": [
+          "Let G_t >= 0 be the future improvement available if search continues, conditional on the observed prefix H_t and the specified continuation policy. If Pr(G_t > 0 | H_t) <= q_t and E[G_t | G_t > 0, H_t] <= M_t, then E[G_t | H_t] <= q_t M_t.",
+          "A global stop spends the remaining option value of search when the risk bound meets the threshold. A basin restart changes the continuation policy while preserving the remaining request budget and the incumbent. Recalibrate q_t and M_t for that continuation policy.",
+          "The empirical Pareto frontier is the set of logged points undominated jointly in requests spent and reported loss. It describes the observed runs."
+        ],
+        "observed": {
+          "seed_order": [
+            20261124,
+            20261125,
+            20261126
+          ],
+          "risk_bounded_requests_used": [
+            93,
+            94,
+            77
+          ],
+          "mean_request_savings_pct": 12.0,
+          "signed_blind_regret_pct": [
+            -0.14929,
+            -0.04997,
+            -0.96064
+          ],
+          "basin_restarts_in_restart_only_arm": [
+            5,
+            5,
+            5
+          ],
+          "replayed_stopping_decisions": "49/49",
+          "frontier_points": [
+            {
+              "arm": "risk_bounded_adaptive_stop",
+              "seed": 20261126,
+              "requests": 77,
+              "blind_120_quality": -18.058876011789582
+            },
+            {
+              "arm": "naive_patience_24",
+              "seed": 20261124,
+              "requests": 100,
+              "blind_120_quality": -18.200053465696797
+            }
+          ]
+        },
+        "scope": "The replay checks the logged decision rule. The conditional risk inequality requires valid bounds under the continuation policy. Blind regret is an empirical outcome.",
+        "sources": [
+          "W2_B1#/pareto_frontier",
+          "W2_theory#/b1_verification"
+        ]
+      }
+    },
+    "wave_3": {
+      "fleet_contract": "For capacity Q and an exact fleet of K nonempty routes, validate customer coverage, every route load, and route count. Reserve time for construction, fleet repair, polishing, and return. Use a validated K-route witness when available. Free-fleet success and search failure to find a K-route witness are distinct outcomes.",
+      "equations": [
+        "rho = sum_i q_i / (K Q), delta_max = max_i q_i / Q. Even with rho <= 1 and delta_max <= 1, the indivisible demands must admit a capacity-feasible partition.",
+        "For current loads l_1,...,l_r with r > K, min_{a<b}(l_a + l_b) > Q blocks every whole-route merge under capacity. Customer exchanges or repacking can still reach K.",
+        "For normalized loads u_j = l_j/Q in a K-route packing, if u_1 = m and their mean is rho, then sum_j (u_j - rho)^2 >= K/(K-1) (m-rho)^2 for K > 1. Equality holds when the other loads are equal."
+      ],
+      "observed": {
+        "offline_exact_k_at_both_500_and_2000_ms": {
+          "m5_legacy_v2": {
+            "ABP_74": 50,
+            "Set_X_100": 44,
+            "official_174": 94
+          },
+          "c1_y01_m5_repair": {
+            "ABP_74": 74,
+            "Set_X_100": 88,
+            "official_174": 162
+          }
+        },
+        "Y_11_seed_order": [
+          20261124,
+          20261125,
+          20261126
+        ],
+        "Y_11_exact_k_ABP_74_at_500_ms": [
+          74,
+          74,
+          74
+        ],
+        "Y_11_exact_k_Set_X_100_at_500_ms": [
+          87,
+          89,
+          88
+        ],
+        "Y_11_exact_k_full_430_at_both_deadlines": [
+          417,
+          419,
+          418
+        ],
+        "Y_11_free_fleet_full_430_at_both_deadlines": [
+          430,
+          430,
+          430
+        ],
+        "Y_11_max_solve_ms_at_500_ms": [
+          492.9677,
+          492.9974,
+          492.9068
+        ],
+        "manifest_valid_K_witnesses_among_Y_11_misses": [
+          [
+            5,
+            13
+          ],
+          [
+            3,
+            11
+          ],
+          [
+            4,
+            12
+          ]
+        ],
+        "Y_00_high_tightness_overshoots_by_max_demand_share": [
+          {
+            "rho_stratum": "0.98<=rho<=1.00",
+            "delta_max_stratum": "delta_max<0.10",
+            "overshoots": 8,
+            "n": 21
+          },
+          {
+            "rho_stratum": "0.98<=rho<=1.00",
+            "delta_max_stratum": "0.10<=delta_max<0.20",
+            "overshoots": 17,
+            "n": 34
+          },
+          {
+            "rho_stratum": "0.98<=rho<=1.00",
+            "delta_max_stratum": "0.20<=delta_max",
+            "overshoots": 49,
+            "n": 59
+          }
+        ],
+        "full_430_repair_by_adjustment_interaction_counts": [
+          -12,
+          -19,
+          -1
+        ],
+        "PyVRP_Set_X_exact_k_feasible_before_deadline_per_seed": {
+          "500_ms": 95,
+          "2000_ms": 97
+        },
+        "PyVRP_official_174_strict_returns_per_seed": 0
+      },
+      "interpretation": "ABP and Set X responded differently to the same repair contract. Misses with a validated witness establish algorithmic incompleteness on those instances. The repair factor bundles repair logic, budget split, and fallback behavior. The factorial interaction describes the bundle.",
+      "sources": [
+        "W3_offline#/budgets_ms",
+        "W3_offline#/pyvrp_dual_endpoint_reference",
+        "W3_eval#/by_seed",
+        "W3_theory#/proposition_1_deadline_vs_contraction",
+        "W3_theory#/proposition_2_factorial_interaction",
+        "W3_theory#/proposition_4_capacity_witness_and_counterexamples",
+        "W3_tightness#/calibration_430"
+      ]
+    },
+    "wave_4": {
+      "result": "B2 confirms that evidence validity and solver quality can move independently after free-fleet completion reaches parity. B3 confirms free-fleet completion and attribution across the tested memory policies while retaining measurable variation in route quality.",
+      "hypotheses": [
+        "Once completion is fixed, diagnostics can affect the objective through changes in which valid solver is selected or returned.",
+        "A memory policy can preserve completion and still reduce solution quality. Offline screening and freezing can improve the bias–variance trade-off when online feedback reuses noisy winners."
+      ],
+      "observed": {
+        "B2_pool_seeds": false,
+        "B3_pool_seeds": false,
+        "deadline_ms": 500.0,
+        "B3_set_x_all_cells_complete": true,
+        "B3_attribution_valid": true
+      },
+      "sources": [
+        "W4_B2_eval",
+        "W4_B3_eval"
+      ]
+    }
+  },
+  "wave4_theorems": {
+    "W4-1": {
+      "title": "Instrumentation Fidelity and Diagnostic Modality Saturation",
+      "formal_statement": "For a fixed set of executed scripts, require every gated decision to pass the evidence predicate and every accepted artifact to have a valid schema, allowed fields, successful execution, and finite numeric evidence. If a repair preserves existing valid outputs and converts invalid outputs to valid ones, the valid-execution rate increases by the converted fraction. Separately, when paired arms achieve full strict free-fleet completion, the penalized and common-completed contrasts coincide. If diagnostics change the returned choice only on A, and |L_new,i - L_base,i| <= epsilon_i L_base,i on A with positive baseline costs, the absolute relative aggregate gain is at most sum_{i in A}(epsilon_i L_base,i) / sum_i L_base,i.",
+      "assumptions": [
+        "The gate is the only path for a decision that requires evidence, and the audit records every attempted transition.",
+        "The validity-rate comparison in the theorem uses fixed attempted scripts. Comparing different live runs leaves the attempted-script mix free to change.",
+        "A small route-quality bound requires a small affected objective share or small cost movement on affected cases. Full completion alone supplies neither condition."
+      ],
+      "proof_sketch": [
+        "The guarded transition makes accepted-without-valid-evidence impossible under the assumed execution path. For fixed attempts, each repaired invalid output raises the valid numerator once.",
+        "Full paired completion makes every deadline penalty vanish. Terms outside A are zero by definition. Applying the triangle inequality to the remaining cost differences gives the bound."
+      ],
+      "observed": {
+        "pilot_attempt_1": {
+          "valid_scripts": 14,
+          "scripts_executed": 18,
+          "valid_script_execution_rate": 0.7777777777777778,
+          "gate_bypass_count": 0,
+          "required_rounds_completed": 1,
+          "required_rounds": 2,
+          "passed": false
+        },
+        "passing_pilot": {
+          "valid_scripts": 10,
+          "scripts_executed": 10,
+          "valid_script_execution_rate": 1.0,
+          "gate_bypass_count": 0,
+          "required_rounds_completed": 3,
+          "required_rounds": 5,
+          "passed": true
+        },
+        "full_B2": {
+          "valid_scripts": 62,
+          "scripts_executed": 69,
+          "valid_script_execution_rate": 0.8985507246376812,
+          "gate_bypass_count": 0,
+          "required_rounds_completed": 8,
+          "required_rounds": 13,
+          "success_cells": 28,
+          "cell_count": 30
+        },
+        "free_fleet_completed_in_each_of_30_cells": {
+          "ABP_74": 74,
+          "Set_X_100": 100,
+          "clean_blind_120": 120
+        },
+        "free_fleet_common_completed_relative_gain_pct_examples": [
+          {
+            "suite": "Set X",
+            "model": "DeepSeek-V4.1-Flash",
+            "seed": 20261127,
+            "contrast": "slice-only vs free-tool",
+            "gain_pct": -0.6962,
+            "bootstrap_ci95_pct": [
+              -0.9637,
+              -0.4055
+            ],
+            "wilcoxon_p_holm": 0.04019313
+          },
+          {
+            "suite": "ABP",
+            "model": "DeepSeek-V4.1-Flash",
+            "seed": 20261126,
+            "contrast": "sandbox-only vs slice-only",
+            "gain_pct": 0.725,
+            "bootstrap_ci95_pct": [
+              0.1453,
+              1.3835
+            ],
+            "wilcoxon_p_holm": 0.03031566
+          },
+          {
+            "suite": "clean blind",
+            "model": "DeepSeek-V4.1-Flash",
+            "seed": 20261127,
+            "contrast": "sandbox-only vs slice-only",
+            "gain_pct": 0.5603,
+            "bootstrap_ci95_pct": [
+              0.2537,
+              0.8585
+            ],
+            "wilcoxon_p_holm": 0.00593867
+          },
+          {
+            "suite": "clean blind",
+            "model": "Qwen4-Max",
+            "seed": 20261127,
+            "contrast": "sandbox-only vs slice-only",
+            "gain_pct": -0.3257,
+            "bootstrap_ci95_pct": [
+              -0.5633,
+              -0.1098
+            ],
+            "wilcoxon_p_holm": 0.04132255
+          }
+        ]
+      },
+      "evidence_boundary": "The first pilot logs KeyError and ValueError and already reports zero bypasses. The supplied reports support higher observed script validity and small, bidirectional free-fleet effects, including some Holm-significant contrasts. They do not isolate a schema or whitelist intervention, establish a prior bypass count of six, or identify an equivalence margin for the diagnostic arms. The six Wave 1 anomalies concern uncensored deadline overruns. B2 Set X has a null exact_k endpoint.",
+      "sources": [
+        "W4_B2_attempt1#/overall",
+        "W4_B2_attempt1#/cells",
+        "W4_B2_pilot#/overall",
+        "W4_B2_eval#/sandbox_rates",
+        "W4_B2_eval#/suites",
+        "W1_summary#/a1_highlights"
+      ]
+    },
+    "W4-2": {
+      "title": "C2-Gated Transfer Safety and Offline-Distillation Variance Dominance",
+      "formal_statement": "Assume joint geometry–scale coverage and a sound bound on incremental solve time, or a valid incumbent with a guarded fallback and time reserved for return. Then admitted memory transfer preserves strict completion under the certified fleet contract. Complete gateway logging links each injection to its source and downstream candidates. In the feedback model below, frozen offline L3 has lower estimation variance when its error variance is below the cumulative online innovation variance. Dominance in expected target objective additionally requires the online signal to fall below the derived selection threshold.",
+      "assumptions": [
+        "A tag identifies a represented joint regime, and the deployment case satisfies the conditions of its certificate. If runtime is uncertain, the fallback is already contract-valid and its return time is reserved.",
+        "Read, write, and injection liveness are checked only for arms requiring those actions. Attributing an injection and verifying that the required injection occurred are separate checks.",
+        "Within a fixed joint regime, online estimation errors follow a linear feedback model with independent centered innovations. The separate selection model assumes a symmetric Gaussian score error and a zero acceptance threshold. Neither model's parameters are identified by the supplied reports."
+      ],
+      "equations": [
+        "Timing certificate: T_base(z) + U_transfer(z) + T_return(z) <= D. With a guarded fallback, invoke it early enough to satisfy the same return deadline under the same fleet contract.",
+        "Online noise: u_(t+1) = a u_t + eta_(t+1), with u_0 = 0 and Var(eta_t) = sigma_W^2. Thus V_W(t) = sigma_W^2 sum_{j=0}^{t-1} a^(2j). Frozen L3 has a fixed regime-level error variance V_L. Variance dominance holds if V_L < V_W(t). MSE dominance holds if b_L^2 + V_L < b_W^2 + V_W(t), where b_L and b_W are target-regime biases.",
+        "For expected objective, measure gains relative to frozen L3. Let p be the prior probability that a proposed write has true target gain g > 0, and let a bad write incur loss ell > 0. Let good and bad writes have selection-score means +s and -s and common noise standard deviation nu > 0. Then p_TP = Phi(s/nu), p_FP = 1 - Phi(s/nu), and expected online incremental gain is p g p_TP - (1-p) ell p_FP.",
+        "Frozen L3 weakly dominates in expected target objective when Phi(s/nu) <= h, where h = (1-p) ell / (p g + (1-p) ell). For h in (1/2, 1), this is the explicit amplitude-SNR condition s/nu <= Phi^(-1)(h). Strict inequality gives strict dominance. In the feedback model, setting nu^2 = V_W(t) shows how variance amplification can move an online policy across this boundary."
+      ],
+      "proof_sketch": [
+        "On the certificate branch, the timing sum fits D. On the fallback branch, the reserved time suffices to return the certified incumbent. Gateway records establish provenance under the logging assumption.",
+        "Expand the feedback recursion and sum the independent innovation variances. A frozen artifact carries no within-run accumulation from new innovations. Its fixed variance can still reflect offline estimation uncertainty.",
+        "Condition on whether a proposed write is helpful or harmful. Multiplying each acceptance probability by its signed target consequence gives the incremental expected gain. Rearrangement gives the SNR threshold. A favorable online mean effect can outweigh a variance disadvantage."
+      ],
+      "observed": {
+        "seed_order": [
+          20261124,
+          20261125,
+          20261126
+        ],
+        "set_x": {
+          "completed_per_cell": 100,
+          "expected_per_cell": 100,
+          "timeout_count_per_cell": 0,
+          "cells": 12,
+          "endpoint": "free_fleet"
+        },
+        "memory_audit": {
+          "attribution_valid_cells": 12,
+          "hard_alarms": {},
+          "zero_read_alarm": false,
+          "zero_write_alarm": false,
+          "zero_injection_alarm": false,
+          "offline_L3_read_counts": [
+            7,
+            6,
+            6
+          ],
+          "offline_L3_write_counts": [
+            0,
+            0,
+            0
+          ],
+          "offline_L3_injected_rounds": [
+            2,
+            2,
+            2
+          ],
+          "offline_L3_gateway_attributed_rounds": [
+            2,
+            2,
+            2
+          ]
+        },
+        "set_x_free_fleet_completed_mean_by_seed": {
+          "arm_b3_0_base_kb_only": [
+            66030.74,
+            66107.66,
+            66146.09
+          ],
+          "arm_b3_1_online_writeback": [
+            66303.48,
+            66134.45,
+            65971.55
+          ],
+          "arm_b3_2_offline_l3_c2_gated": [
+            65959.1,
+            65974.61,
+            65962.02
+          ],
+          "arm_b3_3_full_closed_loop_c2_gated": [
+            65971.53,
+            66249.44,
+            65942.34
+          ]
+        },
+        "final_accept_120_free_fleet_completed_mean_by_seed": {
+          "arm_b3_0_base_kb_only": [
+            24.237150452560872,
+            24.292418070498808,
+            24.3106849566488
+          ],
+          "arm_b3_1_online_writeback": [
+            24.300046040312218,
+            24.2390290661333,
+            24.263135430159036
+          ],
+          "arm_b3_2_offline_l3_c2_gated": [
+            24.26428361886481,
+            24.21147827344428,
+            24.193504644462084
+          ],
+          "arm_b3_3_full_closed_loop_c2_gated": [
+            24.263135430159036,
+            24.37939773705621,
+            24.283806690295997
+          ]
+        },
+        "offline_vs_base_common_completed_gain_pct": {
+          "Set_X": [
+            0.1085,
+            0.2013,
+            0.2783
+          ],
+          "final_accept_120": [
+            -0.1119,
+            0.3332,
+            0.482
+          ]
+        },
+        "offline_vs_base_wilcoxon_p_holm": {
+          "Set_X": [
+            0.12855018,
+            0.13786173,
+            0.04444072
+          ],
+          "final_accept_120": [
+            1.0,
+            0.02539747,
+            0.00491794
+          ]
+        },
+        "Set_X_quality_regressions_flagged_despite_full_completion": [
+          {
+            "arm": "arm_b3_1_online_writeback",
+            "seed": 20261124,
+            "treatment_minus_base": 272.74
+          },
+          {
+            "arm": "arm_b3_1_online_writeback",
+            "seed": 20261125,
+            "treatment_minus_base": 26.79
+          },
+          {
+            "arm": "arm_b3_3_full_closed_loop_c2_gated",
+            "seed": 20261125,
+            "treatment_minus_base": 141.78
+          }
+        ]
+      },
+      "evidence_boundary": [
+        "All twelve B3 cells have Set X free-fleet deadline parity at the recorded deadline. The historical 95/100 and 97/100 observations are Wave 3 PyVRP exact-k feasible incumbents at different deadlines. Wave 2 already reports Set X free-fleet parity for the C2 arms. The authorized reports do not contain a matched pre-C2 B3 comparison that identifies how much of the parity came from screening, tags, or gateway attribution.",
+        "Offline L3 beats base and online-only on Set X in every recorded seed. The full closed loop beats it on Set X in seed 20261126 and on final_accept_120 in seed 20261124. The offline arm has the smallest descriptive variance of the Set X cell means, while online-only has the smallest on final_accept_120. This supports a regime-dependent result and leaves population variance and SNR unestimated.",
+        "The requested across-seed summaries are reproducible as round(mean(seed_means), 2) for Set X and round(mean(seed_means), 4) for final_accept_120. Those rounded summaries are derived. The report supplies the seed-level values above."
+      ],
+      "sources": [
+        "W4_B3_roster#/roster",
+        "W4_B3_eval#/memory_kb_audit",
+        "W4_B3_eval#/negative_transfer_checks",
+        "W4_B3_eval#/suites",
+        "W3_offline#/pyvrp_dual_endpoint_reference",
+        "W2_C2#/budgets_ms"
+      ]
+    }
+  },
+  "adversarial_counterexamples": [
+    {
+      "id": "CE1_proxy_scale_escape",
+      "construction": "Synthetic elapsed time is T(n) = n/5 + 1[n>200] n^2/500 ms. A proxy screen operating only up to n_probe=200 observes the linear branch. At n=500 the candidate exceeds a 500 ms deadline even though the baseline linear branch fits. The excess over baseline scales quadratically.",
+      "python_assertions": "from fractions import Fraction as F\n\ndef time(n):\n    return F(n, 5) + (F(n * n, 500) if n > 200 else 0)\n\nassert all(time(n) < 500 for n in (50, 100, 200))\nassert time(200) == 40 and time(201) > 40\nassert F(500, 5) < 500 < time(500) == 600\nassert time(1000) - 200 == 4 * (time(500) - 100)",
+      "boundary": "Finite proxy measurements cannot certify a runtime bound on an untested branch."
+    },
+    {
+      "id": "CE2_geometry_scale_interaction",
+      "construction": "Both static-interface choices are legal, have the same runtime and fleet feasibility, and share base cost 100. The aggressive threshold activates a local choice with a geometry-by-scale cost change. A clustered-small-heavy development mix favors it. A synthetic Set X-like mix with uniform and corridor instances reverses the ordering while preserving both marginal tag distributions. A screen checking geometry and scale separately sees identical marginal coverage.",
+      "python_assertions": "from fractions import Fraction as F\nfrom statistics import mean\n\ndef cost(theta, geometry, scale):\n    delta = {('clustered', 'small'): -4, ('clustered', 'large'): 2,\n             ('uniform', 'small'): 8, ('uniform', 'large'): -2,\n             ('corridor', 'small'): 8, ('corridor', 'large'): -2}\n    return 100 + (delta[geometry, scale] if F(1, 2) <= theta else 0)\n\ndev = [('clustered', 'small')]*12 + [('uniform', 'large')]*6 + [('corridor', 'large')]*6\ntarget = [('clustered', 'large')]*50 + [('uniform', 'small')]*25 + [('corridor', 'small')]*25\nfor axis in (0, 1):\n    for tag in {row[axis] for row in dev}:\n        assert F(sum(row[axis] == tag for row in dev), len(dev)) == F(sum(row[axis] == tag for row in target), len(target))\nlo, hi = F(1, 4), F(3, 4)\nloss = lambda theta, rows: mean(cost(theta, *row) for row in rows)\nassert (loss(hi, dev), loss(lo, dev), loss(hi, target), loss(lo, target)) == (97, 100, 105, 100)",
+      "boundary": "Marginal coverage can conceal disjoint joint support and a reversal in target quality under identical completion."
+    },
+    {
+      "id": "CE3_online_winner_feedback",
+      "construction": "A stable offline artifact yields target gain 1 each round. An online proposal with true score -1 receives a one-time dev perturbation of +3 or -3 with equal probability. The lucky dev winner is written when its observed score beats 1. Its downstream harm starts at 1 and doubles on each reuse. The other seed retains the stable policy. Runtime and attribution can remain valid throughout.",
+      "python_assertions": "from fractions import Fraction as F\nfrom statistics import mean, pvariance\n\ndef online_gain(noise, t):\n    spurious_winner = int(-1 + noise > 1)\n    return 1 - 2**(t - 1) * spurious_winner\n\nassert [online_gain(3, t) for t in (1, 2, 3)] == [0, -1, -3]\nassert [online_gain(-3, t) for t in (1, 2, 3)] == [1, 1, 1]\nassert [pvariance([online_gain(e, t) for e in (-3, 3)]) for t in (1, 2, 3)] == [F(1, 4), 1, 4]\nassert mean(online_gain(e, 3) for e in (-3, 3)) == -1\nassert mean([1, 1]) == 1 and pvariance([1, 1]) == 0",
+      "boundary": "Selecting a noisy dev winner and reusing it creates persistent error. Per-round averaging formulas that assume fresh independent errors miss this mechanism."
+    }
+  ],
+  "academic_takeaways_cn": [
+    "算法评测应分别记录截止前首次获得可行解与截止前成功返回解。固定评测端点后，可用双方均完成的配对样本衡量解质量，用带惩罚的全样本得分衡量交付表现。",
+    "跨规模筛查应覆盖几何与规模的联合分布，并为超时回退预留返回时间。局部重启调整后续搜索轨迹，全局早停则依据继续搜索所能带来的预期收益决定是否终止。",
+    "自由车队的按时完成率达到上限后，指定车队规模仍可能构成独立的可行性瓶颈。容量紧张程度和最大需求占比可以提示风险，满足指定车队规模的合法分组才是可行性证据。",
+    "诊断脚本的有效率衡量证据能否用于决策。自由车队完成率一致后，诊断方式的价值仍须通过逐种子的路线成本对照来判断。",
+    "离线筛查与冻结可以限制单次开发结果经记忆回写反复传播。在线回写是否有利，取决于真实改进被选中的收益能否抵消误选及其累积损失。Set X 的结果支持这一解释，最终盲评仍呈现种子间差异。"
+  ]
+}

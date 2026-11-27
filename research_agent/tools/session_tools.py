@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import math
 import shutil
@@ -189,15 +190,52 @@ class SessionRunnerTool:
                                           and frozen["kb_release_path"] != self._kb_pin["kb_release_path"]):
                     raise ValueError("session_kb_pin_mismatch")
             rem = self.budget.remaining
+            offset_path = self.run_dir / "session_round_offset.json"
             if (
                 state.get("run_state") in {"COMPLETED", "FAILED", "STOPPED"}
                 and self._session_has_provider_terminal(self.session_dir)
                 and (rem is None or rem > 0)
             ):
+                offset_doc: dict[str, Any] = {"restarts": 0, "round_offset": 0, "archived_run_ids": []}
+                if offset_path.is_file():
+                    try:
+                        loaded = json.loads(offset_path.read_text(encoding="utf-8"))
+                        offset_doc = {
+                            "restarts": int(loaded.get("restarts") or 0),
+                            "round_offset": int(loaded.get("round_offset") or 0),
+                            "archived_run_ids": [str(item) for item in (loaded.get("archived_run_ids") or ())],
+                        }
+                    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                        pass
+                prev_run_id = str(state.get("run_id") or "")
+                if prev_run_id not in offset_doc["archived_run_ids"]:
+                    prev_round_id = max(1, int(state.get("round_id") or 1))
+                    offset_doc = {
+                        "restarts": offset_doc["restarts"] + 1,
+                        "round_offset": offset_doc["round_offset"] + prev_round_id,
+                        "archived_run_ids": [*offset_doc["archived_run_ids"], prev_run_id],
+                    }
+                    atomic_write_json(offset_path, offset_doc)
                 archive_path = self.run_dir / f"session_run_interrupted_{int(time.time() * 1000)}"
                 shutil.move(str(self.session_dir), str(archive_path))
             else:
                 return state
+        session_seed = int(self.config.search_seed)
+        offset_path = self.run_dir / "session_round_offset.json"
+        if offset_path.is_file():
+            try:
+                offset_doc = json.loads(offset_path.read_text(encoding="utf-8"))
+                restarts = int(offset_doc.get("restarts") or 0)
+                round_offset = int(offset_doc.get("round_offset") or 0)
+                if round_offset > 0 or restarts > 0:
+                    session_seed = int.from_bytes(
+                        hashlib.sha256(
+                            f"{session_seed}:restart:{restarts}:{round_offset}".encode("utf-8")
+                        ).digest()[:4],
+                        "big",
+                    ) & 0x7FFFFFFF
+            except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                pass
         eoh_endpoint = "mock://local" if self.config.mode == "mock" else self.config.endpoint
         eff_solver_timeout = max(
             float(self.config.candidate_timeout_s),
@@ -213,6 +251,10 @@ class SessionRunnerTool:
             "run_id": self.budget.run_id,
             "strict_checkpoint_barriers": bool(self.config.strict_checkpoint_barriers),
         }
+        if self.config.global_early_stop_mode != "off":
+            pb_cfg["record_candidate_provenance"] = True
+        if self.config.global_early_stop_mode == "naive_patience" and not self.config.basin_restart_on_stagnation:
+            pb_cfg["global_naive_patience_cooldown"] = self.config.risk_stop_cooldown
         if getattr(self.budget, "owner_epoch", None):
             pb_cfg["owner_epoch"] = self.budget.owner_epoch
         init_kwargs: dict[str, Any] = {
@@ -229,7 +271,7 @@ class SessionRunnerTool:
             "memory_enabled": bool(self.config.memory_enabled),
             "memory_online_writeback_enabled": self.config.memory_online_writeback_enabled,
             "agent_guidance": bool(self.config.agent_guidance),
-            "seed": self.config.search_seed,
+            "seed": session_seed,
             "max_rounds": max(1, int(self.config.max_rounds)),
             "search_policy_defaults": {
                 "pop_size": self.config.eoh_pop_size,
@@ -262,6 +304,16 @@ class SessionRunnerTool:
     def _cooldown(self) -> CooldownLedger:
         return CooldownLedger(self.run_dir / "memory_cooldown.json", cooldown_rounds=self.config.memory_cooldown_rounds)
 
+    def planner_memory(self, tool: str, args: Mapping[str, Any], *, template_id: str,
+                       postprocess_mode: str) -> dict[str, Any]:
+        self.ensure_initialized()
+        selection = {"template_id": template_id, "template_version": self.config.version_for_template(template_id),
+                     "postprocess_mode": postprocess_mode, "time_budget_ms": self.config.instance_time_budget_ms}
+        common = {"run": self.session_dir, "interface_selection": selection, "require_c2_multiscale_admission": True}
+        if tool == "memory_search":
+            return memory_search(query=str(args.get("query", "")), limit=int(args.get("limit", 5)), **common)["result"]
+        return memory_read(reference=str(args["reference"]), limit=8000, **common)["result"]
+
     def _scoped_memory_basis(self, query: str, selection: Mapping[str, Any]) -> list[str]:
         """Search and record complete reads against the same template scope as submit-plan.
 
@@ -274,6 +326,8 @@ class SessionRunnerTool:
             rd = session_db._round(con, row)
             require_state(row, rd, action, "WAITING_FOR_PLAN")
             context = _memory_applicability(root, row, action, selection)
+            if self.config.require_c2_multiscale_admission:
+                context["require_c2_multiscale_admission"] = True
             scene = get_problem(row["problem"]).entrypoint
             backend = open_session_memory_backend(row)
             ledger = self._cooldown()
@@ -296,7 +350,7 @@ class SessionRunnerTool:
                 candidates.extend(hits)
             # The backend's search records provide the full body for model-free
             # reranking. Fetch version metadata for OBP's prefix evidence gate.
-            if self.config.problem_family == "obp":
+            if self.config.problem_family == "obp" or self.config.require_c2_multiscale_admission:
                 candidates = [backend.read_version(card["reference"]) for card in candidates]
             selected = rerank_mmr(
                 query, candidates, context=context, mmr_lambda=self.config.memory_mmr_lambda,
@@ -443,14 +497,27 @@ class SessionRunnerTool:
 
         if solution is not None:
             skill, parent, canonical_ast_sha256 = solution
-            action.update(kind="solution", source_skill_ref=generated_ref, body=(
-                f"## Execution\n```python\n{skill.code}\n```\n"
-                f"**Why:** This verified code differed from parent {parent.code_sha256} and reduced the dev "
-                f"baseline objective from {baseline:.8g} to {objective:.8g}.\n"
-                "**How to apply:** Verify the full replacement on the original interface and evaluator.\n"
-                "**Reusable Experience:** Retest the complete transformation before retaining it."
-            ), code_anchor={"code_sha256": sha256_text(skill.code), "canonical_ast_sha256": canonical_ast_sha256})
-            return self._checked_memory_action(action)
+            c2_rejected_reason = None
+            if self.config.require_c2_multiscale_admission:
+                from agent_skill_loop.memory.auto_dream import screen_cvrp_c2_solution
+
+                sel = selection if isinstance(selection, Mapping) else {}
+                _, c2_rejected_reason = screen_cvrp_c2_solution(
+                    skill.code,
+                    template_id=str(sel.get("template_id") or ""),
+                    template_version=str(sel.get("template_version") or "v2"),
+                    postprocess_mode=str(sel.get("postprocess_mode") or "none"),
+                )
+            if c2_rejected_reason is None:
+                action.update(kind="solution", source_skill_ref=generated_ref, body=(
+                    f"## Execution\n```python\n{skill.code}\n```\n"
+                    f"**Why:** This verified code differed from parent {parent.code_sha256} and reduced the dev "
+                    f"baseline objective from {baseline:.8g} to {objective:.8g}.\n"
+                    "**How to apply:** Verify the full replacement on the original interface and evaluator.\n"
+                    "**Reusable Experience:** Retest the complete transformation before retaining it."
+                ), code_anchor={"code_sha256": sha256_text(skill.code), "canonical_ast_sha256": canonical_ast_sha256})
+                return self._checked_memory_action(action)
+            action["body"] += f" C2 multiscale screen did not admit solution promotion ({c2_rejected_reason})."
 
         scope = action.get("applicability_scope", {})
         if ("n_range" in scope and type(baseline) in (int, float) and math.isfinite(baseline)
@@ -645,11 +712,14 @@ class SessionRunnerTool:
                 ("enable_n200_latency_screen", False),
                 ("enable_degenerate_constant_screen", False),
                 ("n200_latency_multiplier", 1.0),
-                ("early_stop_no_jump_requests", None),
             ):
                 value = getattr(self.config, name)
-                if value != default and not (name == "early_stop_no_jump_requests" and value == 0):
+                if value != default:
                     template_options[name] = value
+            if self.config.effective_early_stop_no_jump_requests:
+                template_options["early_stop_no_jump_requests"] = self.config.effective_early_stop_no_jump_requests
+            if self.config.enable_c2_joint_screen:
+                template_options["enable_c2_joint_screen"] = True
             if self.config.enable_multiscale_latency_ratio_screen or any(
                 getattr(self.config, name) != default for name, default in MULTISCALE_DEFAULTS.items()
             ):
@@ -671,7 +741,7 @@ class SessionRunnerTool:
                 "hypothesis": hypothesis,
                 "interface_selection": {
                     "template_id": template_id,
-                    "template_version": "v1",
+                    "template_version": self.config.version_for_template(template_id),
                     "postprocess_mode": postprocess_mode,
                     "time_budget_ms": float(self.config.instance_time_budget_ms),
                     "template_options": template_options,

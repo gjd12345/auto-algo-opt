@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Cross-problem local_only OBP elite: inverse residual^2 minus leftover-from-40%max",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "tight_penalty=1/(residual^2); minus 1.5*|residual-0.4*bins.max()|/(0.4*max).",
+  "attributes": {
+    "interface": "score(item, bins)",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_local_only_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_local_only_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/cross_problem_transfer/best_codes/bp_online_local_only_best.py",
+      "sha256": "bb58bce48535f7e58eac6e6de822ca77044833f7b48bc932c10250ae1a6b91d4"
+    }
+  ],
+  "id": "impl-obp-xfer-local",
+  "content_sha256": "aba3f23277e86478372b47c44e15a4e6badf27b3c34ef2d302a7c7f26bc63f65"
+}

@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Q3 residual_poly elite: sqrt(item/remaining) minus band penalties",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "score = (item/remaining)^0.5 minus 0.1 when leftover is in (0,0.15] or (0.3,0.45) of an assumed cap=1.0. Not HARMONIC.",
+  "attributes": {
+    "interface": "score(item, bins)",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/q3_card_components/best_codes/bp_online_residual_poly_only_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/q3_card_components/best_codes/bp_online_residual_poly_only_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/q3_card_components/best_codes/bp_online_residual_poly_only_best.py",
+      "sha256": "568994adac3a2bb74e338034a7a02069f09e6041469a47dc002aa1a74ae3658d"
+    }
+  ],
+  "id": "impl-obp-q3-residual-poly",
+  "content_sha256": "d148bb7c87dcdea4cc7d1180f4f526b9fff1b1d042e213eccbf2fb528ff98a28"
+}

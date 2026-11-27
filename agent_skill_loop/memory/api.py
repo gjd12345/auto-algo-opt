@@ -41,6 +41,7 @@ _EVIDENCE_TIERS = {"single_run", "common_fork_verified", "multi_seed_verified", 
 _ANTIPATTERN_SECTIONS = ("Root Cause", "Applicability Scope", "Guardrail & False-Positive Boundary")
 _MAX_SCOPE_LIFETIME = timedelta(days=365)
 _PENDING_SUFFIX = ".publish"
+_JSON_FORMAT = {"schema": "algorithm-optimization-memory-json/v1"}
 _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _HEADING = re.compile(r"^ {0,3}(#{1,2})[ \t]+(.*?)\s*#*\s*$")
 
@@ -289,16 +290,30 @@ def _antipattern_sections(body: str) -> dict[str, str]:
     return sections
 
 
-def _validate_provenance(provenance: Mapping[str, Any] | None) -> dict[str, str]:
+def _validate_provenance(provenance: Mapping[str, Any] | None) -> dict[str, Any]:
     if provenance is None:
         return {}
     if not isinstance(provenance, Mapping):
         raise ValueError("memory_provenance_invalid")
-    result: dict[str, str] = {}
+    result: dict[str, Any] = {}
     for key, value in provenance.items():
         if not isinstance(key, str) or not key or len(key) > 80:
             raise ValueError("memory_provenance_invalid")
-        if not isinstance(value, str) or not value or len(value) > 1024:
+        if key == "c2_multiscale_screen_passed" and type(value) is bool:
+            pass
+        elif key in {"c2_latency_ratio_max", "c2_probe_budget_ms"} and (
+            value is None or _scope_number(value)
+        ):
+            pass
+        elif key == "scale_range" and isinstance(value, list) and len(value) == 2 and all(
+            _scope_number(item, integer=True) for item in value
+        ) and value[0] <= value[1]:
+            pass
+        elif key in {"spatial_regime", "demand_cv_regime", "eccentricity_regime"} and isinstance(value, list) and (
+            0 < len(value) <= 16 and all(_bounded_text(item) for item in value)
+        ):
+            pass
+        elif not isinstance(value, str) or not value or len(value) > 1024:
             raise ValueError("memory_provenance_invalid")
         result[key] = value
     return dict(sorted(result.items()))
@@ -373,9 +388,17 @@ def _atomic_text(path: Path, content: str) -> None:
 
 
 class MemoryAPI:
-    def __init__(self, store: Path, *, read_only: bool = False) -> None:
+    def __init__(self, store: Path, *, read_only: bool = False, json_only: bool = False) -> None:
         self.store = Path(store).resolve()
         self._read_only = read_only
+        marker = self.store / ".memory_format.json"
+        if marker.is_symlink() or (marker.exists() and _metadata_object(marker) != _JSON_FORMAT):
+            raise ValueError("memory_store_format_invalid")
+        if json_only and not marker.exists():
+            if read_only or next(self.store.glob("*/*"), None) is not None:
+                raise ValueError("memory_json_store_requires_empty_directory")
+            _atomic_text(marker, json.dumps(_JSON_FORMAT) + "\n")
+        self.json_only = marker.is_file()
         if read_only:
             return
         self.store.mkdir(parents=True, exist_ok=True)
@@ -388,7 +411,11 @@ class MemoryAPI:
                     raise
 
     def _path(self, entry: MemoryEntry) -> Path:
-        return self.store / entry.project / f"{entry.type}_{entry.name}__v0001.md"
+        return self._version_path(entry, 1)
+
+    def _version_path(self, entry: MemoryEntry, version: int) -> Path:
+        suffix = ".json" if self.json_only else ".md"
+        return self.store / entry.project / f"{entry.type}_{entry.name}__v{version:04d}{suffix}"
 
     def _iter(self, diagnostics: list[dict[str, str]] | None = None
               ) -> Iterable[tuple[Path, MemoryEntry, int, dict[str, Any]]]:
@@ -397,10 +424,10 @@ class MemoryAPI:
         # An orphan sidecar also reserves its revision until explicitly repaired.
         latest: dict[tuple[str, str, str], tuple[int, bool, Path]] = {}
         for asset in sorted(self.store.glob("*/*")):
-            if asset.suffix not in {".md", ".json", _PENDING_SUFFIX}:
+            if asset.suffix not in ({".json"} if self.json_only else {".md", ".json", _PENDING_SUFFIX}):
                 continue
-            path = asset.with_suffix(".md")
-            match = _FILE.fullmatch(path.name)
+            path = asset if self.json_only else asset.with_suffix(".md")
+            match = _FILE.fullmatch(path.with_suffix(".md").name)
             if match is None:
                 continue
             key = (path.parent.name, match.group("type"), match.group("name"))
@@ -410,9 +437,7 @@ class MemoryAPI:
         for version, _versioned, path in latest.values():
             if not path.resolve().is_relative_to(self.store):
                 continue
-            if path.name == "MEMORY.md":
-                continue
-            match = _FILE.fullmatch(path.name)
+            match = _FILE.fullmatch(path.with_suffix(".md").name)
             if match is None:
                 continue
             try:
@@ -457,8 +482,21 @@ class MemoryAPI:
             raise ValueError("memory_content_hash_mismatch")
 
     def _load_entry(self, path: Path) -> tuple[MemoryEntry, dict[str, Any]]:
-        entry = _parse(path)
-        metadata = self._verify_metadata(path, entry)
+        if self.json_only:
+            if path.is_symlink():
+                raise ValueError("memory_reference_outside_store")
+            metadata = _metadata_object(path)
+            markdown = metadata.pop("markdown", None)
+            if not isinstance(markdown, str):
+                raise ValueError("memory_publication_invalid")
+            entry = _parse_text(markdown)
+            if markdown != _render(entry) or metadata.get("format_version") not in _SIDECAR_SCHEMA:
+                raise ValueError("memory_publication_invalid")
+            self._verify_content(entry, metadata)
+            metadata["integrity"] = "verified"
+        else:
+            entry = _parse(path)
+            metadata = self._verify_metadata(path, entry)
         version = metadata.get("format_version")
         if entry.type == "antipattern" and version != 3:
             raise ValueError("memory_format_version_invalid")
@@ -556,13 +594,16 @@ class MemoryAPI:
         project = match.group("project")
         version = int(match.group("version"))
         stem = reference.split("/", 1)[1].rsplit("@v", 1)[0]
-        path = (self.store / project / f"{stem}__v{version:04d}.md").resolve()
-        if not path.is_file() and version == 1:
+        suffix = ".json" if self.json_only else ".md"
+        path = self.store / project / f"{stem}__v{version:04d}{suffix}"
+        if not self.json_only:
+            path = path.resolve()
+        if not self.json_only and not path.is_file() and version == 1:
             # Read legacy v1 assets, but always expose the canonical versioned ref.
             legacy = (self.store / project / f"{stem}.md").resolve()
             if legacy.is_file():
                 path = legacy
-        if self.store not in path.parents:
+        if self.store not in path.resolve().parents:
             raise ValueError("memory_reference_outside_store")
         entry, metadata = self._load_entry(path)
         if f"{entry.project}/{entry.type}_{entry.name}@v{version:04d}" != reference:
@@ -603,6 +644,8 @@ class MemoryAPI:
             yield
 
     def _recover_publications(self) -> bool:
+        if self.json_only:
+            return False
         recovered = False
         for pending in sorted(self.store.glob(f"*/*{_PENDING_SUFFIX}")):
             try:
@@ -624,6 +667,14 @@ class MemoryAPI:
         if not path.parent.exists():
             path.parent.mkdir()
             _sync_directory(self.store)
+        if self.json_only:
+            try:
+                _atomic_text(path, json.dumps({**metadata, "markdown": rendered}, ensure_ascii=False))
+            except OSError as exc:
+                if path.is_file():
+                    raise MemoryPublicationPending("memory_publication_pending") from exc
+                raise
+            return
         pending = path.with_suffix(_PENDING_SUFFIX)
         if pending.exists():
             raise ValueError("memory_publication_conflict")
@@ -674,7 +725,7 @@ class MemoryAPI:
         _validate_entry(entry, publication=False)
         latest = 0
         for path in self.store.glob(f"{entry.project}/{entry.type}_{entry.name}*"):
-            if path.suffix not in {".md", ".json", _PENDING_SUFFIX}:
+            if path.suffix not in ({".json"} if self.json_only else {".md", ".json", _PENDING_SUFFIX}):
                 continue
             match = _FILE.fullmatch(path.with_suffix(".md").name)
             if match is not None and match["type"] == entry.type and match["name"] == entry.name:
@@ -725,9 +776,9 @@ class MemoryAPI:
                     if stored.get("operation_key") != operation_key:
                         continue
                     _validate_metadata(stored)
-                    path = metadata_path.with_suffix(".md")
+                    path = metadata_path if self.json_only else metadata_path.with_suffix(".md")
                     self._check_publication_paths(path)
-                    match = _FILE.fullmatch(path.name)
+                    match = _FILE.fullmatch(path.with_suffix(".md").name)
                     if match is None or (entry.project, entry.type, entry.name) != (path.parent.name, match["type"], match["name"]):
                         raise ValueError("memory_operation_evidence_missing")
                     if (dict(stored.get("provenance") or {}) != provenance
@@ -758,7 +809,7 @@ class MemoryAPI:
             return result
 
     def _write_locked(self, entry: MemoryEntry, *, based_on: str | None = None,
-                      related_refs: tuple[str, ...] = (), provenance: Mapping[str, str] | None = None,
+                      related_refs: tuple[str, ...] = (), provenance: Mapping[str, Any] | None = None,
                       operation_key: str | None = None, format_version: int | None = None) -> dict[str, Any]:
         head = self.card_head(entry)
         if based_on is None:
@@ -779,7 +830,7 @@ class MemoryAPI:
         if version > 9999:
             raise ValueError("memory_version_limit")
         format_version = format_version or 2
-        path = self.store / entry.project / f"{entry.type}_{entry.name}__v{version:04d}.md"
+        path = self._version_path(entry, version)
         self._check_publication_paths(path)
         if path.exists():
             raise ValueError("memory_version_conflict")
@@ -808,6 +859,12 @@ class MemoryAPI:
     def reindex(self) -> Path:
         if self._read_only:
             raise ValueError("memory_store_read_only")
+        if self.json_only:
+            target = self.store / "index.json"
+            cards = [{"path": path.relative_to(self.store).as_posix(), "description": entry.description}
+                     for path, entry, _version, _metadata in self._iter()]
+            _atomic_text(target, json.dumps({"cards": cards}, ensure_ascii=False) + "\n")
+            return target
         groups: dict[str, list[str]] = {}
         for path, entry, _version, _metadata in self._iter():
             groups.setdefault(entry.project, []).append(

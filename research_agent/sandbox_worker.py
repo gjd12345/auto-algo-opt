@@ -44,7 +44,7 @@ _FORBIDDEN_CALLS = frozenset({
 })
 _FORBIDDEN_STRINGS = (
     "cvrp_m2_blind_120", "cvrp_m3_blind_120", "cvrp_m32_blind_120", "cvrp_m5_control_blind_120",
-    "cvrp_select_multiscale_64", "cvrp_s1_sandbox_blind_120",
+    "cvrp_select_multiscale_64", "cvrp_s1_sandbox_blind_120", "cvrp_b2_clean_blind_120",
     "tsp_m31_select_36", "tsp_m31_blind_72",
     "obp_m31_select_36", "obp_m31_blind_72",
     "bpp_m31_select_36", "bpp_m31_blind_72",
@@ -280,6 +280,7 @@ def _execute_sandbox_script(script: str) -> dict[str, Any]:
         "list": list, "max": max, "min": min, "pow": pow, "range": range,
         "round": round, "set": set, "sorted": sorted, "str": str, "sum": sum,
         "tuple": tuple, "zip": zip, "Exception": Exception, "ValueError": ValueError,
+        "repr": repr, "isinstance": isinstance,
         "print": _safe_print, "__import__": _restricted_import,
     }
     env: dict[str, Any] = {
@@ -299,6 +300,7 @@ def _execute_sandbox_script(script: str) -> dict[str, Any]:
         "ok": True,
         "stdout": "\n".join(stdout_buf),
         "result": result_val,
+        **({"result_assigned": False} if "RESULT" not in env and "result" not in env else {}),
         "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 4),
     }
 

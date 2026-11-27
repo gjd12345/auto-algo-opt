@@ -213,6 +213,7 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         opts = dict(opts)
     for name in (
         "allow_extended_numpy_whitelist", "enable_n200_latency_screen", "enable_degenerate_constant_screen",
+        "enable_c2_joint_screen",
     ):
         if name in opts and not isinstance(opts[name], bool):
             raise ValueError(f"interface_selection_{name}_must_be_boolean")
@@ -225,6 +226,8 @@ def parse_interface_selection(raw: Mapping[str, Any]) -> dict[str, Any]:
         opts[name] = latency_options[name]
     if latency_options["enable_multiscale_latency_ratio_screen"] and tpl.problem_family != "cvrp":
         raise ValueError("multiscale_latency_screen_requires_cvrp")
+    if opts.get("enable_c2_joint_screen") and tpl.problem_family != "cvrp":
+        raise ValueError("c2_joint_screen_requires_cvrp")
     _early_stop_limit(opts)
     fresh_template = raw.get("fresh_template", False)
     if not isinstance(fresh_template, bool):
@@ -442,6 +445,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         milestone_ledger_path: Path | None = None,
         milestone_run_id: str | None = None,
         strict_checkpoint_barriers: bool = False,
+        record_candidate_provenance: bool = False,
         run_started_monotonic: float | None = None,
         bridge_ref: Any | None = None,
         **kwargs: Any,
@@ -457,6 +461,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         self.milestone_ledger_path = Path(milestone_ledger_path) if milestone_ledger_path else None
         self.milestone_run_id = milestone_run_id
         self.strict_checkpoint_barriers = bool(strict_checkpoint_barriers)
+        self.record_candidate_provenance = self.strict_checkpoint_barriers or record_candidate_provenance
         self.run_started_monotonic = run_started_monotonic
         self.bridge_ref = bridge_ref
         self.seed_origins: dict[str, str] = {}
@@ -484,7 +489,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
         if origin == "generated":
             if self.bridge_ref is not None and hasattr(self.bridge_ref, "consume_pending_attempt_token"):
                 attempt_token = self.bridge_ref.consume_pending_attempt_token()
-            elif self.strict_checkpoint_barriers and self.milestone_ledger_path is not None and self.milestone_run_id:
+            elif self.record_candidate_provenance and self.milestone_ledger_path is not None and self.milestone_run_id:
                 attempt_token = claim_latest_pending_attempt_token(
                     self.milestone_ledger_path,
                     self.milestone_run_id,
@@ -556,7 +561,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                 })
                 recorder.finish_instance(status="complete" if completed else "partial")
             metrics["behavior_evidence"] = recorder.finalize(status="complete" if complete else "partial")
-        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics"):
+        for key in ("n200_latency_diagnostics", "multiscale_latency_diagnostics", "c2_joint_latency_diagnostics"):
             if key in resp:
                 metrics[key] = resp[key]
         ev_result = EvaluationResult(
@@ -587,7 +592,7 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                     handle.flush()
         solver_event(self.session, done_payload)
 
-        if self.strict_checkpoint_barriers and self.milestone_ledger_path is not None and self.milestone_run_id:
+        if self.record_candidate_provenance and self.milestone_ledger_path is not None and self.milestone_run_id:
             if attempt_token is not None:
                 if ev_result.valid and ev_result.objective is not None:
                     try:
@@ -670,12 +675,13 @@ class _SessionTrackedDynamicProblem(DynamicInterfaceProblem):
                         code_sha256=code_sha,
                         validation_passed=False,
                     )
-            wall_elapsed = (time.monotonic() - self.run_started_monotonic) if self.run_started_monotonic is not None else None
-            try_seal_draining_checkpoints(
-                self.milestone_ledger_path,
-                self.milestone_run_id,
-                wall_elapsed_seconds=wall_elapsed,
-            )
+            if self.strict_checkpoint_barriers:
+                wall_elapsed = (time.monotonic() - self.run_started_monotonic) if self.run_started_monotonic is not None else None
+                try_seal_draining_checkpoints(
+                    self.milestone_ledger_path,
+                    self.milestone_run_id,
+                    wall_elapsed_seconds=wall_elapsed,
+                )
         return resp
 
     def _append_eval_log(self, code_string: str, resp: Mapping[str, Any]) -> None:
@@ -691,7 +697,7 @@ class _StagnationAwareEoH(_DynamicCandidateEoH):
 
     def __init__(
         self, config: Any, problem: DynamicInterfaceProblem, *, evaluation_log: Path, no_jump_limit: int,
-        generation_attempts: Any | None = None,
+        generation_attempts: Any | None = None, global_stop_ordinal: Any | None = None,
     ) -> None:
         super().__init__(config, problem)
         if self.num_samplers != 1 or self.num_evaluators != 1:
@@ -701,6 +707,7 @@ class _StagnationAwareEoH(_DynamicCandidateEoH):
         self.no_jump_count = 0
         self.trigger_ordinal: int | None = None
         self._generation_attempts = generation_attempts
+        self._global_stop_ordinal = global_stop_ordinal
         self._trajectory_error: Exception | None = None
         self._best_key: tuple[int, float] = (-1, -math.inf)
         self._seen_evaluations: set[str] = set()
@@ -724,6 +731,10 @@ class _StagnationAwareEoH(_DynamicCandidateEoH):
 
     def reached_stagnation(self) -> bool:
         with self._trajectory_lock:
+            if self._global_stop_ordinal is not None:
+                if self.trigger_ordinal is None:
+                    self.trigger_ordinal = self._global_stop_ordinal()
+                return self.trigger_ordinal is not None
             if self.no_jump_count >= self.no_jump_limit:
                 return True
             rows = []
@@ -790,6 +801,7 @@ def _build_session_bridge(
     ledger_path: Path | None,
     run_id: str,
     strict_barriers: bool,
+    record_candidate_provenance: bool = False,
     use_mock: bool,
     mock_candidates: Sequence[str],
     mock_failure_hook: Any | None = None,
@@ -818,6 +830,7 @@ def _build_session_bridge(
             self._ledger_path = Path(ledger_path) if ledger_path else None
             self._run_id = run_id
             self._strict_barriers = bool(strict_barriers)
+            self._record_candidate_provenance = self._strict_barriers or record_candidate_provenance
             self._use_mock = bool(use_mock)
             self._mock_candidates = list(mock_candidates)
             self._mock_idx = 0
@@ -856,7 +869,7 @@ def _build_session_bridge(
                 self._pending_attempt_token = None
                 return tok
 
-        def settle_trailing_pending(self, reason: str = "eoh_skipped") -> None:
+        def settle_trailing_pending(self, reason: str = "eoh_skipped", *, evaluations_joined: bool = False) -> None:
             tok = self.consume_pending_attempt_token()
             if tok is not None and self._ledger_path is not None:
                 settle_attempt_provenance(
@@ -865,8 +878,15 @@ def _build_session_bridge(
                     generation_status=reason,
                     only_if_pending=True,
                 )
+            if self._record_candidate_provenance and self._ledger_path is not None:
+                settle_pending_provenance_for_terminal_requests(
+                    self._ledger_path, self._run_id,
+                    finished_eval_owner_epoch=owner_epoch if evaluations_joined else None,
+                )
+            self._seal_strict_checkpoints()
+
+        def _seal_strict_checkpoints(self) -> None:
             if self._strict_barriers and self._ledger_path is not None:
-                settle_pending_provenance_for_terminal_requests(self._ledger_path, self._run_id)
                 try_seal_draining_checkpoints(
                     self._ledger_path,
                     self._run_id,
@@ -1034,9 +1054,9 @@ def _build_session_bridge(
                         self._record(slot, "http_error", status=exc.status, error_code=exc.error_code, elapsed_seconds=elapsed, requested_model=chosen_model)
                     else:
                         self._record(slot, "connectivity_failed", error_code=exc.error_code, elapsed_seconds=elapsed, requested_model=chosen_model)
-                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                    if self._record_candidate_provenance and self._ledger_path is not None and slot.attempt_token:
                         settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="provider_failed")
-                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                        self._seal_strict_checkpoints()
                     self.last_error = exc.error_code
                     transient = (
                         exc.error_code in {"provider_connectivity_or_protocol_error", "request_deadline"}
@@ -1058,9 +1078,9 @@ def _build_session_bridge(
                         elapsed_seconds=time.monotonic() - started,
                         requested_model=chosen_model,
                     )
-                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                    if self._record_candidate_provenance and self._ledger_path is not None and slot.attempt_token:
                         settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="provider_failed")
-                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                        self._seal_strict_checkpoints()
                     self.last_error = "provider_connectivity_or_protocol_error"
                     self.terminal = True
                     raise ProviderFailure(self.last_error) from exc
@@ -1121,9 +1141,9 @@ def _build_session_bridge(
                         rate_card_version=self._routing_policy.rate_card_version,
                         estimated_cost_usd=cost_usd if priced else None,
                     )
-                    if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                    if self._record_candidate_provenance and self._ledger_path is not None and slot.attempt_token:
                         settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="malformed_response")
-                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                        self._seal_strict_checkpoints()
                     self.last_error = err
                     raise ValueError(err)
 
@@ -1145,10 +1165,10 @@ def _build_session_bridge(
                     rate_card_version=self._routing_policy.rate_card_version,
                     estimated_cost_usd=cost_usd if priced else None,
                 )
-                if self._strict_barriers and self._ledger_path is not None and slot.attempt_token:
+                if self._record_candidate_provenance and self._ledger_path is not None and slot.attempt_token:
                     if purpose == "eoh_probe":
                         settle_attempt_provenance(self._ledger_path, attempt_token=slot.attempt_token, generation_status="probe")
-                        try_seal_draining_checkpoints(self._ledger_path, self._run_id, wall_elapsed_seconds=time.monotonic() - self._run_started)
+                        self._seal_strict_checkpoints()
                     else:
                         with self._token_lock:
                             self._pending_attempt_token = slot.attempt_token
@@ -1228,6 +1248,9 @@ def execute_m2_session_task(
     ledger_path = Path(str(pb_cfg["ledger_path"])) if isinstance(pb_cfg, Mapping) and pb_cfg.get("ledger_path") else None
     milestone_run_id = str(pb_cfg.get("run_id") or row["run_id"]) if isinstance(pb_cfg, Mapping) else str(row["run_id"])
     strict_barriers = bool(pb_cfg.get("strict_checkpoint_barriers", False)) if isinstance(pb_cfg, Mapping) else False
+    record_candidate_provenance = strict_barriers or (
+        isinstance(pb_cfg, Mapping) and bool(pb_cfg.get("record_candidate_provenance", False))
+    )
     base_owner_epoch = str(pb_cfg.get("owner_epoch") or "") if isinstance(pb_cfg, Mapping) and pb_cfg.get("owner_epoch") else None
     owner_epoch = f"{base_owner_epoch}:{task_id}" if base_owner_epoch else f"task:{task_id}"
     wall_offset_s = get_run_wall_offset_seconds(ledger_path, milestone_run_id) if ledger_path is not None else 0.0
@@ -1258,13 +1281,14 @@ def execute_m2_session_task(
             run_id=milestone_run_id,
             reconcile_inflight=False,
             strict_checkpoint_barriers=strict_barriers,
+            record_candidate_provenance=record_candidate_provenance,
             owner_epoch=owner_epoch,
         )
     budget = SessionRequestBudget(str(root), task_id, parent=parent_budget)
 
     bridge = None
     mock_srv = None
-    use_routed_bridge = (not use_mock) or strict_barriers or routing_policy.enabled
+    use_routed_bridge = (not use_mock) or record_candidate_provenance or routing_policy.enabled
     if use_routed_bridge:
         if not use_mock:
             load_local_env()
@@ -1295,6 +1319,7 @@ def execute_m2_session_task(
             ledger_path=ledger_path,
             run_id=milestone_run_id,
             strict_barriers=strict_barriers,
+            record_candidate_provenance=record_candidate_provenance,
             use_mock=use_mock,
             mock_candidates=mock_pool,
             owner_epoch=owner_epoch,
@@ -1318,6 +1343,7 @@ def execute_m2_session_task(
         milestone_ledger_path=ledger_path,
         milestone_run_id=milestone_run_id,
         strict_checkpoint_barriers=strict_barriers,
+        record_candidate_provenance=record_candidate_provenance,
         run_started_monotonic=t_wall_origin,
         bridge_ref=bridge,
         design=design,
@@ -1331,7 +1357,8 @@ def execute_m2_session_task(
         enable_n200_latency_screen=options.get("enable_n200_latency_screen", False),
         enable_degenerate_constant_screen=options.get("enable_degenerate_constant_screen", False),
         n200_latency_multiplier=options.get("n200_latency_multiplier", 1.0),
-        checkpoint_validation_workers=7 if strict_barriers and design.problem_family == "cvrp" else 0,
+        enable_c2_joint_screen=options.get("enable_c2_joint_screen", False),
+        checkpoint_validation_workers=7 if record_candidate_provenance and design.problem_family == "cvrp" else 0,
         **multiscale_options(options),
         evaluation_log=eval_log,
         round_context=combined_ctx,
@@ -1421,19 +1448,45 @@ def execute_m2_session_task(
             output_dir=str(output),
         )
         if no_jump_limit:
-            durable_attempts = bridge.settled_generation_attempts if bridge is not None and strict_barriers else None
+            durable_attempts = bridge.settled_generation_attempts if bridge is not None and record_candidate_provenance else None
+            global_stop_ordinal = None
+            if durable_attempts is not None and parent_budget is not None and "global_naive_patience_cooldown" in pb_cfg:
+                from research_agent.contracts import AgentConfig
+                from research_agent.loop import _read_stopping_provenance, evaluate_global_stopping_decision
+
+                stop_config = AgentConfig(
+                    run_id=milestone_run_id,
+                    output_dir=str(root),
+                    total_request_cap=int(parent_budget.max_requests),
+                    global_early_stop_mode="naive_patience",
+                    global_early_stop_patience=no_jump_limit,
+                    risk_stop_cooldown=pb_cfg["global_naive_patience_cooldown"],
+                )
+
+                def global_stop_ordinal() -> int | None:
+                    bridge.settle_trailing_pending(evaluations_joined=True)
+                    t = parent_budget.used
+                    decision = evaluate_global_stopping_decision(
+                        stop_config, t=t, candidate_provenance=_read_stopping_provenance(parent_budget, t),
+                    )
+                    return t if decision["stop"] else None
+
             engine = _StagnationAwareEoH(
                 engine_cfg, task, evaluation_log=eval_log, no_jump_limit=no_jump_limit,
                 generation_attempts=durable_attempts,
+                global_stop_ordinal=global_stop_ordinal,
             )
             if durable_attempts is not None:
                 bridge.before_generation_claim = engine.reached_stagnation
         else:
             engine = _DynamicCandidateEoH(engine_cfg, task)
         base_seed = int(config.get("search_seed", config["suite_generation"]["seed"]))
-        s_seed = base_seed + int(rd["round_id"]) - 1
+        s_seed = int.from_bytes(
+            hashlib.sha256(f"{base_seed}:{int(rd['round_id'])}".encode("utf-8")).digest()[:4],
+            "big",
+        )
         random.seed(s_seed)
-        np.random.seed(s_seed % (2**32))
+        np.random.seed(s_seed)
         engine.run()
         # The upstream sampler can absorb a gateway failure while registering
         # an empty sample. Recover the bridge's durable terminal reason here.
@@ -1473,7 +1526,13 @@ def execute_m2_session_task(
             loop_completed = False
     finally:
         if bridge is not None:
-            bridge.settle_trailing_pending("eoh_skipped")
+            # The serial engine joins its evaluation pool before returning.
+            settle_abandoned = (
+                isinstance(pb_cfg, Mapping) and bool(pb_cfg.get("record_candidate_provenance"))
+            ) or options.get(
+                "enable_c2_joint_screen", False,
+            )
+            bridge.settle_trailing_pending("eoh_skipped", evaluations_joined=settle_abandoned)
             bridge.stop()
         if mock_srv is not None:
             mock_srv.stop()
@@ -1594,6 +1653,7 @@ def execute_m2_session_task(
         "instance_time_budget_ms": budget_ms,
         "effective_candidate_timeout_s": task.candidate_timeout_s,
         "multiscale_probe_timeout_s": task.multiscale_probe_timeout_s,
+        **({"c2_joint_probe_timeout_s": task.c2_joint_probe_timeout_s} if task.enable_c2_joint_screen else {}),
         "enclosing_candidate_timeout_s": task.enclosing_candidate_timeout_s,
         "kb_release_id": kb_release_id,
         "kb_manifest_sha256": kb_manifest_sha256,

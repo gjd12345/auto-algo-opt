@@ -5,9 +5,11 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import math
 import re
 import stat
 from collections import defaultdict
+from contextlib import nullcontext
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
@@ -38,6 +40,10 @@ _FORBIDDEN_VALUE = re.compile(
 _SHA256 = re.compile(r"[a-f0-9]{64}")
 _CLAIM_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
 _REFERENCE = re.compile(r"[\w-]+/(?:insight|antipattern|solution)_[A-Za-z0-9_-]+@v\d{4}", re.ASCII)
+_GEOMETRY_FIELDS = ("spatial_regime", "demand_cv_regime", "eccentricity_regime")
+_C2_BUDGET_MS = 500.0
+_C2_RATIO_LIMIT = 8.0
+_C2_RECEIPT_SCHEMA = "m6-c2-admission-receipts/v1"
 
 
 def _json(value: Any) -> str:
@@ -259,15 +265,16 @@ def _source_card(stores: Sequence[MemoryAPI], reference: str) -> dict[str, Any]:
     records = []
     stem, version = reference.rsplit("@v", 1)
     for api in stores:
-        md = api.store / f"{stem}__v{version}.md"
-        if version == "0001" and not md.is_file():
-            md = api.store / f"{stem}.md"
-        if md.is_symlink() or md.with_suffix(".json").is_symlink():
+        suffix = ".json" if api.json_only else ".md"
+        path = api.store / f"{stem}__v{version}{suffix}"
+        if not api.json_only and version == "0001" and not path.is_file():
+            path = api.store / f"{stem}.md"
+        if path.is_symlink() or path.with_suffix(".json").is_symlink():
             raise ValueError("auto_dream_source_card_link")
-        if not md.is_file():
+        if not path.is_file():
             continue
-        _read_path(md)
-        sidecar = md.with_suffix(".json")
+        _read_path(path)
+        sidecar = path.with_suffix(".json")
         if sidecar.is_file():
             _read_path(sidecar)
         card = api.read_version(reference)
@@ -282,7 +289,7 @@ def _source_card(stores: Sequence[MemoryAPI], reference: str) -> dict[str, Any]:
 
 
 def _entry(raw: Mapping[str, Any], claim: ClaimEvidence, candidate: Mapping[str, Any],
-           stores: Sequence[MemoryAPI]) -> tuple[MemoryEntry, dict[str, str]]:
+           stores: Sequence[MemoryAPI]) -> tuple[MemoryEntry, Mapping[str, Any]]:
     reference, inline = raw.get("source_reference"), raw.get("entry")
     if (reference is None) == (inline is None):
         raise ValueError("auto_dream_source_card_required")
@@ -345,6 +352,138 @@ def _entry(raw: Mapping[str, Any], claim: ClaimEvidence, candidate: Mapping[str,
     return entry, provenance
 
 
+def _geometry_scale_tags(*sources: Mapping[str, Any]) -> dict[str, Any]:
+    tags: dict[str, Any] = {}
+    for source in sources:
+        geometry = source.get("geometry_scale")
+        fields = {**source, **geometry} if isinstance(geometry, Mapping) else source
+        for key in _GEOMETRY_FIELDS:
+            values = fields.get(key)
+            if isinstance(values, str):
+                values = [values]
+            if isinstance(values, (list, tuple)):
+                normalized = {re.sub(r"[\s-]+", "_", value.strip().casefold()) for value in values
+                              if isinstance(value, str)}
+                regimes = sorted(value for value in normalized if re.fullmatch(r"[a-z0-9_]{1,48}", value))
+                if 0 < len(regimes) <= 16:
+                    tags[key] = regimes
+        bounds = fields.get("scale_range")
+        if (isinstance(bounds, (list, tuple)) and len(bounds) == 2
+                and all(type(value) is int and value > 0 for value in bounds) and bounds[0] <= bounds[1]):
+            tags["scale_range"] = list(bounds)
+    return tags
+
+
+def screen_cvrp_c2_solution(
+    code: str,
+    *,
+    template_id: str = "cvrp_parallel_merge_static",
+    template_version: str = "v2",
+    postprocess_mode: str = "relocate_2opt",
+) -> tuple[dict[str, Any], str | None]:
+    """Run the deterministic C2 joint multiscale probe screen for an evolved CVRP hook."""
+    from agent_skill_loop.interface_design.multiscale import ONLINE_C2_JOINT_PROBES
+    from agent_skill_loop.interface_design.templates import build_classic_cw_static_design
+    from agent_skill_loop.interface_design.validator import InterfaceValidator
+
+    telemetry = {"c2_multiscale_screen_passed": False, "c2_latency_ratio_max": None,
+                 "c2_probe_budget_ms": _C2_BUDGET_MS}
+    if template_id != "cvrp_parallel_merge_static":
+        return telemetry, "c2_unsupported_solution_interface"
+    if template_version != "v2":
+        return telemetry, "c2_solution_template_version_mismatch"
+    if postprocess_mode not in ("none", "relocate_2opt"):
+        return telemetry, "c2_solution_postprocess_mode_mismatch"
+    try:
+        design = build_classic_cw_static_design(template_version="v2", postprocess_mode=postprocess_mode)
+        validator = InterfaceValidator(instance_time_budget_ms=_C2_BUDGET_MS, outer_timeout_s=8.0)
+        screen = validator.validate_evolved_hook_c2_joint_screen(
+            design, hook_code_override=code, max_n200_n100_ratio=_C2_RATIO_LIMIT,
+        )
+    except (KeyError, OSError, RecursionError, SyntaxError, TypeError, ValueError) as exc:
+        return telemetry, f"c2_probe_error:{type(exc).__name__}"
+    ratios = [value for pair in screen.get("pairs", []) if isinstance(pair, Mapping)
+              and type(value := pair.get("ratio_200_100")) in (int, float) and math.isfinite(value) and value >= 0]
+    telemetry["c2_latency_ratio_max"] = max(ratios, default=None)
+    if screen.get("passed") is not True:
+        error_code = screen.get("error_code")
+        reason = error_code if isinstance(error_code, str) and re.fullmatch(r"[a-z0-9_]{1,128}", error_code) else None
+        return telemetry, reason or "c2_joint_screen_failed"
+    if len(ratios) != len(ONLINE_C2_JOINT_PROBES) // 2 or max(ratios) > _C2_RATIO_LIMIT:
+        return telemetry, "c2_joint_probe_protocol"
+    telemetry.update(_geometry_scale_from_probes(ONLINE_C2_JOINT_PROBES), c2_multiscale_screen_passed=True)
+    return telemetry, None
+
+
+def _screen_c2_solution(claim: ClaimEvidence, candidate: Mapping[str, Any], facts: Mapping[str, Any],
+                        ) -> tuple[dict[str, Any], str | None]:
+    telemetry = {"c2_multiscale_screen_passed": False, "c2_latency_ratio_max": None,
+                 "c2_probe_budget_ms": _C2_BUDGET_MS}
+    if any(source.get("synthetic") is True or source.get("source_kind") in ("synthetic", "mock")
+           for source in (candidate, facts)):
+        return telemetry, "c2_synthetic_solution_evidence"
+    scope = claim.applicability_scope
+    if problem_family(scope["problem"]) != "cvrp" or scope["interface_id"] != "cvrp_parallel_merge_static":
+        return telemetry, "c2_unsupported_solution_interface"
+    code = candidate.get("code")
+    if not isinstance(code, str) or _sha256(code.encode("utf-8")) != claim.code_anchor.get("code_sha256"):
+        return telemetry, "c2_evaluated_solution_code_missing_or_mismatched"
+    try:
+        if _sha256(ast.unparse(ast.parse(code)).encode("utf-8")) != claim.code_anchor.get("canonical_ast_sha256"):
+            return telemetry, "c2_evaluated_solution_ast_mismatch"
+        selection = facts.get("interface_selection") or {}
+        versions = [value for value in (candidate.get("template_version"), selection.get("template_version"),
+                                         facts.get("template_version")) if value is not None]
+        if any(value != "v2" for value in versions):
+            return telemetry, "c2_solution_template_version_mismatch"
+        modes = [value for value in (candidate.get("postprocess_mode"), selection.get("postprocess_mode"),
+                                      facts.get("postprocess_mode")) if value is not None]
+        if any(value not in ("none", "relocate_2opt") for value in modes) or len(set(modes)) > 1:
+            return telemetry, "c2_solution_postprocess_mode_mismatch"
+    except (KeyError, OSError, RecursionError, SyntaxError, TypeError, ValueError) as exc:
+        return telemetry, f"c2_probe_error:{type(exc).__name__}"
+    return screen_cvrp_c2_solution(
+        code,
+        template_id=scope["interface_id"],
+        template_version="v2",
+        postprocess_mode=modes[0] if modes else "none",
+    )
+
+
+def _geometry_scale_from_probes(probes: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    sizes = [probe["size"] for probe in probes]
+    return {
+        **{target: sorted({probe[field] for probe in probes}) for target, field in zip(
+            _GEOMETRY_FIELDS, ("spatial_mode", "demand_cv_mode", "depot_mode"), strict=True,
+        )},
+        "scale_range": [min(sizes), max(sizes)],
+    }
+
+
+def _replay_c2_screen(receipt: Any) -> tuple[dict[str, Any], str | None]:
+    from agent_skill_loop.interface_design.multiscale import ONLINE_C2_JOINT_PROBES
+
+    if not isinstance(receipt, list) or len(receipt) != 2 or not isinstance(receipt[0], dict):
+        raise ValueError("auto_dream_c2_probe_receipts_invalid")
+    telemetry, reason = receipt
+    ratio = telemetry.get("c2_latency_ratio_max")
+    expected_keys = {"c2_multiscale_screen_passed", "c2_latency_ratio_max", "c2_probe_budget_ms"}
+    if reason is None:
+        expected_keys.update((*_GEOMETRY_FIELDS, "scale_range"))
+    if (telemetry.get("c2_multiscale_screen_passed") is not (reason is None)
+            or telemetry.get("c2_probe_budget_ms") != _C2_BUDGET_MS
+            or telemetry.keys() != expected_keys
+            or (ratio is not None and (type(ratio) not in (float, int) or not math.isfinite(ratio) or ratio < 0))):
+        raise ValueError("auto_dream_c2_probe_receipts_invalid")
+    if reason is None:
+        geometry = _geometry_scale_from_probes(ONLINE_C2_JOINT_PROBES)
+        if ratio is None or ratio > _C2_RATIO_LIMIT or any(telemetry.get(key) != value for key, value in geometry.items()):
+            raise ValueError("auto_dream_c2_probe_receipts_invalid")
+    elif not isinstance(reason, str) or not re.fullmatch(r"[a-zA-Z0-9_:]{1,128}", reason):
+        raise ValueError("auto_dream_c2_probe_receipts_invalid")
+    return telemetry, reason
+
+
 def _usage(receipt: Mapping[str, Any]) -> dict[str, int]:
     usage = receipt.get("usage")
     if not isinstance(usage, Mapping):
@@ -357,6 +496,7 @@ def _usage(receipt: Mapping[str, Any]) -> dict[str, int]:
 
 def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], output_store: Path,
                output_dir: Path, offline_llm_driver: Callable[[dict[str, Any]], Mapping[str, Any]] | None = None,
+               require_c2_multiscale_admission: bool = False,
                ) -> dict[str, Any]:
     """Consolidate explicitly authorized dev claims into a staged memory store.
 
@@ -366,9 +506,26 @@ def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], 
     returning ``representative_claim_id``, ``claim_evidence_manifest`` and
     measured ``usage``. The resulting evidence and caveats are rendered by code.
     """
+    if type(require_c2_multiscale_admission) is not bool:
+        raise ValueError("auto_dream_c2_admission_flag_invalid")
     if not dev_artifacts:
         raise ValueError("auto_dream_dev_artifact_required")
     output_store, output_dir = _write_root(Path(output_store)), _write_root(Path(output_dir))
+    lock_path = _write_root(output_dir / "auto_dream.lock")
+    if require_c2_multiscale_admission:
+        output_dir.mkdir(parents=True, exist_ok=True)
+    # Freeze the timed C2 receipts and the publications under one writer. On an
+    # interrupted promotion, replay the same measured timings and card identity.
+    early_lock = (exclusive_file_lock(lock_path, busy="auto_dream_writer_busy")
+                  if require_c2_multiscale_admission else nullcontext())
+    with early_lock:
+        return _consolidate(dev_artifacts, source_stores, output_store, output_dir,
+                            offline_llm_driver, require_c2_multiscale_admission, lock_path)
+
+
+def _consolidate(dev_artifacts: Sequence[Path], source_stores: Sequence[Path], output_store: Path, output_dir: Path,
+                 offline_llm_driver: Callable[[dict[str, Any]], Mapping[str, Any]] | None,
+                 require_c2_multiscale_admission: bool, lock_path: Path) -> dict[str, Any]:
     source_roots = [_read_path(Path(path)) for path in source_stores]
     sources = []
     for root in source_roots:
@@ -376,9 +533,18 @@ def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], 
                                      for output in (output_store, output_dir))
                 or next(root.glob("*/*.publish"), None) is not None):
             raise ValueError("auto_dream_source_store_invalid")
-        sources.append(MemoryAPI(root))
+        sources.append(MemoryAPI(root, read_only=True))
 
     clusters = defaultdict(list)
+    rejected = []
+    receipt_path = _write_root(output_dir / "c2_probe_receipts.json") if require_c2_multiscale_admission else None
+    receipt = None
+    if receipt_path is not None and receipt_path.is_file():
+        receipt = json.loads(receipt_path.read_bytes())
+        if (not isinstance(receipt, dict) or receipt.get("schema_version") != _C2_RECEIPT_SCHEMA
+                or not isinstance(receipt.get("screens"), dict)):
+            raise ValueError("auto_dream_c2_probe_receipts_invalid")
+    screened = {}
     inputs, seen_claims = set(), set()
     for artifact in dev_artifacts:
         doc, facts, digest, artifact_digest = _load_artifact(Path(artifact))
@@ -393,13 +559,38 @@ def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], 
             seen_claims.add(claim.claim_id)
             candidate = _match_evidence(claim, facts, digest)
             raw = raw_claims[claim.claim_id]
-            entry, provenance = _entry(raw, claim, candidate, sources)
+            try:
+                entry, provenance = _entry(raw, claim, candidate, sources)
+            except ValueError as exc:
+                if not require_c2_multiscale_admission or str(exc) != "auto_dream_unverified_solution":
+                    raise
+                rejected.append({"claim_id": claim.claim_id, "source_reference": raw.get("source_reference"),
+                                 "rejection_reason": str(exc), "c2_multiscale_screen_passed": False,
+                                 "c2_latency_ratio_max": None, "c2_probe_budget_ms": _C2_BUDGET_MS})
+                continue
             # Equality of canonical AST hashes is a conservative clustering
             # rule. Compare only cards with the same evaluator and interface,
             # and keep scope and memory kind exactly as they were verified.
             anchor = _candidate_ast(candidate) or claim.code_anchor.get("code_sha256")
             key = (_json(claim.applicability_scope), entry.type, anchor)
-            clusters[key].append((claim, entry, raw.get("source_reference"), provenance))
+            geometry_scale = _geometry_scale_tags(facts, candidate, provenance)
+            if entry.type == "solution" and require_c2_multiscale_admission:
+                probe_key = evidence_digest({"evaluation_facts_sha256": digest, "evidence_ref": claim.evidence_ref,
+                                             "scope_kind_anchor": key})
+                if probe_key not in screened:
+                    if receipt is None:
+                        screened[probe_key] = _screen_c2_solution(claim, candidate, facts)
+                    elif probe_key in receipt["screens"]:
+                        screened[probe_key] = _replay_c2_screen(receipt["screens"][probe_key])
+                    else:
+                        raise ValueError("auto_dream_c2_probe_receipts_mismatch")
+                telemetry, error = screened[probe_key]
+                if error is not None:
+                    rejected.append({"claim_id": claim.claim_id, "source_reference": raw.get("source_reference"),
+                                     "rejection_reason": error, **telemetry})
+                    continue
+                geometry_scale.update(telemetry)
+            clusters[key].append((claim, entry, raw.get("source_reference"), provenance, geometry_scale))
 
     publications = []
     totals = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
@@ -409,21 +600,21 @@ def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], 
         manifest = expected.as_dict()
         chosen = cluster[0]
         if offline_llm_driver is not None:
-            receipt = offline_llm_driver({"claim_evidence_manifest": expected.as_dict(),
-                                          "cards": [deepcopy(row[1].as_dict()) for row in cluster]})
-            if not isinstance(receipt, Mapping):
+            llm_receipt = offline_llm_driver({"claim_evidence_manifest": expected.as_dict(),
+                                              "cards": [deepcopy(row[1].as_dict()) for row in cluster]})
+            if not isinstance(llm_receipt, Mapping):
                 raise ValueError("auto_dream_llm_receipt_invalid")
-            _check_dev(receipt)
-            usage = _usage(receipt)
+            _check_dev(llm_receipt)
+            usage = _usage(llm_receipt)
             totals["calls"] += 1
             for key, count in usage.items():
                 totals[key] += count
-            ClaimEvidenceManifest.from_dict(receipt.get("claim_evidence_manifest")).validate_preserves(expected)
-            representative = receipt.get("representative_claim_id")
+            ClaimEvidenceManifest.from_dict(llm_receipt.get("claim_evidence_manifest")).validate_preserves(expected)
+            representative = llm_receipt.get("representative_claim_id")
             chosen = next((row for row in cluster if row[0].claim_id == representative), None)
             if chosen is None:
                 raise ValueError("auto_dream_representative_claim_invalid")
-        claim, card, _, source_provenance = chosen
+        claim, card, _, source_provenance, geometry_scale = chosen
         source_refs = sorted({row[2] for row in cluster if row[2] is not None})
         source_bindings = {row[0].claim_id: row[2] for row in cluster}
         identity = evidence_digest({"manifest": manifest, "entry": card.as_dict(), "source_bindings": source_bindings})
@@ -437,30 +628,65 @@ def auto_dream(*, dev_artifacts: Sequence[Path], source_stores: Sequence[Path], 
         ) if key in source_provenance}
         provenance.update(evaluation_facts_sha256=claim.evaluation_facts_sha256, evidence_ref=claim.evidence_ref,
                           claim_evidence_manifest_sha256=evidence_digest(manifest), source_split="dev")
-        publications.append((identity, card, provenance, manifest, source_refs, source_bindings))
+        provenance.update(geometry_scale)
+        publications.append((identity, card, provenance, manifest, source_refs, source_bindings, geometry_scale))
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    lock_path = _write_root(output_dir / "auto_dream.lock")
     _write_root(output_store / ".writer.lock")
-    with exclusive_file_lock(lock_path, busy="auto_dream_writer_busy"):
+    late_lock = (nullcontext() if require_c2_multiscale_admission else
+                 exclusive_file_lock(lock_path, busy="auto_dream_writer_busy"))
+    with late_lock:
         manifest_path = _write_root(output_dir / "auto_dream_manifest.json")
         staging_path = _write_root(output_dir / "l3_promotion_candidates.json")
+        receipt_sha = None
+        if receipt_path is not None and screened:
+            expected_receipt = {"schema_version": _C2_RECEIPT_SCHEMA, "dev_artifact_sha256": sorted(inputs),
+                                "screens": screened}
+            text = _json(expected_receipt) + "\n"
+            if receipt is not None and _json(receipt) + "\n" != text:
+                raise ValueError("auto_dream_c2_probe_receipts_mismatch")
+            if receipt is None:
+                _atomic_text(receipt_path, text)
+            receipt_sha = _sha256(text.encode("utf-8"))
+        elif receipt is not None:
+            raise ValueError("auto_dream_c2_probe_receipts_mismatch")
         expected_refs = [f"{card.project}/{card.type}_{card.name}@v0001" for _, card, *_ in publications]
         if manifest_path.is_file():
             prior = json.loads(manifest_path.read_bytes())
-            if (prior["dev_artifact_sha256"] != sorted(inputs)
-                    or [item["reference"] for item in prior["cards"]] != expected_refs):
+            if (prior["dev_artifact_sha256"] != sorted(inputs) or
+                    bool(prior.get("require_c2_multiscale_admission")) != require_c2_multiscale_admission):
                 raise ValueError("auto_dream_batch_already_frozen")
-        api = MemoryAPI(output_store)
+            if require_c2_multiscale_admission:
+                staging = json.loads(staging_path.read_bytes())
+                api = MemoryAPI(output_store, read_only=True, json_only=True)
+                if (staging.get("auto_dream_manifest_sha256") != _sha256(manifest_path.read_bytes())
+                        or staging.get("candidates") != prior["cards"] or prior.get("c2_probe_receipts_sha256") != receipt_sha
+                        or [item["reference"] for item in prior["cards"]] != expected_refs):
+                    raise ValueError("auto_dream_frozen_batch_integrity_failed")
+                for item in prior["cards"]:
+                    card = api.read_version(item["reference"], require_active=True)
+                    if any(card["provenance"].get(key) != value for key, value in item.get("geometry_scale", {}).items()):
+                        raise ValueError("auto_dream_frozen_batch_integrity_failed")
+                return prior
+            if [item["reference"] for item in prior["cards"]] != expected_refs:
+                raise ValueError("auto_dream_batch_already_frozen")
+        api = MemoryAPI(output_store, json_only=require_c2_multiscale_admission)
         cards = []
-        for identity, card, provenance, claims, source_refs, source_bindings in publications:
+        for identity, card, provenance, claims, source_refs, source_bindings, geometry_scale in publications:
             ref = api.write(card, format_version=3, provenance=provenance, operation_key=f"auto_dream:{identity}")["reference"]
             cards.append({"reference": ref, "source_references": source_refs, "source_bindings": source_bindings,
-                          "claim_evidence_manifest": claims})
+                          "claim_evidence_manifest": claims,
+                          **({"geometry_scale": geometry_scale} if geometry_scale else {})})
         result = {"schema_version": "m35-auto-dream/v1", "source_split": "dev",
                   "dev_artifact_sha256": sorted(inputs), "cards": cards,
                   "offline_llm_usage": {**totals, "mode": "llm" if offline_llm_driver is not None else "deterministic",
                                         "total_tokens": totals["input_tokens"] + totals["output_tokens"]}}
+        if require_c2_multiscale_admission:
+            result.update(require_c2_multiscale_admission=True, rejected_candidates=sorted(
+                rejected, key=lambda item: item["claim_id"],
+            ))
+            if receipt_sha is not None:
+                result["c2_probe_receipts_sha256"] = receipt_sha
         staging = {"schema_version": "m35-l3-promotion-candidates/v1", "source_split": "dev", "activation": "staged",
                    "auto_dream_manifest_sha256": _sha256((_json(result) + "\n").encode("utf-8")), "candidates": cards}
         _atomic_text(staging_path, _json(staging) + "\n")

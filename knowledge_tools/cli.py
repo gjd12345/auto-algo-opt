@@ -124,6 +124,10 @@ def _parser() -> argparse.ArgumentParser:
     status = sub.add_parser("literature-status", help="summarise catalog vs harvested vs screened")
     status.add_argument("--catalog", type=Path, required=True)
     status.add_argument("--queue", type=Path, required=True)
+
+    portal = sub.add_parser("build-portal", help="build offline jargon-free exhibition portal from a release")
+    portal.add_argument("--release", type=Path, required=True, help="immutable release directory")
+    portal.add_argument("--output-dir", type=Path, default=Path("outputs/kb_portal"), help="target directory for index.html")
     return parser
 
 
@@ -231,6 +235,10 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "literature-status":
             result = queue_status(load_catalog(args.catalog), args.queue)
+        elif args.command == "build-portal":
+            from frontend.build_kb_portal import build_kb_portal
+
+            result = build_kb_portal(release_dir=args.release, output_dir=args.output_dir)
         else:  # pragma: no cover
             raise AssertionError(args.command)
     except (OSError, ValueError, KeyError, FileNotFoundError) as exc:

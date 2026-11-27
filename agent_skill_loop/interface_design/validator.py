@@ -34,7 +34,16 @@ from .contracts import (
     hook_bundle_metadata,
     sha256_text,
 )
-from .multiscale import FLOOR_MS, ONLINE_PROBES, generate_stress_probe, reject, screening_pairs
+from .multiscale import (
+    FLOOR_MS,
+    ONLINE_C2_JOINT_PROBES,
+    ONLINE_PROBES,
+    evaluate_c2_joint_screen,
+    generate_c2_joint_probe,
+    generate_stress_probe,
+    reject,
+    screening_pairs,
+)
 from .runtime import DynamicSubprocessEvaluator, validate_hook_ast, validate_hook_bundle
 from .templates import _load_interface_extensions, get_template_spec
 
@@ -815,6 +824,28 @@ class InterfaceValidator:
                 ),
                 fix_hint=f"Optimize hook to complete within {self.instance_time_budget_ms:.0f} ms per instance and return feasible finite scores.",
             ))
+        elif design.template_id == "cvrp_parallel_merge_static" and getattr(design, "template_version", "v1") == "v2":
+            late_records = [
+                rec for rec in g5_records
+                if rec.get("outcome_class") != OUTCOME_COMPLETED
+                or rec.get("budget_exhausted") is True
+                or ("returned_before_deadline" in rec and rec.get("returned_before_deadline") is not True)
+                or (rec.get("solve_ms") is not None and float(rec["solve_ms"]) > self.instance_time_budget_ms)
+            ]
+            if outcome_counts[OUTCOME_BUDGET_EXHAUSTED_INCUMBENT] > 0 or late_records:
+                g5_failures.append(GateFailure(
+                    gate_id=5,
+                    gate_name="budget_and_scale_diagnostics",
+                    error_code="v2_strict_deadline_violation",
+                    line_no=None,
+                    symbol=design.hook_name,
+                    detail=(
+                        f"Gate 5 requires strict returned_before_deadline for v2: "
+                        f"budget_exhausted_incumbent={outcome_counts[OUTCOME_BUDGET_EXHAUSTED_INCUMBENT]}, "
+                        f"late_records={len(late_records)}."
+                    ),
+                    fix_hint=f"Return cleanly within {self.instance_time_budget_ms:.0f} ms before exhausting the anytime deadline.",
+                ))
 
         # Compute 1e-3 scale drift diagnostic (advisory warning, does not silently hide drift)
         scale_drift_pct: float | None = None
@@ -869,22 +900,13 @@ class InterfaceValidator:
 
         return report()
 
-    def validate_evolved_hook_multiscale_latency(
+    def _evaluate_synthetic_latency_probes(
         self,
         design: InterfaceDesign,
-        *,
-        hook_code_override: str | None = None,
-        hook_implementations: Mapping[str, str] | None = None,
-        max_n200_n100_ratio: float = 8.0,
-        multiscale_ratio_min_t200_ms: float = 10.0,
-        multiscale_n200_abs_cap_ms: float | None = None,
-    ) -> dict[str, Any]:
-        """Apply the locked pairwise latency policy to four independent synthetic solves."""
-        from agent_skill_loop.cvrp_workbench.baselines_2026 import dual_timing_fields
-
-        if design.problem_family != "cvrp":
-            raise ValueError("multiscale_latency_screen_requires_cvrp")
-        instances = [generate_stress_probe(size, replicate=rep) for rep, size in ONLINE_PROBES]
+        instances: Sequence[Mapping[str, Any]],
+        hook_code_override: str | None,
+        hook_implementations: Mapping[str, str] | None,
+    ) -> tuple[dict[str, Any], float]:
         tpl = get_template_spec(design.template_id, design.template_version)
         timeout_s = self.candidate_timeout_s if self.outer_timeout_s is None else self.outer_timeout_s
         try:
@@ -913,6 +935,27 @@ class InterfaceValidator:
                 "error_detail": str(exc),
                 "timeout_kind": "outer_worker" if timed_out else None,
             }
+        return response, timeout_s
+
+    def validate_evolved_hook_multiscale_latency(
+        self,
+        design: InterfaceDesign,
+        *,
+        hook_code_override: str | None = None,
+        hook_implementations: Mapping[str, str] | None = None,
+        max_n200_n100_ratio: float = 8.0,
+        multiscale_ratio_min_t200_ms: float = 10.0,
+        multiscale_n200_abs_cap_ms: float | None = None,
+    ) -> dict[str, Any]:
+        """Apply the locked pairwise latency policy to four independent synthetic solves."""
+        from agent_skill_loop.cvrp_workbench.baselines_2026 import dual_timing_fields
+
+        if design.problem_family != "cvrp":
+            raise ValueError("multiscale_latency_screen_requires_cvrp")
+        instances = [generate_stress_probe(size, replicate=rep) for rep, size in ONLINE_PROBES]
+        response, timeout_s = self._evaluate_synthetic_latency_probes(
+            design, instances, hook_code_override, hook_implementations,
+        )
 
         policy = {
             "floor_ms": FLOOR_MS,
@@ -966,6 +1009,63 @@ class InterfaceValidator:
         else:
             diagnostics["passed"] = True
             diagnostics["error_code"] = None
+        return diagnostics
+
+    def validate_evolved_hook_c2_joint_screen(
+        self,
+        design: InterfaceDesign,
+        *,
+        hook_code_override: str | None = None,
+        hook_implementations: Mapping[str, str] | None = None,
+        max_n200_n100_ratio: float = 8.0,
+    ) -> dict[str, Any]:
+        """Run the public synthetic geometry-scale probes without suite access."""
+        from agent_skill_loop.cvrp_workbench.baselines_2026 import dual_timing_fields
+
+        if design.problem_family != "cvrp":
+            raise ValueError("c2_joint_screen_requires_cvrp")
+        instances = [generate_c2_joint_probe(**probe) for probe in ONLINE_C2_JOINT_PROBES]
+        response, timeout_s = self._evaluate_synthetic_latency_probes(
+            design, instances, hook_code_override, hook_implementations,
+        )
+        policy = {"max_solve_ms": self.instance_time_budget_ms, "max_ratio_200_100": max_n200_n100_ratio}
+        diagnostics = {
+            "passed": False,
+            "policy": policy,
+            "n_instances": len(instances),
+            "budget_ms": self.instance_time_budget_ms,
+            "outer_timeout_s": response.get("outer_timeout_s", timeout_s),
+            "worker_wall_ms": response.get("worker_wall_ms"),
+            "timeout_kind": response.get("timeout_kind"),
+            "error_code": response.get("error_code"),
+            "error_detail": response.get("error_detail"),
+            "failures": response.get("failures") or [],
+            "observations": [],
+            "pairs": [],
+            "max_observed_solve_ms": None,
+        }
+        records = response.get("records")
+        if not isinstance(records, list) or len(records) != len(instances) or any(
+            not isinstance(row, Mapping) or row.get("instance_id") != instance["instance_id"]
+            for row, instance in zip(records, instances)
+        ):
+            diagnostics["error_code"] = diagnostics["error_code"] or "c2_joint_probe_protocol"
+            return diagnostics
+        observations = []
+        for record, probe in zip(records, ONLINE_C2_JOINT_PROBES, strict=True):
+            timing = dual_timing_fields(
+                record, budget_ms=self.instance_time_budget_ms, feasible=record.get("valid") is True,
+            )
+            observations.append({
+                **probe,
+                "solve_ms": timing["solve_ms"],
+                "returned_before_deadline": timing["returned_before_deadline"],
+            })
+        diagnostics["observations"] = observations
+        diagnostics.update(evaluate_c2_joint_screen(observations, **policy))
+        diagnostics["error_code"] = None if diagnostics["passed"] else (
+            diagnostics["error_code"] or "c2_joint_latency_exceeded"
+        )
         return diagnostics
 
     def validate_evolved_hook_n200_latency(

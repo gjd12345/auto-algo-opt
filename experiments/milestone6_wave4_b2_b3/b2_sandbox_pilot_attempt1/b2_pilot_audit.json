@@ -1,0 +1,240 @@
+{
+  "schema_version": "wave4-b2-pilot-audit/v1",
+  "protocol_sha256": "5f683529a6d81af7b8e9667f52c2bac995de25566012c7177756d28f252a0dbb",
+  "run_mode": "live",
+  "models": {
+    "DeepSeek-V4.1-Flash": {
+      "scripts_executed": 10,
+      "valid_scripts": 8,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 2,
+      "rounds_with_failed_scripts": 2,
+      "cell_count": 2,
+      "success_cells": 2,
+      "valid_script_execution_rate": 0.8,
+      "post_repair_diagnostic_round_completion_rate": 1.0,
+      "fail_to_pass_rate": 1.0,
+      "cell_sandbox_success_rate": 1.0
+    },
+    "Qwen4-Max": {
+      "scripts_executed": 8,
+      "valid_scripts": 6,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 0,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 1,
+      "cell_count": 2,
+      "success_cells": 2,
+      "valid_script_execution_rate": 0.75,
+      "post_repair_diagnostic_round_completion_rate": 0.0,
+      "fail_to_pass_rate": 0.0,
+      "cell_sandbox_success_rate": 1.0
+    }
+  },
+  "overall": {
+    "scripts_executed": 18,
+    "valid_scripts": 14,
+    "gate_bypass_count": 0,
+    "diagnostic_rounds_required": 2,
+    "diagnostic_rounds_completed": 1,
+    "self_repair_rounds": 2,
+    "rounds_with_failed_scripts": 3,
+    "cell_count": 4,
+    "success_cells": 4,
+    "valid_script_execution_rate": 0.7777777777777778,
+    "post_repair_diagnostic_round_completion_rate": 0.5,
+    "fail_to_pass_rate": 0.6666666666666666,
+    "cell_sandbox_success_rate": 1.0
+  },
+  "cells": {
+    "DeepSeek-V4.1-Flash/20261124/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 6,
+      "valid_scripts": 4,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 0,
+      "diagnostic_rounds_completed": 0,
+      "self_repair_rounds": 2,
+      "rounds_with_failed_scripts": 2,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "196b4295b531d5145729ab9d53ae00f3c38b795d6d36cf33bc6dea7502d0ca41",
+          "script_sha256": "3bd39a4bc39c19f95b67d61d1d7b9376ec40207aeccf201b1b76a140fc7744d1",
+          "finite_numeric_evidence": false,
+          "error_code": "KeyError"
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "5b8ea3e9b5172f693bd2f2f467d778168faa6386fc699a4073ced6ba1628bc9c",
+          "script_sha256": "34d7a9931a492397e8933d8189d27e7b43f02acd97414ddb692ada7c56c0e02b",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "4ca7e9caed1a03e6bd3355223cf7e8df37cec5ff6b99501162ce468d80e97b90",
+          "script_sha256": "60454f3741efd582c3372a5a17130840a8f08568f1d1c20c007669e112478599",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0004.json",
+          "artifact_sha256": "e46778b89b8ac19fa8635441b830d5e5222acf2ffad29e12aa6fa1b13d37bdf9",
+          "script_sha256": "cf33daac99e8568e40cf70d06f54e0e3f75a55ee10f06a07379952c2f323d41a",
+          "finite_numeric_evidence": false,
+          "error_code": "KeyError"
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0005.json",
+          "artifact_sha256": "2a171c2aab8d6ef99ea90b8286376c576a363c2be2c276d5f8ca00ec2c16f669",
+          "script_sha256": "29308703226bbe0e8937a8f7695eece4dcdc05e6dd816a6f56a277674b3b8333",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0006.json",
+          "artifact_sha256": "35d80f1e79cb1d3bbaff1f161715b427f953733b11b74571a2718137331c602c",
+          "script_sha256": "8ea0e68b736c5a2091720291d6c60de970921f8dbdacdb13c40dac8030fd4e8f",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "DeepSeek-V4.1-Flash/20261125/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 4,
+      "valid_scripts": 4,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 1,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "8b3d14b69556e5deb773b6e1b3f499a12585ce3b8a2076a1caf4877642185fa8",
+          "script_sha256": "1940ae79c7dfefd0cf1515247302fe1053408e1409d520919d9630fcd589240a",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "d1e1557e92a999ade1c1628502116bb8564f90529385d17ede42b65a6b47fd73",
+          "script_sha256": "50abf78135a4e5aa1c0222db0dc646d02317e2840659aa94038e84c2b3a5b861",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "048de6cc57b4b12f99a14dfabee9ed9953cc7188abc99ef3295fa39c61305639",
+          "script_sha256": "94310a01aa1eee6435af9eb71e3734336fc9ab674cc88afdbea1201f0b6600f2",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0004.json",
+          "artifact_sha256": "4f63e79c107931171e40561f433b50daec52853a8ccce7d4a8ec48b730477a80",
+          "script_sha256": "ef49734f41cc5f4eb5a45298e574ef71e5c4c4403e1e9575e4b9c5687fc7316d",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "Qwen4-Max/20261124/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 5,
+      "valid_scripts": 5,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 0,
+      "diagnostic_rounds_completed": 0,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 0,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "2a59a4f55a0b19fb4a438d391385577c289cea0e1ff175cd1c07fcbb93993d03",
+          "script_sha256": "7f0c8617d203df75562423a3db0bee46bafcbd2e5cf59138acecc0ad94620f51",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "1c0ecbbc641a6b372b83abc82504b448cd48442bf1a46beaf197be53abbad111",
+          "script_sha256": "cbf8afce224dcaf16715588d1c9b24d6865c6cdffe3e9c2e2c5a6809e50d23fb",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "b9b046391dae10e1d028b8d29eef227574c1e2dee1d4ef40a8c77645668777f2",
+          "script_sha256": "1a602934d7800c9b45f3a008b98177fb1296b7075ecb73aa7bfdbcddbfcdc461",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0004.json",
+          "artifact_sha256": "040c9e61cfa7b3beb924a4bfaefd29e9d1163e8506781ad2dc063851fec616eb",
+          "script_sha256": "777199137b2d7c45eaafa0bc171bc7d679d17b28534d0d59c4b1dad66f373f7b",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0005.json",
+          "artifact_sha256": "49495fadc081140d9f362a378c2ce1a5e437d2e0f9a91400e8516f22af7a152f",
+          "script_sha256": "69257c811071aa4e2f7819b639ee11a345ea8c4fd73f93dd247a2b4713819d87",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        }
+      ]
+    },
+    "Qwen4-Max/20261125/arm_b2_2_sandbox_only": {
+      "phase": "budget_stopped",
+      "scripts_executed": 3,
+      "valid_scripts": 1,
+      "gate_bypass_count": 0,
+      "diagnostic_rounds_required": 1,
+      "diagnostic_rounds_completed": 0,
+      "self_repair_rounds": 0,
+      "rounds_with_failed_scripts": 1,
+      "errors": [],
+      "script_artifacts": [
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0001.json",
+          "artifact_sha256": "73d83f6497bd05dcb608256440653bed62fc306df23ec539cf8eed791267ef65",
+          "script_sha256": "390c75baf0eb9181227c2c8cbc3ee6a5f2fa184d60f11d15d81e357b2d727e19",
+          "finite_numeric_evidence": true,
+          "error_code": null
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0002.json",
+          "artifact_sha256": "c0dcb0f075fba114a4d7830c555daf3a1054b4cc80c75f7eabdb34a7fd0aee56",
+          "script_sha256": "213df85928f24abb2106657b48a9840d5345057dd7cfa169b4290f6fdb83d984",
+          "finite_numeric_evidence": false,
+          "error_code": "ValueError"
+        },
+        {
+          "artifact_ref": "agent_artifacts/sandbox/run_0003.json",
+          "artifact_sha256": "aa9d5f804526fb8390601f29f52d65c4851fdf6da92e497f4aaa45276e8ac145",
+          "script_sha256": "ae1967a77076a5026fc6c2948f73a54304bc04fa373842ecd4858948e6853323",
+          "finite_numeric_evidence": false,
+          "error_code": "ValueError"
+        }
+      ]
+    }
+  },
+  "missing_cells": [],
+  "definitions": {
+    "valid_script_execution_rate": "ok and finite-numeric scripts divided by executed scripts",
+    "cell_sandbox_success_rate": "cells with at least one valid script divided by audited cells",
+    "post_repair_diagnostic_round_completion_rate": "required rounds with verified evidence divided by required rounds",
+    "fail_to_pass_rate": "rounds with valid evidence after a script failure divided by rounds with failures"
+  },
+  "passed": false
+}

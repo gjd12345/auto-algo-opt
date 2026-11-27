@@ -1,0 +1,40 @@
+{
+  "type": "method",
+  "title": "Double-bridge perturbation plus neighbor 2-opt ILS",
+  "category": "method",
+  "problem_family": "tsp",
+  "tags": [
+    "tsp",
+    "ils",
+    "double-bridge",
+    "2-opt"
+  ],
+  "status": "reviewed",
+  "summary": "Deterministic four-cut double-bridge, then reconverge with neighbor 2-opt and keep strict improvements.",
+  "attributes": {
+    "method_family": "local_search",
+    "online_offline": "offline",
+    "interface": "double_bridge + nearest_two_opt",
+    "objective": "tour cost"
+  },
+  "relations": {
+    "problems": [
+      "problem-tsp"
+    ],
+    "implementations": [
+      "impl-tsp-iterated-2opt"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:scripts/evaluate_tsp_iterated_nearest_two_opt.py"
+  ],
+  "code_refs": [
+    {
+      "path": "scripts/evaluate_tsp_iterated_nearest_two_opt.py",
+      "sha256": "115b445c465aac7849ed5596994bec72028c3618d03f1c5a9fffae6fd27e71e8"
+    }
+  ],
+  "id": "method-tsp-double-bridge-ils",
+  "content_sha256": "4f7280fdfcab2cbefd96d2eee3cebda883bf1d06cba0a6e5d1691f33006ed277"
+}

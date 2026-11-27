@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Q3 pure elite: exact-fit bonus and leftover-near-item reward",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "remaining_after=bins-item; +1e3 if exact fill; -1e6 if negative (should not occur on feasible bins); plus 1/(1+|leftover-item|).",
+  "attributes": {
+    "interface": "score(item, bins)",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "reports/strategy_experiments/q3_v2/best_codes/bp_online_pure_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:reports/strategy_experiments/q3_v2/best_codes/bp_online_pure_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "reports/strategy_experiments/q3_v2/best_codes/bp_online_pure_best.py",
+      "sha256": "b7738d10542637fb3df85bfe51fe1b823a47866f66cba15e8d8c7f6a84097d17"
+    }
+  ],
+  "id": "impl-obp-q3-pure",
+  "content_sha256": "ded7fc5a505e44e727b73960525d680b5d939e00bb7b32e8de00fc1a7c639b6c"
+}

@@ -273,12 +273,14 @@ class PersistentRequestBudget(RequestBudget):
         on_checkpoint: Callable[[int, int], Any] | None = None,
         reconcile_inflight: bool = True,
         strict_checkpoint_barriers: bool = False,
+        record_candidate_provenance: bool = False,
         owner_epoch: str | None = None,
     ) -> None:
         self.ledger_path = Path(ledger_path)
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
         self.run_id = str(run_id)
         self.strict_checkpoint_barriers = bool(strict_checkpoint_barriers)
+        self.record_candidate_provenance = self.strict_checkpoint_barriers or record_candidate_provenance
         self.owner_epoch = owner_epoch or uuid.uuid4().hex
         self.barrier_rejections = 0
         super().__init__(
@@ -486,6 +488,72 @@ class PersistentRequestBudget(RequestBudget):
                 limits.append(parent_remaining)
             return max(0, min(limits)) if limits else None
 
+    def reconcile_orphaned_inflight(self, *, error_code: str = "worker_interrupted_unknown") -> int:
+        """Mark any leftover reserved/sent ledger rows and pending provenance as unknown."""
+        now = _utc_now()
+        with self._lock:
+            con = self._connect()
+            try:
+                con.execute("BEGIN IMMEDIATE")
+                cur = con.execute(
+                    """
+                    UPDATE budget_requests
+                    SET state='unknown',
+                        error_code=COALESCE(error_code, ?),
+                        input_tokens=NULL,
+                        output_tokens=NULL,
+                        cached_tokens=NULL,
+                        estimated_cost_usd=NULL,
+                        finished_at_utc=COALESCE(finished_at_utc, ?)
+                    WHERE run_id=? AND state IN ('reserved', 'sent')
+                    """,
+                    (error_code, now, self.run_id),
+                )
+                reconciled = int(cur.rowcount)
+                stale_rows = con.execute(
+                    """
+                    SELECT p.attempt_token, p.eval_id, r.state, r.purpose
+                    FROM candidate_provenance p
+                    JOIN budget_requests r ON r.request_id = p.physical_request_id
+                    WHERE p.run_id=?
+                      AND p.generation_status='pending'
+                      AND r.state NOT IN ('reserved', 'sent')
+                    """,
+                    (self.run_id,),
+                ).fetchall()
+                for row in stale_rows:
+                    req_state = str(row["state"])
+                    if str(row["purpose"]) == "eoh_probe":
+                        prov_status = "probe"
+                    elif req_state == "unknown":
+                        prov_status = "interrupted_unknown"
+                    elif req_state in {"failed", "http_error", "connectivity_failed", "killed_unknown"}:
+                        prov_status = "provider_failed"
+                    elif row["eval_id"] is not None:
+                        prov_status = "invalid_candidate"
+                    else:
+                        prov_status = "eoh_skipped"
+                    con.execute(
+                        """
+                        UPDATE candidate_provenance
+                        SET generation_status=?,
+                            eligible=0,
+                            settled_at_utc=?
+                        WHERE attempt_token=? AND generation_status='pending'
+                        """,
+                        (prov_status, now, row["attempt_token"]),
+                    )
+                con.execute("COMMIT")
+                return reconciled + len(stale_rows)
+            except Exception:
+                try:
+                    con.execute("ROLLBACK")
+                except sqlite3.Error:
+                    pass
+                raise
+            finally:
+                con.close()
+
     def check_checkpoints(self, prev_used: int, curr_used: int) -> list[int]:
         newly_hit: list[int] = []
         now = _utc_now()
@@ -620,16 +688,16 @@ class PersistentRequestBudget(RequestBudget):
                         """,
                         (curr_used, now, self.run_id, prev_used, curr_used),
                     )
-                    if purpose in {"eoh_generation", "eoh_repair", "eoh_probe"}:
-                        con.execute(
-                            """
-                            INSERT OR IGNORE INTO candidate_provenance(
-                                attempt_token, run_id, logical_call_id, physical_request_id,
-                                global_ordinal, purpose, generation_status, eligible
-                            ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0)
-                            """,
-                            (attempt_token, self.run_id, slot.logical_call_id, req_id, curr_used, purpose),
-                        )
+                if self.record_candidate_provenance and purpose in {"eoh_generation", "eoh_repair", "eoh_probe"}:
+                    con.execute(
+                        """
+                        INSERT OR IGNORE INTO candidate_provenance(
+                            attempt_token, run_id, logical_call_id, physical_request_id,
+                            global_ordinal, purpose, generation_status, eligible
+                        ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0)
+                        """,
+                        (attempt_token, self.run_id, slot.logical_call_id, req_id, curr_used, purpose),
+                    )
                 con.execute("COMMIT")
                 self.denial_reason = None
                 self._used = curr_used

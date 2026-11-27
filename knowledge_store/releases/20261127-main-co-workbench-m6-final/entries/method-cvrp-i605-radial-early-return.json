@@ -1,0 +1,161 @@
+{
+  "type": "method",
+  "title": "CVRP 岛屿流派二：线性径向偏置 + 积极几何/低载主动早返 (Island605 C8)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "island605",
+    "i605_cvrp_c8_radial_early",
+    "sequential-construct",
+    "select_next_node"
+  ],
+  "status": "reviewed",
+  "summary": "从仓库选最远点出发，中程以 d(i,j) - 0.3*d(0,j) 兼具近邻与远端优先，一旦到最优候选比回仓更远（d(i,0) < d(i,best)）或剩余容量低于 0.2*max_q 即积极主动早返仓；0.00% 缩放漂移。",
+  "attributes": {
+    "method_family": "sequential_construct",
+    "online_offline": "offline",
+    "interface": "select_next_node",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "select_next_node"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "sequential_construct",
+    "complexity_class": "O(n^2)",
+    "applicable_regimes": {
+      "strong_on": [
+        "fast_pointwise_construct",
+        "multiscale_cvrp",
+        "scale_invariance_verified"
+      ],
+      "weak_on": [
+        "vs_parallel_merge_and_local_search"
+      ],
+      "scale_notes": "旧 6 月协议（16×n50 Q=40）精确复算 12.5481；现行工作台 select_64=22.5822、冻结后 final_accept_120=26.2901、EoH-S 256 差距 +28.99%。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "单车顺序构造骨架（与 EoH / 工作台 select_next_node 完全兼容）",
+      "evolvable_hook": "select_next_node(current_node, depot, unvisited_nodes, rest_capacity, demands, distance_matrix) -> int",
+      "state_maintained": [
+        "current_node",
+        "rest_capacity",
+        "unvisited_nodes"
+      ],
+      "invariants_and_constraints": [
+        "出发步与中程步显式解耦（独立印证 H-003）",
+        "基于 88 题真实运行期追踪核验主动早返次数（非朴素代码关键字猜测）"
+      ],
+      "typical_pitfalls": [
+        "同批 207 条岛屿规则中有 34 条因混合 O(s) 与 O(1/s) 量纲存在缩尺漂移（最差 rank #61 达 +255.95%），入库前必须过缩尺压力测试"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "score(i,j) = d(i,j) - 0.3*d(0,j); return 0 iff d(i,0) < d(i,best) or rest_cap < 0.2*max_q",
+        "variables": {
+          "d(0,j)": "仓库到客户 j 距离",
+          "d(i,j)": "当前点 i 到客户 j 距离",
+          "rest_cap": "当前剩余载重"
+        },
+        "preconditions": "可行未访集合非空；所有代表规则均仅依据 dev_24 + select_64 筛选冻结"
+      }
+    ],
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "48134fc",
+        "path": "experiments/island605_archive/rules/all/cvrp/cvrp_007_E2_highgen_g8_r4__6103d27d.py",
+        "sha256": "6103d27db3a1277e02fad0fc9f306449fe8d01a602a82a8824aa5cda13ad5ba2"
+      }
+    ],
+    "evidence_bindings": [
+      {
+        "suite_id": "cvrp_select_multiscale_64",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "mean_tour_length",
+        "value": 22.5822,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "筛选集 select_64 均长 22.5822（88 题实测主动早返 700 次）",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_hist_p0_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "mean_tour_length",
+        "value": 19.8372,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "历史回归 P0-120 均长 19.8372",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_final_accept_120",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "mean_tour_length",
+        "value": 26.2901,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "名单冻结后 final_accept_120 均长 26.2901",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_eohs_256",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "mean_rel_gap",
+        "value": 0.289911,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "EoH-S 256 例相对 LKH 差距 +28.99%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_abp_74",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "mean_rel_gap",
+        "value": 0.17458,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "CVRPLib A/B/P 74 例相对 BKS 差距 +17.46%",
+        "artifact_path": "results/summary.json"
+      },
+      {
+        "suite_id": "cvrp_ext_cvrplib_x_100",
+        "run_id": "milestone15_unified_500ms",
+        "algorithm_id": "i605_cvrp_c8_radial_early",
+        "metric": "common_completed_mean_rel_gap",
+        "value": 0.170739,
+        "comparison_mode": "local_recomputed",
+        "reference_note": "Set X 共同完成交集差距 +17.07%",
+        "artifact_path": "results/summary.json"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-s2-r5-spiral",
+      "method-cvrp-savings-next-node"
+    ],
+    "sources": [
+      "src-island605-archive-20260630",
+      "src-milestone15-reproduction-20261122"
+    ]
+  },
+  "source_refs": [
+    "src-island605-archive-20260630",
+    "src-milestone15-reproduction-20261122"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone15/legacy_reproduction_605.json",
+    "report:experiments/milestone15/workbench_screening_605.json"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-i605-radial-early-return",
+  "content_sha256": "ae0e3ab3be1f6dc4167333f539f2ede5b2a613983aa708ad52d15e6cf2ea02c8"
+}

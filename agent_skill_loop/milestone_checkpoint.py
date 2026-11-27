@@ -435,8 +435,10 @@ def settle_attempt_provenance(
         con.close()
 
 
-def settle_pending_provenance_for_terminal_requests(ledger_path: Path, run_id: str) -> int:
-    """Close pending candidate_provenance rows whose physical request already terminated without evaluation."""
+def settle_pending_provenance_for_terminal_requests(
+    ledger_path: Path, run_id: str, *, finished_eval_owner_epoch: str | None = None,
+) -> int:
+    """Close terminal requests and, for a joined evaluation owner, abandoned evaluations."""
     now = _utc_now()
     con = _connect(ledger_path)
     try:
@@ -444,14 +446,14 @@ def settle_pending_provenance_for_terminal_requests(ledger_path: Path, run_id: s
         ensure_milestone_tables(con)
         rows = con.execute(
             """
-            SELECT p.attempt_token, r.state, r.purpose
+            SELECT p.attempt_token, p.eval_id, r.state, r.purpose
             FROM candidate_provenance p
             JOIN budget_requests r ON r.request_id = p.physical_request_id
             WHERE p.run_id=? AND p.generation_status='pending'
-              AND p.eval_id IS NULL
+              AND (p.eval_id IS NULL OR r.owner_epoch=?)
               AND r.state NOT IN ('reserved','sent')
             """,
-            (run_id,),
+            (run_id, finished_eval_owner_epoch),
         ).fetchall()
         updated = 0
         for row in rows:
@@ -462,6 +464,8 @@ def settle_pending_provenance_for_terminal_requests(ledger_path: Path, run_id: s
                 status = "interrupted_unknown"
             elif req_state in {"failed", "http_error", "connectivity_failed", "killed_unknown"}:
                 status = "provider_failed"
+            elif row["eval_id"] is not None:
+                status = "invalid_candidate"
             else:
                 status = "eoh_skipped"
             con.execute(

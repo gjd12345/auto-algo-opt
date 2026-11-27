@@ -1,0 +1,87 @@
+{
+  "type": "method",
+  "title": "Standard CVRP inter-route 1-1 swap (customer exchange)",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "swap",
+    "exchange",
+    "local-search",
+    "inter-route",
+    "standard-cvrp"
+  ],
+  "status": "reviewed",
+  "summary": "Exchanges one customer from route A with one customer from route B whenever both post-swap loads respect capacity Q and total distance strictly decreases.",
+  "attributes": {
+    "knowledge_tier": "local_implementation",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "local_search",
+    "complexity_class": "O(k*n^2)",
+    "interface": "local_move_operator",
+    "eoh_map": {
+      "status": "not_mappable",
+      "adapter_kind": "full_route_skeleton",
+      "entrypoint": "solve_cvrp"
+    },
+    "applicable_regimes": {
+      "strong_on": [
+        "tight_capacity",
+        "near_full_routes",
+        "bimodal_demands"
+      ],
+      "weak_on": [
+        "reducing_route_count_directly"
+      ],
+      "scale_notes": "当两条路径均接近满载导致 1-0 Relocate 无法单向迁入时，1-1 Swap 仅要求净负载差 |q_u - q_v| 满足余量，是紧容量工况下不可或缺的互补邻域。"
+    },
+    "interface_blueprint": {
+      "skeleton_role": "枚举不同路径对 (r_a, r_b) 上的客户对 (u, v)，先以 O(1) 校验双向容量不等式，再以 O(1) 计算 4 边替换增量",
+      "evolvable_hook": "swap_candidate_priority(delta, load_imbalance_change, dist_uv)",
+      "state_maintained": [
+        "routes",
+        "loads"
+      ],
+      "invariants_and_constraints": [
+        "load(r_a) - q_u + q_v <= Q 且 load(r_b) - q_v + q_u <= Q",
+        "仅交换不同路径节点（同路径 swap 可额外处理相邻节点边界）"
+      ],
+      "typical_pitfalls": [
+        "同路径相邻节点 swap 时直接套用 4 边独立公式会重复计算中间边 (u,v)"
+      ]
+    },
+    "math_formulation": [
+      {
+        "expr": "Delta_swap = [d(a-,v)+d(v,a+)-d(a-,u)-d(u,a+)] + [d(b-,u)+d(u,b+)-d(b-,v)-d(v,b+)]",
+        "variables": {
+          "u in r_a, v in r_b": "两条不同路径上的待交换客户",
+          "a-/a+, b-/b+": "各自前后邻接节点"
+        },
+        "preconditions": "r_a != r_b，且 load(r_a)-q_u+q_v <= Q、load(r_b)-q_v+q_u <= Q"
+      }
+    ],
+    "artifact_refs": [],
+    "evidence_bindings": []
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-inter-relocate",
+      "method-cvrp-vns"
+    ],
+    "sources": [
+      "src-mladenovic-hansen-1997-vns"
+    ]
+  },
+  "source_refs": [
+    "src-mladenovic-hansen-1997-vns"
+  ],
+  "evidence_refs": [
+    "gap:standard-cvrp-swap-standalone-benchmark-pending-milestone2"
+  ],
+  "code_refs": [],
+  "id": "method-cvrp-inter-swap",
+  "content_sha256": "5a6269d519b97124e808c6d931a049eab5d1c290eecf8c2bf9edb5f5e8917fd6"
+}

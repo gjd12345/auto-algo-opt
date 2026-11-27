@@ -242,3 +242,62 @@ def test_paratera_driver_budget_and_prose_json_reply(monkeypatch: pytest.MonkeyP
     assert driver.complete(phase="reflect_short", prompt="p", template_id="cvrp_ruin_recreate", seed=1, request=2) == '{"ok": "yes"}'
     assert [p["max_tokens"] for p in payloads] == [16384, 4096]
     assert runner._reply_field('Here is the hook:\n{"hook_code": "return x"}\nThanks.', "hook_code", 100) == "return x"
+
+
+def test_score_penalizes_uncensored_deadline_overrun_and_separates_censored_callback() -> None:
+    inst = _instance("overrun_case", k=2)
+    ref = inst["reference_objective"]
+
+    # 1. Uncensored overrun (e.g., EoH-S / ReEvo ran 502ms with completed not forced false)
+    uncens = runner._score(
+        inst,
+        {"valid": True, "tour_length": 12.0, "exact_vehicle_count": True, "status": "ok", "solve_ms": 502.0},
+        policy="free_fleet_min_k_lb",
+        budget_ms=500.0,
+    )
+    assert uncens["uncensored_deadline_overrun"] is True
+    assert uncens["completed"] is False
+    assert uncens["scored_objective"] == 2.0 * ref
+    assert uncens["completed_feasible_before_deadline"] is False
+    assert uncens["completed_returned_before_deadline"] is False
+
+    # 2. Censored callback overrun (e.g., PyVRP cooperative check after valid incumbent before deadline)
+    cens = runner._score(
+        inst,
+        {
+            "valid": True,
+            "tour_length": 11.0,
+            "exact_vehicle_count": True,
+            "status": "ok",
+            "completed": True,
+            "solve_censored": True,
+            "feasible_before_deadline": True,
+            "solve_ms": 503.0,
+        },
+        policy="free_fleet_min_k_lb",
+        budget_ms=500.0,
+    )
+    assert cens["uncensored_deadline_overrun"] is False
+    assert cens["completed"] is True
+    assert cens["scored_objective"] == 11.0
+    assert cens["completed_feasible_before_deadline"] is True
+    assert cens["completed_returned_before_deadline"] is False
+
+    # 3. Clean under-budget completion
+    clean = runner._score(
+        inst,
+        {"valid": True, "tour_length": 11.5, "exact_vehicle_count": True, "status": "ok", "solve_ms": 250.0},
+        policy="free_fleet_min_k_lb",
+        budget_ms=500.0,
+    )
+    assert clean["uncensored_deadline_overrun"] is False
+    assert clean["completed"] is True
+    assert clean["completed_feasible_before_deadline"] is True
+    assert clean["completed_returned_before_deadline"] is True
+
+    summary = runner._summary([uncens, cens, clean])
+    assert summary["completed_count"] == 2
+    assert summary["feasible_before_deadline_completed_count"] == 2
+    assert summary["returned_before_deadline_completed_count"] == 1
+    assert summary["uncensored_overrun_penalized_count"] == 1
+    assert summary["censored_callback_overrun_count"] == 1

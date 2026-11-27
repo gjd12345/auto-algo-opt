@@ -1,0 +1,77 @@
+{
+  "type": "method",
+  "title": "大预算自发涌现的无量纲退火破坏算子（三阶段 Gumbel 整合与 Gibbs–Boltzmann 配额阶梯）",
+  "category": "method",
+  "problem_family": "cvrp",
+  "tags": [
+    "cvrp",
+    "milestone-3.2",
+    "milestone-4",
+    "emergent-operator",
+    "gumbel-annealing",
+    "gibbs-boltzmann",
+    "score_ruin_nodes"
+  ],
+  "status": "reviewed",
+  "summary": "在无人工公式提示下，400 请求大预算自主演化于 L3 破坏修复底盘涌现两类完全无量纲的统计物理类比破坏算子：(1) ckpt_cand_8c4dfb41aa（timeout_2000ms s20261124，盲测 22.9796 / exact-k=0.850）：显式构造路径余量比与停靠稀疏度、最大节约种子径向核及确定性 Gumbel 扰动，按 exploit->neutral->diversify 三阶段退火，前期拆散稀疏低载路径实现车队合并；(2) ckpt_cand_22af9ec1ab（curve s20261126:400，未加罚全局均长最优 22.9430）：融合单位路长绕行节省比、容量压力与饱和仓库偏心率，通过停滞自适应逆温度构造竞争 Gibbs 分布与累积存活概率阶梯。",
+  "attributes": {
+    "method_family": "ruin_recreate",
+    "online_offline": "offline",
+    "interface": "score_ruin_nodes",
+    "eoh_map": {
+      "status": "possible",
+      "adapter_kind": "direct_entrypoint",
+      "entrypoint": "score_ruin_nodes"
+    },
+    "knowledge_tier": "verified_experiment",
+    "problem_variant": "standard_cvrp",
+    "paradigm": "ruin_and_recreate",
+    "complexity_class": "O(n^3)",
+    "applicable_regimes": {
+      "strong_on": [
+        "fleet_consolidation_exact_k",
+        "multi_scale_cvrp_2000ms",
+        "scale_invariant_scoring"
+      ],
+      "weak_on": [
+        "sub_500ms_python_overhead_at_n200"
+      ],
+      "scale_notes": "全部 12 份 400 请求冻结冠军在 select_16 (n=50) 上均达到 16/16 合法且满足无量纲群不变约束。"
+    },
+    "artifact_refs": [
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "tools/run_m4_math_closure.py",
+        "sha256": "de957c036daa7b62e17bc8fae481f41d890ece04a7badf72a485e70be50e943d"
+      },
+      {
+        "kind": "repo_code",
+        "commit": "c2360c85",
+        "path": "experiments/milestone4/m4_m32_operator_dissection.json",
+        "sha256": "133232737f0ab529bf7e37a4b57b088d7d41b22ca3ece083f14616465ce54b2d"
+      }
+    ]
+  },
+  "relations": {
+    "problems": [
+      "problem-cvrp"
+    ],
+    "methods": [
+      "method-cvrp-m3-ruin-recreate-l3"
+    ],
+    "sources": [
+      "src-milestone4-m31-m32-math-closure-20261124"
+    ]
+  },
+  "source_refs": [
+    "src-milestone4-m31-m32-math-closure-20261124"
+  ],
+  "evidence_refs": [
+    "report:experiments/milestone4/m4_m32_operator_dissection.json",
+    "report:experiments/milestone4/m4_math_closure_part2.md"
+  ],
+  "code_refs": [],
+  "id": "method-m32-emergent-gumbel-gibbs-ruin-20261124",
+  "content_sha256": "7277fda8ad395e7ab9d4e9f87b5716d6de5236446dea8797a0b086829069718b"
+}

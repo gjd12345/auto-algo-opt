@@ -1,0 +1,33 @@
+{
+  "type": "implementation",
+  "title": "Evolved OBP residual-utilization score",
+  "category": "implementation",
+  "problem_family": "online_bin_packing",
+  "tags": [
+    "online_bin_packing",
+    "implementation"
+  ],
+  "status": "reviewed",
+  "summary": "The function computes residual=bins-item, utilization=exp(item/(residual+item)), and subtracts (residual-item)^2/item when 0<residual<2*item. Identical bytes also appear as evidence/bp_interpretability/best_code.py.",
+  "attributes": {
+    "interface": "score(item, bins) -> utilization - small-residual penalty",
+    "online_offline": "online"
+  },
+  "relations": {
+    "code": [
+      "evidence/final_batch_20260630/best_codes/bp_online_best.py"
+    ]
+  },
+  "source_refs": [],
+  "evidence_refs": [
+    "code:evidence/final_batch_20260630/best_codes/bp_online_best.py"
+  ],
+  "code_refs": [
+    {
+      "path": "evidence/final_batch_20260630/best_codes/bp_online_best.py",
+      "sha256": "42fa7edc09d9cb88680e39089f236f3b6440029e17912e84b637e038d6424a08"
+    }
+  ],
+  "id": "impl-obp-best-code-residual-util",
+  "content_sha256": "236b70a24dd0efd7a76f515e2ebbf71c889b1bcdc00ca6a49c0ca5c2009b2df4"
+}
